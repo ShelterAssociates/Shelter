@@ -75,7 +75,7 @@ WSGI_APPLICATION = 'Project.wsgi.application'
 
 # Database
 # https://docs.djangoproject.com/en/1.8/ref/settings/#databases
-
+POSTGIS_VERSION = (2, 0, 3)
 DATABASES = {
     'default': {
         'ENGINE': 'django.contrib.gis.db.backends.postgis',
