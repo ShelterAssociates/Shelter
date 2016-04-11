@@ -14,9 +14,12 @@ Including another URLconf
 """
 from django.conf.urls import include, url
 from django.contrib import admin
-
+from views import index
 admin.autodiscover()
 
 urlpatterns = [
-    url(r'^admin/', include('Masters.urls'),
+	
+    url(r'^$',index,name='index'),
+    url(r'^master/', include(admin.site.urls)),
+
 ]
