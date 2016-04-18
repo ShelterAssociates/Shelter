@@ -10,10 +10,12 @@
 
 </head>
 <body>
-<form action="" method="POST">
+<form action="" method="POST" style = "margin-left:10%;">
 {% csrf_token %} 
 <table>
-    <th>Add a new Survey</th>
+	<br>
+    <th><h1>Add a new Survey</h1></th>
+    <tr><td></td><td></td></tr>
   <tr>
   	<td colspan="2">
   		{{ form.Name.errors }}
@@ -76,10 +78,13 @@
     <td>Kobo Toolbox Survey Id</td>
     <td>{{form.kobotoolSurvey_id}}</td>
   </tr>
+ <tr>
+  <td><input  style = "width:195px;-ms-box-sizing:content-box;-moz-box-sizing:content-box;-webkit-box-sizing:content-box; box-sizing:content-box;" type="submit" value="Save" /></td> 
+  <td><input  style = "width:195px;-ms-box-sizing:content-box;-moz-box-sizing:content-box;-webkit-box-sizing:content-box; box-sizing:content-box;" type="submit" value="Clear" /></td>
+  </tr>
 
 </table> 
-<input type="submit" value="Save" /> 
-<input type="submit" value="Clear" /> 
+
 </form>
 </body>
 </html>

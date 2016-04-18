@@ -2,15 +2,29 @@
 
 {% extends "admin/base_site.html" %}
 {% load i18n %}
+{% load staticfiles %}
+
 
 {% block breadcrumbs %}{% csrf_token %}
 
-	<a href="/admin/AddSurveyMapping"><h2>Add New Survey </h2></a> 
-	<ul>
+	<div align = "right" style = "margin-right:5%;"><a href="/admin/AddSurveyMapping"><h2>Add New Survey </h2></a> 
+	</div>
+	<br><br>
+	<table width = 100% style = "margin-left:5%; margin-right:5%;">
+		<th> Name </th><th> Description </th> <th> City </th><th> Type </th><th> Analysis Threshold </th> <th> KoboCat ID </th><th> KoboCat URL </th><th></th>
         {% for surveyFields in object_list %}
-            <li>{{ surveyFields.Name }}</li>
-        {% endfor %}
-    </ul>
+            <tr>
+            <td><a href = "#">{{ surveyFields.Name }}</a></td>
+            <td>{{ surveyFields.Description }}</td>
+            <td>{{ surveyFields.City_id }}</td>
+            <td>{{ surveyFields.survey_type }}</td>
+            <td>{{ surveyFields.AnalysisThreshold }}</td>
+            <td>{{ surveyFields.kobotoolSurvey_id }}</td>
+            <td>{{ surveyFields.kobotoolSurvey_url }}</td>
+            <td><img src = ""></img></td>
+            </tr>
+        {% endfor %}  
+    </table>
 
 {% endblock %}
 
