@@ -1,0 +1,22 @@
+
+
+{% extends "admin/base_site.html" %}
+{% load i18n %}
+
+{% block breadcrumbs %}{% csrf_token %}
+
+	<a href="/admin/AddSurveyMapping"><h2>Add New Survey </h2></a> 
+	<ul>
+        {% for surveyFields in object_list %}
+            <li>{{ surveyFields.Name }}</li>
+        {% endfor %}
+    </ul>
+
+{% endblock %}
+
+{% block content %}
+
+{% endblock %}
+
+{% block sidebar %}
+{% endblock %}

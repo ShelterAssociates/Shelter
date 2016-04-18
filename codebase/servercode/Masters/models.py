@@ -18,16 +18,22 @@ class City(models.Model):
 		return self.Name 
 
 
+SURVEYTYPE_CHOICES = (('survey_type', 'Rapid Appraisal'),
+					  ('survey_type', 'Rapid Household Survey'),
+					  ('survey_type', 'Social Economic'))
+
 class Survey(models.Model):
 	Name = models.CharField(max_length=50)
 	Description = models.CharField(max_length=200)
 	City_id = models.ForeignKey(City)
-	Survey_type = models.CharField(max_length=50)
+	Survey_type = models.CharField(max_length=50, choices=SURVEYTYPE_CHOICES)
 	AnalysisThreshold = models.IntegerField()
 	kobotoolSurvey_id = models.CharField(max_length=50)
 	kobotoolSurvey_url = models.CharField(max_length=50)
+	
 	def __unicode__(self):
 		return self.Name
+	
 
 
 class Administrative_Ward(models.Model):
