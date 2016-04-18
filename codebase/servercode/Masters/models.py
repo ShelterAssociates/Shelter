@@ -18,9 +18,9 @@ class City(models.Model):
 		return self.Name 
 
 
-SURVEYTYPE_CHOICES = (('survey_type', 'Rapid Appraisal'),
-					  ('survey_type', 'Rapid Household Survey'),
-					  ('survey_type', 'Social Economic'))
+SURVEYTYPE_CHOICES = (('Rapid Appraisal', 'Rapid Appraisal'),
+					  ('Rapid Household Survey', 'Rapid Household Survey'),
+					  ('Social Economic', 'Social Economic'))
 
 class Survey(models.Model):
 	Name = models.CharField(max_length=50)
@@ -29,7 +29,7 @@ class Survey(models.Model):
 	Survey_type = models.CharField(max_length=50, choices=SURVEYTYPE_CHOICES)
 	AnalysisThreshold = models.IntegerField()
 	kobotoolSurvey_id = models.CharField(max_length=50)
-	kobotoolSurvey_url = models.CharField(max_length=50)
+	kobotoolSurvey_url = models.CharField(max_length=500)
 	
 	def __unicode__(self):
 		return self.Name

@@ -7,6 +7,7 @@
 <!doctype html>
 <head>
 <title>Add a New Survey</title>
+
 </head>
 <body>
 <form action="" method="POST">
@@ -14,33 +15,68 @@
 <table>
     <th>Add a new Survey</th>
   <tr>
+  	<td colspan="2">
+  		{{ form.Name.errors }}
+  	</td>
+  </tr>  
+  <tr>
     <td>Name</td>
     <td>{{form.Name}}</td>
   </tr>
+  
+  
+  <tr>
+  	<td colspan="2">
+  		{{ form.Description.errors }}
+  	</td>
+  </tr> 
   <tr>
     <td>Description</td>
     <td>{{form.Description}}</td>
   </tr>
+  
+  
+  <tr>
+  	<td colspan="2">
+  		{{ form.City_id.errors }}
+  	</td>
+  </tr> 
   <tr>
     <td>City Id</td>
     <td>{{form.City_id}}</td>
   </tr>
+  
+  <tr>
+  	<td colspan="2">
+  		{{ form.Survey_type.errors }}
+  	</td>
+  </tr> 
   <tr>
     <td>Survey Type</td>
     <td>{{form.Survey_type}}</td>
   </tr>
+  
+  <tr>
+  	<td colspan="2">
+  		{{ form.AnalysisThreshold.errors }}
+  	</td>
+  </tr> 
   <tr>
     <td>Analysis Threshold</td>
     <td>{{form.AnalysisThreshold}}</td>
   </tr>
+  
+  
+  <tr>
+  	<td colspan="2">
+  		{{ form.kobotoolSurvey_id.errors }}
+  	</td>
+  </tr> 
   <tr>
     <td>Kobo Toolbox Survey Id</td>
     <td>{{form.kobotoolSurvey_id}}</td>
   </tr>
-  <tr>
-    <td>Kobo Toolbox Survey URL</td>
-    <td>{{form.kobotoolSurvey_url}}</td>
-  </tr>
+
 </table> 
 <input type="submit" value="Save" /> 
 <input type="submit" value="Clear" /> 
