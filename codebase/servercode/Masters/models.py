@@ -181,31 +181,37 @@ class UserRoleMaster(models.Model):
 
 @receiver(post_save,sender=Slum)
 def Slum_Created_Trigger(sender,instance,**kwargs):
+    conn = psycopg2.connect(database='onadata', user='postgres', password='softcorner', host='localhost', port='5432')#, sslmode='require')
     print instance
     print instance.Name
-    conn = psycopg2.connect(database='onadata', user='postgres', password='softcorner', host='localhost', port='5432')#, sslmode='require')
-    cursor = conn.cursor()
-    cursor.execute('select json from logger_xform where id=26')
-    a = cursor.fetchall()
-    k = None
-    for v in a[0]: 
-        k=json.loads(v)
-    k["children"][0]["children"].append({'name':instance.Name,'label':instance.Name})   
-    aa = json.dumps(k)
-    cursor = conn.cursor()
-    cursor.execute('select xml from logger_xform where id=26')
-    b = cursor.fetchall()
-    x = []
-    for v in b[0]:
-        print type(v) 
-        x=v
-    soup = Soup(x)
-    soup.select1.append(Soup('<item>\n<label>'+instance.Name+'</label>\n<value>'+instance.Name+'</value>\n</item>\n'))
+    print instance.ElectrolWard_id.AdministrativeWard_id.City_id
+    objSurveys=Survey.objects.filter(City_id=instance.ElectrolWard_id.AdministrativeWard_id.City_id)
     
-    xx= unicode(soup)
-    cursor.execute('BEGIN')
-    cursor.execute('update logger_xform set json=%s, xml=%s where id = 26',[(aa,),(xx,)])
-    cursor.execute('COMMIT')
+    for objSurvey in objSurveys:
+        arrlist = objSurvey.kobotoolSurvey_url.split('/')
+	id = arrlist[len(arrlist)-1].split('?')[0]
+        cursor = conn.cursor()
+        cursor.execute('select json from logger_xform where id='+id)
+        a = cursor.fetchall()
+        k = None
+        for v in a[0]: 
+            k=json.loads(v)
+        k["children"][0]["children"].append({'name':instance.Name,'label':instance.Name})   
+        aa = json.dumps(k)
+        cursor = conn.cursor()
+        cursor.execute('select xml from logger_xform where id='+id)
+        b = cursor.fetchall()
+        x = []
+        for v in b[0]:
+            print type(v) 
+            x=v
+        soup = Soup(x)
+        soup.select1.append(Soup('<item>\n<label>'+instance.Name+'</label>\n<value>'+instance.Name+'</value>\n</item>\n'))
+    
+        xx= unicode(soup)
+        cursor.execute('BEGIN')
+        cursor.execute('update logger_xform set json=%s, xml=%s where id='+id,[(aa,),(xx,)])
+        cursor.execute('COMMIT')
 
 
 
