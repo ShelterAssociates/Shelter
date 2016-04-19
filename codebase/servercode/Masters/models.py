@@ -3,6 +3,12 @@ import datetime
 from django.contrib.auth.models import User
 from django.contrib.auth.models import Group
 from django.forms import ModelForm
+from django.db.models.signals import pre_save, pre_delete, post_save, post_delete
+from django.dispatch import receiver
+import django.contrib.gis.db.backends.postgis 
+import psycopg2
+import json
+from BeautifulSoup import BeautifulStoneSoup as Soup
 
 class City(models.Model):
 	Name = models.CharField(max_length=20)
@@ -75,8 +81,6 @@ class Elected_Representative(models.Model):
 	Eletrolward_id = models.ForeignKey(Electrol_Ward)
 	def __unicode__(self):
 		return self.Name
-
-
 
 class ShaperCode(models.Model):
 	Code = models.CharField(max_length=100)
@@ -175,7 +179,33 @@ class UserRoleMaster(models.Model):
 	City_id = models.ForeignKey(City)
 	slum_id = models.ForeignKey(Slum)
 
-
+@receiver(post_save,sender=Slum)
+def Slum_Created_Trigger(sender,instance,**kwargs):
+    print instance
+    print instance.Name
+    conn = psycopg2.connect(database='onadata', user='postgres', password='softcorner', host='localhost', port='5432')#, sslmode='require')
+    cursor = conn.cursor()
+    cursor.execute('select json from logger_xform where id=26')
+    a = cursor.fetchall()
+    k = None
+    for v in a[0]: 
+        k=json.loads(v)
+    k["children"][0]["children"].append({'name':instance.Name,'label':instance.Name})   
+    aa = json.dumps(k)
+    cursor = conn.cursor()
+    cursor.execute('select xml from logger_xform where id=26')
+    b = cursor.fetchall()
+    x = []
+    for v in b[0]:
+        print type(v) 
+        x=v
+    soup = Soup(x)
+    soup.select1.append(Soup('<item>\n<label>'+instance.Name+'</label>\n<value>'+instance.Name+'</value>\n</item>\n'))
+    
+    xx= unicode(soup)
+    cursor.execute('BEGIN')
+    cursor.execute('update logger_xform set json=%s, xml=%s where id = 26',[(aa,),(xx,)])
+    cursor.execute('COMMIT')
 
 
 
