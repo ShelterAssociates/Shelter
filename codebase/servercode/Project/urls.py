@@ -12,11 +12,18 @@ Class-based views
 Including another URLconf
     1. Add a URL to urlpatterns:  url(r'^blog/', include('blog.urls'))
 """
+#from Project.Masters.views import *
 from django.conf.urls import include, url
 from django.contrib import admin
 
+
+
 admin.autodiscover()
 
+
+
+
 urlpatterns = [
-    url(r'^admin/', include('Masters.urls'),
-]
+    url(r'^admin/', include('Masters.urls')),
+    ]
+

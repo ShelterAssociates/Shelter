@@ -15,6 +15,7 @@ Including another URLconf
 from django.conf.urls import include, url
 from django.contrib import admin
 from views import index
+from views import *
 admin.autodiscover()
 
 urlpatterns = [
@@ -23,3 +24,4 @@ urlpatterns = [
     url(r'^master/', include(admin.site.urls)),
 
 ]
+

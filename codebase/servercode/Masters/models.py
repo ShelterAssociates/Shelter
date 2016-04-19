@@ -3,8 +3,6 @@ import datetime
 from django.contrib.auth.models import User
 from django.contrib.auth.models import Group
 from django.forms import ModelForm
-# Create your models here.
-
 
 class City(models.Model):
 	Name = models.CharField(max_length=20)
@@ -12,11 +10,10 @@ class City(models.Model):
 	State_code = models.CharField(max_length=5)
 	District_Code = models.CharField(max_length=5)
 	City_code = models.CharField(max_length=5)
-	createdBy =  models.IntegerField()
+	createdBy =  models.ForeignKey(User)
 	createdOn = models.DateTimeField( default= datetime.datetime.now())
 	def __unicode__(self):
 		return self.Name 
-
 
 class Survey(models.Model):
 	Name = models.CharField(max_length=50)
@@ -100,7 +97,7 @@ class PlottedShape(models.Model):
 	Name = models.CharField(max_length=100)
 	Lat_long = models.CharField(max_length=2000)
 	Drawable_Component_id = models.ForeignKey(Drawable_Component)
-	creaatedBy =  models.IntegerField()
+	creaatedBy =  models.ForeignKey(User)
 	createdOn= models.DateTimeField(default= datetime.datetime.now())
 	def __unicode__(self):
 		return self.Name
@@ -117,7 +114,7 @@ class Filter_Master(models.Model):
 	name = models.CharField(max_length=30)
 	IsDeployed = models.CharField(max_length=1)
 	VisibleTo = models.IntegerField()
-	createdBy = models.IntegerField()
+	createdBy = models.ForeignKey(User)
 	createdOn= models.DateTimeField(default= datetime.datetime.now())
 	
 
@@ -141,7 +138,7 @@ class Sponsor_Project(models.Model):
 	Name = models.CharField(max_length=50)
 	Type = models.CharField(max_length=30)
 	Sponsor_id = models.ForeignKey(Sponser)
-	createdBy = models.IntegerField()
+	createdBy = models.ForeignKey(User)
 	createdOn= models.DateTimeField(default= datetime.datetime.now())
 	def __unicode__(self):
 		return self.Name
@@ -177,3 +174,8 @@ class UserRoleMaster(models.Model):
 	role_id = models.ForeignKey(RoleMaster)
 	City_id = models.ForeignKey(City)
 	slum_id = models.ForeignKey(Slum)
+
+
+
+
+
