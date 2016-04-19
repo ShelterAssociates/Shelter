@@ -24,27 +24,52 @@ def index(request):
 class SurveyListView(ListView):
 	template_name = 'SurveyListView.html'
 	model = Survey
+	
 
 
 class SurveyCreateView(FormView):
 	template_name = 'SurveyCreate_form.html'
 	form_class=SurveyCreateForm
 	success_url='SurveyCreate/'
-	print "survey Creation "
 	
+	def dispatch(self, request, *args, **kwargs):		
+		try:
+			if kwargs['Survey_id'] :
+				self.id=kwargs['Survey_id']
+		except :
+			print "Error"		
+		return super(SurveyCreateView, self).dispatch(request, *args, **kwargs)
+	
+
+	def get_context_data(self, **kwargs):
+	 	context_data = super(SurveyCreateView, self).get_context_data(**kwargs)
+	 	try:
+	 		if self.id:	 	
+	 			self.surveydata=Survey.objects.get(id=self.id)
+	 			context_data['form']=self.form_class(initial={'Name':self.surveydata.Name, 'Description':self.surveydata.Description,
+                             'City_id':self.surveydata.City_id,'Survey_type':self.surveydata.Survey_type,
+                             'AnalysisThreshold':self.surveydata.AnalysisThreshold,
+                             'kobotoolSurvey_id':self.surveydata.kobotoolSurvey_id,
+                             'Survey_id':self.surveydata.id})
+	 	except:
+	 		print "get_context_data Error"
+	 	return context_data
+       
+	
+	def get_form_kwargs(self):
+		kwargs = super( SurveyCreateView, self).get_form_kwargs()
+		try:
+			kwargs['Survey_id']=self.id
+ 		except:
+ 		 	print "get_form_kwargs Error"
+		return kwargs
+
+		
 	def form_valid(self, form):
-		print "hello"
-		print form['Survey_type'].value()
-		
-		#dd.Survey_type=form['Survey_type'].value()
-		#email = form.Survey_type_choices_display()
 		form.save()
-		
 		return super(SurveyCreateView, self).form_valid(form)
 	
-	def form_invalid(self, form):
-		print "456"
-		#return HttpResponseRedirect(self.get_success_url())		
+	def form_invalid(self, form):		
 		return super(SurveyCreateView, self).form_invalid(form)
 	
 	def get_success_url(self):			

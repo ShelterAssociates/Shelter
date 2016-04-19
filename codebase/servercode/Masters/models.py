@@ -18,9 +18,9 @@ class City(models.Model):
 		return self.Name 
 
 
-SURVEYTYPE_CHOICES = (('Rapid Appraisal', 'Rapid Appraisal'),
-					  ('Rapid Household Survey', 'Rapid Household Survey'),
-					  ('Social Economic', 'Social Economic'))
+SURVEYTYPE_CHOICES = (('Slum Level', 'Slum Level'),
+					  ('Household Level', 'Household Level'),
+					  ('Household Member Level', 'Household Member Level'))
 
 class Survey(models.Model):
 	Name = models.CharField(max_length=50)

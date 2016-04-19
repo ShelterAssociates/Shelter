@@ -10,7 +10,12 @@ survey_list=[]
 class SurveyCreateForm(forms.ModelForm): 
     kobotoolSurvey_id = forms.ChoiceField(widget=forms.Select(),required=True)
     kobotoolSurvey_url = forms.CharField(required=True)    
-    def __init__(self,*args,**kwargs):
+    def __init__(self,*args,**kwargs):        
+        try:
+            self.Survey_id=kwargs.pop('Survey_id')
+        except:
+            print "No survey Id"
+                
         super(SurveyCreateForm,self).__init__(*args,**kwargs)
         self.list_i=[]
         self.list_i=getKoboIdList()   
@@ -21,26 +26,22 @@ class SurveyCreateForm(forms.ModelForm):
     class Meta:
         model=Survey
         fields = ['Name','Description','City_id','Survey_type','AnalysisThreshold','kobotoolSurvey_id']
-    
-    def save(self, *args, **kwargs):
+        
+    def save(self, *args, **kwargs):        
         instance = super(SurveyCreateForm,self).save(commit=False)
+       
+        try:
+            instance.id=self.Survey_id
+        except:
+            print "Error for Survey_id"          
+       
         kobourl=""
         data = self.cleaned_data
-        print data
-        #kobocat ID and Kobocat URL Mapping
-        for value in self.list_i:
-            for survey_value in survey_list:  
-                if survey_value[0]== value[0]:
-                    kobourl= survey_value[1]
-        
-        # Saving Data 
-        #=======================================================================
-        # survey_data = Survey(Name=data['Name'],Description=data['Description'],City_id=data['City_id'],
-        #                      Survey_type=data['Survey_type'],AnalysisThreshold=data['AnalysisThreshold'],
-        #                      kobotoolSurvey_id=data['kobotoolSurvey_id'],kobotoolSurvey_url=kobourl)
-        #=======================================================================
-        
-       
+      
+        for survey_value in survey_list:  
+            if survey_value[0]== data['kobotoolSurvey_id']:
+                kobourl= survey_value[1]
+                
         instance.kobotoolSurvey_url=kobourl
         instance.save()
         return instance
@@ -57,11 +58,6 @@ def getKoboIdList():
     temp_arr=[]
     temp_arr.append(('','-----------'))
     for value in data:  
-        #=======================================================================
-        # survey_list={}
-        # survey_list['id']= value['id_string']
-        # survey_list['value']=value['url']
-        #=======================================================================
         survey_list.append((value['id_string'],value['url']))  
         temp_arr.append((value['id_string'],value['id_string']))            
       
