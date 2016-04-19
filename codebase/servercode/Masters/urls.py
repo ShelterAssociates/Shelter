@@ -14,7 +14,6 @@ Including another URLconf
 """
 from django.conf.urls import include, url
 from django.contrib import admin
-#from views import index,SurveyCreate, SurveyUpdate, SurveyDelete,SurveyListView,SurveyCreateView
 from views import index,SurveyListView,SurveyCreateView
 from . import views
 
@@ -27,3 +26,4 @@ urlpatterns = [
     url(r'AddSurveyMapping/$', SurveyCreateView.as_view(), name='survey-add'), 
     url(r'Survey/(?P<Survey_id>[0-9]+)/$', SurveyCreateView.as_view(), name='survey-update'), 
 ]
+

@@ -3,14 +3,6 @@ import datetime
 from django.contrib.auth.models import User
 from django.contrib.auth.models import Group
 from django.forms import ModelForm
-# Create your models here.
-from django.db.models.signals import pre_save, pre_delete, post_save, post_delete
-from django.dispatch import receiver
-import django.contrib.gis.db.backends.postgis 
-from BeautifulSoup import BeautifulStoneSoup as Soup
-import psycopg2
-
-import json
 
 class City(models.Model):
 	Name = models.CharField(max_length=20)
@@ -18,15 +10,17 @@ class City(models.Model):
 	State_code = models.CharField(max_length=5)
 	District_Code = models.CharField(max_length=5)
 	City_code = models.CharField(max_length=5)
-	createdBy =  models.IntegerField()
+	createdBy =  models.ForeignKey(User)
 	createdOn = models.DateTimeField( default= datetime.datetime.now())
 	def __unicode__(self):
 		return self.Name 
 
 
+
 SURVEYTYPE_CHOICES = (('Slum Level', 'Slum Level'),
 					  ('Household Level', 'Household Level'),
 					  ('Household Member Level', 'Household Member Level'))
+
 
 class Survey(models.Model):
 	Name = models.CharField(max_length=50)
@@ -112,7 +106,7 @@ class PlottedShape(models.Model):
 	Name = models.CharField(max_length=100)
 	Lat_long = models.CharField(max_length=2000)
 	Drawable_Component_id = models.ForeignKey(Drawable_Component)
-	creaatedBy =  models.IntegerField()
+	creaatedBy =  models.ForeignKey(User)
 	createdOn= models.DateTimeField(default= datetime.datetime.now())
 	def __unicode__(self):
 		return self.Name
@@ -129,7 +123,7 @@ class Filter_Master(models.Model):
 	name = models.CharField(max_length=30)
 	IsDeployed = models.CharField(max_length=1)
 	VisibleTo = models.IntegerField()
-	createdBy = models.IntegerField()
+	createdBy = models.ForeignKey(User)
 	createdOn= models.DateTimeField(default= datetime.datetime.now())
 	
 
@@ -153,7 +147,7 @@ class Sponsor_Project(models.Model):
 	Name = models.CharField(max_length=50)
 	Type = models.CharField(max_length=30)
 	Sponsor_id = models.ForeignKey(Sponser)
-	createdBy = models.IntegerField()
+	createdBy = models.ForeignKey(User)
 	createdOn= models.DateTimeField(default= datetime.datetime.now())
 	def __unicode__(self):
 		return self.Name
@@ -191,33 +185,3 @@ class UserRoleMaster(models.Model):
 	slum_id = models.ForeignKey(Slum)
 
 
-#City Signals
-@receiver(post_save,sender=Slum)
-def Slum_Created_Trigger(sender,instance,**kwargs):
-	print instance
-	print instance.Name
-	print "Slum Created"
-	conn = psycopg2.connect(database='onadata1', user='onadata', password='softcorner', host='localhost', port='5432')#, sslmode='require')
-	cursor = conn.cursor()
-	cursor.execute('select json from logger_xform where id=40')
-	a = cursor.fetchall()
-	k = None
-	for v in a[0]:  
-		k=json.loads(v)
-	k["children"][0]["children"].append({'name':instance.Name,'label':instance.Name})	
-	print k["children"][0]["children"]
-	aa = json.dumps(k)
-    cursor.execute('select xml from logger_xform where id=40')
-    b = cursor.fetchall()
-	x = None
-	for v in a[0]:  
-		x=v
-
-	soup = Soup(x)
-	soup.select1.append(Soup('<item><label>'+instance.Name+'</label><value>'+instance.Name+'</value></item>'))
-	xx= soup
-
-	cursor.execute('BEGIN')
-	cursor.execute('update logger_xform set json=%s, xml=%s where id = 40',[(aa,),(xx,)])
-	cursor.execute('COMMIT')	
-	print "Hello"

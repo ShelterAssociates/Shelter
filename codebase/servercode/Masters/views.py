@@ -1,5 +1,6 @@
 from django.shortcuts import render
 from django.template import RequestContext,loader
+
 from django.http import HttpResponse, HttpResponseRedirect
 from django.core.urlresolvers import reverse
 from django.contrib.admin.views.decorators import staff_member_required
@@ -16,7 +17,7 @@ from django.core.urlresolvers import reverse_lazy
 
 @staff_member_required
 def index(request):
-	template = get_template('index.html')
+	template = loader.get_template('index.html')
 	context = RequestContext(request, {})
 	return HttpResponse(template.render(context))
 
@@ -24,7 +25,6 @@ def index(request):
 class SurveyListView(ListView):
 	template_name = 'SurveyListView.html'
 	model = Survey
-	
 
 
 class SurveyCreateView(FormView):
