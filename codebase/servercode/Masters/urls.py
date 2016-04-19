@@ -25,5 +25,9 @@ urlpatterns = [
     url(r'^master/', include(admin.site.urls)),
     url(r'^surveymapping/', SurveyListView.as_view(), name="SurveyCreate"),
     url(r'AddSurveyMapping/$', SurveyCreateView.as_view(), name='survey-add'), 
+<<<<<<< HEAD
     url(r'^deletesurvey/$', SurveyDeleteView, name='surveydelete'),
+=======
+    url(r'Survey/(?P<Survey_id>[0-9]+)/$', SurveyCreateView.as_view(), name='survey-update'), 
+>>>>>>> 8e5d177a9c4a56eb751630da8c29cfcb26114c27
 ]
