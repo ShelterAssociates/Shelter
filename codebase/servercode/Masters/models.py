@@ -21,16 +21,25 @@ class City(models.Model):
 	def __unicode__(self):
 		return self.Name 
 
+
+
+SURVEYTYPE_CHOICES = (('Slum Level', 'Slum Level'),
+					  ('Household Level', 'Household Level'),
+					  ('Household Member Level', 'Household Member Level'))
+
+
 class Survey(models.Model):
 	Name = models.CharField(max_length=50)
 	Description = models.CharField(max_length=200)
 	City_id = models.ForeignKey(City)
-	Survey_type = models.CharField(max_length=50)
+	Survey_type = models.CharField(max_length=50, choices=SURVEYTYPE_CHOICES)
 	AnalysisThreshold = models.IntegerField()
 	kobotoolSurvey_id = models.CharField(max_length=50)
-	kobotoolSurvey_url = models.CharField(max_length=50)
+	kobotoolSurvey_url = models.CharField(max_length=500)
+	
 	def __unicode__(self):
 		return self.Name
+	
 
 
 class Administrative_Ward(models.Model):
@@ -212,6 +221,5 @@ def Slum_Created_Trigger(sender,instance,**kwargs):
         cursor.execute('BEGIN')
         cursor.execute('update logger_xform set json=%s, xml=%s where id='+id,[(aa,),(xx,)])
         cursor.execute('COMMIT')
-
 
 
