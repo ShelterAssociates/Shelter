@@ -184,4 +184,3 @@ class UserRoleMaster(models.Model):
 	City_id = models.ForeignKey(City)
 	slum_id = models.ForeignKey(Slum)
 
-

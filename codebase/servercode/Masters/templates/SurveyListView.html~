@@ -1,5 +1,5 @@
-<html>
-<head>
+
+
 {% extends "admin/base_site.html" %}
 {% load i18n %}
 {% load staticfiles %}
@@ -7,26 +7,6 @@
 
 {% block breadcrumbs %}{% csrf_token %}
 
-<script>
-function fun(id)
-	{
-		/*$.ajax({
-			url:'/deletesurvey/',
-			method:'POST',
-			success:function(data){
-				console.log('Succeed');
-			},
-			error:function(xhr, status, error){
-				console.log('Error');
-			}
-		});*/
-		var xhttp = new XMLHttpRequest();
-		xhttp.open("GET", "/admin/deletesurvey/?id="+id, true);
-		xhttp.send();
-	}
-</script>
-</head>
-<body>
 	<div align = "right" style = "margin-right:5%;"><a href="/admin/AddSurveyMapping"><h2>Add New Survey </h2></a> 
 	</div>
 	<br><br>
@@ -34,14 +14,14 @@ function fun(id)
 		<th> Name </th><th> Description </th> <th> City </th><th> Type </th><th> Analysis Threshold </th> <th> KoboCat ID </th><th> KoboCat URL </th><th></th>
         {% for surveyFields in object_list %}
             <tr>
-            <td><a href = "/admin/Survey/{{surveyFields.id}}">{{ surveyFields.Name }}</a></td>
+            <td><a href = "#">{{ surveyFields.Name }}</a></td>
             <td>{{ surveyFields.Description }}</td>
             <td>{{ surveyFields.City_id }}</td>
-            <td>{{ surveyFields.Survey_type }}</td>
+            <td>{{ surveyFields.survey_type }}</td>
             <td>{{ surveyFields.AnalysisThreshold }}</td>
             <td>{{ surveyFields.kobotoolSurvey_id }}</td>
             <td>{{ surveyFields.kobotoolSurvey_url }}</td>
-            <td><img src = "{% static "images/binc.png" %}" height=20 width=20 onclick= fun({{surveyFields.id}})></img></td>
+            <td><a href = "#"><img src = "{% static "images/binc.png" %}" height=20 width=20></img></td>
             </tr>
         {% endfor %}  
     </table>
@@ -54,6 +34,3 @@ function fun(id)
 
 {% block sidebar %}
 {% endblock %}
-<script src="{% static "admin/js/jquery.js" %}"></script>
-</body>
-</html>

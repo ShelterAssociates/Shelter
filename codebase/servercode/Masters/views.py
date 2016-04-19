@@ -13,6 +13,7 @@ from .models import Survey
 from django.views.generic import ListView
 from django.views.generic.edit import FormView,CreateView, UpdateView, DeleteView
 from django.core.urlresolvers import reverse_lazy
+import json
 
 
 @staff_member_required
@@ -74,3 +75,19 @@ class SurveyCreateView(FormView):
 	
 	def get_success_url(self):			
 		return reverse('SurveyCreate')   	
+  
+
+def SurveyDeleteView(request):
+	id = request.GET.get('id', None)
+	if id:
+		obj = Survey.objects.get(id=id)
+		if obj:
+			obj.delete()
+		message = 'Success'
+	else:
+		message = 'Failure'
+	data = {}
+	data['message']= message
+	context = RequestContext(request)
+	return render_to_response('SurveyListView.html',data, context)
+
