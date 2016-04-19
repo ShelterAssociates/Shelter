@@ -4,7 +4,13 @@ from django.contrib.auth.models import User
 from django.contrib.auth.models import Group
 from django.forms import ModelForm
 # Create your models here.
+from django.db.models.signals import pre_save, pre_delete, post_save, post_delete
+from django.dispatch import receiver
+import django.contrib.gis.db.backends.postgis 
+from BeautifulSoup import BeautifulStoneSoup as Soup
+import psycopg2
 
+import json
 
 class City(models.Model):
 	Name = models.CharField(max_length=20)
@@ -183,3 +189,35 @@ class UserRoleMaster(models.Model):
 	role_id = models.ForeignKey(RoleMaster)
 	City_id = models.ForeignKey(City)
 	slum_id = models.ForeignKey(Slum)
+
+
+#City Signals
+@receiver(post_save,sender=Slum)
+def Slum_Created_Trigger(sender,instance,**kwargs):
+	print instance
+	print instance.Name
+	print "Slum Created"
+	conn = psycopg2.connect(database='onadata1', user='onadata', password='softcorner', host='localhost', port='5432')#, sslmode='require')
+	cursor = conn.cursor()
+	cursor.execute('select json from logger_xform where id=40')
+	a = cursor.fetchall()
+	k = None
+	for v in a[0]:  
+		k=json.loads(v)
+	k["children"][0]["children"].append({'name':instance.Name,'label':instance.Name})	
+	print k["children"][0]["children"]
+	aa = json.dumps(k)
+    cursor.execute('select xml from logger_xform where id=40')
+    b = cursor.fetchall()
+	x = None
+	for v in a[0]:  
+		x=v
+
+	soup = Soup(x)
+	soup.select1.append(Soup('<item><label>'+instance.Name+'</label><value>'+instance.Name+'</value></item>'))
+	xx= soup
+
+	cursor.execute('BEGIN')
+	cursor.execute('update logger_xform set json=%s, xml=%s where id = 40',[(aa,),(xx,)])
+	cursor.execute('COMMIT')	
+	print "Hello"

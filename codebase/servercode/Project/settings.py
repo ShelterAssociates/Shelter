@@ -79,16 +79,16 @@ POSTGIS_VERSION = (2, 0, 3)
 DATABASES = {
     'default': {
         'ENGINE': 'django.contrib.gis.db.backends.postgis',
-        'NAME': 'master5',
-        'USER':'postgres',
+        'NAME': 'onadata1',
+        'USER':'onadata',
         'PASSWORD':'softcorner',
         'HOST':'127.0.0.1', 
     }
 }
 
 #'ENGINE': 'django.contrib.gis.backends.postgis',
-KOBOCAT_FORM_URL="http://kc.shelter-associates.org/api/v1/forms?format=json"
-KOBOCAT_TOKEN ="OAuth2 a0028f740988d80cbe670f24a9456d655b8dd419"         
+KOBOCAT_FORM_URL="http://127.0.0.1:8001/api/v1/forms?format=json"
+KOBOCAT_TOKEN ="OAuth2 d5ad1e915895b657b2613d6c005b83a7dc17381c" #a0028f740988d80cbe670f24a9456d655b8dd419"         
 # Internationalization
 # https://docs.djangoproject.com/en/1.8/topics/i18n/
 
