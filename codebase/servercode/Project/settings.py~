@@ -79,7 +79,7 @@ POSTGIS_VERSION = (2, 0, 3)
 DATABASES = {
     'default': {
         'ENGINE': 'django.contrib.gis.db.backends.postgis',
-        'NAME': 'masters6',
+        'NAME': 'sita1',
         'USER':'postgres',
         'PASSWORD':'softcorner',
         'HOST':'127.0.0.1', 
@@ -87,8 +87,8 @@ DATABASES = {
 }
 
 #'ENGINE': 'django.contrib.gis.backends.postgis',
-KOBOCAT_FORM_URL="http://192.168.0.72:8001/api/v1/forms?format=json"
-KOBOCAT_TOKEN ="OAuth2 d5ad1e915895b657b2613d6c005b83a7dc17381c" #a0028f740988d80cbe670f24a9456d655b8dd419"         
+KOBOCAT_FORM_URL="http://kc.shelter-associates.org/api/v1/forms?format=json"
+KOBOCAT_TOKEN ="OAuth2 a0028f740988d80cbe670f24a9456d655b8dd419"         
 # Internationalization
 # https://docs.djangoproject.com/en/1.8/topics/i18n/
 
@@ -107,10 +107,7 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/1.8/howto/static-files/
 
 STATIC_URL = '/static/'
-
-STATICFILES_DIRS = (
-   # Put strings here, like "/home/html/static" or "C:/www/django/static".
-   # Always use forward slashes, even on Windows.
-   # Don't forget to use absolute paths, not relative paths.
-   "/home/varunms/workspace/ShelterSC/ShelterGit/Shelter/codebase/servercode/static",
-)
+print BASE_DIR
+print STATIC_URL
+SDIRS = os.path.join(BASE_DIR,'static')
+print SDIRS
