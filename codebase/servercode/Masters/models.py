@@ -8,7 +8,8 @@ from django.dispatch import receiver
 import django.contrib.gis.db.backends.postgis 
 import psycopg2
 import json
-from BeautifulSoup import BeautifulStoneSoup as Soup
+from bs4 import BeautifulSoup as Soup
+from django.conf import settings
 
 class City(models.Model):
 	Name = models.CharField(max_length=20)
@@ -190,16 +191,19 @@ class UserRoleMaster(models.Model):
 
 @receiver(post_save,sender=Slum)
 def Slum_Created_Trigger(sender,instance,**kwargs):
-    conn = psycopg2.connect(database='onadata', user='postgres', password='softcorner', host='localhost', port='5432')#, sslmode='require')
-    print instance
-    print instance.Name
-    print instance.ElectrolWard_id.AdministrativeWard_id.City_id
+	#Database connection with Kobocat Postgres
+    conn = psycopg2.connect(database=settings.KOBOCATDATABASES['DBNAME'], 
+							user=settings.KOBOCATDATABASES['USER'], 
+							password=settings.KOBOCATDATABASES['PASSWORD'], 
+							host=settings.KOBOCATDATABASES['HOST'], 
+							port=settings.KOBOCATDATABASES['PORT'] )
+   
     objSurveys=Survey.objects.filter(City_id=instance.ElectrolWard_id.AdministrativeWard_id.City_id)
     
     for objSurvey in objSurveys:
-        arrlist = objSurvey.kobotoolSurvey_url.split('/')
-	id = arrlist[len(arrlist)-1].split('?')[0]
-        cursor = conn.cursor()
+    	arrlist = objSurvey.kobotoolSurvey_url.split('/')
+    	id = arrlist[len(arrlist)-1].split('?')[0]
+    	cursor = conn.cursor()
         cursor.execute('select json from logger_xform where id='+id)
         a = cursor.fetchall()
         k = None
@@ -211,13 +215,12 @@ def Slum_Created_Trigger(sender,instance,**kwargs):
         cursor.execute('select xml from logger_xform where id='+id)
         b = cursor.fetchall()
         x = []
-        for v in b[0]:
-            print type(v) 
+        for v in b[0]:           
             x=v
-        soup = Soup(x)
-        soup.select1.append(Soup('<item>\n<label>'+instance.Name+'</label>\n<value>'+instance.Name+'</value>\n</item>\n'))
-    
+        soup = Soup(x,"html.parser")    
+        soup.select1.append(Soup('<item>\n<label>'+instance.Name+'</label>\n<value>'+instance.Name+'</value>\n</item>\n','html.parser'))
         xx= unicode(soup)
+        
         cursor.execute('BEGIN')
         cursor.execute('update logger_xform set json=%s, xml=%s where id='+id,[(aa,),(xx,)])
         cursor.execute('COMMIT')

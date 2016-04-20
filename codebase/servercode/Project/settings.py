@@ -86,6 +86,15 @@ DATABASES = {
     }
 }
 
+
+KOBOCATDATABASES = {    
+        'DBNAME': 'onadata4',
+        'USER':'postgres',
+        'PASSWORD':'softcorner',
+        'HOST':'localhost',
+        'PORT':'5432',  
+}
+
 #'ENGINE': 'django.contrib.gis.backends.postgis',
 KOBOCAT_FORM_URL="http://192.168.0.72:8001/api/v1/forms?format=json"
 KOBOCAT_TOKEN ="OAuth2 d5ad1e915895b657b2613d6c005b83a7dc17381c" #a0028f740988d80cbe670f24a9456d655b8dd419"         

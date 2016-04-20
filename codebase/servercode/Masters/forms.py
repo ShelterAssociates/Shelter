@@ -2,7 +2,6 @@ from django import forms
 from .models import City,Survey
 import urllib2,urllib
 import json
-import simplejson 
 from django.conf import settings
 
 survey_list=[]
