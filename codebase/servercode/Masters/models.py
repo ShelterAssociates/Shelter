@@ -53,11 +53,11 @@ class Administrative_Ward(models.Model):
 	def __unicode__(self):
 		return self.Name    
 
-class Electrol_Ward(models.Model):
+class Electoral_Ward(models.Model):
 	Name = models.CharField(max_length=512)
 	Shape = models.CharField(max_length=2048)
 	WardNo = models.CharField(max_length=10)
-	Electrolward_code = models.CharField(max_length=10)
+	Electoralward_code = models.CharField(max_length=10)
 	Electoralward_Desc = models.CharField(max_length=4096)
 	AdministrativeWard_id = models.ForeignKey(Administrative_Ward)
 	def __unicode__(self):
@@ -68,7 +68,7 @@ class Slum(models.Model):
      Name = models.CharField(max_length=100)
      Shape = models.CharField(max_length=2048)
      Description = models.CharField(max_length=100)
-     ElectrolWard_id = models.ForeignKey(Electrol_Ward)
+     ElectoralWard_id = models.ForeignKey(Electoral_Ward)
      Shelter_slum_code = models.CharField(max_length=512)
      def __unicode__(self):
 		return str(self.Name)   
@@ -88,7 +88,7 @@ class Elected_Representative(models.Model):
 	Postcode = models.CharField(max_length=20)
 	AdditionalInfo = models.CharField(max_length=2048)
 	ElectedRep_Party = models.CharField(max_length=50)
-	Eletrolward_id = models.ForeignKey(Electrol_Ward)
+	Electoralward_id = models.ForeignKey(Electoral_Ward)
 	def __unicode__(self):
 		return self.Name
 
@@ -213,7 +213,7 @@ def Slum_Created_Trigger(sender,instance,**kwargs):
 							password=settings.KOBOCATDATABASES['PASSWORD'], 
 							host=settings.KOBOCATDATABASES['HOST'], 
 							port=settings.KOBOCATDATABASES['PORT'] )
-    objSurveys=Survey.objects.filter(City_id=instance.ElectrolWard_id.AdministrativeWard_id.City_id)
+    objSurveys=Survey.objects.filter(City_id=instance.ElectoralWard_id.AdministrativeWard_id.City_id)
     for objSurvey in objSurveys:
     	arrlist = objSurvey.kobotoolSurvey_url.split('/')
     	id = arrlist[len(arrlist)-1].split('?')[0]

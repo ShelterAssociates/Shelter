@@ -19,7 +19,7 @@ class SlumDetailAdmin(admin.ModelAdmin):
     list_display = ( 
     	             "Name",
     	             "Description",
-    	             "ElectrolWard_id",
+    	             "ElectoralWard_id",
     	             "Shelter_slum_code")
 admin.site.register(Slum, SlumDetailAdmin)
 
@@ -92,13 +92,13 @@ admin.site.register(City,Administrative_Ward_Admin)
 
 
 
-class Electrol_Ward_Inline(admin.TabularInline):
-     model = Electrol_Ward
+class Electoral_Ward_Inline(admin.TabularInline):
+     model = Electoral_Ward
 
-class Electrol_Ward_Admin(admin.ModelAdmin):
-	inlines = [Electrol_Ward_Inline]
+class Electoral_Ward_Admin(admin.ModelAdmin):
+	inlines = [Electoral_Ward_Inline]
 
-admin.site.register(Administrative_Ward,Electrol_Ward_Admin)
+admin.site.register(Administrative_Ward,Electoral_Ward_Admin)
 
 
 
@@ -108,7 +108,7 @@ class Slum_Inline(admin.TabularInline):
 class Slum_Admin(admin.ModelAdmin):
 	inlines = [Slum_Inline]
 
-admin.site.register(Electrol_Ward,Slum_Admin)
+admin.site.register(Electoral_Ward,Slum_Admin)
 
 
 
@@ -118,8 +118,8 @@ class Elected_Representative_Inline(admin.TabularInline):
 class Elected_Representative_Admin(admin.ModelAdmin):
 	inlines = [Elected_Representative_Inline]
 
-admin.site.unregister(Electrol_Ward)
-admin.site.register(Electrol_Ward,Elected_Representative_Admin)
+admin.site.unregister(Electoral_Ward)
+admin.site.register(Electoral_Ward,Elected_Representative_Admin)
 
 
 
