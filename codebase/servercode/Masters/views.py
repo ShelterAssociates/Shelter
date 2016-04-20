@@ -25,6 +25,7 @@ def index(request):
 
 class SurveyListView(ListView):
 	template_name = 'SurveyListView.html'
+	print "hello12"
 	model = Survey
 
 
@@ -77,17 +78,10 @@ class SurveyCreateView(FormView):
 		return reverse('SurveyCreate')   	
   
 
-def SurveyDeleteView(request):
-	id = request.GET.get('id', None)
-	if id:
-		obj = Survey.objects.get(id=id)
-		if obj:
-			obj.delete()
-		message = 'Success'
-	else:
-		message = 'Failure'
-	data = {}
-	data['message']= message
-	context = RequestContext(request)
-	return render_to_response('SurveyListView.html',data, context)
+
+def SurveyDeleteView(request, Survey_id):
+	query = Survey.objects.get(pk=Survey_id)
+	query.delete()
+	return HttpResponseRedirect('/admin/surveymapping/')
+
 

@@ -23,7 +23,7 @@ urlpatterns = [
     url(r'^master/', include(admin.site.urls)),
     url(r'^surveymapping/', SurveyListView.as_view(), name="SurveyCreate"),
     url(r'AddSurveyMapping/$', SurveyCreateView.as_view(), name='survey-add'),
-    url(r'^deletesurvey/$', SurveyDeleteView, name='surveydelete'),
+    url(r'^deletesurvey/(?P<Survey_id>[0-9]+)/$', SurveyDeleteView, name='surveydelete'),
     url(r'Survey/(?P<Survey_id>[0-9]+)/$', SurveyCreateView.as_view(), name='survey-update'), 
 
 ]
