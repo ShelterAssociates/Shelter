@@ -14,7 +14,7 @@ https://docs.djangoproject.com/en/1.8/ref/settings/
 import os
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-
+print BASE_DIR
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/1.8/howto/deployment/checklist/
@@ -36,9 +36,10 @@ INSTALLED_APPS = (
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
-    'django.contrib.staticfiles',
-    'Masters',
+    'django.contrib.staticfiles',    
    # 'south',
+   'Masters',
+   
 )
 
 MIDDLEWARE_CLASSES = (
@@ -87,7 +88,7 @@ DATABASES = {
 }
 
 
-KOBOCATDATABASES = {    
+KOBOCAT_DATABASES = {    
         'DBNAME': 'onadata4',
         'USER':'postgres',
         'PASSWORD':'softcorner',
@@ -121,5 +122,5 @@ STATICFILES_DIRS = (
    # Put strings here, like "/home/html/static" or "C:/www/django/static".
    # Always use forward slashes, even on Windows.
    # Don't forget to use absolute paths, not relative paths.
-   "/home/varunms/workspace/ShelterSC/ShelterGit/Shelter/codebase/servercode/static",
+   os.path.join( BASE_DIR, 'static'),
 )
