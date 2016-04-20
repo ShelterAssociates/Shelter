@@ -36,7 +36,7 @@ class Survey(models.Model):
 	Survey_type = models.CharField(max_length=50, choices=SURVEYTYPE_CHOICES)
 	AnalysisThreshold = models.IntegerField()
 	kobotoolSurvey_id = models.CharField(max_length=50)
-	kobotoolSurvey_url = models.CharField(max_length=500)
+	kobotoolSurvey_url = models.CharField(max_length=512)
 	
 	def __unicode__(self):
 		return self.Name
@@ -44,19 +44,19 @@ class Survey(models.Model):
 
 
 class Administrative_Ward(models.Model):
-	Name = models.CharField(max_length=50)
+	Name = models.CharField(max_length=512)
 	Shape = models.CharField(max_length=2048)
 	Ward_no =models.CharField(max_length=10)
-	Description = models.CharField(max_length=512)
-	OfficeAddress = models.CharField(max_length=512)
+	Description = models.CharField(max_length=2048)
+	OfficeAddress = models.CharField(max_length=2048)
 	City_id	= models.ForeignKey(City)
 	def __unicode__(self):
 		return self.Name    
 
 class Electrol_Ward(models.Model):
-	Name = models.CharField(max_length=50)
+	Name = models.CharField(max_length=512)
 	Shape = models.CharField(max_length=2048)
-	WardNo = models.CharField(max_length=200)
+	WardNo = models.CharField(max_length=10)
 	Electrolward_code = models.CharField(max_length=10)
 	Electoralward_Desc = models.CharField(max_length=4096)
 	AdministrativeWard_id = models.ForeignKey(Administrative_Ward)
@@ -74,33 +74,33 @@ class Slum(models.Model):
 		return str(self.Name)   
 
 class WardOffice_Contacts(models.Model):
-	Name  = models.CharField(max_length=50)
-	Title = models.CharField(max_length=10)
-	Telephone = models.CharField(max_length=20)
+	Name  = models.CharField(max_length=200)
+	Title = models.CharField(max_length=25)
+	Telephone = models.CharField(max_length=50)
 	Administrativeward_id = models.ForeignKey(Administrative_Ward)
 	def __unicode__(self):
 		return self.Name  
 
 class Elected_Representative(models.Model):
-	Name = models.CharField(max_length=50) 
-	Telnos = models.CharField(max_length=20)
-	Address = models.CharField(max_length=100)
+	Name = models.CharField(max_length=200) 
+	Telnos = models.CharField(max_length=50)
+	Address = models.CharField(max_length=512)
 	Postcode = models.CharField(max_length=20)
-	AdditionalInfo = models.CharField(max_length=200)
+	AdditionalInfo = models.CharField(max_length=2048)
 	ElectedRep_Party = models.CharField(max_length=50)
 	Eletrolward_id = models.ForeignKey(Electrol_Ward)
 	def __unicode__(self):
 		return self.Name
 
 class ShaperCode(models.Model):
-	Code = models.CharField(max_length=100)
+	Code = models.CharField(max_length=25)
 	Description = models.CharField(max_length=100)
 
 class Drawable_Component(models.Model):
 	Name  = models.CharField(max_length=100)
 	Color = models.CharField(max_length=100)
-	Extra = models.CharField(max_length=100)
-	Maker_icon = models.CharField(max_length=100)
+	Extra = models.CharField(max_length=4096)
+	Maker_icon = models.CharField(max_length=500)
 	Shapecode_id = models.ForeignKey(ShaperCode)
 	def __unicode__(self):
 		return self.Name
@@ -108,49 +108,65 @@ class Drawable_Component(models.Model):
 
 class PlottedShape(models.Model):
 	Slum = models.CharField(max_length=100)
-	Name = models.CharField(max_length=100)
+	Name = models.CharField(max_length=512)
 	Lat_long = models.CharField(max_length=2000)
 	Drawable_Component_id = models.ForeignKey(Drawable_Component)
-	creaatedBy =  models.ForeignKey(User)
+	createdBy =  models.ForeignKey(User)
 	createdOn= models.DateTimeField(default= datetime.datetime.now())
 	def __unicode__(self):
 		return self.Name
 
 class Sponser(models.Model):
-	organization = models.CharField(max_length=100)
-	address = models.CharField(max_length=50)
-	Phonenumber = models.CharField(max_length=20)
-	description = models.CharField(max_length=256)
+	organization = models.CharField(max_length=200)
+	address = models.CharField(max_length=2048)
+	Phonenumber = models.CharField(max_length=50)
+	description = models.CharField(max_length=2048)
 	image = models.CharField(max_length=2048)
 
 
+CHOICES_ALL = (('0', '0'),
+					  ('1', '1'),
+					  ('2', '2'))
+
 class Filter_Master(models.Model):
-	name = models.CharField(max_length=30)
+	Name = models.CharField(max_length=512)
 	IsDeployed = models.CharField(max_length=1)
-	VisibleTo = models.IntegerField()
+	VisibleTo = models.IntegerField(choices=CHOICES_ALL)
 	createdBy = models.ForeignKey(User)
 	createdOn= models.DateTimeField(default= datetime.datetime.now())
+
+
+CHOICE = (('0', '0'),
+					  ('1', '1'))
 	
+
+CHOICES_ALL = (('0', '0'),
+					  ('1', '1'),
+					  ('2', '2'))
+
 
 class RoleMaster(models.Model):
 	RoleName = models.CharField(max_length=100)
-	City = models.IntegerField()
-	Slum = models.IntegerField()
-	KML = models.CharField(max_length=1)
-	DynamicQuery = models.CharField(max_length=1)
-	PredefinedQuery = models.CharField(max_length=1)
-	CanRequest = models.CharField(max_length=1)
-	Users = models.CharField(max_length=1)
-	CreateSaveQuery = models.CharField(max_length=1)
-	DeploySurvey = models.CharField(max_length=1)
-	UploadImages = models.CharField(max_length=1)
-	PrepareReports = models.CharField(max_length=1)
+	City = models.IntegerField(choices=CHOICES_ALL)
+	Slum = models.IntegerField(choices=CHOICES_ALL)
+	KML =  models.BooleanField(choices=CHOICE,blank=False)
+	DynamicQuery = models.BooleanField(choices=CHOICE,blank=False)
+	PredefinedQuery = models.BooleanField(choices=CHOICE,blank=False)
+	CanRequest = models.BooleanField(choices=CHOICE,blank=False)
+	Users = models.BooleanField(choices=CHOICE,blank=False)
+	CreateSaveQuery = models.BooleanField(choices=CHOICE,blank=False)
+	DeploySurvey = models.BooleanField(choices=CHOICE,blank=False)
+	UploadImages = models.BooleanField(choices=CHOICE,blank=False)
+	PrepareReports = models.BooleanField(choices=CHOICE,blank=False)
 	
- 
+
+
+Type_CHOICES = (('0', '0'),
+					  ('1', '1'))
 
 class Sponsor_Project(models.Model):
-	Name = models.CharField(max_length=50)
-	Type = models.CharField(max_length=30)
+	Name = models.CharField(max_length=512)
+	Type =  models.IntegerField(choices=Type_CHOICES)
 	Sponsor_id = models.ForeignKey(Sponser)
 	createdBy = models.ForeignKey(User)
 	createdOn= models.DateTimeField(default= datetime.datetime.now())
@@ -197,9 +213,7 @@ def Slum_Created_Trigger(sender,instance,**kwargs):
 							password=settings.KOBOCATDATABASES['PASSWORD'], 
 							host=settings.KOBOCATDATABASES['HOST'], 
 							port=settings.KOBOCATDATABASES['PORT'] )
-   
     objSurveys=Survey.objects.filter(City_id=instance.ElectrolWard_id.AdministrativeWard_id.City_id)
-    
     for objSurvey in objSurveys:
     	arrlist = objSurvey.kobotoolSurvey_url.split('/')
     	id = arrlist[len(arrlist)-1].split('?')[0]
@@ -213,6 +227,7 @@ def Slum_Created_Trigger(sender,instance,**kwargs):
         aa = json.dumps(k)
         cursor = conn.cursor()
         cursor.execute('select xml from logger_xform where id='+id)
+        print type(cursor.fetchall())
         b = cursor.fetchall()
         x = []
         for v in b[0]:           
