@@ -208,36 +208,47 @@ class UserRoleMaster(models.Model):
 @receiver(post_save,sender=Slum)
 def Slum_Created_Trigger(sender,instance,**kwargs):
 	#Database connection with Kobocat Postgres
-    conn = psycopg2.connect(database=settings.KOBOCATDATABASES['DBNAME'], 
-							user=settings.KOBOCATDATABASES['USER'], 
-							password=settings.KOBOCATDATABASES['PASSWORD'], 
-							host=settings.KOBOCATDATABASES['HOST'], 
-							port=settings.KOBOCATDATABASES['PORT'] )
-    objSurveys=Survey.objects.filter(City_id=instance.ElectoralWard_id.AdministrativeWard_id.City_id)
+
+    conn = psycopg2.connect(database=settings.KOBOCAT_DATABASES['DBNAME'], 
+							user=settings.KOBOCAT_DATABASES['USER'], 
+							password=settings.KOBOCAT_DATABASES['PASSWORD'], 
+							host=settings.KOBOCAT_DATABASES['HOST'], 
+							port=settings.KOBOCAT_DATABASES['PORT'] )
+   
+
+    objSurveys=Survey.objects.filter(City_id=instance.ElectrolWard_id.AdministrativeWard_id.City_id)
     for objSurvey in objSurveys:
+    	#Split Kobocat URL to get Form_ID
     	arrlist = objSurvey.kobotoolSurvey_url.split('/')
-    	id = arrlist[len(arrlist)-1].split('?')[0]
+    	koboformId = arrlist[len(arrlist)-1].split('?')[0]
+    	
+    	#Get JSON data from Kobocat
     	cursor = conn.cursor()
-        cursor.execute('select json from logger_xform where id='+id)
-        a = cursor.fetchall()
-        k = None
-        for v in a[0]: 
-            k=json.loads(v)
-        k["children"][0]["children"].append({'name':instance.Name,'label':instance.Name})   
-        aa = json.dumps(k)
-        cursor = conn.cursor()
-        cursor.execute('select xml from logger_xform where id='+id)
-        print type(cursor.fetchall())
-        b = cursor.fetchall()
-        x = []
-        for v in b[0]:           
-            x=v
-        soup = Soup(x,"html.parser")    
-        soup.select1.append(Soup('<item>\n<label>'+instance.Name+'</label>\n<value>'+instance.Name+'</value>\n</item>\n','html.parser'))
-        xx= unicode(soup)
+        cursor.execute('select json from logger_xform where id='+koboformId)
+        jsonCursor = cursor.fetchall()
+        koboJson = None
+        for jsonValue in jsonCursor[0]: 
+            koboJson=json.loads(jsonValue)
+        koboJson["children"][0]["children"].append({'name':instance.Name,'label':instance.Name})   
+        koboformJson = json.dumps(koboJson)
         
+        #Get XML data from Kobocat
+        cursor = conn.cursor()
+        cursor.execute('select xml from logger_xform where id='+koboformId)
+        xmlCursor = cursor.fetchall()
+        koboXml = []
+        for xmlValue in xmlCursor[0]:           
+            koboXml=xmlValue
+            
+        soup = Soup(koboXml,"html.parser")    
+        
+        #Append New City In XML
+        soup.select1.append(Soup('<item>\n<label>'+instance.Name+'</label>\n<value>'+instance.Name+'</value>\n</item>\n','html.parser'))
+        koboformXml= unicode(soup.prettify())
+        
+        #Update Kobocat database JSON and XML fields 
         cursor.execute('BEGIN')
-        cursor.execute('update logger_xform set json=%s, xml=%s where id='+id,[(aa,),(xx,)])
+        cursor.execute('update logger_xform set json=%s, xml=%s where id='+koboformId,[(koboformJson,),(koboformXml,)])
         cursor.execute('COMMIT')
 
 
