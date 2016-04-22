@@ -39,7 +39,8 @@ INSTALLED_APPS = (
     'django.contrib.staticfiles',    
    # 'south',
    'Masters',
-   
+   'Filter',
+   'Sponsor',
 )
 
 MIDDLEWARE_CLASSES = (
@@ -77,10 +78,11 @@ WSGI_APPLICATION = 'Project.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/1.8/ref/settings/#databases
 POSTGIS_VERSION = (2, 0, 3)
+
 DATABASES = {
     'default': {
         'ENGINE': 'django.contrib.gis.db.backends.postgis',
-        'NAME': 'masters6',
+        'NAME': 'masters1',
         'USER':'postgres',
         'PASSWORD':'softcorner',
         'HOST':'127.0.0.1', 
@@ -89,7 +91,7 @@ DATABASES = {
 
 
 KOBOCAT_DATABASES = {    
-        'DBNAME': 'onadata4',
+        'DBNAME': 'onadata',
         'USER':'postgres',
         'PASSWORD':'softcorner',
         'HOST':'localhost',
@@ -97,7 +99,8 @@ KOBOCAT_DATABASES = {
 }
 
 #'ENGINE': 'django.contrib.gis.backends.postgis',
-KOBOCAT_FORM_URL="http://192.168.0.72:8001/api/v1/forms?format=json"
+KOBOCAT_FORM_URL="http://192.168.0.99:8001/api/v1/forms?format=json"
+
 KOBOCAT_TOKEN ="OAuth2 d5ad1e915895b657b2613d6c005b83a7dc17381c" #a0028f740988d80cbe670f24a9456d655b8dd419"         
 # Internationalization
 # https://docs.djangoproject.com/en/1.8/topics/i18n/
