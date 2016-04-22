@@ -3,14 +3,7 @@ import datetime
 from django.contrib.auth.models import User
 from django.contrib.auth.models import Group
 from django.forms import ModelForm
-from django.db.models.signals import pre_save, pre_delete, post_save, post_delete
-from django.dispatch import receiver
-import django.contrib.gis.db.backends.postgis 
-import psycopg2
-import json
-from bs4 import BeautifulSoup as Soup
-from django.conf import settings
-
+#import signals
 class City(models.Model):
 	Name = models.CharField(max_length=20)
 	Shape = models.CharField(max_length=2000)
@@ -42,7 +35,6 @@ class Survey(models.Model):
 		return self.Name
 	
 
-
 class Administrative_Ward(models.Model):
 	Name = models.CharField(max_length=512)
 	Shape = models.CharField(max_length=2048)
@@ -52,6 +44,7 @@ class Administrative_Ward(models.Model):
 	City_id	= models.ForeignKey(City)
 	def __unicode__(self):
 		return self.Name    
+
 
 class Electoral_Ward(models.Model):
 	Name = models.CharField(max_length=512)
@@ -73,6 +66,7 @@ class Slum(models.Model):
      def __unicode__(self):
 		return str(self.Name)   
 
+
 class WardOffice_Contacts(models.Model):
 	Name  = models.CharField(max_length=200)
 	Title = models.CharField(max_length=25)
@@ -80,6 +74,7 @@ class WardOffice_Contacts(models.Model):
 	Administrativeward_id = models.ForeignKey(Administrative_Ward)
 	def __unicode__(self):
 		return self.Name  
+
 
 class Elected_Representative(models.Model):
 	Name = models.CharField(max_length=200) 
@@ -92,9 +87,11 @@ class Elected_Representative(models.Model):
 	def __unicode__(self):
 		return self.Name
 
+
 class ShaperCode(models.Model):
 	Code = models.CharField(max_length=25)
 	Description = models.CharField(max_length=100)
+
 
 class Drawable_Component(models.Model):
 	Name  = models.CharField(max_length=100)
@@ -104,7 +101,6 @@ class Drawable_Component(models.Model):
 	Shapecode_id = models.ForeignKey(ShaperCode)
 	def __unicode__(self):
 		return self.Name
-
 
 class PlottedShape(models.Model):
 	Slum = models.CharField(max_length=100)
@@ -116,82 +112,30 @@ class PlottedShape(models.Model):
 	def __unicode__(self):
 		return self.Name
 
-class Sponser(models.Model):
-	organization = models.CharField(max_length=200)
-	address = models.CharField(max_length=2048)
-	Phonenumber = models.CharField(max_length=50)
-	description = models.CharField(max_length=2048)
-	image = models.CharField(max_length=2048)
 
-
-CHOICES_ALL = (('0', '0'),
-					  ('1', '1'),
-					  ('2', '2'))
-
-class Filter_Master(models.Model):
-	Name = models.CharField(max_length=512)
-	IsDeployed = models.CharField(max_length=1)
-	VisibleTo = models.IntegerField(choices=CHOICES_ALL)
-	createdBy = models.ForeignKey(User)
-	createdOn= models.DateTimeField(default= datetime.datetime.now())
-
-
-CHOICE = (('0', '0'),
-					  ('1', '1'))
-	
-
-CHOICES_ALL = (('0', '0'),
-					  ('1', '1'),
-					  ('2', '2'))
-
+CHOICES_ALL = (('0', 'None'),
+					  ('1', 'All'),
+					  ('2', 'Allow Selection'))
 
 class RoleMaster(models.Model):
 	RoleName = models.CharField(max_length=100)
 	City = models.IntegerField(choices=CHOICES_ALL)
 	Slum = models.IntegerField(choices=CHOICES_ALL)
-	KML =  models.BooleanField(choices=CHOICE,blank=False)
-	DynamicQuery = models.BooleanField(choices=CHOICE,blank=False)
-	PredefinedQuery = models.BooleanField(choices=CHOICE,blank=False)
-	CanRequest = models.BooleanField(choices=CHOICE,blank=False)
-	Users = models.BooleanField(choices=CHOICE,blank=False)
-	CreateSaveQuery = models.BooleanField(choices=CHOICE,blank=False)
-	DeploySurvey = models.BooleanField(choices=CHOICE,blank=False)
-	UploadImages = models.BooleanField(choices=CHOICE,blank=False)
-	PrepareReports = models.BooleanField(choices=CHOICE,blank=False)
+	KML =  models.BooleanField(blank=False)
+	DynamicQuery = models.BooleanField(blank=False)
+	PredefinedQuery = models.BooleanField(blank=False)
+	CanRequest = models.BooleanField(blank=False)
+	Users = models.BooleanField(blank=False)
+	CreateSaveQuery = models.BooleanField(blank=False)
+	DeploySurvey = models.BooleanField(blank=False)
+	UploadImages = models.BooleanField(blank=False)
+	PrepareReports = models.BooleanField(blank=False)
 	
-
-
-Type_CHOICES = (('0', '0'),
-					  ('1', '1'))
-
-class Sponsor_Project(models.Model):
-	Name = models.CharField(max_length=512)
-	Type =  models.IntegerField(choices=Type_CHOICES)
-	Sponsor_id = models.ForeignKey(Sponser)
-	createdBy = models.ForeignKey(User)
-	createdOn= models.DateTimeField(default= datetime.datetime.now())
-	def __unicode__(self):
-		return self.Name
-
-class Sponsor_ProjectMetadata(models.Model):
-	household_code = models.IntegerField()
-	slum_id = models.ForeignKey(Slum)
-	Sponsor_Project_id = models.ForeignKey(Sponsor_Project)
-
-
-class Filter(models.Model):
-	query = models.CharField(max_length=4096)
-	Filter_Master_id = models.ForeignKey(Filter_Master)
-
-
-class Sponsor_user(models.Model):
-	Sponsor_id = models.ForeignKey(Sponser)
-	auth_user_id = models.ForeignKey(User)
-
-class FilterMasterMetadata(models.Model):
+class UserRoleMaster(models.Model):
 	user_id = models.ForeignKey(User)
-	user_type = models.ForeignKey(Group)
-	filter_id = models.ForeignKey(Filter_Master)
+	role_id = models.ForeignKey(RoleMaster)
+	City_id = models.ForeignKey(City)
+	slum_id = models.ForeignKey(Slum)
 
 
 class ProjectMaster(models.Model):
@@ -199,12 +143,8 @@ class ProjectMaster(models.Model):
 	created_date = models.DateTimeField(default= datetime.datetime.now())
 
 
-class UserRoleMaster(models.Model):
-	user_id = models.ForeignKey(User)
-	role_id = models.ForeignKey(RoleMaster)
-	City_id = models.ForeignKey(City)
-	slum_id = models.ForeignKey(Slum)
 
+"""
 @receiver(post_save,sender=Slum)
 def Slum_Created_Trigger(sender,instance,**kwargs):
 	#Database connection with Kobocat Postgres
@@ -216,7 +156,7 @@ def Slum_Created_Trigger(sender,instance,**kwargs):
 							port=settings.KOBOCAT_DATABASES['PORT'] )
    
 
-    objSurveys=Survey.objects.filter(City_id=instance.ElectrolWard_id.AdministrativeWard_id.City_id)
+    objSurveys=Survey.objects.filter(City_id=instance.ElectoralWard_id.AdministrativeWard_id.City_id)
     for objSurvey in objSurveys:
     	#Split Kobocat URL to get Form_ID
     	arrlist = objSurvey.kobotoolSurvey_url.split('/')
@@ -251,4 +191,4 @@ def Slum_Created_Trigger(sender,instance,**kwargs):
         cursor.execute('update logger_xform set json=%s, xml=%s where id='+koboformId,[(koboformJson,),(koboformXml,)])
         cursor.execute('COMMIT')
 
-
+"""
