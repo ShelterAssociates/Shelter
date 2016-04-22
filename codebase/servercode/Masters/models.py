@@ -4,6 +4,7 @@ from django.contrib.auth.models import User
 from django.contrib.auth.models import Group
 from django.forms import ModelForm
 #import signals
+
 class City(models.Model):
 	Name = models.CharField(max_length=20)
 	Shape = models.CharField(max_length=2000)
@@ -47,8 +48,8 @@ class Administrative_Ward(models.Model):
 
 
 class Electoral_Ward(models.Model):
-	Name = models.CharField(max_length=512)
 	Shape = models.CharField(max_length=2048)
+	Name = models.CharField(max_length=512)
 	WardNo = models.CharField(max_length=10)
 	Electoralward_code = models.CharField(max_length=10)
 	Electoralward_Desc = models.CharField(max_length=4096)

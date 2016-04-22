@@ -2,10 +2,11 @@
 {% load i18n %}
 {% load staticfiles %}
 {% block breadcrumbs %}{% csrf_token %}
+   <script src="sorttable.js"></script>
 	<div align = "right" style = "margin-right:5%;"><a href="/admin/AddSurveyMapping"><h2>Add New Survey </h2></a> 
 	</div>
 	<br><br>
-	<table width = 90% style = "margin-left:5%; margin-right:5%;">
+	<table width = 90% style = "margin-left:5%; margin-right:5%;" class = "sortable">
 		<th> Name </th><th> Description </th> <th> City </th><th> Type </th><th> Analysis Threshold </th> <th> KoboCat ID </th><th> KoboCat URL </th><th></th>
         {% for surveyFields in object_list %}
             <tr>
@@ -21,8 +22,13 @@
         {% endfor %}  
     </table>
 
+ <script src="{% static "admin/js/sorttable.js" %} "></script>
+
 {% endblock %}
 {% block content %}
 {% endblock %}
 {% block sidebar %}
 {% endblock %}
+
+
+
