@@ -6,12 +6,13 @@ admin.site.register(WardOffice_Contacts)
 admin.site.register(ProjectMaster)
 admin.site.register(ShaperCode)
 admin.site.register(Drawable_Component)
-admin.site.register(Sponser)
+#admin.site.register(Sponser)
+#admin.site.register(Sponsor_ProjectMetadata)
+#admin.site.register(Filter)
+#admin.site.register(Sponsor_user)
+#admin.site.register(FilterMasterMetadata)
 admin.site.register(RoleMaster)
-admin.site.register(Sponsor_ProjectMetadata)
-admin.site.register(Filter)
-admin.site.register(Sponsor_user)
-admin.site.register(FilterMasterMetadata)
+
 admin.site.register(UserRoleMaster)
 
 
@@ -49,32 +50,6 @@ class PlottedShapeAdmin(admin.ModelAdmin):
 		obj.createdBy = request.user
 		obj.save()   
 admin.site.register(PlottedShape,PlottedShapeAdmin)
-
-
-
-
-class Filter_MasterAdmin(admin.ModelAdmin):
-	list_display = ( 
-				"Name",
-				"IsDeployed", 
-				"VisibleTo")
-	exclude = ('createdBy','createdOn')
-	def save_model(self, request, obj, form, change):
-		obj.createdBy = request.user
-		obj.save()   
-admin.site.register(Filter_Master,Filter_MasterAdmin)
-
-
-class Sponsor_ProjectAdmin(admin.ModelAdmin):
-	list_display = ( 
-				"Type",
-				"Sponsor_id", 
-	)
-	exclude = ('createdBy','createdOn')
-	def save_model(self, request, obj, form, change):
-		obj.createdBy = request.user
-		obj.save()   
-admin.site.register(Sponsor_Project,Sponsor_ProjectAdmin)
 
 
 
