@@ -7,30 +7,30 @@ from django.conf import settings
 survey_list=[]
 
 class SurveyCreateForm(forms.ModelForm): 
-    kobotoolSurvey_id = forms.ChoiceField(widget=forms.Select(),required=True)
-    kobotoolSurvey_url = forms.CharField(required=True)    
+    kobotool_survey_id = forms.ChoiceField(widget=forms.Select(),required=True)
+    kobotool_survey_url = forms.CharField(required=True)    
     def __init__(self,*args,**kwargs):        
         try:
-            self.Survey_id=kwargs.pop('Survey_id')
+            self.survey=kwargs.pop('survey')
         except:
             print "No survey Id"
                 
         super(SurveyCreateForm,self).__init__(*args,**kwargs)
         self.list_i=[]
         self.list_i=getKoboIdList()   
-        self.fields['kobotoolSurvey_id'].choices=self.list_i
-        self.fields['kobotoolSurvey_id'].initial=[0]
-        self.fields['kobotoolSurvey_url'].required = False 
+        self.fields['kobotool_survey_id'].choices=self.list_i
+        self.fields['kobotool_survey_id'].initial=[0]
+        self.fields['kobotool_survey_url'].required = False 
         #self.fields['kobotoolSurvey_url'].widget.attrs['readonly'] = True 
     class Meta:
         model=Survey
-        fields = ['Name','Description','City_id','Survey_type','AnalysisThreshold','kobotoolSurvey_id']
+        fields = ['name','description','city','survey_type','analysis_threshold','kobotool_survey_id']
         
     def save(self, *args, **kwargs):        
         instance = super(SurveyCreateForm,self).save(commit=False)
        
         try:
-            instance.id=self.Survey_id
+            instance.id=self.survey
         except:
             print "Error for Survey_id"          
        
@@ -38,10 +38,10 @@ class SurveyCreateForm(forms.ModelForm):
         data = self.cleaned_data
       
         for survey_value in survey_list:  
-            if survey_value[0]== data['kobotoolSurvey_id']:
+            if survey_value[0]== data['kobotool_survey_id']:
                 kobourl= survey_value[1]
                 
-        instance.kobotoolSurvey_url=kobourl
+        instance.kobotool_survey_url=kobourl
         instance.save()
         return instance
         

@@ -1,41 +1,69 @@
 from django.db import models
 from django.contrib.auth.models import User
 from django.contrib.auth.models import Group
-import datetime
+from datetime import datetime
 from Masters.models import Slum
 
-class Sponser(models.Model):
+class Sponsor(models.Model):
 	organization = models.CharField(max_length=200)
 	address = models.CharField(max_length=2048)
-	Phonenumber = models.CharField(max_length=50)
-	description = models.CharField(max_length=2048)
+	website = models.CharField(max_length = 2048)
+	intro_date = models.DateTimeField(default=datetime.now())
+	other_info = models.CharField(max_length=2048)
 	image = models.CharField(max_length=2048)
 
+	class Meta: 
+	 	verbose_name = 'Sponsor' 
+	 	verbose_name_plural = 'Sponsors'  
 
 
-Type_CHOICES = (('0', 'Intervention'),
+TYPE_CHOICES = (('0', 'Intervention'),
 					  ('1', 'Collection'))
 
+PROJECTSTATUS_CHOICES = ( ('0','Planned'),
+							('1','Activated'),
+							('2','Closed')
+	)
+class SponsorProject(models.Model):
+	sponsor = models.ForeignKey(Sponsor)
+	name = models.CharField(max_length=512)
+	type =  models.IntegerField(choices=TYPE_CHOICES)
+	funds_sponsored = models.DecimalField(max_digits=10, decimal_places=2)
+	additional_info = models.CharField(max_length=2048)
+	start_date = models.DateTimeField()
+	end_date = models.DateTimeField()
+	funds_utilised = models.DecimalField(max_digits=10, decimal_places=2)
+	status = models.CharField(choices = PROJECTSTATUS_CHOICES, max_length=2)
+	created_by = models.ForeignKey(User)
+	created_on= models.DateTimeField(default= datetime.now())
 
-class Sponsor_Project(models.Model):
-	Name = models.CharField(max_length=512)
-	Type =  models.IntegerField(choices=Type_CHOICES)
-	Sponsor_id = models.ForeignKey(Sponser)
-	createdBy = models.ForeignKey(User)
-	createdOn= models.DateTimeField(default= datetime.datetime.now())
 	def __unicode__(self):
-		return self.Name
+		return self.name
 
+	class Meta: 
+	 	verbose_name = 'Sponsor Project' 
+	 	verbose_name_plural = 'Sponsor Projects'  
 
-class Sponsor_ProjectMetadata(models.Model):
+class SponsorProjectDetails(models.Model):
 	household_code = models.IntegerField()
-	slum_id = models.ForeignKey(Slum)
-	Sponsor_Project_id = models.ForeignKey(Sponsor_Project)
+	slum = models.ForeignKey(Slum)
+	sponsor_project = models.ForeignKey(SponsorProject)
 
+	class Meta: 
+	 	verbose_name = 'Sponsor Project Detail' 
+	 	verbose_name_plural = 'Sponsor Project Details'  
 
-class Sponsor_user(models.Model):
-	Sponsor_id = models.ForeignKey(Sponser)
-	auth_user_id = models.ForeignKey(User)
+STATUS_CHOICES = (('0','InActive'),
+	('1','Active')
+	)
 
+class SponsorContact(models.Model):
+	sponsor = models.ForeignKey(Sponsor)
+	name = models.CharField(max_length=512)
+	email_id = models.CharField(max_length=512)
+	contact_no = models.CharField(max_length=256)
+	status = models.CharField(choices=STATUS_CHOICES, max_length=2)
 
-
+	class Meta: 
+	 	verbose_name = 'Sponsor Contact' 
+	 	verbose_name_plural = 'Sponsor Contacts'  

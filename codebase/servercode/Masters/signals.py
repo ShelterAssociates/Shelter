@@ -22,10 +22,10 @@ def Slum_Created_Trigger(sender,instance,**kwargs):
 							host=settings.KOBOCAT_DATABASES['HOST'], 
 							port=settings.KOBOCAT_DATABASES['PORT'] )
 	
-	objSurveys=Survey.objects.filter(City_id=instance.ElectoralWard_id.AdministrativeWard_id.City_id)
+	objSurveys=Survey.objects.filter(city=instance.electoral_ward.administrative_ward.city)
 	print "Query"
 	for objSurvey in objSurveys:
-		arrlist = objSurvey.kobotoolSurvey_url.split('/')
+		arrlist = objSurvey.kobotool_survey_url.split('/')
 		koboformId = arrlist[len(arrlist)-1].split('?')[0]
 		cursor = conn.cursor()
 		cursor.execute('select json from logger_xform where id='+koboformId)
@@ -33,7 +33,7 @@ def Slum_Created_Trigger(sender,instance,**kwargs):
 		koboJson = None
 		for jsonValue in jsonCursor[0]: 
 			koboJson=json.loads(jsonValue)
-			koboJson["children"][0]["children"].append({'name':instance.Name,'label':instance.Name})   
+			koboJson["children"][0]["children"].append({'name':instance.name,'label':instance.name})   
 			koboformJson = json.dumps(koboJson)
 
 		cursor = conn.cursor()
@@ -43,7 +43,7 @@ def Slum_Created_Trigger(sender,instance,**kwargs):
 		for xmlValue in xmlCursor[0]:           
 			koboXml=xmlValue
 		soup = Soup(koboXml,"html.parser")    
-		soup.select1.append(Soup('<item>\n<label>'+instance.Name+'</label>\n<value>'+instance.Name+'</value>\n</item>\n','html.parser'))
+		soup.select1.append(Soup('<item>\n<label>'+instance.name+'</label>\n<value>'+instance.name+'</value>\n</item>\n','html.parser'))
 		koboformXml= unicode(soup)
 		#koboformXml= unicode(soup.prettify())
 		cursor.execute('BEGIN')

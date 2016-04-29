@@ -2,99 +2,95 @@ from django.contrib import admin
 from Masters.models import *
 # Register your models here.
 
-admin.site.register(WardOffice_Contacts)
-admin.site.register(ProjectMaster)
-admin.site.register(ShaperCode)
-admin.site.register(Drawable_Component)
-#admin.site.register(Sponser)
-#admin.site.register(Sponsor_ProjectMetadata)
-#admin.site.register(Filter)
-#admin.site.register(Sponsor_user)
-#admin.site.register(FilterMasterMetadata)
-admin.site.register(RoleMaster)
+admin.site.register(WardOfficeContact)
+#admin.site.register(ProjectMaster)
+#admin.site.register(ShapeCode)
+#admin.site.register(DrawableComponent)
+#admin.site.register(RoleMaster)
+admin.site.register(ElectedRepresentative)
+#admin.site.register(UserRoleMaster)
 
-admin.site.register(UserRoleMaster)
+class City_reference_Admin(admin.ModelAdmin):
+    list_display = (
+    "city_name",
+    "city_code",
+    "district_name",
+    "district_code",
+    "state_name",
+    "state_code"
+ )
+admin.site.register(City_reference,City_reference_Admin)
+
+class WardOfficeContactInline(admin.TabularInline):
+     model = WardOfficeContact
+
+class WardOfficeContactAdmin(admin.ModelAdmin):
+	inlines = [WardOfficeContactInline]
+	list_display = ( 
+    	             "name",
+    	             "ward_no",
+    	             "city",
+    	             "office_address")
+admin.site.register(AdministrativeWard, WardOfficeContactAdmin)
+
+
+class ElectedRepresentativeInline(admin.TabularInline):
+     model = ElectedRepresentative
+
+class ElectedRepresentativeAdmin(admin.ModelAdmin):
+	list_display = ( 
+    	             "name",
+    	             "ward_no",
+    	             "ward_code",
+    	             "administrative_ward")
+	inlines = [ElectedRepresentativeInline]
+
+admin.site.register(ElectoralWard, ElectedRepresentativeAdmin)
+
 
 
 class SlumDetailAdmin(admin.ModelAdmin):
     list_display = ( 
-    	             "Name",
-    	             "Description",
-    	             "ElectoralWard_id",
-    	             "Shelter_slum_code")
+    	             "name",
+    	             "description",
+    	             "electoral_ward",
+    	             "shelter_slum_code")
 admin.site.register(Slum, SlumDetailAdmin)
 
 
-class SurveyDetailAdmin(admin.ModelAdmin):
-    list_display = (
-                   "Name", 
-	                "Description", 
-					"City_id",
-					"Survey_type", 	
-					"AnalysisThreshold",
-					"kobotoolSurvey_id", 
-					"kobotoolSurvey_url")
-admin.site.register(Survey,SurveyDetailAdmin)
+# class SurveyDetailAdmin(admin.ModelAdmin):
+#     list_display = (
+#                    "name", 
+# 	                "description", 
+# 					"city",
+# 					"survey_type", 	
+# 					"analysis_threshold",
+# 					"kobotool_survey_id", 
+# 					"kobotool_survey_url")
+# admin.site.register(Survey,SurveyDetailAdmin)
 
 
 
 class PlottedShapeAdmin(admin.ModelAdmin):
 	list_display = (
-					"Slum", 
-					"Name",
-					"Lat_long", 
-					"Drawable_Component_id")
+					"slum", 
+					"name",
+					"lat_long", 
+					"drawable_component")
 	
-	exclude = ('createdBy','createdOn')
+	exclude = ('created_by','created_on')
 	def save_model(self, request, obj, form, change):
 		obj.createdBy = request.user
 		obj.save()   
-admin.site.register(PlottedShape,PlottedShapeAdmin)
+#admin.site.register(PlottedShape,PlottedShapeAdmin)
 
-
-
-class Administrative_Ward_Inline(admin.TabularInline):
-     model = Administrative_Ward
      
-class Administrative_Ward_Admin(admin.ModelAdmin):
-	inlines = [Administrative_Ward_Inline]
-	list_display = ("Name","Shape","State_code","District_Code","City_code")
-	exclude = ('createdBy','createdOn')
+class CityAdmin(admin.ModelAdmin):
+	list_display = ("name","shape","state_code","district_code","city_code")
+	exclude = ('created_by','created_on')
 	def save_model(self, request, obj, form, change):
-         obj.createdBy = request.user
+         obj.created_by = request.user
          obj.save()
-admin.site.register(City,Administrative_Ward_Admin)
 
-
-
-class Electoral_Ward_Inline(admin.TabularInline):
-     model = Electoral_Ward
-
-class Electoral_Ward_Admin(admin.ModelAdmin):
-	inlines = [Electoral_Ward_Inline]
-
-admin.site.register(Administrative_Ward,Electoral_Ward_Admin)
-
-
-
-class Slum_Inline(admin.TabularInline):
-     model = Slum
-
-class Slum_Admin(admin.ModelAdmin):
-	inlines = [Slum_Inline]
-
-admin.site.register(Electoral_Ward,Slum_Admin)
-
-
-
-class Elected_Representative_Inline(admin.TabularInline):
-     model = Elected_Representative
-
-class Elected_Representative_Admin(admin.ModelAdmin):
-	inlines = [Elected_Representative_Inline]
-
-admin.site.unregister(Electoral_Ward)
-admin.site.register(Electoral_Ward,Elected_Representative_Admin)
-
-
+admin.site.register(City, CityAdmin)
 

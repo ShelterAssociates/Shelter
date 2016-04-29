@@ -35,8 +35,8 @@ class SurveyCreateView(FormView):
 	
 	def dispatch(self, request, *args, **kwargs):		
 		try:
-			if kwargs['Survey_id'] :
-				self.id=kwargs['Survey_id']
+			if kwargs['survey'] :
+				self.id=kwargs['survey']
 		except :
 			print "Error"		
 		return super(SurveyCreateView, self).dispatch(request, *args, **kwargs)
@@ -47,11 +47,12 @@ class SurveyCreateView(FormView):
 	 	try:
 	 		if self.id:	 	
 	 			self.surveydata=Survey.objects.get(id=self.id)
-	 			context_data['form']=self.form_class(initial={'Name':self.surveydata.Name, 'Description':self.surveydata.Description,
-                             'City_id':self.surveydata.City_id,'Survey_type':self.surveydata.Survey_type,
-                             'AnalysisThreshold':self.surveydata.AnalysisThreshold,
-                             'kobotoolSurvey_id':self.surveydata.kobotoolSurvey_id,
-                             'Survey_id':self.surveydata.id})
+	 			print self.surveydata.citys
+	 			context_data['form']=self.form_class(initial={'name':self.surveydata.name, 'description':self.surveydata.description,
+                             'city':self.surveydata.city,'survey_type':self.surveydata.survey_type,
+                             'analysis_threshold':self.surveydata.analysis_threshold,
+                             'kobotool_survey_id':self.surveydata.kobotool_survey_id,
+                             'survey':self.surveydata.id})
 	 	except:
 	 		print "get_context_data Error"
 	 	return context_data
@@ -60,7 +61,7 @@ class SurveyCreateView(FormView):
 	def get_form_kwargs(self):
 		kwargs = super( SurveyCreateView, self).get_form_kwargs()
 		try:
-			kwargs['Survey_id']=self.id
+			kwargs['survey']=self.id
  		except:
  		 	print "get_form_kwargs Error"
 		return kwargs
@@ -77,17 +78,14 @@ class SurveyCreateView(FormView):
 		return reverse('SurveyCreate')   	
   
 
-def SurveyDeleteView(request):
-	id = request.GET.get('id', None)
-	if id:
-		obj = Survey.objects.get(id=id)
-		if obj:
-			obj.delete()
+def SurveyDeleteView(request,survey):
+	obj = Survey.objects.get(id=survey)
+	if obj:
+		obj.delete()
 		message = 'Success'
 	else:
 		message = 'Failure'
 	data = {}
 	data['message']= message
-	context = RequestContext(request)
-	return render_to_response('SurveyListView.html',data, context)
+	return HttpResponseRedirect('/admin/surveymapping/')
 

@@ -1,21 +1,21 @@
 from django.contrib import admin
 from .models import *
 
-admin.site.register(Sponser)
-admin.site.register(Sponsor_ProjectMetadata)
-admin.site.register(Sponsor_user)
+admin.site.register(Sponsor)
+admin.site.register(SponsorContact)
+admin.site.register(SponsorProjectDetails)
 
 # Register your models here.
 
-class Sponsor_ProjectAdmin(admin.ModelAdmin):
+class SponsorProjectAdmin(admin.ModelAdmin):
 	list_display = ( 
-				"Type",
-				"Sponsor_id", 
+				"type",
+				"sponsor", 
 	)
-	exclude = ('createdBy','createdOn')
+	exclude = ('created_by','created_on')
 	def save_model(self, request, obj, form, change):
 		obj.createdBy = request.user
 		obj.save()   
 
-admin.site.register(Sponsor_Project,Sponsor_ProjectAdmin)
+admin.site.register(SponsorProject,SponsorProjectAdmin)
 
