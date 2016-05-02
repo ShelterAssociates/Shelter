@@ -26,7 +26,16 @@ def index(request):
 class SurveyListView(ListView):
 	template_name = 'SurveyListView.html'
 	model = Survey
-
+	def get_queryset(self):
+		try:
+			Name = self.kwargs['Name']
+		except:
+			Name = ''
+		if (Name != ''):
+			object_list = self.model.objects.filter(Name__icontains = Name)
+		else:
+			object_list = self.model.objects.all()
+		return object_list
 
 class SurveyCreateView(FormView):
 	template_name = 'SurveyCreate_form.html'
