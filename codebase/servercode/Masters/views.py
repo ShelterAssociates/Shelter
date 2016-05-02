@@ -7,14 +7,14 @@ from django.contrib.admin.views.decorators import staff_member_required
 from django import template
 from django.template.loader import get_template
 from django.shortcuts import render,render_to_response,get_object_or_404
-from .models import City,Survey
+from .models import City,Survey,City_reference
 from .forms import SurveyCreateForm
 from .models import Survey
 from django.views.generic import ListView
 from django.views.generic.edit import FormView,CreateView, UpdateView, DeleteView
 from django.core.urlresolvers import reverse_lazy
 import json
-
+from django.views.decorators.csrf import csrf_exempt
 
 @staff_member_required
 def index(request):
@@ -26,16 +26,7 @@ def index(request):
 class SurveyListView(ListView):
 	template_name = 'SurveyListView.html'
 	model = Survey
-	def get_queryset(self):
-		try:
-			Name = self.kwargs['Name']
-		except:
-			Name = ''
-		if (Name != ''):
-			object_list = self.model.objects.filter(Name__icontains = Name)
-		else:
-			object_list = self.model.objects.all()
-		return object_list
+
 
 class SurveyCreateView(FormView):
 	template_name = 'SurveyCreate_form.html'
@@ -98,3 +89,14 @@ def SurveyDeleteView(request,survey):
 	data['message']= message
 	return HttpResponseRedirect('/admin/surveymapping/')
 
+
+@csrf_exempt
+def search(request):
+	print "HelloIamsearch"
+	id = request.POST['id']
+	print id 
+	c = City_reference.objects.get(id=id)
+	print "Data is getting printed"
+	data_dict = {'city_code': str(c.city_code),'district_name':str(c.district_name),'district_code':str(c.district_code),'state_name':str(c.state_name),'state_code':str(c.state_code)}
+	print data_dict
+	return HttpResponse(json.dumps(data_dict), content_type = "application/json")

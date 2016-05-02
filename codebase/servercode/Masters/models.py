@@ -12,19 +12,27 @@ class City_reference(models.Model):
     state_name = models.CharField(max_length=20)
     state_code = models.CharField(max_length=20)
     def __unicode__(self):
-        return str(self.city_name)
+    	return str(self.city_name)
+    	return str(self.city_code)
+    	return str(self.district_name)
+    	return str(self.district_code)
+    	return str(self.state_name)
+    	return str(self.state_Code)
+
 
 class City(models.Model):
 	name = models.ForeignKey(City_reference)
-	shape = models.CharField(max_length=2000)
-	state_code = models.CharField(max_length=5)
-	district_code = models.CharField(max_length=5)
 	city_code = models.CharField(max_length=5)
+	state_name = models.CharField(max_length=5)
+	state_code = models.CharField(max_length=20)
+	district_name = models.CharField(max_length=20)
+	district_code = models.CharField(max_length=5)
+	shape = models.CharField(max_length=2000)
 	created_by =  models.ForeignKey(User)
 	created_on = models.DateTimeField( default= datetime.datetime.now())
 	
 	def __unicode__(self):
-		return self.name.city_name 
+		return str(self.name)
     
 	class Meta: 
 	 	verbose_name = 'City'
