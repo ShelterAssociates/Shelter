@@ -21,6 +21,7 @@ admin.autodiscover()
 urlpatterns = [	
     url(r'^$',index,name='index'),
     url(r'^master/', include(admin.site.urls)),
+    url(r'^surveymapping/(?P<Name>\w[a-zA-Z_0-9]+)/$', SurveyListView.as_view(), name="SurveyCreate"),
     url(r'^surveymapping/', SurveyListView.as_view(), name="SurveyCreate"),
     url(r'AddSurveyMapping/$', SurveyCreateView.as_view(), name='survey-add'),
     url(r'^deletesurvey/(?P<survey>[0-9]+)/$', SurveyDeleteView, name='surveydelete'),
