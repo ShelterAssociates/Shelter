@@ -1,0 +1,14 @@
+<!DOCTYPE html>
+<html>
+<body>
+
+<form action="demo_form.asp" method="get">
+  <input list="browsers" name="browser">
+  <datalist id="browsers">
+   
+  </datalist>
+  <input type="submit">
+</form>
+</body>
+</html>
+

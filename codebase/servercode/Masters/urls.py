@@ -14,7 +14,7 @@ Including another URLconf
 """
 from django.conf.urls import include, url
 from django.contrib import admin
-from views import index,SurveyListView,SurveyCreateView, SurveyDeleteView
+from views import index,SurveyListView,SurveyCreateView, SurveyDeleteView,search
 
 admin.autodiscover()
 
@@ -25,6 +25,7 @@ urlpatterns = [
     url(r'AddSurveyMapping/$', SurveyCreateView.as_view(), name='survey-add'),
     url(r'^deletesurvey/(?P<survey>[0-9]+)/$', SurveyDeleteView, name='surveydelete'),
     url(r'Survey/(?P<survey>[0-9]+)/$', SurveyCreateView.as_view(), name='survey-update'), 
+    url(r'^search/',search, name='search'), 
 
 ]
 
