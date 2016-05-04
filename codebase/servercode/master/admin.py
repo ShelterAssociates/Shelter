@@ -1,5 +1,5 @@
 from django.contrib import admin
-from Masters.models import *
+from models import *
 # Register your models here.
 
 admin.site.register(WardOfficeContact)
@@ -10,7 +10,7 @@ admin.site.register(WardOfficeContact)
 admin.site.register(ElectedRepresentative)
 #admin.site.register(UserRoleMaster)
 
-class City_reference_Admin(admin.ModelAdmin):
+class CityReferenceAdmin(admin.ModelAdmin):
     list_display = (
     "city_name",
     "city_code",
@@ -19,7 +19,7 @@ class City_reference_Admin(admin.ModelAdmin):
     "state_name",
     "state_code"
  )
-admin.site.register(City_reference,City_reference_Admin)
+admin.site.register(CityReference,CityReferenceAdmin)
 
 class WardOfficeContactInline(admin.TabularInline):
      model = WardOfficeContact

@@ -19,6 +19,6 @@ from django.contrib import admin
 admin.autodiscover()
 
 urlpatterns = [
-    url(r'^admin/', include('Masters.urls')),
+    url(r'^admin/', include('master.urls')),
 ]
 

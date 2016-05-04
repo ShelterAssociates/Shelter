@@ -3,8 +3,10 @@ import datetime
 from django.contrib.auth.models import User
 from django.contrib.auth.models import Group
 from django.forms import ModelForm
+from signals import Slum_Created_Trigger
+from django.db.models.signals import post_save
 
-class City_reference(models.Model):
+class CityReference(models.Model):
     city_name = models.CharField(max_length=20)
     city_code = models.CharField(max_length=20)
     district_name = models.CharField(max_length=20)
@@ -13,15 +15,10 @@ class City_reference(models.Model):
     state_code = models.CharField(max_length=20)
     def __unicode__(self):
     	return str(self.city_name)
-    	return str(self.city_code)
-    	return str(self.district_name)
-    	return str(self.district_code)
-    	return str(self.state_name)
-    	return str(self.state_Code)
 
 
 class City(models.Model):
-	name = models.ForeignKey(City_reference)
+	name = models.ForeignKey(CityReference)
 	city_code = models.CharField(max_length=5)
 	state_name = models.CharField(max_length=5)
 	state_code = models.CharField(max_length=20)
@@ -215,6 +212,8 @@ class ProjectMaster(models.Model):
 	 	verbose_name = 'Project Master'
 	 	verbose_name_plural = 'Project Masters'  
 
+#Signals apply event
+post_save.connect(Slum_Created_Trigger, sender=Slum)
 
 """
 @receiver(post_save,sender=Slum)

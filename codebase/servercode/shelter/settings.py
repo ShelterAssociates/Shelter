@@ -38,9 +38,9 @@ INSTALLED_APPS = (
     'django.contrib.messages',
     'django.contrib.staticfiles',    
    # 'south',
-   'Masters',
+   'master',
    #'Filter',
-   'Sponsor',
+   'sponsor',
 )
 
 
@@ -73,7 +73,7 @@ TEMPLATES = [
     },
 ]
 
-WSGI_APPLICATION = 'Project.wsgi.application'
+WSGI_APPLICATION = 'shelter.wsgi.application'
 
 
 # Database

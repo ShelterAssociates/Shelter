@@ -32,11 +32,13 @@ class Migration(migrations.Migration):
             name='City',
             fields=[
                 ('id', models.AutoField(verbose_name='ID', serialize=False, auto_created=True, primary_key=True)),
-                ('shape', models.CharField(max_length=2000)),
-                ('state_code', models.CharField(max_length=5)),
-                ('district_code', models.CharField(max_length=5)),
                 ('city_code', models.CharField(max_length=5)),
-                ('created_on', models.DateTimeField(default=datetime.datetime(2016, 4, 29, 12, 15, 55, 958288))),
+                ('state_name', models.CharField(max_length=5)),
+                ('state_code', models.CharField(max_length=20)),
+                ('district_name', models.CharField(max_length=20)),
+                ('district_code', models.CharField(max_length=5)),
+                ('shape', models.CharField(max_length=2000)),
+                ('created_on', models.DateTimeField(default=datetime.datetime(2016, 5, 4, 14, 57, 3, 173470))),
                 ('created_by', models.ForeignKey(to=settings.AUTH_USER_MODEL)),
             ],
             options={
@@ -45,7 +47,7 @@ class Migration(migrations.Migration):
             },
         ),
         migrations.CreateModel(
-            name='City_reference',
+            name='CityReference',
             fields=[
                 ('id', models.AutoField(verbose_name='ID', serialize=False, auto_created=True, primary_key=True)),
                 ('city_name', models.CharField(max_length=20)),
@@ -95,7 +97,7 @@ class Migration(migrations.Migration):
                 ('ward_no', models.CharField(max_length=10)),
                 ('ward_code', models.CharField(max_length=10)),
                 ('extra_info', models.CharField(max_length=4096)),
-                ('administrative_ward', models.ForeignKey(to='Masters.AdministrativeWard')),
+                ('administrative_ward', models.ForeignKey(to='master.AdministrativeWard')),
             ],
             options={
                 'verbose_name': 'Electoral Ward',
@@ -109,9 +111,9 @@ class Migration(migrations.Migration):
                 ('slum', models.CharField(max_length=100)),
                 ('name', models.CharField(max_length=512)),
                 ('lat_long', models.CharField(max_length=2000)),
-                ('created_on', models.DateTimeField(default=datetime.datetime(2016, 4, 29, 12, 15, 55, 967779))),
+                ('created_on', models.DateTimeField(default=datetime.datetime(2016, 5, 4, 14, 57, 3, 183690))),
                 ('created_by', models.ForeignKey(to=settings.AUTH_USER_MODEL)),
-                ('drawable_component', models.ForeignKey(to='Masters.DrawableComponent')),
+                ('drawable_component', models.ForeignKey(to='master.DrawableComponent')),
             ],
             options={
                 'verbose_name': 'Plotted Shape',
@@ -123,7 +125,7 @@ class Migration(migrations.Migration):
             fields=[
                 ('id', models.AutoField(verbose_name='ID', serialize=False, auto_created=True, primary_key=True)),
                 ('created_user', models.CharField(max_length=100)),
-                ('created_date', models.DateTimeField(default=datetime.datetime(2016, 4, 29, 12, 15, 55, 970880))),
+                ('created_date', models.DateTimeField(default=datetime.datetime(2016, 5, 4, 14, 57, 3, 186539))),
             ],
             options={
                 'verbose_name': 'Project Master',
@@ -172,7 +174,7 @@ class Migration(migrations.Migration):
                 ('shape', models.CharField(max_length=2048)),
                 ('description', models.CharField(max_length=100)),
                 ('shelter_slum_code', models.CharField(max_length=512)),
-                ('electoral_ward', models.ForeignKey(to='Masters.ElectoralWard')),
+                ('electoral_ward', models.ForeignKey(to='master.ElectoralWard')),
             ],
             options={
                 'verbose_name': 'Slum',
@@ -189,7 +191,7 @@ class Migration(migrations.Migration):
                 ('analysis_threshold', models.IntegerField()),
                 ('kobotool_survey_id', models.CharField(max_length=50)),
                 ('kobotool_survey_url', models.CharField(max_length=512)),
-                ('city', models.ForeignKey(to='Masters.City')),
+                ('city', models.ForeignKey(to='master.City')),
             ],
             options={
                 'verbose_name': 'Survey',
@@ -200,9 +202,9 @@ class Migration(migrations.Migration):
             name='UserRoleMaster',
             fields=[
                 ('id', models.AutoField(verbose_name='ID', serialize=False, auto_created=True, primary_key=True)),
-                ('city', models.ForeignKey(to='Masters.City')),
-                ('role_master', models.ForeignKey(to='Masters.RoleMaster')),
-                ('slum', models.ForeignKey(to='Masters.Slum')),
+                ('city', models.ForeignKey(to='master.City')),
+                ('role_master', models.ForeignKey(to='master.RoleMaster')),
+                ('slum', models.ForeignKey(to='master.Slum')),
                 ('user', models.ForeignKey(to=settings.AUTH_USER_MODEL)),
             ],
             options={
@@ -217,7 +219,7 @@ class Migration(migrations.Migration):
                 ('title', models.CharField(max_length=25)),
                 ('name', models.CharField(max_length=200)),
                 ('telephone', models.CharField(max_length=50)),
-                ('administrative_ward', models.ForeignKey(to='Masters.AdministrativeWard')),
+                ('administrative_ward', models.ForeignKey(to='master.AdministrativeWard')),
             ],
             options={
                 'verbose_name': 'Ward Officer Contact',
@@ -227,21 +229,21 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='electedrepresentative',
             name='electoral_ward',
-            field=models.ForeignKey(to='Masters.ElectoralWard'),
+            field=models.ForeignKey(to='master.ElectoralWard'),
         ),
         migrations.AddField(
             model_name='drawablecomponent',
             name='shape_code',
-            field=models.ForeignKey(to='Masters.ShapeCode'),
+            field=models.ForeignKey(to='master.ShapeCode'),
         ),
         migrations.AddField(
             model_name='city',
             name='name',
-            field=models.ForeignKey(to='Masters.City_reference'),
+            field=models.ForeignKey(to='master.CityReference'),
         ),
         migrations.AddField(
             model_name='administrativeward',
             name='city',
-            field=models.ForeignKey(to='Masters.City'),
+            field=models.ForeignKey(to='master.City'),
         ),
     ]

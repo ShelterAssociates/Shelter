@@ -1,4 +1,4 @@
-from Masters.models import *
+from models import *
 from django.contrib.auth.models import User
 from django.contrib.auth.models import Group
 from django.forms import ModelForm
@@ -10,10 +10,6 @@ import json
 from bs4 import BeautifulSoup as Soup
 from django.conf import settings
 
-
-
-
-@receiver(post_save,sender=Slum)
 def Slum_Created_Trigger(sender,instance,**kwargs):
 	print "Hello"
 	conn = psycopg2.connect(database=settings.KOBOCAT_DATABASES['DBNAME'], 

@@ -1,5 +1,5 @@
 from django import forms
-from .models import City,Survey
+from models import City,Survey
 import urllib2,urllib
 import json
 from django.conf import settings

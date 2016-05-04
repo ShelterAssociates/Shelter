@@ -7,9 +7,9 @@ from django.contrib.admin.views.decorators import staff_member_required
 from django import template
 from django.template.loader import get_template
 from django.shortcuts import render,render_to_response,get_object_or_404
-from .models import City,Survey,City_reference
-from .forms import SurveyCreateForm
-from .models import Survey
+from models import City,Survey,City_reference
+from forms import SurveyCreateForm
+from models import Survey
 from django.views.generic import ListView
 from django.views.generic.edit import FormView,CreateView, UpdateView, DeleteView
 from django.core.urlresolvers import reverse_lazy
