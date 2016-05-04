@@ -2,7 +2,7 @@ from django.db import models
 from django.contrib.auth.models import User
 from django.contrib.auth.models import Group
 from datetime import datetime
-from Masters.models import Slum
+from master.models import Slum
 
 class Sponsor(models.Model):
 	organization = models.CharField(max_length=200)

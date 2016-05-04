@@ -1,5 +1,5 @@
 from django.contrib import admin
-from Filter.models import *
+from filter.models import *
 
 """
 admin.site.register(Filter)

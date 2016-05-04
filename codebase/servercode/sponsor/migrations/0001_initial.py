@@ -9,7 +9,7 @@ from django.conf import settings
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('Masters', '0002_auto_20160429_1216'),
+        ('master', '0002_auto_20160504_1457'),
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
     ]
 
@@ -21,7 +21,7 @@ class Migration(migrations.Migration):
                 ('organization', models.CharField(max_length=200)),
                 ('address', models.CharField(max_length=2048)),
                 ('website', models.CharField(max_length=2048)),
-                ('intro_date', models.DateTimeField(default=datetime.datetime(2016, 4, 29, 12, 16, 2, 188344))),
+                ('intro_date', models.DateTimeField(default=datetime.datetime(2016, 5, 4, 14, 57, 10, 206692))),
                 ('other_info', models.CharField(max_length=2048)),
                 ('image', models.CharField(max_length=2048)),
             ],
@@ -38,7 +38,7 @@ class Migration(migrations.Migration):
                 ('email_id', models.CharField(max_length=512)),
                 ('contact_no', models.CharField(max_length=256)),
                 ('status', models.CharField(max_length=2, choices=[(b'0', b'InActive'), (b'1', b'Active')])),
-                ('sponsor', models.ForeignKey(to='Sponsor.Sponsor')),
+                ('sponsor', models.ForeignKey(to='sponsor.Sponsor')),
             ],
             options={
                 'verbose_name': 'Sponsor Contact',
@@ -57,9 +57,9 @@ class Migration(migrations.Migration):
                 ('end_date', models.DateTimeField()),
                 ('funds_utilised', models.DecimalField(max_digits=10, decimal_places=2)),
                 ('status', models.CharField(max_length=2, choices=[(b'0', b'Planned'), (b'1', b'Activated'), (b'2', b'Closed')])),
-                ('created_on', models.DateTimeField(default=datetime.datetime(2016, 4, 29, 12, 16, 2, 191044))),
+                ('created_on', models.DateTimeField(default=datetime.datetime(2016, 5, 4, 14, 57, 10, 209367))),
                 ('created_by', models.ForeignKey(to=settings.AUTH_USER_MODEL)),
-                ('sponsor', models.ForeignKey(to='Sponsor.Sponsor')),
+                ('sponsor', models.ForeignKey(to='sponsor.Sponsor')),
             ],
             options={
                 'verbose_name': 'Sponsor Project',
@@ -71,8 +71,8 @@ class Migration(migrations.Migration):
             fields=[
                 ('id', models.AutoField(verbose_name='ID', serialize=False, auto_created=True, primary_key=True)),
                 ('household_code', models.IntegerField()),
-                ('slum', models.ForeignKey(to='Masters.Slum')),
-                ('sponsor_project', models.ForeignKey(to='Sponsor.SponsorProject')),
+                ('slum', models.ForeignKey(to='master.Slum')),
+                ('sponsor_project', models.ForeignKey(to='sponsor.SponsorProject')),
             ],
             options={
                 'verbose_name': 'Sponsor Project Detail',
