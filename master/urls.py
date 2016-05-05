@@ -25,7 +25,7 @@ urlpatterns = [
     url(r'AddSurveyMapping/$', SurveyCreateView.as_view(), name='survey-add'),
     url(r'^deletesurvey/(?P<survey>[0-9]+)/$', SurveyDeleteView, name='surveydelete'),
     url(r'Survey/(?P<survey>[0-9]+)/$', SurveyCreateView.as_view(), name='survey-update'), 
-    url(r'^search/',search, name='search'), 
+    url(r'^search/(?P<survey>[0-9]+)/$',search, name='search'),
 
 ]
 
