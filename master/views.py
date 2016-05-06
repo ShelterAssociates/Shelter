@@ -1,20 +1,17 @@
-from django.shortcuts import render
-from django.template import RequestContext,loader
-
-from django.http import HttpResponse, HttpResponseRedirect
-from django.core.urlresolvers import reverse
-from django.contrib.admin.views.decorators import staff_member_required
 from django import template
+from django.core.urlresolvers import reverse,reverse_lazy
+from django.contrib.admin.views.decorators import staff_member_required
+from django.template import RequestContext,loader
 from django.template.loader import get_template
+from django.http import HttpResponse, HttpResponseRedirect
 from django.shortcuts import render,render_to_response,get_object_or_404
-from models import City,Survey,City_reference
-from forms import SurveyCreateForm
-from models import Survey
 from django.views.generic import ListView
-from django.views.generic.edit import FormView,CreateView, UpdateView, DeleteView
-from django.core.urlresolvers import reverse_lazy
-import json
 from django.views.decorators.csrf import csrf_exempt
+from django.views.generic.edit import FormView,CreateView, UpdateView, DeleteView
+from models import City,Survey,CityReference
+from forms import SurveyCreateForm
+import json
+
 
 @staff_member_required
 def index(request):
@@ -47,7 +44,6 @@ class SurveyCreateView(FormView):
 	 	try:
 	 		if self.id:	 	
 	 			self.surveydata=Survey.objects.get(id=self.id)
-	 			print self.surveydata.citys
 	 			context_data['form']=self.form_class(initial={'name':self.surveydata.name, 'description':self.surveydata.description,
                              'city':self.surveydata.city,'survey_type':self.surveydata.survey_type,
                              'analysis_threshold':self.surveydata.analysis_threshold,
@@ -92,11 +88,7 @@ def SurveyDeleteView(request,survey):
 
 @csrf_exempt
 def search(request):
-	print "HelloIamsearch"
 	id = request.POST['id']
-	print id 
-	c = City_reference.objects.get(id=id)
-	print "Data is getting printed"
+	c = CityReference.objects.get(id=id)
 	data_dict = {'city_code': str(c.city_code),'district_name':str(c.district_name),'district_code':str(c.district_code),'state_name':str(c.state_name),'state_code':str(c.state_code)}
-	print data_dict
 	return HttpResponse(json.dumps(data_dict), content_type = "application/json")
