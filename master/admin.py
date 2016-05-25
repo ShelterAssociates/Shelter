@@ -5,9 +5,6 @@ from django.contrib import admin
 from master.models import CityReference, City, \
     AdministrativeWard, ElectoralWard, Slum, WardOfficeContact, ElectedRepresentative
 
-from master.forms import *
-
-
 # Register your models here.
 admin.site.register(WardOfficeContact)
 # admin.site.register(ProjectMaster)
@@ -84,8 +81,12 @@ class PlottedShapeAdmin(admin.ModelAdmin):
 
 class CityAdmin(admin.ModelAdmin):
     """Display panel of CityAdmin Model"""
-    form = CityFrom 
+    list_display = ('name', 'shape', 'state_code', 'district_code',
+                    'city_code')
+    exclude = ('created_by', 'created_on')
+
     def save_model(self, request, obj, form, change):
         obj.created_by = request.user
         obj.save()
+
 admin.site.register(City, CityAdmin)

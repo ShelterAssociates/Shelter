@@ -8,11 +8,7 @@ import json
 from django import forms
 from django.conf import settings
 
-from master.models import Survey, City
-from django.utils.safestring import mark_safe
-from django.template.loader import render_to_string
-from django.forms import widgets
-
+from master.models import Survey
 
 SURVEY_LIST = []
 
@@ -90,34 +86,3 @@ def get_kobo_id_list():
         temp_arr.append((value['id_string'], value['id_string']))
 
     return temp_arr
-
-
-class LocationWidget(widgets.TextInput):
-    """widgets to draw Polygon on google map"""
-    template_name = 'location.html'
-    
-    def render(self, name, value, attrs=None):
-        print self
-        print name
-        print value
-        print attrs
-        context = {
-            'POLYGON' : value
-        }
-        return mark_safe(render_to_string(self.template_name, context))
-
-
-class CityFrom(forms.ModelForm):
-     """Admin form for google map"""
-     shape = forms.CharField(widget = LocationWidget())
-     class Meta:
-        model = City
-        fields = ('name', 'shape', 'state_code', 'district_code', 'city_code')
-        exclude = ('created_by', 'created_on')
-
-
-
-
-
-
-
