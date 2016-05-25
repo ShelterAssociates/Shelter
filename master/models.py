@@ -4,7 +4,7 @@
 
 import datetime
 
-from django.db import models
+from django.contrib.gis.db import models
 from django.contrib.auth.models import User
 
 class CityReference(models.Model):
@@ -28,7 +28,7 @@ class City(models.Model):
     state_code = models.CharField(max_length=20)
     district_name = models.CharField(max_length=20)
     district_code = models.CharField(max_length=5)
-    shape = models.CharField(max_length=2000)
+    shape = models.PolygonField(srid=4326)
     created_by = models.ForeignKey(User)
     created_on = models.DateTimeField(default=datetime.datetime.now())
 
