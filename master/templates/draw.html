@@ -1,3 +1,7 @@
+<p> <input id="id_shape" type="text" name="shape" value="{{ POLYGON }}">
+<br> 
+</p>
+
 <html> 
 <head> 
 	<meta name="viewport" content="initial-scale=1.0, user-scalable=no" /> 
@@ -13,16 +17,83 @@
 	<script type="text/javascript">
         
         var P=[];
+        var myOptions;
+        var map;
+        var creator;
+        var a;
+        var PolygonPoints=[];
+        var Poly;
 
   function initialise(){
-	 var myOptions = {
+	 myOptions = {
 		  	zoom: 16,
 		  	center: new google.maps.LatLng(18.505599,73.822867),
 		  	mapTypeId: google.maps.MapTypeId.ROADMAP
 		  }
 		 map = new google.maps.Map(document.getElementById('main-map'), myOptions);
 		  var creator = new PolygonCreator(map);
+
+
 		 
+		 
+		 a=django.jQuery('#id_shape').val();
+
+		 if(a!="") 
+        {
+     		var res = a.substring(20,a.length-2);
+
+    		L= res.split(",");
+
+    		var X="";
+
+    		for(i=0;i <L.length;i++){
+         		X+=L[i]; 
+      		}
+
+      		Y= X.split(" ");
+
+      		var array=[];
+
+      		for(i=0;i <Y.length;i++){
+          			array.push(Y[i]);
+      		}
+
+			var result1;
+
+			var result2;
+		
+			for (var i=0; i <= array.length-1 ; i ++){
+			if (i%2==0){
+				result1 = array[i];
+
+			}else if (i %2 !=0){
+
+				result2 =array[i];			
+				PolygonPoints.push(new google.maps.LatLng(result2, result1));
+				
+			}
+		}
+	PolygonPoints.pop();
+	console.log(PolygonPoints);
+	
+
+   Poly = new google.maps.Polygon({
+                paths: PolygonPoints,
+                draggable: true,
+                editable: true,
+                strokeColor: '#FF0000',
+                strokeOpacity: 0.8,
+                strokeWeight: 2,
+                fillColor: '#FF0000',
+                fillOpacity: 0.35
+            });
+
+            Poly.setMap(map);
+           
+
+}
+		 
+
 }		 
 
 $(function(){
@@ -31,9 +102,7 @@ $(function(){
 		 		creator=null;
 		 		
 		 		creator=new PolygonCreator(map);
-		 });		 
-		 
-		 
+		 });		 		 		 
 		 //show paths
 		 $('#showData').click(function(){ 
 		 		$('#dataPanel').empty();
@@ -380,6 +449,38 @@ $(function(){
 
 
 
+function Point_string(){
+	var Point = P[0];
+    P.push(Point);
+    console.log(P);
+    var c_str="POLYGON((";
+    var aa="";
+    var lng ="";
+    var lat = "";
+    for(var i=0; i<P.length;i++){
+       lng = P[i].lng();
+       lat = P[i].lat();
+       aa+=lng+" "+lat +",";
+    };
+
+    c_str+=aa.substring(aa,aa.length-1)+"))";
+ 
+ return c_str;
+}
+
+
+
+
+  $(document).ready(function(){
+    $('#MyButton').click(function(){
+        django.jQuery('#id_shape').val(Point_string());
+        django.jQuery('#id_shape').text(Point_string());
+       });
+  });
+
+
+
+
 
 
 
@@ -398,6 +499,8 @@ $(function(){
 	</script>
 </head>
 <body>
+<input type="button" value="Save" id="MyButton" >
+
 <div id="main-map"  style="width:300%; height:600px"></div>	
 </body>
 
