@@ -1,0 +1,105 @@
+
+{% extends "admin/base_site.html" %}
+{% load i18n %}
+
+{% block breadcrumbs %}
+
+<!doctype html>
+<head>
+<title>Add a New Survey</title>
+
+</head>
+<body>
+<form action="" method="POST" style = "margin-left:10%;">
+{% csrf_token %} 
+<table>
+	<br>
+    <th><h1>Add a new Survey</h1></th>
+    <tr><td></td><td></td></tr>
+  <tr>
+  	<td colspan="2">
+  		{{ form.name.errors }}
+  	</td>
+  </tr>  
+  <tr>
+    <td>Name</td>
+    <td>{{form.name}}</td>
+  </tr>
+  
+  
+  <tr>
+  	<td colspan="2">
+  		{{ form.description.errors }}
+  	</td>
+  </tr> 
+  <tr>
+    <td>Description</td>
+    <td>{{form.description}}</td>
+  </tr>
+  
+  
+  <tr>
+  	<td colspan="2">
+  		{{ form.city.errors }}
+  	</td>
+  </tr> 
+  <tr>
+    <td>City</td>
+    <td>{{form.city}}</td>
+  </tr>
+  
+  <tr>
+  	<td colspan="2">
+  		{{ form.survey_type.errors }}
+  	</td>
+  </tr> 
+  <tr>
+    <td>Survey Type</td>
+    <td>{{form.survey_type}}</td>
+  </tr>
+  
+  <tr>
+  	<td colspan="2">
+  		{{ form.analysis_threshold.errors }}
+  	</td>
+  </tr> 
+  <tr>
+    <td>Analysis Threshold</td>
+    <td>{{form.analysis_threshold}}</td>
+  </tr>
+  
+  
+  <tr>
+  	<td colspan="2">
+  		{{ form.kobotool_survey_id.errors }}
+  	</td>
+  </tr> 
+  <tr>
+    <td>Kobo Toolbox Survey</td>
+    <td>{{form.kobotool_survey_id}}</td>
+  </tr>
+ <tr>
+  <td><input  style = "width:195px;-ms-box-sizing:content-box;-moz-box-sizing:content-box;-webkit-box-sizing:content-box; box-sizing:content-box;" type="submit" name="Save" value="Save" /></td> 
+  <td>
+  	<!--<input  style = "width:195px;-ms-box-sizing:content-box;-moz-box-sizing:content-box;-webkit-box-sizing:content-box; box-sizing:content-box;" type="href" name="Canel" value="Cancel" />-->
+  	<a href="/admin/surveymapping/">Cancel</a> 
+  	</td>
+  </tr>
+
+</table> 
+
+</form>
+</body>
+</html>
+
+
+{% endblock %}
+
+{% block content %}
+
+{% endblock %}
+
+{% block sidebar %}
+{% endblock %}
+
+
