@@ -61,16 +61,16 @@ function myFunction(){
 	console.log(cityname);
 	alert(cityname);
 
-        var id = django.jQuery("#id_name option:selected").val();
-        alert(id);
+  var id = django.jQuery("#id_name option:selected").val();
+  alert(id);
         
 	
 
 django.jQuery.ajax({
  
-    url: "http://127.0.0.1:8000/admin/search/",
+    url : "http://127.0.0.1:8000/admin/search/",
  
-    data: {
+    data : {
         id : id
     },
  
@@ -83,8 +83,7 @@ django.jQuery.ajax({
   // Code to run if the request succeeds (is done);
   // The response is passed to the function
   
-
-  success :function(json) {
+success :function(json) {
      
     alert( "The request is complete!" );
     alert(json.district_code);
@@ -121,17 +120,20 @@ django.jQuery.ajax({
 });
 
 }
+
+ django.jQuery(document).ready(function(){
+     django.jQuery("#id_name").on('change',function(){
+         alert(this.value);
+         myFunction();
+    });
+});
+
+
+
+
 </script>
 
-
-<br>
-   <button type="button" " onclick= "myFunction()"> Populate</button>
-<br>
-
-
-
-
-
+<button type="button" " onclick= "myFunction()"> Populate </button>
 
 {% block field_sets %}
 {% for fieldset in adminform %}
