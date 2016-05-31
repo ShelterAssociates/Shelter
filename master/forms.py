@@ -94,7 +94,7 @@ def get_kobo_id_list():
 
 class LocationWidget(widgets.TextInput):
     """Map Widget"""
-    template_name = 'draw9.html'
+    template_name = 'draw.html'
     def render(self, name, value, attrs=None):
         context = {'POLYGON':value}
         return mark_safe(render_to_string(self.template_name, context))
