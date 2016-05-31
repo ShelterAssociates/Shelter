@@ -37,7 +37,6 @@ urlpatterns = [
         name='surveydelete'),
     url(r'Survey/(?P<survey>[0-9]+)/$', SurveyCreateView.as_view(),
         name='survey-update'),
-    #url(r'^search/(?P<survey>[0-9]+)/$', search, name='search'),
     url(r'^search/$', search, name='search'),
     ]
 
