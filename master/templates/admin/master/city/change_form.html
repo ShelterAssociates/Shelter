@@ -58,11 +58,7 @@
 <script>
 function myFunction(){
 	var cityname = django.jQuery("#id_name option:selected").text();
-	console.log(cityname);
-	alert(cityname);
-
   var id = django.jQuery("#id_name option:selected").val();
-  alert(id);
         
 	
 
@@ -85,36 +81,25 @@ django.jQuery.ajax({
   
 success :function(json) {
      
-    alert( "The request is complete!" );
-    alert(json.district_code);
-    console.log(json.district_code);
-   
-
-      
-       django.jQuery('#id_city_code').val(json.city_code);
-       
+      django.jQuery('#id_city_code').val(json.city_code);
        
       django.jQuery('#id_state_code').val(json.state_code);
        
+      django.jQuery('#id_state_name').val(json.state_name);
+
+      django.jQuery('#id_district_name').val(json.district_name);
        
-       django.jQuery('#id_state_name').val(json.state_name);
+      django.jQuery('#id_district_code').val(json.district_code);
 
+      django.jQuery("#id_city_code").prop("readonly", true);
+
+      django.jQuery('#id_state_name').prop("readonly", true);
       
-       django.jQuery('#id_district_name').val(json.district_name);
+      django.jQuery('#id_state_code').prop("readonly", true);
+      
+      django.jQuery('#id_district_name').prop("readonly", true);
        
-
-       django.jQuery('#id_district_code').val(json.district_code);
-
-
-       django.jQuery("#id_city_code").prop("readonly", true);
-
-       django.jQuery('#id_state_name').prop("readonly", true);
-      
-       django.jQuery('#id_state_code').prop("readonly", true);
-      
-       django.jQuery('#id_district_name').prop("readonly", true);
-       
-       django.jQuery('#id_district_code').prop("readonly", true);
+      django.jQuery('#id_district_code').prop("readonly", true);
 
   }
 });
@@ -122,14 +107,13 @@ success :function(json) {
 }
 
  django.jQuery(document).ready(function(){
-     django.jQuery("#id_name").on('change',function(){
-         alert(this.value);
+    
+     django.jQuery("#id_name").on('change',function()
+     {
          myFunction();
+    
     });
 });
-
-
-
 
 </script>
 
