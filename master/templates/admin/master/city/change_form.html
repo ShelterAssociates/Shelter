@@ -57,57 +57,48 @@
 
 <script>
 function myFunction(){
-	var cityname = django.jQuery("#id_name option:selected").text();
-  var id = django.jQuery("#id_name option:selected").val();
+    var cityname = django.jQuery("#id_name option:selected").text();
+    var id = django.jQuery("#id_name option:selected").val();
         
-	
+    django.jQuery.ajax({
 
-django.jQuery.ajax({
+        url : "/admin/search/",
+        
+        data : { id : id },
+    
+        type: "POST",
  
-    url : "/admin/search/",
- 
-    data : {
-        id : id
-    },
-     // Whether this is a POST or GET request
-    type: "POST",
- 
-    // The type of data we expect back
-    contenttype : "json",
+        // The type of data we expect back
+        contenttype : "json",
 
-  success :function(json) {
-     
-      django.jQuery('#id_city_code').val(json.city_code);
+        success :function(json) {
+            django.jQuery('#id_city_code').val(json.city_code);
        
-      django.jQuery('#id_state_code').val(json.state_code);
+            django.jQuery('#id_state_code').val(json.state_code);
        
-      django.jQuery('#id_state_name').val(json.state_name);
+            django.jQuery('#id_state_name').val(json.state_name);
 
-      django.jQuery('#id_district_name').val(json.district_name);
+            django.jQuery('#id_district_name').val(json.district_name);
        
-      django.jQuery('#id_district_code').val(json.district_code);
+            django.jQuery('#id_district_code').val(json.district_code);
 
-      django.jQuery("#id_city_code").prop("readonly", true);
+            django.jQuery("#id_city_code").prop("readonly", true);
 
-      django.jQuery('#id_state_name').prop("readonly", true);
+            django.jQuery('#id_state_name').prop("readonly", true);
       
-      django.jQuery('#id_state_code').prop("readonly", true);
+            django.jQuery('#id_state_code').prop("readonly", true);
       
-      django.jQuery('#id_district_name').prop("readonly", true);
+            django.jQuery('#id_district_name').prop("readonly", true);
        
-      django.jQuery('#id_district_code').prop("readonly", true);
-
-  }
-});
-
+            django.jQuery('#id_district_code').prop("readonly", true);
+        }
+    });
 }
 
- django.jQuery(document).ready(function(){
-    
-     django.jQuery("#id_name").on('change',function()
+django.jQuery(document).ready(function(){
+    django.jQuery("#id_name").on('change',function()
      {
-         myFunction();
-    
+        myFunction();    
     });
 });
 
