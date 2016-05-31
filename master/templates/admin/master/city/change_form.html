@@ -64,22 +64,18 @@ function myFunction(){
 
 django.jQuery.ajax({
  
-    url : "http://127.0.0.1:8000/admin/search/",
+    url : "/admin/search/",
  
     data : {
         id : id
     },
- 
-    // Whether this is a POST or GET request
+     // Whether this is a POST or GET request
     type: "POST",
  
     // The type of data we expect back
     contenttype : "json",
 
-  // Code to run if the request succeeds (is done);
-  // The response is passed to the function
-  
-success :function(json) {
+  success :function(json) {
      
       django.jQuery('#id_city_code').val(json.city_code);
        
