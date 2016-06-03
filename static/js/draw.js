@@ -1,76 +1,77 @@
-    var PointArray=[];
-    var myOptions;
-    var map;
-    var creator;
-    var ShapeValue;
-    var PolygonPoints=[];
-    var Poly;
-    var curLatLng=[];
-    var creator;
-    var flag=0;
+var PointArray=[];
+var myOptions;
+var map;
+var creator;
+var ShapeValue;
+var PolygonPoints=[];
+var Poly;
+var curLatLng=[];
+var creator;
+var flag=0;
 
-    function initialise(){
-    	myOptions = {
-        zoom: 16,
-		center: new google.maps.LatLng(18.505599,73.822867),
-		mapTypeId: google.maps.MapTypeId.SATELLITE
-		}
+function initialise(){
+    	
+    myOptions = {
+    zoom: 16,
+	center: new google.maps.LatLng(18.505599,73.822867),
+	mapTypeId: google.maps.MapTypeId.SATELLITE
+	}
 
-        map = new google.maps.Map(document.getElementById('main-map'), myOptions);
+    map = new google.maps.Map(document.getElementById('main-map'), myOptions);
 		 
-		creator = new PolygonCreator(map);
+    creator = new PolygonCreator(map);
 				 
-		ShapeValue=django.jQuery('#id_shape').val();
+	ShapeValue=django.jQuery('#id_shape').val();
 		 
-		if(ShapeValue!="None") 
-        {
-            flag = 1;
+	if(ShapeValue!="None") 
+    {
+        flag = 1;
 
-     	    var result = ShapeValue.substring(20,ShapeValue.length-2);
+     	var result = ShapeValue.substring(20,ShapeValue.length-2);
 
-    	    StringArray= result.split(",");
+    	StringArray= result.split(",");
 
-    		var split1="";
+    	var split1="";
 
-    		for(i=0;i <StringArray.length;i++){
-         		split1+=StringArray[i]; 
-      		}
+    	for(i=0;i <StringArray.length;i++){
+         	split1+=StringArray[i]; 
+      	}
      		
-     		split2= split1.split(" ");
+     	split2= split1.split(" ");
 
-      	    var array=[];
+        var array=[];
 
-      		for(i=0;i <split2.length;i++){
-          		array.push(split2[i]);
-      		}
+      	for(i=0;i <split2.length;i++){
+          	array.push(split2[i]);
+      	}
 
-			var result1;
+		var result1;
 
-			var result2;
+		var result2;
 		
-			for (var i=0; i <= array.length-1 ; i ++){
-				if (i%2==0)
-					{
-					    result1 = array[i];
+		for (var i=0; i <= array.length-1 ; i ++){
+			if (i%2==0)
+			{
+				result1 = array[i];
 
-					}else if (i %2 !=0){
+			}else if (i %2 !=0){
 
-        				result2 =array[i];			
-		        		PolygonPoints.push(new google.maps.LatLng(result2, result1));				
+        		result2 =array[i];			
+		        PolygonPoints.push(new google.maps.LatLng(result2, result1));				
 			}
 		}
 
 		PolygonPoints.pop();
 		
 		Poly = new google.maps.Polygon({
-                paths: PolygonPoints,
-                draggable: true,
-                editable: true,
-                strokeColor: '#FF0000',
-                strokeOpacity: 0.8,
-                strokeWeight: 2,
-                fillColor: '#FF0000',
-                fillOpacity: 0.35
+            paths: PolygonPoints,
+            draggable: true,
+            editable: true,
+            strokeColor: '#FF0000',
+            strokeOpacity: 0.8,
+            strokeWeight: 2,
+            fillColor: '#FF0000',
+            fillOpacity: 0.35
         });
 
         Poly.setMap(map);
