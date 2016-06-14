@@ -108,12 +108,4 @@ class CityFrom(forms.ModelForm):
         fields = ('name', 'shape', 'state_code', 'district_code', 'city_code')
         exclude = ('created_by', 'created_on')
 
-
-
-
-
-
-
-
-
-
+        

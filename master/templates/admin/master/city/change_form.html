@@ -51,8 +51,9 @@
 function myFunction(){
     var cityname = django.jQuery("#id_name option:selected").text();
     var id = django.jQuery("#id_name option:selected").val();
+    var url = "{% url 'search' %}";
     django.jQuery.ajax({
-        url : "/admin/search/",
+        url : url,
         data : { id : id },
         type: "POST",
         // The type of data we expect back

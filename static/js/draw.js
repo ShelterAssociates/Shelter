@@ -66,9 +66,9 @@ function getPolygonCoords() {
     curLatLng = Poly.getPath().getArray();
 }   
 
-$(function(){
+django.jQuery(function(){
     //reset Polygon and redraw
-    $('#reset').click(function(){
+    django.jQuery('#reset').click(function(){
         creator.destroy();
         creator=null;
         creator=new PolygonCreator(map);
@@ -128,7 +128,7 @@ function Pen(map){
         this.deleteMis();
     }
     this.deleteMis = function(){
-    $.each(this.listOfDots, function(index, value){
+    django.jQuery.each(this.listOfDots, function(index, value){
         value.remove();
     });
     this.listOfDots.length=0;
@@ -205,7 +205,7 @@ function Line(listOfDots,map){
     this.polylineObj=null;
     if (this.listOfDots.length > 1){
         var thisObj=this;
-        $.each(this.listOfDots, function(index, value){
+        django.jQuery.each(this.listOfDots, function(index, value){
             thisObj.coords.push(value.getLatLng());
         });
     this.polylineObj  = new google.maps.Polyline({
@@ -227,7 +227,7 @@ function Polygon(listOfDots,map,pen,color){
     this.parent = pen;
     this.des = 'Hello';
     var thisObj=this;
-    $.each(this.listOfDots,function(index,value){
+    django.jQuery.each(this.listOfDots,function(index,value){
         thisObj.coords.push(value.getLatLng());
     });
     this.polygonObj= new google.maps.Polygon({
@@ -281,20 +281,20 @@ function Info(polygon,map){
     this.map = map;
     this.color =  document.createElement('input');
     this.button = document.createElement('input');
-    $(this.button).attr('type','button');
-    $(this.button).val("Change Color");
+    django.jQuery(this.button).attr('type','button');
+    django.jQuery(this.button).val("Change Color");
     var thisOjb=this;
     this.changeColor= function(){
-        thisOjb.parent.setColor($(thisOjb.color).val());
+        thisOjb.parent.setColor(django.jQuery(thisOjb.color).val());
     }
     this.getContent = function(){
         var content = document.createElement('div');
-        $(this.color).val(this.parent.getColor());
-        $(this.button).click(function(){
+        django.jQuery(this.color).val(this.parent.getColor());
+        django.jQuery(this.button).click(function(){
             thisObj.changeColor();
         });
-        $(content).append(this.color);
-        $(content).append(this.button);
+        django.jQuery(content).append(this.color);
+        django.jQuery(content).append(this.button);
         return content;
     }
     thisObj=this;
@@ -336,7 +336,8 @@ function Point_string(){
     c_str+=string_append.substring(string_append,string_append.length-1)+"))";
     return c_str;
 }
-$(document).ready(function(){
+
+django.jQuery(document).ready(function(){
     django.jQuery("input[name='_save']").click(function(){
         var string = Point_string();
         django.jQuery('#id_shape').val(string);

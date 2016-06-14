@@ -1,8 +1,8 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 """The Django Views Page for master app"""
-
 import json
+import urllib2
 
 from django.core.urlresolvers import reverse
 from django.contrib.admin.views.decorators import staff_member_required
@@ -14,6 +14,9 @@ from django.views.generic.edit import FormView
 
 from master.models import Survey, CityReference
 from master.forms import SurveyCreateForm
+
+from django.views.generic.base import View
+from wkhtmltopdf.views import PDFTemplateResponse
 
 @staff_member_required
 
@@ -112,7 +115,6 @@ def survey_delete_view(survey):
     data['message'] = message
     return HttpResponseRedirect('/admin/surveymapping/')
 
-
 @csrf_exempt
 def search(request):
     """Autofill add city form fields based on City ID"""
@@ -127,3 +129,29 @@ def search(request):
         }
     return HttpResponse(json.dumps(data_dict),
                         content_type='application/json')
+
+
+class mypdfview(View):#url="http://kc.shelter-associates.org/api/v1/data/161?format=json" #url= "http://45.56.104.240:8001/api/v1/data/161?format=json"
+    url= "http://45.56.104.240:8001/api/v1/data/161?format=json"
+    req = urllib2.Request(url)
+    req.add_header('Authorization', 'OAuth2 a0028f740988d80cbe670f24a9456d655b8dd419')
+    resp = urllib2.urlopen(req)
+    content = resp.read()
+    data = json.loads(content)
+    p=data[0]
+    result=p['_attachments']
+    print type(result)
+    img ="http://45.56.104.240:8001/media/"+result[0]['filename']
+    template='report.html'
+    context= {'img':img}
+    print img
+    def get(self, request):
+        response = PDFTemplateResponse(request=request,
+                                        template=self.template,
+                                        filename="hello.pdf",
+                                        context= self.context,
+                                       show_content_in_browser=False,
+                                       cmd_options={'margin-top': 50,},
+                                       )
+        return response
+    
