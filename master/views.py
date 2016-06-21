@@ -12,7 +12,7 @@ from django.views.generic import ListView
 from django.views.decorators.csrf import csrf_exempt
 from django.views.generic.edit import FormView
 
-from master.models import Survey, CityReference
+from master.models import Survey, CityReference, Person ,RAPID_SLUM_APPRAISAL
 from master.forms import SurveyCreateForm
 
 from django.views.generic.base import View
@@ -141,9 +141,13 @@ class mypdfview(View):#url="http://kc.shelter-associates.org/api/v1/data/161?for
     p=data[0]
     result=p['_attachments']
     print type(result)
+    slumname ="PuneSlum"
+    datadict = {slumname :"PuneSlum"}
+    SurveyNumber = 1
     img ="http://45.56.104.240:8001/media/"+result[0]['filename']
     template='report.html'
-    context= {'img':img}
+    print datadict[slumname]
+    context= {'img':img,'data':data,'datadict':datadict}
     print img
     def get(self, request):
         response = PDFTemplateResponse(request=request,
@@ -154,4 +158,99 @@ class mypdfview(View):#url="http://kc.shelter-associates.org/api/v1/data/161?for
                                        cmd_options={'margin-top': 50,},
                                        )
         return response
+
+"""
+def report(request):
+    t = loader.get_template('index.html')
+    c = Context({'message': 'Hello world!'})
+    return HttpResponse(t.render(c))
     
+"""
+def report(request):
+    return HttpResponse("Hello world!")
+"""
+def insert(request):
+    # If this is a post request we insert the person
+    if request.method == 'POST':
+        p = Person(
+            name=request.POST['name'],
+            phone=request.POST['phone'],
+            age=request.POST['age']
+        )
+        p.save()
+
+    t = loader.get_template('insert.html')
+    c = RequestContext(request)
+    return HttpResponse(t.render(c))
+"""
+def delete(request, person_id):
+    p = Person.objects.get(pk=person_id)
+    p.delete()
+    return HttpResponseRedirect('/')
+    
+
+def edit(request, person_id):
+    p = Person.objects.get(pk=person_id)
+    if request.method == 'POST':
+        p.name = request.POST['name']
+        p.phone = request.POST['phone']
+        p.age = request.POST['age']
+        p.save()
+    t = loader.get_template('insert.html')
+    c = RequestContext(request, {
+        'person': p
+    })
+    return HttpResponse(t.render(c))
+"""
+def display(request):
+    P = Person.objects.all()
+    t = loader.get_template('display1.html')
+    Hello ="hello"
+    c = RequestContext(request, {'P':P})
+    return HttpResponse(t.render(c))
+"""
+
+def display(request):
+    R = RAPID_SLUM_APPRAISAL.objects.all()
+    t = loader.get_template('display2.html')
+    c = RequestContext(request, {'R':R})
+    return HttpResponse(t.render(c))
+
+
+
+def insert(request):
+    # If this is a post request we insert the person
+    if request.method == 'POST':
+        R = RAPID_SLUM_APPRAISAL(
+            Toilet_Cost=request.POST['Toilet_Cost'],
+            Toilet_seat_to_persons_ratio=request.POST['Toilet_seat_to_persons_ratio'],
+            Percentage_with_an_Individual_Water_Connection=request.POST['Percentage_with_an_Individual_Water_Connection'],
+            Frequency_of_clearance_of_waste_containers=request.POST['Frequency_of_clearance_of_waste_containers'],
+            image1=request.POST['image1'],
+            image2=request.POST['image2'],
+            image3=request.POST['image3'],
+            image4=request.POST['image4']            
+        )
+        R.save()
+
+    t = loader.get_template('insert.html')
+    c = RequestContext(request)
+    return HttpResponse('/')
+
+
+
+"""
+
+
+ Approximate_Population=models.IntegerField()
+    Toilet_Cost=models.IntegerField()
+    Toilet_seat_to_persons_ratio=models.IntegerField()
+    Percentage_with_an_Individual_Water_Connection=models.IntegerField()
+    Frequency_of_clearance_of_waste_containers=models.IntegerField()
+    image1 = models.ImageField()
+    image2 = models.ImageField()
+    image3 = models.ImageField()
+    image4 = models.ImageField()
+
+
+ """   

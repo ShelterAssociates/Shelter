@@ -250,4 +250,48 @@ class ProjectMaster(models.Model):
         """Metadata for class ProjectMaster"""
         verbose_name = 'Project Master'
         verbose_name_plural = 'Project Masters'
+
+class Report(models.Model):
+    img=models.ImageField()
+    name = models.CharField(max_length=200)
+
+class RAPID_SLUM_APPRAISAL(models.Model):
+    Approximate_Population=models.IntegerField()
+    Toilet_Cost=models.IntegerField()
+    Toilet_seat_to_persons_ratio=models.IntegerField()
+    Percentage_with_an_Individual_Water_Connection=models.IntegerField()
+    Frequency_of_clearance_of_waste_containers=models.IntegerField()
+    image1 = models.ImageField()
+    image2 = models.ImageField()
+    image3 = models.ImageField()
+    image4 = models.ImageField()
+
+class Individual_Fatsheet(models.Model):
+    Name_of_the_family_head =  models.CharField(max_length=2048)
+    Name_of_Native_village_district_and_state =  models.CharField(max_length=2048)
+    Duration_of_stay_in_the_city  =  models.CharField(max_length=2048)
+    Duration_of_stay_in_this_current_settlement  =  models.CharField(max_length=2048)
+    Type_of_house  =  models.CharField(max_length=2048)
+    Owner_or_tenant  =  models.CharField(max_length=2048)
+    Total_family_members = models.IntegerField()
+    Number_of_male_members  = models.IntegerField()
+    Number_of_female_members  = models.IntegerField()
+    Number_of_children_under_five_years_of_age = models.IntegerField()
+    Number_of_members_over_60_years_of_age = models.IntegerField()
+    Number_of_disabled_members = models.IntegerField()
+    If_yes_specify_type_of_disability = models.CharField(max_length=50)
+    Number_of_earning_members = models.IntegerField()
+    Occupations_of_earning_members = models.CharField(max_length=2048)
+    Approximate_monthly_family_income =  models.CharField(max_length=2048)
+    img = models.ImageField()
+
+
+class Person(models.Model):
+    name = models.CharField(max_length=200)
+    phone = models.CharField(max_length=15)
+    age = models.IntegerField()
+    def get_absolute_url(self):
+        return "/Person/%i/" % self.id
+    
+
             
