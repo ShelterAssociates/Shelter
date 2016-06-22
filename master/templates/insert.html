@@ -1,0 +1,56 @@
+{% extends "admin/base_site.html" %}
+{% load i18n %}
+
+{% block breadcrumbs %}
+
+
+<form method="post">
+    {% csrf_token %}
+    <label>Approximate_Population: </label>
+    <input name="Approximate_Population" value="{{RAPID_SLUM_APPRAISAL.Approximate_Population}}">
+    
+    <br>
+    <label>Toilet_Cost: </label>
+    <input name="Toilet_Cost" value="{{RAPID_SLUM_APPRAISAL.Toilet_Cost}}">
+    
+    <br>
+    <label>Toilet_seat_to_persons_ratio: </label>
+    <input name="Toilet_seat_to_persons_ratio" value="{{RAPID_SLUM_APPRAISAL.Toilet_seat_to_persons_ratio}}">
+    
+    <br>
+    <label>Percentage_with_an_Individual_Water_Connection: </label>
+    <input name="Percentage_with_an_Individual_Water_Connection" value="{{RAPID_SLUM_APPRAISAL.Percentage_with_an_Individual_Water_Connection}}">
+    <br>
+    
+    <label>Frequency_of_clearance_of_waste_containers: </label>
+    <input name="Frequency_of_clearance_of_waste_containers" value="{{RAPID_SLUM_APPRAISAL.Frequency_of_clearance_of_waste_containers}}">
+    
+    <br>
+    <label>Image1: </label>
+    <input id="Image1" type="file" name="Image1" value="{{RAPID_SLUM_APPRAISAL.Image1}}">
+
+     <br>
+    <label>Image2: </label>
+    <input id="Image2" type="file" name="Image2" value="{{RAPID_SLUM_APPRAISAL.Image2}}">
+    
+    <br>
+    <label>Image3: </label>
+    <input id="Image3" type="file" name="Image3" value="{{RAPID_SLUM_APPRAISAL.Image3}}">
+
+
+    <br>
+    <label>Image4: </label>
+    <input id="Image4" type="file" name="Image4" value="{{RAPID_SLUM_APPRAISAL.Image4}}">
+
+    <input type="hidden" name="id" value="{{RAPID_SLUM_APPRAISAL.id}}">
+    <input type="submit" value="Submit">
+</form>
+
+{% endblock %}
+
+{% block content %}
+
+{% endblock %}
+
+{% block sidebar %}
+{% endblock %}

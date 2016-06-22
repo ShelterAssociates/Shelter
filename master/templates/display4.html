@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <title>Bootstrap Example</title>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css">
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.2/jquery.min.js"></script>
+  <script src="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js"></script>
+</head>
+<body>
+
+<div class="container">
+  
+  <table class="table table-bordered" width="647">
+    
+    <thead>
+      <tr>
+
+        <th>Approximate_Population</th>
+    
+        <th> Toilet_Cost</th>
+    
+        <th>Toilet_seat_to_persons_ratio</th>
+    
+        <th> Percentage_with_an_Individual_Water_Connection</th>
+    
+        <th>Frequency_of_clearance_of_waste_containers</th>
+    
+        <th>image1 </th>
+    
+        <th>image2 </th>      
+    
+        <th>image3 </th>
+    
+        <th>image4 </th>
+    
+      </tr>
+    
+    </thead>
+
+{% for i in R%}
+
+    <tbody bgcolor='lavender'>
+     
+     <tr>
+
+     <td> <a href="http://127.0.0.1:8000/admin/edit/{{i.id }}">{{ i.Approximate_Population }} </a> </td> 
+
+     <td>   {{ i.Toilet_Cost }} <td> 
+
+     <td>    {{ i.Toilet_seat_to_persons_ratio }}  </td>
+ 
+     <td>    {{ i.Percentage_with_an_Individual_Water_Connection }}  </td> 
+ 
+     <td>    {{ i.Frequency_of_clearance_of_waste_containers }}  </td> 
+ 
+     <td>    {{ i.image1 }}  </td> 
+
+     <td>    {{ i.image2 }}  </td> 
+
+     <td>    {{ i.image3 }}  </td> 
+
+     <td>    {{ i.image4 }}  </td>
+     
+    </tr>
+
+    </tbody>
+
+ {% endfor %}
+   
+  </table>
+</div>
+
+</body>
+
+</html>
+
+
+
+

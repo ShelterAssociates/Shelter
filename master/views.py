@@ -188,7 +188,7 @@ def delete(request, person_id):
     p.delete()
     return HttpResponseRedirect('/')
     
-
+"""
 def edit(request, person_id):
     p = Person.objects.get(pk=person_id)
     if request.method == 'POST':
@@ -202,6 +202,7 @@ def edit(request, person_id):
     })
     return HttpResponse(t.render(c))
 """
+"""
 def display(request):
     P = Person.objects.all()
     t = loader.get_template('display1.html')
@@ -212,45 +213,48 @@ def display(request):
 
 def display(request):
     R = RAPID_SLUM_APPRAISAL.objects.all()
-    t = loader.get_template('display2.html')
+    t = loader.get_template('display4.html')
     c = RequestContext(request, {'R':R})
     return HttpResponse(t.render(c))
 
 
 
 def insert(request):
-    # If this is a post request we insert the person
+    print request
     if request.method == 'POST':
+        print "Hello"
         R = RAPID_SLUM_APPRAISAL(
-            Toilet_Cost=request.POST['Toilet_Cost'],
+            Approximate_Population= request.POST['Approximate_Population'],
+            Toilet_Cost=request.POST['Toilet_Cost'],            
             Toilet_seat_to_persons_ratio=request.POST['Toilet_seat_to_persons_ratio'],
             Percentage_with_an_Individual_Water_Connection=request.POST['Percentage_with_an_Individual_Water_Connection'],
             Frequency_of_clearance_of_waste_containers=request.POST['Frequency_of_clearance_of_waste_containers'],
-            image1=request.POST['image1'],
-            image2=request.POST['image2'],
-            image3=request.POST['image3'],
-            image4=request.POST['image4']            
+            image1=request.POST['Image1'],
+            image2=request.POST['Image2'],
+            image3=request.POST['Image3'],
+            image4=request.POST['Image4']            
         )
         R.save()
-
     t = loader.get_template('insert.html')
     c = RequestContext(request)
-    return HttpResponse('/')
+    return HttpResponseRedirect(t.render(c))
 
 
-
-"""
-
-
- Approximate_Population=models.IntegerField()
-    Toilet_Cost=models.IntegerField()
-    Toilet_seat_to_persons_ratio=models.IntegerField()
-    Percentage_with_an_Individual_Water_Connection=models.IntegerField()
-    Frequency_of_clearance_of_waste_containers=models.IntegerField()
-    image1 = models.ImageField()
-    image2 = models.ImageField()
-    image3 = models.ImageField()
-    image4 = models.ImageField()
-
-
- """   
+def edit(request,RAPID_SLUM_APPRAISAL_id):
+    R = RAPID_SLUM_APPRAISAL.objects.get(pk=RAPID_SLUM_APPRAISAL_id)
+    if request.method == 'POST':
+        Approximate_Population= request.POST['Approximate_Population']
+        Toilet_Cost=request.POST['Toilet_Cost']           
+        Toilet_seat_to_persons_ratio=request.POST['Toilet_seat_to_persons_ratio']
+        Percentage_with_an_Individual_Water_Connection=request.POST['Percentage_with_an_Individual_Water_Connection']
+        Frequency_of_clearance_of_waste_containers=request.POST['Frequency_of_clearance_of_waste_containers']
+        image1=request.POST['Image1']
+        image2=request.POST['Image2']
+        image3=request.POST['Image3']
+        image4=request.POST['Image4']            
+        R.save()
+    t = loader.get_template('insert.html')
+    c = RequestContext(request, {
+        'RAPID_SLUM_APPRAISAL': R
+    })
+    return HttpResponseRedirect(t.render(c))
