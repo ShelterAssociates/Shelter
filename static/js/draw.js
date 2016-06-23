@@ -1,7 +1,6 @@
 var PointArray=[];
 var map;
 var creator;
-var ShapeValue;
 var PolygonPoints=[];
 var Poly;
 var curLatLng=[];
@@ -19,7 +18,7 @@ function initialise(){
 
     map = new google.maps.Map(document.getElementById('main-map'), myOptions);
     creator = new PolygonCreator(map);
-    ShapeValue=django.jQuery('#id_shape').val();
+    var ShapeValue=django.jQuery('#id_shape').val();
     if(ShapeValue!="None")
     {
         flag = 1;
