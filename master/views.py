@@ -12,11 +12,12 @@ from django.views.generic import ListView
 from django.views.decorators.csrf import csrf_exempt
 from django.views.generic.edit import FormView
 
-from master.models import Survey, CityReference, Person ,RAPID_SLUM_APPRAISAL
-from master.forms import SurveyCreateForm
+from master.models import Survey, CityReference, Rapid_Slum_Appresal, Slum
+from master.forms import SurveyCreateForm, Rapid_Slum_AppresalForm
 
 from django.views.generic.base import View
 from wkhtmltopdf.views import PDFTemplateResponse
+from django.shortcuts import render
 
 @staff_member_required
 
@@ -159,60 +160,15 @@ class mypdfview(View):#url="http://kc.shelter-associates.org/api/v1/data/161?for
                                        )
         return response
 
-"""
-def report(request):
-    t = loader.get_template('index.html')
-    c = Context({'message': 'Hello world!'})
-    return HttpResponse(t.render(c))
-    
-"""
-def report(request):
-    return HttpResponse("Hello world!")
-"""
-def insert(request):
-    # If this is a post request we insert the person
-    if request.method == 'POST':
-        p = Person(
-            name=request.POST['name'],
-            phone=request.POST['phone'],
-            age=request.POST['age']
-        )
-        p.save()
 
-    t = loader.get_template('insert.html')
-    c = RequestContext(request)
-    return HttpResponse(t.render(c))
-"""
 def delete(request, person_id):
     p = Person.objects.get(pk=person_id)
     p.delete()
     return HttpResponseRedirect('/')
     
-"""
-def edit(request, person_id):
-    p = Person.objects.get(pk=person_id)
-    if request.method == 'POST':
-        p.name = request.POST['name']
-        p.phone = request.POST['phone']
-        p.age = request.POST['age']
-        p.save()
-    t = loader.get_template('insert.html')
-    c = RequestContext(request, {
-        'person': p
-    })
-    return HttpResponse(t.render(c))
-"""
-"""
-def display(request):
-    P = Person.objects.all()
-    t = loader.get_template('display1.html')
-    Hello ="hello"
-    c = RequestContext(request, {'P':P})
-    return HttpResponse(t.render(c))
-"""
 
 def display(request):
-    R = RAPID_SLUM_APPRAISAL.objects.all()
+    R = Rapid_Slum_Appresal.objects.all()
     t = loader.get_template('display4.html')
     c = RequestContext(request, {'R':R})
     return HttpResponse(t.render(c))
@@ -222,13 +178,13 @@ def display(request):
 def insert(request):
     print request
     if request.method == 'POST':
-        print "Hello"
-        R = RAPID_SLUM_APPRAISAL(
-            Approximate_Population= request.POST['Approximate_Population'],
-            Toilet_Cost=request.POST['Toilet_Cost'],            
-            Toilet_seat_to_persons_ratio=request.POST['Toilet_seat_to_persons_ratio'],
-            Percentage_with_an_Individual_Water_Connection=request.POST['Percentage_with_an_Individual_Water_Connection'],
-            Frequency_of_clearance_of_waste_containers=request.POST['Frequency_of_clearance_of_waste_containers'],
+        R = Rapid_Slum_Appresal(
+            slum_name = request.POST['slum_name'],
+            approximate_population= request.POST['approximate_population'],
+            toilet_cost=request.POST['toilet_cost'],            
+            toilet_seat_to_persons_ratio = request.POST['toilet_seat_to_persons_ratio'],
+            percentage_with_an_individual_water_connection = request.POST['percentage_with_an_individual_water_connection'],
+            frequency_of_clearance_of_waste_containers = request.POST['frequency_of_clearance_of_waste_containers'],
             image1=request.POST['Image1'],
             image2=request.POST['Image2'],
             image3=request.POST['Image3'],
@@ -240,21 +196,93 @@ def insert(request):
     return HttpResponse(t.render(c))
 
 
-def edit(request,RAPID_SLUM_APPRAISAL_id):
-    R = RAPID_SLUM_APPRAISAL.objects.get(pk=RAPID_SLUM_APPRAISAL_id)
+def edit(request,Rapid_Slum_Appresal_id):
+    form = Rapid_Slum_AppresalForm()
+    R = Rapid_Slum_Appresal.objects.get(pk=Rapid_Slum_Appresal_id)
+    Slumref = Slum.objects.get(id=2)
     if request.method == 'POST':
-        Approximate_Population= request.POST['Approximate_Population']
-        Toilet_Cost=request.POST['Toilet_Cost']           
-        Toilet_seat_to_persons_ratio=request.POST['Toilet_seat_to_persons_ratio']
-        Percentage_with_an_Individual_Water_Connection=request.POST['Percentage_with_an_Individual_Water_Connection']
-        Frequency_of_clearance_of_waste_containers=request.POST['Frequency_of_clearance_of_waste_containers']
+        slum_name = Slumref
+        approximate_population= request.POST['approximate_population']
+        toilet_cost=request.POST['toilet_cost']           
+        toilet_seat_to_persons_ratio = request.POST['toilet_seat_to_persons_ratio']
+        percentage_with_an_individual_water_connection = request.POST['percentage_with_an_individual_water_connection']
+        frequency_of_clearance_of_waste_containers = request.POST['frequency_of_clearance_of_waste_containers']
         image1=request.POST['Image1']
         image2=request.POST['Image2']
         image3=request.POST['Image3']
-        image4=request.POST['Image4']            
+        image4=request.POST['Image4']  
+        R.save()
+    return render(request, '1.html', {'form': form})
+
+
+
+
+
+"""
+def edit(request,Rapid_Slum_Appresal_id):
+    R = Rapid_Slum_Appresal.objects.get(pk=Rapid_Slum_Appresal_id)
+    if request.method == 'POST':
+        slum_name = request.POST['slum_name']
+        approximate_population= request.POST['approximate_population']
+        toilet_cost=request.POST['toilet_cost']           
+        toilet_seat_to_persons_ratio = request.POST['toilet_seat_to_persons_ratio']
+        percentage_with_an_individual_water_connection = request.POST['percentage_with_an_individual_water_connection']
+        frequency_of_clearance_of_waste_containers = request.POST['frequency_of_clearance_of_waste_containers']
+        image1=request.POST['Image1']
+        image2=request.POST['Image2']
+        image3=request.POST['Image3']
+        image4=request.POST['Image4']  
         R.save()
     t = loader.get_template('insert.html')
     c = RequestContext(request, {
-        'RAPID_SLUM_APPRAISAL': R
+        'Rapid_Slum_Appresal': R
     })
     return HttpResponse(t.render(c))
+"""
+
+
+
+
+
+"""
+def ins(request):
+    if request.method == 'POST':
+        form = Rapid_Slum_AppresalForm(request.POST)
+        if form.is_valid():
+            return HttpResponseRedirect('/')
+    else:
+        form = Rapid_Slum_AppresalForm()
+
+    return render(request, '1.html', {'form': form})
+
+"""
+
+def ins(request):
+    print "Form"
+    form = Rapid_Slum_AppresalForm()
+    Slumref = Slum.objects.get(id=2)
+    print "Slumref"#print request.POST#print request.POST['toilet_seat_to_persons_ratio']
+    print Slumref
+    if request.method == 'POST':
+        R = Rapid_Slum_Appresal(
+            slum_name = Slumref ,
+            approximate_population= request.POST['approximate_population'],
+            toilet_cost=request.POST['toilet_cost'],            
+            toilet_seat_to_persons_ratio = request.POST['toilet_seat_to_persons_ratio'],
+            percentage_with_an_individual_water_connection = request.POST['percentage_with_an_individual_water_connection'],
+            frequency_of_clearance_of_waste_containers = request.POST['frequency_of_clearance_of_waste_containers'],
+            image1=request.POST['image1'],
+            image2=request.POST['image2'],
+            image3=request.POST['image3'],
+            image4=request.POST['image4']            
+        )
+        R.save()
+
+    return render(request, '1.html', {'form': form})
+
+
+class RapidSlumAppresalView(FormView):
+    print FormView
+    """Renders the RapidSlumAppresal template in browser"""
+    template_name = '2.html'
+    form_class = Rapid_Slum_AppresalForm

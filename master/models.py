@@ -251,16 +251,14 @@ class ProjectMaster(models.Model):
         verbose_name = 'Project Master'
         verbose_name_plural = 'Project Masters'
 
-class Report(models.Model):
-    img=models.ImageField()
-    name = models.CharField(max_length=200)
 
-class RAPID_SLUM_APPRAISAL(models.Model):
-    Approximate_Population=models.IntegerField()
-    Toilet_Cost=models.IntegerField()
-    Toilet_seat_to_persons_ratio=models.IntegerField()
-    Percentage_with_an_Individual_Water_Connection=models.IntegerField()
-    Frequency_of_clearance_of_waste_containers=models.IntegerField()
+class Rapid_Slum_Appresal(models.Model):
+    slum_name = models.ForeignKey(Slum)
+    approximate_population=models.IntegerField()
+    toilet_cost=models.IntegerField()
+    toilet_seat_to_persons_ratio = models.IntegerField()
+    percentage_with_an_individual_water_connection = models.IntegerField()
+    frequency_of_clearance_of_waste_containers=models.IntegerField()
     image1 = models.ImageField()
     image2 = models.ImageField()
     image3 = models.ImageField()
@@ -285,13 +283,5 @@ class Individual_Fatsheet(models.Model):
     Approximate_monthly_family_income =  models.CharField(max_length=2048)
     img = models.ImageField()
 
-
-class Person(models.Model):
-    name = models.CharField(max_length=200)
-    phone = models.CharField(max_length=15)
-    age = models.IntegerField()
-    def get_absolute_url(self):
-        return "/Person/%i/" % self.id
-    
-
+ 
             

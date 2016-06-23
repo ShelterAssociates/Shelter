@@ -8,7 +8,7 @@ import json
 from django import forms
 from django.conf import settings
 
-from master.models import Survey, City
+from master.models import Survey, City  ,Rapid_Slum_Appresal
 from django.utils.safestring import mark_safe
 from django.template.loader import render_to_string
 from django.forms import widgets
@@ -108,4 +108,22 @@ class CityFrom(forms.ModelForm):
         fields = ('name', 'shape', 'state_code', 'district_code', 'city_code')
         exclude = ('created_by', 'created_on')
 
+
+
+class Rapid_Slum_AppresalForm(forms.ModelForm):
+    class Meta:
+        model = Rapid_Slum_Appresal
+        fields = (
+        'slum_name' 
+    ,'approximate_population'
+    ,'toilet_cost'
+    ,'toilet_seat_to_persons_ratio'
+    ,'percentage_with_an_individual_water_connection' 
+    ,'frequency_of_clearance_of_waste_containers'
+    ,'image1' 
+    ,'image2'
+    ,'image3' 
+    ,'image4') 
         
+
+

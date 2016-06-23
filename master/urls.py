@@ -21,9 +21,12 @@ from django.contrib import admin
 from wkhtmltopdf.views import PDFTemplateView
 from django.views.generic.base import View
 from master.views import index, SurveyListView, SurveyCreateView, \
-    survey_delete_view, search ,mypdfview, report ,insert, delete , edit, display
+    survey_delete_view, search ,mypdfview,insert, delete , edit, display, ins, RapidSlumAppresalView
+
 
 from wkhtmltopdf.views import PDFTemplateView
+from django.conf import settings
+from django.conf.urls.static import static
     
 
 admin.autodiscover()
@@ -43,13 +46,16 @@ urlpatterns = [
         name='survey-update'),
     url(r'^search/$', search, name="search"),
     url(r'^mypdfview/', mypdfview.as_view()), 
-    url(r'^report/$', report, name="report"), 
     url(r'^insert/$', insert, name='insert'),
-    url(r'^delete/(?P<RAPID_SLUM_APPRAISAL_id>\d+)$', delete, name='delete'),
-    url(r'^edit/(?P<RAPID_SLUM_APPRAISAL_id>\d+)$', edit, name='edit'),
-    url(r'^display/$', display, name='display')
+    url(r'^delete/(?P<Rapid_Slum_Appresal_id>\d+)$', delete, name='delete'),
+    url(r'^edit/(?P<Rapid_Slum_Appresal_id>\d+)$', edit, name='edit'),
+    url(r'^display/$', display, name='display'),
+    url(r'^ins/$', ins, name='ins'),
 
+    url(r'^RapidSlumAppresalView/$', RapidSlumAppresalView.as_view(),name='RapidSlumAppresalView'),
 ]
+ 
+# + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 
 
             
