@@ -321,4 +321,4 @@ django.jQuery(document).ready(function(){
         django.jQuery('#id_shape').val(string);
         django.jQuery('#id_shape').text(string);
     });
-});s
+});

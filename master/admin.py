@@ -88,4 +88,5 @@ class CityAdmin(admin.ModelAdmin):
     def save_model(self, request, obj, form, change):
         obj.created_by = request.user
         obj.save()
+
 admin.site.register(City, CityAdmin)

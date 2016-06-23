@@ -16,7 +16,6 @@ from django.forms import widgets
 
 SURVEY_LIST = []
 
-
 class SurveyCreateForm(forms.ModelForm):
     """Create a new survey"""
 
@@ -91,14 +90,12 @@ def get_kobo_id_list():
 
     return temp_arr
 
-
 class LocationWidget(widgets.TextInput):
     """Map Widget"""
     template_name = 'draw.html'
     def render(self, name, value, attrs=None):
         context = {'POLYGON':value}
         return mark_safe(render_to_string(self.template_name, context))
-
 
 class CityFrom(forms.ModelForm):
     """City Form"""
@@ -107,5 +104,3 @@ class CityFrom(forms.ModelForm):
         model = City
         fields = ('name', 'shape', 'state_code', 'district_code', 'city_code')
         exclude = ('created_by', 'created_on')
-
-        

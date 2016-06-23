@@ -18,13 +18,9 @@ Including another URLconf
 
 from django.conf.urls import include, url
 from django.contrib import admin
-from wkhtmltopdf.views import PDFTemplateView
-from django.views.generic.base import View
 from master.views import index, SurveyListView, SurveyCreateView, \
-    survey_delete_view, search ,mypdfview
-from wkhtmltopdf.views import PDFTemplateView
+    survey_delete_view, search
     
-
 admin.autodiscover()
 
 urlpatterns = [
@@ -41,7 +37,6 @@ urlpatterns = [
     url(r'Survey/(?P<survey>[0-9]+)/$', SurveyCreateView.as_view(),
         name='survey-update'),
     url(r'^search/$', search, name="search"),
-    url(r'^mypdfview/', mypdfview.as_view()),  
 ]
 
 
