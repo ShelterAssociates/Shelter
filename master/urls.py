@@ -45,8 +45,8 @@ urlpatterns = [
     url(r'^mypdfview/', mypdfview.as_view()), 
     url(r'^report/$', report, name="report"), 
     url(r'^insert/$', insert, name='insert'),
-    url(r'^delete/(?P<person_id>\d+)$', delete, name='delete'),
-    url(r'^edit/(?P<person_id>\d+)$', edit, name='edit'),
+    url(r'^delete/(?P<RAPID_SLUM_APPRAISAL_id>\d+)$', delete, name='delete'),
+    url(r'^edit/(?P<RAPID_SLUM_APPRAISAL_id>\d+)$', edit, name='edit'),
     url(r'^display/$', display, name='display')
 
 ]

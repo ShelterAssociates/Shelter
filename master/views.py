@@ -237,7 +237,7 @@ def insert(request):
         R.save()
     t = loader.get_template('insert.html')
     c = RequestContext(request)
-    return HttpResponseRedirect(t.render(c))
+    return HttpResponse(t.render(c))
 
 
 def edit(request,RAPID_SLUM_APPRAISAL_id):
@@ -257,4 +257,4 @@ def edit(request,RAPID_SLUM_APPRAISAL_id):
     c = RequestContext(request, {
         'RAPID_SLUM_APPRAISAL': R
     })
-    return HttpResponseRedirect(t.render(c))
+    return HttpResponse(t.render(c))
