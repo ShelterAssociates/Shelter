@@ -165,7 +165,6 @@ def delete(request, person_id):
     p = Person.objects.get(pk=person_id)
     p.delete()
     return HttpResponseRedirect('/')
-    
 
 def display(request):
     R = Rapid_Slum_Appresal.objects.all()
@@ -175,198 +174,23 @@ def display(request):
     c = RequestContext(request, {'R':R})
     return HttpResponse(t.render(c))
 
-
-"""
-def insert(request):
-    print request
-    if request.method == 'POST':
-        R = Rapid_Slum_Appresal(
-            slum_name = request.POST['slum_name'],
-            approximate_population= request.POST['approximate_population'],
-            toilet_cost=request.POST['toilet_cost'],            
-            toilet_seat_to_persons_ratio = request.POST['toilet_seat_to_persons_ratio'],
-            percentage_with_an_individual_water_connection = request.POST['percentage_with_an_individual_water_connection'],
-            frequency_of_clearance_of_waste_containers = request.POST['frequency_of_clearance_of_waste_containers'],
-            image1=request.POST['Image1'],
-            image2=request.POST['Image2'],
-            image3=request.POST['Image3'],
-            image4=request.POST['Image4']            
-        )
-        R.save()
-    t = loader.get_template('insert.html')
-    c = RequestContext(request)
-    return HttpResponse(t.render(c))
-"""
-
-"""
-
-def edit(request,Rapid_Slum_Appresal_id):
-    R = Rapid_Slum_Appresal.objects.get(pk=Rapid_Slum_Appresal_id)
-    form = Rapid_Slum_AppresalForm()
-    print type(form)
-    print R.slum_name
-    print R.approximate_population
-    print R.toilet_cost
-    print R.toilet_seat_to_persons_ratio
-    print R.percentage_with_an_individual_water_connection
-    print R.frequency_of_clearance_of_waste_containers
-    print R.image1
-    print R.image2
-    print R.image3
-    print R.image4
-    
-    if request.method == 'POST':
-        slum_name = Slumref
-        approximate_population= request.POST['approximate_population']
-        toilet_cost=request.POST['toilet_cost']           
-        toilet_seat_to_persons_ratio = request.POST['toilet_seat_to_persons_ratio']
-        percentage_with_an_individual_water_connection = request.POST['percentage_with_an_individual_water_connection']
-        frequency_of_clearance_of_waste_containers = request.POST['frequency_of_clearance_of_waste_containers']
-        image1=request.POST['Image1']
-        image2=request.POST['Image2']
-        image3=request.POST['Image3']
-        image4=request.POST['Image4']  
-        R.save()
-
-    if request.method=='GET':
-        slum_name = R.slum_name
-        approximate_population= R.approximate_population
-        toilet_cost= R.toilet_cost           
-        toilet_seat_to_persons_ratio = R.toilet_seat_to_persons_ratio
-        percentage_with_an_individual_water_connection = R.percentage_with_an_individual_water_connection
-        frequency_of_clearance_of_waste_containers = R.frequency_of_clearance_of_waste_containers
-        image1 = R.image1
-        image2 = R.image2
-        image3 = R.image3
-        image4 = R.image4  
-    
-    return render(request, '1.html', {'form': form}) 
-
-"""
-"""
-
-    t = loader.get_template('insert.html')
-    c = RequestContext(request, {
-        'Rapid_Slum_Appresal': R
-    })
-
-    return HttpResponse(t.render(c))
-
-    """
-
-"""
-def edit(request,Rapid_Slum_Appresal_id):
-    R = Rapid_Slum_Appresal.objects.get(pk=Rapid_Slum_Appresal_id)#Slumref= Slum.objects.get(id=R.slum_name)
-    if request.method == 'POST':
-        slum_name =  Slum.objects.get(id=request.POST['slum_name']),
-        approximate_population= request.POST['approximate_population']
-        toilet_cost=request.POST['toilet_cost']           
-        toilet_seat_to_persons_ratio = request.POST['toilet_seat_to_persons_ratio']
-        percentage_with_an_individual_water_connection = request.POST['percentage_with_an_individual_water_connection']
-        frequency_of_clearance_of_waste_containers = request.POST['frequency_of_clearance_of_waste_containers']
-        image1=request.POST['Image1']
-        image2=request.POST['Image2']
-        image3=request.POST['Image3']
-        image4=request.POST['Image4']  
-        R.save()
-    t = loader.get_template('insert.html')
-    c = RequestContext(request, {
-        'Rapid_Slum_Appresal': R
-    })
-    return HttpResponse(t.render(c))
-"""
-
-
-"""
-def ins(request):
-    if request.method == 'POST':
-        form = Rapid_Slum_AppresalForm(request.POST)
-        if form.is_valid():
-            return HttpResponseRedirect('/')
-    else:
-        form = Rapid_Slum_AppresalForm()
-
-    return render(request, '1.html', {'form': form})
-
-"""
-
-def ins(request):
-    form = Rapid_Slum_AppresalForm()
-    print request.POST #Slumref = Slum.objects.get(id=request.POST['slum_name'])
-    if request.method == 'POST':
-        R = Rapid_Slum_Appresal(
-            slum_name = Slum.objects.get(id=request.POST['slum_name']),
-            approximate_population= request.POST['approximate_population'],
-            toilet_cost=request.POST['toilet_cost'],            
-            toilet_seat_to_persons_ratio = request.POST['toilet_seat_to_persons_ratio'],
-            percentage_with_an_individual_water_connection = request.POST['percentage_with_an_individual_water_connection'],
-            frequency_of_clearance_of_waste_containers = request.POST['frequency_of_clearance_of_waste_containers'],
-            image1=request.POST['image1'],
-            image2=request.POST['image2'],
-            image3=request.POST['image3'],
-            image4=request.POST['image4']            
-        )
-        R.save()
-    return render(request, '2_boot.html', {'form': form})
-
-
-class RapidSlumAppresalView(FormView):
-    print FormView
-    template_name = '2.html'
-    form_class = Rapid_Slum_AppresalForm
-
-
-
-
-
-
-from django.shortcuts import render, redirect
-from django.views.generic.base import View
-
-
-
-class ClassBasedView(View):
-    def get(self, request,Rapid_Slum_Appresal_id):
-        print self
-        R = Rapid_Slum_Appresal.objects.get(pk=Rapid_Slum_Appresal_id)#Slumref= Slum.objects.get(id=R.slum_name) 
-        form = Rapid_Slum_AppresalForm(instance= R)
-        context = {'form': form}
-        return render(request, '3.html', context)
-
-    def post(self, request):
-        form = Rapid_Slum_AppresalForm()
-        Slumref = Slum.objects.get(id=request.POST['slum_name'])
-        form = Rapid_Slum_AppresalForm()
-        R = Rapid_Slum_Appresal(
-            slum_name = Slumref ,
-            approximate_population= request.POST['approximate_population'],
-            toilet_cost=request.POST['toilet_cost'],            
-            toilet_seat_to_persons_ratio = request.POST['toilet_seat_to_persons_ratio'],
-            percentage_with_an_individual_water_connection = request.POST['percentage_with_an_individual_water_connection'],
-            frequency_of_clearance_of_waste_containers = request.POST['frequency_of_clearance_of_waste_containers'],
-            image1=request.POST['image1'],
-            image2=request.POST['image2'],
-            image3=request.POST['image3'],
-            image4=request.POST['image4']            
-        )
-        R.save()
-        return HttpResponse('done')
-
 def edit(request,Rapid_Slum_Appresal_id):
     R = Rapid_Slum_Appresal.objects.get(pk=Rapid_Slum_Appresal_id)#Slumref= Slum.objects.get(id=R.slum_name) 
     form = Rapid_Slum_AppresalForm(instance= R)
     if request.method == 'POST':
-        print request.POST
-        slum_name =  Slum.objects.get(id=request.POST['slum_name']),
-        approximate_population= request.POST['approximate_population']
-        toilet_cost=request.POST['toilet_cost']           
-        toilet_seat_to_persons_ratio = request.POST['toilet_seat_to_persons_ratio']
-        percentage_with_an_individual_water_connection = request.POST['percentage_with_an_individual_water_connection']
-        frequency_of_clearance_of_waste_containers = request.POST['frequency_of_clearance_of_waste_containers']
-        image1=request.POST['image1']
-        image2=request.POST['image2']
-        image3=request.POST['image3']
-        image4=request.POST['image4']  
-        R.save()
+        form.save()
     return render(request, '3.html', {'form': form})
 
+def insert(request):
+    if request.method == 'POST':
+        form = Rapid_Slum_AppresalForm(request.POST,request.FILES)
+        a =form.is_valid()
+        print a
+        if a is True:
+            print "form is saved"
+            form.save()
+        else:
+            print form.errors    
+    else:
+        form = Rapid_Slum_AppresalForm()        
+    return render(request, 'boot_6.html', {'form': form})

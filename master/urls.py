@@ -21,18 +21,13 @@ from django.contrib import admin
 from wkhtmltopdf.views import PDFTemplateView
 from django.views.generic.base import View
 from master.views import index, SurveyListView, SurveyCreateView, \
-    survey_delete_view, search ,mypdfview, delete , edit, display, ins, RapidSlumAppresalView
+    survey_delete_view, search ,mypdfview, delete, edit, display, insert
 
 
 from wkhtmltopdf.views import PDFTemplateView
 from django.conf import settings
 from django.conf.urls.static import static
     
-
-
-
-from master.views import ClassBasedView    
-
 admin.autodiscover()
 
 urlpatterns = [
@@ -50,19 +45,10 @@ urlpatterns = [
         name='survey-update'),
     url(r'^search/$', search, name="search"),
     url(r'^mypdfview/', mypdfview.as_view()), 
-    #url(r'^insert/$', insert, name='insert'),
     url(r'^delete/(?P<Rapid_Slum_Appresal_id>\d+)$', delete, name='delete'),
     url(r'^edit/(?P<Rapid_Slum_Appresal_id>\d+)$', edit, name='edit'),
     url(r'^display/$', display, name='display'),
-    url(r'^ins/$', ins, name='ins'),
-
-    url(r'^RapidSlumAppresalView/$', RapidSlumAppresalView.as_view(),name='RapidSlumAppresalView'),
-
-    url(r'^cbv/$', ClassBasedView.as_view(), name='cbv'),
-
-    url(r'^cbv/(?P<Rapid_Slum_Appresal_id>\d+)$', ClassBasedView.as_view(), name='cbv'),
-
-
+    url(r'^insert/$', insert, name='insert'),
 ]
  
 
