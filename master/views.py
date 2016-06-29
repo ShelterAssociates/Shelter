@@ -12,8 +12,8 @@ from django.views.generic import ListView
 from django.views.decorators.csrf import csrf_exempt
 from django.views.generic.edit import FormView
 
-from master.models import Survey, CityReference, Rapid_Slum_Appresal, Slum
-from master.forms import SurveyCreateForm, Rapid_Slum_AppresalForm
+from master.models import Survey, CityReference, Rapid_Slum_Appraisal, Slum
+from master.forms import SurveyCreateForm, Rapid_Slum_AppraisalForm
 
 from django.views.generic.base import View
 from wkhtmltopdf.views import PDFTemplateResponse
@@ -161,36 +161,38 @@ class mypdfview(View):#url="http://kc.shelter-associates.org/api/v1/data/161?for
         return response
 
 
-def delete(request, person_id):
-    p = Person.objects.get(pk=person_id)
-    p.delete()
-    return HttpResponseRedirect('/')
+def delete(request, Rapid_Slum_Appraisal_id):
+    R = Rapid_Slum_Appraisal.objects.get(pk=Rapid_Slum_Appraisal_id)
+    form = Rapid_Slum_AppraisalForm(instance= R)
+    if request.method == 'POST':
+        R.delete()
+        return HttpResponseRedirect('/admin/display')
+    return render(request, 'delete.html', {'form': form})
 
 def display(request):
-    R = Rapid_Slum_Appresal.objects.all()
+    R = Rapid_Slum_Appraisal.objects.all()
     for i in R:
         print i.approximate_population
     t = loader.get_template('display4.html')
     c = RequestContext(request, {'R':R})
     return HttpResponse(t.render(c))
 
-def edit(request,Rapid_Slum_Appresal_id):
-    R = Rapid_Slum_Appresal.objects.get(pk=Rapid_Slum_Appresal_id)#Slumref= Slum.objects.get(id=R.slum_name) 
-    form = Rapid_Slum_AppresalForm(instance= R)
+def edit(request,Rapid_Slum_Appraisal_id):
+    R = Rapid_Slum_Appraisal.objects.get(pk=Rapid_Slum_Appraisal_id)
+    form = Rapid_Slum_AppraisalForm(instance= R)
     if request.method == 'POST':
         form.save()
-    return render(request, '3.html', {'form': form})
+        return HttpResponseRedirect('/admin/display')
+    return render(request, 'edit.html', {'form': form})
 
 def insert(request):
     if request.method == 'POST':
-        form = Rapid_Slum_AppresalForm(request.POST,request.FILES)
-        a =form.is_valid()
-        print a
-        if a is True:
-            print "form is saved"
+        form = Rapid_Slum_AppraisalForm(request.POST,request.FILES)
+        if form.is_valid():
             form.save()
+            return HttpResponseRedirect('/admin/display')
         else:
             print form.errors    
     else:
-        form = Rapid_Slum_AppresalForm()        
-    return render(request, 'boot_6.html', {'form': form})
+        form = Rapid_Slum_AppraisalForm()        
+    return render(request, 'insert.html', {'form': form})
