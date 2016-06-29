@@ -45,8 +45,8 @@ urlpatterns = [
         name='survey-update'),
     url(r'^search/$', search, name="search"),
     url(r'^mypdfview/', mypdfview.as_view()), 
-    url(r'^delete/(?P<Rapid_Slum_Appresal_id>\d+)$', delete, name='delete'),
-    url(r'^edit/(?P<Rapid_Slum_Appresal_id>\d+)$', edit, name='edit'),
+    url(r'^delete/(?P<Rapid_Slum_Appraisal_id>\d+)$', delete, name='delete'),
+    url(r'^edit/(?P<Rapid_Slum_Appraisal_id>\d+)$', edit, name='edit'),
     url(r'^display/$', display, name='display'),
     url(r'^insert/$', insert, name='insert'),
 ]
