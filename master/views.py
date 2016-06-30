@@ -17,9 +17,9 @@ from master.forms import SurveyCreateForm, Rapid_Slum_AppraisalForm
 
 from django.views.generic.base import View
 from django.shortcuts import render
+from django.core.paginator import Paginator, PageNotAnInteger
 
 @staff_member_required
-
 def index(request):
     """Renders the index template in browser"""
     template = loader.get_template('index.html')
@@ -173,10 +173,17 @@ def display(request):
         for i in deleteList:
             R = Rapid_Slum_Appraisal.objects.get(pk=i)
             R.delete()             
+    
     R = Rapid_Slum_Appraisal.objects.all()
-    t = loader.get_template('display5.html')
-    c = RequestContext(request, {'R':R})
-    return HttpResponse(t.render(c))
+    paginator = Paginator(R, 1) # Show 25 contacts per page
+    page = request.GET.get('page')
+    try:
+        RA = paginator.page(page)
+    except PageNotAnInteger:# If page is not an integer, deliver first page.
+        RA = paginator.page(1)
+    except EmptyPage:# If page is out of range (e.g. 9999), deliver last page of results.
+        RA = paginator.page(paginator.num_pages)        
+    return render(request, 'display5.html',{'R':R,'RA':RA})
 
 def edit(request,Rapid_Slum_Appraisal_id):
     if request.method == 'POST':
@@ -227,3 +234,19 @@ def edit(request,Rapid_Slum_Appraisal_id):
         form = Rapid_Slum_AppraisalForm(instance= R)
     return render(request, 'edit.html', {'form': form})
     """
+
+def listing(request):
+    R = Rapid_Slum_Appraisal.objects.all()
+    paginator = Paginator(R, 10) # Show 25 contacts per page
+    page = request.GET.get('page')
+    try:
+        contacts = paginator.page(page)
+    except PageNotAnInteger:
+        # If page is not an integer, deliver first page.
+        contacts = paginator.page(1)
+    except EmptyPage:
+        # If page is out of range (e.g. 9999), deliver last page of results.
+        contacts = paginator.page(paginator.num_pages)
+
+    return render(request, 'list.html', {'contacts': contacts})
+
