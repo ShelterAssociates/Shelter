@@ -123,8 +123,7 @@ class Rapid_Slum_AppraisalForm(forms.ModelForm):
     class Meta:
         model = Rapid_Slum_Appraisal
         fields = '__all__'
-
-        
+ 
 """
     def clean_general_info_left_image(self):
         image = self.cleaned_data.get('general_info_left_image')

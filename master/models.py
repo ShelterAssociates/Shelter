@@ -6,6 +6,7 @@ import datetime
 
 from django.contrib.gis.db import models
 from django.contrib.auth.models import User
+from django.core.exceptions import ValidationError
 
 class CityReference(models.Model):
     """Worldwide City Database"""
@@ -253,19 +254,25 @@ class ProjectMaster(models.Model):
 
 
 class Rapid_Slum_Appraisal(models.Model):
+    def validate_image(fieldfile_obj):
+        filesize = fieldfile_obj.file.size
+        megabyte_limit = 3.0
+        if filesize > megabyte_limit*1024*1024:
+            raise ValidationError("Max file size is %sMB" % str(megabyte_limit))     
+
     slum_name = models.ForeignKey(Slum)
     approximate_population=models.IntegerField()
     toilet_cost=models.IntegerField()
     toilet_seat_to_persons_ratio = models.IntegerField()
     percentage_with_an_individual_water_connection = models.IntegerField()
     frequency_of_clearance_of_waste_containers=models.IntegerField()
-    general_info_left_image = models.ImageField()
-    toilet_info_left_image = models.ImageField()
-    waste_management_info_left_image = models.ImageField()
-    water_info_left_image = models.ImageField()
-    roads_and_access_info_left_image = models.ImageField()
-    drainage_info_left_image = models.ImageField() 
-    gutter_info_left_image = models.ImageField()     
+    general_info_left_image = models.ImageField(validators=[validate_image])
+    toilet_info_left_image = models.ImageField(validators=[validate_image])
+    waste_management_info_left_image = models.ImageField(validators=[validate_image])
+    water_info_left_image = models.ImageField(validators=[validate_image])
+    roads_and_access_info_left_image = models.ImageField(validators=[validate_image])
+    drainage_info_left_image = models.ImageField(validators=[validate_image]) 
+    gutter_info_left_image = models.ImageField(validators=[validate_image])
 
 class Individual_Fatsheet(models.Model):
     Name_of_the_family_head =  models.CharField(max_length=2048)

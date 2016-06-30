@@ -76,7 +76,7 @@
      
     <tr>
     
-    <td>
+    <td class="col-md-2">
         <input id={{i.id}} type="checkbox" name= "delete" value={{i.id}}>
     </td>
 
@@ -125,6 +125,24 @@
 </div>
 
 </form>
+
+
+<div class="pagination" style = "margin-left:50%;">
+    <span class="step-links">
+        {% if RA.has_previous %}
+            <a href="?page={{ RA.previous_page_number }}">previous</a>
+        {% endif %}
+
+        <span class="current">
+            Page {{ RA.number }} of {{ RA.paginator.num_pages }}.
+        </span>
+
+        {% if RA.has_next %}
+            <a href="?page={{ RA.next_page_number }}">next</a>
+        {% endif %}
+    </span>
+</div>
+
 
 </body>
 
