@@ -265,7 +265,7 @@ class Rapid_Slum_Appraisal(models.Model):
     water_info_left_image = models.ImageField()
     roads_and_access_info_left_image = models.ImageField()
     drainage_info_left_image = models.ImageField() 
-    gutter_info_left_image = models.ImageField(blank=True, null=True)     
+    gutter_info_left_image = models.ImageField()     
 
 class Individual_Fatsheet(models.Model):
     Name_of_the_family_head =  models.CharField(max_length=2048)
@@ -286,5 +286,4 @@ class Individual_Fatsheet(models.Model):
     Approximate_monthly_family_income =  models.CharField(max_length=2048)
     img = models.ImageField()
 
- 
-            
+          

@@ -16,7 +16,6 @@ from master.models import Survey, CityReference, Rapid_Slum_Appraisal, Slum
 from master.forms import SurveyCreateForm, Rapid_Slum_AppraisalForm
 
 from django.views.generic.base import View
-from wkhtmltopdf.views import PDFTemplateResponse
 from django.shortcuts import render
 
 @staff_member_required
@@ -131,7 +130,7 @@ def search(request):
     return HttpResponse(json.dumps(data_dict),
                         content_type='application/json')
 
-
+"""
 class mypdfview(View):#url="http://kc.shelter-associates.org/api/v1/data/161?format=json" #url= "http://45.56.104.240:8001/api/v1/data/161?format=json"
     url= "http://45.56.104.240:8001/api/v1/data/161?format=json"
     req = urllib2.Request(url)
@@ -141,15 +140,11 @@ class mypdfview(View):#url="http://kc.shelter-associates.org/api/v1/data/161?for
     data = json.loads(content)
     p=data[0]
     result=p['_attachments']
-    print type(result)
-    slumname ="PuneSlum"
     datadict = {slumname :"PuneSlum"}
     SurveyNumber = 1
     img ="http://45.56.104.240:8001/media/"+result[0]['filename']
     template='report.html'
-    print datadict[slumname]
     context= {'img':img,'data':data,'datadict':datadict}
-    print img
     def get(self, request):
         response = PDFTemplateResponse(request=request,
                                         template=self.template,
@@ -160,6 +155,7 @@ class mypdfview(View):#url="http://kc.shelter-associates.org/api/v1/data/161?for
                                        )
         return response
 
+"""
 
 def delete(request, Rapid_Slum_Appraisal_id):
     R = Rapid_Slum_Appraisal.objects.get(pk=Rapid_Slum_Appraisal_id)
@@ -170,29 +166,64 @@ def delete(request, Rapid_Slum_Appraisal_id):
     return render(request, 'delete.html', {'form': form})
 
 def display(request):
+    if request.method=='POST':
+        print request.POST['csrfmiddlewaretoken']
+        deleteList=[]
+        deleteList=request.POST.getlist('delete')
+        for i in deleteList:
+            R = Rapid_Slum_Appraisal.objects.get(pk=i)
+            R.delete()             
     R = Rapid_Slum_Appraisal.objects.all()
-    for i in R:
-        print i.approximate_population
-    t = loader.get_template('display4.html')
+    t = loader.get_template('display5.html')
     c = RequestContext(request, {'R':R})
     return HttpResponse(t.render(c))
 
 def edit(request,Rapid_Slum_Appraisal_id):
-    R = Rapid_Slum_Appraisal.objects.get(pk=Rapid_Slum_Appraisal_id)
-    form = Rapid_Slum_AppraisalForm(instance= R)
     if request.method == 'POST':
-        form.save()
-        return HttpResponseRedirect('/admin/display')
+        R = Rapid_Slum_Appraisal.objects.get(pk=Rapid_Slum_Appraisal_id)
+        print request.POST
+        print "#########################################################"
+        print request.FILES
+        form = Rapid_Slum_AppraisalForm(request.POST or None,request.FILES,instance=R)
+        if form.is_valid():
+            form.save()
+            return HttpResponseRedirect('/admin/display')
+        else:
+            print form.errors
+    elif request.method=="GET":
+        R = Rapid_Slum_Appraisal.objects.get(pk=Rapid_Slum_Appraisal_id)
+        form = Rapid_Slum_AppraisalForm(instance= R)
+        print form        
     return render(request, 'edit.html', {'form': form})
 
 def insert(request):
     if request.method == 'POST':
         form = Rapid_Slum_AppraisalForm(request.POST,request.FILES)
+        print form
         if form.is_valid():
             form.save()
             return HttpResponseRedirect('/admin/display')
         else:
             print form.errors    
     else:
-        form = Rapid_Slum_AppraisalForm()        
+        form = Rapid_Slum_AppraisalForm()  
+        print form      
     return render(request, 'insert.html', {'form': form})
+
+
+"""
+def edit(request,Rapid_Slum_Appraisal_id):
+    if request.method == 'POST':
+        form = Rapid_Slum_AppraisalForm(request.POST,request.FILES)
+        print request.POST
+        print request.FILES
+        if form.is_valid():
+            form.save()
+            return HttpResponseRedirect('/admin/display')
+        else:
+            print form.errors
+    elif request.method== 'GET':
+        R = Rapid_Slum_Appraisal.objects.get(pk=Rapid_Slum_Appraisal_id)
+        form = Rapid_Slum_AppraisalForm(instance= R)
+    return render(request, 'edit.html', {'form': form})
+    """

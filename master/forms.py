@@ -112,20 +112,23 @@ class CityFrom(forms.ModelForm):
 
 
 class Rapid_Slum_AppraisalForm(forms.ModelForm):
-    general_info_left_image = forms.ImageField(required=True)
-    toilet_info_left_image = forms.ImageField(required=True)
-    waste_management_info_left_image = forms.ImageField(required=True)
-    water_info_left_image = forms.ImageField(required=True)
-    roads_and_access_info_left_image = forms.ImageField(required=True)
-    drainage_info_left_image = forms.ImageField(required=True) 
-    gutter_information_left_image = forms.ImageField(required=False)
+    general_info_left_image = forms.ImageField()
+    toilet_info_left_image = forms.ImageField()
+    waste_management_info_left_image = forms.ImageField()
+    water_info_left_image = forms.ImageField()
+    roads_and_access_info_left_image = forms.ImageField()
+    drainage_info_left_image = forms.ImageField() 
+    gutter_info_left_image = forms.ImageField()
 
     class Meta:
         model = Rapid_Slum_Appraisal
         fields = '__all__'
 
+        
+"""
     def clean_general_info_left_image(self):
         image = self.cleaned_data.get('general_info_left_image')
+        print image
         if image:
             if image._size > 3*1024*1024:
                 raise ValidationError("Image file too large ( > 3mb )")
@@ -186,4 +189,5 @@ class Rapid_Slum_AppraisalForm(forms.ModelForm):
             return image
         else:
             raise ValidationError("Couldn't read uploaded image")    
+"""
 

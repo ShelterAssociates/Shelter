@@ -21,7 +21,7 @@ from django.contrib import admin
 from wkhtmltopdf.views import PDFTemplateView
 from django.views.generic.base import View
 from master.views import index, SurveyListView, SurveyCreateView, \
-    survey_delete_view, search ,mypdfview, delete, edit, display, insert
+    survey_delete_view, search , delete, edit, display, insert
 
 
 from wkhtmltopdf.views import PDFTemplateView
@@ -44,12 +44,11 @@ urlpatterns = [
     url(r'Survey/(?P<survey>[0-9]+)/$', SurveyCreateView.as_view(),
         name='survey-update'),
     url(r'^search/$', search, name="search"),
-    url(r'^mypdfview/', mypdfview.as_view()), 
     url(r'^delete/(?P<Rapid_Slum_Appraisal_id>\d+)$', delete, name='delete'),
     url(r'^edit/(?P<Rapid_Slum_Appraisal_id>\d+)$', edit, name='edit'),
     url(r'^display/$', display, name='display'),
     url(r'^insert/$', insert, name='insert'),
-]
+ ]
  
 
 

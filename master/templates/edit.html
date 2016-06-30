@@ -21,6 +21,9 @@
 <form  enctype="multipart/form-data" method="post">
 {% csrf_token %}
 
+
+<br>
+<br>
 <div class="row">
     <div class ="col-md-6">  
         <label for="id_slum_name"> slum name </label>
@@ -287,9 +290,20 @@
 
 <br>
 
-<div style = "margin-left:1%;">
-    <button type="submit" class="btn btn-primary">Update</button>
+
+<div class ="row">
+    <div class="col-md-6">
+   
+       <a href="/admin/display" class="btn btn-primary"> Return</a>
+
+    </div>
+
+   <div class="col-md-6"> 
+      <button type="submit" class="btn btn-primary">Update</button>
+    </div>
+
 </div>
+
 
 </form>
 
