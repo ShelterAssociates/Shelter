@@ -71,7 +71,7 @@ class AdministrativeWard(models.Model):
     """Administrative Ward Database"""
     city = models.ForeignKey(City)
     name = models.CharField(max_length=512)
-    shape = models.CharField(max_length=2048)
+    shape = models.PolygonField(srid=4326)
     ward_no = models.CharField(max_length=10)
     description = models.CharField(max_length=2048)
     office_address = models.CharField(max_length=2048)
@@ -90,7 +90,7 @@ class ElectoralWard(models.Model):
     """Electoral Ward Database"""
     administrative_ward = models.ForeignKey(AdministrativeWard)
     name = models.CharField(max_length=512)
-    shape = models.CharField(max_length=2048)
+    shape = models.PolygonField(srid=4326)
     ward_no = models.CharField(max_length=10)
     ward_code = models.CharField(max_length=10)
     extra_info = models.CharField(max_length=4096)
@@ -109,7 +109,7 @@ class Slum(models.Model):
     """Slum Database"""
     electoral_ward = models.ForeignKey(ElectoralWard)
     name = models.CharField(max_length=100)
-    shape = models.CharField(max_length=2048)
+    shape = models.PolygonField(srid=4326)
     description = models.CharField(max_length=100)
     shelter_slum_code = models.CharField(max_length=512)
 

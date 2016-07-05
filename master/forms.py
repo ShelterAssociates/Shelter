@@ -8,7 +8,7 @@ import json
 from django import forms
 from django.conf import settings
 
-from master.models import Survey, City  ,Rapid_Slum_Appraisal
+from master.models import Survey, City  ,Rapid_Slum_Appraisal, AdministrativeWard, ElectoralWard, Slum
 from django.utils.safestring import mark_safe
 from django.template.loader import render_to_string
 from django.forms import widgets
@@ -21,8 +21,7 @@ SURVEY_LIST = []
 class SurveyCreateForm(forms.ModelForm):
     """Create a new survey"""
 
-    kobotool_survey_id = forms.ChoiceField(widget=forms.Select(),
-                                           required=True)
+    kobotool_survey_id = forms.ChoiceField(widget=forms.Select(),required=True)
     kobotool_survey_url = forms.CharField(required=True)
 
     def __init__(self, *args, **kwargs):
@@ -110,20 +109,32 @@ class CityFrom(forms.ModelForm):
         exclude = ('created_by', 'created_on')
 
 
+class AdministrativeWardFrom(forms.ModelForm):
+    shape = forms.CharField(widget=LocationWidget())
+    class Meta:
+        model = AdministrativeWard
+        fields = '__all__'
+
+class ElectoralWardForm(forms.ModelForm):
+    shape = forms.CharField(widget=LocationWidget())
+    class Meta:
+        model = ElectoralWard
+        fields = '__all__'
+
+
+class SlumForm(forms.ModelForm):
+    shape = forms.CharField(widget=LocationWidget())
+    class Meta:
+        model = Slum
+        fields= "__all__"
 
 class Rapid_Slum_AppraisalForm(forms.ModelForm):
-    general_info_left_image = forms.ImageField()
-    toilet_info_left_image = forms.ImageField()
-    waste_management_info_left_image = forms.ImageField()
-    water_info_left_image = forms.ImageField()
-    roads_and_access_info_left_image = forms.ImageField()
-    drainage_info_left_image = forms.ImageField() 
-    gutter_info_left_image = forms.ImageField()
-
     class Meta:
         model = Rapid_Slum_Appraisal
         fields = '__all__'
- 
+
+
+
 """
     def clean_general_info_left_image(self):
         image = self.cleaned_data.get('general_info_left_image')

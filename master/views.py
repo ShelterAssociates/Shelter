@@ -17,7 +17,7 @@ from master.forms import SurveyCreateForm, Rapid_Slum_AppraisalForm
 
 from django.views.generic.base import View
 from django.shortcuts import render
-from django.core.paginator import Paginator, PageNotAnInteger
+from django.core.paginator import Paginator, PageNotAnInteger, EmptyPage
 
 @staff_member_required
 def index(request):
