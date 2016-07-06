@@ -273,6 +273,20 @@ class Rapid_Slum_Appraisal(models.Model):
     roads_and_access_info_left_image = models.ImageField(validators=[validate_image])
     drainage_info_left_image = models.ImageField(validators=[validate_image]) 
     gutter_info_left_image = models.ImageField(validators=[validate_image])
+    def save(self, *args, **kwargs):
+        try:
+            this = Rapid_Slum_Appraisal.objects.get(id=self.id)
+            print "updated"              
+            print self.gutter_info_left_image.name  
+            print "deleted"              
+            print this.gutter_info_left_image.name
+            if this.gutter_info_left_image.name != self.gutter_info_left_image.name:
+                print "I am in try"
+                this.gutter_info_left_image.delete(save=False)                
+        except:
+            print "I am in except"
+            pass # when new photo then we do nothing, normal case          
+        super(Rapid_Slum_Appraisal, self).save(*args, **kwargs)
 
 class Individual_Fatsheet(models.Model):
     Name_of_the_family_head =  models.CharField(max_length=2048)

@@ -46,7 +46,7 @@ urlpatterns = [
     url(r'^search/$', search, name="search"),
     url(r'^delete/(?P<Rapid_Slum_Appraisal_id>\d+)$', delete, name='delete'),
     url(r'^edit/(?P<Rapid_Slum_Appraisal_id>\d+)$', edit, name='edit'),
-    url(r'^display/$', display, name='display'),
+    url(r'^factsheet/$', display, name='display'),
     url(r'^insert/$', insert, name='insert'),
     url(r'^listing/$',listing, name='listing'),
    

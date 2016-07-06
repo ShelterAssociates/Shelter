@@ -5,11 +5,11 @@
 import json
 import psycopg2
 
-from django.db.models.signals import post_save
+from django.db.models.signals import post_save, pre_save
 from django.dispatch import receiver
 from django.conf import settings
 
-from master.models import Survey, Slum
+from master.models import Survey, Slum, Rapid_Slum_Appraisal
 from bs4 import BeautifulSoup as Soup
 
 
@@ -63,3 +63,12 @@ def slum_created_trigger(sender, instance, **kwargs):
                        + koboform_id, [(koboform_json, ), (koboform_xml,
                                                           )])
         cursor.execute('COMMIT')
+
+
+
+@receiver(pre_save,sender=Rapid_Slum_Appraisal)
+def my_handler(sender,instance,self, **kwargs):
+    print sender
+    print kwargs
+    print instance
+    print self

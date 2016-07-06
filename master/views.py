@@ -194,27 +194,20 @@ def edit(request,Rapid_Slum_Appraisal_id):
         form = Rapid_Slum_AppraisalForm(request.POST or None,request.FILES,instance=R)
         if form.is_valid():
             form.save()
-            return HttpResponseRedirect('/admin/display')
-        else:
-            print form.errors
+            return HttpResponseRedirect('/admin/factsheet/')
     elif request.method=="GET":
         R = Rapid_Slum_Appraisal.objects.get(pk=Rapid_Slum_Appraisal_id)
         form = Rapid_Slum_AppraisalForm(instance= R)
-        print form        
     return render(request, 'edit.html', {'form': form})
 
 def insert(request):
     if request.method == 'POST':
         form = Rapid_Slum_AppraisalForm(request.POST,request.FILES)
-        print form
         if form.is_valid():
             form.save()
-            return HttpResponseRedirect('/admin/display')
-        else:
-            print form.errors    
+            return HttpResponseRedirect('/admin/factsheet/')
     else:
         form = Rapid_Slum_AppraisalForm()  
-        print form      
     return render(request, 'insert.html', {'form': form})
 
 
