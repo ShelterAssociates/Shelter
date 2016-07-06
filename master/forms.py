@@ -110,12 +110,14 @@ class CityFrom(forms.ModelForm):
 
 
 class AdministrativeWardFrom(forms.ModelForm):
+    """AdministrativeWard Form"""
     shape = forms.CharField(widget=LocationWidget())
     class Meta:
         model = AdministrativeWard
         fields = '__all__'
 
 class ElectoralWardForm(forms.ModelForm):
+    """Electoral Ward Form"""
     shape = forms.CharField(widget=LocationWidget())
     class Meta:
         model = ElectoralWard
@@ -123,81 +125,15 @@ class ElectoralWardForm(forms.ModelForm):
 
 
 class SlumForm(forms.ModelForm):
+    """Slum Form"""
     shape = forms.CharField(widget=LocationWidget())
     class Meta:
         model = Slum
         fields= "__all__"
 
 class Rapid_Slum_AppraisalForm(forms.ModelForm):
+    """Rapid Slum AppraisalForm"""
     class Meta:
         model = Rapid_Slum_Appraisal
         fields = '__all__'
-
-
-
-"""
-    def clean_general_info_left_image(self):
-        image = self.cleaned_data.get('general_info_left_image')
-        print image
-        if image:
-            if image._size > 3*1024*1024:
-                raise ValidationError("Image file too large ( > 3mb )")
-            return image
-        else:
-            raise ValidationError("Couldn't read uploaded image")    
-    
-    def clean_toilet_info_left_image(self):
-        image = self.cleaned_data.get('toilet_info_left_image')
-        if image:
-            if image._size > 3*1024*1024:
-                raise ValidationError("Image file too large ( > 3mb )")
-            return image
-        else:
-            raise ValidationError("Couldn't read uploaded image")    
-
-    def clean_waste_management_info_left_image(self):
-        image = self.cleaned_data.get('waste_management_info_left_image')
-        if image:
-            if image._size > 3*1024*1024:
-                raise ValidationError("Image file too large ( > 3mb )")
-            return image
-        else:
-            raise ValidationError("Couldn't read uploaded image")    
-
-    def clean_water_info_left_image(self):
-        image = self.cleaned_data.get('water_info_left_image')
-        if image:
-            if image._size > 3*1024*1024:
-                raise ValidationError("Image file too large ( > 3mb )")
-            return image
-        else:
-            raise ValidationError("Couldn't read uploaded image")    
-
-    def clean_roads_and_access_info_left_image(self):
-        image = self.cleaned_data.get('roads_and_access_info_left_image')
-        if image:
-            if image._size > 3*1024*1024:
-                raise ValidationError("Image file too large ( > 3mb )")
-            return image
-        else:
-            raise ValidationError("Couldn't read uploaded image")    
-
-    def clean_drainage_info_left_image(self):
-        image = self.cleaned_data.get('drainage_info_left_image')
-        if image:
-            if image._size > 3*1024*1024:
-                raise ValidationError("Image file too large ( > 3mb )")
-            return image
-        else:
-            raise ValidationError("Couldn't read uploaded image")    
-
-    def clean_gutter_information_left_image(self):
-        image = self.cleaned_data.get('gutter_information_left_image')
-        if image:
-            if image._size > 3*1024*1024:
-                raise ValidationError("Image file too large ( > 3mb )")
-            return image
-        else:
-            raise ValidationError("Couldn't read uploaded image")    
-"""
 

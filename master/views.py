@@ -130,67 +130,29 @@ def search(request):
     return HttpResponse(json.dumps(data_dict),
                         content_type='application/json')
 
-"""
-class mypdfview(View):#url="http://kc.shelter-associates.org/api/v1/data/161?format=json" #url= "http://45.56.104.240:8001/api/v1/data/161?format=json"
-    url= "http://45.56.104.240:8001/api/v1/data/161?format=json"
-    req = urllib2.Request(url)
-    req.add_header('Authorization', 'OAuth2 a0028f740988d80cbe670f24a9456d655b8dd419')
-    resp = urllib2.urlopen(req)
-    content = resp.read()
-    data = json.loads(content)
-    p=data[0]
-    result=p['_attachments']
-    datadict = {slumname :"PuneSlum"}
-    SurveyNumber = 1
-    img ="http://45.56.104.240:8001/media/"+result[0]['filename']
-    template='report.html'
-    context= {'img':img,'data':data,'datadict':datadict}
-    def get(self, request):
-        response = PDFTemplateResponse(request=request,
-                                        template=self.template,
-                                        filename="hello.pdf",
-                                        context= self.context,
-                                       show_content_in_browser=False,
-                                       cmd_options={'margin-top': 50,},
-                                       )
-        return response
-
-"""
-
-def delete(request, Rapid_Slum_Appraisal_id):
-    R = Rapid_Slum_Appraisal.objects.get(pk=Rapid_Slum_Appraisal_id)
-    form = Rapid_Slum_AppraisalForm(instance= R)
-    if request.method == 'POST':
-        R.delete()
-        return HttpResponseRedirect('/admin/display')
-    return render(request, 'delete.html', {'form': form})
-
 def display(request):
+    """Display Rapid Slum Appraisal Records"""
     if request.method=='POST':
-        print request.POST['csrfmiddlewaretoken']
         deleteList=[]
         deleteList=request.POST.getlist('delete')
         for i in deleteList:
             R = Rapid_Slum_Appraisal.objects.get(pk=i)
-            R.delete()             
-    
+            R.delete()                 
     R = Rapid_Slum_Appraisal.objects.all()
-    paginator = Paginator(R, 1) # Show 25 contacts per page
+    paginator = Paginator(R, 1) 
     page = request.GET.get('page')
     try:
         RA = paginator.page(page)
-    except PageNotAnInteger:# If page is not an integer, deliver first page.
+    except PageNotAnInteger:
         RA = paginator.page(1)
-    except EmptyPage:# If page is out of range (e.g. 9999), deliver last page of results.
+    except EmptyPage:
         RA = paginator.page(paginator.num_pages)        
-    return render(request, 'display5.html',{'R':R,'RA':RA})
+    return render(request, 'display.html',{'R':R,'RA':RA})
 
 def edit(request,Rapid_Slum_Appraisal_id):
+    """Update Rapid Slum Appraisal Record"""
     if request.method == 'POST':
         R = Rapid_Slum_Appraisal.objects.get(pk=Rapid_Slum_Appraisal_id)
-        print request.POST
-        print "#########################################################"
-        print request.FILES
         form = Rapid_Slum_AppraisalForm(request.POST or None,request.FILES,instance=R)
         if form.is_valid():
             form.save()
@@ -201,6 +163,7 @@ def edit(request,Rapid_Slum_Appraisal_id):
     return render(request, 'edit.html', {'form': form})
 
 def insert(request):
+    """Insert Rapid Slum Appraisal Record"""
     if request.method == 'POST':
         form = Rapid_Slum_AppraisalForm(request.POST,request.FILES)
         if form.is_valid():
@@ -209,37 +172,4 @@ def insert(request):
     else:
         form = Rapid_Slum_AppraisalForm()  
     return render(request, 'insert.html', {'form': form})
-
-
-"""
-def edit(request,Rapid_Slum_Appraisal_id):
-    if request.method == 'POST':
-        form = Rapid_Slum_AppraisalForm(request.POST,request.FILES)
-        print request.POST
-        print request.FILES
-        if form.is_valid():
-            form.save()
-            return HttpResponseRedirect('/admin/display')
-        else:
-            print form.errors
-    elif request.method== 'GET':
-        R = Rapid_Slum_Appraisal.objects.get(pk=Rapid_Slum_Appraisal_id)
-        form = Rapid_Slum_AppraisalForm(instance= R)
-    return render(request, 'edit.html', {'form': form})
-    """
-
-def listing(request):
-    R = Rapid_Slum_Appraisal.objects.all()
-    paginator = Paginator(R, 10) # Show 25 contacts per page
-    page = request.GET.get('page')
-    try:
-        contacts = paginator.page(page)
-    except PageNotAnInteger:
-        # If page is not an integer, deliver first page.
-        contacts = paginator.page(1)
-    except EmptyPage:
-        # If page is out of range (e.g. 9999), deliver last page of results.
-        contacts = paginator.page(paginator.num_pages)
-
-    return render(request, 'list.html', {'contacts': contacts})
 

@@ -254,6 +254,7 @@ class ProjectMaster(models.Model):
 
 
 class Rapid_Slum_Appraisal(models.Model):
+    """ Rapid Slum Appraisal Database """
     def validate_image(fieldfile_obj):
         filesize = fieldfile_obj.file.size
         megabyte_limit = 3.0
@@ -273,38 +274,4 @@ class Rapid_Slum_Appraisal(models.Model):
     roads_and_access_info_left_image = models.ImageField(validators=[validate_image])
     drainage_info_left_image = models.ImageField(validators=[validate_image]) 
     gutter_info_left_image = models.ImageField(validators=[validate_image])
-    def save(self, *args, **kwargs):
-        try:
-            this = Rapid_Slum_Appraisal.objects.get(id=self.id)
-            print "updated"              
-            print self.gutter_info_left_image.name  
-            print "deleted"              
-            print this.gutter_info_left_image.name
-            if this.gutter_info_left_image.name != self.gutter_info_left_image.name:
-                print "I am in try"
-                this.gutter_info_left_image.delete(save=False)                
-        except:
-            print "I am in except"
-            pass # when new photo then we do nothing, normal case          
-        super(Rapid_Slum_Appraisal, self).save(*args, **kwargs)
-
-class Individual_Fatsheet(models.Model):
-    Name_of_the_family_head =  models.CharField(max_length=2048)
-    Name_of_Native_village_district_and_state =  models.CharField(max_length=2048)
-    Duration_of_stay_in_the_city  =  models.CharField(max_length=2048)
-    Duration_of_stay_in_this_current_settlement  =  models.CharField(max_length=2048)
-    Type_of_house  =  models.CharField(max_length=2048)
-    Owner_or_tenant  =  models.CharField(max_length=2048)
-    Total_family_members = models.IntegerField()
-    Number_of_male_members  = models.IntegerField()
-    Number_of_female_members  = models.IntegerField()
-    Number_of_children_under_five_years_of_age = models.IntegerField()
-    Number_of_members_over_60_years_of_age = models.IntegerField()
-    Number_of_disabled_members = models.IntegerField()
-    If_yes_specify_type_of_disability = models.CharField(max_length=50)
-    Number_of_earning_members = models.IntegerField()
-    Occupations_of_earning_members = models.CharField(max_length=2048)
-    Approximate_monthly_family_income =  models.CharField(max_length=2048)
-    img = models.ImageField()
-
-          
+ 
