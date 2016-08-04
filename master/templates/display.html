@@ -15,26 +15,19 @@
 </head>
 <body>
 
-
 <div style = "margin-left:3%;">
 <h2>Rapid Slum Appraisal form</h2>
 </div>
 
-
-
 <form  enctype="multipart/form-data" method="post">
-
 <div class ="row" style = "margin-left:1%;">
     <div class = "col-md-4">
         <a href="/admin/insert/"> <button type="button"> Add New </button></a>
     </div>
 </div>
-
 {% csrf_token %}
 <br>
-
 <table class="table table-bordered" class= "col-md-12" style = "margin-left:2%;" >
-    
     <thead>
       <tr>
          <th></th>
@@ -82,7 +75,6 @@
 
      <td class="col-md-2"> <a href="/admin/edit/{{i.id }}" data-toggle="tooltip" title="edit"> {{ i.slum_name }} </a> </td> 
 
-
      <td class="col-md-2"> {{ i.approximate_population }} </td> 
 
      <td class="col-md-2">  {{ i.toilet_cost }} </td> 
@@ -101,17 +93,12 @@
 
      <td class="col-md-2">  {{ i.water_info_left_image }}  </td>
 
-
      <td class="col-md-2">  {{ i.roads_and_access_info_left_image }}  </td>
-
 
      <td class="col-md-2">  {{ i.drainage_info_left_image}}  </td>
      
-
      <td class="col-md-2">  {{ i.gutter_info_left_image}}  </td>
     
-
-
     </tr>
 
     </tbody>
@@ -125,7 +112,6 @@
 </div>
 
 </form>
-
 
 <div class="pagination" style = "margin-left:50%;">
     <span class="step-links">
@@ -146,7 +132,6 @@
 
 </body>
 
-
 <script>
 $(document).ready(function(){
     $('[data-toggle="tooltip"]').tooltip();   
@@ -157,11 +142,11 @@ $(document).ready(function(){
 </html>
 
 {% endblock %}
+
 {% block content %}
+
 {% endblock %}
+
 {% block sidebar %}
+
 {% endblock %}
-
-
-
-

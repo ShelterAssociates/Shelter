@@ -24,6 +24,7 @@ PROJECTSTATUS_CHOICES = ( ('0','Planned'),
 							('1','Activated'),
 							('2','Closed')
 	)
+
 class SponsorProject(models.Model):
 	sponsor = models.ForeignKey(Sponsor)
 	name = models.CharField(max_length=512)
