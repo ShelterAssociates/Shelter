@@ -1,4 +1,5 @@
 var PointArray=[];
+var myOptions;
 var map;
 var creator;
 var PolygonPoints=[];
@@ -6,11 +7,9 @@ var Poly;
 var curLatLng=[];
 var creator;
 var flag=0;
-var result;
 
-//Initialise map
 function initialise(){
-    var myOptions = {
+    myOptions = {
         zoom: 16,
         center: new google.maps.LatLng(18.505599,73.822867),
         mapTypeId: google.maps.MapTypeId.SATELLITE
@@ -22,7 +21,7 @@ function initialise(){
     if(ShapeValue!="None")
     {
         flag = 1;
-        result = ShapeValue.substring(20,ShapeValue.length-2);
+        var result = ShapeValue.substring(20,ShapeValue.length-2);
         var array= result.split(/[\s,]+/);
         var result1;
         var result2;
@@ -60,13 +59,20 @@ function initialise(){
     }
 }
 
-//Get Cordinates
 function getPolygonCoords() {
     curLatLng = [];
     curLatLng = Poly.getPath().getArray();
 }   
 
-// Create Polygon
+django.jQuery(function(){
+    //reset Polygon and redraw
+    django.jQuery('#reset').click(function(){
+        creator.destroy();
+        creator=null;
+        creator=new PolygonCreator(map);
+    });
+});
+
 function PolygonCreator(map){
     this.map = map;
     this.pen = new Pen(this.map);
@@ -90,14 +96,12 @@ function PolygonCreator(map){
     }
 }
 
-//pen class
 function Pen(map){
     this.map= map;
     this.listOfDots = new Array();
     this.polyline =null;
     this.polygon = null;
     this.currentDot = null;
-    //draw function
     this.draw = function(latLng){
         if (null != this.polygon) {
             alert('Click Reset to draw another');
@@ -166,10 +170,10 @@ function Pen(map){
     }
 }
 
-//Put point on map on click
 function Dot(latLng,map,pen){
     this.latLng=latLng;
     this.parent = pen;
+
     this.markerObj = new google.maps.Marker({
         position: this.latLng,
         map: map
@@ -195,7 +199,6 @@ function Dot(latLng,map,pen){
     }
 }
 
-//Draw Polylines
 function Line(listOfDots,map){
     this.listOfDots = listOfDots;
     this.map = map;
@@ -211,6 +214,8 @@ function Line(listOfDots,map){
         strokeColor: "#FF0000",
         strokeOpacity: 1.0,
         strokeWeight: 2,
+        draggable: true,
+        editable: true,
         map: this.map
     });
     }
@@ -219,7 +224,6 @@ function Line(listOfDots,map){
     }
 }
 
-// Draw filled polygon
 function Polygon(listOfDots,map,pen,color){
     this.listOfDots = listOfDots;
     this.map = map;
@@ -230,6 +234,7 @@ function Polygon(listOfDots,map,pen,color){
     django.jQuery.each(this.listOfDots,function(index,value){
         thisObj.coords.push(value.getLatLng());
     });
+   
     this.polygonObj= new google.maps.Polygon({
         paths: this.coords,
         strokeColor: "#FF0000",
@@ -237,6 +242,8 @@ function Polygon(listOfDots,map,pen,color){
         strokeWeight: 2,
         fillColor: "#FF0000",
         fillOpacity: 0.35,
+        draggable: true,
+        editable: true,
         map:this.map
     });
     this.remove = function(){
@@ -276,8 +283,40 @@ function Polygon(listOfDots,map,pen,color){
     }
     this.addListener();
 }
+function Info(polygon,map){
+    this.parent = polygon;
+    this.map = map;
+    this.color =  document.createElement('input');
+    this.button = document.createElement('input');
+    django.jQuery(this.button).attr('type','button');
+    django.jQuery(this.button).val("Change Color");
+    var thisOjb=this;
+    this.changeColor= function(){
+        thisOjb.parent.setColor(django.jQuery(thisOjb.color).val());
+    }
+    this.getContent = function(){
+        var content = document.createElement('div');
+        django.jQuery(this.color).val(this.parent.getColor());
+        django.jQuery(this.button).click(function(){
+            thisObj.changeColor();
+        });
+        django.jQuery(content).append(this.color);
+        django.jQuery(content).append(this.button);
+        return content;
+    }
+    thisObj=this;
+    this.infoWidObj = new google.maps.InfoWindow({
+        content:thisObj.getContent()
+    });
+    this.show = function(latLng){
+        this.infoWidObj.setPosition(latLng);
+        this.infoWidObj.open(this.map);
+    }
+    this.remove = function(){
+        this.infoWidObj.close();
+    }
+}
 
-// Retrun Co-ordinate string
 function Point_string(){
     var PolygonArray=[];
     if (flag==0)
@@ -305,16 +344,6 @@ function Point_string(){
     return c_str;
 }
 
-//reset Polygon and redraw
-django.jQuery(function(){
-    django.jQuery('#reset').click(function(){
-        creator.destroy();
-        creator=null;
-        creator=new PolygonCreator(map);
-    });
-});
-
-// Sumbit value
 django.jQuery(document).ready(function(){
     django.jQuery("input[name='_save']").click(function(){
         var string = Point_string();
