@@ -18,10 +18,9 @@ Including another URLconf
 
 from django.conf.urls import include, url
 from django.contrib import admin
-
 from master.views import index, SurveyListView, SurveyCreateView, \
     survey_delete_view, search
-
+    
 admin.autodiscover()
 
 urlpatterns = [
@@ -37,8 +36,8 @@ urlpatterns = [
         name='surveydelete'),
     url(r'Survey/(?P<survey>[0-9]+)/$', SurveyCreateView.as_view(),
         name='survey-update'),
-    url(r'^search/(?P<survey>[0-9]+)/$', search, name='search'),
-    ]
+    url(r'^search/$', search, name="search"),
+]
 
 
             

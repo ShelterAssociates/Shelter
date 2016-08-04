@@ -1,8 +1,8 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 """The Django Views Page for master app"""
-
 import json
+import urllib2
 
 from django.core.urlresolvers import reverse
 from django.contrib.admin.views.decorators import staff_member_required
@@ -15,14 +15,13 @@ from django.views.generic.edit import FormView
 from master.models import Survey, CityReference
 from master.forms import SurveyCreateForm
 
-@staff_member_required
 
+@staff_member_required
 def index(request):
     """Renders the index template in browser"""
     template = loader.get_template('index.html')
     context = RequestContext(request, {})
     return HttpResponse(template.render(context))
-
 
 class SurveyListView(ListView):
     """Renders the Survey View template in browser"""
@@ -98,7 +97,6 @@ class SurveyCreateView(FormView):
     def get_success_url(self):
         """If form is valid -> redirect to"""
         return reverse('SurveyCreate')
-
 
 def survey_delete_view(survey):
     """Delete Survey Object"""
