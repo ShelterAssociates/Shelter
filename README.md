@@ -4,7 +4,7 @@ Installing on Ubuntu
 
 1. Clone the project 
 
-  `git clone https://github.com/project-x/Shelter.git`
+  `git clone https://github.com/ShelterAssociates/Shelter.git`
 
 2. Activate a python <a href='https://pypi.python.org/pypi/virtualenv'>virtualenv.</a>
  
