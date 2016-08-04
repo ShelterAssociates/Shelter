@@ -2,10 +2,8 @@
 # -*- coding: utf-8 -*-
 """The Django Admin Page for master app"""
 from django.contrib import admin
-from django.contrib.gis import admin
 from master.models import CityReference, City, \
     AdministrativeWard, ElectoralWard, Slum, WardOfficeContact, ElectedRepresentative
-from master.forms import CityFrom
 
 # Register your models here.
 admin.site.register(WardOfficeContact)
@@ -83,8 +81,10 @@ class PlottedShapeAdmin(admin.ModelAdmin):
 
 class CityAdmin(admin.ModelAdmin):
     """Display panel of CityAdmin Model"""
-    form = CityFrom 
-    model = City
+    list_display = ('name', 'shape', 'state_code', 'district_code',
+                    'city_code')
+    exclude = ('created_by', 'created_on')
+
     def save_model(self, request, obj, form, change):
         obj.created_by = request.user
         obj.save()
