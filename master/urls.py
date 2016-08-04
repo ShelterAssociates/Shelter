@@ -27,7 +27,7 @@ from master.views import index, SurveyListView, SurveyCreateView, \
 from wkhtmltopdf.views import PDFTemplateView
 from django.conf import settings
 from django.conf.urls.static import static
-from master.views import birt_report, generate_birt
+
     
 admin.autodiscover()
 
@@ -48,8 +48,6 @@ urlpatterns = [
     url(r'^edit/(?P<Rapid_Slum_Appraisal_id>\d+)$', edit, name='edit'),
     url(r'^factsheet/$', display, name='display'),
     url(r'^insert/$', insert, name='insert'),
-    url(r'^birt/$', birt_report),
-    url(r'^generate/$', generate_birt),
 ]
  
 

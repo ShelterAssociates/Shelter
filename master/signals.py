@@ -67,6 +67,7 @@ def slum_created_trigger(sender, instance, **kwargs):
 
 @receiver(pre_save,sender=Rapid_Slum_Appraisal)
 def Rapid_Slum_Appraisa_created_trigger(sender,instance, **kwargs):
+    """Triggers the below code when image is updated"""
     try:
         this = Rapid_Slum_Appraisal.objects.get(id=instance.id)
         print instance.gutter_info_left_image.name
@@ -107,6 +108,5 @@ def Rapid_Slum_Appraisa_created_trigger(sender,instance, **kwargs):
             pass          
     except:
         pass           
+ 
   
-
-
