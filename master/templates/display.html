@@ -3,15 +3,17 @@
 
 {% block breadcrumbs %}
 
+{% load staticfiles %}
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <title>Display Report </title>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <link rel="stylesheet"  type="text/css" href="/static/css/bootstrap.css">
-    <script src="/static/js/jquery.min.js"></script>
-    <script src="/static/js/bootstrap.min.js"></script>
+    <link rel="stylesheet"  type="text/css" href="{% static "css/bootstrap.min.css" %}"/>
+    <script src="{% static "js/jquery.min.js" %}"></script>
+    <script src="{% static "js/bootstrap.min.js" %}"></script>
 </head>
 <body>
 
@@ -22,7 +24,7 @@
 <form  enctype="multipart/form-data" method="post">
 <div class ="row" style = "margin-left:1%;">
     <div class = "col-md-4">
-        <a href="/admin/insert/"> <button type="button"> Add New </button></a>
+        <a href="{% url 'insert' %}"style="text-decoration: none; color: #FFF" class="btn btn-primary" role="button">Add New</a>
     </div>
 </div>
 {% csrf_token %}
@@ -73,7 +75,7 @@
         <input id={{i.id}} type="checkbox" name= "delete" value={{i.id}}>
     </td>
 
-     <td class="col-md-2"> <a href="/admin/edit/{{i.id }}" data-toggle="tooltip" title="edit"> {{ i.slum_name }} </a> </td> 
+     <td class="col-md-2"> <a href="{% url 'edit' %}/{{i.id }}" data-toggle="tooltip" title="edit"> {{ i.slum_name }} </a> </td> 
 
      <td class="col-md-2"> {{ i.approximate_population }} </td> 
 
@@ -108,7 +110,7 @@
 
 
 <div style = "margin-left:2%;">
-  <button type="submit" class="btn btn-primary">Delete</button>
+  <button id ="delete" type="submit" class="btn btn-primary">Delete</button>
 </div>
 
 </form>
@@ -136,6 +138,14 @@
 $(document).ready(function(){
     $('[data-toggle="tooltip"]').tooltip();   
 });
+
+$(document).ready(function() {
+    $("#delete").click(function(){
+        alert("Are You sure You want to Delete ?");
+    }); 
+});
+
+
 
 </script>
 
