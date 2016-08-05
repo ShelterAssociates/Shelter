@@ -136,4 +136,3 @@ class Rapid_Slum_AppraisalForm(forms.ModelForm):
     class Meta:
         model = Rapid_Slum_Appraisal
         fields = '__all__'
-

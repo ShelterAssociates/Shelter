@@ -173,3 +173,4 @@ def insert(request):
         form = Rapid_Slum_AppraisalForm()  
     return render(request, 'insert.html', {'form': form})
 
+    
