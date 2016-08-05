@@ -24,7 +24,7 @@
 <form  enctype="multipart/form-data" method="post">
 <div class ="row" style = "margin-left:1%;">
     <div class = "col-md-4">
-        <a href="{% url 'insert' %}"style="text-decoration: none; color: #FFF" class="btn btn-primary" role="button">Add New</a>
+        <a href="{% url 'insert' %}" style="text-decoration: none; color: #FFF" class="btn btn-primary" role="button">Add New</a>
     </div>
 </div>
 {% csrf_token %}
@@ -75,7 +75,7 @@
         <input id={{i.id}} type="checkbox" name= "delete" value={{i.id}}>
     </td>
 
-     <td class="col-md-2"> <a href="{% url 'edit' %}/{{i.id }}" data-toggle="tooltip" title="edit"> {{ i.slum_name }} </a> </td> 
+     <td class="col-md-2"> <a href="{% url 'edit' i.id %}" data-toggle="tooltip" title="edit"> {{ i.slum_name }} </a> </td> 
 
      <td class="col-md-2"> {{ i.approximate_population }} </td> 
 
