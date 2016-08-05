@@ -18,13 +18,11 @@ Including another URLconf
 
 from django.conf.urls import include, url
 from django.contrib import admin
-from wkhtmltopdf.views import PDFTemplateView
 from django.views.generic.base import View
 from master.views import index, SurveyListView, SurveyCreateView, \
     survey_delete_view, search, edit, display, insert
 
 
-from wkhtmltopdf.views import PDFTemplateView
 from django.conf import settings
 from django.conf.urls.static import static
 

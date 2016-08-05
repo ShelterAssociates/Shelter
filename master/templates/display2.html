@@ -1,0 +1,46 @@
+{% extends "admin/base_site.html" %}
+{% load i18n %}
+
+{% block breadcrumbs %}
+
+
+<a href="http://127.0.0.1:8000/admin/insert"> ADD NEW </a>
+
+
+{% for i in R%}
+<table>
+<tr>
+ <td colspan="2"> <a href="http://127.0.0.1:8000/admin/edit/{{i.id }}">{{ i.Approximate_Population }} </a> </td> <br>
+ <td colspan="2" >   {{ i.Toilet_Cost }} <td> <br>
+ <td colspan="2" >    {{ i.Toilet_seat_to_persons_ratio }}  </td> <br>
+ <td colspan="2" >    {{ i.Percentage_with_an_Individual_Water_Connection }}  </td> <br>
+ <td colspan="2" >    {{ i.Frequency_of_clearance_of_waste_containers }}  </td> <br>
+ 
+ <td colspan="2" >    {{ i.image1 }}  </td> <br>
+
+
+ <td colspan="2" >    {{ i.image2 }}  </td> <br>
+
+
+ <td colspan="2" >    {{ i.image3 }}  </td> <br>
+
+
+ <td colspan="2" >    {{ i.image4 }}  </td> <br>
+
+
+<tr>    
+
+</table>
+
+{% endfor %}
+
+
+{% endblock %}
+
+{% block content %}
+
+{% endblock %}
+
+{% block sidebar %}
+{% endblock %}
+

@@ -1,0 +1,364 @@
+<p> <input id="id_shape" type="text" name="shape" value="{{ POLYGON }}">
+<br> 
+</p>
+
+<!DOCTYPE html>
+<html>
+  <head>
+ 
+<script src="http://maps.google.com/maps?file=api&amp;v=2&amp;key=AIzaSyDvDxlP63HXGJmKLvC0t_6O_Oy1IKo6RSI&sensor=true" type="text/javascript"></script>
+
+<script type="text/javascript">
+
+
+var global = this;
+var map;
+var pp;
+var PolygonMarkers = []; //Array for Map Markers
+var PolygonPoints = []; //Array for Polygon Node Markers
+var bounds = new GLatLngBounds; //Polygon Bounds
+var Polygon; //Polygon overlay object
+var polygon_resizing = false; //To track Polygon Resizing
+
+//Polygon Marker/Node icons
+var redpin = new GIcon(); //Red Pushpin Icon
+redpin.image = "http://maps.google.com/mapfiles/ms/icons/red-pushpin.png";
+redpin.iconSize = new GSize(32, 32);
+redpin.iconAnchor = new GPoint(10, 32);
+var bluepin = new GIcon(); //Blue Pushpin Icon
+bluepin.image = "http://maps.google.com/mapfiles/ms/icons/blue-pushpin.png";
+bluepin.iconSize = new GSize(32, 32);
+bluepin.iconAnchor = new GPoint(10, 32);
+
+function initialize() {
+  //Initialize Google Map
+    if (GBrowserIsCompatible()) {
+        map = new GMap2(document.getElementById("map_canvas")); //New GMap object
+        //map.setCenter(new GLatLng(38.90, -94.68007), 13);
+        map.setCenter(new GLatLng(18.505599,73.822867),16);
+        map.addControl(new GLargeMapControl());
+        mapTypeId: G_SATELLITE_MAP;
+
+
+        var ui = new GMapUIOptions(); //Map UI options
+        ui.maptypes = { normal:true, satellite:true, hybrid:true, physical:false }
+        ui.zoom = {scrollwheel:true, doubleclick:true};
+        ui.controls = { largemapcontrol3d:true, maptypecontrol:true, scalecontrol:true };
+        map.setUI(ui); //Set Map UI options
+
+        //Add Shift+Click event to add Polygon markers
+        GEvent.addListener(map, "click", function(overlay, point, overlaypoint) {
+            var p = (overlaypoint) ? overlaypoint : point;
+            //Add polygon marker if overlay is not an existing marker and shift key is pressed
+            if (global.shiftKey && !checkPolygonMarkers(overlay)) { addMarker(p); }
+        });
+    }
+    a=django.jQuery('#id_shape').val();
+    if(a!="") 
+        {
+      //  	var map = new GMap2(document.getElementById('map_canvas'));
+
+			//map.setCenter(new GLatLng(18.505599,73.822867 ), 9);
+    var res = a.substring(20,a.length-2);
+
+    L= res.split(",");
+
+    var X="";
+
+    for(i=0;i <L.length;i++){
+         X+=L[i]; 
+      }
+
+      Y= X.split(" ");
+
+      var array=[];
+
+      for(i=0;i <Y.length;i++){
+          array.push(Y[i]);
+      }
+
+
+			var result1;
+
+			var result2;
+            
+      PolygonPoints = [];
+		
+			for (var i=0; i <= array.length-1 ; i ++){
+			if (i%2==0){
+				result1 = array[i];
+
+			}else if (i %2 !=0){
+
+				result2 =array[i];			
+				PolygonPoints.push(new GLatLng(result2, result1));
+				//console.log(PolygonPoints);
+			}
+		}
+		var Polygon = new GPolygon(PolygonPoints,'#FF0000', 2, 0.8, '#FF0000', 0.35);
+		map.addOverlay(Polygon);
+	  Polygon.enableEditing();
+    GEvent.addListener(Polygon, 'drag', function() {
+  alert('You clicked the map.');
+});
+	}
+  
+}
+
+// Adds a new Polygon boundary marker
+function addMarker(point) {
+    var markerOptions = { icon: bluepin, draggable: true };
+    var marker = new GMarker(point, markerOptions);
+    PolygonMarkers.push(marker); //Add marker to PolygonMarkers array
+    map.addOverlay(marker); //Add marker on the map
+    GEvent.addListener(marker,'dragstart',function(){ //Add drag start event
+        marker.setImage(redpin.image);
+        polygon_resizing = true;
+    });
+    GEvent.addListener(marker,'drag',function(){ drawPolygon(); }); //Add drag event
+    GEvent.addListener(marker,'dragend',function(){   //Add drag end event
+        marker.setImage(bluepin.image);
+        polygon_resizing = false;
+        drawPolygon();
+        fitPolygon();
+    });
+    GEvent.addListener(marker,'click',function(point) { //Add Ctrl+Click event to remove marker
+        if (global.ctrlKey) { removeMarker(point); }
+    });
+    drawPolygon();
+
+    //If more then 2 nodes then automatically fit the polygon
+    if(PolygonMarkers.length > 2) fitPolygon();
+}
+
+// Removes a Polygon boundary marker
+function removeMarker(point) {
+    if(PolygonMarkers.length == 1){ //Only one marker in the array
+        map.removeOverlay(PolygonMarkers[0]);
+        map.removeOverlay(PolygonMarkers[0]);
+        PolygonMarkers = [];
+        if(Polygon){map.removeOverlay(Polygon)};
+    }
+      else //More then one marker
+      {
+        var RemoveIndex = -1;
+        var Remove;
+        //Search for clicked Marker in PolygonMarkers Array
+        for(var m=0; m<PolygonMarkers.length; m++)
+        {
+            if(PolygonMarkers[m].getPoint().equals(point))
+            {
+                RemoveIndex = m; Remove = PolygonMarkers[m]
+                break;
+            }
+        }
+        //Shift Array elemeents to left
+        for(var n=RemoveIndex; n<PolygonMarkers.length-1; n++)
+        {
+            PolygonMarkers[n] = PolygonMarkers[n+1];
+        }
+        PolygonMarkers.length = PolygonMarkers.length-1 //Decrease Array length by 1
+        map.removeOverlay(Remove); //Remove Marker
+        drawPolygon(); //Redraw Polygon
+      }
+}
+
+//Draw Polygon from the PolygonMarkers Array
+function drawPolygon()
+{
+    PolygonPoints.length=0;
+    for(var m=0; m<PolygonMarkers.length; m++)
+    {
+    	 (PolygonMarkers[m].getPoint()); 
+        PolygonPoints.push(PolygonMarkers[m].getPoint()); //Add Markers to PolygonPoints node array
+    }
+    //Add first marker in the end to close the Polygon
+    PolygonPoints.push(PolygonMarkers[0].getPoint());
+    if(Polygon){ map.removeOverlay(Polygon); } //Remove existing Polygon from Map
+    var fillColor = (polygon_resizing) ? 'red' : 'blue'; //Set Polygon Fill Color
+    Polygon = new GPolygon(PolygonPoints, '#FF0000', 2, 1, fillColor, 0.2); //New GPolygon object
+    map.addOverlay(Polygon); //Add Polygon to the Map
+
+    //TO DO: Function Call triggered after Polygon is drawn
+}
+
+
+function show(){
+      
+    }	
+
+
+//Fits the Map to Polygon bounds
+function fitPolygon(){
+    bounds = Polygon.getBounds();
+    map.setCenter(bounds.getCenter(), map.getBoundsZoomLevel(bounds));
+}
+//check is the marker is a polygon boundary marker
+function checkPolygonMarkers(marker) {
+    var flag = false;
+    for (var m = 0; m < PolygonMarkers.length; m++) {
+        if (marker == PolygonMarkers[m])
+        { flag = true; break; }
+    }
+    return flag;
+}
+
+//////////////////[ Key down event handler ]/////////////////////
+//Event handler class to attach events
+var EventUtil = {
+      addHandler: function(element, type, handler){
+            if (element.addEventListener){
+                    element.addEventListener(type, handler, false);
+            } else if (element.attachEvent){
+                    element.attachEvent("on" + type, handler);
+            } else {
+                    element["on" + type] = handler;
+            }
+      }
+};
+
+// Attach Key down/up events to document
+EventUtil.addHandler(document, "keydown", function(event){keyDownHandler(event)});
+EventUtil.addHandler(document, "keyup", function(event){keyUpHandler(event)});
+
+//Checks for shift and Ctrl key press
+function keyDownHandler(e)
+{
+      if (!e) var e = window.event;
+      var target = (!e.target) ? e.srcElement : e.target;
+      if (e.keyCode == 16 && !global.shiftKey) { //Shift Key
+            global.shiftKey = true;
+      }
+      if (e.keyCode == 17 && !global.ctrlKey) { //Ctrl Key
+            global.ctrlKey = true;
+      }
+}
+//Checks for shift and Ctrl key release
+function keyUpHandler(e){
+      if (!e) var e = window.event;
+      if (e.keyCode == 16 && global.shiftKey) { //Shift Key
+            global.shiftKey = false;
+      }
+      if (e.keyCode == 17 && global.ctrlKey) { //Ctrl Key
+            global.ctrlKey = false;
+      }
+}
+</script>
+
+
+  </head>
+ 
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.2/jquery.min.js"></script>
+
+
+<script type="text/javascript">
+function Point_string(){
+    var c_str="POLYGON((";
+    var aa="";
+    var lng ="";
+    var lat = "";
+    for(var i=0; i<PolygonPoints.length;i++){
+       lng = PolygonPoints[i].lng();
+       lat = PolygonPoints[i].lat();
+       aa+=lng+" "+lat +",";
+    };
+    c_str+=aa.substring(aa,aa.length-1)+"))";
+ 
+ return c_str;
+}
+
+</script>
+
+
+
+<script type="text/javascript">
+  $(document).ready(function(){
+    $('#MyButton').click(function(){
+        django.jQuery('#id_shape').val(Point_string());
+        django.jQuery('#id_shape').text(Point_string());
+       });
+  });
+</script>
+
+<input type="button" value="Save" id="MyButton" >
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<script type="text/javascript">
+  $(document).ready(function()
+  {
+/*    a=django.jQuery('#id_shape').val();
+    if(a!="") 
+        {
+        	var map = new GMap2(document.getElementById('map_canvas'));
+
+			map.setCenter(new GLatLng(18.505599,73.822867 ), 9);
+
+/*
+
+			var array=[18.505599,73.822867,18.519069, 73.814842,  18.513046, 73.856255,18.505599,73.822867];
+
+			var result1;
+
+			var result2;
+            
+            PolygonPoints = [];
+		
+			for (var i=0; i <= array.length-1 ; i ++){
+			if (i%2==0){
+				result1 = array[i];
+
+			}else if (i %2 !=0){
+
+				result2 =array[i];			
+				PolygonPoints.push(new GLatLng(result1, result2));
+				//console.log(PolygonPoints);
+			}
+		}
+		var Polygon = new GPolygon(PolygonPoints,'#FF0000', 2, 0.8, '#FF0000', 0.35);
+		map.addOverlay(Polygon);
+		
+	}
+	*/
+  }     
+  );
+</script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<body onload="initialize()" onunload="GUnload()">
+<div id="map_canvas" style="width:300%; height:600px"></div>
+</body>
+</html>
+
+
+ 
