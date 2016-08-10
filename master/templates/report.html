@@ -1,0 +1,39 @@
+{% load staticfiles %}
+
+<html>
+   <script src="{% static "js/jquery.min.js" %}"></script>
+   <script src="{% static "js/bootstrap.min.js" %}"></script>
+
+{{ form }}
+
+<script>
+function myFunction(){
+
+     	alert("Hello Func");
+
+/*
+    var id = django.jQuery("#id_City option:selected").val();
+    var url = "{% url 'Administrativeward' %}";
+    $.ajax({
+        url : url,
+        data : { id : id },
+        type: "POST",
+        // The type of data we expect back
+        contenttype : "json",
+        success :function(json){
+            django.jQuery('#id_AdministrativeWard').val(json.city_code);
+        }
+    });
+*/
+}
+
+$(document).ready(function(){
+    $("#id_City").on('change',function()
+     {
+     	alert("Hello");
+    });
+});
+</script>
+
+</html>
+

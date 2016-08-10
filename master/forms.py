@@ -136,3 +136,21 @@ class Rapid_Slum_AppraisalForm(forms.ModelForm):
     class Meta:
         model = Rapid_Slum_Appraisal
         fields = '__all__'
+
+
+
+class ReportForm(forms.Form):
+    City_Name_List = []#
+    City_Name_List = [(c.id,c.name) for c in City.objects.all()]
+    print City_Name_List
+    City = forms.ChoiceField(choices=City_Name_List)
+    AdministrativeWard_Name_List = []#AdministrativeWard_Name_List = [(i.id,i.name) for i in AdministrativeWard.objects.all()]
+    print AdministrativeWard_Name_List
+    AdministrativeWard = forms.ChoiceField(choices=AdministrativeWard_Name_List)
+    ElectoralWard_Name_List = []#ElectoralWard_Name_List = [(e.id,e.name) for e in ElectoralWard.objects.all()]
+    print ElectoralWard_Name_List
+    ElectoralWard = forms.ChoiceField(choices=ElectoralWard_Name_List)
+    Slum_Name_List = []#Slum_Name_List = [(s.id,s.name) for s in Slum.objects.all()]
+    print Slum_Name_List
+    Slum = forms.ChoiceField(choices=Slum_Name_List)
+    
