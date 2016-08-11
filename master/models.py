@@ -6,15 +6,16 @@ import datetime
 
 from django.contrib.gis.db import models
 from django.contrib.auth.models import User
+from django.core.exceptions import ValidationError
 
 class CityReference(models.Model):
     """Worldwide City Database"""
-    city_name = models.CharField(max_length=20)
-    city_code = models.CharField(max_length=20)
-    district_name = models.CharField(max_length=20)
-    district_code = models.CharField(max_length=20)
-    state_name = models.CharField(max_length=20)
-    state_code = models.CharField(max_length=20)
+    city_name = models.CharField(max_length=2048)
+    city_code = models.CharField(max_length=2048)
+    district_name = models.CharField(max_length=2048)
+    district_code = models.CharField(max_length=2048)
+    state_name = models.CharField(max_length=2048)
+    state_code = models.CharField(max_length=2048)
 
     def __unicode__(self):
         """Returns string representation of object"""
@@ -23,11 +24,11 @@ class CityReference(models.Model):
 class City(models.Model):
     """Shelter City Database"""
     name = models.ForeignKey(CityReference)
-    city_code = models.CharField(max_length=48)
-    state_name = models.CharField(max_length=48)
-    state_code = models.CharField(max_length=48)
-    district_name = models.CharField(max_length=48)
-    district_code = models.CharField(max_length=48)
+    city_code = models.CharField(max_length=2048)
+    state_name = models.CharField(max_length=2048)
+    state_code = models.CharField(max_length=2048)
+    district_name = models.CharField(max_length=2048)
+    district_code = models.CharField(max_length=2048)
     shape = models.PolygonField(srid=4326)
     created_by = models.ForeignKey(User)
     created_on = models.DateTimeField(default=datetime.datetime.now())
@@ -47,14 +48,14 @@ SURVEYTYPE_CHOICES = (('Slum Level', 'Slum Level'), ('Household Level',
 
 class Survey(models.Model):
     """Shelter Survey Database"""
-    name = models.CharField(max_length=50)
-    description = models.CharField(max_length=200)
+    name = models.CharField(max_length=2048)
+    description = models.CharField(max_length=2048)
     city = models.ForeignKey(City)
-    survey_type = models.CharField(max_length=50,
+    survey_type = models.CharField(max_length=2048,
                                    choices=SURVEYTYPE_CHOICES)
     analysis_threshold = models.IntegerField()
-    kobotool_survey_id = models.CharField(max_length=50)
-    kobotool_survey_url = models.CharField(max_length=512)
+    kobotool_survey_id = models.CharField(max_length=2048)
+    kobotool_survey_url = models.CharField(max_length=2048)
 
     def __unicode__(self):
         """Returns string representation of object"""
@@ -69,9 +70,9 @@ class Survey(models.Model):
 class AdministrativeWard(models.Model):
     """Administrative Ward Database"""
     city = models.ForeignKey(City)
-    name = models.CharField(max_length=512)
-    shape = models.CharField(max_length=2048)
-    ward_no = models.CharField(max_length=10)
+    name = models.CharField(max_length=2048)
+    shape = models.PolygonField(srid=4326)
+    ward_no = models.CharField(max_length=2048)
     description = models.CharField(max_length=2048)
     office_address = models.CharField(max_length=2048)
 
@@ -88,11 +89,11 @@ class AdministrativeWard(models.Model):
 class ElectoralWard(models.Model):
     """Electoral Ward Database"""
     administrative_ward = models.ForeignKey(AdministrativeWard)
-    name = models.CharField(max_length=512)
-    shape = models.CharField(max_length=2048)
-    ward_no = models.CharField(max_length=10)
-    ward_code = models.CharField(max_length=10)
-    extra_info = models.CharField(max_length=4096)
+    name = models.CharField(max_length=2048)
+    shape = models.PolygonField(srid=4326)
+    ward_no = models.CharField(max_length=2048,blank=True,null=True)
+    ward_code = models.CharField(max_length=2048)
+    extra_info = models.CharField(max_length=2048)
 
     def __unicode__(self):
         """Returns string representation of object"""
@@ -107,10 +108,10 @@ class ElectoralWard(models.Model):
 class Slum(models.Model):
     """Slum Database"""
     electoral_ward = models.ForeignKey(ElectoralWard)
-    name = models.CharField(max_length=100)
-    shape = models.CharField(max_length=2048)
-    description = models.CharField(max_length=100)
-    shelter_slum_code = models.CharField(max_length=512)
+    name = models.CharField(max_length=2048)
+    shape = models.PolygonField(srid=4326)
+    description = models.CharField(max_length=2048,blank=True,null=True)
+    shelter_slum_code = models.CharField(max_length=2048)
 
     def __unicode__(self):
         """Returns string representation of object"""
@@ -125,9 +126,9 @@ class Slum(models.Model):
 class WardOfficeContact(models.Model):
     """Ward Office Contact Database"""
     administrative_ward = models.ForeignKey(AdministrativeWard)
-    title = models.CharField(max_length=25)
-    name = models.CharField(max_length=200)
-    telephone = models.CharField(max_length=50)
+    title = models.CharField(max_length=2048)
+    name = models.CharField(max_length=2048)
+    telephone = models.CharField(max_length=2048)
 
     def __unicode__(self):
         """Returns string representation of object"""
@@ -142,12 +143,12 @@ class WardOfficeContact(models.Model):
 class ElectedRepresentative(models.Model):
     """Elected Reresentative Database"""
     electoral_ward = models.ForeignKey(ElectoralWard)
-    name = models.CharField(max_length=200)
-    tel_nos = models.CharField(max_length=50)
-    address = models.CharField(max_length=512)
-    post_code = models.CharField(max_length=20)
+    name = models.CharField(max_length=2048)
+    tel_nos = models.CharField(max_length=2048)
+    address = models.CharField(max_length=2048)
+    post_code = models.CharField(max_length=2048)
     additional_info = models.CharField(max_length=2048)
-    elected_rep_Party = models.CharField(max_length=50)
+    elected_rep_Party = models.CharField(max_length=2048)
 
     def __unicode__(self):
         """Returns string representation of object"""
@@ -161,8 +162,8 @@ class ElectedRepresentative(models.Model):
 
 class ShapeCode(models.Model):
     """Shape Code Database"""
-    code = models.CharField(max_length=25)
-    description = models.CharField(max_length=100)
+    code = models.CharField(max_length=2048)
+    description = models.CharField(max_length=2048)
 
     class Meta:
         """Metadata for class ShapeCode"""
@@ -172,10 +173,10 @@ class ShapeCode(models.Model):
 
 class DrawableComponent(models.Model):
     """Drawable Component Database"""
-    name = models.CharField(max_length=100)
-    color = models.CharField(max_length=100)
-    extra = models.CharField(max_length=4096)
-    maker_icon = models.CharField(max_length=500)
+    name = models.CharField(max_length=2048)
+    color = models.CharField(max_length=2048)
+    extra = models.CharField(max_length=2048)
+    maker_icon = models.CharField(max_length=2048)
     shape_code = models.ForeignKey(ShapeCode)
 
     def __unicode__(self):
@@ -190,9 +191,9 @@ class DrawableComponent(models.Model):
 
 class PlottedShape(models.Model):
     """Plotted Shape Database"""
-    slum = models.CharField(max_length=100)
-    name = models.CharField(max_length=512)
-    lat_long = models.CharField(max_length=2000)
+    slum = models.CharField(max_length=2048)
+    name = models.CharField(max_length=2048)
+    lat_long = models.CharField(max_length=2048)
     drawable_component = models.ForeignKey(DrawableComponent)
     created_by = models.ForeignKey(User)
     created_on = models.DateTimeField(default=datetime.datetime.now())
@@ -210,7 +211,7 @@ CHOICES_ALL = (('0', 'None'), ('1', 'All'), ('2', 'Allow Selection'))
 
 class RoleMaster(models.Model):
     """Role Master Database"""
-    name = models.CharField(max_length=100)
+    name = models.CharField(max_length=2048)
     city = models.IntegerField(choices=CHOICES_ALL)
     slum = models.IntegerField(choices=CHOICES_ALL)
     kml = models.BooleanField(blank=False)
@@ -243,11 +244,34 @@ class UserRoleMaster(models.Model):
 
 class ProjectMaster(models.Model):
     """Project Master Database"""
-    created_user = models.CharField(max_length=100)
+    created_user = models.CharField(max_length=2048)
     created_date = models.DateTimeField(default=datetime.datetime.now())
 
     class Meta:
         """Metadata for class ProjectMaster"""
         verbose_name = 'Project Master'
         verbose_name_plural = 'Project Masters'
-            
+
+
+class Rapid_Slum_Appraisal(models.Model):
+    """ Rapid Slum Appraisal Database """
+    def validate_image(fieldfile_obj):
+        filesize = fieldfile_obj.file.size
+        megabyte_limit = 3.0
+        if filesize > megabyte_limit*1024*1024:
+            raise ValidationError("Max file size is %sMB" % str(megabyte_limit))     
+
+    slum_name = models.ForeignKey(Slum)
+    approximate_population=models.IntegerField()
+    toilet_cost=models.IntegerField()
+    toilet_seat_to_persons_ratio = models.IntegerField()
+    percentage_with_an_individual_water_connection = models.IntegerField()
+    frequency_of_clearance_of_waste_containers=models.IntegerField()
+    general_info_left_image = models.ImageField(validators=[validate_image])
+    toilet_info_left_image = models.ImageField(validators=[validate_image])
+    waste_management_info_left_image = models.ImageField(validators=[validate_image])
+    water_info_left_image = models.ImageField(validators=[validate_image])
+    roads_and_access_info_left_image = models.ImageField(validators=[validate_image])
+    drainage_info_left_image = models.ImageField(validators=[validate_image]) 
+    gutter_info_left_image = models.ImageField(validators=[validate_image])
+ 
