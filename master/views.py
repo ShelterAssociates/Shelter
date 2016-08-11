@@ -12,9 +12,13 @@ from django.views.generic import ListView
 from django.views.decorators.csrf import csrf_exempt
 from django.views.generic.edit import FormView
 
-from master.models import Survey, CityReference
-from master.forms import SurveyCreateForm
+from master.models import Survey, CityReference, Rapid_Slum_Appraisal, Slum, AdministrativeWard 
+from master.forms import SurveyCreateForm, Rapid_Slum_AppraisalForm, ReportForm
 
+from django.views.generic.base import View
+from django.shortcuts import render
+from django.core.paginator import Paginator, PageNotAnInteger, EmptyPage
+from django.conf import settings
 
 @staff_member_required
 def index(request):
@@ -22,6 +26,7 @@ def index(request):
     template = loader.get_template('index.html')
     context = RequestContext(request, {})
     return HttpResponse(template.render(context))
+
 
 class SurveyListView(ListView):
     """Renders the Survey View template in browser"""
@@ -98,6 +103,7 @@ class SurveyCreateView(FormView):
         """If form is valid -> redirect to"""
         return reverse('SurveyCreate')
 
+
 def survey_delete_view(survey):
     """Delete Survey Object"""
     obj = Survey.objects.get(id=survey)
@@ -109,7 +115,6 @@ def survey_delete_view(survey):
     data = {}
     data['message'] = message
     return HttpResponseRedirect('/admin/surveymapping/')
-
 
 @csrf_exempt
 def search(request):
@@ -125,3 +130,76 @@ def search(request):
         }
     return HttpResponse(json.dumps(data_dict),
                         content_type='application/json')
+
+def display(request):
+    """Display Rapid Slum Appraisal Records"""
+    if request.method=='POST':
+        deleteList=[]
+        deleteList=request.POST.getlist('delete')
+        for i in deleteList:
+            R = Rapid_Slum_Appraisal.objects.get(pk=i)
+            R.delete()                 
+    R = Rapid_Slum_Appraisal.objects.all()
+    paginator = Paginator(R, 1) 
+    page = request.GET.get('page')
+    try:
+        RA = paginator.page(page)
+    except PageNotAnInteger:
+        RA = paginator.page(1)
+    except EmptyPage:
+        RA = paginator.page(paginator.num_pages)        
+    return render(request, 'display.html',{'R':R,'RA':RA})
+
+def edit(request,Rapid_Slum_Appraisal_id):
+    """Update Rapid Slum Appraisal Record"""
+    if request.method == 'POST':
+        R = Rapid_Slum_Appraisal.objects.get(pk=Rapid_Slum_Appraisal_id)
+        form = Rapid_Slum_AppraisalForm(request.POST or None,request.FILES,instance=R)
+        if form.is_valid():
+            form.save()
+            return HttpResponseRedirect('/admin/factsheet/')
+    elif request.method=="GET":
+        R = Rapid_Slum_Appraisal.objects.get(pk=Rapid_Slum_Appraisal_id)
+        form = Rapid_Slum_AppraisalForm(instance= R)
+    return render(request, 'edit.html', {'form': form})
+
+def insert(request):
+    """Insert Rapid Slum Appraisal Record"""
+    if request.method == 'POST':
+        form = Rapid_Slum_AppraisalForm(request.POST,request.FILES)
+        if form.is_valid():
+            form.save()
+            return HttpResponseRedirect('/admin/factsheet/')
+    else:
+        form = Rapid_Slum_AppraisalForm()  
+    return render(request, 'insert.html', {'form': form})
+
+
+def report(request):
+    return HttpResponseRedirect(settings.BIRT_REPORT_URL + "Birt/frameset?__report=FactSheet_Report_New-1.rptdesign&rp_slumDetails_id=10&rp_dataset_id=9&rp_slumInfo_id=8&rp_waterDetails_id=2358&rp_waterDetailsSource_id=5215")
+
+
+
+"""
+#This is to for dynamic report generation
+def report(request):
+    form = ReportForm()
+    return render(request,'report.html', {'form':form})
+"""
+@csrf_exempt
+def Administrativeward(request):
+    cid = request.POST['id']
+    print cid
+    Aobj = AdministrativeWard.objects.filter(city=cid)
+    idArray = []
+    nameArray = []
+    for i in Aobj:
+        nameArray.append(str(i.name))
+        idArray.append(i.id)
+    data ={}
+    data = { 'idArray'  : idArray,
+             'nameArray': nameArray
+            }       
+    print json.dumps(data)    
+    return HttpResponse(json.dumps(data),content_type='application/json')
+    
