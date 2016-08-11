@@ -12,7 +12,7 @@ from django.views.generic import ListView
 from django.views.decorators.csrf import csrf_exempt
 from django.views.generic.edit import FormView
 
-from master.models import Survey, CityReference, Rapid_Slum_Appraisal, Slum
+from master.models import Survey, CityReference, Rapid_Slum_Appraisal, Slum, AdministrativeWard 
 from master.forms import SurveyCreateForm, Rapid_Slum_AppraisalForm, ReportForm
 
 from django.views.generic.base import View
@@ -173,21 +173,29 @@ def insert(request):
         form = Rapid_Slum_AppraisalForm()  
     return render(request, 'insert.html', {'form': form})
 
-"""
+
 def report(request):
     return HttpResponseRedirect('http://127.0.0.1:8080/Birt/frameset?__report=FactSheet_Report_New-1.rptdesign&rp_slumDetails_id=10&rp_dataset_id=9&rp_slumInfo_id=8&rp_waterDetails_id=2358&rp_waterDetailsSource_id=5215')
-"""
 
+"""
+#This is to for dynamic report generation
 def report(request):
     form = ReportForm()
     return render(request,'report.html', {'form':form})
-
+"""
 @csrf_exempt
 def Administrativeward(request):
     cid = request.POST['id']
-    AdministrativewardList = []
-    AdministrativewardList = Administrativeward.objects.get.all().filter(city=cid)
-    data_dict = {
-        'Administrativeward': AdministrativewardList,
-        }
-    return HttpResponse(json.dumps(data_dict),content_type='application/json')
+    print cid
+    Aobj = AdministrativeWard.objects.filter(city=cid)
+    idArray = []
+    nameArray = []
+    for i in Aobj:
+        nameArray.append(str(i.name))
+        idArray.append(i.id)
+    data ={}
+    data = { 'idArray'  : idArray,
+             'nameArray': nameArray
+            }       
+    print json.dumps(data)    
+    return HttpResponse(json.dumps(data),content_type='application/json')

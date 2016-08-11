@@ -1,39 +1,82 @@
 {% load staticfiles %}
 
-<html>
-   <script src="{% static "js/jquery.min.js" %}"></script>
-   <script src="{% static "js/bootstrap.min.js" %}"></script>
-
 {{ form }}
 
-<script>
+<html>
+<head>
+<title></title>
+ <head>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
+<script type="text/javascript">
+
+
+
+
+
 function myFunction(){
 
-     	alert("Hello Func");
+	alert("sucess");
+    
+    var cityname = $("#id_City option:selected").text();
 
-/*
-    var id = django.jQuery("#id_City option:selected").val();
+    var id = $("#id_City option:selected").val();
+
     var url = "{% url 'Administrativeward' %}";
+    
+    alert(id);    
+
+    alert(url);
+
     $.ajax({
-        url : url,
-        data : { id : id },
+
+    	url : url,
+        
+        data : { id : id},
+        
         type: "POST",
-        // The type of data we expect back
+        
         contenttype : "json",
-        success :function(json){
-            django.jQuery('#id_AdministrativeWard').val(json.city_code);
+
+
+     
+        success : function(json){        	
+        
+        //	alert(typeof(json));
+			alert(json.idArray);
+			alert(json.nameArray);       	
+
+		for (i = 0; i < json.nameArray.length; i++) { 
+         	$('#id_AdministrativeWard').append('<option>'+json.nameArray[i]+'</option>');
+		}
+
         }
+
+
     });
-*/
+
 }
 
+
 $(document).ready(function(){
-    $("#id_City").on('change',function()
-     {
-     	alert("Hello");
-    });
+	$("#id_City").on('change',function()
+	{
+        myFunction();   
+
+ 	});
 });
+
 </script>
 
-</html>
 
+
+</head> 
+<body>
+
+<div id ="name" align="center">
+<select name="drop">
+<option value="Milk">Fresh Milk</option>
+</select>
+</div>
+
+</body>
+</html>
