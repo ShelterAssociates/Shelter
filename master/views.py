@@ -18,6 +18,7 @@ from master.forms import SurveyCreateForm, Rapid_Slum_AppraisalForm, ReportForm
 from django.views.generic.base import View
 from django.shortcuts import render
 from django.core.paginator import Paginator, PageNotAnInteger, EmptyPage
+from django.conf import settings
 
 @staff_member_required
 def index(request):
@@ -175,7 +176,9 @@ def insert(request):
 
 
 def report(request):
-    return HttpResponseRedirect('http://127.0.0.1:8080/Birt/frameset?__report=FactSheet_Report_New-1.rptdesign&rp_slumDetails_id=10&rp_dataset_id=9&rp_slumInfo_id=8&rp_waterDetails_id=2358&rp_waterDetailsSource_id=5215')
+    return HttpResponseRedirect(settings.BIRT_REPORT_URL + "Birt/frameset?__report=FactSheet_Report_New-1.rptdesign&rp_slumDetails_id=10&rp_dataset_id=9&rp_slumInfo_id=8&rp_waterDetails_id=2358&rp_waterDetailsSource_id=5215")
+
+
 
 """
 #This is to for dynamic report generation
