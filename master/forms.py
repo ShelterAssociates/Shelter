@@ -8,7 +8,12 @@ import json
 from django import forms
 from django.conf import settings
 
-from master.models import Survey
+from master.models import Survey, City  ,Rapid_Slum_Appraisal, AdministrativeWard, ElectoralWard, Slum
+from django.utils.safestring import mark_safe
+from django.template.loader import render_to_string
+from django.forms import widgets
+from django.core.exceptions import ValidationError
+
 
 SURVEY_LIST = []
 
@@ -16,8 +21,7 @@ SURVEY_LIST = []
 class SurveyCreateForm(forms.ModelForm):
     """Create a new survey"""
 
-    kobotool_survey_id = forms.ChoiceField(widget=forms.Select(),
-                                           required=True)
+    kobotool_survey_id = forms.ChoiceField(widget=forms.Select(),required=True)
     kobotool_survey_url = forms.CharField(required=True)
 
     def __init__(self, *args, **kwargs):
@@ -86,3 +90,64 @@ def get_kobo_id_list():
         temp_arr.append((value['id_string'], value['id_string']))
 
     return temp_arr
+
+class LocationWidget(widgets.TextInput):
+    """Map Widget"""
+    template_name = 'draw.html'
+    def render(self, name, value, attrs=None):
+        context = {'POLYGON':value}
+        return mark_safe(render_to_string(self.template_name, context))
+
+
+class CityFrom(forms.ModelForm):
+    """City Form"""
+    shape = forms.CharField(widget=LocationWidget())
+    class Meta:
+        model = City
+        fields = ('name', 'shape', 'state_code', 'district_code', 'city_code')
+        exclude = ('created_by', 'created_on')
+
+
+class AdministrativeWardFrom(forms.ModelForm):
+    """AdministrativeWard Form"""
+    shape = forms.CharField(widget=LocationWidget())
+    class Meta:
+        model = AdministrativeWard
+        fields = '__all__'
+
+class ElectoralWardForm(forms.ModelForm):
+    """Electoral Ward Form"""
+    shape = forms.CharField(widget=LocationWidget())
+    class Meta:
+        model = ElectoralWard
+        fields = '__all__'
+
+
+class SlumForm(forms.ModelForm):
+    """Slum Form"""
+    shape = forms.CharField(widget=LocationWidget())
+    class Meta:
+        model = Slum
+        fields= "__all__"
+
+class Rapid_Slum_AppraisalForm(forms.ModelForm):
+    """Rapid Slum AppraisalForm"""
+    class Meta:
+        model = Rapid_Slum_Appraisal
+        fields = '__all__'
+
+
+class ReportForm(forms.Form):
+    City_Name_List = []#
+    City_Name_List = [(c.id,c.name) for c in City.objects.all()]
+    print City_Name_List
+    City = forms.ChoiceField(choices=City_Name_List)
+    AdministrativeWard_Name_List = []#AdministrativeWard_Name_List = [(i.id,i.name) for i in AdministrativeWard.objects.all()]
+    print AdministrativeWard_Name_List
+    AdministrativeWard = forms.ChoiceField(choices=AdministrativeWard_Name_List)
+    ElectoralWard_Name_List = []#ElectoralWard_Name_List = [(e.id,e.name) for e in ElectoralWard.objects.all()]
+    print ElectoralWard_Name_List
+    ElectoralWard = forms.ChoiceField(choices=ElectoralWard_Name_List)
+    Slum_Name_List = []#Slum_Name_List = [(s.id,s.name) for s in Slum.objects.all()]
+    print Slum_Name_List
+    Slum = forms.ChoiceField(choices=Slum_Name_List)
