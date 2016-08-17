@@ -14,22 +14,16 @@
 
 
 function myFunction(){
-
-	alert("sucess");
-    
+   
     var cityname = $("#id_City option:selected").text();
 
     var id = $("#id_City option:selected").val();
 
-    var url = "{% url 'Administrativeward' %}";
+    var url = "{% url 'AdministrativewardList' %}";
     
-    alert(id);    
-
-    alert(url);
-
     $.ajax({
 
-    	url : url,
+        url : url,
         
         data : { id : id},
         
@@ -39,15 +33,15 @@ function myFunction(){
 
 
      
-        success : function(json){        	
+        success : function(json){           
         
-        //	alert(typeof(json));
-			alert(json.idArray);
-			alert(json.nameArray);       	
+        for (i = 0; i < json.nameArray.length; i++) { 
+        $('#id_AdministrativeWard').append('<option>'+json.nameArray[i]+'</option>');
+        
+        //$('#id_AdministrativeWard').append('<option value="'+json.idArray[i] +">" + json.nameArray[i] + '</option>');
 
-		for (i = 0; i < json.nameArray.length; i++) { 
-         	$('#id_AdministrativeWard').append('<option>'+json.nameArray[i]+'</option>');
-		}
+
+        }
 
         }
 
@@ -57,26 +51,160 @@ function myFunction(){
 }
 
 
+
+
+function myFunction2(){
+
+    alert("sucess");
+    
+    var Administrativewardname = $("#id_AdministrativeWard option:selected").text();
+
+    var id = $("#id_AdministrativeWard option:selected").val();
+
+    var url = "{% url 'ElectoralWardList' %}";
+    
+    alert(id);    
+
+    $.ajax({
+
+        url : url,
+        
+        data : { id : id},
+        
+        type: "POST",
+        
+        contenttype : "json",
+
+ 
+        success : function(json){           
+        
+        alert(json.nameArray);
+        
+        for (i = 0; i < json.nameArray.length; i++) { 
+            $('#id_ElectoralWard').append('<option>'+json.nameArray[i]+'</option>');
+        }
+
+        }
+
+
+    });
+
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+function myFunction3(){
+
+    alert("sucess");
+    
+    var Administrativewardname = $("#id_ElectoralWard option:selected").text();
+
+    var id = $("#id_ElectoralWard option:selected").val();
+
+    var url = "{% url 'SlumList' %}";
+    
+    alert(id);    
+
+    $.ajax({
+
+        url : url,
+        
+        data : { id : id},
+        
+        type: "POST",
+        
+        contenttype : "json",
+
+ 
+        success : function(json){           
+        
+        alert(json.nameArray);
+        
+        for (i = 0; i < json.nameArray.length; i++) { 
+            $('#id_Slum').append('<option>'+json.nameArray[i]+'</option>');
+        }
+
+        }
+
+
+    });
+
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 $(document).ready(function(){
-	$("#id_City").on('change',function()
-	{
+    $("#id_City").on('change',function()
+    {
         myFunction();   
 
- 	});
+    });
 });
+
+
+$(document).ready(function(){
+    $("#id_AdministrativeWard").on('change',function()
+    {
+        myFunction2();   
+
+    });
+});
+
+
+$(document).ready(function(){
+    $("#id_ElectoralWard").on('change',function()
+    {
+        alert("Hi");
+         myFunction3();   
+
+       
+    });
+});
+
+
 
 </script>
 
-
-
 </head> 
 <body>
-
-<div id ="name" align="center">
-<select name="drop">
-<option value="Milk">Fresh Milk</option>
-</select>
-</div>
-
 </body>
 </html>

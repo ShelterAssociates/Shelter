@@ -252,7 +252,6 @@ class ProjectMaster(models.Model):
         verbose_name = 'Project Master'
         verbose_name_plural = 'Project Masters'
 
-
 class Rapid_Slum_Appraisal(models.Model):
     """ Rapid Slum Appraisal Database """
     def validate_image(fieldfile_obj):

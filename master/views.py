@@ -13,6 +13,7 @@ from django.views.decorators.csrf import csrf_exempt
 from django.views.generic.edit import FormView
 
 from master.models import Survey, CityReference, Rapid_Slum_Appraisal, Slum, AdministrativeWard 
+from master.models import ElectoralWard, Slum
 from master.forms import SurveyCreateForm, Rapid_Slum_AppraisalForm, ReportForm
 
 from django.views.generic.base import View
@@ -176,20 +177,20 @@ def insert(request):
 
 
 def report(request):
-    return HttpResponseRedirect(settings.BIRT_REPORT_URL + "Birt/frameset?__report=FactSheet_Report_New-1.rptdesign&rp_slumDetails_id=10&rp_dataset_id=9&rp_slumInfo_id=8&rp_waterDetails_id=2358&rp_waterDetailsSource_id=5215")
+    return HttpResponseRedirect(settings.BIRT_REPORT_URL + "Birt/frameset?__format=pdf&report=FactSheet_Report_New-1.rptdesign&rp_slumDetails_id=10&rp_dataset_id=9&rp_slumInfo_id=8&rp_waterDetails_id=2358&rp_waterDetailsSource_id=5215")
 
-
-
+"""
+frameset?__format=pdf&__report=FactSheet_Report_New-1.rptdesign&rp_slumDetails_id=10&rp_dataset_id=9&rp_slumInfo_id=8&rp_waterDetails_id=2358&rp_waterDetailsSource_id=5215
 """
 #This is to for dynamic report generation
-def report(request):
+def report(request):#
     form = ReportForm()
     return render(request,'report.html', {'form':form})
-"""
+
+
 @csrf_exempt
-def Administrativeward(request):
+def AdministrativewardList(request):
     cid = request.POST['id']
-    print cid
     Aobj = AdministrativeWard.objects.filter(city=cid)
     idArray = []
     nameArray = []
@@ -200,6 +201,82 @@ def Administrativeward(request):
     data = { 'idArray'  : idArray,
              'nameArray': nameArray
             }       
-    print json.dumps(data)    
     return HttpResponse(json.dumps(data),content_type='application/json')
-    
+
+"""
+@csrf_exempt
+def ElectoralWard(request):
+    AdministrativeWardName = request.POST['id']
+    print AdministrativeWardName
+    Aobj = AdministrativeWard.objects.get(name=AdministrativeWardName)    
+    Aid = Aobj.id
+    print Aid
+    try:
+        print "hello"
+        Eobj = ElectoralWard.objects.all()
+        print Eobj
+        print "############"
+    except e:
+        print e
+        
+    idArray = []
+    nameArray = []
+    print "$$$$$$$$$$$$$$$$"
+    for i in Eobj:
+        print i.id
+        nameArray.append(str(i.name))
+        idArray.append(i.id)
+    data ={}
+    data = { 'idArray' :idArray,'nameArray':nameArray}
+    print data               
+    return HttpResponse(json.dumps(data),content_type='application/json')
+"""
+
+@csrf_exempt
+def ElectoralWardList(request):
+    AdministrativeWardName = request.POST['id']
+    print AdministrativeWardName
+    Aobj = AdministrativeWard.objects.get(name=AdministrativeWardName)    
+    Aid = Aobj.id
+    print Aid
+    try:
+        print "hello"
+        Eobj = ElectoralWard.objects.filter(administrative_ward=Aid)
+        print Eobj
+        print "############"
+    except e:
+        print e
+        
+    idArray = []
+    nameArray = []
+    print "$$$$$$$$$$$$$$$$"
+    for i in Eobj:
+        print i.id
+        nameArray.append(str(i.name))
+        idArray.append(i.id)
+    data ={}
+    data = { 'idArray' :idArray,'nameArray':nameArray}
+    print data               
+    return HttpResponse(json.dumps(data),content_type='application/json')
+
+
+
+@csrf_exempt
+def SlumList(request):
+    ElectoralWardName = 'ew2'
+    print ElectoralWardName
+    Eobj = ElectoralWard.objects.get(name=ElectoralWardName)    
+    Eid = Eobj.id
+    print Eid
+    Sobj = Slum.objects.filter(electoral_ward=Eid)
+    idArray = []
+    nameArray = []
+    print "$$$$$$$$$$$$$$$$"
+    for i in Sobj:
+        print i.id
+        nameArray.append(str(i.name))
+        idArray.append(i.id)
+    data ={}
+    data = { 'idArray' :idArray,'nameArray':nameArray}
+    print data               
+    return HttpResponse(json.dumps(data),content_type='application/json')
