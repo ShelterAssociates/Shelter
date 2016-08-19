@@ -20,7 +20,7 @@ from django.conf.urls import include, url
 from django.contrib import admin
 from django.views.generic.base import View
 from master.views import index, SurveyListView, SurveyCreateView, \
-    survey_delete_view, search, edit, display, insert, report, AdministrativewardList, ElectoralWardList, SlumList
+    survey_delete_view, search, edit, display, insert, report, AdministrativewardList, ElectoralWardList, SlumList, ReportGenerate
 
 from django.conf import settings
 from django.conf.urls.static import static
@@ -49,5 +49,8 @@ urlpatterns = [
     url(r'^AdministrativewardList/$', AdministrativewardList, name='AdministrativewardList'),#url(r'^ElectoralWard/$', ElectoralWard, name='ElectoralWard'),
     url(r'^ElectoralWardList/$',ElectoralWardList, name='ElectoralWardList'),
     url(r'^SlumList/$',SlumList, name='SlumList'),
-
+    url(r'^ReportGenerate/$',ReportGenerate, name='ReportGenerate'),
 ]
+
+
+

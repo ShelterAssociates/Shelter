@@ -10,12 +10,12 @@ from django.core.exceptions import ValidationError
 
 class CityReference(models.Model):
     """Worldwide City Database"""
-    city_name = models.CharField(max_length=2048)
-    city_code = models.CharField(max_length=2048)
-    district_name = models.CharField(max_length=2048)
-    district_code = models.CharField(max_length=2048)
-    state_name = models.CharField(max_length=2048)
-    state_code = models.CharField(max_length=2048)
+    city_name = models.CharField(max_length=2048,blank=True,null=True)
+    city_code = models.CharField(max_length=2048,blank=True,null=True)
+    district_name = models.CharField(max_length=2048,blank=True,null=True)
+    district_code = models.CharField(max_length=2048,blank=True,null=True)
+    state_name = models.CharField(max_length=2048,blank=True,null=True)
+    state_code = models.CharField(max_length=2048,blank=True,null=True)
 
     def __unicode__(self):
         """Returns string representation of object"""
@@ -24,12 +24,12 @@ class CityReference(models.Model):
 class City(models.Model):
     """Shelter City Database"""
     name = models.ForeignKey(CityReference)
-    city_code = models.CharField(max_length=2048)
-    state_name = models.CharField(max_length=2048)
-    state_code = models.CharField(max_length=2048)
-    district_name = models.CharField(max_length=2048)
-    district_code = models.CharField(max_length=2048)
-    shape = models.PolygonField(srid=4326)
+    city_code = models.CharField(max_length=2048,blank=True,null=True)
+    state_name = models.CharField(max_length=2048,blank=True,null=True)
+    state_code = models.CharField(max_length=2048,blank=True,null=True)
+    district_name = models.CharField(max_length=2048,blank=True,null=True)
+    district_code = models.CharField(max_length=2048,blank=True,null=True)
+    shape = models.PolygonField(srid=4326,blank=True,null=True)
     created_by = models.ForeignKey(User)
     created_on = models.DateTimeField(default=datetime.datetime.now())
 
@@ -70,11 +70,11 @@ class Survey(models.Model):
 class AdministrativeWard(models.Model):
     """Administrative Ward Database"""
     city = models.ForeignKey(City)
-    name = models.CharField(max_length=2048)
-    shape = models.PolygonField(srid=4326)
-    ward_no = models.CharField(max_length=2048)
-    description = models.CharField(max_length=2048)
-    office_address = models.CharField(max_length=2048)
+    name = models.CharField(max_length=2048,blank=True,null=True)
+    shape = models.PolygonField(srid=4326,blank=True,null=True)
+    ward_no = models.CharField(max_length=2048,blank=True,null=True)
+    description = models.CharField(max_length=2048,blank=True,null=True)
+    office_address = models.CharField(max_length=2048,blank=True,null=True)
 
     def __unicode__(self):
         """Returns string representation of object"""
@@ -89,11 +89,11 @@ class AdministrativeWard(models.Model):
 class ElectoralWard(models.Model):
     """Electoral Ward Database"""
     administrative_ward = models.ForeignKey(AdministrativeWard)
-    name = models.CharField(max_length=2048)
-    shape = models.PolygonField(srid=4326)
+    name = models.CharField(max_length=2048,blank=True,null=True)
+    shape = models.PolygonField(srid=4326,blank=True,null=True)
     ward_no = models.CharField(max_length=2048,blank=True,null=True)
-    ward_code = models.CharField(max_length=2048)
-    extra_info = models.CharField(max_length=2048)
+    ward_code = models.CharField(max_length=2048,blank=True,null=True)
+    extra_info = models.CharField(max_length=2048,blank=True,null=True)
 
     def __unicode__(self):
         """Returns string representation of object"""
@@ -108,10 +108,10 @@ class ElectoralWard(models.Model):
 class Slum(models.Model):
     """Slum Database"""
     electoral_ward = models.ForeignKey(ElectoralWard)
-    name = models.CharField(max_length=2048)
-    shape = models.PolygonField(srid=4326)
+    name = models.CharField(max_length=2048,blank=True,null=True)
+    shape = models.PolygonField(srid=4326,blank=True,null=True)
     description = models.CharField(max_length=2048,blank=True,null=True)
-    shelter_slum_code = models.CharField(max_length=2048)
+    shelter_slum_code = models.CharField(max_length=2048,blank=True,null=True)
 
     def __unicode__(self):
         """Returns string representation of object"""
