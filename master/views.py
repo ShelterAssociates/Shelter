@@ -178,20 +178,7 @@ def insert(request):
         form = Rapid_Slum_AppraisalForm()  
     return render(request, 'insert.html', {'form': form})
 
-@csrf_exempt
-def ReportGenerate(request):
-    return HttpResponseRedirect("http://127.0.0.1:8080/Birt/frameset?__report=FactSheet_Report_New-1(1).rptdesign&rp_slumDetails_id=10&rp_dataset_id=9&rp_slumInfo_id=8&rp_waterDetails_id=2358&rp_waterDetailsSource_id=5215")
 
-
-
-"""
-return HttpResponseRedirect(settings.BIRT_REPORT_URL + "Birt/frameset?__report=FactSheet_Report_New-1(1).rptdesign&rp_slumDetails_id=10&rp_dataset_id=9&rp_slumInfo_id=8&rp_waterDetails_id=2358&rp_waterDetailsSource_id=5215")
-"""
-
-
-"""
-frameset?__format=pdf&__report=FactSheet_Report_New-1.rptdesign&rp_slumDetails_id=10&rp_dataset_id=9&rp_slumInfo_id=8&rp_waterDetails_id=2358&rp_waterDetailsSource_id=5215
-"""
 
 #This is to for dynamic report generation
 
@@ -228,13 +215,11 @@ def ElectoralWardList(request):
         idArray.append(i.id)
     data ={}
     data = { 'idArray'  : idArray,'nameArray': nameArray }
-    print data
     return HttpResponse(json.dumps(data),content_type='application/json')
 
 @csrf_exempt
 def SlumList(request):
     Eid = request.POST['id']
-    print Eid
     Sobj = Slum.objects.filter(electoral_ward=Eid)
     idArray = []
     nameArray = []
@@ -243,24 +228,18 @@ def SlumList(request):
         idArray.append(i.id)
     data ={}
     data = { 'idArray' :idArray,'nameArray':nameArray}
-    print json.dumps(data)               
     return HttpResponse(json.dumps(data),content_type='application/json')
 
-
-
-"""
 @csrf_exempt
-def SlumList(request):
-    Eid = request.POST['id']
-    print Eid
-    Sobj = Slum.objects.filter(electoral_ward=Eid)
-    idArray = []
-    nameArray = []
-    for i in Sobj:
-        nameArray.append(str(i.name))
-        idArray.append(i.id)
+def ReportGenerate(request):
+    sid = request.POST['Sid']
+    Fid = request.POST['Fid']
+    SlumObj = Slum.objects.get(id=sid)
+    rp_slum_code = str(SlumObj.shelter_slum_code)
+    rp_xform_title = Fid
+    string = settings.BIRT_REPORT_URL + "Birt/frameset?__report=FactSheet.rptdesign&rp_xform_title=" + rp_xform_title + "&rp_slum_code=" + str(rp_slum_code)
     data ={}
-    data = { 'idArray' :idArray,'nameArray':nameArray}
-    print json.dumps(data)               
+    data = {'string': string}
     return HttpResponse(json.dumps(data),content_type='application/json')
-"""
+
+

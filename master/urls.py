@@ -46,7 +46,7 @@ urlpatterns = [
     url(r'^factsheet/$', display, name='display'),
     url(r'^insert/$', insert, name='insert'),
     url(r'^report/$', report, name='report'),
-    url(r'^AdministrativewardList/$', AdministrativewardList, name='AdministrativewardList'),#url(r'^ElectoralWard/$', ElectoralWard, name='ElectoralWard'),
+    url(r'^AdministrativewardList/$', AdministrativewardList, name='AdministrativewardList'),
     url(r'^ElectoralWardList/$',ElectoralWardList, name='ElectoralWardList'),
     url(r'^SlumList/$',SlumList, name='SlumList'),
     url(r'^ReportGenerate/$',ReportGenerate, name='ReportGenerate'),
