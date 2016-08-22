@@ -99,7 +99,6 @@ admin.site.register(AdministrativeWard,AdministrativeWardAdmin)
 
 admin.site.unregister(ElectoralWard)
 
-admin.site.register(City, CityAdmin)
 class ElectoralWardFormAdmin(admin.ModelAdmin):
     form = ElectoralWardForm
 admin.site.register(ElectoralWard,ElectoralWardFormAdmin)    
