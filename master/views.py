@@ -12,7 +12,7 @@ from django.views.generic import ListView
 from django.views.decorators.csrf import csrf_exempt
 from django.views.generic.edit import FormView
 
-from master.models import Survey, CityReference, Rapid_Slum_Appraisal, Slum, AdministrativeWard 
+from master.models import Survey, CityReference, Rapid_Slum_Appraisal, Slum, AdministrativeWard, ElectoralWard
 from master.forms import SurveyCreateForm, Rapid_Slum_AppraisalForm, ReportForm
 
 from django.views.generic.base import View
@@ -131,6 +131,7 @@ def search(request):
     return HttpResponse(json.dumps(data_dict),
                         content_type='application/json')
 
+@csrf_exempt
 def display(request):
     """Display Rapid Slum Appraisal Records"""
     if request.method=='POST':
@@ -150,6 +151,7 @@ def display(request):
         RA = paginator.page(paginator.num_pages)        
     return render(request, 'display.html',{'R':R,'RA':RA})
 
+@csrf_exempt
 def edit(request,Rapid_Slum_Appraisal_id):
     """Update Rapid Slum Appraisal Record"""
     if request.method == 'POST':
@@ -163,6 +165,7 @@ def edit(request,Rapid_Slum_Appraisal_id):
         form = Rapid_Slum_AppraisalForm(instance= R)
     return render(request, 'edit.html', {'form': form})
 
+@csrf_exempt
 def insert(request):
     """Insert Rapid Slum Appraisal Record"""
     if request.method == 'POST':
@@ -175,21 +178,18 @@ def insert(request):
     return render(request, 'insert.html', {'form': form})
 
 
-def report(request):
-    return HttpResponseRedirect(settings.BIRT_REPORT_URL + "Birt/frameset?__report=FactSheet_Report_New-1.rptdesign&rp_slumDetails_id=10&rp_dataset_id=9&rp_slumInfo_id=8&rp_waterDetails_id=2358&rp_waterDetailsSource_id=5215")
 
-
-
-"""
 #This is to for dynamic report generation
-def report(request):
+
+@csrf_exempt
+def report(request):#
     form = ReportForm()
     return render(request,'report.html', {'form':form})
-"""
+
+
 @csrf_exempt
-def Administrativeward(request):
+def AdministrativewardList(request):
     cid = request.POST['id']
-    print cid
     Aobj = AdministrativeWard.objects.filter(city=cid)
     idArray = []
     nameArray = []
@@ -200,6 +200,43 @@ def Administrativeward(request):
     data = { 'idArray'  : idArray,
              'nameArray': nameArray
             }       
-    print json.dumps(data)    
     return HttpResponse(json.dumps(data),content_type='application/json')
-    
+
+
+@csrf_exempt
+def ElectoralWardList(request):
+    Aid = request.POST['id']
+    Eobj = ElectoralWard.objects.filter(administrative_ward=Aid)
+    idArray = []
+    nameArray = []
+    for i in Eobj:
+        nameArray.append(str(i.name))
+        idArray.append(i.id)
+    data ={}
+    data = { 'idArray'  : idArray,'nameArray': nameArray }
+    return HttpResponse(json.dumps(data),content_type='application/json')
+
+@csrf_exempt
+def SlumList(request):
+    Eid = request.POST['id']
+    Sobj = Slum.objects.filter(electoral_ward=Eid)
+    idArray = []
+    nameArray = []
+    for i in Sobj:
+        nameArray.append(str(i.name))
+        idArray.append(i.id)
+    data ={}
+    data = { 'idArray' :idArray,'nameArray':nameArray}
+    return HttpResponse(json.dumps(data),content_type='application/json')
+
+@csrf_exempt
+def ReportGenerate(request):
+    sid = request.POST['Sid']
+    Fid = request.POST['Fid']
+    SlumObj = Slum.objects.get(id=sid)
+    rp_slum_code = str(SlumObj.shelter_slum_code)
+    rp_xform_title = Fid
+    string = settings.BIRT_REPORT_URL + "Birt/frameset?__report=FactSheet.rptdesign&rp_xform_title=" + rp_xform_title + "&rp_slum_code=" + str(rp_slum_code)
+    data ={}
+    data = {'string': string}
+    return HttpResponse(json.dumps(data),content_type='application/json')
