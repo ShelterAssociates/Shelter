@@ -18,16 +18,13 @@ Including another URLconf
 
 from django.conf.urls import include, url
 from django.contrib import admin
-from master.views import index, SurveyListView, SurveyCreateView, \
-    survey_delete_view, search
 from django.views.generic.base import View
 from master.views import index, SurveyListView, SurveyCreateView, \
-    survey_delete_view, search, edit, display, insert, report, Administrativeward
+    survey_delete_view, search, edit, display, insert, report, AdministrativewardList, ElectoralWardList, SlumList, ReportGenerate, VulnerabilityReport
 
 from django.conf import settings
 from django.conf.urls.static import static
 
-    
 admin.autodiscover()
 
 urlpatterns = [
@@ -47,7 +44,10 @@ urlpatterns = [
     url(r'^edit/(?P<Rapid_Slum_Appraisal_id>\d+)$', edit, name='edit'),
     url(r'^factsheet/$', display, name='display'),
     url(r'^insert/$', insert, name='insert'),
-    url(r'^report/$', report, name='report'),
-    url(r'^Administrativeward/$', Administrativeward, name='Administrativeward'),
+    url(r'^report/$', report, name='report'),            
+    url(r'^AdministrativewardList/$', AdministrativewardList, name='AdministrativewardList'),
+    url(r'^ElectoralWardList/$',ElectoralWardList, name='ElectoralWardList'),
+    url(r'^SlumList/$',SlumList, name='SlumList'),
+    url(r'^ReportGenerate/$',ReportGenerate, name='ReportGenerate'),
+    url(r'^VulnerabilityReport/$',VulnerabilityReport, name='VulnerabilityReport'),
 ]
-            

@@ -4,7 +4,7 @@
 
 import urllib2
 import json
-
+import psycopg2
 from django import forms
 from django.conf import settings
 
@@ -16,6 +16,7 @@ from django.core.exceptions import ValidationError
 
 
 SURVEY_LIST = []
+
 
 class SurveyCreateForm(forms.ModelForm):
     """Create a new survey"""
@@ -90,12 +91,14 @@ def get_kobo_id_list():
 
     return temp_arr
 
+
 class LocationWidget(widgets.TextInput):
     """Map Widget"""
     template_name = 'draw.html'
     def render(self, name, value, attrs=None):
         context = {'POLYGON':value}
         return mark_safe(render_to_string(self.template_name, context))
+
 
 class CityFrom(forms.ModelForm):
     """City Form"""
@@ -135,18 +138,33 @@ class Rapid_Slum_AppraisalForm(forms.ModelForm):
         fields = '__all__'
 
 
-
 class ReportForm(forms.Form):
-    City_Name_List = []#
-    City_Name_List = [(c.id,c.name) for c in City.objects.all()]
-    print City_Name_List
+    City_Name_List = []
+    Default =('0','---select---')
+    City_Name_List.append(Default)
+    for c in City.objects.all():
+        Default=(c.id,c.name)
+        City_Name_List.append(Default)
     City = forms.ChoiceField(choices=City_Name_List)
-    AdministrativeWard_Name_List = []#AdministrativeWard_Name_List = [(i.id,i.name) for i in AdministrativeWard.objects.all()]
-    print AdministrativeWard_Name_List
+    AdministrativeWard_Name_List = []
+    Default =('0','---select---')
+    AdministrativeWard_Name_List.append(Default)
     AdministrativeWard = forms.ChoiceField(choices=AdministrativeWard_Name_List)
-    ElectoralWard_Name_List = []#ElectoralWard_Name_List = [(e.id,e.name) for e in ElectoralWard.objects.all()]
-    print ElectoralWard_Name_List
+    ElectoralWard_Name_List = []
+    Default =('0','---select---')
+    ElectoralWard_Name_List.append(Default)
     ElectoralWard = forms.ChoiceField(choices=ElectoralWard_Name_List)
-    Slum_Name_List = []#Slum_Name_List = [(s.id,s.name) for s in Slum.objects.all()]
-    print Slum_Name_List
+    Slum_Name_List = []
+    Default =('0','---select---')
+    Slum_Name_List.append(Default)
     Slum = forms.ChoiceField(choices=Slum_Name_List)
+    form_Name_List = []
+    Default =('0','---select---')
+    form_Name_List.append(Default)
+    old = psycopg2.connect(database='onadata1',user='shelter',password='Sh3lt3rAss0ciat3s',host='45.56.104.240',port='5432')
+    cursor_old = old.cursor()
+    cursor_old.execute("select id, title from logger_xform;")
+    fetch_data = cursor_old.fetchall()
+    for i in fetch_data:
+        form_Name_List.append(i)
+    form = forms.ChoiceField(choices=form_Name_List)    

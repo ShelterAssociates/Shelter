@@ -4,7 +4,7 @@
 from django.contrib import admin
 from django.contrib.gis import admin
 from master.models import CityReference, City, \
-    AdministrativeWard, ElectoralWard, Slum, WardOfficeContact, ElectedRepresentative, Rapid_Slum_Appraisal
+    AdministrativeWard, ElectoralWard, Slum, WardOfficeContact, ElectedRepresentative, Rapid_Slum_Appraisal, Survey
 from master.forms import CityFrom, AdministrativeWardFrom, ElectoralWardForm, SlumForm
 
 # Register your models here.
@@ -77,7 +77,6 @@ class CityAdmin(admin.ModelAdmin):
     def save_model(self, request, obj, form, change):
         obj.created_by = request.user
         obj.save()
-
 admin.site.register(City, CityAdmin)
 
 admin.site.register(Rapid_Slum_Appraisal)
@@ -101,4 +100,4 @@ admin.site.unregister(ElectoralWard)
 
 class ElectoralWardFormAdmin(admin.ModelAdmin):
     form = ElectoralWardForm
-admin.site.register(ElectoralWard,ElectoralWardFormAdmin)    
+admin.site.register(ElectoralWard,ElectoralWardFormAdmin) 
