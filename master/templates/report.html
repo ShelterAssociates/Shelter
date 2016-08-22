@@ -204,15 +204,19 @@ $(document).ready(function(){
 <body>
 
 
-<div style = "margin-left:6%;">
-<h2> Generate Report </h2>
+<div style="margin-left:3%;">
+<div class="row">
+<div class="col-md-12">
+<h2> Generate Factsheet </h2>
+</div>
+</div>
 </div>
 
 <div style = "margin-left:3%;">
 <br>
 <div class="row">
     <div class ="col-md-3">  
-        <label for="City"> Select City </label>
+        <label for="City"> City </label>
     </div>
     <div class="col-md-6">
        {{ form.City }}
@@ -223,7 +227,7 @@ $(document).ready(function(){
 
 <div class="row">
     <div class ="col-md-3">  
-        <label for=""> Select Administrative Ward  </label>
+        <label for=""> Administrative Ward  </label>
     </div>
     <div class="col-md-6">
        {{ form.AdministrativeWard  }}
@@ -235,7 +239,7 @@ $(document).ready(function(){
 
 <div class="row">
     <div class ="col-md-3">  
-        <label for=""> Select Electoral Ward </label>
+        <label for=""> Electoral Ward </label>
     </div>
     <div class="col-md-6">
        {{ form.ElectoralWard }}
@@ -246,7 +250,7 @@ $(document).ready(function(){
 
 <div class="row">
     <div class ="col-md-3">  
-        <label for=""> Select Slum </label>
+        <label for=""> Slum </label>
     </div>
     <div class="col-md-6">
        {{ form.Slum }}
@@ -257,16 +261,19 @@ $(document).ready(function(){
 
 <div class="row">
     <div class ="col-md-3">  
-        <label for=""> Select form </label>
+        <label for=""> Form </label>
     </div>
     <div id='form' class="col-md-6" >
        {{ form.form }}
     </div>
 </div>
 
-
-<div class="row" style = "margin-left:6%;">
+<br/>
+<div class="row" >
+   <div class="col-md-3"></div>
+   <div class="col-md-6">
      <input type="button" id="button" value="Generate Report">
+   </div>
 </div>
 
 </div>
@@ -286,4 +293,4 @@ $(document).ready(function(){
 
 {% block sidebar %}
 {% endblock %}
-q
+

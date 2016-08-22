@@ -139,26 +139,26 @@ class Rapid_Slum_AppraisalForm(forms.ModelForm):
 
 class ReportForm(forms.Form):
     City_Name_List = []
-    Default =('0','---Please Select---')
+    Default =('0','---select---')
     City_Name_List.append(Default)
     for c in City.objects.all():
         Default=(c.id,c.name)
         City_Name_List.append(Default)
     City = forms.ChoiceField(choices=City_Name_List)
     AdministrativeWard_Name_List = []
-    Default =('0','---Please Select---')
+    Default =('0','---select---')
     AdministrativeWard_Name_List.append(Default)
     AdministrativeWard = forms.ChoiceField(choices=AdministrativeWard_Name_List)
     ElectoralWard_Name_List = []
-    Default =('0','---Please Select---')
+    Default =('0','---select---')
     ElectoralWard_Name_List.append(Default)
     ElectoralWard = forms.ChoiceField(choices=ElectoralWard_Name_List)
     Slum_Name_List = []
-    Default =('0','---Please Select---')
+    Default =('0','---select---')
     Slum_Name_List.append(Default)
     Slum = forms.ChoiceField(choices=Slum_Name_List)
     form_Name_List = []
-    Default =('0','---Please Select---')
+    Default =('0','---select---')
     form_Name_List.append(Default)
     old = psycopg2.connect(database='onadata1',user='shelter',password='Sh3lt3rAss0ciat3s',host='45.56.104.240',port='5432')
     cursor_old = old.cursor()
