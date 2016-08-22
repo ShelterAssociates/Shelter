@@ -3,16 +3,45 @@
 {% block breadcrumbs %}
 {% load staticfiles %}
 {% csrf_token %} 
-
 <html>
 <head>
 <title></title>
     <link rel="stylesheet"  type="text/css" href="{% static "css/bootstrap.min.css" %}"/>
     <script src="{% static "js/jquery.min.js" %}"></script>
-    <script src="{% static "js/bootstrap.min.js" %}"></script>
- <head>
-<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
+    <script src="{% static "js/bootstrap.min.js" %}"></script>  
+<head>
 <script type="text/javascript">
+
+$(document).ready(function(){
+  $("#button").click(function(){
+ 
+        var Sid = $("#id_Slum option:selected").val();        
+        var Cid = $("#id_City option:selected").val();
+        var Fid = $("#id_form option:selected").text();
+        var url = "{% url 'ReportGenerate' %}";
+   
+        $.ajax({
+
+        url : url,
+        
+        //data : { Sid : Sid,Cid : Cid},
+        
+        data : { Sid : Sid,Fid : Fid},
+       
+        type: "POST",
+        
+        contenttype : "json",
+
+        success : function(json){           
+
+            url = json.string;
+            window.open("" + url );                  
+        }
+
+    });
+
+  });
+});
 
 
 function myFunction(){
@@ -41,7 +70,6 @@ function myFunction(){
         for (i = 0; i < json.nameArray.length; i++){ 
                 var str='<option value="';
                 str = str +json.idArray[i] +'"'+'>' + json.nameArray[i] + '</option>';
-                console.log(str);
                 $('#id_AdministrativeWard').append(str);
             }
 
@@ -79,7 +107,6 @@ function myFunction2(){
         for (i = 0; i < json.nameArray.length; i++) { 
             var str='<option value="';
             str = str +json.idArray[i] +'"'+'>' + json.nameArray[i] + '</option>';
-            console.log(str);
             $('#id_ElectoralWard').append(str);
      
 
@@ -117,7 +144,6 @@ function myFunction3(){
         for (i = 0; i < json.nameArray.length; i++) { 
             var str='<option value="';
             str = str +json.idArray[i] +'"'+'>' + json.nameArray[i] + '</option>';
-            console.log(str);
             $('#id_Slum').append(str);
      
             }
@@ -156,12 +182,22 @@ $(document).ready(function(){
     });
 });
 
-django.jQuery(document).ready(function(){
-    django.jQuery("#id_name").on('change',function()
+$(document).ready(function(){
+    $("#id_Slum").on('change',function()
      {
-        myFunction();    
+
+        var id = $("#id_Slum option:selected").val();
     });
 });
+
+
+$(document).ready(function(){
+    $("#id_form").on('change',function()
+     {
+        var id = $("#id_form option:selected").text();
+    });
+});
+
 
 </script>
 </head> 
@@ -172,11 +208,8 @@ django.jQuery(document).ready(function(){
 <h2> Generate Report </h2>
 </div>
 
-
 <div style = "margin-left:3%;">
-
 <br>
-
 <div class="row">
     <div class ="col-md-3">  
         <label for="City"> Select City </label>
@@ -226,21 +259,19 @@ django.jQuery(document).ready(function(){
     <div class ="col-md-3">  
         <label for=""> Select form </label>
     </div>
-    <div id='form' class="col-md-6">
+    <div id='form' class="col-md-6" >
        {{ form.form }}
     </div>
 </div>
 
 
-
 <div class="row" style = "margin-left:6%;">
-
-    <form action= "{% url 'ReportGenerate' %}" method="POST">
-     <input type="submit" class="btn" value="Generate Report" name="Generate Report">
-    </form>
+     <input type="button" id="button" value="Generate Report">
 </div>
 
 </div>
+
+
 
 </body>
 </html>
@@ -255,3 +286,4 @@ django.jQuery(document).ready(function(){
 
 {% block sidebar %}
 {% endblock %}
+q
