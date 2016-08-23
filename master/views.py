@@ -179,10 +179,8 @@ def insert(request):
 
 
 
-#This is to for dynamic report generation
-
 @csrf_exempt
-def report(request):#
+def report(request):
     form = ReportForm()
     return render(request,'report.html', {'form':form})
 
@@ -200,6 +198,7 @@ def AdministrativewardList(request):
     data = { 'idArray'  : idArray,
              'nameArray': nameArray
             }       
+    print json.dumps(data)    
     return HttpResponse(json.dumps(data),content_type='application/json')
 
 
@@ -240,3 +239,7 @@ def ReportGenerate(request):
     data ={}
     data = {'string': string}
     return HttpResponse(json.dumps(data),content_type='application/json')
+
+def VulnerabilityReport(request):
+    string = settings.BIRT_REPORT_URL + "Birt/frameset?__report=Vulnerability_Report.rptdesign"
+    return HttpResponseRedirect(string)    

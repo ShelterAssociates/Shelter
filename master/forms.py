@@ -137,6 +137,7 @@ class Rapid_Slum_AppraisalForm(forms.ModelForm):
         model = Rapid_Slum_Appraisal
         fields = '__all__'
 
+
 class ReportForm(forms.Form):
     City_Name_List = []
     Default =('0','---select---')
@@ -166,5 +167,4 @@ class ReportForm(forms.Form):
     fetch_data = cursor_old.fetchall()
     for i in fetch_data:
         form_Name_List.append(i)
-    form = forms.ChoiceField(choices=form_Name_List)
-    
+    form = forms.ChoiceField(choices=form_Name_List)    

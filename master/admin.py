@@ -2,8 +2,9 @@
 # -*- coding: utf-8 -*-
 """The Django Admin Page for master app"""
 from django.contrib import admin
+from django.contrib.gis import admin
 from master.models import CityReference, City, \
-    AdministrativeWard, ElectoralWard, Slum, WardOfficeContact, ElectedRepresentative, Rapid_Slum_Appraisal
+    AdministrativeWard, ElectoralWard, Slum, WardOfficeContact, ElectedRepresentative, Rapid_Slum_Appraisal, Survey
 from master.forms import CityFrom, AdministrativeWardFrom, ElectoralWardForm, SlumForm
 
 # Register your models here.
@@ -71,10 +72,8 @@ class PlottedShapeAdmin(admin.ModelAdmin):
 # admin.site.register(PlottedShape,PlottedShapeAdmin)
 class CityAdmin(admin.ModelAdmin):
     """Display panel of CityAdmin Model"""
-    list_display = ('name', 'shape', 'state_code', 'district_code',
-                    'city_code')
-    exclude = ('created_by', 'created_on')
-
+    form = CityFrom 
+    model = City
     def save_model(self, request, obj, form, change):
         obj.created_by = request.user
         obj.save()
@@ -101,4 +100,4 @@ admin.site.unregister(ElectoralWard)
 
 class ElectoralWardFormAdmin(admin.ModelAdmin):
     form = ElectoralWardForm
-admin.site.register(ElectoralWard,ElectoralWardFormAdmin)    
+admin.site.register(ElectoralWard,ElectoralWardFormAdmin) 

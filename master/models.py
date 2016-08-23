@@ -10,12 +10,12 @@ from django.core.exceptions import ValidationError
 
 class CityReference(models.Model):
     """Worldwide City Database"""
-    city_name = models.CharField(max_length=2048,blank=True,null=True)
-    city_code = models.CharField(max_length=2048,blank=True,null=True)
-    district_name = models.CharField(max_length=2048,blank=True,null=True)
-    district_code = models.CharField(max_length=2048,blank=True,null=True)
-    state_name = models.CharField(max_length=2048,blank=True,null=True)
-    state_code = models.CharField(max_length=2048,blank=True,null=True)
+    city_name = models.CharField(max_length=2048)
+    city_code = models.CharField(max_length=2048)
+    district_name = models.CharField(max_length=2048)
+    district_code = models.CharField(max_length=2048)
+    state_name = models.CharField(max_length=2048)
+    state_code = models.CharField(max_length=2048)
 
     def __unicode__(self):
         """Returns string representation of object"""
@@ -24,12 +24,12 @@ class CityReference(models.Model):
 class City(models.Model):
     """Shelter City Database"""
     name = models.ForeignKey(CityReference)
-    city_code = models.CharField(max_length=2048,blank=True,null=True)
-    state_name = models.CharField(max_length=2048,blank=True,null=True)
-    state_code = models.CharField(max_length=2048,blank=True,null=True)
-    district_name = models.CharField(max_length=2048,blank=True,null=True)
-    district_code = models.CharField(max_length=2048,blank=True,null=True)
-    shape = models.PolygonField(srid=4326,blank=True,null=True)
+    city_code = models.CharField(max_length=2048)
+    state_name = models.CharField(max_length=2048)
+    state_code = models.CharField(max_length=2048)
+    district_name = models.CharField(max_length=2048)
+    district_code = models.CharField(max_length=2048)
+    shape = models.PolygonField(srid=4326)
     created_by = models.ForeignKey(User)
     created_on = models.DateTimeField(default=datetime.datetime.now())
 
