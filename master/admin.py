@@ -79,7 +79,6 @@ class CityAdmin(admin.ModelAdmin):
         obj.save()
 admin.site.register(City, CityAdmin)
 
-admin.site.register(Rapid_Slum_Appraisal)
 
 
 class WardOfficeContactAdmin(admin.ModelAdmin):
@@ -101,3 +100,5 @@ admin.site.unregister(ElectoralWard)
 class ElectoralWardFormAdmin(admin.ModelAdmin):
     form = ElectoralWardForm
 admin.site.register(ElectoralWard,ElectoralWardFormAdmin) 
+
+
