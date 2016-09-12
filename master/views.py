@@ -3,6 +3,8 @@
 """The Django Views Page for master app"""
 
 import json
+import psycopg2
+
 
 from django.core.urlresolvers import reverse
 from django.contrib.admin.views.decorators import staff_member_required
@@ -13,7 +15,7 @@ from django.views.decorators.csrf import csrf_exempt
 from django.views.generic.edit import FormView
 
 from master.models import Survey, CityReference, Rapid_Slum_Appraisal, Slum, AdministrativeWard, ElectoralWard
-from master.forms import SurveyCreateForm, Rapid_Slum_AppraisalForm, ReportForm
+from master.forms import SurveyCreateForm, ReportForm, Rapid_Slum_AppraisalForm
 
 from django.views.generic.base import View
 from django.shortcuts import render
@@ -141,7 +143,7 @@ def display(request):
             R = Rapid_Slum_Appraisal.objects.get(pk=i)
             R.delete()                 
     R = Rapid_Slum_Appraisal.objects.all()
-    paginator = Paginator(R, 1) 
+    paginator = Paginator(R, 10) 
     page = request.GET.get('page')
     try:
         RA = paginator.page(page)
@@ -176,7 +178,6 @@ def insert(request):
     else:
         form = Rapid_Slum_AppraisalForm()  
     return render(request, 'insert.html', {'form': form})
-
 
 
 @csrf_exempt
@@ -240,6 +241,36 @@ def ReportGenerate(request):
     data = {'string': string}
     return HttpResponse(json.dumps(data),content_type='application/json')
 
+@csrf_exempt
 def VulnerabilityReport(request):
-    string = settings.BIRT_REPORT_URL + "Birt/frameset?__report=Vulnerability_Report.rptdesign"
+    string = settings.BIRT_REPORT_URL + "Birt/frameset?__format=report=Vulnerability_Report.rptdesign"
     return HttpResponseRedirect(string)    
+
+
+@csrf_exempt
+def jsondata(request):
+    old = psycopg2.connect(database='onadata1',user='postgres',password='softcorner',host='127.0.0.1',port='5432')
+    cursor_old = old.cursor()
+    cursor_old.execute("select json from logger_instance where xform_id=106 and id=9;")
+    fetch_data = cursor_old.fetchone()
+    data = fetch_data
+    return HttpResponse(json.dumps(data),content_type='application/json')
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

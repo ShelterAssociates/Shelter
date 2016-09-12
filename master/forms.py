@@ -131,12 +131,12 @@ class SlumForm(forms.ModelForm):
         model = Slum
         fields= "__all__"
 
+""
 class Rapid_Slum_AppraisalForm(forms.ModelForm):
     """Rapid Slum AppraisalForm"""
     class Meta:
         model = Rapid_Slum_Appraisal
         fields = '__all__'
-
 
 class ReportForm(forms.Form):
     City_Name_List = []
@@ -161,10 +161,14 @@ class ReportForm(forms.Form):
     form_Name_List = []
     Default =('0','---select---')
     form_Name_List.append(Default)
-    old = psycopg2.connect(database='onadata1',user='shelter',password='Sh3lt3rAss0ciat3s',host='45.56.104.240',port='5432')
+    old = psycopg2.connect(database='onadata1',user='postgres',password='softcorner',host='127.0.0.1',port='5432')
     cursor_old = old.cursor()
     cursor_old.execute("select id, title from logger_xform;")
     fetch_data = cursor_old.fetchall()
     for i in fetch_data:
         form_Name_List.append(i)
     form = forms.ChoiceField(choices=form_Name_List)    
+
+
+
+
