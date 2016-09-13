@@ -14,7 +14,7 @@ from django.views.generic import ListView
 from django.views.decorators.csrf import csrf_exempt
 from django.views.generic.edit import FormView
 
-from master.models import Survey, CityReference, Rapid_Slum_Appraisal, Slum, AdministrativeWard, ElectoralWard
+from master.models import Survey, CityReference, Rapid_Slum_Appraisal, Slum, AdministrativeWard, ElectoralWard, City
 from master.forms import SurveyCreateForm, ReportForm, Rapid_Slum_AppraisalForm
 
 from django.views.generic.base import View
@@ -255,6 +255,17 @@ def jsondata(request):
     fetch_data = cursor_old.fetchone()
     data = fetch_data
     return HttpResponse(json.dumps(data),content_type='application/json')
+
+
+@csrf_exempt
+def googlemap(request):
+    Cobj = City.objects.filter(id=7)
+    for i in Cobj:
+        city=i.shape
+    return render(request,'googlemap.html', {'city':city})
+
+
+
 
 
 
