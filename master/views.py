@@ -3,6 +3,8 @@
 """The Django Views Page for master app"""
 
 import json
+import psycopg2
+
 
 from django.core.urlresolvers import reverse
 from django.contrib.admin.views.decorators import staff_member_required
@@ -12,11 +14,15 @@ from django.views.generic import ListView
 from django.views.decorators.csrf import csrf_exempt
 from django.views.generic.edit import FormView
 
-from master.models import Survey, CityReference
-from master.forms import SurveyCreateForm
+from master.models import Survey, CityReference, Rapid_Slum_Appraisal, Slum, AdministrativeWard, ElectoralWard
+from master.forms import SurveyCreateForm, ReportForm, Rapid_Slum_AppraisalForm
+
+from django.views.generic.base import View
+from django.shortcuts import render
+from django.core.paginator import Paginator, PageNotAnInteger, EmptyPage
+from django.conf import settings
 
 @staff_member_required
-
 def index(request):
     """Renders the index template in browser"""
     template = loader.get_template('index.html')
@@ -112,7 +118,6 @@ def survey_delete_view(survey):
     data['message'] = message
     return HttpResponseRedirect('/admin/surveymapping/')
 
-
 @csrf_exempt
 def search(request):
     """Autofill add city form fields based on City ID"""
@@ -127,3 +132,145 @@ def search(request):
         }
     return HttpResponse(json.dumps(data_dict),
                         content_type='application/json')
+
+@csrf_exempt
+def display(request):
+    """Display Rapid Slum Appraisal Records"""
+    if request.method=='POST':
+        deleteList=[]
+        deleteList=request.POST.getlist('delete')
+        for i in deleteList:
+            R = Rapid_Slum_Appraisal.objects.get(pk=i)
+            R.delete()                 
+    R = Rapid_Slum_Appraisal.objects.all()
+    paginator = Paginator(R, 10) 
+    page = request.GET.get('page')
+    try:
+        RA = paginator.page(page)
+    except PageNotAnInteger:
+        RA = paginator.page(1)
+    except EmptyPage:
+        RA = paginator.page(paginator.num_pages)        
+    return render(request, 'display.html',{'R':R,'RA':RA})
+
+@csrf_exempt
+def edit(request,Rapid_Slum_Appraisal_id):
+    """Update Rapid Slum Appraisal Record"""
+    if request.method == 'POST':
+        R = Rapid_Slum_Appraisal.objects.get(pk=Rapid_Slum_Appraisal_id)
+        form = Rapid_Slum_AppraisalForm(request.POST or None,request.FILES,instance=R)
+        if form.is_valid():
+            form.save()
+            return HttpResponseRedirect('/admin/factsheet/')
+    elif request.method=="GET":
+        R = Rapid_Slum_Appraisal.objects.get(pk=Rapid_Slum_Appraisal_id)
+        form = Rapid_Slum_AppraisalForm(instance= R)
+    return render(request, 'edit.html', {'form': form})
+
+@csrf_exempt
+def insert(request):
+    """Insert Rapid Slum Appraisal Record"""
+    if request.method == 'POST':
+        form = Rapid_Slum_AppraisalForm(request.POST,request.FILES)
+        if form.is_valid():
+            form.save()
+            return HttpResponseRedirect('/admin/factsheet/')
+    else:
+        form = Rapid_Slum_AppraisalForm()  
+    return render(request, 'insert.html', {'form': form})
+
+
+@csrf_exempt
+def report(request):
+    form = ReportForm()
+    return render(request,'report.html', {'form':form})
+
+
+@csrf_exempt
+def AdministrativewardList(request):
+    cid = request.POST['id']
+    Aobj = AdministrativeWard.objects.filter(city=cid)
+    idArray = []
+    nameArray = []
+    for i in Aobj:
+        nameArray.append(str(i.name))
+        idArray.append(i.id)
+    data ={}
+    data = { 'idArray'  : idArray,
+             'nameArray': nameArray
+            }       
+    print json.dumps(data)    
+    return HttpResponse(json.dumps(data),content_type='application/json')
+
+
+@csrf_exempt
+def ElectoralWardList(request):
+    Aid = request.POST['id']
+    Eobj = ElectoralWard.objects.filter(administrative_ward=Aid)
+    idArray = []
+    nameArray = []
+    for i in Eobj:
+        nameArray.append(str(i.name))
+        idArray.append(i.id)
+    data ={}
+    data = { 'idArray'  : idArray,'nameArray': nameArray }
+    return HttpResponse(json.dumps(data),content_type='application/json')
+
+@csrf_exempt
+def SlumList(request):
+    Eid = request.POST['id']
+    Sobj = Slum.objects.filter(electoral_ward=Eid)
+    idArray = []
+    nameArray = []
+    for i in Sobj:
+        nameArray.append(str(i.name))
+        idArray.append(i.id)
+    data ={}
+    data = { 'idArray' :idArray,'nameArray':nameArray}
+    return HttpResponse(json.dumps(data),content_type='application/json')
+
+@csrf_exempt
+def ReportGenerate(request):
+    sid = request.POST['Sid']
+    Fid = request.POST['Fid']
+    SlumObj = Slum.objects.get(id=sid)
+    rp_slum_code = str(SlumObj.shelter_slum_code)
+    rp_xform_title = Fid
+    string = settings.BIRT_REPORT_URL + "Birt/frameset?__format=pdf&__report=FactSheet.rptdesign&rp_xform_title=" + rp_xform_title + "&rp_slum_code=" + str(rp_slum_code)
+    data ={}
+    data = {'string': string}
+    return HttpResponse(json.dumps(data),content_type='application/json')
+
+@csrf_exempt
+def VulnerabilityReport(request):
+    string = settings.BIRT_REPORT_URL + "Birt/frameset?__format=pdf&__report=Vulnerability_Report.rptdesign"
+    return HttpResponseRedirect(string)    
+
+
+@csrf_exempt
+def jsondata(request):
+    old = psycopg2.connect(database='onadata1',user='postgres',password='softcorner',host='127.0.0.1',port='5432')
+    cursor_old = old.cursor()
+    cursor_old.execute("select json from logger_instance where xform_id=106 and id=9;")
+    fetch_data = cursor_old.fetchone()
+    data = fetch_data
+    return HttpResponse(json.dumps(data),content_type='application/json')
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

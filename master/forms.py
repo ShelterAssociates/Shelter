@@ -4,11 +4,16 @@
 
 import urllib2
 import json
-
+import psycopg2
 from django import forms
 from django.conf import settings
 
-from master.models import Survey
+from master.models import Survey, City  ,Rapid_Slum_Appraisal, AdministrativeWard, ElectoralWard, Slum
+from django.utils.safestring import mark_safe
+from django.template.loader import render_to_string
+from django.forms import widgets
+from django.core.exceptions import ValidationError
+
 
 SURVEY_LIST = []
 
@@ -16,8 +21,7 @@ SURVEY_LIST = []
 class SurveyCreateForm(forms.ModelForm):
     """Create a new survey"""
 
-    kobotool_survey_id = forms.ChoiceField(widget=forms.Select(),
-                                           required=True)
+    kobotool_survey_id = forms.ChoiceField(widget=forms.Select(),required=True)
     kobotool_survey_url = forms.CharField(required=True)
 
     def __init__(self, *args, **kwargs):
@@ -86,3 +90,85 @@ def get_kobo_id_list():
         temp_arr.append((value['id_string'], value['id_string']))
 
     return temp_arr
+
+
+class LocationWidget(widgets.TextInput):
+    """Map Widget"""
+    template_name = 'draw.html'
+    def render(self, name, value, attrs=None):
+        context = {'POLYGON':value}
+        return mark_safe(render_to_string(self.template_name, context))
+
+
+class CityFrom(forms.ModelForm):
+    """City Form"""
+    shape = forms.CharField(widget=LocationWidget())
+    class Meta:
+        model = City
+        fields = ('name', 'shape', 'state_code', 'district_code', 'city_code')
+        exclude = ('created_by', 'created_on')
+
+
+class AdministrativeWardFrom(forms.ModelForm):
+    """AdministrativeWard Form"""
+    shape = forms.CharField(widget=LocationWidget())
+    class Meta:
+        model = AdministrativeWard
+        fields = '__all__'
+
+class ElectoralWardForm(forms.ModelForm):
+    """Electoral Ward Form"""
+    shape = forms.CharField(widget=LocationWidget())
+    class Meta:
+        model = ElectoralWard
+        fields = '__all__'
+
+
+class SlumForm(forms.ModelForm):
+    """Slum Form"""
+    shape = forms.CharField(widget=LocationWidget())
+    class Meta:
+        model = Slum
+        fields= "__all__"
+
+""
+class Rapid_Slum_AppraisalForm(forms.ModelForm):
+    """Rapid Slum AppraisalForm"""
+    class Meta:
+        model = Rapid_Slum_Appraisal
+        fields = '__all__'
+
+class ReportForm(forms.Form):
+    City_Name_List = []
+    Default =('0','---select---')
+    City_Name_List.append(Default)
+    for c in City.objects.all():
+        Default=(c.id,c.name)
+        City_Name_List.append(Default)
+    City = forms.ChoiceField(choices=City_Name_List)
+    AdministrativeWard_Name_List = []
+    Default =('0','---select---')
+    AdministrativeWard_Name_List.append(Default)
+    AdministrativeWard = forms.ChoiceField(choices=AdministrativeWard_Name_List)
+    ElectoralWard_Name_List = []
+    Default =('0','---select---')
+    ElectoralWard_Name_List.append(Default)
+    ElectoralWard = forms.ChoiceField(choices=ElectoralWard_Name_List)
+    Slum_Name_List = []
+    Default =('0','---select---')
+    Slum_Name_List.append(Default)
+    Slum = forms.ChoiceField(choices=Slum_Name_List)
+    form_Name_List = []
+    Default =('0','---select---')
+    form_Name_List.append(Default)
+    old = psycopg2.connect(database='onadata1',user='postgres',password='softcorner',host='127.0.0.1',port='5432')
+    cursor_old = old.cursor()
+    cursor_old.execute("select id, title from logger_xform;")
+    fetch_data = cursor_old.fetchall()
+    for i in fetch_data:
+        form_Name_List.append(i)
+    form = forms.ChoiceField(choices=form_Name_List)    
+
+
+
+
