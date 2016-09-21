@@ -10,7 +10,7 @@ from django.dispatch import receiver
 from django.conf import settings
 
 from master.models import Survey, Slum, Rapid_Slum_Appraisal
-from bs4 import BeautifulSoup as Soup
+import BeautifulSoup as Soup
 
 
 @receiver(post_save, sender=Slum)
