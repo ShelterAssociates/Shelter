@@ -317,6 +317,7 @@ def slummapdisplay(request):
         slum_dict["name"]=s.name
         slum_dict["id"]=s.id
         slum_dict["lat"]=str(s.shape)
+        slum_dict["info"]=s.description
         slum_dict["content"]={}
         
 
