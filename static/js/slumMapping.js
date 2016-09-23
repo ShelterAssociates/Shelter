@@ -1,7 +1,7 @@
 var map;
 var obj;
 var mydiv;
-var url = "http://192.168.0.126:8006/admin/slummapdisplay";
+var url = "/admin/slummapdisplay";
 var Poly;
 var ShapeValue;
 var shapecount = "";
@@ -14,8 +14,9 @@ function initMap12() {
 
 	map = new google.maps.Map(document.getElementById('map12'), {
 		center : {
-			lat : 16.7003848629408189,
-			lng : 74.2311403557174003
+			lat : 18.484913,
+			lng : 73.785493
+			
 		},
 		zoom : 8,
 		mapTypeId : 'satellite',
@@ -89,20 +90,15 @@ function latlongformat(ShapeValue, shapename) {
 	// Events on Polygon
 	google.maps.event.addListener(Poly, 'mouseover', function(event) {
 		infoWindow.setContent(shapename);
-		if (infoWindow.getContent() != shapecount) {
-			shapecount = infoWindow.getContent();
-			infoWindow.setPosition(event.latLng);
-			infoWindow.open(map);
-		}
+		infoWindow.setPosition(event.latLng);
+		infoWindow.open(map);
+		
 	});
 
 	google.maps.event.addListener(Poly, 'mouseout', function(event) {
 		infoWindow.close();
 	});
-
 	
-
-
 	google.maps.event.addListener(Poly, 'click', function(event) {
 		createMap(shapename, false);
         
@@ -219,10 +215,10 @@ function drawPolygon(PolygonPoints) {
 	Poly = new google.maps.Polygon({
 		paths : PolygonPoints,
 		strokeColor : '#FF0000',
-		strokeOpacity : 0.5,
+		strokeOpacity : 0.7,
 		strokeWeight : 2,
 		fillColor : "#"+((1<<24)*Math.random()|0).toString(16),
-		fillOpacity : 0.25
+		fillOpacity : 0.30
 	});
 	Poly.setMap(map);
 }
