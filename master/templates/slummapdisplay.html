@@ -1,0 +1,36 @@
+{% extends "admin/base_site.html" %}
+{% load i18n %}
+
+{% block breadcrumbs %}
+   
+{% endblock %}
+
+{% block content %}
+{% load staticfiles %}
+
+<link rel="stylesheet"  type="text/css" href="{% static "css/bootstrap.min.css" %}"/>
+<script src="{% static "js/jquery.min.js" %}"></script>
+<script src="{% static "js/bootstrap.min.js" %}"></script>  
+<script src="{% static "js/slumMapping.js" %}"></script>
+  
+ <style>
+	 #map12 {
+		        height: 550px;
+		  		width: 600px;
+		  		margin: 0px;
+		  		padding: 0px
+			}     
+</style>  
+
+<h3>Spatial Slum Information</h3>
+<div id="maplink"></div>
+<div id="map12" ></div>
+
+<script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCuQTQr4BdUZEpca7kQIt673JF_Yah3C4A&callback=initMap12"
+async defer></script>
+       
+
+{% endblock %}
+
+{% block sidebar %}
+{% endblock %}
