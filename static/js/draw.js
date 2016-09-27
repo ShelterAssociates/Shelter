@@ -7,11 +7,33 @@ var Poly;
 var curLatLng=[];
 var creator;
 var flag=0;
+var P;
+var Points=[];
+
 
 function initialise(){
+
+    var a =[];
+    var ShapeValue=django.jQuery('#id_shape').val();
+    var r = ShapeValue.substring(20,ShapeValue.length-2);
+    var a= r.split(/[\s,]+/);
+    var r1;
+    var r2;
+    for (var i=0; i <= a.length-1 ; i ++){
+        if (i%2==0)
+        {
+            r1 = a[i];
+        }else if (i %2 !=0){
+            r2 =a[i];
+            Points.push(new google.maps.LatLng(r2, r1));
+            }
+        }
+        P=Points.pop();
+   
+
     myOptions = {
-        zoom: 16,
-        center: new google.maps.LatLng(18.505599,73.822867),
+        zoom: 13,
+        center: new google.maps.LatLng(P.lat(),P.lng()),
         mapTypeId: google.maps.MapTypeId.SATELLITE
     }
 
@@ -351,3 +373,21 @@ django.jQuery(document).ready(function(){
         django.jQuery('#id_shape').text(string);
     });
 });
+
+django.jQuery(document).ready(function(){
+    django.jQuery("input[name='_addanother']").click(function(){
+        var string = Point_string();
+        django.jQuery('#id_shape').val(string);
+        django.jQuery('#id_shape').text(string);
+    });
+});
+
+
+django.jQuery(document).ready(function(){
+    django.jQuery("input[name='_continue']").click(function(){
+        var string = Point_string();
+        django.jQuery('#id_shape').val(string);
+        django.jQuery('#id_shape').text(string);
+    });
+});
+

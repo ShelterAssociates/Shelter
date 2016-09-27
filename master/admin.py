@@ -26,27 +26,33 @@ class CityReferenceAdmin(admin.ModelAdmin):
         'state_name',
         'state_code',
         )
+    search_fields = ('city_name',)
+
 
 admin.site.register(CityReference, CityReferenceAdmin)
 
 class WardOfficeContactInline(admin.TabularInline):
     """Display panel of WardOfficeContacts Model"""
     model = WardOfficeContact
+    search_fields = ('name',)
 
 class ElectedRepresentativeInline(admin.TabularInline):
     """Display panel of ElectedRepresentative Model"""
     model = ElectedRepresentative
+    search_fields = ('name',)
 
 class ElectedRepresentativeAdmin(admin.ModelAdmin):
     """Display panel of ElectedRepresentativeAdmin Model"""
     list_display = ('name', 'ward_no', 'ward_code',
                     'administrative_ward')
+    search_fields = ('name',)
     inlines = [ElectedRepresentativeInline]
 
 admin.site.register(ElectoralWard, ElectedRepresentativeAdmin)
 
 class SlumDetailAdmin(admin.ModelAdmin):
     form = SlumForm
+    search_fields = ('name',)
 admin.site.register(Slum, SlumDetailAdmin)
 
 # class SurveyDetailAdmin(admin.ModelAdmin):
@@ -74,6 +80,7 @@ class CityAdmin(admin.ModelAdmin):
     """Display panel of CityAdmin Model"""
     form = CityFrom 
     model = City
+    search_fields = ('name',)
     def save_model(self, request, obj, form, change):
         obj.created_by = request.user
         obj.save()
@@ -85,13 +92,14 @@ class WardOfficeContactAdmin(admin.ModelAdmin):
     """Display panel of WardOfficeContact Model"""
     inlines = [WardOfficeContactInline]
     list_display = ('name', 'ward_no', 'city', 'office_address')
-
+    search_fields = ('name',)
 admin.site.register(AdministrativeWard, WardOfficeContactAdmin)
 
 admin.site.unregister(AdministrativeWard)
 
 class AdministrativeWardAdmin(admin.ModelAdmin):
     form = AdministrativeWardFrom
+    search_fields = ('name',)
 admin.site.register(AdministrativeWard,AdministrativeWardAdmin)    
 
 
@@ -99,6 +107,7 @@ admin.site.unregister(ElectoralWard)
 
 class ElectoralWardFormAdmin(admin.ModelAdmin):
     form = ElectoralWardForm
+    search_fields = ('name',)
 admin.site.register(ElectoralWard,ElectoralWardFormAdmin) 
 
 
