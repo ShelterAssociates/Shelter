@@ -161,7 +161,7 @@ class ReportForm(forms.Form):
     form_Name_List = []
     Default =('0','---select---')
     form_Name_List.append(Default)
-    old = psycopg2.connect(database='onadata1',user='postgres',password='softcorner',host='127.0.0.1',port='5432')
+    old = psycopg2.connect(database='onadatav2',user='postgres',password='softcorner',host='127.0.0.1',port='5432')
     cursor_old = old.cursor()
     cursor_old.execute("select id, title from logger_xform;")
     fetch_data = cursor_old.fetchall()
