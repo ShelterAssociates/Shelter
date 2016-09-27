@@ -179,11 +179,6 @@ def Rapid_Slum_Appraisal_created_trigger(sender,instance, **kwargs):
     except:
         pass           
  
-  
-
-
-
-
 @receiver(pre_delete,sender=Rapid_Slum_Appraisal)
 def Rapid_Slum_Appraisa_delete_trigger(sender,instance, **kwargs):
     this = Rapid_Slum_Appraisal.objects.get(id=instance.id)
@@ -209,6 +204,3 @@ def Rapid_Slum_Appraisa_delete_trigger(sender,instance, **kwargs):
     this.water_info_left_image.delete() 
     this.gutter_info_left_image.delete()
     
-
-
-
