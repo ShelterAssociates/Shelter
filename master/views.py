@@ -269,19 +269,10 @@ def slummap(request):
     return HttpResponse(template.render(context))
 
 @csrf_exempt
-def slummapdisplay(request):
-    slum_list=[]
+def citymapdisplay(request):
     city_dict={}
     city_main={}
-    admin_dict={}
-    admin_main={}
-    elctrol_dict=dict()
-    elctrol_main=dict()
-    slum_dict=dict()
-    slum_main=dict()
-    main_list=[]
     
-    counter=0
     for c in City.objects.all():
         city_dict={}
         city_dict["name"]=c.name.city_name
@@ -289,30 +280,48 @@ def slummapdisplay(request):
         city_dict["lat"]= str(c.shape)
         city_dict["content"]={}
         city_main.update({str(c.name.city_name) : city_dict })
-        
-        #location = geos.Point(c.shape['lng'], c.shape['lat'], srid=4326)
+    
+    return HttpResponse(json.dumps(city_main),content_type='application/json')   
+
+
+
+@csrf_exempt
+def slummapdisplay(request,id):
+    slum_list=[]
+    city_dict={}
+    city_main={"content" : {}}
+    admin_dict={}
+    admin_main={}
+    elctrol_dict=dict()
+    elctrol_main=dict()
+    slum_dict=dict()
+    slum_main=dict()
+    main_list=[]
+ 
          
     admin_main={}
-    for a in AdministrativeWard.objects.all():
+    for a in AdministrativeWard.objects.filter(city__id=id):
         admin_dict={}
         admin_dict["name"]=a.name
         admin_dict["id"]=a.id
         admin_dict["lat"]= str(a.shape)
+        admin_dict["info"]=a.description
         admin_dict["content"]={}
-        city_main[str(a.city.name.city_name)]["content"].update({a.name:admin_dict})
+        city_main["content"].update({a.name:admin_dict})
         
         
-    for e in ElectoralWard.objects.all():
+    for e in ElectoralWard.objects.filter(administrative_ward__city__id=id):
         elctrol_dict={}
         elctrol_dict["name"]=e.name
         elctrol_dict["id"]=e.id
         elctrol_dict["lat"]=str(e.shape)
+        elctrol_dict["info"]=e.extra_info
         elctrol_dict["content"]={}
         #print e.administrative_ward.name
                     
-        city_main[str(e.administrative_ward.city.name.city_name)]["content"][str(e.administrative_ward.name)]["content"].update({e.name : elctrol_dict })                
+        city_main["content"][str(e.administrative_ward.name)]["content"].update({e.name : elctrol_dict })                
              
-    for s in Slum.objects.all():
+    for s in Slum.objects.filter(electoral_ward__administrative_ward__city__id=id):
         slum_dict={}
         slum_dict["name"]=s.name
         slum_dict["id"]=s.id
@@ -321,7 +330,7 @@ def slummapdisplay(request):
         slum_dict["content"]={}
         
 
-        city_main[str(s.electoral_ward.administrative_ward.city.name.city_name)]["content"]\
+        city_main["content"]\
         [str(s.electoral_ward.administrative_ward.name)]["content"]\
         [str(s.electoral_ward.name)]["content"].update({s.name : slum_dict })                
 
