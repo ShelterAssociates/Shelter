@@ -5,7 +5,7 @@
 import json
 import psycopg2
 
-from django.db.models.signals import post_save, pre_save
+from django.db.models.signals import post_save, pre_save, pre_delete, post_delete
 from django.dispatch import receiver
 from django.conf import settings
 
@@ -66,11 +66,11 @@ def slum_created_trigger(sender, instance, **kwargs):
 
 
 @receiver(pre_save,sender=Rapid_Slum_Appraisal)
-def Rapid_Slum_Appraisa_created_trigger(sender,instance, **kwargs):
+def Rapid_Slum_Appraisal_created_trigger(sender,instance, **kwargs):
     """Triggers the below code when image is updated"""
     try:
         this = Rapid_Slum_Appraisal.objects.get(id=instance.id)
-        print instance.gutter_info_left_image.name
+        print "Hi"
         try:
             if this.gutter_info_left_image.name != instance.gutter_info_left_image.name:
                 this.gutter_info_left_image.delete(save=False)                
@@ -105,8 +105,110 @@ def Rapid_Slum_Appraisa_created_trigger(sender,instance, **kwargs):
             if this.drainage_info_left_image.name != instance.drainage_info_left_image.name:
                 this.drainage_info_left_image.delete(save=False)               
         except:
-            pass          
+            pass
+        try:
+            if this.general_image_bottomdown1.name != instance.general_image_bottomdown1.name:
+                this.general_image_bottomdown1.delete(save=False)               
+        except:
+            pass
+        try:
+            if this.general_image_bottomdown2.name != instance.general_image_bottomdown2.name:
+                this.general_image_bottomdown2.delete(save=False)               
+        except:
+            pass
+        try:
+            if this.toilet_image_bottomdown1.name != instance.toilet_image_bottomdown1.name:
+                this.toilet_image_bottomdown1.delete(save=False)               
+        except:
+            pass
+        try:
+            if this.toilet_image_bottomdown2.name != instance.toilet_image_bottomdown2.name:
+                this.toilet_image_bottomdown2.delete(save=False)               
+        except:
+            pass
+        try:
+            if this.waste_management_image_bottomdown1.name != instance.waste_management_image_bottomdown1.name:
+                this.waste_management_image_bottomdown1.delete(save=False)               
+        except:
+            pass
+        try:
+            if this.waste_management_image_bottomdown2.name != instance.waste_management_image_bottomdown2.name:
+                this.waste_management_image_bottomdown2.delete(save=False)               
+        except:
+            pass
+        try:
+            if this.water_image_bottomdown1.name != instance.water_image_bottomdown1.name:
+                this.water_image_bottomdown1.delete(save=False)               
+        except:
+            pass
+        try:
+            if this.water_image_bottomdown2.name != instance.water_image_bottomdown2.name:
+                this.water_image_bottomdown2.delete(save=False)               
+        except:
+            pass
+        try:
+            if this.roads_image_bottomdown1.name != instance.roads_image_bottomdown1.name:
+                this.roads_image_bottomdown1.delete(save=False)               
+        except:
+            pass
+        try:
+            if this.roads_image_bottomdown2.name != instance.roads_image_bottomdown2.name:
+                this.roads_image_bottomdown2.delete(save=False)               
+        except:
+            pass
+        try:
+            if this.drainage_image_bottomdown1.name != instance.drainage_image_bottomdown1.name:
+                this.drainage_image_bottomdown1.delete(save=False)               
+        except:
+            pass
+        try:
+            if this.drainage_image_bottomdown2.name != instance.drainage_image_bottomdown2.name:
+                this.drainage_image_bottomdown2.delete(save=False)               
+        except:
+            pass
+        try:
+            if this.gutter_image_bottomdown1.name != instance.gutter_image_bottomdown1.name:
+                this.gutter_image_bottomdown1.delete(save=False)               
+        except:
+            pass
+        try:
+            if this.gutter_image_bottomdown2.name != instance.gutter_image_bottomdown2.name:
+                this.gutter_image_bottomdown2.delete(save=False)               
+        except:
+            pass                                                                  
     except:
         pass           
  
   
+
+
+
+
+@receiver(pre_delete,sender=Rapid_Slum_Appraisal)
+def Rapid_Slum_Appraisa_delete_trigger(sender,instance, **kwargs):
+    this = Rapid_Slum_Appraisal.objects.get(id=instance.id)
+    this.general_image_bottomdown1.delete()
+    this.general_image_bottomdown2.delete()
+    this.toilet_image_bottomdown1.delete()
+    this.toilet_image_bottomdown2.delete()
+    this.waste_management_image_bottomdown1.delete()
+    this.waste_management_image_bottomdown2.delete()
+    this.water_image_bottomdown1.delete()
+    this.water_image_bottomdown2.delete()
+    this.roads_image_bottomdown1.delete()
+    this.road_image_bottomdown2.delete()
+    this.drainage_image_bottomdown1.delete()
+    this.drainage_image_bottomdown2.delete()
+    this.gutter_image_bottomdown1.delete()
+    this.gutter_image_bottomdown2.delete()
+    this.drainage_info_left_image.delete()               
+    this.roads_and_access_info_left_image.delete()
+    this.general_info_left_image.delete()
+    this.toilet_info_left_image.delete()
+    this.waste_management_info_left_image.delete()
+    this.water_info_left_image.delete() 
+    this.gutter_info_left_image.delete()
+    
+
+
+
