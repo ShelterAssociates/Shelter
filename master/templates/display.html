@@ -10,7 +10,6 @@
 <head>
     <title>Rapid Infrastructure Mapping Form</title>
     <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="stylesheet"  type="text/css" href="{% static "css/bootstrap.min.css" %}"/>
     <script src="{% static "js/jquery.min.js" %}"></script>
     <script src="{% static "js/bootstrap.min.js" %}"></script>
@@ -18,35 +17,37 @@
 <body>
 
 <div style = "margin-left:0.5%;">
+
 <h2>Rapid Infrastructure Mapping Form</h2>
+
+<br>
+
 </div>
 
-    <div style = "margin-left:1%;">
+    <div>
       <form method='GET' action=''>
-        <div class = "col-md-2">
-        <input type='text' name='q' placeholder='Search' value='{{request.GET.q}}'/>
-        </div>  
-          <div class = "col-md-2">
-        <button type='submit' value='Search' class="btn btn-primary" role="button">Search</button>
-          </div>
+       <div class= "col-md-12">
+            <div >
+                <input type='text' name='q' placeholder='Search' value='{{request.GET.q}}' size="35"/> &nbsp;&nbsp; &nbsp;&nbsp;
+                <button type='submit' value='Search' class="btn btn-primary" role="button">Search</button>
+            </div>
+       </div>  
     </form>
     </div>
 
 
 <form  enctype="multipart/form-data" method="post">
 <div class ="row" style = "margin-left:0%;">
-    <div class = "col-md-6">
+    <div class = "col-md-offset-10 col-md-2 pull-right">
         <a href="{% url 'insert' %}" style="text-decoration: none; color: #FFF" class="btn btn-primary" role="button">Add New</a>
-    </div>
-
-    <div >
-        <button id ="delete" type="submit" class="btn btn-primary">Delete</button>
+   &nbsp;&nbsp;
+        <button id ="delete" type="submit" class="btn btn-danger">Delete</button>
     </div>
 
 </div>
 {% csrf_token %}
 <br>
-<div style=" overflow-x:scroll ; overflow-y: hidden; padding-bottom:10px;">      
+<div style=" overflow-x:scroll ; overflow-y: hidden; padding-bottom:10px; width:98%">      
 <table class="table table-bordered" class= "col-md-12" style = "margin-left:1%;" >
     <thead>
       <tr>
