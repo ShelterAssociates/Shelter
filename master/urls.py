@@ -55,7 +55,5 @@ urlpatterns = [
     url(r'^jsondata/$',jsondata, name='jsondata'),
     url(r'^slummap/$',slummap, name='slummap'),
     url(r'^slummapdisplay/(?P<id>[0-9]+)/$',slummapdisplay, name='slummapdisplay'),
-    url(r'^citymapdisplay/$',citymapdisplay, name='citymapdisplay'),
-    
-    
+    url(r'^citymapdisplay/$',citymapdisplay, name='citymapdisplay'),    
 ]

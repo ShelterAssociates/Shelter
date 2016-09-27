@@ -7,7 +7,8 @@ import psycopg2
 
 
 from django.core.urlresolvers import reverse
-from django.contrib.admin.views.decorators import staff_member_required
+from django.contrib.admin.views.decorators import staff_member_required 
+from django.contrib.auth.decorators import login_required
 from django.template import RequestContext, loader
 from django.http import HttpResponse, HttpResponseRedirect
 from django.views.generic import ListView
@@ -22,6 +23,7 @@ from django.views.generic.base import View
 from django.shortcuts import render
 from django.core.paginator import Paginator, PageNotAnInteger, EmptyPage
 from django.conf import settings
+from django.contrib.auth.decorators import login_required
 
 from django.contrib.gis import geos
 
@@ -136,6 +138,7 @@ def search(request):
     return HttpResponse(json.dumps(data_dict),
                         content_type='application/json')
 
+
 @csrf_exempt
 def display(request):
     """Display Rapid Slum Appraisal Records"""
@@ -144,17 +147,31 @@ def display(request):
         deleteList=request.POST.getlist('delete')
         for i in deleteList:
             R = Rapid_Slum_Appraisal.objects.get(pk=i)
-            R.delete()                 
-    R = Rapid_Slum_Appraisal.objects.all()
-    paginator = Paginator(R, 10) 
-    page = request.GET.get('page')
-    try:
-        RA = paginator.page(page)
-    except PageNotAnInteger:
-        RA = paginator.page(1)
-    except EmptyPage:
-        RA = paginator.page(paginator.num_pages)        
-    return render(request, 'display.html',{'R':R,'RA':RA})
+            R.delete()
+    query = request.GET.get("q") 
+    if(query):
+        R = Rapid_Slum_Appraisal.objects.filter(slum_name__name__contains=query)
+        paginator = Paginator(R, 10) 
+        page = request.GET.get('page')
+        try:
+            RA = paginator.page(page)
+        except PageNotAnInteger:
+            RA = paginator.page(1)
+        except EmptyPage:
+            RA = paginator.page(paginator.num_pages)      
+        return render(request, 'display.html',{'R':R,'RA':RA})
+    else:    
+        R = Rapid_Slum_Appraisal.objects.all()
+        paginator = Paginator(R, 10) 
+        page = request.GET.get('page')
+        try:
+            RA = paginator.page(page)
+        except PageNotAnInteger:
+            RA = paginator.page(1)
+        except EmptyPage:
+            RA = paginator.page(paginator.num_pages)      
+        return render(request, 'display.html',{'R':R,'RA':RA})
+
 
 @csrf_exempt
 def edit(request,Rapid_Slum_Appraisal_id):
@@ -259,12 +276,8 @@ def jsondata(request):
     data = fetch_data
     return HttpResponse(json.dumps(data),content_type='application/json')
 
-
-
 def slummap(request):
     template = loader.get_template('slummapdisplay.html')
-    
-    
     context = RequestContext(request, {})
     return HttpResponse(template.render(context))
 
@@ -333,27 +346,5 @@ def slummapdisplay(request,id):
         city_main["content"]\
         [str(s.electoral_ward.administrative_ward.name)]["content"]\
         [str(s.electoral_ward.name)]["content"].update({s.name : slum_dict })                
-
-      
-    #context = RequestContext(request, json.dumps(city_main))
     return HttpResponse(json.dumps(city_main),content_type='application/json')
     
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

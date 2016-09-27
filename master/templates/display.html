@@ -8,28 +8,47 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <title>Display Report </title>
+    <title>Rapid Infrastructure Mapping Form</title>
     <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="stylesheet"  type="text/css" href="{% static "css/bootstrap.min.css" %}"/>
     <script src="{% static "js/jquery.min.js" %}"></script>
     <script src="{% static "js/bootstrap.min.js" %}"></script>
 </head>
 <body>
 
-<div style = "margin-left:3%;">
-<h2>Rapid Slum Appraisal form</h2>
+<div style = "margin-left:0.5%;">
+
+<h2>Rapid Infrastructure Mapping Form</h2>
+
+<br>
+
 </div>
 
-<form  enctype="multipart/form-data" method="post">
-<div class ="row" style = "margin-left:1%;">
-    <div class = "col-md-4">
-        <a href="{% url 'insert' %}" style="text-decoration: none; color: #FFF" class="btn btn-primary" role="button">Add New</a>
+    <div>
+      <form method='GET' action=''>
+       <div class= "col-md-12">
+            <div >
+                <input type='text' name='q' placeholder='Search' value='{{request.GET.q}}' size="35"/> &nbsp;&nbsp; &nbsp;&nbsp;
+                <button type='submit' value='Search' class="btn btn-primary" role="button">Search</button>
+            </div>
+       </div>  
+    </form>
     </div>
+
+
+<form  enctype="multipart/form-data" method="post">
+<div class ="row" style = "margin-left:0%;">
+    <div class = "col-md-offset-10 col-md-2 pull-right">
+        <a href="{% url 'insert' %}" style="text-decoration: none; color: #FFF" class="btn btn-primary" role="button">Add New</a>
+   &nbsp;&nbsp;
+        <button id ="delete" type="submit" class="btn btn-danger">Delete</button>
+    </div>
+
 </div>
 {% csrf_token %}
 <br>
-<table class="table table-bordered" class= "col-md-12" style = "margin-left:2%;" >
+<div style=" overflow-x:scroll ; overflow-y: hidden; padding-bottom:10px; width:98%">      
+<table class="table table-bordered" class= "col-md-12" style = "margin-left:1%;" >
     <thead>
       <tr>
          <th></th>
@@ -38,27 +57,61 @@
  
         <th class="col-md-2"> Approximate Population  </th>
     
-        <th class="col-md-2"> Toilet cost </th>
+        <th class="col-md-2"> Toilet Cost </th>
     
-        <th class="col-md-2"> Toilet seat to persons ratio</th>
+        <th class="col-md-2"> Toilet Seat To Persons Ratio</th>
     
-        <th class="col-md-2"> Percentage with an Individual Water Connection</th>
+        <th class="col-md-2"> Percentage With An Individual Water Connection</th>
     
-        <th class="col-md-2"> Frequency of clearance of waste containers</th>
+        <th class="col-md-2"> Frequency Of Clearance Of Waste Containers</th>
     
-        <th class="col-md-2"> General info left image</th>
+        <th class="col-md-2"> General Info Left Image</th>
     
-        <th class="col-md-2"> Toilet info left image </th>      
+        <th class="col-md-2"> Toilet Info Left Image </th>      
     
-        <th class="col-md-2"> Waste management info left image </th>
+        <th class="col-md-2"> Waste Management Info Left Image </th>
     
-        <th class="col-md-2"> Water info left image </th>
+        <th class="col-md-2"> Water Info Left Image </th>
 
-        <th class="col-md-2"> Roads and access info left image  </th>      
+        <th class="col-md-2"> Roads And Access Info Left Image  </th>      
     
-        <th class="col-md-2"> Drainage info left image </th>
+        <th class="col-md-2"> Drainage Info Left Image </th>
+
+        <th class="col-md-2">  General Image Bottomdown1 </th>
+
+        <th class="col-md-2">  General Image Bottomdown2 </th>
+       
+
+        <th class="col-md-2"> Toilet Image Bottomdown1 </th>
+
+        <th class="col-md-2">  Toilet Image Bottomdown2 </th>
+
+
+        <th class="col-md-2"> Waste Management Image Bottomdown1 </th>
+
+        <th class="col-md-2">  Waste Management Image Bottomdown2 </th>
+
+
+        <th class="col-md-2"> Water Image Bottomdown1 </th>
+
+        <th class="col-md-2">  Water Image Bottomdown2 </th>
     
+
+        <th class="col-md-2"> Roads Image Bottomdown1 </th>
+
+        <th class="col-md-2"> Roads Image Bottomdown2 </th>
     
+
+        <th class="col-md-2"> Drainage Image Bottomdown1</th>
+
+        <th class="col-md-2">  Drainage Image Bottomdown2 </th>
+   
+
+        <th class="col-md-2"> Gutter Image Bottomdown1</th>
+
+        <th class="col-md-2"> Gutter Image Bottomdown2</th>
+
+   
     
       </tr>
     
@@ -97,7 +150,33 @@
      <td class="col-md-2">  {{ i.roads_and_access_info_left_image }}  </td>
 
      <td class="col-md-2">  {{ i.drainage_info_left_image}}  </td>
+
+    <td class="col-md-2">  {{ i.general_image_bottomdown1}}  </td>
+   
+    <td class="col-md-2">  {{ i.general_image_bottomdown2}}  </td>
+ 
+    <td class="col-md-2">  {{ i.toilet_image_bottomdown1}}  </td>
      
+    <td class="col-md-2">  {{ i.toilet_image_bottomdown2}}  </td>
+    
+    <td class="col-md-2">  {{ i.waste_management_image_bottomdown1}}  </td>
+   
+    <td class="col-md-2">  {{ i.waste_management_image_bottomdown2}}  </td> 
+
+    <td class="col-md-2">  {{ i.water_image_bottomdown1}}  </td>
+   
+    <td class="col-md-2">  {{ i.water_image_bottomdown2}}  </td>
+ 
+    <td class="col-md-2">  {{ i.roads_image_bottomdown1 }}  </td>
+
+    <td class="col-md-2">  {{ i.drainage_image_bottomdown1 }}  </td>
+
+    <td class="col-md-2">  {{ i.drainage_image_bottomdown2 }}  </td>
+
+   <td class="col-md-2">  {{ i.gutter_image_bottomdown1 }}  </td>
+
+   <td class="col-md-2">  {{ i.gutter_image_bottomdown2 }}  </td>
+
     
     </tr>
 
@@ -106,19 +185,16 @@
    
   </table>
 
-
-<div style = "margin-left:2%;">
-  <button id ="delete" type="submit" class="btn btn-primary">Delete</button>
 </div>
 
 </form>
 
 
-
 <div class="pagination" style = "margin-left:50%;">
     <span class="step-links">
+
         {% if RA.has_previous %}
-            <a href="?page={{ RA.previous_page_number }}">previous</a>
+            <a href="?q={{ request.GET.q}}&page={{ RA.previous_page_number }}">previous</a>
         {% endif %}
 
         <span class="current">
@@ -126,7 +202,7 @@
         </span>
 
         {% if RA.has_next %}
-            <a href="?page={{ RA.next_page_number }}">next</a>
+            <a href="?q={{ request.GET.q}}&page={{ RA.next_page_number }}">next</a>
         {% endif %}
     </span>
 </div>
@@ -141,7 +217,7 @@ $(document).ready(function(){
 
 $(document).ready(function() {
     $("#delete").click(function(){
-        alert("Are You sure You want to Delete ?");
+        alert("Are you sure you want to delete ?");
     }); 
 });
 
@@ -160,3 +236,7 @@ $(document).ready(function() {
 {% block sidebar %}
 
 {% endblock %}
+
+
+
+
