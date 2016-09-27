@@ -193,7 +193,7 @@
     <span class="step-links">
 
         {% if RA.has_previous %}
-            <a href="?page={{ RA.previous_page_number }}">previous</a>
+            <a href="?q={{ request.GET.q}}&page={{ RA.previous_page_number }}">previous</a>
         {% endif %}
 
         <span class="current">
@@ -201,7 +201,7 @@
         </span>
 
         {% if RA.has_next %}
-            <a href="?page={{ RA.next_page_number }}">next</a>
+            <a href="?q={{ request.GET.q}}&page={{ RA.next_page_number }}">next</a>
         {% endif %}
     </span>
 </div>
@@ -235,3 +235,7 @@ $(document).ready(function() {
 {% block sidebar %}
 
 {% endblock %}
+
+
+
+

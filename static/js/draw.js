@@ -28,15 +28,24 @@ function initialise(){
             Points.push(new google.maps.LatLng(r2, r1));
             }
         }
+    
         P=Points.pop();
-   
 
-    myOptions = {
-        zoom: 13,
+    if(P)
+    {
+         myOptions = {
+        zoom: 10,
         center: new google.maps.LatLng(P.lat(),P.lng()),
         mapTypeId: google.maps.MapTypeId.SATELLITE
+        }
     }
-
+    else{
+         myOptions = {
+        zoom: 14,
+        center: new google.maps.LatLng(18.505536, 73.822812),
+        mapTypeId: google.maps.MapTypeId.SATELLITE   
+        }
+    }
     map = new google.maps.Map(document.getElementById('main-map'), myOptions);
     creator = new PolygonCreator(map);
     var ShapeValue=django.jQuery('#id_shape').val();
@@ -57,7 +66,7 @@ function initialise(){
             }
         }
 
-        PolygonPoints.pop();
+        P=PolygonPoints.pop
         Poly = new google.maps.Polygon({
             paths: PolygonPoints,
             draggable: true,
