@@ -7,20 +7,25 @@ import psycopg2
 
 
 from django.core.urlresolvers import reverse
-from django.contrib.admin.views.decorators import staff_member_required
+from django.contrib.admin.views.decorators import staff_member_required 
+from django.contrib.auth.decorators import login_required
 from django.template import RequestContext, loader
 from django.http import HttpResponse, HttpResponseRedirect
 from django.views.generic import ListView
 from django.views.decorators.csrf import csrf_exempt
 from django.views.generic.edit import FormView
 
-from master.models import Survey, CityReference, Rapid_Slum_Appraisal, Slum, AdministrativeWard, ElectoralWard
+from master.models import Survey, CityReference, Rapid_Slum_Appraisal, \
+                          Slum, AdministrativeWard, ElectoralWard, City
 from master.forms import SurveyCreateForm, ReportForm, Rapid_Slum_AppraisalForm
 
 from django.views.generic.base import View
 from django.shortcuts import render
 from django.core.paginator import Paginator, PageNotAnInteger, EmptyPage
 from django.conf import settings
+from django.contrib.auth.decorators import login_required
+
+from django.contrib.gis import geos
 
 @staff_member_required
 def index(request):
@@ -133,6 +138,7 @@ def search(request):
     return HttpResponse(json.dumps(data_dict),
                         content_type='application/json')
 
+
 @csrf_exempt
 def display(request):
     """Display Rapid Slum Appraisal Records"""
@@ -141,17 +147,31 @@ def display(request):
         deleteList=request.POST.getlist('delete')
         for i in deleteList:
             R = Rapid_Slum_Appraisal.objects.get(pk=i)
-            R.delete()                 
-    R = Rapid_Slum_Appraisal.objects.all()
-    paginator = Paginator(R, 10) 
-    page = request.GET.get('page')
-    try:
-        RA = paginator.page(page)
-    except PageNotAnInteger:
-        RA = paginator.page(1)
-    except EmptyPage:
-        RA = paginator.page(paginator.num_pages)        
-    return render(request, 'display.html',{'R':R,'RA':RA})
+            R.delete()
+    query = request.GET.get("q") 
+    if(query):
+        R = Rapid_Slum_Appraisal.objects.filter(slum_name__name__contains=query)
+        paginator = Paginator(R, 10) 
+        page = request.GET.get('page')
+        try:
+            RA = paginator.page(page)
+        except PageNotAnInteger:
+            RA = paginator.page(1)
+        except EmptyPage:
+            RA = paginator.page(paginator.num_pages)      
+        return render(request, 'display.html',{'R':R,'RA':RA})
+    else:    
+        R = Rapid_Slum_Appraisal.objects.all()
+        paginator = Paginator(R, 10) 
+        page = request.GET.get('page')
+        try:
+            RA = paginator.page(page)
+        except PageNotAnInteger:
+            RA = paginator.page(1)
+        except EmptyPage:
+            RA = paginator.page(paginator.num_pages)      
+        return render(request, 'display.html',{'R':R,'RA':RA})
+
 
 @csrf_exempt
 def edit(request,Rapid_Slum_Appraisal_id):
@@ -256,21 +276,75 @@ def jsondata(request):
     data = fetch_data
     return HttpResponse(json.dumps(data),content_type='application/json')
 
+def slummap(request):
+    template = loader.get_template('slummapdisplay.html')
+    context = RequestContext(request, {})
+    return HttpResponse(template.render(context))
+
+@csrf_exempt
+def citymapdisplay(request):
+    city_dict={}
+    city_main={}
+    
+    for c in City.objects.all():
+        city_dict={}
+        city_dict["name"]=c.name.city_name
+        city_dict["id"]=c.id
+        city_dict["lat"]= str(c.shape)
+        city_dict["content"]={}
+        city_main.update({str(c.name.city_name) : city_dict })
+    
+    return HttpResponse(json.dumps(city_main),content_type='application/json')   
 
 
 
+@csrf_exempt
+def slummapdisplay(request,id):
+    slum_list=[]
+    city_dict={}
+    city_main={"content" : {}}
+    admin_dict={}
+    admin_main={}
+    elctrol_dict=dict()
+    elctrol_main=dict()
+    slum_dict=dict()
+    slum_main=dict()
+    main_list=[]
+ 
+         
+    admin_main={}
+    for a in AdministrativeWard.objects.filter(city__id=id):
+        admin_dict={}
+        admin_dict["name"]=a.name
+        admin_dict["id"]=a.id
+        admin_dict["lat"]= str(a.shape)
+        admin_dict["info"]=a.description
+        admin_dict["content"]={}
+        city_main["content"].update({a.name:admin_dict})
+        
+        
+    for e in ElectoralWard.objects.filter(administrative_ward__city__id=id):
+        elctrol_dict={}
+        elctrol_dict["name"]=e.name
+        elctrol_dict["id"]=e.id
+        elctrol_dict["lat"]=str(e.shape)
+        elctrol_dict["info"]=e.extra_info
+        elctrol_dict["content"]={}
+        #print e.administrative_ward.name
+                    
+        city_main["content"][str(e.administrative_ward.name)]["content"].update({e.name : elctrol_dict })                
+             
+    for s in Slum.objects.filter(electoral_ward__administrative_ward__city__id=id):
+        slum_dict={}
+        slum_dict["name"]=s.name
+        slum_dict["id"]=s.id
+        slum_dict["lat"]=str(s.shape)
+        slum_dict["info"]=s.description
+        slum_dict["content"]={}
+        
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+        city_main["content"]\
+        [str(s.electoral_ward.administrative_ward.name)]["content"]\
+        [str(s.electoral_ward.name)]["content"].update({s.name : slum_dict })                
+    return HttpResponse(json.dumps(city_main),content_type='application/json')
+    

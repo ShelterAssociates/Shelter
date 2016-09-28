@@ -8,6 +8,8 @@ from django.contrib.gis.db import models
 from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
 
+
+
 class CityReference(models.Model):
     """Worldwide City Database"""
     city_name = models.CharField(max_length=2048)
@@ -73,7 +75,7 @@ class AdministrativeWard(models.Model):
     name = models.CharField(max_length=2048,blank=True,null=True)
     shape = models.PolygonField(srid=4326,blank=True,null=True)
     ward_no = models.CharField(max_length=2048,blank=True,null=True)
-    description = models.CharField(max_length=2048,blank=True,null=True)
+    description = models.TextField(max_length=2048,blank=True,null=True)
     office_address = models.CharField(max_length=2048,blank=True,null=True)
 
     def __unicode__(self):
@@ -92,7 +94,7 @@ class ElectoralWard(models.Model):
     name = models.CharField(max_length=2048,blank=True,null=True)
     shape = models.PolygonField(srid=4326,blank=True,null=True)
     ward_no = models.CharField(max_length=2048,blank=True,null=True)
-    ward_code = models.CharField(max_length=2048,blank=True,null=True)
+    ward_code = models.TextField(max_length=2048,blank=True,null=True)
     extra_info = models.CharField(max_length=2048,blank=True,null=True)
 
     def __unicode__(self):
@@ -110,7 +112,7 @@ class Slum(models.Model):
     electoral_ward = models.ForeignKey(ElectoralWard)
     name = models.CharField(max_length=2048,blank=True,null=True)
     shape = models.PolygonField(srid=4326,blank=True,null=True)
-    description = models.CharField(max_length=2048,blank=True,null=True)
+    description = models.TextField(max_length=2048,blank=True,null=True)
     shelter_slum_code = models.CharField(max_length=2048,blank=True,null=True)
 
     def __unicode__(self):
@@ -266,28 +268,25 @@ class Rapid_Slum_Appraisal(models.Model):
     toilet_seat_to_persons_ratio = models.TextField(blank=True, null=True)
     percentage_with_an_individual_water_connection = models.TextField(blank=True, null=True)
     frequency_of_clearance_of_waste_containers = models.TextField(blank=True, null=True)
-    general_info_left_image = models.ImageField(blank=True, null=True)
-    toilet_info_left_image = models.ImageField(blank=True, null=True)
-    waste_management_info_left_image = models.ImageField(blank=True, null=True)
-    water_info_left_image = models.ImageField(blank=True, null=True)
-    roads_and_access_info_left_image = models.ImageField(blank=True, null=True)
-    drainage_info_left_image = models.ImageField(blank=True, null=True) 
-    gutter_info_left_image = models.ImageField(blank=True, null=True)
-    general_image_bottomdown1 = models.ImageField(blank=True, null=True)
-    general_image_bottomdown2 = models.ImageField(blank=True, null=True)    
-    toilet_image_bottomdown1 = models.ImageField(blank=True, null=True)
-    toilet_image_bottomdown2 = models.ImageField(blank=True, null=True)
-    waste_management_image_bottomdown1 = models.ImageField(blank=True, null=True)
-    waste_management_image_bottomdown2 = models.ImageField(blank=True, null=True)
-    water_image_bottomdown1  = models.ImageField(blank=True, null=True)
-    water_image_bottomdown2 = models.ImageField(blank=True, null=True)
-    roads_image_bottomdown1 = models.ImageField(blank=True, null=True)
-    road_image_bottomdown2  = models.ImageField(blank=True, null=True)
-    drainage_image_bottomdown1 = models.ImageField(blank=True, null=True)
-    drainage_image_bottomdown2 = models.ImageField(blank=True, null=True) 
-    gutter_image_bottomdown1  = models.ImageField(blank=True, null=True)
-    gutter_image_bottomdown2 = models.ImageField(blank=True, null=True)  
+    general_info_left_image = models.ImageField(upload_to='ShelterPhotos/',blank=True, null=True)
+    toilet_info_left_image = models.ImageField(upload_to='ShelterPhotos/',blank=True, null=True)
+    waste_management_info_left_image = models.ImageField(upload_to='ShelterPhotos/',blank=True, null=True)
+    water_info_left_image = models.ImageField(upload_to='ShelterPhotos/',blank=True, null=True)
+    roads_and_access_info_left_image = models.ImageField(upload_to='ShelterPhotos/',blank=True, null=True)
+    drainage_info_left_image = models.ImageField(upload_to='ShelterPhotos/',blank=True, null=True) 
+    gutter_info_left_image = models.ImageField(upload_to='ShelterPhotos/',blank=True, null=True)
+    general_image_bottomdown1 = models.ImageField(upload_to='ShelterPhotos/',blank=True, null=True)
+    general_image_bottomdown2 = models.ImageField(upload_to='ShelterPhotos/',blank=True, null=True)    
+    toilet_image_bottomdown1 = models.ImageField(upload_to='ShelterPhotos/',blank=True, null=True)
+    toilet_image_bottomdown2 = models.ImageField(upload_to='ShelterPhotos/',blank=True, null=True)
+    waste_management_image_bottomdown1 = models.ImageField(upload_to='ShelterPhotos/',blank=True, null=True)
+    waste_management_image_bottomdown2 = models.ImageField(upload_to='ShelterPhotos/',blank=True, null=True)
+    water_image_bottomdown1  = models.ImageField(upload_to='ShelterPhotos/',blank=True, null=True)
+    water_image_bottomdown2 = models.ImageField(upload_to='ShelterPhotos/',blank=True, null=True)
+    roads_image_bottomdown1 = models.ImageField(upload_to='ShelterPhotos/',blank=True, null=True)
+    road_image_bottomdown2  = models.ImageField(upload_to='ShelterPhotos/',blank=True, null=True)
+    drainage_image_bottomdown1 = models.ImageField(upload_to='ShelterPhotos/',blank=True, null=True)
+    drainage_image_bottomdown2 = models.ImageField(upload_to='ShelterPhotos/',blank=True, null=True) 
+    gutter_image_bottomdown1  = models.ImageField(upload_to='ShelterPhotos/',blank=True, null=True)
+    gutter_image_bottomdown2 = models.ImageField(upload_to='ShelterPhotos/',blank=True, null=True)  
    
-
-
-
