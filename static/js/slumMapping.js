@@ -37,7 +37,6 @@ function initMap(obj, zoomlavel) {
 		zoom : zoomlavel,
 		mapTypeId : 'satellite',
 	});
-
 	getcordinates(obj);
 }
 
@@ -86,8 +85,7 @@ function getcordinates(obj) {
 function latlongformat(ShapeValue, shapename) {
 	var PolygonPoints = [];
 	var centerlatlang=[];
-	var bounds = new google.maps.LatLngBounds();
-	
+	var bounds = new google.maps.LatLngBounds();	
 	var result = ShapeValue.substring(20, ShapeValue.length - 2);
 	var array = result.split(/[\s,]+/);
 	var result1;
@@ -97,23 +95,17 @@ function latlongformat(ShapeValue, shapename) {
 			result1 = array[i];
 		} else if (i % 2 != 0) {
 			result2 = array[i];
-			PolygonPoints.push(new google.maps.LatLng(result2, result1));
-			centerlatlang.push({lat : result2, lng : result1 });
-			bounds.extend(new google.maps.LatLng(result2, result1));
-			
+			PolygonPoints.push(new google.maps.LatLng(result2, result1));			
+			bounds.extend(new google.maps.LatLng(result2, result1));			
 		}
 	}
 		
-	PolygonPoints.pop();
-	centerlatlang.pop();
+	PolygonPoints.pop();	
 	
-	console.log("hello");
 	var Poly1 =drawPolygon(PolygonPoints,bounds);
-
 	var infoWindow = new google.maps.InfoWindow;
 	// Events on Polygon
 	google.maps.event.addListener(Poly1, 'mouseover', function(event) {
-		console.log(Poly1.center);		
 		infoWindow.setContent(shapename);
 		infoWindow.setPosition(Poly1.center);
 		infoWindow.open(map);
@@ -121,14 +113,10 @@ function latlongformat(ShapeValue, shapename) {
 	});
 
 	google.maps.event.addListener(Poly1, 'mouseout', function(event) {
-		
 		infoWindow.close();
 	});
 
 	google.maps.event.addListener(Poly1, 'click', function(event) {
-		
-		
-
 		if (arr.length == 4) {
 			if (indiWindow == true) {
 				var contentString = '<div id="content" >' + 
@@ -152,13 +140,11 @@ function latlongformat(ShapeValue, shapename) {
 			createMap(shapename, false);
 			indiWindow = false;
 		}
-
 	});
 }
 
 function createMap(jsondata, arrRemoveInd) {
-	console.log("create map");
-
+	
 	if (arrRemoveInd == true) {
 		if (arr.indexOf(jsondata) > -1 == true) {
 			var indi = arr.indexOf(jsondata);
@@ -169,28 +155,31 @@ function createMap(jsondata, arrRemoveInd) {
 			arr.push(jsondata);
 		}
 	}
-	data = fetchData(obj);
-	console.log(data);
-
-	setMaplink();
-	centerlat = fetchLatLng(obj);
-
 	
+	data = fetchData(obj);
+	myheader.html('<h4>' + jsondata + '</h4>');	
+	setMaplink();
 
-	if (arr.length == 3) {
+	if (arr.length == 1) {
+		mydesc.html(obj[arr[0]]['info']);
+		initMap(data, 11);
+		
+	}else if (arr.length == 2) {
+		mydesc.html(obj[arr[0]]["content"][arr[1]]['info']);
+		initMap(data, 12);
+		
+	}else if (arr.length == 3) {
+		mydesc.html(obj[arr[0]]["content"][arr[1]]["content"][arr[2]]['info']);
 		val = obj[arr[0]]["content"][arr[1]]["content"][arr[2]]
 		initMap(val,  13);
 		getcordinates(data);
 
 	} else if (arr.length == 4) {
-		val = obj[arr[0]]["content"][arr[1]]["content"][arr[2]]["content"][arr[3]]
+		mydesc.html(obj[arr[0]]["content"][arr[1]]["content"][arr[2]]["content"][arr[3]]['info']);
+	    val = obj[arr[0]]["content"][arr[1]]["content"][arr[2]]["content"][arr[3]]
 		initMap(val, 14);
-
-	} else {
-		initMap(data, 11);
-	}
-
-	myheader.html('<h4>' + jsondata + '</h4>');
+	} 
+	
 
 }
 
@@ -200,32 +189,6 @@ function fetchData(obj) {
 		o = o[val]['content'];
 	});
 	return o
-}
-
-function fetchLatLng(obj) {
-	var d_lat;
-	var c_split;
-
-	if (arr.length == 1) {
-		d_lat = obj[arr[0]]['lat'].split(",");
-		mydesc.html(obj[arr[0]]['info']);
-
-	} else if (arr.length == 2) {
-		d_lat = obj[arr[0]]["content"][arr[1]]['lat'].split(",");
-		mydesc.html(obj[arr[0]]["content"][arr[1]]['info']);
-
-	} else if (arr.length == 3) {
-		d_lat = obj[arr[0]]["content"][arr[1]]["content"][arr[2]]['lat'].split(",");
-		mydesc.html(obj[arr[0]]["content"][arr[1]]["content"][arr[2]]['info']);
-
-	} else if (arr.length == 4) {
-		d_lat = obj[arr[0]]["content"][arr[1]]["content"][arr[2]]["content"][arr[3]]['lat'].split(",");
-		mydesc.html(obj[arr[0]]["content"][arr[1]]["content"][arr[2]]["content"][arr[3]]['info']);
-	}
-
-	c_split = d_lat[d_lat.length - 3].split(" ");
-
-	return c_split;
 }
 
 function DataLatlng(obj) {
@@ -239,8 +202,11 @@ function DataLatlng(obj) {
 function setMaplink() {
 	mydiv.html("");
 	var aTag = "";
+	aTag +='<label id="Home" onclick="getArea(this);">' + " <span style='text-decoration: underline;cursor:pointer;color:blue;'>Home</span></label>&nbsp;&nbsp;";
+	
 	for (var i = 0; i < arr.length; i++) {
-		aTag += '<label id=' + arr[i] + ' onclick="getArea(this);">&nbsp;&nbsp;' + " <span style='text-decoration: underline;cursor:pointer;color:blue;'>" + arr[i] + "</span></label>";
+	
+		aTag += '<label id=' + arr[i] + ' onclick="getArea(this);">' + " <span style='text-decoration: underline;cursor:pointer;color:blue;'>" + arr[i] + "</span></label>&nbsp;&nbsp; ";
 	}
 	mydiv.html(aTag);
 }
@@ -248,14 +214,18 @@ function setMaplink() {
 function getArea(initlink) {
 	removeIndi = "";
 	var textelement = (initlink.textContent).toString().trim();
+	console.log(textelement);
+	if(textelement == "Home"){
+		arr.splice(0, 4);
+		initMap(obj, 8);
+		return;
+	}	
+	
 	removeIndi = arr.indexOf(textelement) + 1;
-	createMap(textelement, true)
-
+	createMap(textelement, true);
 }
 
-function drawPolygon(PolygonPoints,centerlatlang) {
-	//var center= centroid(centerlatlang);
-	console.log(centerlatlang.getCenter());
+function drawPolygon(PolygonPoints,centerlatlang) {	
 	Poly = new google.maps.Polygon({
 		paths : PolygonPoints,
 		strokeColor : '#FF0000',
