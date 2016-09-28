@@ -1,14 +1,7 @@
 {% extends "admin/base_site.html" %}
 {% load i18n admin_urls admin_static admin_modify %}
-
 {% block extrahead %}{{ block.super }}
 <script type="text/javascript" src="{% url 'admin:jsi18n' %}"></script>
-
-
- <script src = "{% static 'admin/js/jquery.js' %}"> </script>
-
-
-
 {{ media }}
 {% endblock %}
 
@@ -28,7 +21,6 @@
 </div>
 {% endblock %}
 {% endif %}
-
 {% block content %}<div id="content-main">
 {% block object-tools %}
 {% if change %}{% if not is_popup %}
@@ -50,89 +42,44 @@
 {% if save_on_top %}{% block submit_buttons_top %}{% submit_row %}{% endblock %}{% endif %}
 {% if errors %}
     <p class="errornote">
-    {% if errors|length == 1 %}{% trans "go to hell." %}{% else %}{% trans "Go To Hell." %}{% endif %}
+    {% if errors|length == 1 %}{% trans "Please correct the error below." %}{% else %}{% trans "Please correct the error below." %}{% endif %}
     </p>
     {{ adminform.form.non_field_errors }}
 {% endif %}
 
 <script>
 function myFunction(){
-	var cityname = django.jQuery("#id_name option:selected").text();
-	console.log(cityname);
-	alert(cityname);
-
-        var id = django.jQuery("#id_name option:selected").val();
-        alert(id);
-        
-	
-
-django.jQuery.ajax({
- 
-    url: "http://127.0.0.1:8000/admin/search/",
- 
-    data: {
-        id : id
-    },
- 
-    // Whether this is a POST or GET request
-    type: "POST",
- 
-    // The type of data we expect back
-    contenttype : "json",
-
-  // Code to run if the request succeeds (is done);
-  // The response is passed to the function
-  
-
-  success :function(json) {
-     
-    alert( "The request is complete!" );
-    alert(json.district_code);
-    console.log(json.district_code);
-   
-
-      
-       django.jQuery('#id_city_code').val(json.city_code);
-       
-       
-      django.jQuery('#id_state_code').val(json.state_code);
-       
-       
-       django.jQuery('#id_state_name').val(json.state_name);
-
-      
-       django.jQuery('#id_district_name').val(json.district_name);
-       
-
-       django.jQuery('#id_district_code').val(json.district_code);
-
-
-       django.jQuery("#id_city_code").prop("readonly", true);
-
-       django.jQuery('#id_state_name').prop("readonly", true);
-      
-       django.jQuery('#id_state_code').prop("readonly", true);
-      
-       django.jQuery('#id_district_name').prop("readonly", true);
-       
-       django.jQuery('#id_district_code').prop("readonly", true);
-
-  }
-});
-
+    var cityname = django.jQuery("#id_name option:selected").text();
+    var id = django.jQuery("#id_name option:selected").val();
+    var url = "{% url 'search' %}";
+    django.jQuery.ajax({
+        url : url,
+        data : { id : id },
+        type: "POST",
+        // The type of data we expect back
+        contenttype : "json",
+        success :function(json){
+            django.jQuery('#id_city_code').val(json.city_code);
+            django.jQuery('#id_state_code').val(json.state_code);
+            django.jQuery('#id_state_name').val(json.state_name);
+            django.jQuery('#id_district_name').val(json.district_name);
+            django.jQuery('#id_district_code').val(json.district_code);
+            django.jQuery("#id_city_code").prop("readonly", true);
+            django.jQuery('#id_state_name').prop("readonly", true);
+            django.jQuery('#id_state_code').prop("readonly", true);
+            django.jQuery('#id_district_name').prop("readonly", true);
+            django.jQuery('#id_district_code').prop("readonly", true);
+        }
+    });
 }
+
+django.jQuery(document).ready(function(){
+    django.jQuery("#id_name").on('change',function()
+     {
+        myFunction();    
+    });
+});
 </script>
-
-
-<br>
-   <button type="button" " onclick= "myFunction()"> Populate</button>
-<br>
-
-
-
-
-
-
 {% block field_sets %}
 {% for fieldset in adminform %}
 

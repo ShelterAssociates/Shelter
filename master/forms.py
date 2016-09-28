@@ -130,7 +130,7 @@ class SlumForm(forms.ModelForm):
     class Meta:
         model = Slum
         fields= "__all__"
-
+        
 ""
 class Rapid_Slum_AppraisalForm(forms.ModelForm):
     """Rapid Slum AppraisalForm"""
