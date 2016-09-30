@@ -3,7 +3,9 @@ var obj;
 var mydiv;
 var myheader;
 var mydesc;
-
+var mydatatable;
+var wdofficer;
+var wdaddress;
 var url = "/admin/citymapdisplay";
 var Poly;
 var ShapeValue;
@@ -13,8 +15,9 @@ var removeIndi;
 var indiWindow;
 var centerlat;
 
-function initMap12() {
 
+function initMap12() {     
+    
 	map = new google.maps.Map(document.getElementById('map12'), {
 		center : {
 			lat : 18.484913,
@@ -26,18 +29,35 @@ function initMap12() {
 	mydiv = $("#maplink");
 	myheader = $("#maphead");
 	mydesc = $("#mapdesc");
+	wdaddress = $("#wdaddress");
+	wdofficer = $("#wdofficer");	
 	
 	loadcity();
+	viewIndiaBorder();		
 }
 
-function initMap(obj, zoomlavel) {
-
+function initMap(obj, zoomlavel) {	
+    
 	map = new google.maps.Map(document.getElementById('map12'), {
 		
 		zoom : zoomlavel,
 		mapTypeId : 'satellite',
 	});
 	getcordinates(obj);
+	
+}
+
+function loadcity() {
+	$.ajax({
+		url : url,
+		type : "GET",
+		contenttype : "json",
+		success : function(json) {
+			obj = json;
+			loadslum();
+			getcordinates(obj);			
+		}
+	});
 }
 
 function loadslum() {
@@ -53,26 +73,7 @@ function loadslum() {
 	});
 }
 
-
-$(document).ready(function() {
-	
-});
-
-function loadcity() {
-	$.ajax({
-		url : url,
-		type : "GET",
-		contenttype : "json",
-		success : function(json) {
-			obj = json;
-			getcordinates(obj);
-			loadslum();
-		}
-	});
-}
-
 function getcordinates(obj) {
-
 	for (var key in obj) {
 		try {
 			latlongformat(obj[key]['lat'], obj[key]['name']);
@@ -90,6 +91,7 @@ function latlongformat(ShapeValue, shapename) {
 	var array = result.split(/[\s,]+/);
 	var result1;
 	var result2;
+	
 	for (var i = 0; i <= array.length - 1; i++) {
 		if (i % 2 == 0) {
 			result1 = array[i];
@@ -103,20 +105,22 @@ function latlongformat(ShapeValue, shapename) {
 	PolygonPoints.pop();	
 	
 	var Poly1 =drawPolygon(PolygonPoints,bounds);
-	var infoWindow = new google.maps.InfoWindow;
+	var infoWindowover = new google.maps.InfoWindow;
 	// Events on Polygon
 	google.maps.event.addListener(Poly1, 'mouseover', function(event) {
-		infoWindow.setContent(shapename);
-		infoWindow.setPosition(Poly1.center);
-		infoWindow.open(map);
+		infoWindowover.setContent(shapename);
+		infoWindowover.setPosition(Poly1.center);
+		infoWindowover.open(map);
 
 	});
 
 	google.maps.event.addListener(Poly1, 'mouseout', function(event) {
-		infoWindow.close();
+		infoWindowover.close();
 	});
 
 	google.maps.event.addListener(Poly1, 'click', function(event) {
+		infoWindowover.close();
+		
 		if (arr.length == 4) {
 			if (indiWindow == true) {
 				var contentString = '<div id="content" >' + 
@@ -137,14 +141,15 @@ function latlongformat(ShapeValue, shapename) {
 			indiWindow = true;
 
 		} else {
+					
 			createMap(shapename, false);
 			indiWindow = false;
 		}
 	});
 }
-
+var bbb;
 function createMap(jsondata, arrRemoveInd) {
-	
+		
 	if (arrRemoveInd == true) {
 		if (arr.indexOf(jsondata) > -1 == true) {
 			var indi = arr.indexOf(jsondata);
@@ -156,10 +161,15 @@ function createMap(jsondata, arrRemoveInd) {
 		}
 	}
 	
+	if ($.isEmptyObject(obj[arr[0]]["content"]))
+	{
+    	return;
+	}
+		
 	data = fetchData(obj);
 	myheader.html('<h4>' + jsondata + '</h4>');	
 	setMaplink();
-
+    drawDatatable();
 	if (arr.length == 1) {
 		mydesc.html(obj[arr[0]]['info']);
 		initMap(data, 11);
@@ -179,19 +189,10 @@ function createMap(jsondata, arrRemoveInd) {
 	    val = obj[arr[0]]["content"][arr[1]]["content"][arr[2]]["content"][arr[3]]
 		initMap(val, 14);
 	} 
-	
-
+    
 }
 
 function fetchData(obj) {
-	var o = obj;
-	$.each(arr, function(index, val) {
-		o = o[val]['content'];
-	});
-	return o
-}
-
-function DataLatlng(obj) {
 	var o = obj;
 	$.each(arr, function(index, val) {
 		o = o[val]['content'];
@@ -206,7 +207,7 @@ function setMaplink() {
 	
 	for (var i = 0; i < arr.length; i++) {
 	
-		aTag += '<label id=' + arr[i] + ' onclick="getArea(this);">' + " <span style='text-decoration: underline;cursor:pointer;color:blue;'>" + arr[i] + "</span></label>&nbsp;&nbsp; ";
+		aTag += '>> <label id=' + arr[i] + ' onclick="getArea(this);">' + " <span style='text-decoration: underline;cursor:pointer;color:blue;'>" + arr[i] + "</span></label>&nbsp;&nbsp; ";
 	}
 	mydiv.html(aTag);
 }
@@ -240,4 +241,67 @@ function drawPolygon(PolygonPoints,centerlatlang) {
 	 return Poly;
 }
 
+var dataset = [];
+var a=[];
+function getData(data){
+	
+	$.each(data, function(k,v){
+		if(v.content != undefined){
+		    getData(v.content);
+		}
+		else{
+		   a.push(v);
+		}
+	});
+}
+
+var arrr;
+function drawDatatable(){
+	data = fetchData(obj);
+	
+	 getData(data);
+	arrr=a;
+	console.log(arrr);
+
+ 	mydatatable=$("#datatable").dataTable({
+		"aaData": arrr,
+		"bDestroy": true,
+        "aoColumns": [{
+        "title":'<div style="font-size: large;font-weight: 900;">'+"Slums"+'</div>',
+        "mDataProp":  "name",
+        "mRender" :function(oObj,val, setval){
+        	console.log(setval);
+        	return '<div><span style="font-weight: 900;font-size: small;color: blue;cursor: pointer;">'
+        			+setval.name +'</span></div>'
+        	        +'<div style="font-size: small;">'+setval.info+'</div>';
+        	}         
+    	}]
+	});	 
+}
+
+
+function viewIndiaBorder() {
+	var layer;
+	// Fusion Tables layer
+	var tableid = 420419;
+
+	layer = new google.maps.FusionTablesLayer({
+		query : {
+			select : "kml_4326",
+			from : tableid,
+			where : "name_0 = 'India'"
+		},
+		styles : [{
+			polygonOptions : {
+				strokeWeight : "2",
+				strokeColor : "#FF0000",
+				strokeOpacity : "0.4",
+				fillOpacity : "0.0",
+				fillColor : "#000000"
+			}
+		}]
+	});
+
+	layer.setMap(map);
+}
 

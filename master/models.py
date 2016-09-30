@@ -114,7 +114,8 @@ class Slum(models.Model):
     shape = models.PolygonField(srid=4326,blank=True,null=True)
     description = models.TextField(max_length=2048,blank=True,null=True)
     shelter_slum_code = models.CharField(max_length=2048,blank=True,null=True)
-
+    factsheet = models.FileField(upload_to='factsheet/',blank=True,null=True)
+    image = models.ImageField(upload_to='factsheet/',blank=True, null=True)
     def __unicode__(self):
         """Returns string representation of object"""
         return str(self.name)
@@ -130,6 +131,7 @@ class WardOfficeContact(models.Model):
     administrative_ward = models.ForeignKey(AdministrativeWard)
     title = models.CharField(max_length=2048)
     name = models.CharField(max_length=2048)
+    address_info = models.CharField(max_length=2048,blank=True,null=True)
     telephone = models.CharField(max_length=2048)
 
     def __unicode__(self):
