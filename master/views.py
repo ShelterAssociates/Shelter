@@ -293,10 +293,9 @@ def citymapdisplay(request):
         city_dict["lat"]= str(c.shape)
         city_dict["content"]={}
         city_main.update({str(c.name.city_name) : city_dict })
+        
     
     return HttpResponse(json.dumps(city_main),content_type='application/json')   
-
-
 
 @csrf_exempt
 def slummapdisplay(request,id):
@@ -311,6 +310,7 @@ def slummapdisplay(request,id):
     slum_main=dict()
     main_list=[]
  
+    
          
     admin_main={}
     for a in AdministrativeWard.objects.filter(city__id=id):
@@ -340,9 +340,7 @@ def slummapdisplay(request,id):
         slum_dict["id"]=s.id
         slum_dict["lat"]=str(s.shape)
         slum_dict["info"]=s.description
-        slum_dict["content"]={}
         
-
         city_main["content"]\
         [str(s.electoral_ward.administrative_ward.name)]["content"]\
         [str(s.electoral_ward.name)]["content"].update({s.name : slum_dict })                
