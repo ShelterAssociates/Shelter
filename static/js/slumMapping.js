@@ -258,7 +258,8 @@ function getData(data){
 var arrr;
 function drawDatatable(){
 	data = fetchData(obj);
-	
+        a=[]
+     	
 	 getData(data);
 	arrr=a;
 	console.log(arrr);

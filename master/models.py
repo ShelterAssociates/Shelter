@@ -115,7 +115,7 @@ class Slum(models.Model):
     description = models.TextField(max_length=2048,blank=True,null=True)
     shelter_slum_code = models.CharField(max_length=2048,blank=True,null=True)
     factsheet = models.FileField(upload_to='factsheet/',blank=True,null=True)
-    image = models.ImageField(upload_to='factsheet/',blank=True, null=True)
+    photo = models.ImageField(upload_to='factsheet/',blank=True, null=True)
     def __unicode__(self):
         """Returns string representation of object"""
         return str(self.name)
