@@ -275,16 +275,20 @@ function drawDatatable(){
  	mydatatable=$("#datatable").dataTable({
 		"aaData": arrr,
 		"bDestroy": true,
-        "aoColumns": [{
+    "order": [[ 0, "asc" ]],
+    "aoColumns": [{
         "title":'<div style="font-size: large;font-weight: 900;">'+"Slums"+'</div>',
         "mDataProp":  "name",
         "mRender" :function(oObj,val, setval){
-        	console.log(setval);
-        	return '<div><span style="font-weight: 900;font-size: small;color: blue;cursor: pointer;" name="divSlum" data="'+setval.legend + ":"+setval.name+'">'
-        			+setval.name +' ('+ setval.legend.replace(":"," >> ") +') </span></div>'
-        	        +'<div style="font-size: small;">'+setval.info+'</div>';
-        	}
-    	}]
+            	console.log(setval);
+              var desc = "";
+              if(setval.legend != "")
+                  desc = ' ('+ setval.legend.replace(":"," >> ") +')';
+            	return '<div><span style="font-weight: 900;font-size: small;color: blue;cursor: pointer;" name="divSlum" data="'+setval.legend + ":"+setval.name+'">'
+            			+setval.name + desc +' </span></div>'
+            	        +'<div style="font-size: small;">'+setval.info+'</div>';
+            	}
+    	   }]
 	});
 
   $("span[name=divSlum]").on("click", function(){
