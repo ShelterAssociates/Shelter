@@ -3,7 +3,9 @@ var obj;
 var mydiv;
 var myheader;
 var mydesc;
-
+var mydatatable;
+var wdofficer;
+var wdaddress;
 var url = "/admin/citymapdisplay";
 var Poly;
 var ShapeValue;
@@ -12,6 +14,7 @@ var arr = [];
 var removeIndi;
 var indiWindow;
 var centerlat;
+
 
 function initMap12() {
 
@@ -26,19 +29,35 @@ function initMap12() {
 	mydiv = $("#maplink");
 	myheader = $("#maphead");
 	mydesc = $("#mapdesc");
-	
+	wdaddress = $("#wdaddress");
+	wdofficer = $("#wdofficer");
+
 	loadcity();
+	viewIndiaBorder();
 }
 
 function initMap(obj, zoomlavel) {
 
 	map = new google.maps.Map(document.getElementById('map12'), {
-		
+
 		zoom : zoomlavel,
 		mapTypeId : 'satellite',
 	});
-
 	getcordinates(obj);
+
+}
+
+function loadcity() {
+	$.ajax({
+		url : url,
+		type : "GET",
+		contenttype : "json",
+		success : function(json) {
+			obj = json;
+			loadslum();
+			getcordinates(obj);
+		}
+	});
 }
 
 function loadslum() {
@@ -54,26 +73,7 @@ function loadslum() {
 	});
 }
 
-
-$(document).ready(function() {
-	
-});
-
-function loadcity() {
-	$.ajax({
-		url : url,
-		type : "GET",
-		contenttype : "json",
-		success : function(json) {
-			obj = json;
-			getcordinates(obj);
-			loadslum();
-		}
-	});
-}
-
 function getcordinates(obj) {
-
 	for (var key in obj) {
 		try {
 			latlongformat(obj[key]['lat'], obj[key]['name']);
@@ -87,57 +87,49 @@ function latlongformat(ShapeValue, shapename) {
 	var PolygonPoints = [];
 	var centerlatlang=[];
 	var bounds = new google.maps.LatLngBounds();
-	
 	var result = ShapeValue.substring(20, ShapeValue.length - 2);
 	var array = result.split(/[\s,]+/);
 	var result1;
 	var result2;
+
 	for (var i = 0; i <= array.length - 1; i++) {
 		if (i % 2 == 0) {
 			result1 = array[i];
 		} else if (i % 2 != 0) {
 			result2 = array[i];
 			PolygonPoints.push(new google.maps.LatLng(result2, result1));
-			centerlatlang.push({lat : result2, lng : result1 });
 			bounds.extend(new google.maps.LatLng(result2, result1));
-			
 		}
 	}
-		
-	PolygonPoints.pop();
-	centerlatlang.pop();
-	
-	console.log("hello");
-	var Poly1 =drawPolygon(PolygonPoints,bounds);
 
-	var infoWindow = new google.maps.InfoWindow;
+	PolygonPoints.pop();
+
+	var Poly1 =drawPolygon(PolygonPoints,bounds);
+	var infoWindowover = new google.maps.InfoWindow;
 	// Events on Polygon
 	google.maps.event.addListener(Poly1, 'mouseover', function(event) {
-		console.log(Poly1.center);		
-		infoWindow.setContent(shapename);
-		infoWindow.setPosition(Poly1.center);
-		infoWindow.open(map);
+		infoWindowover.setContent(shapename);
+		infoWindowover.setPosition(Poly1.center);
+		infoWindowover.open(map);
 
 	});
 
 	google.maps.event.addListener(Poly1, 'mouseout', function(event) {
-		
-		infoWindow.close();
+		infoWindowover.close();
 	});
 
 	google.maps.event.addListener(Poly1, 'click', function(event) {
-		
-		
+		infoWindowover.close();
 
 		if (arr.length == 4) {
 			if (indiWindow == true) {
-				var contentString = '<div id="content" >' + 
-				'<div id="siteNotice">' + 
-				'</div>' + 
-				'<h1 id="firstHeading" class="firstHeading"></h1>' + 
-				'<div id="bodyContent">' + 
-				'<p><b>' + shapename + 
-				'</b></p>' + 
+				var contentString = '<div id="content" >' +
+				'<div id="siteNotice">' +
+				'</div>' +
+				'<h1 id="firstHeading" class="firstHeading"></h1>' +
+				'<div id="bodyContent">' +
+				'<p><b>' + shapename +
+				'</b></p>' +
 				'<p>' + obj[arr[0]]["content"][arr[1]]["content"][arr[2]]["content"][arr[3]]['info'] +
 				 '</p>' + '</div>' + '</div>';
 
@@ -145,19 +137,19 @@ function latlongformat(ShapeValue, shapename) {
 				infoWindow.setContent(contentString);
 				infoWindow.setPosition(event.latLng);
 				infoWindow.open(map);
+
 			}
 			indiWindow = true;
 
 		} else {
+
 			createMap(shapename, false);
 			indiWindow = false;
 		}
-
 	});
 }
-
+var bbb;
 function createMap(jsondata, arrRemoveInd) {
-	console.log("create map");
 
 	if (arrRemoveInd == true) {
 		if (arr.indexOf(jsondata) > -1 == true) {
@@ -169,28 +161,37 @@ function createMap(jsondata, arrRemoveInd) {
 			arr.push(jsondata);
 		}
 	}
+
+	if ($.isEmptyObject(obj[arr[0]]["content"]))
+	{
+    	return;
+	}
+
 	data = fetchData(obj);
-	console.log(data);
-
+	myheader.html('<h4>' + jsondata + '</h4>');
 	setMaplink();
-	centerlat = fetchLatLng(obj);
+    drawDatatable();
+	if (arr.length == 1) {
+		mydesc.html(obj[arr[0]]['info']);
+		initMap(data, 11);
 
-	
+	}else if (arr.length == 2) {
+		mydesc.html(obj[arr[0]]["content"][arr[1]]['info']);
+		initMap(data, 12);
 
-	if (arr.length == 3) {
+	}else if (arr.length == 3) {
+		mydesc.html(obj[arr[0]]["content"][arr[1]]["content"][arr[2]]['info']);
 		val = obj[arr[0]]["content"][arr[1]]["content"][arr[2]]
 		initMap(val,  13);
 		getcordinates(data);
 
 	} else if (arr.length == 4) {
-		val = obj[arr[0]]["content"][arr[1]]["content"][arr[2]]["content"][arr[3]]
-		initMap(val, 14);
-
-	} else {
-		initMap(data, 11);
+		mydesc.html(obj[arr[0]]["content"][arr[1]]["content"][arr[2]]["content"][arr[3]]['info']);
+	    val = obj[arr[0]]["content"][arr[1]]["content"][arr[2]]["content"][arr[3]]
+		initMap(val, 16);
+    mydatatable.fnDestroy();
+    $("#datatable").empty();
 	}
-
-	myheader.html('<h4>' + jsondata + '</h4>');
 
 }
 
@@ -202,45 +203,14 @@ function fetchData(obj) {
 	return o
 }
 
-function fetchLatLng(obj) {
-	var d_lat;
-	var c_split;
-
-	if (arr.length == 1) {
-		d_lat = obj[arr[0]]['lat'].split(",");
-		mydesc.html(obj[arr[0]]['info']);
-
-	} else if (arr.length == 2) {
-		d_lat = obj[arr[0]]["content"][arr[1]]['lat'].split(",");
-		mydesc.html(obj[arr[0]]["content"][arr[1]]['info']);
-
-	} else if (arr.length == 3) {
-		d_lat = obj[arr[0]]["content"][arr[1]]["content"][arr[2]]['lat'].split(",");
-		mydesc.html(obj[arr[0]]["content"][arr[1]]["content"][arr[2]]['info']);
-
-	} else if (arr.length == 4) {
-		d_lat = obj[arr[0]]["content"][arr[1]]["content"][arr[2]]["content"][arr[3]]['lat'].split(",");
-		mydesc.html(obj[arr[0]]["content"][arr[1]]["content"][arr[2]]["content"][arr[3]]['info']);
-	}
-
-	c_split = d_lat[d_lat.length - 3].split(" ");
-
-	return c_split;
-}
-
-function DataLatlng(obj) {
-	var o = obj;
-	$.each(arr, function(index, val) {
-		o = o[val]['content'];
-	});
-	return o
-}
-
 function setMaplink() {
 	mydiv.html("");
 	var aTag = "";
+	aTag +='<label id="Home" onclick="getArea(this);">' + " <span style='text-decoration: underline;cursor:pointer;color:blue;'>Home</span></label>&nbsp;&nbsp;";
+
 	for (var i = 0; i < arr.length; i++) {
-		aTag += '<label id=' + arr[i] + ' onclick="getArea(this);">&nbsp;&nbsp;' + " <span style='text-decoration: underline;cursor:pointer;color:blue;'>" + arr[i] + "</span></label>";
+
+		aTag += '>> <label id=' + arr[i] + ' onclick="getArea(this);">' + " <span style='text-decoration: underline;cursor:pointer;color:blue;'>" + arr[i] + "</span></label>&nbsp;&nbsp; ";
 	}
 	mydiv.html(aTag);
 }
@@ -248,14 +218,18 @@ function setMaplink() {
 function getArea(initlink) {
 	removeIndi = "";
 	var textelement = (initlink.textContent).toString().trim();
-	removeIndi = arr.indexOf(textelement) + 1;
-	createMap(textelement, true)
+	console.log(textelement);
+	if(textelement == "Home"){
+		arr.splice(0, 4);
+		initMap(obj, 8);
+		return;
+	}
 
+	removeIndi = arr.indexOf(textelement) + 1;
+	createMap(textelement, true);
 }
 
 function drawPolygon(PolygonPoints,centerlatlang) {
-	//var center= centroid(centerlatlang);
-	console.log(centerlatlang.getCenter());
 	Poly = new google.maps.Polygon({
 		paths : PolygonPoints,
 		strokeColor : '#FF0000',
@@ -270,4 +244,88 @@ function drawPolygon(PolygonPoints,centerlatlang) {
 	 return Poly;
 }
 
+var dataset = [];
+var a=[];
+var stackLegend =[];
+function getData(data){
 
+	$.each(data, function(k,v){
+		if(v.content != undefined){
+        stackLegend.push(k);
+		    getData(v.content);
+        stackLegend.pop();
+		}
+		else{
+       v['legend'] = stackLegend.join(':')
+		   a.push(v);
+		}
+
+	});
+}
+
+var arrr;
+function drawDatatable(){
+	data = fetchData(obj);
+        a=[]
+
+	getData(data);
+	arrr=a;
+	console.log(arrr);
+
+ 	mydatatable=$("#datatable").dataTable({
+		"aaData": arrr,
+		"bDestroy": true,
+    "order": [[ 0, "asc" ]],
+    "aoColumns": [{
+        "title":'<div style="font-size: large;font-weight: 900;">'+"Slums"+'</div>',
+        "mDataProp":  "name",
+        "mRender" :function(oObj,val, setval){
+            	console.log(setval);
+              var desc = "";
+              if(setval.legend != "")
+                  desc = ' ('+ setval.legend.replace(":"," >> ") +')';
+            	return '<div><span style="font-weight: 900;font-size: small;color: blue;cursor: pointer;" name="divSlum" data="'+setval.legend + ":"+setval.name+'">'
+            			+setval.name + desc +' </span></div>'
+            	        +'<div style="font-size: small;">'+setval.info+'</div>';
+            	}
+    	   }]
+	});
+
+  $("span[name=divSlum]").on("click", function(){
+    data = $(this).attr("data");
+    arr_data = data.split(":");
+    $.each(arr_data,function(k,v){
+      if(arr.indexOf(v)==-1)
+        arr.push(v);
+    });
+    slum_pop = arr.pop();
+    arr.push(slum_pop);
+    createMap(slum_pop, false);
+  });
+}
+
+
+function viewIndiaBorder() {
+	var layer;
+	// Fusion Tables layer
+	var tableid = 420419;
+
+	layer = new google.maps.FusionTablesLayer({
+		query : {
+			select : "kml_4326",
+			from : tableid,
+			where : "name_0 = 'India'"
+		},
+		styles : [{
+			polygonOptions : {
+				strokeWeight : "2",
+				strokeColor : "#FF0000",
+				strokeOpacity : "0.4",
+				fillOpacity : "0.0",
+				fillColor : "#000000"
+			}
+		}]
+	});
+
+	layer.setMap(map);
+}
