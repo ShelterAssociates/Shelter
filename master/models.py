@@ -7,7 +7,7 @@ import datetime
 from django.contrib.gis.db import models
 from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
-
+from colorfield.fields import ColorField
 
 
 class CityReference(models.Model):
@@ -32,6 +32,8 @@ class City(models.Model):
     district_name = models.CharField(max_length=2048)
     district_code = models.CharField(max_length=2048)
     shape = models.PolygonField(srid=4326)
+    border_color = ColorField(default='#94BBFF',blank=True, null=True)
+    background_color = ColorField(default='#94BBFF',blank=True, null=True)
     created_by = models.ForeignKey(User)
     created_on = models.DateTimeField(default=datetime.datetime.now())
 
@@ -77,6 +79,8 @@ class AdministrativeWard(models.Model):
     ward_no = models.CharField(max_length=2048,blank=True,null=True)
     description = models.TextField(max_length=2048,blank=True,null=True)
     office_address = models.CharField(max_length=2048,blank=True,null=True)
+    border_color = ColorField(default='#BFFFD0',blank=True, null=True)
+    background_color = ColorField(default='#BFFFD0',blank=True, null=True)
 
     def __unicode__(self):
         """Returns string representation of object"""
@@ -96,6 +100,8 @@ class ElectoralWard(models.Model):
     ward_no = models.CharField(max_length=2048,blank=True,null=True)
     ward_code = models.TextField(max_length=2048,blank=True,null=True)
     extra_info = models.CharField(max_length=2048,blank=True,null=True)
+    border_color = ColorField(default='#FFEFA1',blank=True, null=True)
+    background_color = ColorField(default='#FFEFA1',blank=True, null=True)
 
     def __unicode__(self):
         """Returns string representation of object"""
