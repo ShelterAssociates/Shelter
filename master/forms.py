@@ -105,7 +105,7 @@ class CityFrom(forms.ModelForm):
     shape = forms.CharField(widget=LocationWidget())
     class Meta:
         model = City
-        fields = ('name', 'shape', 'state_code', 'district_code', 'city_code')
+        fields = ('name', 'shape', 'state_code', 'district_code', 'city_code', 'border_color','background_color')
         exclude = ('created_by', 'created_on')
 
 
