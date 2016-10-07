@@ -8,7 +8,7 @@ var wdofficer;
 var wdaddress;
 var wdhead;
 var url = "/admin/citymapdisplay";
-var Poly;
+
 var ShapeValue;
 var shapecount = "";
 var arr = [];
@@ -108,7 +108,13 @@ function latlongformat(ShapeValue, shapename , bgcolor , bordercolor) {
 
 	PolygonPoints.pop();
     
+    if(bgcolor == undefined){
+    	console.log("Undefined color");
+    	bgcolor="";
+    	bordercolor="";
+    }
 	var Poly1 = drawPolygon(PolygonPoints,bounds, bgcolor, bordercolor);
+	
 	var infoWindowover = new google.maps.InfoWindow;
 	// Events on Polygon
 	google.maps.event.addListener(Poly1, 'mouseover', function(event) {
@@ -257,12 +263,6 @@ function createMap(jsondata, arrRemoveInd) {
 		wdaddress.html(wdadd);      
 		wdofficer.html(wdname);
 		
-		
-		
-		
-		
-		
-		
 		val = obj[arr[0]]["content"][arr[1]]["content"][arr[2]]
 		initMap(val,  13);	
 		getcordinates(data);
@@ -294,10 +294,12 @@ function setMaplink() {
 	var aTag = "";
 	aTag +='<label id="Home" onclick="getArea(this);">' + " <span style='text-decoration: underline;cursor:pointer;color:blue;'>Home</span></label>&nbsp;&nbsp;";
 
-	for (var i = 0; i < arr.length; i++) {
-
-		aTag += '>> <label id=' + arr[i] + ' onclick="getArea(this);">' + " <span style='text-decoration: underline;cursor:pointer;color:blue;'>" + arr[i] + "</span></label>&nbsp;&nbsp; ";
-	}
+    if(arr.length > 0){
+    	for (var i = 0; i < arr.length; i++) {
+			aTag += '>> <label id=' + arr[i] + ' onclick="getArea(this);">' + " <span style='text-decoration: underline;cursor:pointer;color:blue;'>" + arr[i] + "</span></label>&nbsp;&nbsp; ";
+		}
+    }
+	
 	mydiv.html(aTag);
 }
 
@@ -306,8 +308,11 @@ function getArea(initlink) {
 	var textelement = (initlink.textContent).toString().trim();
 	
 	if(textelement == "Home"){
-		arr.splice(0, 4);
+		arr.splice(0, 4);		
+		setMaplink();		
 		initMap(obj, 8);
+		viewIndiaBorder();
+		
 		return;
 	}
 
@@ -316,8 +321,10 @@ function getArea(initlink) {
 }
 
 function drawPolygon(PolygonPoints,centerlatlang , bgcolor ,bordercolor) {
-	var newbgcolor="#FF0000";
+	var Poly;
+	var newbgcolor="#FFA3A3";
 	var newbordercolor="#FF0000";
+	
 	if(bgcolor != undefined && bgcolor != ""){
 		newbgcolor=bgcolor;
 	}
@@ -325,16 +332,18 @@ function drawPolygon(PolygonPoints,centerlatlang , bgcolor ,bordercolor) {
 	if(bordercolor != undefined && bordercolor != ""){
 		newbordercolor=bordercolor;
 	}
+	
 	Poly = new google.maps.Polygon({
 		paths : PolygonPoints,
 		strokeColor : newbordercolor,
 		strokeOpacity : 0.7,
 		strokeWeight : 2,
 		fillColor : newbgcolor ,
-		fillOpacity : 0.30,
+		fillOpacity : 0.2,
 		center : centerlatlang.getCenter()
 	});
 	 Poly.setMap(map);
+	 console.log(Poly);
 	 map.setCenter(centerlatlang.getCenter() );
 	 return Poly;
 }
@@ -361,8 +370,7 @@ function getData(data){
 var arrr;
 function drawDatatable(){
 	data = fetchData(obj);
-        a=[]
-
+    a=[]
 	getData(data);
 	arrr=a;
  	mydatatable=$("#datatable").dataTable({
@@ -384,7 +392,7 @@ function drawDatatable(){
     	   }]
 	});
 
-  $("span[name=divSlum]").on("click", function(){
+  $("#datatable").on("click", "span", function(){
     data = $(this).attr("data");
     arr_data = data.split(":");
     $.each(arr_data,function(k,v){
