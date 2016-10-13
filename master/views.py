@@ -151,7 +151,7 @@ def display(request):
     query = request.GET.get("q") 
     if(query):
         R = Rapid_Slum_Appraisal.objects.filter(slum_name__name__contains=query)
-        paginator = Paginator(R, 10) 
+        paginator = Paginator(R, 6) 
         page = request.GET.get('page')
         try:
             RA = paginator.page(page)
@@ -162,7 +162,7 @@ def display(request):
         return render(request, 'display.html',{'R':R,'RA':RA})
     else:    
         R = Rapid_Slum_Appraisal.objects.all()
-        paginator = Paginator(R, 10) 
+        paginator = Paginator(R, 6) 
         page = request.GET.get('page')
         try:
             RA = paginator.page(page)
@@ -348,3 +348,14 @@ def slummapdisplay(request,id):
         [str(s.electoral_ward.name)]["content"].update({s.name : slum_dict })                
     return HttpResponse(json.dumps(city_main),content_type='application/json')
     
+
+@csrf_exempt
+def Acitymapdisplay(request):
+    Shape="";
+    cid = request.POST['id']
+    print cid
+    Aobj = AdministrativeWard.objects.filter(city=cid)
+    for i in Aobj:
+        Shape=str(i.shape)
+    return HttpResponse(json.dumps(Shape),content_type='application/json')
+
