@@ -109,7 +109,6 @@ function latlongformat(ShapeValue, shapename , bgcolor , bordercolor) {
 	PolygonPoints.pop();
     
     if(bgcolor == undefined){
-    	console.log("Undefined color");
     	bgcolor="";
     	bordercolor="";
     }
@@ -138,9 +137,12 @@ function latlongformat(ShapeValue, shapename , bgcolor , bordercolor) {
 				'<p><b>'+ shapename +'</b></p>'+
 				'<div class="row">'+
 				'<div class="col-md-9">'+
-				 '<p>' + obj[arr[0]]["content"][arr[1]]["content"][arr[2]]["content"][arr[3]]['info'] +'</p> '+
-				 '<p><a href="' + obj[arr[0]]["content"][arr[1]]["content"][arr[2]]["content"][arr[3]]['factsheet'] +'">Factsheet</a></p>' +
-				'</div>'+
+				 '<p>' + obj[arr[0]]["content"][arr[1]]["content"][arr[2]]["content"][arr[3]]['info'] +'</p> ';
+				 
+				 if(obj[arr[0]]["content"][arr[1]]["content"][arr[2]]["content"][arr[3]]['factsheet']){
+				 	contentString += '<p><a href="' + obj[arr[0]]["content"][arr[1]]["content"][arr[2]]["content"][arr[3]]['factsheet'] +'">Factsheet</a></p>' ;
+				 }
+				 '</div>'+
 				'<div class="col-md-3" style="margin-left:-20px"><img width="100px" height="120px" src="' + obj[arr[0]]["content"][arr[1]]["content"][arr[2]]["content"][arr[3]]['photo'] +'"></img></div>'+  
 				'</div>';
 
@@ -189,6 +191,8 @@ function createMap(jsondata, arrRemoveInd) {
 		wdhead.html('');
 		wdaddress.html('');
 		wdofficer.html('');
+		myheader.html('');
+		mydesc.html('');
 		initMap(data, 11);
 
 	}else if (arr.length == 2) {
@@ -272,6 +276,7 @@ function createMap(jsondata, arrRemoveInd) {
 	    wdhead.html('');
 	    wdaddress.html('');
 		wdofficer.html('');
+		
 	    val = obj[arr[0]]["content"][arr[1]]["content"][arr[2]]["content"][arr[3]]
 		initMap(val, 16);
 		
@@ -312,10 +317,18 @@ function getArea(initlink) {
 		setMaplink();		
 		initMap(obj, 8);
 		viewIndiaBorder();
+		wdhead.html('');
+		wdaddress.html('');
+		wdofficer.html('');
+		myheader.html('');
+		mydesc.html('');
+		$("#datatable").empty();
+		$("#datatablecontainer").hide();
 		
 		return;
 	}
-
+	
+    $("#datatablecontainer").show();
 	removeIndi = arr.indexOf(textelement) + 1;
 	createMap(textelement, true);
 }
@@ -343,7 +356,6 @@ function drawPolygon(PolygonPoints,centerlatlang , bgcolor ,bordercolor) {
 		center : centerlatlang.getCenter()
 	});
 	 Poly.setMap(map);
-	 console.log(Poly);
 	 map.setCenter(centerlatlang.getCenter() );
 	 return Poly;
 }
@@ -391,6 +403,8 @@ function drawDatatable(){
             	}
     	   }]
 	});
+	
+  $("#datatablecontainer").show();
 
   $("#datatable").on("click", "span", function(){
     data = $(this).attr("data");
