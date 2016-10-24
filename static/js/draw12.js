@@ -80,8 +80,7 @@ function initialise(){
             CPoints.push(new google.maps.LatLng(r2, r1));
             }
         }
-        
-    
+            
         var flightPath = new google.maps.Polyline({
           path:  CPoints,
           geodesic: true,
@@ -149,9 +148,9 @@ function getPolygonCoords() {
 
 
 function Point_string(){
-    //curLatLng  = Poly.getPath().getArray();
+   
     var PolygonArray=[];
-  alert("I am in Point_string condition");    
+    alert("I am in Point_string condition");    
     if (flag==0)
     {
         PointArray = poly.getPath().getArray();  
@@ -308,7 +307,7 @@ function laodmapcity(){
   
         contenttype : "json",
         success : function(json) {
-            PolygonPoints=Poly.getPath().getArray();
+           // PolygonPoints=Poly.getPath().getArray();
             initMap(json);
         },
         async:false
@@ -379,3 +378,16 @@ function clearOverlays() {
   }
   markersArray.length = 0;
 }
+
+
+
+django.jQuery(document).ready(function(){
+      django.jQuery('#reset').click(function(){
+        map=null;
+        map = new google.maps.Map(document.getElementById('main-map'), myOptions);
+        PointArray=[];
+        PolygonPoints=[];
+        drawMap();
+
+    });
+});
