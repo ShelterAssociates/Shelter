@@ -9,12 +9,18 @@ var creator;
 var flag=0;
 var P;
 var Points=[];
+var ShapeValue;
+
 
 
 function initialise(){
 
+
+
+
+
     var a =[];
-    var ShapeValue=django.jQuery('#id_shape').val();
+    ShapeValue=django.jQuery('#id_shape').val();
     var r = ShapeValue.substring(20,ShapeValue.length-2);
     var a= r.split(/[\s,]+/);
     var r1;
@@ -48,7 +54,7 @@ function initialise(){
     }
     map = new google.maps.Map(document.getElementById('main-map'), myOptions);
     creator = new PolygonCreator(map);
-    var ShapeValue=django.jQuery('#id_shape').val();
+    ShapeValue=django.jQuery('#id_shape').val();
     if(ShapeValue!="None")
     {
         flag = 1;
@@ -66,7 +72,7 @@ function initialise(){
             }
         }
 
-        P=PolygonPoints.pop
+        
         Poly = new google.maps.Polygon({
             paths: PolygonPoints,
             draggable: true,
@@ -79,14 +85,31 @@ function initialise(){
         });
 
         Poly.setMap(map);
-           
+
+        django.jQuery('#main-map').unbind('click');
+        //django.jQuery("#main-map").off('click');
+        //django.jQuery("#main-map").css("pointer-events", "none");
+
+      //  document.getElementById("#main-map").removeEventListener("click");
+       // google.maps.event.removeEventListener(map,"click");   
+       //google.maps.event.removeListener("click");
+
+       google.maps.event.removeListener(map, 'click', function (e) {
+                alert("Hi");
+        
+        });
+
+       // google.maps.event.removeEventListener(Pmap, 'click', function(event) {});
         google.maps.event.addListener( Poly, "dragend", getPolygonCoords);
         google.maps.event.addListener( Poly.getPath(), "insert_at", getPolygonCoords);
         google.maps.event.addListener( Poly.getPath(), "remove_at", getPolygonCoords);
         google.maps.event.addListener( Poly.getPath(), "set_at", getPolygonCoords);
+
+        //google.map.event.removeListener();
     }
     else{
         flag = 0;
+
     }
 }
 
@@ -109,8 +132,13 @@ function PolygonCreator(map){
     this.pen = new Pen(this.map);
     var thisOjb=this;
     this.event=google.maps.event.addListener(thisOjb.map, 'click', function(event){
+        if(PolygonPoints.length==0)
+        {
+        console.log("I am in edit");    
         PointArray.push(event.latLng);
         thisOjb.pen.draw(event.latLng);
+        }  
+        
     });
     this.showData = function(){
         return this.pen.getData();
@@ -399,4 +427,39 @@ django.jQuery(document).ready(function(){
         django.jQuery('#id_shape').text(string);
     });
 });
+
+
+
+
+django.jQuery(document).ready(function(){
+    django.jQuery("#id_city").on('change',function()
+     {
+        laodmapcity();       
+    });
+});
+
+
+function laodmapcity(){
+    
+    var id = django.jQuery("#id_city option:selected").val();  
+    $.ajax({
+        url : "/admin/Acitymapdisplay/",
+        type : "POST",
+       data : { 'id' : id},
+  
+        contenttype : "json",
+        success : function(json) {
+            alert(json);
+        }
+    });
+}
+
+
+
+
+
+
+    
+  
+
 
