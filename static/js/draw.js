@@ -3,8 +3,7 @@ var map;
 var Poly;
 var isClosed = false;
 var markersArray =[];
-
-    
+var Pcenter;
 
 function initialise(){
     var Points=[];
@@ -12,71 +11,42 @@ function initialise(){
         zoom: 14,
         center: new google.maps.LatLng(18.505536, 73.822812),
         mapTypeId: google.maps.MapTypeId.SATELLITE   
-        };
+    };
         
     map = new google.maps.Map(document.getElementById('main-map'), myOptions); 
+    var Pcenter = new google.maps.LatLng(41.850, -87.650);
 
     var ShapeValue=django.jQuery('#id_shape').val();   
-    Points=Pointconverter(ShapeValue); 
-    var P=Points.pop();
-
-    if(P)
+    Points=Pointconverter(ShapeValue);
+    Pcenter=centerpoint(Points); 
+    if(Pcenter)
     {
         myOptions = {
         zoom: 10,
-        center: new google.maps.LatLng(P.lat(),P.lng()),
+        center: new google.maps.LatLng(Pcenter.lat(),Pcenter.lng()),
         mapTypeId: google.maps.MapTypeId.SATELLITE
         };
     }
-    else{
-        
-        myOptions = {
-        zoom: 14,
-        center: new google.maps.LatLng(18.505536, 73.822812),
-        mapTypeId: google.maps.MapTypeId.SATELLITE   
-        };
-    }
-    
     if(ShapeValue!="None")
     {
 
-         map = new google.maps.Map(document.getElementById('main-map'), myOptions);
-
-         PointArray=[];
-         var CPoints=[];
+        map = new google.maps.Map(document.getElementById('main-map'), myOptions);
+        var Rpolygon;
+        PointArray=[];
+        var CPoints=[];
         try {
-            var Rpolygon=laodmapcity2();
-        
-             CPoints=Pointconverter(Rpolygon);
-
-            var RArea = new google.maps.Polyline({
-                        path:  CPoints,
-                        geodesic: true,
-                        strokeColor: '#FF0000',
-                        strokeOpacity: 1.0,
-                        strokeWeight: 2
-            });
-
-            RArea.setMap(map);
+            Rpolygon =laodmapcity2();
         }
-        catch(err) {
-                console.log(err); 
-        } 
-  
-        PointArray=Pointconverter(ShapeValue);
-        
-        Poly = new google.maps.Polygon({
-            paths:  PointArray,
-            draggable: true,
-            editable: true,
-            strokeColor: '#FF0000',
-            strokeOpacity: 0.8,
-            strokeWeight: 2,
-            fillColor: '#FF0000',
-            fillOpacity: 0.35
-        });
-
-         Poly.setMap(map);      
+        catch(err)
+        {
+            console.log(err);
+        }
+        if(Rpolygon) 
+         {
+            PointArray=Pointconverter(ShapeValue);
+            initMap(Rpolygon,PointArray);
+         }   
+         
     }
     else{     
         drawMap();        
@@ -91,9 +61,6 @@ function Point_string(){
     var Point = PointArray[0];
     PointArray.push(Point);
     PolygonArray= PointArray;
-    alert("Point_string");
-    alert(PolygonArray);
-    
     var c_str="POLYGON((";
     var string_append="";
     var lng ="";
@@ -135,22 +102,28 @@ django.jQuery(document).ready(function(){
 
 
 django.jQuery(document).ready(function(){
-    django.jQuery("#id_city").on('change',function()
+    django.jQuery("#id_city, #id_administrative_ward, #id_electoral_ward").on('change',function()
      {  
+        alert("change is working");
         laodmapcity();      
     });
 });
 
 
 function initMap(mstring,PointArray){
+
+    Pcenter=centerpoint(PointArray);
     var MPoints=[];
     map=null;
+    myOptions = {
+        zoom: 14,
+        center: new google.maps.LatLng(Pcenter.lat(),Pcenter.lng()),
+        mapTypeId: google.maps.MapTypeId.SATELLITE   
+        };
     map = new google.maps.Map(document.getElementById('main-map'), myOptions);
     
-
     MPoints=Pointconverter(mstring);
-    alert(MPoints);
-
+   
     var RArea = new google.maps.Polyline({
           path: MPoints,
           geodesic: true,
@@ -159,7 +132,7 @@ function initMap(mstring,PointArray){
           strokeWeight: 2
         });
 
-        RArea.setMap(map);
+    RArea.setMap(map);
 
 
     if(PointArray.length > 0){
@@ -185,11 +158,16 @@ function initMap(mstring,PointArray){
 }
 
 function laodmapcity(){
-    var id = django.jQuery("#id_city option:selected").val();  
+    alert("I am in laodmapcity");
+    var id = django.jQuery("#id_city option:selected, #id_administrative_ward option:selected, #id_electoral_ward option:selected").val();
+    var name = django.jQuery("#id_city, #id_administrative_ward, #id_electoral_ward").attr("name");
+    var model = name.replace(/_/g, '');  
+    alert(id);
+    alert(model);   
     $.ajax({
         url : "/admin/Acitymapdisplay/",
         type : "POST",
-       data : { 'id' : id},
+       data : { 'id' : id,'model':model},
   
         contenttype : "json",
         success : function(json) {
@@ -203,12 +181,15 @@ function laodmapcity(){
 
 
 function laodmapcity2(){
-    var id = django.jQuery("#id_city option:selected").val();  
+
+    var id = django.jQuery("#id_city option:selected, #id_administrative_ward option:selected, #id_electoral_ward option:selected").val();
+    var name = django.jQuery("#id_city, #id_administrative_ward, #id_electoral_ward").attr("name");
+    var model = name.replace(/_/g, '');
     var val;
     $.ajax({
         url : "/admin/Acitymapdisplay/",
         type : "POST",
-       data : { 'id' : id},
+       data : { 'id' : id,'model':model},
   
         contenttype : "json",
         success : function(json) {
@@ -268,6 +249,11 @@ function clearOverlays() {
 django.jQuery(document).ready(function(){
       django.jQuery('#reset').click(function(){
         map=null;
+        myOptions = {
+        zoom: 14,
+        center: new google.maps.LatLng(18.505536, 73.822812),
+        mapTypeId: google.maps.MapTypeId.SATELLITE   
+    };
         map = new google.maps.Map(document.getElementById('main-map'), myOptions);
         drawMap();
     });
@@ -281,7 +267,7 @@ function Pointconverter(PolyString){
     var Shape = PolyString.substring(20,PolyString.length-2);
     var adummy = Shape.split(/[\s,]+/);
     var dummy1;
-   var dummy2;   
+    var dummy2;   
 
     for (var i=0; i <= adummy.length-1 ; i ++){
         if (i%2==0)
@@ -293,4 +279,17 @@ function Pointconverter(PolyString){
             }
         }
     return PolygonPoints;
+}
+
+
+
+function centerpoint(Points){
+    var bounds = new google.maps.LatLngBounds();
+    var Point = new google.maps.LatLng(41.850, -87.650);
+    var i;   
+    for (i = 0; i < Points.length; i++) {
+       bounds.extend(Points[i]);
+    }
+    Point=bounds.getCenter();
+    return Point; 
 }
