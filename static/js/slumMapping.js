@@ -33,7 +33,7 @@ function initMap12() {
 	wdaddress = $("#wdaddress");
 	wdofficer = $("#wdofficer");
 	wdhead = $("#wdhead");
-	
+
 
 	loadcity();
 	viewIndiaBorder();
@@ -51,6 +51,7 @@ function initMap(obj, zoomlavel) {
 }
 
 function loadcity() {
+	$(".overlay").show();
 	$.ajax({
 		url : url,
 		type : "GET",
@@ -62,18 +63,23 @@ function loadcity() {
 		}
 	});
 }
-
 function loadslum() {
+	var arr_slum_url = [];
+	//$(".overlay").show();
 	$.each(obj, function(k, v) {
-		$.ajax({
-			url : "/admin/slummapdisplay/" + v.id + "/",
-			type : "GET",
-			contenttype : "json",
-			success : function(json) {
-				obj[k]["content"] = json["content"];
-			}
-		});
+			arr_slum_url.push($.ajax({
+				url : "/admin/slummapdisplay/" + v.id + "/",
+				type : "GET",
+				contenttype : "json",
+				success : function(json) {
+					obj[k]["content"] = json["content"];
+				}
+			}));
 	});
+	Promise.all(arr_slum_url).then( function(result) {
+			$(".overlay").hide();
+	});
+
 }
 
 function getcordinates(obj) {
@@ -87,7 +93,7 @@ function getcordinates(obj) {
 }
 
 function latlongformat(ShapeValue, shapename , bgcolor , bordercolor) {
-	
+
 	var PolygonPoints = [];
 	var centerlatlang=[];
 	var bounds = new google.maps.LatLngBounds();
@@ -107,13 +113,13 @@ function latlongformat(ShapeValue, shapename , bgcolor , bordercolor) {
 	}
 
 	PolygonPoints.pop();
-    
+
     if(bgcolor == undefined){
     	bgcolor="";
     	bordercolor="";
     }
 	var Poly1 = drawPolygon(PolygonPoints,bounds, bgcolor, bordercolor);
-	
+
 	var infoWindowover = new google.maps.InfoWindow;
 	// Events on Polygon
 	google.maps.event.addListener(Poly1, 'mouseover', function(event) {
@@ -138,12 +144,11 @@ function latlongformat(ShapeValue, shapename , bgcolor , bordercolor) {
 				'<div class="row">'+
 				'<div class="col-md-9">'+
 				 '<p>' + obj[arr[0]]["content"][arr[1]]["content"][arr[2]]["content"][arr[3]]['info'] +'</p> ';
-				 
 				 if(obj[arr[0]]["content"][arr[1]]["content"][arr[2]]["content"][arr[3]]['factsheet']){
 				 	contentString += '<p><a href="' + obj[arr[0]]["content"][arr[1]]["content"][arr[2]]["content"][arr[3]]['factsheet'] +'">Factsheet</a></p>' ;
 				 }
 				 '</div>'+
-				'<div class="col-md-3" style="margin-left:-20px"><img width="100px" height="120px" src="' + obj[arr[0]]["content"][arr[1]]["content"][arr[2]]["content"][arr[3]]['photo'] +'"></img></div>'+  
+				'<div class="col-md-3" style="margin-left:-20px"><img width="100px" height="120px" src="' + obj[arr[0]]["content"][arr[1]]["content"][arr[2]]["content"][arr[3]]['photo'] +'"></img></div>'+
 				'</div>';
 
 				var infoWindow = new google.maps.InfoWindow({maxWidth: 430});
@@ -198,77 +203,77 @@ function createMap(jsondata, arrRemoveInd) {
 	}else if (arr.length == 2) {
 		mydesc.html(obj[arr[0]]["content"][arr[1]]['info']);
 	    wdhead.html('');
-		wdaddress.html('');      
+		wdaddress.html('');
 	    wdofficer.html('');
-		
+
 		wdadd +="<div class='row'><div  class='col-md-2' style='margin-left:25px'><b>Address :</b> </div><div class='col-md-9'>";
 		if(obj[arr[0]]["content"][arr[1]]['wardOfficeAddress']){
-			wdadd += (obj[arr[0]]["content"][arr[1]]['wardOfficeAddress']).trim(); 
+			wdadd += (obj[arr[0]]["content"][arr[1]]['wardOfficeAddress']).trim();
 		}else{
 			wdadd += " - ";
 		}
 		wdadd +="</div></div>";
-		
+
 		wdname +="<div class='row'><div class='row' style='margin-left:25px'><div class='col-md-2' ><b>Name :</b></div><div class='col-md-10'> ";
 		if(obj[arr[0]]["content"][arr[1]]['wardOfficerName'])
 		{
-			wdname += obj[arr[0]]["content"][arr[1]]['wardOfficerName'] ;	
+			wdname += obj[arr[0]]["content"][arr[1]]['wardOfficerName'] ;
 		}else{
 			wdname += " - ";
 		}
 		wdname += "</div></div>"+
-		          "<div class='row' style='margin-left:25px'><div class='col-md-2' ><b> Contact :</b></div><div class='col-md-10'> "; 
+		          "<div class='row' style='margin-left:25px'><div class='col-md-2' ><b> Contact :</b></div><div class='col-md-10'> ";
 		if(obj[arr[0]]["content"][arr[1]]['wardOfficeTel']){
 			wdname += obj[arr[0]]["content"][arr[1]]['wardOfficeTel'] ;
 		}else{
 			wdname += " - ";
 		}
 		wdname += "</div></div></div>";
-	    
+
 	    head += "<div><b>Administrative Ward : </b></div>";
 		wdhead.html(head);
-		wdaddress.html(wdadd);      
+		wdaddress.html(wdadd);
 		wdofficer.html(wdname);
-		
+
 		initMap(data, 12);
 
 	}else if (arr.length == 3) {
 		mydesc.html(obj[arr[0]]["content"][arr[1]]["content"][arr[2]]['info']);
 		wdhead.html('');
-		wdaddress.html('');      
+		wdaddress.html('');
 	    wdofficer.html('');
-		
+
 		wdadd +="<div class='row'><div  class='col-md-2' style='margin-left:25px'><b>Address :</b> </div><div class='col-md-9'>";
 		if(obj[arr[0]]["content"][arr[1]]["content"][arr[2]]['wardOfficeAddress']){
-			wdadd += (obj[arr[0]]["content"][arr[1]]["content"][arr[2]]['wardOfficeAddress']).trim(); 
+			wdadd += (obj[arr[0]]["content"][arr[1]]["content"][arr[2]]['wardOfficeAddress']).trim();
 		}else{
 			wdadd += " - ";
 		}
 		wdadd +="</div></div>";
-		
+
 		wdname +="<div class='row'><div class='row' style='margin-left:25px'><div class='col-md-2' ><b>Name :</b></div><div class='col-md-10'> ";
 		if(obj[arr[0]]["content"][arr[1]]["content"][arr[2]]['wardOfficerName'])
 		{
-			wdname += obj[arr[0]]["content"][arr[1]]["content"][arr[2]]['wardOfficerName'] ;	
+			wdname += obj[arr[0]]["content"][arr[1]]["content"][arr[2]]['wardOfficerName'] ;
 		}else{
 			wdname += " - ";
 		}
 		wdname += "</div></div>"+
-		          "<div class='row' style='margin-left:25px'><div class='col-md-2' ><b> Contact :</b></div><div class='col-md-10'> "; 
+		          "<div class='row' style='margin-left:25px'><div class='col-md-2' ><b> Contact :</b></div><div class='col-md-10'> ";
 		if(obj[arr[0]]["content"][arr[1]]["content"][arr[2]]['wardOfficeTel']){
 			wdname += obj[arr[0]]["content"][arr[1]]["content"][arr[2]]['wardOfficeTel'] ;
 		}else{
 			wdname += " - ";
 		}
 		wdname += "</div></div></div>";
-	    
+
 	    head += "<div><b>Electoral Ward : </b></div>";
 		wdhead.html(head);
-		wdaddress.html(wdadd);      
+		wdaddress.html(wdadd);
 		wdofficer.html(wdname);
-		
+
 		val = obj[arr[0]]["content"][arr[1]]["content"][arr[2]]
-		initMap(val,  13);	
+		initMap(val,  13);
 		getcordinates(data);
 
 	} else if (arr.length == 4) {
@@ -276,10 +281,10 @@ function createMap(jsondata, arrRemoveInd) {
 	    wdhead.html('');
 	    wdaddress.html('');
 		wdofficer.html('');
-		
+
 	    val = obj[arr[0]]["content"][arr[1]]["content"][arr[2]]["content"][arr[3]]
 		initMap(val, 16);
-		
+
     	mydatatable.fnDestroy();
     	$("#datatable").empty();
 	}
@@ -304,19 +309,20 @@ function setMaplink() {
 			aTag += '>> <label id=' + arr[i] + ' onclick="getArea(this);">' + " <span style='text-decoration: underline;cursor:pointer;color:blue;'>" + arr[i] + "</span></label>&nbsp;&nbsp; ";
 		}
     }
-	
+
 	mydiv.html(aTag);
 }
 
 function getArea(initlink) {
 	removeIndi = "";
 	var textelement = (initlink.textContent).toString().trim();
-	
+
 	if(textelement == "Home"){
-		arr.splice(0, 4);		
-		setMaplink();		
+		arr.splice(0, 4);
+		setMaplink();
 		initMap(obj, 8);
 		viewIndiaBorder();
+
 		wdhead.html('');
 		wdaddress.html('');
 		wdofficer.html('');
@@ -324,10 +330,9 @@ function getArea(initlink) {
 		mydesc.html('');
 		$("#datatable").empty();
 		$("#datatablecontainer").hide();
-		
 		return;
 	}
-	
+
     $("#datatablecontainer").show();
 	removeIndi = arr.indexOf(textelement) + 1;
 	createMap(textelement, true);
@@ -337,15 +342,15 @@ function drawPolygon(PolygonPoints,centerlatlang , bgcolor ,bordercolor) {
 	var Poly;
 	var newbgcolor="#FFA3A3";
 	var newbordercolor="#FF0000";
-	
+
 	if(bgcolor != undefined && bgcolor != ""){
 		newbgcolor=bgcolor;
 	}
-	
+
 	if(bordercolor != undefined && bordercolor != ""){
 		newbordercolor=bordercolor;
 	}
-	
+
 	Poly = new google.maps.Polygon({
 		paths : PolygonPoints,
 		strokeColor : newbordercolor,
@@ -393,7 +398,7 @@ function drawDatatable(){
         "title":'<div style="font-size: large;font-weight: 900;">'+"Slums"+'</div>',
         "mDataProp":  "name",
         "mRender" :function(oObj,val, setval){
-            
+
               var desc = "";
               if(setval.legend != "")
                   desc = ' ('+ setval.legend.replace(":"," >> ") +')';
@@ -403,7 +408,7 @@ function drawDatatable(){
             	}
     	   }]
 	});
-	
+
   $("#datatablecontainer").show();
 
   $("#datatable").on("click", "span", function(){
