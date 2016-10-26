@@ -14,3 +14,4 @@ py4j==0.10.2.1
 pylint==1.5.5
 six==1.10.0
 wrapt==1.10.8
+django-colorfield==0.1.10

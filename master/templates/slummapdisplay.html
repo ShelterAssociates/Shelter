@@ -5,41 +5,58 @@
 
 <link rel="stylesheet"  type="text/css" href="{% static "css/bootstrap.min.css" %}"/>
 <link rel="stylesheet"  type="text/css" href="{% static "css/jquery.dataTables.min.css" %}" />
- 
+
 <script src="{% static "js/jquery.min.js" %}"></script>
-<script src="{% static "js/bootstrap.min.js" %}"></script>  
+<script src="{% static "js/bootstrap.min.js" %}"></script>
 <script src="{% static "js/slumMapping.js" %}"></script>
 <script src="{% static "js/jquery.dataTables.min.js" %}"></script>
 <script type="text/javascript" src="http://www.google.com/jsapi" ></script>
 
  <style>
-	 #map12 {
-		        height: 500px;
-		  		width: 750px;
-		  		margin: 0px;
-		  		padding: 0px
-			}     
-</style> 
+ #map12 {
+      height: 500px;
+  		width: 750px;
+  		margin: 0px;
+  		padding: 0px
+		}
+#loading-img {
+      background: url(/static/images/spinner.gif) center center no-repeat;
+      height: 100%;
+      width:55%;
+      z-index: 20;
+  }
+.overlay {
+    background: #e9e9e9;
+    display: none;
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    opacity: 0.5;
+    z-index:1;
+}
+</style>
 
 <div style="padding-left: 10px">
 	<h3>Spatial Slum Information</h3>
-	
+  <div class="overlay">
+    <div id="loading-img"></div>
+  </div>
 	<div id="maphead"></div>
 	<div id="mapdesc" style="width: 750px"></div>
-	
-	<!-- <div id="wdaddress" style="width: 750px" >Ward Office: Aundh Ward Office Near Breman Chawk, Spicer College Road, Pune</div>
-	<div id="wdofficer" style="width: 750px">Ward Officer: Mr Udas Nitin Ramesh (Mobile # 96 8993 1499, Office # (0)20 2589 7982)</div>
-	 -->
+
+	<div id="wdhead" style="width: 750px" ></div>
+	<div id="wdaddress" style="width: 750px" ></div>
+	<div id="wdofficer" style="width: 750px"></div>
+	<div style="height: 20px"></div>
 	<div id="maplink" ></div>
-	<div id="map12" ></div>
-	
-	
+	<div id="map12"></div>
+
 	<div style="height: 10px;width: 750px;"></div>
-	<div style="width: 750px;"><table id="datatable" class="display"> </table></div>
-	
-	
+	<div style="width: 750px;" id="datatablecontainer"><table id="datatable" class="display"> </table></div>
 	<script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCuQTQr4BdUZEpca7kQIt673JF_Yah3C4A&callback=initMap12"
 	async defer></script>
-       
+
 </div>
 {% endblock %}

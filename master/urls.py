@@ -22,7 +22,7 @@ from django.views.generic.base import View
 from master.views import index, SurveyListView, SurveyCreateView, \
     survey_delete_view, search, edit, display, insert, report, \
     AdministrativewardList, ElectoralWardList, SlumList, ReportGenerate, \
-    VulnerabilityReport,jsondata,slummapdisplay,slummap,citymapdisplay
+    VulnerabilityReport,jsondata,slummapdisplay,slummap,citymapdisplay, Acitymapdisplay
 
 from django.conf import settings
 from django.conf.urls.static import static
@@ -56,4 +56,6 @@ urlpatterns = [
     url(r'^slummap/$',slummap, name='slummap'),
     url(r'^slummapdisplay/(?P<id>[0-9]+)/$',slummapdisplay, name='slummapdisplay'),
     url(r'^citymapdisplay/$',citymapdisplay, name='citymapdisplay'),    
+    url(r'^Acitymapdisplay/$',Acitymapdisplay, name='Acitymapdisplay'),    
 ]
+

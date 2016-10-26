@@ -105,7 +105,7 @@ class CityFrom(forms.ModelForm):
     shape = forms.CharField(widget=LocationWidget())
     class Meta:
         model = City
-        fields = ('name', 'shape', 'state_code', 'district_code', 'city_code')
+        fields = ('name', 'shape', 'state_code', 'district_code', 'city_code', 'border_color','background_color')
         exclude = ('created_by', 'created_on')
 
 
@@ -130,7 +130,7 @@ class SlumForm(forms.ModelForm):
     class Meta:
         model = Slum
         fields= "__all__"
-        
+
 ""
 class Rapid_Slum_AppraisalForm(forms.ModelForm):
     """Rapid Slum AppraisalForm"""
@@ -139,36 +139,33 @@ class Rapid_Slum_AppraisalForm(forms.ModelForm):
         fields = '__all__'
 
 class ReportForm(forms.Form):
-    City_Name_List = []
-    Default =('0','---select---')
-    City_Name_List.append(Default)
-    for c in City.objects.all():
-        Default=(c.id,c.name)
-        City_Name_List.append(Default)
-    City = forms.ChoiceField(choices=City_Name_List)
-    AdministrativeWard_Name_List = []
-    Default =('0','---select---')
-    AdministrativeWard_Name_List.append(Default)
-    AdministrativeWard = forms.ChoiceField(choices=AdministrativeWard_Name_List)
-    ElectoralWard_Name_List = []
-    Default =('0','---select---')
-    ElectoralWard_Name_List.append(Default)
-    ElectoralWard = forms.ChoiceField(choices=ElectoralWard_Name_List)
-    Slum_Name_List = []
-    Default =('0','---select---')
-    Slum_Name_List.append(Default)
-    Slum = forms.ChoiceField(choices=Slum_Name_List)
-    form_Name_List = []
-    Default =('0','---select---')
-    form_Name_List.append(Default)
-    old = psycopg2.connect(database='onadatav2',user='postgres',password='softcorner',host='127.0.0.1',port='5432')
-    cursor_old = old.cursor()
-    cursor_old.execute("select id, title from logger_xform;")
-    fetch_data = cursor_old.fetchall()
-    for i in fetch_data:
-        form_Name_List.append(i)
-    form = forms.ChoiceField(choices=form_Name_List)    
-
-
-
-
+    pass
+    # City_Name_List = []
+    # Default =('0','---select---')
+    # City_Name_List.append(Default)
+    # for c in City.objects.all():
+    #     Default=(c.id,c.name)
+    #     City_Name_List.append(Default)
+    # City = forms.ChoiceField(choices=City_Name_List)
+    # AdministrativeWard_Name_List = []
+    # Default =('0','---select---')
+    # AdministrativeWard_Name_List.append(Default)
+    # AdministrativeWard = forms.ChoiceField(choices=AdministrativeWard_Name_List)
+    # ElectoralWard_Name_List = []
+    # Default =('0','---select---')
+    # ElectoralWard_Name_List.append(Default)
+    # ElectoralWard = forms.ChoiceField(choices=ElectoralWard_Name_List)
+    # Slum_Name_List = []
+    # Default =('0','---select---')
+    # Slum_Name_List.append(Default)
+    # Slum = forms.ChoiceField(choices=Slum_Name_List)
+    # form_Name_List = []
+    # Default =('0','---select---')
+    # form_Name_List.append(Default)
+    # old = psycopg2.connect(database='onadata1',user='postgres',password='softcorner',host='127.0.0.1',port='5432')
+    # cursor_old = old.cursor()
+    # cursor_old.execute("select id, title from logger_xform;")
+    # fetch_data = cursor_old.fetchall()
+    # for i in fetch_data:
+    #     form_Name_List.append(i)
+    # form = forms.ChoiceField(choices=form_Name_List)

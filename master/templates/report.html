@@ -65,8 +65,12 @@ function myFunction(){
         contenttype : "json",
 
         success : function(json){           
-                    
+        
+              var str='<option value="';
+              str = str +"0" +'"'+'>' + "---select---" + '</option>';
+              $('#id_AdministrativeWard').append(str);
 
+        
         for (i = 0; i < json.nameArray.length; i++){ 
                 var str='<option value="';
                 str = str +json.idArray[i] +'"'+'>' + json.nameArray[i] + '</option>';
@@ -101,8 +105,13 @@ function myFunction2(){
         
         contenttype : "json",
 
-        success : function(json){           
-        
+        success : function(json){  
+
+
+            var str='<option value="';
+              str = str +"0" +'"'+'>' + "---select---" + '</option>';
+            $('#id_ElectoralWard').append(str);
+
         
         for (i = 0; i < json.nameArray.length; i++) { 
             var str='<option value="';
@@ -138,8 +147,12 @@ function myFunction3(){
         contenttype : "json",
 
  
-        success : function(json){           
-        
+        success : function(json){  
+          var str='<option value="';
+          str = str +"0" +'"'+'>' + "---select---" + '</option>';
+          $('#id_Slum').append(str);
+              
+   
         
         for (i = 0; i < json.nameArray.length; i++) { 
             var str='<option value="';
