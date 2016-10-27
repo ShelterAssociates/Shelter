@@ -1,3 +1,4 @@
+//workiing on reduce if block
 var myOptions;
 var map;
 var Poly;
