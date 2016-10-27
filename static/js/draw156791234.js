@@ -192,7 +192,8 @@ function laodmapcity(){
        data : { 'id' : id,'model':model},
   
         contenttype : "json",
-         success : function(json) {
+         success : function(json){
+            alert(json);
             console.log(json);
             console.log(Poly);
             var PointArray=[];

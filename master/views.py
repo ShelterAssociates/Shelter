@@ -16,7 +16,8 @@ from django.views.decorators.csrf import csrf_exempt
 from django.views.generic.edit import FormView
 
 from master.models import Survey, CityReference, Rapid_Slum_Appraisal, \
-                          Slum, AdministrativeWard, ElectoralWard, City
+                          Slum, AdministrativeWard, ElectoralWard, City, \
+                          WardOfficeContact, ElectedRepresentative
 from master.forms import SurveyCreateForm, ReportForm, Rapid_Slum_AppraisalForm
 
 from django.views.generic.base import View
@@ -289,11 +290,14 @@ def citymapdisplay(request):
     
     for c in City.objects.all():
         city_dict={}
-        city_dict["name"]=c.name.city_name
-        city_dict["id"]=c.id
+        city_dict["name"]= c.name.city_name
+        city_dict["id"]= c.id
         city_dict["lat"]= str(c.shape)
+        city_dict["bgColor"]= c.background_color
+        city_dict["borderColor"]= c.border_color
         city_dict["content"]={}
         city_main.update({str(c.name.city_name) : city_dict })
+        
     
     return HttpResponse(json.dumps(city_main),content_type='application/json')   
 
@@ -310,7 +314,8 @@ def slummapdisplay(request,id):
     slum_dict=dict()
     slum_main=dict()
     main_list=[]
- 
+    
+    
          
     admin_main={}
     for a in AdministrativeWard.objects.filter(city__id=id):
@@ -319,8 +324,17 @@ def slummapdisplay(request,id):
         admin_dict["id"]=a.id
         admin_dict["lat"]= str(a.shape)
         admin_dict["info"]=a.description
+        admin_dict["bgColor"]=a.background_color
+        admin_dict["borderColor"]=a.border_color
+        
+        adminwd=WardOfficeContact.objects.filter(administrative_ward = a.id)
+        if adminwd :
+            admin_dict["wardOfficerName"]=adminwd[0].name
+            admin_dict["wardOfficeAddress"]= adminwd[0].address_info 
+            admin_dict["wardOfficeTel"] = adminwd[0].telephone
         admin_dict["content"]={}
         city_main["content"].update({a.name:admin_dict})
+    
         
         
     for e in ElectoralWard.objects.filter(administrative_ward__city__id=id):
@@ -329,9 +343,17 @@ def slummapdisplay(request,id):
         elctrol_dict["id"]=e.id
         elctrol_dict["lat"]=str(e.shape)
         elctrol_dict["info"]=e.extra_info
+        elctrol_dict["bgColor"]=e.background_color
+        elctrol_dict["borderColor"]=e.border_color
+        
+        electrolwd=ElectedRepresentative.objects.filter(electoral_ward = e.id)
+        if electrolwd :
+            elctrol_dict["wardOfficerName"]=electrolwd[0].name
+            elctrol_dict["wardOfficeAddress"]= electrolwd[0].address +" "+electrolwd[0].post_code
+            elctrol_dict["wardOfficeTel"] = electrolwd[0].tel_nos
+        
         elctrol_dict["content"]={}
-        #print e.administrative_ward.name
-                    
+                   
         city_main["content"][str(e.administrative_ward.name)]["content"].update({e.name : elctrol_dict })                
              
     for s in Slum.objects.filter(electoral_ward__administrative_ward__city__id=id):
@@ -340,9 +362,9 @@ def slummapdisplay(request,id):
         slum_dict["id"]=s.id
         slum_dict["lat"]=str(s.shape)
         slum_dict["info"]=s.description
-        slum_dict["content"]={}
+        slum_dict["factsheet"]=s.factsheet.url if s.factsheet else ''
+        slum_dict["photo"]=s.photo.url if s.photo else ''
         
-
         city_main["content"]\
         [str(s.electoral_ward.administrative_ward.name)]["content"]\
         [str(s.electoral_ward.name)]["content"].update({s.name : slum_dict })                
@@ -351,6 +373,8 @@ def slummapdisplay(request,id):
 
 @csrf_exempt
 def Acitymapdisplay(request):
+    shape = "";
+    background_color="";
     MList=['city','administrativeward','electoralward']
     sid = request.POST['id']
     model=request.POST['model']
@@ -358,7 +382,10 @@ def Acitymapdisplay(request):
         dummy1=ContentType.objects.get(app_label="master",model=model)
         dummy2=dummy1.get_all_objects_for_this_type(id=sid)
         dummy3=dummy2.values()
-        shape = "";
-        Shape=str(dummy3[0]['shape'])
-    print Shape    
-    return HttpResponse(json.dumps(Shape),content_type='application/json')
+        shape=str(dummy3[0]['shape'])
+        background_color=str(dummy3[0]['background_color'])
+    print shape
+    print background_color 
+    data ={}
+    data = {'shape': shape,'background_color':background_color}   
+    return HttpResponse(json.dumps(data),content_type='application/json')

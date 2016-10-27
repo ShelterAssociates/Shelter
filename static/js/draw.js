@@ -6,6 +6,7 @@ var isClosed = false;
 var markersArray =[];
 var Pcenter;
 var Zoom=14;
+var shapecolor;
 function initialise(){
     var Points=[];
     myOptions = {
@@ -135,7 +136,7 @@ function initMap(mstring,PointArray){
     var RArea = new google.maps.Polyline({
           path: MPoints,
           geodesic: true,
-          strokeColor: '#FF0000',
+          strokeColor: shapecolor,
           strokeOpacity: 1.0,
           strokeWeight: 2
         });
@@ -192,12 +193,11 @@ function laodmapcity(){
        data : { 'id' : id,'model':model},
   
         contenttype : "json",
-         success : function(json) {
-            console.log(json);
-            console.log(Poly);
+         success : function(json){
+            shapecolor=json.background_color
             var PointArray=[];
             PointArray = Poly.getPath().getArray();
-            initMap(json,PointArray);
+            initMap(json.shape,PointArray);
         }
     });   
 }
@@ -229,7 +229,8 @@ function laodmapcity2(){
   
         contenttype : "json",
         success : function(json) {
-          val = json;
+            val = json.shape;
+            shapecolor=json.background_color
         },
         async:false
     });

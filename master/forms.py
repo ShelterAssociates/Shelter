@@ -105,7 +105,7 @@ class CityFrom(forms.ModelForm):
     shape = forms.CharField(widget=LocationWidget())
     class Meta:
         model = City
-        fields = ('name', 'shape', 'state_code', 'district_code', 'city_code')
+        fields = ('name', 'shape', 'state_code', 'district_code', 'city_code', 'border_color','background_color')
         exclude = ('created_by', 'created_on')
 
 
@@ -130,7 +130,7 @@ class SlumForm(forms.ModelForm):
     class Meta:
         model = Slum
         fields= "__all__"
-        
+
 ""
 class Rapid_Slum_AppraisalForm(forms.ModelForm):
     """Rapid Slum AppraisalForm"""
@@ -140,6 +140,7 @@ class Rapid_Slum_AppraisalForm(forms.ModelForm):
 
 class ReportForm(forms.Form):
     pass
+
 
 """    
     City_Name_List = []
