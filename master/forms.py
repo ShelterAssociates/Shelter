@@ -115,7 +115,7 @@ class AdministrativeWardFrom(forms.ModelForm):
     class Meta:
         model = AdministrativeWard
         fields = '__all__'
-
+ 
 class ElectoralWardForm(forms.ModelForm):
     """Electoral Ward Form"""
     shape = forms.CharField(widget=LocationWidget())
@@ -139,6 +139,9 @@ class Rapid_Slum_AppraisalForm(forms.ModelForm):
         fields = '__all__'
 
 class ReportForm(forms.Form):
+    pass
+
+"""    
     City_Name_List = []
     Default =('0','---select---')
     City_Name_List.append(Default)
@@ -160,7 +163,7 @@ class ReportForm(forms.Form):
     Slum = forms.ChoiceField(choices=Slum_Name_List)
     form_Name_List = []
     Default =('0','---select---')
-    form_Name_List.append(Default)
+    form_Name_List.append(Default)#old = psycopg2.connect(database='onadata1',user='shelter',password='Sh3lt3rAss0ciat3s',host='45.56.104.240',port='5432')
     old = psycopg2.connect(database='onadata1',user='shelter',password='Sh3lt3rAss0ciat3s',host='45.56.104.240',port='5432')
     cursor_old = old.cursor()
     cursor_old.execute("select id, title from logger_xform;")
@@ -168,7 +171,4 @@ class ReportForm(forms.Form):
     for i in fetch_data:
         form_Name_List.append(i)
     form = forms.ChoiceField(choices=form_Name_List)    
-
-
-
-
+"""

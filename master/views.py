@@ -24,6 +24,7 @@ from django.shortcuts import render
 from django.core.paginator import Paginator, PageNotAnInteger, EmptyPage
 from django.conf import settings
 from django.contrib.auth.decorators import login_required
+from django.contrib.contenttypes.models import ContentType
 
 from django.contrib.gis import geos
 
@@ -269,7 +270,7 @@ def VulnerabilityReport(request):
 
 @csrf_exempt
 def jsondata(request):
-    old = psycopg2.connect(database='onadata1',user='postgres',password='softcorner',host='127.0.0.1',port='5432')
+    old = psycopg2.connect(database='onadata1',user='shelter',password='Sh3lt3rAss0ciat3s',host='45.56.104.240',port='5432')
     cursor_old = old.cursor()
     cursor_old.execute("select json from logger_instance where xform_id=106 and id=9;")
     fetch_data = cursor_old.fetchone()
@@ -295,7 +296,6 @@ def citymapdisplay(request):
         city_main.update({str(c.name.city_name) : city_dict })
     
     return HttpResponse(json.dumps(city_main),content_type='application/json')   
-
 
 
 @csrf_exempt
@@ -347,15 +347,18 @@ def slummapdisplay(request,id):
         [str(s.electoral_ward.administrative_ward.name)]["content"]\
         [str(s.electoral_ward.name)]["content"].update({s.name : slum_dict })                
     return HttpResponse(json.dumps(city_main),content_type='application/json')
-    
+
 
 @csrf_exempt
 def Acitymapdisplay(request):
-    Shape="";
-    cid = request.POST['id']
-    print cid
-    Aobj = AdministrativeWard.objects.filter(city=cid)
-    for i in Aobj:
-        Shape=str(i.shape)
+    MList=['city','administrativeward','electoralward']
+    sid = request.POST['id']
+    model=request.POST['model']
+    if model in MList:
+        dummy1=ContentType.objects.get(app_label="master",model=model)
+        dummy2=dummy1.get_all_objects_for_this_type(id=sid)
+        dummy3=dummy2.values()
+        shape = "";
+        Shape=str(dummy3[0]['shape'])
+    print Shape    
     return HttpResponse(json.dumps(Shape),content_type='application/json')
-
