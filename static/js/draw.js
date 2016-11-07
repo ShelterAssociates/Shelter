@@ -8,19 +8,20 @@ var Zoom=14;
 var shapecolor;
 
 function initialise(){
+
     var Points=[];
     myOptions = {
         zoom: Zoom,
         center: new google.maps.LatLng(18.505536, 73.822812),
         mapTypeId: google.maps.MapTypeId.SATELLITE   
     };
-        
+
     map = new google.maps.Map(document.getElementById('main-map'), myOptions); 
     var Pcenter = new google.maps.LatLng(41.850, -87.650);
 
     var ShapeValue=django.jQuery('#id_shape').val();   
     Points=Pointconverter(ShapeValue);
-    Pcenter=centerpoint(Points); 
+    Pcenter=centerpoint(Points);
     if(Pcenter)
     {
         myOptions = {
@@ -31,21 +32,30 @@ function initialise(){
     }
     if(ShapeValue!="None")
     {
-
+        map=null;
         map = new google.maps.Map(document.getElementById('main-map'), myOptions);
-        var Rpolygon;
+ 
+        var Rpolygon="";
+ 
         PointArray=[];
+ 
         var CPoints=[];
+ 
         try {
             Rpolygon =laodmap2();
         }
+ 
         catch(err)
         {
+            Rpolygon="";
             console.log(err);
         }
-        if(Rpolygon) 
-         {
-            PointArray=Pointconverter(ShapeValue);
+ 
+        if(ShapeValue) 
+         {  
+            
+            
+            PointArray=Pointconverter(ShapeValue);            
             initMap(Rpolygon,PointArray);
          }   
          
@@ -94,19 +104,20 @@ django.jQuery(document).ready(function(){
 
 
 function initMap(mstring,PointArray){
-
     var MPoints=[];
     MPoints=Pointconverter(mstring);
+
     if(PointArray.length==0)
     {   
      Pcenter=centerpoint(MPoints);
     }
     else
     {   
-     Pcenter=centerpoint(PointArray);
+       Pcenter=centerpoint(PointArray);      
     }    
     
     map=null;
+
     myOptions = {
         zoom: Zoom,
         center: new google.maps.LatLng(Pcenter.lat(),Pcenter.lng()),
@@ -114,7 +125,8 @@ function initMap(mstring,PointArray){
         };
     map = new google.maps.Map(document.getElementById('main-map'), myOptions);
     
-    var RArea = new google.maps.Polyline({
+    if(MPoints){
+        var RArea = new google.maps.Polyline({
           path: MPoints,
           geodesic: true,
           strokeColor: shapecolor,
@@ -122,12 +134,11 @@ function initMap(mstring,PointArray){
           strokeWeight: 2
         });
 
-    RArea.setMap(map);
-
+        RArea.setMap(map);
+    }
 
     if(PointArray.length > 0){
-
-        Poly = new google.maps.Polygon({
+            Poly = new google.maps.Polygon({
             paths:PointArray, 
             draggable: true,
             editable: true,
@@ -280,8 +291,17 @@ django.jQuery(document).ready(function(){
 function Pointconverter(PolyString){
     var PolygonPoints=[];
     var adummy =[];
-    var Shape;
-    var Shape = PolyString.substring(20,PolyString.length-2);
+    var Shape="";
+    var dummystring="SRID=4326;POLYGON ((";
+    if((PolyString.substring(0,20))==dummystring)
+    {
+       Shape = PolyString.substring(20,PolyString.length-2);
+    }
+    else
+    {
+        Shape = PolyString.substring(9,PolyString.length-2);
+        Zoom =15;
+    }    
     var adummy = Shape.split(/[\s,]+/);
     var dummy1;
     var dummy2;   
