@@ -107,21 +107,37 @@ class CityFrom(forms.ModelForm):
         model = City
         fields = ('name', 'shape', 'state_code', 'district_code', 'city_code', 'border_color','background_color')
         exclude = ('created_by', 'created_on')
+    def clean_shape(self):
+        shape = self.cleaned_data.get('shape')
+        if shape=='None':
+            raise forms.ValidationError("Please draw Polygon") 
+        return shape    
 
 
 class AdministrativeWardFrom(forms.ModelForm):
     """AdministrativeWard Form"""
-    shape = forms.CharField(widget=LocationWidget())
+    shape = forms.CharField(widget=LocationWidget(),required=True)
     class Meta:
         model = AdministrativeWard
-        fields = '__all__'
- 
+        fields = '__all__'        
+    def clean_shape(self):
+        shape = self.cleaned_data.get('shape')
+        if shape=='None':
+            raise forms.ValidationError("Please draw Polygon") 
+        return shape        
+
+
 class ElectoralWardForm(forms.ModelForm):
     """Electoral Ward Form"""
     shape = forms.CharField(widget=LocationWidget())
     class Meta:
         model = ElectoralWard
         fields = '__all__'
+    def clean_shape(self):
+        shape = self.cleaned_data.get('shape')
+        if shape=='None':
+            raise forms.ValidationError("Please draw Polygon") 
+        return shape      
 
 
 class SlumForm(forms.ModelForm):
@@ -130,8 +146,13 @@ class SlumForm(forms.ModelForm):
     class Meta:
         model = Slum
         fields= "__all__"
+    def clean_shape(self):
+        shape = self.cleaned_data.get('shape')
+        if shape=='None':
+            raise forms.ValidationError("Please draw Polygon") 
+        return shape      
 
-""
+
 class Rapid_Slum_AppraisalForm(forms.ModelForm):
     """Rapid Slum AppraisalForm"""
     class Meta:

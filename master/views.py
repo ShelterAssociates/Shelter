@@ -391,3 +391,5 @@ def Acitymapdisplay(request):
     data ={}
     data = {'shape': shape,'background_color':background_color}   
     return HttpResponse(json.dumps(data),content_type='application/json')
+
+

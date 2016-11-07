@@ -75,7 +75,7 @@ class AdministrativeWard(models.Model):
     """Administrative Ward Database"""
     city = models.ForeignKey(City)
     name = models.CharField(max_length=2048,blank=True,null=True)
-    shape = models.PolygonField(srid=4326,blank=True,null=True)
+    shape = models.PolygonField(srid=4326)
     ward_no = models.CharField(max_length=2048,blank=True,null=True)
     description = models.TextField(max_length=2048,blank=True,null=True)
     office_address = models.CharField(max_length=2048,blank=True,null=True)
@@ -96,7 +96,7 @@ class ElectoralWard(models.Model):
     """Electoral Ward Database"""
     administrative_ward = models.ForeignKey(AdministrativeWard)
     name = models.CharField(max_length=2048,blank=True,null=True)
-    shape = models.PolygonField(srid=4326,blank=True,null=True)
+    shape = models.PolygonField(srid=4326)
     ward_no = models.CharField(max_length=2048,blank=True,null=True)
     ward_code = models.TextField(max_length=2048,blank=True,null=True)
     extra_info = models.CharField(max_length=2048,blank=True,null=True)
@@ -117,7 +117,7 @@ class Slum(models.Model):
     """Slum Database"""
     electoral_ward = models.ForeignKey(ElectoralWard)
     name = models.CharField(max_length=2048,blank=True,null=True)
-    shape = models.PolygonField(srid=4326,blank=True,null=True)
+    shape = models.PolygonField(srid=4326)
     description = models.TextField(max_length=2048,blank=True,null=True)
     shelter_slum_code = models.CharField(max_length=2048,blank=True,null=True)
     factsheet = models.FileField(upload_to='factsheet/',blank=True,null=True)
