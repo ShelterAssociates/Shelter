@@ -32,8 +32,8 @@ class City(models.Model):
     district_name = models.CharField(max_length=2048)
     district_code = models.CharField(max_length=2048)
     shape = models.PolygonField(srid=4326)
-    border_color = ColorField(default='#94BBFF',blank=True, null=True)
-    background_color = ColorField(default='#94BBFF',blank=True, null=True)
+    border_color = ColorField(default='#94BBFF')
+    background_color = ColorField(default='#94BBFF')
     created_by = models.ForeignKey(User)
     created_on = models.DateTimeField(default=datetime.datetime.now())
 
@@ -74,13 +74,13 @@ class Survey(models.Model):
 class AdministrativeWard(models.Model):
     """Administrative Ward Database"""
     city = models.ForeignKey(City)
-    name = models.CharField(max_length=2048,blank=True,null=True)
+    name = models.CharField(max_length=2048)
     shape = models.PolygonField(srid=4326)
-    ward_no = models.CharField(max_length=2048,blank=True,null=True)
-    description = models.TextField(max_length=2048,blank=True,null=True)
-    office_address = models.CharField(max_length=2048,blank=True,null=True)
-    border_color = ColorField(default='#BFFFD0',blank=True, null=True)
-    background_color = ColorField(default='#BFFFD0',blank=True, null=True)
+    ward_no = models.CharField(max_length=2048)
+    description = models.TextField(max_length=2048)
+    office_address = models.CharField(max_length=2048)
+    border_color = ColorField(default='#BFFFD0')
+    background_color = ColorField(default='#BFFFD0')
 
     def __unicode__(self):
         """Returns string representation of object"""
@@ -95,13 +95,13 @@ class AdministrativeWard(models.Model):
 class ElectoralWard(models.Model):
     """Electoral Ward Database"""
     administrative_ward = models.ForeignKey(AdministrativeWard)
-    name = models.CharField(max_length=2048,blank=True,null=True)
+    name = models.CharField(max_length=2048)
     shape = models.PolygonField(srid=4326)
-    ward_no = models.CharField(max_length=2048,blank=True,null=True)
-    ward_code = models.TextField(max_length=2048,blank=True,null=True)
-    extra_info = models.CharField(max_length=2048,blank=True,null=True)
-    border_color = ColorField(default='#FFEFA1',blank=True, null=True)
-    background_color = ColorField(default='#FFEFA1',blank=True, null=True)
+    ward_no = models.CharField(max_length=2048)
+    ward_code = models.TextField(max_length=2048)
+    extra_info = models.CharField(max_length=2048)
+    border_color = ColorField(default='#FFEFA1')
+    background_color = ColorField(default='#FFEFA1')
 
     def __unicode__(self):
         """Returns string representation of object"""
@@ -116,12 +116,12 @@ class ElectoralWard(models.Model):
 class Slum(models.Model):
     """Slum Database"""
     electoral_ward = models.ForeignKey(ElectoralWard)
-    name = models.CharField(max_length=2048,blank=True,null=True)
+    name = models.CharField(max_length=2048)
     shape = models.PolygonField(srid=4326)
-    description = models.TextField(max_length=2048,blank=True,null=True)
-    shelter_slum_code = models.CharField(max_length=2048,blank=True,null=True)
-    factsheet = models.FileField(upload_to='factsheet/',blank=True,null=True)
-    photo = models.ImageField(upload_to='factsheet/',blank=True, null=True)
+    description = models.TextField(max_length=2048)
+    shelter_slum_code = models.CharField(max_length=2048)
+    factsheet = models.FileField(upload_to='factsheet/')
+    photo = models.ImageField(upload_to='factsheet/')
     def __unicode__(self):
         """Returns string representation of object"""
         return str(self.name)
@@ -137,7 +137,7 @@ class WardOfficeContact(models.Model):
     administrative_ward = models.ForeignKey(AdministrativeWard)
     title = models.CharField(max_length=2048)
     name = models.CharField(max_length=2048)
-    address_info = models.CharField(max_length=2048,blank=True,null=True)
+    address_info = models.CharField(max_length=2048)
     telephone = models.CharField(max_length=2048)
 
     def __unicode__(self):
