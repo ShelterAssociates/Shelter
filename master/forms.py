@@ -116,7 +116,7 @@ class CityFrom(forms.ModelForm):
 
 class AdministrativeWardFrom(forms.ModelForm):
     """AdministrativeWard Form"""
-    shape = forms.CharField(widget=LocationWidget(),required=True)
+    shape = forms.CharField(widget=LocationWidget())
     class Meta:
         model = AdministrativeWard
         fields = '__all__'        
