@@ -66,7 +66,6 @@ function Point_string(){
     var PointArray=[];
     var PolygonArray=[];
     PointArray = Poly.getPath().getArray();  
-    var Point = PointArray[0];
     PointArray.push(Point);
     PolygonArray= PointArray;
     var c_str="POLYGON((";
@@ -294,10 +293,10 @@ django.jQuery(document).ready(function(){
 /* Convert a PolygonField object to polygon string*/
 function Pointconverter(PolyString){
     var PolygonPoints=[];
-    var adummy =[];
+    var Parray =[];
     var Shape="";
-    var dummystring="SRID=4326;POLYGON ((";
-    if((PolyString.substring(0,20))==dummystring)
+    var Polygoncheckstring="SRID=4326;POLYGON ((";
+    if((PolyString.substring(0,20))==Polygoncheckstring)
     {
        Shape = PolyString.substring(20,PolyString.length-2);
     }
@@ -306,17 +305,17 @@ function Pointconverter(PolyString){
         Shape = PolyString.substring(9,PolyString.length-2);
         Zoom =15;
     }    
-    var adummy = Shape.split(/[\s,]+/);
-    var dummy1;
-    var dummy2;   
+    var Parray = Shape.split(/[\s,]+/);
+    var Plng;
+    var Plat;   
 
-    for (var i=0; i <= adummy.length-1 ; i ++){
+    for (var i=0; i <= Parray.length-1 ; i ++){
         if (i%2==0)
         {
-            dummy1 = adummy[i];
+            Plng = Parray[i];
         }else if (i %2 !=0){
-            dummy2 =adummy[i];
-            PolygonPoints.push(new google.maps.LatLng(dummy2, dummy1));
+            Plat =Parray[i];
+            PolygonPoints.push(new google.maps.LatLng(Plat, Plng));
             }
         }
     return PolygonPoints;
