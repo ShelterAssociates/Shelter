@@ -88,16 +88,28 @@ django.jQuery(document).ready(function(){
         django.jQuery('#id_shape').val(string);
         django.jQuery('#id_shape').text(string);
     });
-});
 
 
 /* on change load reference polygon*/
-django.jQuery(document).ready(function(){
     django.jQuery("#id_city, #id_administrative_ward, #id_electoral_ward").on('change',function()
      {  
         laodmap();      
     });
+
+/* Reset polygon */
+    django.jQuery('#reset').click(function(){
+        map=null;
+        var myOptions = {
+        zoom: Zoom,
+        center: new google.maps.LatLng(18.505536, 73.822812),
+        mapTypeId: google.maps.MapTypeId.SATELLITE   
+    };
+        map = new google.maps.Map(document.getElementById('main-map'), myOptions);
+        drawMap();
+    });
+
 });
+
 
 /* on change load reference polygon*/
 function initMap(mstring,PointArray){
@@ -284,19 +296,6 @@ function clearOverlays() {
 }
 
 
-/* Reset polygon */
-django.jQuery(document).ready(function(){
-    django.jQuery('#reset').click(function(){
-        map=null;
-        var myOptions = {
-        zoom: Zoom,
-        center: new google.maps.LatLng(18.505536, 73.822812),
-        mapTypeId: google.maps.MapTypeId.SATELLITE   
-    };
-        map = new google.maps.Map(document.getElementById('main-map'), myOptions);
-        drawMap();
-    });
-});
 
 /* Convert a PolygonField object to polygon string*/
 function Pointconverter(PolyString){
