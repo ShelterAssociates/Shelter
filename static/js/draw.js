@@ -1,4 +1,3 @@
-var myOptions;
 var map;
 var Poly;
 var isClosed = false;
@@ -7,10 +6,11 @@ var Pcenter;
 var Zoom=14;
 var shapecolor;
 
+/* Intialise a Google Map */
 function initialise(){
 
     var Points=[];
-    myOptions = {
+    var myOptions = {
         zoom: Zoom,
         center: new google.maps.LatLng(18.505536, 73.822812),
         mapTypeId: google.maps.MapTypeId.SATELLITE   
@@ -32,12 +32,10 @@ function initialise(){
     }
     if(ShapeValue!="None")
     {
-        map=null;
-        map = new google.maps.Map(document.getElementById('main-map'), myOptions);
- 
+   
         var Rpolygon="";
  
-        PointArray=[];
+        var PointArray=[];
  
         var CPoints=[];
  
@@ -48,13 +46,11 @@ function initialise(){
         catch(err)
         {
             Rpolygon="";
-            console.log(err);
+           
         }
  
         if(ShapeValue) 
-         {  
-            
-            
+         {                        
             PointArray=Pointconverter(ShapeValue);            
             initMap(Rpolygon,PointArray);
          }   
@@ -65,7 +61,7 @@ function initialise(){
     }
 }
 
-
+/* convert a polygon string to PolygonField object*/
 function Point_string(){
     var PointArray=[];
     var PolygonArray=[];
@@ -86,6 +82,7 @@ function Point_string(){
     return c_str;
 }
 
+/* save PolygonField object*/
 django.jQuery(document).ready(function(){
     django.jQuery("input[name='_save'], input[name='_continue'], input[name='_addanother']").click(function(){
         var string = Point_string();
@@ -95,6 +92,7 @@ django.jQuery(document).ready(function(){
 });
 
 
+/* on change load reference polygon*/
 django.jQuery(document).ready(function(){
     django.jQuery("#id_city, #id_administrative_ward, #id_electoral_ward").on('change',function()
      {  
@@ -102,7 +100,7 @@ django.jQuery(document).ready(function(){
     });
 });
 
-
+/* on change load reference polygon*/
 function initMap(mstring,PointArray){
     var MPoints=[];
     MPoints=Pointconverter(mstring);
@@ -118,7 +116,7 @@ function initMap(mstring,PointArray){
     
     map=null;
 
-    myOptions = {
+    var myOptions = {
         zoom: Zoom,
         center: new google.maps.LatLng(Pcenter.lat(),Pcenter.lng()),
         mapTypeId: google.maps.MapTypeId.SATELLITE   
@@ -159,6 +157,7 @@ function initMap(mstring,PointArray){
 
 }
 
+/* Load a refereence Polygon */
 function laodmap(){
     
     var id = django.jQuery("#id_city option:selected, #id_administrative_ward option:selected, #id_electoral_ward option:selected").val();
@@ -179,7 +178,7 @@ function laodmap(){
     }
    
     $.ajax({
-        url : "/admin/Acitymapdisplay/",
+        url : "/admin/modelmapdisplay/",
         type : "POST",
        data : { 'id' : id,'model':model},
   
@@ -194,8 +193,9 @@ function laodmap(){
 }
 
 
-function laodmap2(){
+/* Load a refereence Polygon */
 
+function laodmap2(){
     var id = django.jQuery("#id_city option:selected, #id_administrative_ward option:selected, #id_electoral_ward option:selected").val();
     var name = django.jQuery("#id_city, #id_administrative_ward, #id_electoral_ward").attr("name");
     var model = name.replace(/_/g, '');
@@ -214,7 +214,7 @@ function laodmap2(){
     }
     
     $.ajax({
-        url : "/admin/Acitymapdisplay/",
+        url : "/admin/modelmapdisplay/",
         type : "POST",
        data : { 'id' : id,'model':model},
   
@@ -229,6 +229,7 @@ function laodmap2(){
     return val;
 }
 
+/* Draw a polygon on google map on click*/
 function drawMap(){
       var PointArray=[]; 
       isClosed = false;
@@ -267,6 +268,7 @@ function drawMap(){
 
 }
   
+/* clear markers from google map */  
 function clearOverlays() {
   for (var i = 0; i < markersArray.length; i++ ) {
     markersArray[i].setMap(null);
@@ -274,10 +276,12 @@ function clearOverlays() {
   markersArray.length = 0;
 }
 
+
+/* Reset polygon */
 django.jQuery(document).ready(function(){
     django.jQuery('#reset').click(function(){
         map=null;
-        myOptions = {
+        var myOptions = {
         zoom: Zoom,
         center: new google.maps.LatLng(18.505536, 73.822812),
         mapTypeId: google.maps.MapTypeId.SATELLITE   
@@ -287,7 +291,7 @@ django.jQuery(document).ready(function(){
     });
 });
 
-
+/* Convert a PolygonField object to polygon string*/
 function Pointconverter(PolyString){
     var PolygonPoints=[];
     var adummy =[];
@@ -318,6 +322,7 @@ function Pointconverter(PolyString){
     return PolygonPoints;
 }
 
+/* find a center point of polygon */
 function centerpoint(Points){
     var bounds = new google.maps.LatLngBounds();
     var Point = new google.maps.LatLng(41.850, -87.650);

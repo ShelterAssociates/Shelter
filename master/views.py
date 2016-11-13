@@ -372,19 +372,19 @@ def slummapdisplay(request,id):
 
 
 @csrf_exempt
-def Acitymapdisplay(request):
+def modelmapdisplay(request):
     shape = "";
     background_color="";
-    MList=['city','administrativeward','electoralward']
-    sid = request.POST['id']
+    modelList=['city','administrativeward','electoralward']
+    mid = request.POST['id']
     model=request.POST['model']
     try:
-        if model in MList:
-            dummy1=ContentType.objects.get(app_label="master",model=model)
-            dummy2=dummy1.get_all_objects_for_this_type(id=sid)
-            dummy3=dummy2.values()
-            shape=str(dummy3[0]['shape'])
-            background_color=str(dummy3[0]['background_color'])
+        if model in modelList:
+            contenttypeobj=ContentType.objects.get(app_label="master",model=model)
+            modelobj=contenttypeobj.get_all_objects_for_this_type(id=mid)
+            modelval=modelobj.values()
+            shape=str(modelval[0]['shape'])
+            background_color=str(modelval[0]['background_color'])
     except:
         shape =""
         background_color=""
