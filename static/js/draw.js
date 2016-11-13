@@ -175,11 +175,16 @@ function laodmap(){
     {
         Zoom=16;
     }
-   
+    
+    var url = "{% url 'modelmapdisplay' %}";
+
     $.ajax({
-        url : "/admin/modelmapdisplay/",
+        
+        url : url,
+        
         type : "POST",
-       data : { 'id' : id,'model':model},
+        
+        data : { 'id' : id,'model':model},
   
         contenttype : "json",
          success : function(json){
@@ -212,8 +217,11 @@ function laodmap2(){
         Zoom=15;
     }
     
+    var url = "{% url 'modelmapdisplay' %}";
+
+
     $.ajax({
-        url : "/admin/modelmapdisplay/",
+        url : url,
         type : "POST",
        data : { 'id' : id,'model':model},
   
