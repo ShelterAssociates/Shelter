@@ -1,395 +1,79 @@
-var PointArray=[];
-var myOptions;
 var map;
-var creator;
-var PolygonPoints=[];
 var Poly;
-var curLatLng=[];
-var creator;
-var flag=0;
-var P;
-var Points=[];
-var ShapeValue;
+var isClosed = false;
+var markersArray =[];
+var Pcenter;
+var Zoom=14;
+var shapecolor;
 
-
+/* Intialise a Google Map */
 
 function initialise(){
 
-
-
-
-
-    var a =[];
-    ShapeValue=django.jQuery('#id_shape').val();
-    var r = ShapeValue.substring(20,ShapeValue.length-2);
-    var a= r.split(/[\s,]+/);
-    var r1;
-    var r2;
-    for (var i=0; i <= a.length-1 ; i ++){
-        if (i%2==0)
-        {
-            r1 = a[i];
-        }else if (i %2 !=0){
-            r2 =a[i];
-            Points.push(new google.maps.LatLng(r2, r1));
-            }
-        }
-    
-        P=Points.pop();
-
-    if(P)
-    {
-         myOptions = {
-        zoom: 10,
-        center: new google.maps.LatLng(P.lat(),P.lng()),
-        mapTypeId: google.maps.MapTypeId.SATELLITE
-        }
-    }
-    else{
-         myOptions = {
-        zoom: 14,
+    var Points=[];
+    var myOptions = {
+        zoom: Zoom,
         center: new google.maps.LatLng(18.505536, 73.822812),
         mapTypeId: google.maps.MapTypeId.SATELLITE   
-        }
+    };
+
+    map = new google.maps.Map(document.getElementById('main-map'), myOptions); 
+    var Pcenter = new google.maps.LatLng(41.850, -87.650);
+
+    var ShapeValue=django.jQuery('#id_shape').val();   
+    Points=Pointconverter(ShapeValue);
+    Pcenter=centerpoint(Points);
+    if(Pcenter)
+    {
+        myOptions = {
+        zoom: Zoom,
+        center: new google.maps.LatLng(Pcenter.lat(),Pcenter.lng()),
+        mapTypeId: google.maps.MapTypeId.SATELLITE
+        };
     }
-    map = new google.maps.Map(document.getElementById('main-map'), myOptions);
-    creator = new PolygonCreator(map);
-    ShapeValue=django.jQuery('#id_shape').val();
     if(ShapeValue!="None")
     {
-        flag = 1;
-        var result = ShapeValue.substring(20,ShapeValue.length-2);
-        var array= result.split(/[\s,]+/);
-        var result1;
-        var result2;
-        for (var i=0; i <= array.length-1 ; i ++){
-            if (i%2==0)
-            {
-                result1 = array[i];
-            }else if (i %2 !=0){
-                result2 =array[i];
-                PolygonPoints.push(new google.maps.LatLng(result2, result1));
-            }
+        map=null;
+        map = new google.maps.Map(document.getElementById('main-map'), myOptions);
+ 
+        var Rpolygon="";
+ 
+        PointArray=[];
+ 
+        var CPoints=[];
+ 
+        try {
+            Rpolygon =laodmap2();
         }
-
-        
-        Poly = new google.maps.Polygon({
-            paths: PolygonPoints,
-            draggable: true,
-            editable: true,
-            strokeColor: '#FF0000',
-            strokeOpacity: 0.8,
-            strokeWeight: 2,
-            fillColor: '#FF0000',
-            fillOpacity: 0.35
-        });
-
-        Poly.setMap(map);
-
-        django.jQuery('#main-map').unbind('click');
-        //django.jQuery("#main-map").off('click');
-        //django.jQuery("#main-map").css("pointer-events", "none");
-
-      //  document.getElementById("#main-map").removeEventListener("click");
-       // google.maps.event.removeEventListener(map,"click");   
-       //google.maps.event.removeListener("click");
-
-       google.maps.event.removeListener(map, 'click', function (e) {
-                alert("Hi");
-        
-        });
-
-       // google.maps.event.removeEventListener(Pmap, 'click', function(event) {});
-        google.maps.event.addListener( Poly, "dragend", getPolygonCoords);
-        google.maps.event.addListener( Poly.getPath(), "insert_at", getPolygonCoords);
-        google.maps.event.addListener( Poly.getPath(), "remove_at", getPolygonCoords);
-        google.maps.event.addListener( Poly.getPath(), "set_at", getPolygonCoords);
-
-        //google.map.event.removeListener();
-    }
-    else{
-        flag = 0;
-
-    }
-}
-
-function getPolygonCoords() {
-    curLatLng = [];
-    curLatLng = Poly.getPath().getArray();
-}   
-
-django.jQuery(function(){
-    //reset Polygon and redraw
-    django.jQuery('#reset').click(function(){
-        creator.destroy();
-        creator=null;
-        creator=new PolygonCreator(map);
-    });
-});
-
-function PolygonCreator(map){
-    this.map = map;
-    this.pen = new Pen(this.map);
-    var thisOjb=this;
-    this.event=google.maps.event.addListener(thisOjb.map, 'click', function(event){
-        if(PolygonPoints.length==0)
+ 
+        catch(err)
         {
-        console.log("I am in edit");    
-        PointArray.push(event.latLng);
-        thisOjb.pen.draw(event.latLng);
-        }  
-        
-    });
-    this.showData = function(){
-        return this.pen.getData();
-    }
-    this.showColor = function(){
-        return this.pen.getColor();
-    }
-    this.destroy = function(){
-        this.pen.deleteMis();
-        if(null!=this.pen.polygon){
-            this.pen.polygon.remove();
+            Rpolygon="";
         }
-        google.maps.event.removeListener(this.event);
+ 
+        if(ShapeValue) 
+         {  
+            
+            
+            PointArray=Pointconverter(ShapeValue);            
+            initMap(Rpolygon,PointArray);
+         }   
+         
+    }
+    else{     
+        drawMap();        
     }
 }
 
-function Pen(map){
-    this.map= map;
-    this.listOfDots = new Array();
-    this.polyline =null;
-    this.polygon = null;
-    this.currentDot = null;
-    this.draw = function(latLng){
-        if (null != this.polygon) {
-            alert('Click Reset to draw another');
-        }else {
-            if (this.currentDot != null && this.listOfDots.length > 1 && this.currentDot == this.listOfDots[0]) {
-                this.drawPloygon(this.listOfDots);
-            }else {
-                if(null!=this.polyline){
-                    this.polyline.remove();
-                }
-                    var dot = new Dot(latLng, this.map, this);
-                    this.listOfDots.push(dot);
-
-                if(this.listOfDots.length > 1){
-                    this.polyline = new Line(this.listOfDots, this.map);
-                }
-            }
-        }
-    }
-    this.drawPloygon = function (listOfDots,color,des,id){
-        this.polygon = new Polygon(listOfDots,this.map,this,color,des,id);
-        this.deleteMis();
-    }
-    this.deleteMis = function(){
-    django.jQuery.each(this.listOfDots, function(index, value){
-        value.remove();
-    });
-    this.listOfDots.length=0;
-        if(null!=this.polyline){
-            this.polyline.remove();
-            this.polyline=null;
-        }
-    }
-    this.cancel = function(){
-        if(null!=this.polygon){
-            (this.polygon.remove());
-        }
-        this.polygon=null;
-        this.deleteMis();
-    }
-    this.setCurrentDot = function(dot){
-        this.currentDot = dot;
-    }
-    this.getListOfDots = function(){
-        return this.listOfDots;
-    }
-    this.getData = function(){
-        if(this.polygon!=null){
-            var data ="";
-            var paths = this.polygon.getPlots();
-            paths.getAt(0).forEach(function(value, index){
-                data+=(value.toString());
-            });
-            return data;
-        }else {
-                return null;
-            }
-        }
-    this.getColor = function(){
-        if(this.polygon!=null){
-            var color = this.polygon.getColor();
-            return color;
-        }else {
-            return null;
-        }
-    }
-}
-
-function Dot(latLng,map,pen){
-    this.latLng=latLng;
-    this.parent = pen;
-
-    this.markerObj = new google.maps.Marker({
-        position: this.latLng,
-        map: map
-    });
-    this.addListener = function(){
-        var parent=this.parent;
-        var thisMarker=this.markerObj;
-        var thisDot=this;
-        google.maps.event.addListener(thisMarker, 'click', function(){
-            parent.setCurrentDot(thisDot);
-            parent.draw(thisMarker.getPosition());
-        });
-    }
-    this.addListener();
-    this.getLatLng = function(){
-        return this.latLng;
-    }
-    this.getMarkerObj = function(){
-        return this.markerObj;
-    }
-    this.remove = function(){
-        this.markerObj.setMap(null);
-    }
-}
-
-function Line(listOfDots,map){
-    this.listOfDots = listOfDots;
-    this.map = map;
-    this.coords = new Array();
-    this.polylineObj=null;
-    if (this.listOfDots.length > 1){
-        var thisObj=this;
-        django.jQuery.each(this.listOfDots, function(index, value){
-            thisObj.coords.push(value.getLatLng());
-        });
-    this.polylineObj  = new google.maps.Polyline({
-        path: this.coords,
-        strokeColor: "#FF0000",
-        strokeOpacity: 1.0,
-        strokeWeight: 2,
-        draggable: true,
-        editable: true,
-        map: this.map
-    });
-    }
-    this.remove = function(){
-        this.polylineObj.setMap(null);
-    }
-}
-
-function Polygon(listOfDots,map,pen,color){
-    this.listOfDots = listOfDots;
-    this.map = map;
-    this.coords = new Array();
-    this.parent = pen;
-    this.des = 'Hello';
-    var thisObj=this;
-    django.jQuery.each(this.listOfDots,function(index,value){
-        thisObj.coords.push(value.getLatLng());
-    });
-   
-    this.polygonObj= new google.maps.Polygon({
-        paths: this.coords,
-        strokeColor: "#FF0000",
-        strokeOpacity: 0.8,
-        strokeWeight: 2,
-        fillColor: "#FF0000",
-        fillOpacity: 0.35,
-        draggable: true,
-        editable: true,
-        map:this.map
-    });
-    this.remove = function(){
-        this.info.remove();
-        this.polygonObj.setMap(null);
-    }
-    this.getContent = function(){
-        return this.des;
-    }
-    this.getPolygonObj= function(){
-        return this.polygonObj;
-    }
-    this.getListOfDots = function (){
-        return this.listOfDots;
-    }
-    this.getPlots = function(){
-        return this.polygonObj.getPaths();
-    }
-    this.getColor=function(){
-        return  this.getPolygonObj().fillColor;
-    }
-    this.setColor = function(color){
-        return  this.getPolygonObj().setOptions(
-            {fillColor:color,
-                strokeColor:color,
-                strokeWeight: 2
-            }
-            );
-    }
-    this.info = new Info(this,this.map);
-    this.addListener = function(){
-        var info=this.info;
-        var thisPolygon=this.polygonObj;
-        google.maps.event.addListener(thisPolygon, 'rightclick', function(event){
-            info.show(event.latLng);
-        });
-    }
-    this.addListener();
-}
-function Info(polygon,map){
-    this.parent = polygon;
-    this.map = map;
-    this.color =  document.createElement('input');
-    this.button = document.createElement('input');
-    django.jQuery(this.button).attr('type','button');
-    django.jQuery(this.button).val("Change Color");
-    var thisOjb=this;
-    this.changeColor= function(){
-        thisOjb.parent.setColor(django.jQuery(thisOjb.color).val());
-    }
-    this.getContent = function(){
-        var content = document.createElement('div');
-        django.jQuery(this.color).val(this.parent.getColor());
-        django.jQuery(this.button).click(function(){
-            thisObj.changeColor();
-        });
-        django.jQuery(content).append(this.color);
-        django.jQuery(content).append(this.button);
-        return content;
-    }
-    thisObj=this;
-    this.infoWidObj = new google.maps.InfoWindow({
-        content:thisObj.getContent()
-    });
-    this.show = function(latLng){
-        this.infoWidObj.setPosition(latLng);
-        this.infoWidObj.open(this.map);
-    }
-    this.remove = function(){
-        this.infoWidObj.close();
-    }
-}
+/* convert a polygon string to PolygonField object*/
 
 function Point_string(){
+    var PointArray=[];
     var PolygonArray=[];
-    if (flag==0)
-    {
-        var Point = PointArray[0];
-        PointArray.push(Point);
-        PolygonArray= PointArray;
-    }
-    else if(flag==1)
-    {
-        var Point = curLatLng[0];
-        curLatLng.push(Point);
-        PolygonArray=  curLatLng;
-    }
+    PointArray = Poly.getPath().getArray();  
+    var Point = PointArray[0];
+    PointArray.push(Point);
+    PolygonArray= PointArray;
     var c_str="POLYGON((";
     var string_append="";
     var lng ="";
@@ -403,63 +87,257 @@ function Point_string(){
     return c_str;
 }
 
-django.jQuery(document).ready(function(){
-    django.jQuery("input[name='_save']").click(function(){
-        var string = Point_string();
-        django.jQuery('#id_shape').val(string);
-        django.jQuery('#id_shape').text(string);
-    });
-});
-
-django.jQuery(document).ready(function(){
-    django.jQuery("input[name='_addanother']").click(function(){
-        var string = Point_string();
-        django.jQuery('#id_shape').val(string);
-        django.jQuery('#id_shape').text(string);
-    });
-});
 
 
-django.jQuery(document).ready(function(){
-    django.jQuery("input[name='_continue']").click(function(){
-        var string = Point_string();
-        django.jQuery('#id_shape').val(string);
-        django.jQuery('#id_shape').text(string);
-    });
-});
+/* on change draw reference polygon on map*/
 
+function initMap(mstring,PointArray){
+    var MPoints=[];
+    MPoints=Pointconverter(mstring);
 
-
-
-django.jQuery(document).ready(function(){
-    django.jQuery("#id_city").on('change',function()
-     {
-        laodmapcity();       
-    });
-});
-
-
-function laodmapcity(){
+    if(PointArray.length==0)
+    {   
+     Pcenter=centerpoint(MPoints);
+    }
+    else
+    {   
+       Pcenter=centerpoint(PointArray);      
+    }    
     
-    var id = django.jQuery("#id_city option:selected").val();  
+    map=null;
+
+    var myOptions = {
+        zoom: Zoom,
+        center: new google.maps.LatLng(Pcenter.lat(),Pcenter.lng()),
+        mapTypeId: google.maps.MapTypeId.SATELLITE   
+        };
+    map = new google.maps.Map(document.getElementById('main-map'), myOptions);
+    
+    if(MPoints){
+        var RArea = new google.maps.Polyline({
+          path: MPoints,
+          geodesic: true,
+          strokeColor: shapecolor,
+          strokeOpacity: 1.0,
+          strokeWeight: 2
+        });
+
+        RArea.setMap(map);
+    }
+
+    if(PointArray.length > 0){
+            Poly = new google.maps.Polygon({
+            paths:PointArray, 
+            draggable: true,
+            editable: true,
+            strokeColor: '#FF0000',
+            strokeOpacity: 0.8,
+            strokeWeight: 2,
+            fillColor: '#FF0000',
+            fillOpacity: 0.35
+        });
+        Poly.setMap(map);
+     }
+     else
+     {   
+        
+        isClosed=true;
+        drawMap();
+      }  
+
+}
+
+/* Load a refereence Polygon */
+
+function laodmap(){
+    
+    var id = django.jQuery("#id_city option:selected, #id_administrative_ward option:selected, #id_electoral_ward option:selected").val();
+    var name = django.jQuery("#id_city, #id_administrative_ward, #id_electoral_ward").attr("name");
+    var model = name.replace(/_/g, '');  
+     
+    if(model=="city")
+    {
+        Zoom=12;
+    }    
+    else if(model=="administrativeward")
+    {
+        Zoom=14;
+    }
+    else
+    {
+        Zoom=16;
+    }
+   
     $.ajax({
-        url : "/admin/Acitymapdisplay/",
+        url : url,
         type : "POST",
-       data : { 'id' : id},
+       data : { 'id' : id,'model':model},
+  
+        contenttype : "json",
+         success : function(json){
+            shapecolor=json.background_color
+            var PointArray=[];
+            PointArray = Poly.getPath().getArray();
+            initMap(json.shape,PointArray);
+        }
+    });   
+}
+
+/* Load a refereence Polygon */
+
+function laodmap2(){
+
+    var id = django.jQuery("#id_city option:selected, #id_administrative_ward option:selected, #id_electoral_ward option:selected").val();
+    var name = django.jQuery("#id_city, #id_administrative_ward, #id_electoral_ward").attr("name");
+    var model = name.replace(/_/g, '');
+    var val;
+    if(model=="city")
+    {
+        Zoom=12;
+    }    
+    else if(model=="administrativeward")
+    {
+        Zoom=14;
+    }
+    else
+    {
+        Zoom=15;
+    }
+    
+    $.ajax({
+        url : url,
+        type : "POST",
+       data : { 'id' : id,'model':model},
   
         contenttype : "json",
         success : function(json) {
-            alert(json);
-        }
+            val = json.shape;
+            shapecolor=json.background_color
+        },
+        async:false
     });
+
+    return val;
+}
+
+/* Draw a polygon on google map on click*/
+function drawMap(){
+      var PointArray=[]; 
+      isClosed = false;
+
+      Poly = new google.maps.Polyline({ map: map, path: [], strokeColor: "#FF0000", strokeOpacity: 1.0, strokeWeight: 2 });
+  
+      google.maps.event.addListener(map, 'click', function (clickEvent) {
+        if (isClosed)
+            return;
+        var markerIndex = Poly.getPath().length;
+        var isFirstMarker = markerIndex === 0;
+        var Point = clickEvent.latLng;
+        PointArray.push(Point); 
+
+        var marker = new google.maps.Marker({ map: map, position: clickEvent.latLng, draggable: true });
+        markersArray.push(marker);
+        if (isFirstMarker) {
+            google.maps.event.addListener(marker, 'click', function () {
+                if (isClosed)
+                    return;
+                var path = Poly.getPath();
+                Poly.setMap(null);
+                Poly = new google.maps.Polygon({ map: map, path: PointArray, strokeColor: "#FF0000", strokeOpacity: 0.8, strokeWeight: 2, fillColor: "#FF0000", fillOpacity: 0.35,draggable: true,
+            editable: true });
+                isClosed = true;
+                clearOverlays();
+            });
+        }
+
+        google.maps.event.addListener(marker, 'drag', function (dragEvent) {
+            Poly.getPath().setAt(markerIndex, dragEvent.latLng);
+        });
+        Poly.getPath().push(clickEvent.latLng);
+        }
+    ); 
+
+}
+  
+
+/* clear markers from google map */  
+function clearOverlays() {
+  for (var i = 0; i < markersArray.length; i++ ) {
+    markersArray[i].setMap(null);
+  }
+  markersArray.length = 0;
 }
 
 
 
+/* Convert a PolygonField object to polygon string*/
+function Pointconverter(PolyString){
+    var PolygonPoints=[];
+    var Parray =[];
+    var Shape="";
+    var Polygoncheckstring="SRID=4326;POLYGON ((";
+    if((PolyString.substring(0,20))==Polygoncheckstring)
+    {
+       Shape = PolyString.substring(20,PolyString.length-2);
+    }
+    else
+    {
+        Shape = PolyString.substring(9,PolyString.length-2);
+        Zoom =15;
+    }    
+    var Parray = Shape.split(/[\s,]+/);
+    var Plng;
+    var Plat;   
+
+    for (var i=0; i <= Parray.length-1 ; i ++){
+        if (i%2==0)
+        {
+            Plng = Parray[i];
+        }else if (i %2 !=0){
+            Plat =Parray[i];
+            PolygonPoints.push(new google.maps.LatLng(Plat, Plng));
+            }
+        }
+    return PolygonPoints;
+}
+
+/* find a center point of polygon */
+function centerpoint(Points){
+    var bounds = new google.maps.LatLngBounds();
+    var Point = new google.maps.LatLng(41.850, -87.650);
+    var i;   
+    for (i = 0; i < Points.length; i++) {
+       bounds.extend(Points[i]);
+    }
+    Point=bounds.getCenter();
+    return Point; 
+}
 
 
+django.jQuery(document).ready(function(){
+    /* Reset polygon */
+    django.jQuery('#reset').click(function(){
+        map=null;
+        var myOptions = {
+        zoom: Zoom,
+        center: new google.maps.LatLng(18.505536, 73.822812),
+        mapTypeId: google.maps.MapTypeId.SATELLITE   
+    };
+        map = new google.maps.Map(document.getElementById('main-map'), myOptions);
+        drawMap();
+    });
 
-    
-  
+    /* save PolygonField object*/
+    django.jQuery("input[name='_save'], input[name='_continue'], input[name='_addanother']").click(function(){
+        var string = Point_string();
+        django.jQuery('#id_shape').val(string);
+        django.jQuery('#id_shape').text(string);
+    });
 
+    /* on change load reference polygon*/
+    django.jQuery("#id_city, #id_administrative_ward, #id_electoral_ward").on('change',function()
+     {  
+        laodmap();      
+    });
+});
 

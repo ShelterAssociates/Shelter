@@ -32,8 +32,8 @@ class City(models.Model):
     district_name = models.CharField(max_length=2048)
     district_code = models.CharField(max_length=2048)
     shape = models.PolygonField(srid=4326)
-    border_color = ColorField(default='#94BBFF',blank=True, null=True)
-    background_color = ColorField(default='#94BBFF',blank=True, null=True)
+    border_color = ColorField(default='#94BBFF')
+    background_color = ColorField(default='#94BBFF')
     created_by = models.ForeignKey(User)
     created_on = models.DateTimeField(default=datetime.datetime.now())
 
@@ -74,13 +74,13 @@ class Survey(models.Model):
 class AdministrativeWard(models.Model):
     """Administrative Ward Database"""
     city = models.ForeignKey(City)
-    name = models.CharField(max_length=2048,blank=True,null=True)
-    shape = models.PolygonField(srid=4326,blank=True,null=True)
-    ward_no = models.CharField(max_length=2048,blank=True,null=True)
+    name = models.CharField(max_length=2048)
+    shape = models.PolygonField(srid=4326)
+    ward_no = models.CharField(max_length=2048)
     description = models.TextField(max_length=2048,blank=True,null=True)
     office_address = models.CharField(max_length=2048,blank=True,null=True)
-    border_color = ColorField(default='#BFFFD0',blank=True, null=True)
-    background_color = ColorField(default='#BFFFD0',blank=True, null=True)
+    border_color = ColorField(default='#BFFFD0')
+    background_color = ColorField(default='#BFFFD0')
 
     def __unicode__(self):
         """Returns string representation of object"""
@@ -95,13 +95,13 @@ class AdministrativeWard(models.Model):
 class ElectoralWard(models.Model):
     """Electoral Ward Database"""
     administrative_ward = models.ForeignKey(AdministrativeWard)
-    name = models.CharField(max_length=2048,blank=True,null=True)
-    shape = models.PolygonField(srid=4326,blank=True,null=True)
-    ward_no = models.CharField(max_length=2048,blank=True,null=True)
-    ward_code = models.TextField(max_length=2048,blank=True,null=True)
+    name = models.CharField(max_length=2048)
+    shape = models.PolygonField(srid=4326)
+    ward_no = models.CharField(max_length=2048)
+    ward_code = models.TextField(max_length=2048)
     extra_info = models.CharField(max_length=2048,blank=True,null=True)
-    border_color = ColorField(default='#FFEFA1',blank=True, null=True)
-    background_color = ColorField(default='#FFEFA1',blank=True, null=True)
+    border_color = ColorField(default='#FFEFA1')
+    background_color = ColorField(default='#FFEFA1')
 
     def __unicode__(self):
         """Returns string representation of object"""
@@ -116,12 +116,12 @@ class ElectoralWard(models.Model):
 class Slum(models.Model):
     """Slum Database"""
     electoral_ward = models.ForeignKey(ElectoralWard)
-    name = models.CharField(max_length=2048,blank=True,null=True)
-    shape = models.PolygonField(srid=4326,blank=True,null=True)
-    description = models.TextField(max_length=2048,blank=True,null=True)
-    shelter_slum_code = models.CharField(max_length=2048,blank=True,null=True)
+    name = models.CharField(max_length=2048)
+    shape = models.PolygonField(srid=4326)
+    description = models.TextField(max_length=2048)
+    shelter_slum_code = models.CharField(max_length=2048)
     factsheet = models.FileField(upload_to='factsheet/',blank=True,null=True)
-    photo = models.ImageField(upload_to='factsheet/',blank=True, null=True)
+    photo = models.ImageField(upload_to='factsheet/',blank=True,null=True)
     def __unicode__(self):
         """Returns string representation of object"""
         return str(self.name)
@@ -137,8 +137,8 @@ class WardOfficeContact(models.Model):
     administrative_ward = models.ForeignKey(AdministrativeWard)
     title = models.CharField(max_length=2048)
     name = models.CharField(max_length=2048)
-    address_info = models.CharField(max_length=2048,blank=True,null=True)
-    telephone = models.CharField(max_length=2048)
+    address_info = models.CharField(max_length=2048)
+    telephone = models.CharField(max_length=2048,blank=True,null=True)
 
     def __unicode__(self):
         """Returns string representation of object"""
@@ -157,7 +157,7 @@ class ElectedRepresentative(models.Model):
     tel_nos = models.CharField(max_length=2048)
     address = models.CharField(max_length=2048)
     post_code = models.CharField(max_length=2048)
-    additional_info = models.CharField(max_length=2048)
+    additional_info = models.CharField(max_length=2048,blank=True,null=True)
     elected_rep_Party = models.CharField(max_length=2048)
 
     def __unicode__(self):
@@ -263,38 +263,37 @@ class ProjectMaster(models.Model):
         verbose_name_plural = 'Project Masters'
 
 class Rapid_Slum_Appraisal(models.Model):
-    """ Rapid Slum Appraisal Database """
     def validate_image(fieldfile_obj):
         filesize = fieldfile_obj.file.size
         megabyte_limit = 3.0
         if filesize > megabyte_limit*1024*1024:
             raise ValidationError("Max file size is %sMB" % str(megabyte_limit))     
-
     slum_name = models.ForeignKey(Slum)
     approximate_population=models.CharField(max_length=2048,blank=True, null=True)
     toilet_cost=models.CharField(max_length=2048,blank=True, null=True)
     toilet_seat_to_persons_ratio = models.CharField(max_length=2048,blank=True, null=True)
     percentage_with_an_individual_water_connection = models.CharField(max_length=2048,blank=True, null=True)
     frequency_of_clearance_of_waste_containers = models.CharField(max_length=2048,blank=True, null=True)
-    general_info_left_image = models.ImageField(validate_image,upload_to='ShelterPhotos/',blank=True, null=True)
-    toilet_info_left_image = models.ImageField(validate_image,upload_to='ShelterPhotos/',blank=True, null=True)
-    waste_management_info_left_image = models.ImageField(validate_image,upload_to='ShelterPhotos/',blank=True, null=True)
-    water_info_left_image = models.ImageField(validate_image,upload_to='ShelterPhotos/',blank=True, null=True)
-    roads_and_access_info_left_image = models.ImageField(validate_image,upload_to='ShelterPhotos/',blank=True, null=True)
-    drainage_info_left_image = models.ImageField(validate_image,upload_to='ShelterPhotos/',blank=True, null=True) 
-    gutter_info_left_image = models.ImageField(validate_image,upload_to='ShelterPhotos/',blank=True, null=True)
-    general_image_bottomdown1 = models.ImageField(validate_image,upload_to='ShelterPhotos/',blank=True, null=True)
-    general_image_bottomdown2 = models.ImageField(validate_image,upload_to='ShelterPhotos/',blank=True, null=True)    
-    toilet_image_bottomdown1 = models.ImageField(validate_image,upload_to='ShelterPhotos/',blank=True, null=True)
-    toilet_image_bottomdown2 = models.ImageField(validate_image,upload_to='ShelterPhotos/',blank=True, null=True)
-    waste_management_image_bottomdown1 = models.ImageField(validate_image,upload_to='ShelterPhotos/',blank=True, null=True)
-    waste_management_image_bottomdown2 = models.ImageField(validate_image,upload_to='ShelterPhotos/',blank=True, null=True)
-    water_image_bottomdown1  = models.ImageField(validate_image,upload_to='ShelterPhotos/',blank=True, null=True)
-    water_image_bottomdown2 = models.ImageField(validate_image,upload_to='ShelterPhotos/',blank=True, null=True)
-    roads_image_bottomdown1 = models.ImageField(validate_image,upload_to='ShelterPhotos/',blank=True, null=True)
-    road_image_bottomdown2  = models.ImageField(validate_image,upload_to='ShelterPhotos/',blank=True, null=True)
-    drainage_image_bottomdown1 = models.ImageField(validate_image,upload_to='ShelterPhotos/',blank=True, null=True)
-    drainage_image_bottomdown2 = models.ImageField(validate_image,upload_to='ShelterPhotos/',blank=True, null=True) 
-    gutter_image_bottomdown1  = models.ImageField(validate_image,upload_to='ShelterPhotos/',blank=True, null=True)
-    gutter_image_bottomdown2 = models.ImageField(validate_image,upload_to='ShelterPhotos/',blank=True, null=True)  
+    general_info_left_image = models.ImageField(upload_to='ShelterPhotos/',blank=True, null=True)
+    toilet_info_left_image = models.ImageField(upload_to='ShelterPhotos/',blank=True, null=True)
+    waste_management_info_left_image = models.ImageField(upload_to='ShelterPhotos/',blank=True, null=True)
+    water_info_left_image = models.ImageField(upload_to='ShelterPhotos/',blank=True, null=True)
+    roads_and_access_info_left_image = models.ImageField(upload_to='ShelterPhotos/',blank=True, null=True)
+    drainage_info_left_image = models.ImageField(upload_to='ShelterPhotos/',blank=True, null=True) 
+    gutter_info_left_image = models.ImageField(upload_to='ShelterPhotos/',blank=True, null=True)
+    general_image_bottomdown1 = models.ImageField(upload_to='ShelterPhotos/',blank=True, null=True)
+    general_image_bottomdown2 = models.ImageField(upload_to='ShelterPhotos/',blank=True, null=True)    
+    toilet_image_bottomdown1 = models.ImageField(upload_to='ShelterPhotos/',blank=True, null=True)
+    toilet_image_bottomdown2 = models.ImageField(upload_to='ShelterPhotos/',blank=True, null=True)
+    waste_management_image_bottomdown1 = models.ImageField(upload_to='ShelterPhotos/',blank=True, null=True)
+    waste_management_image_bottomdown2 = models.ImageField(upload_to='ShelterPhotos/',blank=True, null=True)
+    water_image_bottomdown1  = models.ImageField(upload_to='ShelterPhotos/',blank=True, null=True)
+    water_image_bottomdown2 = models.ImageField(upload_to='ShelterPhotos/',blank=True, null=True)
+    roads_image_bottomdown1 = models.ImageField(upload_to='ShelterPhotos/',blank=True, null=True)
+    road_image_bottomdown2  = models.ImageField(upload_to='ShelterPhotos/',blank=True, null=True)
+    drainage_image_bottomdown1 = models.ImageField(upload_to='ShelterPhotos/',blank=True, null=True)
+    drainage_image_bottomdown2 = models.ImageField(upload_to='ShelterPhotos/',blank=True, null=True) 
+    gutter_image_bottomdown1  = models.ImageField(upload_to='ShelterPhotos/',blank=True, null=True)
+    gutter_image_bottomdown2 = models.ImageField(upload_to='ShelterPhotos/',blank=True, null=True)
+
    

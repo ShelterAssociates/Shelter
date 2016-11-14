@@ -7,17 +7,21 @@
 </script>
 <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDvDxlP63HXGJmKLvC0t_6O_Oy1IKo6RSI&callback=initialise"
 async defer></script>
-  <script src="https://code.jquery.com/jquery-1.10.2.js"></script>
+     <script src="{% static "js/jquery.min.js" %}"></script>
+<script>
+     var url = "{% url 'modelmapdisplay' %}";
+</script>
 </head>
 <body>
  <input id="id_shape" type="hidden" name="shape" value="{{ POLYGON }}">
-<div id="main-map"  style="width:1600px; height:600px"></div>	
-<div id="side">
-	<input id="reset" value="Reset and Redraw Polygon" type="button" class="navi"/>
-	<div   id="dataPanel"></div>
-</div>
+
+<div id="main-map"  style="width:1200px; height:600px"></div>	
+
+<input id="reset" value="Reset and Redraw Polygon" type="button" class="navi"/>
 
 </body>
 </html>
+
+
 
 
