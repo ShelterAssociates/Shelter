@@ -7,6 +7,7 @@ var Zoom=14;
 var shapecolor;
 
 /* Intialise a Google Map */
+
 function initialise(){
 
     var Points=[];
@@ -32,10 +33,12 @@ function initialise(){
     }
     if(ShapeValue!="None")
     {
-   
+        map=null;
+        map = new google.maps.Map(document.getElementById('main-map'), myOptions);
+ 
         var Rpolygon="";
  
-        var PointArray=[];
+        PointArray=[];
  
         var CPoints=[];
  
@@ -46,11 +49,12 @@ function initialise(){
         catch(err)
         {
             Rpolygon="";
-           
         }
  
         if(ShapeValue) 
-         {                        
+         {  
+            
+            
             PointArray=Pointconverter(ShapeValue);            
             initMap(Rpolygon,PointArray);
          }   
@@ -62,10 +66,12 @@ function initialise(){
 }
 
 /* convert a polygon string to PolygonField object*/
+
 function Point_string(){
     var PointArray=[];
     var PolygonArray=[];
     PointArray = Poly.getPath().getArray();  
+    var Point = PointArray[0];
     PointArray.push(Point);
     PolygonArray= PointArray;
     var c_str="POLYGON((";
@@ -81,37 +87,10 @@ function Point_string(){
     return c_str;
 }
 
-/* save PolygonField object*/
-django.jQuery(document).ready(function(){
-    django.jQuery("input[name='_save'], input[name='_continue'], input[name='_addanother']").click(function(){
-        var string = Point_string();
-        django.jQuery('#id_shape').val(string);
-        django.jQuery('#id_shape').text(string);
-    });
 
 
-/* on change load reference polygon*/
-    django.jQuery("#id_city, #id_administrative_ward, #id_electoral_ward").on('change',function()
-     {  
-        laodmap();      
-    });
+/* on change draw reference polygon on map*/
 
-/* Reset polygon */
-    django.jQuery('#reset').click(function(){
-        map=null;
-        var myOptions = {
-        zoom: Zoom,
-        center: new google.maps.LatLng(18.505536, 73.822812),
-        mapTypeId: google.maps.MapTypeId.SATELLITE   
-    };
-        map = new google.maps.Map(document.getElementById('main-map'), myOptions);
-        drawMap();
-    });
-
-});
-
-
-/* on change load reference polygon*/
 function initMap(mstring,PointArray){
     var MPoints=[];
     MPoints=Pointconverter(mstring);
@@ -169,6 +148,7 @@ function initMap(mstring,PointArray){
 }
 
 /* Load a refereence Polygon */
+
 function laodmap(){
     
     var id = django.jQuery("#id_city option:selected, #id_administrative_ward option:selected, #id_electoral_ward option:selected").val();
@@ -187,18 +167,11 @@ function laodmap(){
     {
         Zoom=16;
     }
-    
-   // var url = "{% url 'modelmapdisplay' %}";
-
-    //alert(url);
-
+   
     $.ajax({
-        
         url : url,
-        
         type : "POST",
-        
-        data : { 'id' : id,'model':model},
+       data : { 'id' : id,'model':model},
   
         contenttype : "json",
          success : function(json){
@@ -210,10 +183,10 @@ function laodmap(){
     });   
 }
 
-
 /* Load a refereence Polygon */
 
 function laodmap2(){
+
     var id = django.jQuery("#id_city option:selected, #id_administrative_ward option:selected, #id_electoral_ward option:selected").val();
     var name = django.jQuery("#id_city, #id_administrative_ward, #id_electoral_ward").attr("name");
     var model = name.replace(/_/g, '');
@@ -231,12 +204,6 @@ function laodmap2(){
         Zoom=15;
     }
     
-   //var url = "{% url 'modelmapdisplay' %}";
-
-    //alert(url);
-
-
-
     $.ajax({
         url : url,
         type : "POST",
@@ -292,6 +259,7 @@ function drawMap(){
 
 }
   
+
 /* clear markers from google map */  
 function clearOverlays() {
   for (var i = 0; i < markersArray.length; i++ ) {
@@ -344,3 +312,32 @@ function centerpoint(Points){
     Point=bounds.getCenter();
     return Point; 
 }
+
+
+django.jQuery(document).ready(function(){
+    /* Reset polygon */
+    django.jQuery('#reset').click(function(){
+        map=null;
+        var myOptions = {
+        zoom: Zoom,
+        center: new google.maps.LatLng(18.505536, 73.822812),
+        mapTypeId: google.maps.MapTypeId.SATELLITE   
+    };
+        map = new google.maps.Map(document.getElementById('main-map'), myOptions);
+        drawMap();
+    });
+
+    /* save PolygonField object*/
+    django.jQuery("input[name='_save'], input[name='_continue'], input[name='_addanother']").click(function(){
+        var string = Point_string();
+        django.jQuery('#id_shape').val(string);
+        django.jQuery('#id_shape').text(string);
+    });
+
+    /* on change load reference polygon*/
+    django.jQuery("#id_city, #id_administrative_ward, #id_electoral_ward").on('change',function()
+     {  
+        laodmap();      
+    });
+});
+
