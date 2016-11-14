@@ -77,8 +77,8 @@ class AdministrativeWard(models.Model):
     name = models.CharField(max_length=2048)
     shape = models.PolygonField(srid=4326)
     ward_no = models.CharField(max_length=2048)
-    description = models.TextField(max_length=2048)
-    office_address = models.CharField(max_length=2048)
+    description = models.TextField(max_length=2048,blank=True,null=True)
+    office_address = models.CharField(max_length=2048,blank=True,null=True)
     border_color = ColorField(default='#BFFFD0')
     background_color = ColorField(default='#BFFFD0')
 
@@ -99,7 +99,7 @@ class ElectoralWard(models.Model):
     shape = models.PolygonField(srid=4326)
     ward_no = models.CharField(max_length=2048)
     ward_code = models.TextField(max_length=2048)
-    extra_info = models.CharField(max_length=2048)
+    extra_info = models.CharField(max_length=2048,blank=True,null=True)
     border_color = ColorField(default='#FFEFA1')
     background_color = ColorField(default='#FFEFA1')
 
@@ -120,8 +120,8 @@ class Slum(models.Model):
     shape = models.PolygonField(srid=4326)
     description = models.TextField(max_length=2048)
     shelter_slum_code = models.CharField(max_length=2048)
-    factsheet = models.FileField(upload_to='factsheet/')
-    photo = models.ImageField(upload_to='factsheet/')
+    factsheet = models.FileField(upload_to='factsheet/',blank=True,null=True)
+    photo = models.ImageField(upload_to='factsheet/',blank=True,null=True)
     def __unicode__(self):
         """Returns string representation of object"""
         return str(self.name)
@@ -138,7 +138,7 @@ class WardOfficeContact(models.Model):
     title = models.CharField(max_length=2048)
     name = models.CharField(max_length=2048)
     address_info = models.CharField(max_length=2048)
-    telephone = models.CharField(max_length=2048)
+    telephone = models.CharField(max_length=2048,blank=True,null=True)
 
     def __unicode__(self):
         """Returns string representation of object"""
@@ -157,7 +157,7 @@ class ElectedRepresentative(models.Model):
     tel_nos = models.CharField(max_length=2048)
     address = models.CharField(max_length=2048)
     post_code = models.CharField(max_length=2048)
-    additional_info = models.CharField(max_length=2048)
+    additional_info = models.CharField(max_length=2048,blank=True,null=True)
     elected_rep_Party = models.CharField(max_length=2048)
 
     def __unicode__(self):

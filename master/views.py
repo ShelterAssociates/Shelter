@@ -204,12 +204,14 @@ def insert(request):
 
 @csrf_exempt
 def report(request):
+    """ RIM Report Form"""
     form = ReportForm()
     return render(request,'report.html', {'form':form})
 
 
 @csrf_exempt
 def AdministrativewardList(request):
+    """Administrativeward List Display"""
     cid = request.POST['id']
     Aobj = AdministrativeWard.objects.filter(city=cid)
     idArray = []
@@ -227,6 +229,7 @@ def AdministrativewardList(request):
 
 @csrf_exempt
 def ElectoralWardList(request):
+    """Electoral Ward List"""
     Aid = request.POST['id']
     Eobj = ElectoralWard.objects.filter(administrative_ward=Aid)
     idArray = []
@@ -240,6 +243,7 @@ def ElectoralWardList(request):
 
 @csrf_exempt
 def SlumList(request):
+    """Slum Ward List"""
     Eid = request.POST['id']
     Sobj = Slum.objects.filter(electoral_ward=Eid)
     idArray = []
@@ -253,6 +257,7 @@ def SlumList(request):
 
 @csrf_exempt
 def ReportGenerate(request):
+    """Generate RIM Report"""
     sid = request.POST['Sid']
     Fid = request.POST['Fid']
     SlumObj = Slum.objects.get(id=sid)
@@ -265,6 +270,7 @@ def ReportGenerate(request):
 
 @csrf_exempt
 def VulnerabilityReport(request):
+    """Generate Vulnerability Report """
     string = settings.BIRT_REPORT_URL + "Birt/frameset?__format=pdf&__report=Vulnerability_Report.rptdesign"
     return HttpResponseRedirect(string)    
 
@@ -373,6 +379,7 @@ def slummapdisplay(request,id):
 
 @csrf_exempt
 def modelmapdisplay(request):
+    """ ftech reference polygon """    
     shape = "";
     background_color="";
     modelList=['city','administrativeward','electoralward']

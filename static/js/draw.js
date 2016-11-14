@@ -188,7 +188,9 @@ function laodmap(){
         Zoom=16;
     }
     
-    var url = "{% url 'modelmapdisplay' %}";
+   // var url = "{% url 'modelmapdisplay' %}";
+
+    //alert(url);
 
     $.ajax({
         
@@ -229,7 +231,10 @@ function laodmap2(){
         Zoom=15;
     }
     
-    var url = "{% url 'modelmapdisplay' %}";
+   //var url = "{% url 'modelmapdisplay' %}";
+
+    //alert(url);
+
 
 
     $.ajax({
