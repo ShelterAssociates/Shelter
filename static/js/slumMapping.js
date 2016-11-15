@@ -9,12 +9,12 @@ var wdaddress;
 var wdhead;
 var url = "/admin/citymapdisplay";
 
-var ShapeValue;
-var shapecount = "";
+//var ShapeValue;
+//var shapecount = "";
 var arr = [];
 var removeIndi;
-var indiWindow;
-var centerlat;
+
+//var centerlat;
 
 
 function initMap12() {
@@ -132,7 +132,8 @@ function latlongformat(ShapeValue, shapename , bgcolor , bordercolor) {
 	google.maps.event.addListener(Poly1, 'mouseout', function(event) {
 		infoWindowover.close();
 	});
-
+    
+    var indiWindow;
 	google.maps.event.addListener(Poly1, 'click', function(event) {
 		infoWindowover.close();
 

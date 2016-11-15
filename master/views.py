@@ -147,9 +147,13 @@ def display(request):
     if request.method=='POST':
         deleteList=[]
         deleteList=request.POST.getlist('delete')
-        for i in deleteList:
-            R = Rapid_Slum_Appraisal.objects.get(pk=i)
-            R.delete()
+        print deleteList
+        if deleteList :
+            for i in deleteList:
+                R = Rapid_Slum_Appraisal.objects.get(pk=i)
+                R.delete()
+    
+    print request.GET.get("q")         
     query = request.GET.get("q") 
     if(query):
         R = Rapid_Slum_Appraisal.objects.filter(slum_name__name__contains=query)
@@ -187,7 +191,8 @@ def edit(request,Rapid_Slum_Appraisal_id):
     elif request.method=="GET":
         R = Rapid_Slum_Appraisal.objects.get(pk=Rapid_Slum_Appraisal_id)
         form = Rapid_Slum_AppraisalForm(instance= R)
-    return render(request, 'edit.html', {'form': form})
+    return render(request, 'insert.html', {'form': form})
+   # return render(request, 'edit.html', {'form': form})
 
 @csrf_exempt
 def insert(request):
