@@ -1,231 +1,169 @@
 {% extends "admin/base_site.html" %}
 {% load i18n %}
-
 {% block breadcrumbs %}
-
 {% load staticfiles %}
 
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <title>Rapid Infrastructure Mapping Form4</title>
-    <meta charset="utf-8">
-    <link rel="stylesheet"  type="text/css" href="{% static "css/bootstrap.min.css" %}"/>
-    <script src="{% static "js/jquery.min.js" %}"></script>
-    <script src="{% static "js/bootstrap.min.js" %}"></script>
-</head>
-<body>
-
-<div style = "margin-left:0.5%;">
-
-<h2>Rapid Infrastructure Mapping Form</h2>
-
-<br>
-
-</div>
-
-    <div>
-      <form method='GET' action=''>
-       <div class= "col-md-12">
-            <div >
-                <input type='text' name='q' placeholder='Search' value='{{request.GET.q}}' size="35"/> &nbsp;&nbsp; &nbsp;&nbsp;
-                <button type='submit' value='Search' class="btn btn-primary" role="button">Search</button>
-            </div>
-       </div>  
-    </form>
-    </div>
-
-
-<form  enctype="multipart/form-data" method="post">
-<div class ="row" style = "margin-left:0%;">
-    <div class = "col-md-offset-10 col-md-2 pull-right">
-        <a href="{% url 'insert' %}" style="text-decoration: none; color: #FFF" class="btn btn-primary" role="button">Add New</a>
-   &nbsp;&nbsp;
-        <button id ="delete" type="submit" class="btn btn-danger">Delete</button>
-    </div>
-
-</div>
-{% csrf_token %}
-<br>
-<div style=" overflow-x:scroll ; padding-bottom:10px; width:98%">      
-<table class="table table-bordered" class= "col-md-12" style = "margin-left:1%;" >
-    <thead>
-      <tr>
-         <th></th>
-    
-        <th class="col-md-2"> Slum name </th>
- 
-        <th class="col-md-2"> Approximate population  </th>
-    
-        <th class="col-md-2"> Toilet cost </th>
-    
-        <th class="col-md-2"> Toilet seat to persons ratio</th>
-    
-        <th class="col-md-2"> Percentage with an individual water connection</th>
-    
-        <th class="col-md-2"> Frequency of clearance of waste containers</th>
-    
-        <th class="col-md-2"> General info left image</th>
-    
-        <th class="col-md-2"> Toilet info left image </th>      
-    
-        <th class="col-md-2"> Waste management info left image </th>
-    
-        <th class="col-md-2"> Water info left image </th>
-
-        <th class="col-md-2"> Roads and access info left image  </th>      
-    
-        <th class="col-md-2"> Drainage info left image </th>
-
-        <th class="col-md-2">  General image bottomdown1 </th>
-
-        <th class="col-md-2">  General image bottomdown2 </th>
-       
-
-        <th class="col-md-2"> Toilet image bottomdown1 </th>
-
-        <th class="col-md-2">  Toilet image bottomdown2 </th>
-
-
-        <th class="col-md-2"> Waste management image bottomdown1 </th>
-
-        <th class="col-md-2">  Waste management image bottomdown2 </th>
-
-
-        <th class="col-md-2"> Water image bottomdown1 </th>
-
-        <th class="col-md-2">  Water image bottomdown2 </th>
-    
-
-        <th class="col-md-2"> Roads image bottomdown1 </th>
-
-        <th class="col-md-2"> Roads image bottomdown2 </th>
-    
-
-        <th class="col-md-2"> Drainage image bottomdown1</th>
-
-        <th class="col-md-2">  Drainage image bottomdown2 </th>
-   
-
-        <th class="col-md-2"> Gutter image bottomdown1</th>
-
-        <th class="col-md-2"> Gutter image bottomdown2</th>
-
-   
-    
-      </tr>
-    
-    </thead>
-
-{% for i in RA%}
-
-    <tbody bgcolor='lavender'>
-     
-    <tr>
-    
-    <td class="col-md-2">
-        <input id={{i.id}} type="checkbox" name= "delete" value={{i.id}}>
-    </td>
-
-     <td class="col-md-2"> <a href="{% url 'edit' i.id %}" data-toggle="tooltip" title="edit"> {{ i.slum_name }} </a> </td> 
-
-     <td class="col-md-2"> {{ i.approximate_population }} </td> 
-
-     <td class="col-md-2">  {{ i.toilet_cost }} </td> 
-
-     <td class="col-md-2">  {{ i.toilet_seat_to_persons_ratio }}  </td>
- 
-     <td class="col-md-2">  {{ i.percentage_with_an_individual_water_connection }}  </td> 
- 
-     <td class="col-md-2">  {{ i.frequency_of_clearance_of_waste_containers }}  </td> 
- 
-     <td class="col-md-2">  {{ i.general_info_left_image }}  </td> 
-
-     <td class="col-md-2">  {{ i.toilet_info_left_image}}  </td> 
-
-     <td class="col-md-2">  {{ i.waste_management_info_left_image }}  </td> 
-
-     <td class="col-md-2">  {{ i.water_info_left_image }}  </td>
-
-     <td class="col-md-2">  {{ i.roads_and_access_info_left_image }}  </td>
-
-     <td class="col-md-2">  {{ i.drainage_info_left_image}}  </td>
-
-    <td class="col-md-2">  {{ i.general_image_bottomdown1}}  </td>
-   
-    <td class="col-md-2">  {{ i.general_image_bottomdown2}}  </td>
- 
-    <td class="col-md-2">  {{ i.toilet_image_bottomdown1}}  </td>
-     
-    <td class="col-md-2">  {{ i.toilet_image_bottomdown2}}  </td>
-    
-    <td class="col-md-2">  {{ i.waste_management_image_bottomdown1}}  </td>
-   
-    <td class="col-md-2">  {{ i.waste_management_image_bottomdown2}}  </td> 
-
-    <td class="col-md-2">  {{ i.water_image_bottomdown1}}  </td>
-   
-    <td class="col-md-2">  {{ i.water_image_bottomdown2}}  </td>
- 
-    <td class="col-md-2">  {{ i.roads_image_bottomdown1 }}  </td>
-
-    <td class="col-md-2">  {{ i.drainage_image_bottomdown1 }}  </td>
-
-    <td class="col-md-2">  {{ i.drainage_image_bottomdown2 }}  </td>
-
-   <td class="col-md-2">  {{ i.gutter_image_bottomdown1 }}  </td>
-
-   <td class="col-md-2">  {{ i.gutter_image_bottomdown2 }}  </td>
-
-    
-    </tr>
-
-    </tbody>
- {% endfor %}
-   
-  </table>
-
-</div>
-
-</form>
-
-
-<div class="pagination" style = "margin-left:50%;">
-    <span class="step-links">
-
-        {% if RA.has_previous %}
-            <a href="?q={{ request.GET.q}}&page={{ RA.previous_page_number }}">previous</a>
-        {% endif %}
-
-        <span class="current">
-            Page {{ RA.number }} of {{ RA.paginator.num_pages }}.
-        </span>
-
-        {% if RA.has_next %}
-            <a href="?q={{ request.GET.q}}&page={{ RA.next_page_number }}">next</a>
-        {% endif %}
-    </span>
-</div>
-
-
-</body>
-
+<meta charset="utf-8">
+<link rel="stylesheet"  type="text/css" href="{% static "css/bootstrap.min.css" %}"/>
+<script src="{% static "js/jquery.min.js" %}"></script>
+<script src="{% static "js/bootstrap.min.js" %}"></script>
 <script>
-$(document).ready(function(){
-    $('[data-toggle="tooltip"]').tooltip();   
-});
+	$(document).ready(function() {
+		$('[data-toggle="tooltip"]').tooltip();
+	});
 
-$(document).ready(function() {
-    $("#delete").click(function(){
-        alert("Are you sure you want to delete ?");
-    }); 
-});
+	$(document).ready(function() {
+		$("#delete").click(function() {
 
+			var boolcheck = false;
+			var inputArray = $('[name=selectcheckbox]');
+			for (var i = 0; i < inputArray.length; i++) {
+				if (inputArray[i].type == 'checkbox' && inputArray[i].checked == true) {
+					boolcheck = true;
+				}
+			}
 
+			if (boolcheck == true) {
+				alert("Are you sure you want to delete ? ");
+			} else {
+				alert("Please select checkbox ... ");
+				return;
+			}
+
+		});
+	});
 
 </script>
+<div style = "margin-left:1%;margin-right: 1%;">
+	<div >
+		<h2>Rapid Infrastructure Mapping Form</h2>
+	</div>
 
-</html>
+	<div>
+		<form method='GET' action=''>
+			
+				<div >
+					<input type='text' name='q' placeholder='Search' value='{{request.GET.q}}' size="35"/>
+					&nbsp;&nbsp; &nbsp;&nbsp;
+					<button type='submit' value='Search' class="btn btn-primary" role="button">Search</button>
+
+					<div style="float: right; ">
+						<a href="{% url 'insert' %}" style="text-decoration: none; color: #FFF;" class="btn btn-primary" role="button">Add New</a>
+						&nbsp;&nbsp;
+						<button id ="delete" type="submit" class="btn btn-danger">Delete</button>						
+					</div>
+				</div>	
+					
+		</form>
+	</div>
+	</br>
+	
+	<div  class= "col-md-12" style = "height: 1px;background-color: blue;"></div>
+	
+	<form  enctype="multipart/form-data" method="post" >
+
+		{% csrf_token %}
+		<br>
+		<div style=" overflow-x:scroll ; ">
+			<table class="table table-bordered" class= "col-md-12" >
+				<thead>
+					<tr>
+						<th></th>
+
+						<th > Slum name </th>
+
+						<th > Approximate population </th>
+						<th > General info left image</th>
+						<th > General image bottomdown1 </th>
+						<th > General image bottomdown2 </th>
+
+						<th > Toilet cost </th>
+						<th > Toilet seat to persons ratio</th>
+						<th > Toilet info left image </th>
+						<th > Toilet image bottomdown1 </th>
+						<th > Toilet image bottomdown2 </th>
+
+						<th > Percentage with an individual water connection</th>
+						<th > Water info left image </th>
+						<th > Water image bottomdown1 </th>
+						<th > Water image bottomdown2 </th>
+
+						<th > Roads and access info left image </th>
+						<th > Roads image bottomdown1 </th>
+						<th > Roads image bottomdown2 </th>
+
+						<th > Drainage info left image </th>
+						<th > Drainage image bottomdown1</th>
+						<th > Drainage image bottomdown2 </th>
+
+						<th > Gutter info left image </th>
+						<th > Gutter image bottomdown1</th>
+						<th > Gutter image bottomdown2</th>
+
+						<th > Frequency of clearance of waste containers</th>
+						<th > Waste management info left image </th>
+						<th > Waste management image bottomdown1 </th>
+						<th > Waste management image bottomdown2 </th>
+
+					</tr>
+
+				</thead>
+
+				{% for i in RA%}
+
+				<tbody bgcolor='lavender'>
+					<tr>
+						<td>
+						<input id={{i.id}} type="checkbox" name="selectcheckbox" value={{i.id}}>
+						</td>
+
+						<td ><a href="{% url 'edit' i.id %}" data-toggle="tooltip" title="edit"> {{ i.slum_name }} </a></td>
+
+						<td > {{ i.approximate_population }} </td>
+						<td > {{ i.general_info_left_image }} </td>
+						<td > {{ i.general_image_bottomdown1}} </td>
+						<td > {{ i.general_image_bottomdown2}} </td>
+
+						<td > {{ i.toilet_cost }} </td>
+						<td > {{ i.toilet_seat_to_persons_ratio }} </td>
+						<td > {{ i.toilet_info_left_image}} </td>
+						<td > {{ i.toilet_image_bottomdown1}} </td>
+						<td > {{ i.toilet_image_bottomdown2}} </td>
+
+						<td > {{ i.percentage_with_an_individual_water_connection }} </td>
+						<td > {{ i.water_info_left_image }} </td>
+						<td > {{ i.water_image_bottomdown1}} </td>
+						<td > {{ i.water_image_bottomdown2}} </td>
+
+						<td > {{ i.roads_and_access_info_left_image }} </td>
+						<td > {{ i.roads_image_bottomdown1 }} </td>
+						<td > {{ i.roads_image_bottomdown2 }} </td>
+
+						<td > {{ i.drainage_info_left_image}} </td>
+						<td > {{ i.drainage_image_bottomdown1 }} </td>
+						<td > {{ i.drainage_image_bottomdown2 }} </td>
+
+						<td > {{ i.gutter_info_left_image }} </td>
+						<td > {{ i.gutter_image_bottomdown1 }} </td>
+						<td > {{ i.gutter_image_bottomdown2 }} </td>
+
+						<td > {{ i.frequency_of_clearance_of_waste_containers }} </td>
+						<td > {{ i.waste_management_info_left_image }} </td>
+						<td > {{ i.waste_management_image_bottomdown1}} </td>
+						<td > {{ i.waste_management_image_bottomdown2}} </td>
+
+					</tr>
+				</tbody>
+				{% endfor %}
+			</table>
+		</div>
+	</form>
+
+	<div class="pagination col-md-12"  align="center">
+		<span class="step-links col-md-12"> {% if RA.has_previous %} <a href="?q={{ request.GET.q}}&page={{ RA.previous_page_number }}">previous</a> {% endif %} <span class="current "> Page {{ RA.number }} of {{ RA.paginator.num_pages }}. </span> {% if RA.has_next %} <a href="?q={{ request.GET.q}}&page={{ RA.next_page_number }}">next</a> {% endif %} </span>
+	</div>
+
+</div>
 
 {% endblock %}
 
@@ -236,7 +174,4 @@ $(document).ready(function() {
 {% block sidebar %}
 
 {% endblock %}
-
-
-
 
