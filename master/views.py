@@ -147,9 +147,13 @@ def rimdisplay(request):
     if request.method=='POST':
         deleteList=[]
         deleteList=request.POST.getlist('delete')
-        for i in deleteList:
-            R = Rapid_Slum_Appraisal.objects.get(pk=i)
-            R.delete()
+        print deleteList
+        if deleteList :
+            for i in deleteList:
+                R = Rapid_Slum_Appraisal.objects.get(pk=i)
+                R.delete()
+    
+    print request.GET.get("q")         
     query = request.GET.get("q") 
     if(query):
         R = Rapid_Slum_Appraisal.objects.filter(slum_name__name__contains=query)
@@ -161,7 +165,7 @@ def rimdisplay(request):
             RA = paginator.page(1)
         except EmptyPage:
             RA = paginator.page(paginator.num_pages)      
-        return render(request, 'display.html',{'R':R,'RA':RA})
+        return render(request, 'rimdisplay.html',{'R':R,'RA':RA})
     else:    
         R = Rapid_Slum_Appraisal.objects.all()
         paginator = Paginator(R, 6) 
@@ -183,11 +187,11 @@ def rimedit(request,Rapid_Slum_Appraisal_id):
         form = Rapid_Slum_AppraisalForm(request.POST or None,request.FILES,instance=R)
         if form.is_valid():
             form.save()
-            return HttpResponseRedirect('/admin/factsheet/')
+            return HttpResponseRedirect('/admin/sluminformation/rim/display')
     elif request.method=="GET":
         R = Rapid_Slum_Appraisal.objects.get(pk=Rapid_Slum_Appraisal_id)
         form = Rapid_Slum_AppraisalForm(instance= R)
-    return render(request, 'rimedit.html', {'form': form})
+    return render(request, 'riminsert.html', {'form': form})
 
 @csrf_exempt
 def riminsert(request):
@@ -196,7 +200,7 @@ def riminsert(request):
         form = Rapid_Slum_AppraisalForm(request.POST,request.FILES)
         if form.is_valid():
             form.save()
-            return HttpResponseRedirect('/admin/factsheet/')
+            return HttpResponseRedirect('/admin/sluminformation/rim/display')
     else:
         form = Rapid_Slum_AppraisalForm()  
     return render(request, 'riminsert.html', {'form': form})
