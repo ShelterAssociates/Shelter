@@ -17,8 +17,8 @@ from django.views.generic.edit import FormView
 
 from master.models import Survey, CityReference, Rapid_Slum_Appraisal, \
                           Slum, AdministrativeWard, ElectoralWard, City, \
-                          WardOfficeContact, ElectedRepresentative
-from master.forms import SurveyCreateForm, ReportForm, Rapid_Slum_AppraisalForm
+                          WardOfficeContact, ElectedRepresentative, drainage
+from master.forms import SurveyCreateForm, ReportForm, Rapid_Slum_AppraisalForm, DrainageForm
 
 from django.views.generic.base import View
 from django.shortcuts import render
@@ -142,7 +142,7 @@ def search(request):
 
 
 @csrf_exempt
-def display(request):
+def rimdisplay(request):
     """Display Rapid Slum Appraisal Records"""
     if request.method=='POST':
         deleteList=[]
@@ -172,11 +172,11 @@ def display(request):
             RA = paginator.page(1)
         except EmptyPage:
             RA = paginator.page(paginator.num_pages)      
-        return render(request, 'display.html',{'R':R,'RA':RA})
+        return render(request, 'rimdisplay.html',{'R':R,'RA':RA})
 
 
 @csrf_exempt
-def edit(request,Rapid_Slum_Appraisal_id):
+def rimedit(request,Rapid_Slum_Appraisal_id):
     """Update Rapid Slum Appraisal Record"""
     if request.method == 'POST':
         R = Rapid_Slum_Appraisal.objects.get(pk=Rapid_Slum_Appraisal_id)
@@ -187,10 +187,10 @@ def edit(request,Rapid_Slum_Appraisal_id):
     elif request.method=="GET":
         R = Rapid_Slum_Appraisal.objects.get(pk=Rapid_Slum_Appraisal_id)
         form = Rapid_Slum_AppraisalForm(instance= R)
-    return render(request, 'edit.html', {'form': form})
+    return render(request, 'rimedit.html', {'form': form})
 
 @csrf_exempt
-def insert(request):
+def riminsert(request):
     """Insert Rapid Slum Appraisal Record"""
     if request.method == 'POST':
         form = Rapid_Slum_AppraisalForm(request.POST,request.FILES)
@@ -199,7 +199,7 @@ def insert(request):
             return HttpResponseRedirect('/admin/factsheet/')
     else:
         form = Rapid_Slum_AppraisalForm()  
-    return render(request, 'insert.html', {'form': form})
+    return render(request, 'riminsert.html', {'form': form})
 
 
 @csrf_exempt
@@ -400,3 +400,64 @@ def modelmapdisplay(request):
     return HttpResponse(json.dumps(data),content_type='application/json')
 
 
+
+def drainageinsert(request):
+    """ RIM Report Form"""
+    if request.method == 'POST':
+        form = DrainageForm(request.POST,request.FILES)
+        if form.is_valid():
+            form.save()
+            return HttpResponseRedirect('/admin/sluminformation/drainage/display/')
+    else:
+        form = DrainageForm()  
+    return render(request,'drainageinsert.html', {'form':form})
+
+
+def drainagedisplay(request):
+    if request.method=='POST':
+        deleteList=[]
+        deleteList=request.POST.getlist('delete')
+        for i in deleteList:
+            R = drainage.objects.get(pk=i)
+            R.delete()
+    query = request.GET.get("q") 
+    if(query):
+        R = drainage.objects.filter(slum_name__name__contains=query)
+        paginator = Paginator(R, 6) 
+        page = request.GET.get('page')
+        try:
+            RA = paginator.page(page)
+        except PageNotAnInteger:
+            RA = paginator.page(1)
+        except EmptyPage:
+            RA = paginator.page(paginator.num_pages)      
+        return render(request, 'drainagedisplay.html',{'R':R,'RA':RA})
+    else:    
+        R = drainage.objects.all()
+        paginator = Paginator(R, 6) 
+        page = request.GET.get('page')
+        try:
+            RA = paginator.page(page)
+        except PageNotAnInteger:
+            RA = paginator.page(1)
+
+        except EmptyPage:
+            RA = paginator.page(paginator.num_pages)      
+        return render(request, 'drainagedisplay.html',{'R':R,'RA':RA})
+
+
+def drainageedit(request,drainage_id):
+    if request.method == 'POST':
+        d = drainage.objects.get(pk=drainage_id)
+        form = DrainageForm(request.POST or None,request.FILES,instance=d)
+        if form.is_valid():
+            form.save()
+            return HttpResponseRedirect('/admin/sluminformation/drainage/display/')
+    elif request.method=="GET":
+        d = drainage.objects.get(pk=drainage_id)
+        form = DrainageForm(instance=d)
+    return render(request, 'drainageedit.html', {'form': form})
+
+
+def sluminformation(request):
+    return render(request,'sluminformation.html')

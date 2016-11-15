@@ -8,7 +8,7 @@ import psycopg2
 from django import forms
 from django.conf import settings
 
-from master.models import Survey, City  ,Rapid_Slum_Appraisal, AdministrativeWard, ElectoralWard, Slum
+from master.models import Survey, City  ,Rapid_Slum_Appraisal, AdministrativeWard, ElectoralWard, Slum, drainage
 from django.utils.safestring import mark_safe
 from django.template.loader import render_to_string
 from django.forms import widgets
@@ -163,7 +163,41 @@ class ReportForm(forms.Form):
     pass
 
 
-"""    
+class DrainageForm(forms.ModelForm):
+    """Drainage sForm"""
+    class Meta:
+        model = drainage
+        fields = '__all__'
+
+
+"""
+    City_Name_List = []
+    Default =('0','---select---')
+    City_Name_List.append(Default)
+    for c in City.objects.all():
+        Default=(c.id,c.name)
+        City_Name_List.append(Default)
+    City = forms.ChoiceField(choices=City_Name_List)
+    AdministrativeWard_Name_List = []
+    Default =('0','---select---')
+    AdministrativeWard_Name_List.append(Default)
+    AdministrativeWard = forms.ChoiceField(choices=AdministrativeWard_Name_List)
+    ElectoralWard_Name_List = []
+    Default =('0','---select---')
+    ElectoralWard_Name_List.append(Default)
+    ElectoralWard = forms.ChoiceField(choices=ElectoralWard_Name_List)
+    Slum_Name_List = []
+    Default =('0','---select---')
+    Slum_Name_List.append(Default)
+    Slum = forms.ChoiceField(choices=Slum_Name_List)
+    form_Name_List = []
+    Default =('0','---select---')
+    form_Name_List.append(Default)
+    form = forms.ChoiceField(choices=form_Name_List)
+
+
+
+
     City_Name_List = []
     Default =('0','---select---')
     City_Name_List.append(Default)

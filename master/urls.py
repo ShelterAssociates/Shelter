@@ -20,9 +20,9 @@ from django.conf.urls import include, url
 from django.contrib import admin
 from django.views.generic.base import View
 from master.views import index, SurveyListView, SurveyCreateView, \
-    survey_delete_view, search, edit, display, insert, report, \
+    survey_delete_view, search, rimedit, rimdisplay, riminsert, report, \
     AdministrativewardList, ElectoralWardList, SlumList, ReportGenerate, \
-    VulnerabilityReport,jsondata,slummapdisplay,slummap,citymapdisplay, modelmapdisplay
+    VulnerabilityReport,jsondata,slummapdisplay,slummap,citymapdisplay, modelmapdisplay, drainageinsert, sluminformation, drainagedisplay ,drainageedit
     
 
 from django.conf import settings
@@ -44,9 +44,9 @@ urlpatterns = [
     url(r'Survey/(?P<survey>[0-9]+)/$', SurveyCreateView.as_view(),
         name='survey-update'),
     url(r'^search/$', search, name="search"),
-    url(r'^edit/(?P<Rapid_Slum_Appraisal_id>\d+)$', edit, name='edit'),
-    url(r'^factsheet/$', display, name='display'),
-    url(r'^insert/$', insert, name='insert'),
+    url(r'^sluminformation/rim/edit/(?P<Rapid_Slum_Appraisal_id>\d+)$', rimedit, name='rimedit'),
+    url(r'^sluminformation/rim/display/$', rimdisplay, name='rimdisplay'),
+    url(r'^sluminformation/rim/insert/$', riminsert, name='riminsert'),
     url(r'^report/$', report, name='report'),            
     url(r'^AdministrativewardList/$', AdministrativewardList, name='AdministrativewardList'),
     url(r'^ElectoralWardList/$',ElectoralWardList, name='ElectoralWardList'),
@@ -58,5 +58,9 @@ urlpatterns = [
     url(r'^slummapdisplay/(?P<id>[0-9]+)/$',slummapdisplay, name='slummapdisplay'),
     url(r'^citymapdisplay/$',citymapdisplay, name='citymapdisplay'),    
     url(r'^modelmapdisplay/$',modelmapdisplay, name='modelmapdisplay'), 
+    url(r'^sluminformation/$',sluminformation, name='sluminformation'), 
+    url(r'^sluminformation/drainage/display/$',drainagedisplay, name='drainagedisplay'),
+    url(r'^sluminformation/drainage/insert/$',drainageinsert, name='drainageinsert'),
+    url(r'^sluminformation/drainage/edit/(?P<drainage_id>\d+)$', drainageedit, name='drainageedit'),    
 ]
 

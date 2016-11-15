@@ -22,10 +22,10 @@ class CityReference(models.Model):
     def __unicode__(self):
         """Returns string representation of object"""
         return str(self.city_name)
-
+    
 class City(models.Model):
     """Shelter City Database"""
-    name = models.ForeignKey(CityReference)
+    name = models.OneToOneField(CityReference,primary_key=True,)
     city_code = models.CharField(max_length=2048)
     state_name = models.CharField(max_length=2048)
     state_code = models.CharField(max_length=2048)
@@ -296,4 +296,13 @@ class Rapid_Slum_Appraisal(models.Model):
     gutter_image_bottomdown1  = models.ImageField(upload_to='ShelterPhotos/',blank=True, null=True)
     gutter_image_bottomdown2 = models.ImageField(upload_to='ShelterPhotos/',blank=True, null=True)
 
+
+class drainage(models.Model):
+    def validate_image(fieldfile_obj):
+        filesize = fieldfile_obj.file.size
+        megabyte_limit = 3.0
+        if filesize > megabyte_limit*1024*1024:
+            raise ValidationError("Max file size is %sMB" % str(megabyte_limit))     
+    slum_name = models.ForeignKey(Slum)
+    drainage_image = models.ImageField(upload_to='ShelterPhotos/drainage/',blank=True, null=True)
    

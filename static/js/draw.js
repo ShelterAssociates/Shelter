@@ -7,7 +7,6 @@ var Zoom=14;
 var shapecolor;
 
 /* Intialise a Google Map */
-
 function initialise(){
 
     var Points=[];
@@ -20,7 +19,7 @@ function initialise(){
     map = new google.maps.Map(document.getElementById('main-map'), myOptions); 
     var Pcenter = new google.maps.LatLng(41.850, -87.650);
 
-    var ShapeValue=django.jQuery('#id_shape').val();   
+    var ShapeValue=$('#id_shape').val();   
     Points=Pointconverter(ShapeValue);
     Pcenter=centerpoint(Points);
     if(Pcenter)
@@ -52,9 +51,7 @@ function initialise(){
         }
  
         if(ShapeValue) 
-         {  
-            
-            
+         {                          
             PointArray=Pointconverter(ShapeValue);            
             initMap(Rpolygon,PointArray);
          }   
@@ -151,8 +148,8 @@ function initMap(mstring,PointArray){
 
 function laodmap(){
     
-    var id = django.jQuery("#id_city option:selected, #id_administrative_ward option:selected, #id_electoral_ward option:selected").val();
-    var name = django.jQuery("#id_city, #id_administrative_ward, #id_electoral_ward").attr("name");
+    var id = $("#id_city option:selected, #id_administrative_ward option:selected, #id_electoral_ward option:selected").val();
+    var name = $("#id_city, #id_administrative_ward, #id_electoral_ward").attr("name");
     var model = name.replace(/_/g, '');  
      
     if(model=="city")
@@ -187,8 +184,8 @@ function laodmap(){
 
 function laodmap2(){
 
-    var id = django.jQuery("#id_city option:selected, #id_administrative_ward option:selected, #id_electoral_ward option:selected").val();
-    var name = django.jQuery("#id_city, #id_administrative_ward, #id_electoral_ward").attr("name");
+    var id = $("#id_city option:selected, #id_administrative_ward option:selected, #id_electoral_ward option:selected").val();
+    var name = $("#id_city, #id_administrative_ward, #id_electoral_ward").attr("name");
     var model = name.replace(/_/g, '');
     var val;
     if(model=="city")
@@ -204,7 +201,7 @@ function laodmap2(){
         Zoom=15;
     }
     
-    $.ajax({
+   $.ajax({
         url : url,
         type : "POST",
        data : { 'id' : id,'model':model},
@@ -314,9 +311,9 @@ function centerpoint(Points){
 }
 
 
-django.jQuery(document).ready(function(){
+$(document).ready(function(){
     /* Reset polygon */
-    django.jQuery('#reset').click(function(){
+    $('#reset').click(function(){
         map=null;
         var myOptions = {
         zoom: Zoom,
@@ -328,14 +325,14 @@ django.jQuery(document).ready(function(){
     });
 
     /* save PolygonField object*/
-    django.jQuery("input[name='_save'], input[name='_continue'], input[name='_addanother']").click(function(){
+    $("input[name='_save'], input[name='_continue'], input[name='_addanother']").click(function(){
         var string = Point_string();
-        django.jQuery('#id_shape').val(string);
-        django.jQuery('#id_shape').text(string);
+        $('#id_shape').val(string);
+        $('#id_shape').text(string);
     });
 
     /* on change load reference polygon*/
-    django.jQuery("#id_city, #id_administrative_ward, #id_electoral_ward").on('change',function()
+    $("#id_city, #id_administrative_ward, #id_electoral_ward").on('change',function()
      {  
         laodmap();      
     });
