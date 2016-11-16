@@ -5,46 +5,16 @@
 {% csrf_token %} 
 <html>
 <head>
-<title></title>
     <link rel="stylesheet"  type="text/css" href="{% static "css/bootstrap.min.css" %}"/>
     <script src="{% static "js/jquery.min.js" %}"></script>
     <script src="{% static "js/bootstrap.min.js" %}"></script>  
 <head>
 <script type="text/javascript">
 
-$(document).ready(function(){
-  $("#button").click(function(){
- 
-        var Sid = $("#id_Slum option:selected").val();        
-        var Cid = $("#id_City option:selected").val();
-        var Fid = $("#id_form option:selected").text();
-        var url = "{% url 'ReportGenerate' %}";
-   
-        $.ajax({
-
-        url : url,
-        
-        //data : { Sid : Sid,Cid : Cid},
-        
-        data : { Sid : Sid,Fid : Fid},
-       
-        type: "POST",
-        
-        contenttype : "json",
-
-        success : function(json){           
-
-            url = json.string;
-            window.open("" + url );                  
-        }
-
-    });
-
-  });
-});
 
 
-function myFunction(){
+
+function administrativewardList(){
 
     $('#id_AdministrativeWard').empty();
    
@@ -52,7 +22,7 @@ function myFunction(){
 
     var id = $("#id_City option:selected").val();
 
-    var url = "{% url 'AdministrativewardList' %}";
+    var url = "{% url 'administrativewardList' %}";
     
     $.ajax({
 
@@ -84,7 +54,7 @@ function myFunction(){
 
 }
 
-function myFunction2(){
+function electoralWardList(){
 
     $('#id_ElectoralWard').empty();
   
@@ -92,7 +62,7 @@ function myFunction2(){
 
     var id = $("#id_AdministrativeWard option:selected").val();
 
-    var url = "{% url 'ElectoralWardList' %}";
+    var url = "{% url 'electoralWardList' %}";
     
 
     $.ajax({
@@ -128,14 +98,14 @@ function myFunction2(){
 }
 
 
-function myFunction3(){
+function slumList(){
     
    $('#id_Slum').empty();
       
     var Administrativewardname = $("#id_ElectoralWard option:selected").text();
     var id = $("#id_ElectoralWard option:selected").val();
 
-    var url = "{% url 'SlumList' %}";
+    var url = "{% url 'slumList' %}";
     $.ajax({
 
         url : url,
@@ -168,49 +138,187 @@ function myFunction3(){
 
 }
 
+
+function cityList(){
+
+    var url = "{% url 'cityList' %}";
+    
+    $.ajax({
+
+        url : url,
+        
+        //data : {},
+        
+        type: "GET",
+        
+        contenttype : "json",
+
+        success : function(json){           
+        
+              var str='<option value="';
+              str = str +"0" +'"'+'>' + "---select---" + '</option>';
+              $('#id_City').append(str);
+
+        
+        for (i = 0; i < json.nameArray.length; i++){ 
+                var str='<option value="';
+                str = str +json.idArray[i] +'"'+'>' + json.nameArray[i] + '</option>';
+                $('#id_City').append(str);
+            }
+
+        }
+
+
+    });
+
+}
+
+
+
+function formList(){
+
+    var url = "{% url 'formList' %}";
+    
+    $.ajax({
+
+        url : url,
+                
+        type: "GET",
+        
+        contenttype : "json",
+
+        success : function(json){           
+        
+              var str='<option value="';
+              str = str +"0" +'"'+'>' + "---select---" + '</option>';
+              $('#id_form').append(str);
+
+        
+        for (i = 0; i < json.nameArray.length; i++){ 
+                var str='<option value="';
+                str = str +json.idArray[i] +'"'+'>' + json.nameArray[i] + '</option>';
+                $('#id_form').append(str);
+            }
+
+        }
+
+
+    });
+
+}
+
+
+
 $(document).ready(function(){
+
+     $("#id_Slum").on('change',function()
+     {
+        $("#forms").show();
+        alert("Hi");
+              
+    });
+    $('drainagebutton').prop('disabled', true);
+    $('rimbutton').prop('disabled', true);   
+    $("#AdministrativeWards").hide();
+    $("#ElectoralWards").hide();
+    $("#Slums").hide();
+    $("#forms").hide();
+    cityList();
+    formList();     
+
     $("#id_City").on('change',function()
     {
-        myFunction();   
-
+        $("#AdministrativeWards").show();
+        administrativewardList();   
     });
-});
 
-
-$(document).ready(function(){
     $("#id_AdministrativeWard").on('change',function()
     {
-        myFunction2();   
+        $("#ElectoralWards").show();
+        electoralWardList();   
 
     });
-});
 
 
-$(document).ready(function(){
     $("#id_ElectoralWard").on('change',function()
     {
-         myFunction3();   
+          $("#Slums").show();
+         slumList();   
 
        
     });
-});
 
-$(document).ready(function(){
+
     $("#id_Slum").on('change',function()
      {
 
         var id = $("#id_Slum option:selected").val();
     });
-});
 
 
-$(document).ready(function(){
-    $("#id_form").on('change',function()
+
+    $("#id_form").on('change',function()        
      {
+        $('drainagebutton').prop('disabled', false);
+        $('rimbutton').prop('disabled', false);
         var id = $("#id_form option:selected").text();
     });
-});
 
+  $("#rimbutton").click(function(){
+ 
+        var Sid = $("#id_Slum option:selected").val();        
+        var Cid = $("#id_City option:selected").val();
+        var Fid = $("#id_form option:selected").text();
+        var url = "{% url 'rimreportgenerate' %}";
+   
+        $.ajax({
+
+        url : url,
+               
+        data : { Sid : Sid,Fid : Fid},
+       
+        type: "POST",
+        
+        contenttype : "json",
+
+        success : function(json){           
+
+            url = json.string;
+            window.open("" + url );                  
+        }
+
+    });
+
+  });
+
+
+  $("#drainagebutton").click(function(){
+ 
+        var Sid = $("#id_Slum option:selected").val();        
+        var Cid = $("#id_City option:selected").val();
+        var Fid = $("#id_form option:selected").text();
+        var url = "{% url 'drainagereportgenerate' %}";
+   
+        $.ajax({
+
+        url : url,
+               
+        data : { Sid : Sid,Fid : Fid},
+       
+        type: "POST",
+        
+        contenttype : "json",
+
+        success : function(json){           
+
+            url = json.string;
+            window.open("" + url );                  
+        }
+
+    });
+
+  });
+});
 
 </script>
 </head> 
@@ -218,81 +326,88 @@ $(document).ready(function(){
 
 
 <div style="margin-left:3%;">
-<div class="row">
-<div class="col-md-12">
-<h2> Generate Factsheet </h2>
+    <div class="row">
+        <div class="col-md-12">
+            <h2> Generate Report </h2>
+        </div>
+    </div>
 </div>
-</div>
-</div>
+
 
 <div style = "margin-left:3%;">
-<br>
-<div class="row">
-    <div class ="col-md-3">  
-        <label for="City"> City </label>
-    </div>
-    <div class="col-md-6">
-       {{ form.City }}
-    </div>
-</div>
 
-<br>
-
-<div class="row">
-    <div class ="col-md-3">  
-        <label for=""> Administrative Ward  </label>
+ <div class="row">
+   <div class ="col-md-4">  
+    
+    
+    <div class="row" style="margin-bottom: 20px">
+        <div class ="col-md-4">  
+            <label for="City"> City </label>
+        </div>
+        <div class="col-md-8">
+            {{ form.City }}
+        </div>
     </div>
-    <div class="col-md-6">
-       {{ form.AdministrativeWard  }}
-    </div>
-</div>
-
-<br>
 
 
-<div class="row">
-    <div class ="col-md-3">  
-        <label for=""> Electoral Ward </label>
+    <div class="row" id="AdministrativeWards" style="margin-bottom: 20px">
+        <div class ="col-md-4">  
+            <label for=""> Administrative Ward  </label>
+        </div>
+        <div class="col-md-8">
+            {{ form.AdministrativeWard  }}
+        </div>
     </div>
-    <div class="col-md-6">
-       {{ form.ElectoralWard }}
-    </div>
-</div>
 
-<br>
 
-<div class="row">
-    <div class ="col-md-3">  
-        <label for=""> Slum </label>
+    <div class="row" id="ElectoralWards" style="margin-bottom: 20px">
+        <div class ="col-md-4">  
+            <label for=""> Electoral Ward </label>
+        </div>
+        <div class="col-md-8">
+            {{ form.ElectoralWard }}
+        </div>
     </div>
-    <div class="col-md-6">
-       {{ form.Slum }}
-    </div>
-</div>
 
-<br>
-
-<div class="row">
-    <div class ="col-md-3">  
-        <label for=""> Form </label>
+    <div class="row" id="Slums" style="margin-bottom: 20px">
+        <div class ="col-md-4">  
+            <label for=""> Slum </label>
+        </div>
+        <div class="col-md-8">
+            {{ form.Slum }}
+        </div>
     </div>
-    <div id='form' class="col-md-6" >
-       {{ form.form }}
-    </div>
-</div>
 
-<br/>
-<div class="row" >
-   <div class="col-md-3"></div>
+    <div class="row"id ="forms" style="margin-bottom: 20px">
+        <div class ="col-md-4">  
+            <label for=""> Form </label>
+        </div> 
+        <div id='form' class="col-md-8" >
+            {{ form.form }}
+        </div>
+    </div>
+
+    
+
+    <div class="row" id="buttons" style="margin-bottom: 20px">
    
-   <div class="col-md-6">
-     <input type="button" id="button" value="Generate Report">
-   </div>
+        <div class="col-md-4">
+            
+            <button id ="rimbutton" type="submit" class="btn btn-primary" >Generate RIM Report </button> 
+        </div>
+
+        <div class="col-md-8">
+
+            <button id ="drainagebutton" type="submit" class="btn btn-primary" >Generate Drainage Report </button> 
+        </div>
+
+        
+
+    </div>
+
+  </div>
+ </div> 
 </div>
-
-</div>
-
-
 
 </body>
 </html>

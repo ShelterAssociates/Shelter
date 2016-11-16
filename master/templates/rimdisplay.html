@@ -50,7 +50,12 @@
 					<div style="float: right; ">
 						<a href="{% url 'riminsert' %}" style="text-decoration: none; color: #FFF;" class="btn btn-primary" role="button">Add New</a>
 						&nbsp;&nbsp;
-						<button id ="delete" type="submit" class="btn btn-danger">Delete</button>						
+						<button id ="delete" type="submit" class="btn btn-danger">Delete</button>	
+
+            <a href="{% url 'sluminformation' %}" style="text-decoration: none; color: #FFF;" class="btn btn-primary" role="button">BacK</a>
+
+            &nbsp;&nbsp;
+            					
 					</div>
 				</div>	
 					
@@ -111,7 +116,7 @@
 
 				{% for i in RA%}
 
-				<tbody bgcolor='lavender'>
+				<tbody bgcolor='white'>
 					<tr>
 						<td>
 						<input id={{i.id}} type="checkbox" name="selectcheckbox" value={{i.id}}>

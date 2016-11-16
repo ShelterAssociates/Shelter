@@ -160,24 +160,7 @@ class Rapid_Slum_AppraisalForm(forms.ModelForm):
         fields = '__all__'
 
 class ReportForm(forms.Form):
-    pass
-
-
-class DrainageForm(forms.ModelForm):
-    """Drainage sForm"""
-    class Meta:
-        model = drainage
-        fields = '__all__'
-
-
-"""
-    City_Name_List = []
-    Default =('0','---select---')
-    City_Name_List.append(Default)
-    for c in City.objects.all():
-        Default=(c.id,c.name)
-        City_Name_List.append(Default)
-    City = forms.ChoiceField(choices=City_Name_List)
+    City = forms.ChoiceField()
     AdministrativeWard_Name_List = []
     Default =('0','---select---')
     AdministrativeWard_Name_List.append(Default)
@@ -190,14 +173,17 @@ class DrainageForm(forms.ModelForm):
     Default =('0','---select---')
     Slum_Name_List.append(Default)
     Slum = forms.ChoiceField(choices=Slum_Name_List)
-    form_Name_List = []
-    Default =('0','---select---')
-    form_Name_List.append(Default)
-    form = forms.ChoiceField(choices=form_Name_List)
+    form = forms.ChoiceField()
+   
+
+class DrainageForm(forms.ModelForm):
+    """Drainage sForm"""
+    class Meta:
+        model = drainage
+        fields = '__all__'
 
 
-
-
+"""
     City_Name_List = []
     Default =('0','---select---')
     City_Name_List.append(Default)

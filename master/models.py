@@ -11,6 +11,7 @@ from colorfield.fields import ColorField
 
 FACTSHEET_PHOTO="factsheet/"
 SHELTER_PHOTO="ShelterPhotos/"
+DRAINAGE_PHOTO="ShelterPhotos/drainage/"
 
 class CityReference(models.Model):
     """Worldwide City Database"""
@@ -27,7 +28,7 @@ class CityReference(models.Model):
     
 class City(models.Model):
     """Shelter City Database"""
-    name = models.OneToOneField(CityReference,primary_key=True,)
+    name = models.ForeignKey(CityReference)
     city_code = models.CharField(max_length=2048)
     state_name = models.CharField(max_length=2048)
     state_code = models.CharField(max_length=2048)
@@ -311,5 +312,5 @@ class drainage(models.Model):
         if filesize > megabyte_limit*1024*1024:
             raise ValidationError("Max file size is %sMB" % str(megabyte_limit))     
     slum_name = models.ForeignKey(Slum)
-    drainage_image = models.ImageField(upload_to='ShelterPhotos/drainage/',blank=True, null=True)
+    drainage_image = models.ImageField(upload_to=DRAINAGE_PHOTO,blank=True, null=True)
    

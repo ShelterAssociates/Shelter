@@ -154,29 +154,22 @@ def rimdisplay(request):
                 R.delete()
     
     print request.GET.get("q")         
-    query = request.GET.get("q") 
+    query = request.GET.get("q")
+    R = ""
+    RA = "" 
     if(query):
         R = Rapid_Slum_Appraisal.objects.filter(slum_name__name__contains=query)
-        paginator = Paginator(R, 6) 
-        page = request.GET.get('page')
-        try:
-            RA = paginator.page(page)
-        except PageNotAnInteger:
-            RA = paginator.page(1)
-        except EmptyPage:
-            RA = paginator.page(paginator.num_pages)      
-        return render(request, 'rimdisplay.html',{'R':R,'RA':RA})
     else:    
         R = Rapid_Slum_Appraisal.objects.all()
-        paginator = Paginator(R, 6) 
-        page = request.GET.get('page')
-        try:
-            RA = paginator.page(page)
-        except PageNotAnInteger:
-            RA = paginator.page(1)
-        except EmptyPage:
-            RA = paginator.page(paginator.num_pages)      
-        return render(request, 'rimdisplay.html',{'R':R,'RA':RA})
+    paginator = Paginator(R, 6) 
+    page = request.GET.get('page')
+    try:
+        RA = paginator.page(page)
+    except PageNotAnInteger:
+        RA = paginator.page(1)
+    except EmptyPage:
+        RA = paginator.page(paginator.num_pages)      
+    return render(request, 'rimdisplay.html',{'R':R,'RA':RA})
 
 
 @csrf_exempt
@@ -214,7 +207,7 @@ def report(request):
 
 
 @csrf_exempt
-def AdministrativewardList(request):
+def administrativewardList(request):
     """Administrativeward List Display"""
     cid = request.POST['id']
     Aobj = AdministrativeWard.objects.filter(city=cid)
@@ -232,7 +225,7 @@ def AdministrativewardList(request):
 
 
 @csrf_exempt
-def ElectoralWardList(request):
+def electoralWardList(request):
     """Electoral Ward List"""
     Aid = request.POST['id']
     Eobj = ElectoralWard.objects.filter(administrative_ward=Aid)
@@ -246,7 +239,7 @@ def ElectoralWardList(request):
     return HttpResponse(json.dumps(data),content_type='application/json')
 
 @csrf_exempt
-def SlumList(request):
+def slumList(request):
     """Slum Ward List"""
     Eid = request.POST['id']
     Sobj = Slum.objects.filter(electoral_ward=Eid)
@@ -260,7 +253,7 @@ def SlumList(request):
     return HttpResponse(json.dumps(data),content_type='application/json')
 
 @csrf_exempt
-def ReportGenerate(request):
+def rimreportgenerate(request):
     """Generate RIM Report"""
     sid = request.POST['Sid']
     Fid = request.POST['Fid']
@@ -272,21 +265,27 @@ def ReportGenerate(request):
     data = {'string': string}
     return HttpResponse(json.dumps(data),content_type='application/json')
 
+
 @csrf_exempt
-def VulnerabilityReport(request):
+def drainagereportgenerate(request):
+    """Generate RIM Report"""
+    sid = request.POST['Sid']
+    Fid = request.POST['Fid']
+    SlumObj = Slum.objects.get(id=sid)
+    rp_slum_code = str(SlumObj.shelter_slum_code)
+    rp_xform_title = Fid
+    string = settings.BIRT_REPORT_URL + "Birt/frameset?__format=pdf&__report=Drainage.rptdesign&rp_xform_title=" + rp_xform_title + "&rp_slum_code=" + str(rp_slum_code)
+    data ={}
+    data = {'string': string}
+    return HttpResponse(json.dumps(data),content_type='application/json')
+
+
+@csrf_exempt
+def vulnerabilityreport(request):
     """Generate Vulnerability Report """
     string = settings.BIRT_REPORT_URL + "Birt/frameset?__format=pdf&__report=Vulnerability_Report.rptdesign"
     return HttpResponseRedirect(string)    
 
-
-@csrf_exempt
-def jsondata(request):
-    old = psycopg2.connect(database='onadata1',user='shelter',password='Sh3lt3rAss0ciat3s',host='45.56.104.240',port='5432')
-    cursor_old = old.cursor()
-    cursor_old.execute("select json from logger_instance where xform_id=106 and id=9;")
-    fetch_data = cursor_old.fetchone()
-    data = fetch_data
-    return HttpResponse(json.dumps(data),content_type='application/json')
 
 def slummap(request):
     template = loader.get_template('slummapdisplay.html')
@@ -424,32 +423,23 @@ def drainagedisplay(request):
         for i in deleteList:
             R = drainage.objects.get(pk=i)
             R.delete()
-    query = request.GET.get("q") 
+    query = request.GET.get("q")
+    R=""
+    RA =""  
     if(query):
         R = drainage.objects.filter(slum_name__name__contains=query)
-        paginator = Paginator(R, 6) 
-        page = request.GET.get('page')
-        try:
-            RA = paginator.page(page)
-        except PageNotAnInteger:
-            RA = paginator.page(1)
-        except EmptyPage:
-            RA = paginator.page(paginator.num_pages)      
-        return render(request, 'drainagedisplay.html',{'R':R,'RA':RA})
     else:    
         R = drainage.objects.all()
-        paginator = Paginator(R, 6) 
-        page = request.GET.get('page')
-        try:
-            RA = paginator.page(page)
-        except PageNotAnInteger:
-            RA = paginator.page(1)
-
-        except EmptyPage:
-            RA = paginator.page(paginator.num_pages)      
-        return render(request, 'drainagedisplay.html',{'R':R,'RA':RA})
-
-
+    paginator = Paginator(R, 10) 
+    page = request.GET.get('page')
+    try:
+        RA = paginator.page(page)
+    except PageNotAnInteger:
+        RA = paginator.page(1)
+    except EmptyPage:
+        RA = paginator.page(paginator.num_pages)      
+    return render(request, 'drainagedisplay.html',{'R':R,'RA':RA})
+    
 def drainageedit(request,drainage_id):
     if request.method == 'POST':
         d = drainage.objects.get(pk=drainage_id)
@@ -465,3 +455,40 @@ def drainageedit(request,drainage_id):
 
 def sluminformation(request):
     return render(request,'sluminformation.html')
+
+
+@csrf_exempt
+def cityList(request):
+    """city List Display"""
+    Cobj = City.objects.all()
+    idArray = []
+    nameArray = []
+    for i in Cobj:
+        nameArray.append(str(i.name))
+        idArray.append(i.id)
+    data ={}
+    data = { 'idArray'  : idArray,
+             'nameArray': nameArray
+            }       
+    print json.dumps(data)    
+    return HttpResponse(json.dumps(data),content_type='application/json')
+
+
+
+@csrf_exempt
+def formList(request):
+    old = psycopg2.connect(database='onadata1',user='shelter',password='Sh3lt3rAss0ciat3s',host='45.56.104.240',port='5432')
+    cursor_old = old.cursor()
+    cursor_old.execute("select id, title from logger_xform;")
+    fetch_data = cursor_old.fetchall()
+    idArray = []
+    nameArray = []
+    for i in fetch_data:
+        nameArray.append(str(i[1]))
+        idArray.append(i[0])
+    data ={}
+    data = { 'idArray'  : idArray,
+             'nameArray': nameArray
+           }      
+    return HttpResponse(json.dumps(data),content_type='application/json')
+

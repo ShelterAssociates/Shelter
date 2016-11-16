@@ -21,8 +21,8 @@ from django.contrib import admin
 from django.views.generic.base import View
 from master.views import index, SurveyListView, SurveyCreateView, \
     survey_delete_view, search, rimedit, rimdisplay, riminsert, report, \
-    AdministrativewardList, ElectoralWardList, SlumList, ReportGenerate, \
-    VulnerabilityReport,jsondata,slummapdisplay,slummap,citymapdisplay, modelmapdisplay, drainageinsert, sluminformation, drainagedisplay ,drainageedit
+    administrativewardList, electoralWardList, slumList, rimreportgenerate, \
+    vulnerabilityreport,formList,slummapdisplay,slummap,citymapdisplay, modelmapdisplay, drainageinsert, sluminformation, drainagedisplay ,drainageedit, cityList, drainagereportgenerate
     
 
 from django.conf import settings
@@ -43,12 +43,12 @@ urlpatterns = [
     url(r'^sluminformation/rim/display/$', rimdisplay, name='rimdisplay'),
     url(r'^sluminformation/rim/insert/$', riminsert, name='riminsert'),
     url(r'^report/$', report, name='report'),            
-    url(r'^AdministrativewardList/$', AdministrativewardList, name='AdministrativewardList'),
-    url(r'^ElectoralWardList/$',ElectoralWardList, name='ElectoralWardList'),
-    url(r'^SlumList/$',SlumList, name='SlumList'),
-    url(r'^ReportGenerate/$',ReportGenerate, name='ReportGenerate'),
-    url(r'^VulnerabilityReport/$',VulnerabilityReport, name='VulnerabilityReport'),
-    url(r'^jsondata/$',jsondata, name='jsondata'),
+    url(r'^administrativewardList/$', administrativewardList, name='administrativewardList'),
+    url(r'^electoralWardList/$',electoralWardList, name='electoralWardList'),
+    url(r'^slumList/$',slumList, name='slumList'),
+    url(r'^rimreportgenerate/$',rimreportgenerate, name='rimreportgenerate'),
+    url(r'^vulnerabilityReport/$',vulnerabilityreport, name='vulnerabilityReport'),
+    url(r'^formList/$',formList, name='formList'),
     url(r'^slummap/$',slummap, name='slummap'),
     url(r'^slummapdisplay/(?P<id>[0-9]+)/$',slummapdisplay, name='slummapdisplay'),
     url(r'^citymapdisplay/$',citymapdisplay, name='citymapdisplay'),    
@@ -56,6 +56,8 @@ urlpatterns = [
     url(r'^sluminformation/$',sluminformation, name='sluminformation'), 
     url(r'^sluminformation/drainage/display/$',drainagedisplay, name='drainagedisplay'),
     url(r'^sluminformation/drainage/insert/$',drainageinsert, name='drainageinsert'),
-    url(r'^sluminformation/drainage/edit/(?P<drainage_id>\d+)$', drainageedit, name='drainageedit'),    
+    url(r'^sluminformation/drainage/edit/(?P<drainage_id>\d+)$', drainageedit, name='drainageedit'), 
+    url(r'^cityList/$', cityList, name='cityList'), 
+    url(r'^drainagereportgenerate/$', drainagereportgenerate, name='drainagereportgenerate'),
 ]
 
