@@ -183,7 +183,8 @@ def rimedit(request,Rapid_Slum_Appraisal_id):
             return HttpResponseRedirect('/admin/sluminformation/rim/display')
     elif request.method=="GET":
         R = Rapid_Slum_Appraisal.objects.get(pk=Rapid_Slum_Appraisal_id)
-        form = Rapid_Slum_AppraisalForm(instance= R)
+        form = Rapid_Slum_AppraisalForm(instance=R)
+    print form
     return render(request, 'riminsert.html', {'form': form})
 
 @csrf_exempt
@@ -489,6 +490,32 @@ def formList(request):
     data ={}
     data = { 'idArray'  : idArray,
              'nameArray': nameArray
+           }      
+    return HttpResponse(json.dumps(data),content_type='application/json')
+
+
+@csrf_exempt
+def modelList(request):
+    sid = request.POST['id']
+    SlumObj = Slum.objects.get(id=sid)
+    sname=SlumObj.name
+    eid=SlumObj.electoral_ward.id
+    ename=str(SlumObj.electoral_ward.name)
+    aid=SlumObj.electoral_ward.administrative_ward.id
+    aname=str(SlumObj.electoral_ward.administrative_ward.name)
+    cid=SlumObj.electoral_ward.administrative_ward.city.id
+    cref=CityReference.objects.get(id=SlumObj.electoral_ward.administrative_ward.city.name_id)
+    cname=cref.city_name
+    data ={}
+    data = {
+            'sid'  : sid,
+            'sname': sname,
+            'eid'  : eid,
+            'ename': ename,
+            'aid' : aid,
+            'aname': aname,
+            'cid'  : cid,
+            'cname': cname
            }      
     return HttpResponse(json.dumps(data),content_type='application/json')
 

@@ -214,9 +214,9 @@ $(document).ready(function(){
      $("#id_Slum").on('change',function()
      {
         $("#forms").show();
-        alert("Hi");
               
     });
+
     $('drainagebutton').prop('disabled', true);
     $('rimbutton').prop('disabled', true);   
     $("#AdministrativeWards").hide();
@@ -243,15 +243,12 @@ $(document).ready(function(){
     $("#id_ElectoralWard").on('change',function()
     {
           $("#Slums").show();
-         slumList();   
-
-       
+         slumList();        
     });
 
 
     $("#id_Slum").on('change',function()
      {
-
         var id = $("#id_Slum option:selected").val();
     });
 

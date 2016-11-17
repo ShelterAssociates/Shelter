@@ -11,6 +11,296 @@
 <script src="{% static "js/jquery.min.js" %}"></script>
 <script src="{% static "js/bootstrap.min.js" %}"></script>
 
+<script>
+
+function cityList(){
+
+    var url = "{% url 'cityList' %}";
+    
+    $.ajax({
+
+        url : url,
+        
+        //data : {},
+        
+        type: "GET",
+        
+        contenttype : "json",
+
+        success : function(json){           
+        
+              var str='<option value="';
+              str = str +"0" +'"'+'>' + "---select---" + '</option>';
+              $('#id_City').append(str);
+
+        
+            for (i = 0; i < json.nameArray.length; i++){ 
+                var str='<option value="';
+                str = str +json.idArray[i] +'"'+'>' + json.nameArray[i] + '</option>';
+                $('#id_City').append(str);
+            }
+
+            slumid=$('#id_slum_name').val();  
+    		if(slumid)
+    		{
+        		filllist();    
+
+    		}
+
+        },
+        
+        sync:false
+
+    });
+
+}
+
+function administrativewardList(){
+
+    $('#id_AdministrativeWard').empty();
+   
+    var cityname = $("#id_City option:selected").text();
+
+    var id = $("#id_City option:selected").val();
+
+    var url = "{% url 'administrativewardList' %}";
+    
+    $.ajax({
+
+        url : url,
+        
+        data : { id : id},
+        
+        type: "POST",
+        
+        contenttype : "json",
+
+        success : function(json){           
+        
+              var str='<option value="';
+              str = str +"0" +'"'+'>' + "---select---" + '</option>';
+              $('#id_AdministrativeWard').append(str);
+
+        
+        for (i = 0; i < json.nameArray.length; i++){ 
+                var str='<option value="';
+                str = str +json.idArray[i] +'"'+'>' + json.nameArray[i] + '</option>';
+                $('#id_AdministrativeWard').append(str);
+            }            
+
+        },
+
+        async:false
+
+
+    });
+
+}
+
+
+function electoralWardList(){
+
+    $('#id_ElectoralWard').empty();
+  
+    var Administrativewardname = $("#id_AdministrativeWard option:selected").text();
+
+    var id = $("#id_AdministrativeWard option:selected").val();
+
+    var url = "{% url 'electoralWardList' %}";
+    
+
+    $.ajax({
+
+        url : url,
+        
+        data : { id : id},
+        
+        type: "POST",
+        
+        contenttype : "json",
+
+        success : function(json){  
+
+
+            var str='<option value="';
+              str = str +"0" +'"'+'>' + "---select---" + '</option>';
+            $('#id_ElectoralWard').append(str);
+
+        
+        for (i = 0; i < json.nameArray.length; i++) { 
+            var str='<option value="';
+            str = str +json.idArray[i] +'"'+'>' + json.nameArray[i] + '</option>';
+            $('#id_ElectoralWard').append(str);
+     
+
+        }
+
+        },
+        async:false
+
+    });
+
+}
+function slumList(){
+    
+   $('#id_slum_name').empty();
+      
+    var Administrativewardname = $("#id_ElectoralWard option:selected").text();
+    var id = $("#id_ElectoralWard option:selected").val();
+
+    var url = "{% url 'slumList' %}";
+    $.ajax({
+
+        url : url,
+        
+        data : { id : id},
+        
+        type: "POST",
+        
+        contenttype : "json",
+
+ 
+        success : function(json){  
+          var str='<option value="';
+          str = str +"0" +'"'+'>' + "---select---" + '</option>';
+          $('#id_slum_name').append(str);
+              
+   
+        
+        for (i = 0; i < json.nameArray.length; i++) { 
+            var str='<option value="';
+            str = str +json.idArray[i] +'"'+'>' + json.nameArray[i] + '</option>';
+            $('#id_slum_name').append(str);
+     
+            }
+
+        },
+        async:false
+
+
+    });
+
+}
+
+function setcity(cid,cname)
+{
+	alert(cid);
+	alert(cname);
+	alert("I am in setcity");
+	$("#id_City option:selected").val(cid);
+    $("#id_City option:selected").text(cname);
+}
+
+
+
+function filllist(){
+
+    var id = $('#id_slum_name').val();
+    
+    var url = "{% url 'modelList' %}";
+    
+    $.ajax({
+        url : url,
+        data : { id : id },
+        type: "POST",
+        // The type of data we expect back
+        contenttype : "json",
+        success :function(json){
+
+           var a=json.cid;
+           $("#id_City option[value='"+json.cid+"']").attr("selected", "selected");
+           
+            administrativewardList();
+
+           // alert(json.aid);
+          //	$("id_AdministrativeWard option[value='"+json.aid+"']").attr("selected", "selected");
+            
+            $("#id_AdministrativeWard option:selected").val(json.aid);
+            $("#id_AdministrativeWard option:selected").text(json.aname);
+
+            electoralWardList(); 
+
+            $("id_ElectoralWard option[value='"+json.eid+"']").attr("selected", "selected");
+           
+            $("#id_ElectoralWard option:selected").val(json.eid);
+            $("#id_ElectoralWard option:selected").text(json.ename);
+
+
+
+             slumList();
+
+            //$("id_slum_name option[value='"+json.sid+"']").attr("selected", "selected");
+           
+
+            $("#id_slum_name option:selected").val(json.sid);
+            $("#id_slum_name option:selected").text(json.sname);
+
+            /*
+           $("#id_City").empty();
+            $('#id_AdministrativeWard').empty();
+            $('#id_ElectoralWard').empty();
+         
+            str = '<option value="'+ json.cid +'"'+'>' + json.cname + '</option>';
+            $('#id_City').append(str);
+            str="";
+            str = '<option value="'+ json.aid +'"'+'>' + json.aname + '</option>';
+            $('#id_AdministrativeWard').append(str);
+            str="";
+            str = '<option value="'+ json.eid +'"'+'>' + json.ename + '</option>';
+            $('#id_ElectoralWard').append(str);     
+            
+            */
+        },
+
+        async:false   
+    });
+}
+
+
+
+
+$(document).ready(function(){
+
+	$("#AdministrativeWards").hide();
+   	$("#ElectoralWards").hide();
+    $("#Slums").hide();
+
+	slumid=$('#id_slum_name').val();  
+    if(slumid)
+    {
+       $("#AdministrativeWards").show();
+   	   $("#ElectoralWards").show();
+       $("#Slums").show();
+    }
+
+    cityList();
+    
+     $("#id_City").on('change',function()
+    {
+        $("#AdministrativeWards").show();
+        $("#ElectoralWards").hide();
+        $("#Slums").hide();
+       	administrativewardList();
+    });
+
+    $("#id_AdministrativeWard").on('change',function()
+    {
+        $("#ElectoralWards").show();
+        electoralWardList();   
+
+    });
+
+    $("#id_ElectoralWard").on('change',function()
+    {
+        $("#Slums").show();
+         slumList();        
+    });
+
+}); 
+
+
+</script>
+
 <style>
 	#rcorners2 {
 		border-radius: 25px;
@@ -30,7 +320,50 @@
 				<br>
 				<!-- Slum -->
 				<div id="rcorners2">
-					<div class="row">
+
+                    <div class="row" style="margin-bottom: 20px">
+                        <div class ="col-md-5">
+                            <label> City </label>
+                        </div>
+                        <div class="col-md-6">
+                            <select id="id_City">
+                                
+                            </select>
+                        </div>
+                    </div>
+
+
+              
+
+                <div class="row" id='AdministrativeWards' style="margin-bottom: 20px">
+                        <div class ="col-md-5">
+                            <label> Administrative Ward </label>
+                        </div>
+                        <div class="col-md-6">
+                            <select id="id_AdministrativeWard">
+                                
+                            </select>
+                        </div>
+                    </div>
+
+
+
+                <div class="row" id="ElectoralWards" style="margin-bottom: 20px">
+                        <div class ="col-md-5">
+                            <label> Electoral Ward </label>
+                        </div>
+                        <div class="col-md-6">
+                            <select id="id_ElectoralWard">
+                                
+                            </select>
+                        </div>
+                    </div>
+
+
+
+
+
+					<div class="row" id="Slums" style="margin-bottom: 20px">
 						<div class ="col-md-5">
 							<label for="id_slum_name"> Slum name </label>
 						</div>
@@ -45,7 +378,9 @@
 						</div>
 					</div>
 				</div>
-				<br>
+				
+
+                <br>
 				<!-- General Information -->
 				<div class="row">
 					<div class ="col-md-6" style = "font-size: 150%";>
