@@ -22,7 +22,9 @@ from django.views.generic.base import View
 from master.views import index, SurveyListView, SurveyCreateView, \
     survey_delete_view, search, rimedit, rimdisplay, riminsert, report, \
     administrativewardList, electoralWardList, slumList, rimreportgenerate, \
-    vulnerabilityreport,formList,slummapdisplay,slummap,citymapdisplay, modelmapdisplay, drainageinsert, sluminformation, drainagedisplay ,drainageedit, cityList, drainagereportgenerate, modelList
+    vulnerabilityreport,formList,slummapdisplay,slummap,citymapdisplay, \
+    modelmapdisplay, drainageinsert, sluminformation, drainagedisplay , \
+    drainageedit, cityList, drainagereportgenerate, modelList
     
 
 from django.conf import settings

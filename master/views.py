@@ -147,13 +147,11 @@ def rimdisplay(request):
     if request.method=='POST':
         deleteList=[]
         deleteList=request.POST.getlist('delete')
-        print deleteList
         if deleteList :
             for i in deleteList:
                 R = Rapid_Slum_Appraisal.objects.get(pk=i)
                 R.delete()
-    
-    print request.GET.get("q")         
+            
     query = request.GET.get("q")
     R = ""
     RA = "" 
@@ -184,7 +182,6 @@ def rimedit(request,Rapid_Slum_Appraisal_id):
     elif request.method=="GET":
         R = Rapid_Slum_Appraisal.objects.get(pk=Rapid_Slum_Appraisal_id)
         form = Rapid_Slum_AppraisalForm(instance=R)
-    print form
     return render(request, 'riminsert.html', {'form': form})
 
 @csrf_exempt
@@ -220,8 +217,7 @@ def administrativewardList(request):
     data ={}
     data = { 'idArray'  : idArray,
              'nameArray': nameArray
-            }       
-    print json.dumps(data)    
+            }           
     return HttpResponse(json.dumps(data),content_type='application/json')
 
 
@@ -451,7 +447,7 @@ def drainageedit(request,drainage_id):
     elif request.method=="GET":
         d = drainage.objects.get(pk=drainage_id)
         form = DrainageForm(instance=d)
-    return render(request, 'drainageedit.html', {'form': form})
+    return render(request, 'drainageinsert.html', {'form': form})
 
 
 def sluminformation(request):
@@ -470,8 +466,7 @@ def cityList(request):
     data ={}
     data = { 'idArray'  : idArray,
              'nameArray': nameArray
-            }       
-    print json.dumps(data)    
+            }        
     return HttpResponse(json.dumps(data),content_type='application/json')
 
 

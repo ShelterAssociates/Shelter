@@ -35,14 +35,22 @@ function cityList(){
               $('#id_City').append(str);
 
         
-        for (i = 0; i < json.nameArray.length; i++){ 
+            for (i = 0; i < json.nameArray.length; i++){ 
                 var str='<option value="';
                 str = str +json.idArray[i] +'"'+'>' + json.nameArray[i] + '</option>';
                 $('#id_City').append(str);
             }
 
-        }
+            slumid=$('#id_slum_name').val();  
+            if(slumid)
+            {
+                filllist();    
 
+            }
+
+        },
+        
+        sync:false
 
     });
 
@@ -79,9 +87,11 @@ function administrativewardList(){
                 var str='<option value="';
                 str = str +json.idArray[i] +'"'+'>' + json.nameArray[i] + '</option>';
                 $('#id_AdministrativeWard').append(str);
-            }
+            }            
 
-        }
+        },
+
+        async:false
 
 
     });
@@ -126,7 +136,8 @@ function electoralWardList(){
 
         }
 
-        }
+        },
+        async:false
 
     });
 
@@ -164,37 +175,112 @@ function slumList(){
      
             }
 
-        }
+        },
+        async:false
 
 
     });
 
 }
+
+
+
+
+function filllist(){
+
+    var id = $('#id_slum_name').val();
+    
+    var url = "{% url 'modelList' %}";
+    
+    $.ajax({
+        url : url,
+        data : { id : id },
+        type: "POST",
+        // The type of data we expect back
+        contenttype : "json",
+        success :function(json){
+
+           var a=json.cid;
+           $("#id_City option[value='"+json.cid+"']").attr("selected", "selected");
+           
+            administrativewardList();
+
+            
+            $("#id_AdministrativeWard option:selected").val(json.aid);
+            $("#id_AdministrativeWard option:selected").text(json.aname);
+
+            electoralWardList(); 
+
+            $("id_ElectoralWard option[value='"+json.eid+"']").attr("selected", "selected");
+           
+            $("#id_ElectoralWard option:selected").val(json.eid);
+            $("#id_ElectoralWard option:selected").text(json.ename);
+
+            slumList();
+              
+            $("#id_slum_name option:selected").val(json.sid);
+            $("#id_slum_name option:selected").text(json.sname);
+
+            /*
+           $("#id_City").empty();
+            $('#id_AdministrativeWard').empty();
+            $('#id_ElectoralWard').empty();
+         
+            str = '<option value="'+ json.cid +'"'+'>' + json.cname + '</option>';
+            $('#id_City').append(str);
+            str="";
+            str = '<option value="'+ json.aid +'"'+'>' + json.aname + '</option>';
+            $('#id_AdministrativeWard').append(str);
+            str="";
+            str = '<option value="'+ json.eid +'"'+'>' + json.ename + '</option>';
+            $('#id_ElectoralWard').append(str);     
+            
+            */
+        },
+
+        async:false   
+    });
+}
+
+
+
+
 $(document).ready(function(){
 
     $("#AdministrativeWards").hide();
     $("#ElectoralWards").hide();
     $("#Slums").hide();
 
-    cityList();
+    slumid=$('#id_slum_name').val();  
+    if(slumid)
+    {
+       $("#AdministrativeWards").show();
+       $("#ElectoralWards").show();
+       $("#Slums").show();
+    }
 
+    cityList();
+    
      $("#id_City").on('change',function()
     {
         $("#AdministrativeWards").show();
-         administrativewardList();   
+        $("#ElectoralWards").hide();
+        $("#Slums").hide();
+        administrativewardList();
     });
 
     $("#id_AdministrativeWard").on('change',function()
     {
         $("#ElectoralWards").show();
-            electoralWardList();   
+        $("#Slums").hide();
+        electoralWardList();   
 
     });
 
     $("#id_ElectoralWard").on('change',function()
     {
-          $("#Slums").show();
-            slumList();        
+        $("#Slums").show();
+         slumList();        
     });
 
 }); 
@@ -279,7 +365,10 @@ $(document).ready(function(){
                         </div>
                     </div>
                 </div>
+                
+
                 <br>
+
                 <!-- Drainage Information -->
                 <div class="row">
                     <div class ="col-md-6" style = "font-size: 150%";>

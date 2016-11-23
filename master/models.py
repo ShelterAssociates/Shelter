@@ -11,7 +11,7 @@ from colorfield.fields import ColorField
 
 FACTSHEET_PHOTO="factsheet/"
 SHELTER_PHOTO="ShelterPhotos/"
-DRAINAGE_PHOTO="ShelterPhotos/drainage/"
+DRAINAGE_PHOTO="ShelterPhotos/FactsheetPhotos/"
 
 class CityReference(models.Model):
     """Worldwide City Database"""

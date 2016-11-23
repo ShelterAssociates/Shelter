@@ -182,15 +182,6 @@ function slumList(){
 
 }
 
-function setcity(cid,cname)
-{
-	alert(cid);
-	alert(cname);
-	alert("I am in setcity");
-	$("#id_City option:selected").val(cid);
-    $("#id_City option:selected").text(cname);
-}
-
 
 
 function filllist(){
@@ -286,6 +277,7 @@ $(document).ready(function(){
     $("#id_AdministrativeWard").on('change',function()
     {
         $("#ElectoralWards").show();
+        $("#Slums").hide();
         electoralWardList();   
 
     });
