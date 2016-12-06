@@ -5,7 +5,6 @@
 import json
 import psycopg2
 
-
 from django.core.urlresolvers import reverse
 from django.contrib.admin.views.decorators import staff_member_required 
 from django.contrib.auth.decorators import login_required
@@ -414,6 +413,7 @@ def drainageinsert(request):
 
 
 def drainagedisplay(request):
+    """ drainage display List Form"""
     if request.method=='POST':
         deleteList=[]
         deleteList=request.POST.getlist('delete')
@@ -473,6 +473,7 @@ def cityList(request):
 
 @csrf_exempt
 def formList(request):
+    """ Form List"""
     old = psycopg2.connect(database='onadata1',user='shelter',password='Sh3lt3rAss0ciat3s',host='45.56.104.240',port='5432')
     cursor_old = old.cursor()
     cursor_old.execute("select id, title from logger_xform;")
@@ -491,6 +492,7 @@ def formList(request):
 
 @csrf_exempt
 def modelList(request):
+    """city adminstravive electrol ward dropdown list"""
     sid = request.POST['id']
     SlumObj = Slum.objects.get(id=sid)
     sname=SlumObj.name
@@ -513,4 +515,3 @@ def modelList(request):
             'cname': cname
            }      
     return HttpResponse(json.dumps(data),content_type='application/json')
-

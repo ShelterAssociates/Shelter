@@ -221,21 +221,7 @@ function filllist(){
             $("#id_slum_name option:selected").val(json.sid);
             $("#id_slum_name option:selected").text(json.sname);
 
-            /*
-           $("#id_City").empty();
-            $('#id_AdministrativeWard').empty();
-            $('#id_ElectoralWard').empty();
-         
-            str = '<option value="'+ json.cid +'"'+'>' + json.cname + '</option>';
-            $('#id_City').append(str);
-            str="";
-            str = '<option value="'+ json.aid +'"'+'>' + json.aname + '</option>';
-            $('#id_AdministrativeWard').append(str);
-            str="";
-            str = '<option value="'+ json.eid +'"'+'>' + json.ename + '</option>';
-            $('#id_ElectoralWard').append(str);     
-            
-            */
+           
         },
 
         async:false   

@@ -203,9 +203,6 @@ function filllist(){
            
             administrativewardList();
 
-           // alert(json.aid);
-          //	$("id_AdministrativeWard option[value='"+json.aid+"']").attr("selected", "selected");
-            
             $("#id_AdministrativeWard option:selected").val(json.aid);
             $("#id_AdministrativeWard option:selected").text(json.aname);
 
@@ -216,31 +213,12 @@ function filllist(){
             $("#id_ElectoralWard option:selected").val(json.eid);
             $("#id_ElectoralWard option:selected").text(json.ename);
 
-
-
              slumList();
-
-            //$("id_slum_name option[value='"+json.sid+"']").attr("selected", "selected");
-           
-
+    
             $("#id_slum_name option:selected").val(json.sid);
             $("#id_slum_name option:selected").text(json.sname);
 
-            /*
-           $("#id_City").empty();
-            $('#id_AdministrativeWard').empty();
-            $('#id_ElectoralWard').empty();
-         
-            str = '<option value="'+ json.cid +'"'+'>' + json.cname + '</option>';
-            $('#id_City').append(str);
-            str="";
-            str = '<option value="'+ json.aid +'"'+'>' + json.aname + '</option>';
-            $('#id_AdministrativeWard').append(str);
-            str="";
-            str = '<option value="'+ json.eid +'"'+'>' + json.ename + '</option>';
-            $('#id_ElectoralWard').append(str);     
-            
-            */
+          
         },
 
         async:false   
