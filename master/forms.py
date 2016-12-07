@@ -8,7 +8,7 @@ import psycopg2
 from django import forms
 from django.conf import settings
 
-from master.models import Survey, City  ,Rapid_Slum_Appraisal, AdministrativeWard, ElectoralWard, Slum
+from master.models import Survey, City  ,Rapid_Slum_Appraisal, AdministrativeWard, ElectoralWard, Slum, drainage
 from django.utils.safestring import mark_safe
 from django.template.loader import render_to_string
 from django.forms import widgets
@@ -160,17 +160,7 @@ class Rapid_Slum_AppraisalForm(forms.ModelForm):
         fields = '__all__'
 
 class ReportForm(forms.Form):
-    pass
-
-
-"""    
-    City_Name_List = []
-    Default =('0','---select---')
-    City_Name_List.append(Default)
-    for c in City.objects.all():
-        Default=(c.id,c.name)
-        City_Name_List.append(Default)
-    City = forms.ChoiceField(choices=City_Name_List)
+    City = forms.ChoiceField()
     AdministrativeWard_Name_List = []
     Default =('0','---select---')
     AdministrativeWard_Name_List.append(Default)
@@ -183,14 +173,12 @@ class ReportForm(forms.Form):
     Default =('0','---select---')
     Slum_Name_List.append(Default)
     Slum = forms.ChoiceField(choices=Slum_Name_List)
-    form_Name_List = []
-    Default =('0','---select---')
-    form_Name_List.append(Default)#old = psycopg2.connect(database='onadata1',user='shelter',password='Sh3lt3rAss0ciat3s',host='45.56.104.240',port='5432')
-    old = psycopg2.connect(database='onadata1',user='shelter',password='Sh3lt3rAss0ciat3s',host='45.56.104.240',port='5432')
-    cursor_old = old.cursor()
-    cursor_old.execute("select id, title from logger_xform;")
-    fetch_data = cursor_old.fetchall()
-    for i in fetch_data:
-        form_Name_List.append(i)
-    form = forms.ChoiceField(choices=form_Name_List)    
-"""
+    form = forms.ChoiceField()
+   
+
+class DrainageForm(forms.ModelForm):
+    """Drainage sForm"""
+    class Meta:
+        model = drainage
+        fields = '__all__'
+

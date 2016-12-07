@@ -34,6 +34,13 @@
 	});
 
 </script>
+
+
+<ol class="breadcrumb">
+    <li><a href="{% url 'index' %}">Home</a></li>
+    <li><a href="{% url 'sluminformation' %}">Slum Information</a></li>
+</ol>
+
 <div style = "margin-left:1%;margin-right: 1%;">
 	<div >
 		<h2>Rapid Infrastructure Mapping Form</h2>
@@ -48,9 +55,14 @@
 					<button type='submit' value='Search' class="btn btn-primary" role="button">Search</button>
 
 					<div style="float: right; ">
-						<a href="{% url 'insert' %}" style="text-decoration: none; color: #FFF;" class="btn btn-primary" role="button">Add New</a>
+						<a href="{% url 'riminsert' %}" style="text-decoration: none; color: #FFF;" class="btn btn-primary" role="button">Add New</a>
 						&nbsp;&nbsp;
-						<button id ="delete" type="submit" class="btn btn-danger">Delete</button>						
+						<button id ="delete" type="submit" class="btn btn-danger">Delete</button>	
+            &nbsp;&nbsp;
+            <a href="{% url 'sluminformation' %}" style="text-decoration: none; color: #FFF;" class="btn btn-primary" role="button">BacK</a>
+            
+            &nbsp;&nbsp;
+            					
 					</div>
 				</div>	
 					
@@ -117,7 +129,7 @@
 						<input id={{i.id}} type="checkbox" name="selectcheckbox" value={{i.id}}>
 						</td>
 
-						<td ><a href="{% url 'edit' i.id %}" data-toggle="tooltip" title="edit"> {{ i.slum_name }} </a></td>
+						<td ><a href="{% url 'rimedit' i.id %}" data-toggle="tooltip" title="edit"> {{ i.slum_name }} </a></td>
 
 						<td > {{ i.approximate_population }} </td>
 						<td > {{ i.general_info_left_image }} </td>

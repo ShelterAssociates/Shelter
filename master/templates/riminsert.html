@@ -1,0 +1,870 @@
+{% extends "admin/base_site.html" %}
+{% load i18n %}
+
+{% block breadcrumbs %}
+
+{% load staticfiles %}
+
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="stylesheet"  type="text/css" href="{% static "css/bootstrap.min.css" %}"/>
+<script src="{% static "js/jquery.min.js" %}"></script>
+<script src="{% static "js/bootstrap.min.js" %}"></script>
+
+<script>
+
+function cityList(){
+
+    var url = "{% url 'cityList' %}";
+    
+    $.ajax({
+
+        url : url,
+        
+        //data : {},
+        
+        type: "GET",
+        
+        contenttype : "json",
+
+        success : function(json){           
+        
+              var str='<option value="';
+              str = str +"0" +'"'+'>' + "---select---" + '</option>';
+              $('#id_City').append(str);
+
+        
+            for (i = 0; i < json.nameArray.length; i++){ 
+                var str='<option value="';
+                str = str +json.idArray[i] +'"'+'>' + json.nameArray[i] + '</option>';
+                $('#id_City').append(str);
+            }
+
+            slumid=$('#id_slum_name').val();  
+    		if(slumid)
+    		{
+        		filllist();    
+
+    		}
+
+        },
+        
+        sync:false
+
+    });
+
+}
+
+function administrativewardList(){
+
+    $('#id_AdministrativeWard').empty();
+   
+    var cityname = $("#id_City option:selected").text();
+
+    var id = $("#id_City option:selected").val();
+
+    var url = "{% url 'administrativewardList' %}";
+    
+    $.ajax({
+
+        url : url,
+        
+        data : { id : id},
+        
+        type: "POST",
+        
+        contenttype : "json",
+
+        success : function(json){           
+        
+              var str='<option value="';
+              str = str +"0" +'"'+'>' + "---select---" + '</option>';
+              $('#id_AdministrativeWard').append(str);
+
+        
+        for (i = 0; i < json.nameArray.length; i++){ 
+                var str='<option value="';
+                str = str +json.idArray[i] +'"'+'>' + json.nameArray[i] + '</option>';
+                $('#id_AdministrativeWard').append(str);
+            }            
+
+        },
+
+        async:false
+
+
+    });
+
+}
+
+
+function electoralWardList(){
+
+    $('#id_ElectoralWard').empty();
+  
+    var Administrativewardname = $("#id_AdministrativeWard option:selected").text();
+
+    var id = $("#id_AdministrativeWard option:selected").val();
+
+    var url = "{% url 'electoralWardList' %}";
+    
+
+    $.ajax({
+
+        url : url,
+        
+        data : { id : id},
+        
+        type: "POST",
+        
+        contenttype : "json",
+
+        success : function(json){  
+
+
+            var str='<option value="';
+              str = str +"0" +'"'+'>' + "---select---" + '</option>';
+            $('#id_ElectoralWard').append(str);
+
+        
+        for (i = 0; i < json.nameArray.length; i++) { 
+            var str='<option value="';
+            str = str +json.idArray[i] +'"'+'>' + json.nameArray[i] + '</option>';
+            $('#id_ElectoralWard').append(str);
+     
+
+        }
+
+        },
+        async:false
+
+    });
+
+}
+function slumList(){
+    
+   $('#id_slum_name').empty();
+      
+    var Administrativewardname = $("#id_ElectoralWard option:selected").text();
+    var id = $("#id_ElectoralWard option:selected").val();
+
+    var url = "{% url 'slumList' %}";
+    $.ajax({
+
+        url : url,
+        
+        data : { id : id},
+        
+        type: "POST",
+        
+        contenttype : "json",
+
+ 
+        success : function(json){  
+          var str='<option value="';
+          str = str +"0" +'"'+'>' + "---select---" + '</option>';
+          $('#id_slum_name').append(str);
+              
+   
+        
+        for (i = 0; i < json.nameArray.length; i++) { 
+            var str='<option value="';
+            str = str +json.idArray[i] +'"'+'>' + json.nameArray[i] + '</option>';
+            $('#id_slum_name').append(str);
+     
+            }
+
+        },
+        async:false
+
+
+    });
+
+}
+
+
+
+function filllist(){
+
+    var id = $('#id_slum_name').val();
+    
+    var url = "{% url 'modelList' %}";
+    
+    $.ajax({
+        url : url,
+        data : { id : id },
+        type: "POST",
+        // The type of data we expect back
+        contenttype : "json",
+        success :function(json){
+
+           var a=json.cid;
+           $("#id_City option[value='"+json.cid+"']").attr("selected", "selected");
+           
+            administrativewardList();
+
+            $("#id_AdministrativeWard option:selected").val(json.aid);
+            $("#id_AdministrativeWard option:selected").text(json.aname);
+
+            electoralWardList(); 
+
+            $("id_ElectoralWard option[value='"+json.eid+"']").attr("selected", "selected");
+           
+            $("#id_ElectoralWard option:selected").val(json.eid);
+            $("#id_ElectoralWard option:selected").text(json.ename);
+
+             slumList();
+    
+            $("#id_slum_name option:selected").val(json.sid);
+            $("#id_slum_name option:selected").text(json.sname);
+
+          
+        },
+
+        async:false   
+    });
+}
+
+
+
+
+$(document).ready(function(){
+
+	$("#AdministrativeWards").hide();
+   	$("#ElectoralWards").hide();
+    $("#Slums").hide();
+
+	slumid=$('#id_slum_name').val();  
+    if(slumid)
+    {
+       $("#AdministrativeWards").show();
+   	   $("#ElectoralWards").show();
+       $("#Slums").show();
+    }
+
+    cityList();
+    
+     $("#id_City").on('change',function()
+    {
+        $("#AdministrativeWards").show();
+        $("#ElectoralWards").hide();
+        $("#Slums").hide();
+       	administrativewardList();
+    });
+
+    $("#id_AdministrativeWard").on('change',function()
+    {
+        $("#ElectoralWards").show();
+        $("#Slums").hide();
+        electoralWardList();   
+
+    });
+
+    $("#id_ElectoralWard").on('change',function()
+    {
+        $("#Slums").show();
+         slumList();        
+    });
+
+}); 
+
+
+</script>
+
+<style>
+	#rcorners2 {
+		border-radius: 10px;
+		border: 2px solid #dee0e2;
+		background: white;
+		padding: 20px;
+		width:auto;
+	}
+
+</style>
+<ol class="breadcrumb">
+    <li><a href="{% url 'index' %}">Home</a></li>
+    <li><a href="{% url 'sluminformation' %}">Slum Information</a></li>
+    <li><a href="{% url 'rimdisplay' %}">Rapid Infrastructure Mapping Form</a></li>
+ </ol>
+<div style = "margin-left:1%;margin-right: 1%;">
+	<h2>Rapid Infrastructure Mapping Form</h2>
+	<div class="container">
+		<div class="row">
+			<form  enctype="multipart/form-data" method="post">
+				{% csrf_token %}
+				<br>
+				<!-- Slum -->
+				<div id="rcorners2">
+
+                    <div class="row" style="margin-bottom: 20px">
+                        <div class ="col-md-5">
+                            <label> City </label>
+                        </div>
+                        <div class="col-md-6">
+                            <select id="id_City">
+                                
+                            </select>
+                        </div>
+                    </div>
+
+
+              
+
+                <div class="row" id='AdministrativeWards' style="margin-bottom: 20px">
+                        <div class ="col-md-5">
+                            <label> Administrative Ward </label>
+                        </div>
+                        <div class="col-md-6">
+                            <select id="id_AdministrativeWard">
+                                
+                            </select>
+                        </div>
+                    </div>
+
+
+
+                <div class="row" id="ElectoralWards" style="margin-bottom: 20px">
+                        <div class ="col-md-5">
+                            <label> Electoral Ward </label>
+                        </div>
+                        <div class="col-md-6">
+                            <select id="id_ElectoralWard">
+                                
+                            </select>
+                        </div>
+                    </div>
+
+
+
+
+
+					<div class="row" id="Slums" style="margin-bottom: 20px">
+						<div class ="col-md-5">
+							<label for="id_slum_name"> Slum name </label>
+						</div>
+						<div class="col-md-6">
+							{{ form.slum_name }}
+						</div>
+					</div>
+
+					<div class="row">
+						
+							{{ form.slum_name.errors }}
+			
+					</div>
+				</div>
+				
+				<br>
+				
+				<!-- General Information -->
+				<div class="row">
+					<div class ="col-md-6" style = "font-size: 150%";>
+						<label for="General Information"> General Information : </label>
+					</div>
+				</div>
+
+				
+				<div id="rcorners2" style="width:100%;">
+				<div>
+					<div class="row" >
+						<div class="col-md-3">
+							<label for="id_approximate_population"> Approximate population </label>
+						</div>
+					
+						<div class="col-md-3">
+							{{ form.approximate_population }}
+						</div>
+					
+						<div class="col-md-3">
+							<label for="general_info_left_image">General info left image </label>
+						</div>
+					
+						<div class="col-md-3">
+							{{form.general_info_left_image }}
+						</div>
+					</div>
+
+				</div>
+
+				<br>
+
+				<div class="row">
+						<div class="col-md-6">
+							{{ form.approximate_population.errors }}
+						</div>
+						<div class="col-md-6">
+							{{ form.general_info_left_image.errors }}
+						</div>
+
+				</div>
+				
+				<br>
+				
+				<div class ="row">
+
+						<div class="col-md-3">
+							<label for="general_image_bottomdown1"> General image bottomdown1</label>
+						</div>
+						
+
+						<div class="col-md-3">
+							{{form.general_image_bottomdown1 }}
+						</div>
+
+						<div class="col-md-3">
+							<label for="general_image_bottomdown2"> General image bottomdown2</label>
+						</div>
+						
+						<div class="col-md-3">
+							{{form.general_image_bottomdown2 }}
+						</div>
+				</div>
+
+					<div class="row">
+
+						<div class="col-md-6">
+							{{ form.general_image_bottomdown1.errors }}
+						</div>
+						<div class="col-md-6">
+							{{ form.general_image_bottomdown2.errors }}
+						</div>
+					</div>
+
+
+			</div>
+				
+				<br>
+				<!-- Toilet Information -->
+				<div class="row">
+					<div class ="col-md-6" style = "font-size: 150%";>
+						<label for="General Information"> Toilet Information : </label>
+					</div>
+				</div>
+
+				<div id="rcorners2">
+					<div class = "row">
+						<div class="col-md-3">
+							<label for="id_toilet_cost">Toilet cost </label>
+						</div>
+						
+						<div class="col-md-3">
+							{{ form.toilet_cost }}
+						</div>
+
+						<div class="col-md-3">
+							<label for="toilet_seat_to_persons_ratio">Toilet seat to persons ratio</label>
+						</div>
+
+						<div class="col-md-3">
+							{{ form.toilet_seat_to_persons_ratio }}
+						</div>
+					</div>
+
+					<div class = "row">
+						<div class="col-md-6">
+							{{ form.toilet_cost.errors }}
+						</div>
+						<div class="col-md-6">
+							{{ form.toilet_seat_to_persons_ratio.errors }}
+						</div>
+					</div>
+					
+					<br>
+					<br>
+
+					<div class ="row">
+						<div class="col-md-3">
+							<label for="toilet_info_left_image">Toilet info left image</label>
+						</div>
+									
+						<div class="col-md-3">
+							{{form.toilet_info_left_image }}
+						</div>						
+
+						<div class="col-md-3">
+							<label for="toilet_image_bottomdown1">Toilet image bottomdown1</label>
+						</div>
+
+						<div class="col-md-3">
+							{{form.toilet_image_bottomdown1 }}
+						</div>
+					</div>
+
+
+
+					<div class="row">
+						<div class="col-md-6">
+							{{ form.toilet_info_left_image.errors }}
+						</div>
+						<div class="col-md-6">
+							{{ form.toilet_image_bottomdown1.errors }}
+						</div>
+					</div>
+
+					<br>
+					<br>
+
+					<div class ="row">
+						<div class="col-md-3">
+							<label for="toilet_image_bottomdown2">Toilet image bottomdown2</label>
+						</div>
+
+						<div class="col-md-3">
+							{{form.toilet_image_bottomdown2 }}
+						</div>
+					</div>
+				
+					<div class="row">
+						<div class="col-md-6">
+							{{ form.toilet_image_bottomdown2.errors }}
+						</div>
+					</div>
+
+				</div>
+
+
+				<br>
+				<!-- Water Information -->
+				<div class="row">
+					<div class ="col-md-6" style = "font-size: 150%";>
+						<label for="General Information"> Water Information : </label>
+					</div>
+				</div>
+
+
+				<div id="rcorners2">
+					<div class="row">
+						<div class="col-md-3">
+							<label for="percentage_with_an_individual_water_connection">Percentage with an individual water connection</label>
+						</div>
+
+						<div class="col-md-3">
+							{{ form.percentage_with_an_individual_water_connection }}
+						</div>
+					
+						<div class="col-md-3">
+							<label for="water_info_left_image">Water info left image</label>
+						</div>
+
+						<div class="col-md-3">
+							{{form.water_info_left_image }}
+						</div>
+					</div>
+
+				<br>
+				<br>	
+
+				<div class="row">
+						<div class="col-md-6">
+							{{ form.percentage_with_an_individual_water_connection.errors }}
+						</div>
+						<div class="col-md-6">
+							{{ form.water_info_left_image.errors }}
+						</div>
+				</div>
+
+					<br>
+
+				<div class ="row">
+					<div class="col-md-3">
+							<label for="water_image_bottomdown1">Water image bottomdown1</label>
+					</div>
+					
+					
+					<div class="col-md-3">
+							{{form.water_image_bottomdown1 }}
+						</div>
+
+					<div class="col-md-3">
+							<label for="water_image_bottomdown2">Water image bottomdown2</label>
+					</div>	
+					<div class="col-md-3">
+							{{form.water_image_bottomdown2 }}
+						</div>
+				</div>
+
+					<div class="row">
+						<div class="col-md-6">
+							{{ form.water_image_bottomdown1.errors }}
+						</div>
+						<div class="col-md-6">
+							{{ form.water_image_bottomdown2.errors }}
+						</div>
+					</div>
+				</div>
+				
+				<br>
+				<br>
+
+
+
+				<!-- Road Information -->
+				<div class="row">
+					<div class ="col-md-6" style = "font-size: 150%";>
+						<label for="gutter_Information">Road Information : </label>
+					</div>
+				</div>
+
+
+				<div id="rcorners2">
+					<div class ="row">
+						<div class="col-md-3">
+							<label for="roads_and_access_info_left_image">Roads and access info left image</label>
+						</div>
+					
+						<div class="col-md-3">
+							{{form.roads_and_access_info_left_image }}
+						</div>
+
+						<div class="col-md-3">
+							<label for="roads_image_bottomdown1">Roads image bottomdown1</label>
+							
+						</div>
+
+						<div class="col-md-3">
+							{{form.roads_image_bottomdown1 }}
+						</div>
+					</div>
+
+				<div class="row">
+					<div class="col-md-6">
+							{{ form.roads_and_access_info_left_image.errors }}
+					</div>
+					<div class="col-md-6">
+							{{ form.roads_image_bottomdown1.errors }}
+					</div>
+				</div>
+
+					<br>
+					<br>
+
+					<div class ="row">
+						<div class="col-md-3">
+							<label for="roads_image_bottomdown2">Roads image bottomdown2</label>
+						</div>
+					
+						<div class="col-md-3">
+							{{form.road_image_bottomdown2 }}
+						</div>
+					</div>
+
+					<div class="row">
+						<div class="col-md-6">
+							{{ form.road_image_bottomdown2.errors }}
+						</div>
+					</div>
+			
+					<br>
+					<br>
+			</div>
+				<br>
+
+				<!-- Drainage Information -->
+				<div class="row">
+					<div class ="col-md-6" style = "font-size: 150%";>
+						<label for="gutter_Information"> Drainage Information : </label>
+					</div>
+				</div>
+			
+				<div id="rcorners2">
+					<div class ="row">
+						<div class="col-md-3">
+							<label for="drainage_info_left_image">Drainage info left image</label>
+						</div>
+						
+					
+						<div class="col-md-3">
+							{{form.drainage_info_left_image }}
+						</div>
+
+						<div class="col-md-3">
+							<label for="drainage_image_bottomdown1 ">Drainage image bottomdown1 </label>
+						</div>
+
+
+						<div class="col-md-3">
+							{{form.drainage_image_bottomdown1  }}
+						</div>
+					</div>
+
+					<div class="row">
+						<div class="col-md-6">
+							{{ form.drainage_info_left_image.errors }}
+						</div>
+						<div class="col-md-6">
+							{{ form.drainage_image_bottomdown1.errors }}
+						</div>
+					</div>
+
+					<br>
+					<br>
+
+					<div class ="row">
+						<div class="col-md-3">
+							<label for="drainage_image_bottomdown2 ">Drainage image bottomdown2 </label>
+						</div>
+
+						<div class="col-md-3">
+							{{form.drainage_image_bottomdown2  }}
+						</div>
+					</div>
+
+					<div class="row">
+						<div class="col-md-6">
+							{{ form.drainage_image_bottomdown2.errors }}
+						</div>
+					</div>
+				</div>
+				<br>
+				
+
+				<!-- Gutter Information -->
+				<div class="row">
+					<div class ="col-md-6" style = "font-size: 150%";>
+						<label for="gutter_Information"> Gutter Information : </label>
+					</div>
+				</div>
+
+				<div id="rcorners2">
+					<div class ="row">
+						<div class="col-md-3">
+							<label for="gutter_info_left_image">Gutter info left image</label>
+						</div>
+						
+						<div class="col-md-3">
+							{{form.gutter_info_left_image }}
+						</div>
+						
+						<div class="col-md-3">
+							<label for="gutter_image_bottomdown2">Gutter image bottomdown1 </label>
+						</div>		
+
+						<div class="col-md-3">
+							{{form.gutter_image_bottomdown1 }}
+						</div>
+					</div>
+
+					<div class="row">
+						<div class="col-md-6">
+							{{ form.gutter_info_left_image.errors }}
+						</div>
+						<div class="col-md-6">
+							{{ form.gutter_image_bottomdown1.errors }}
+						</div>
+					</div>
+
+					<br>
+					<br>
+
+					<div class ="row">
+						<div class="col-md-3">
+							<label for="gutter_image_bottomdown1">Gutter image bottomdown2 </label>
+						</div>
+
+						<div class="col-md-3">
+							{{form.gutter_image_bottomdown2  }}
+						</div>
+					</div>
+
+					<div class="row">
+						<div class="col-md-6">
+							{{ form.gutter_image_bottomdown2.errors }}
+						</div>
+					</div>
+				</div>
+				<br>
+				<!-- Waste Information -->
+
+				<div class="row">
+					<div class ="col-md-6" style = "font-size: 150%";>
+						<label for="Waste_Information">Waste Information : </label>
+					</div>
+				</div>
+				<div id="rcorners2">
+					<div class ="row">
+						<div class="col-md-3">
+							<label for="frequency_of_clearance_of_waste_containers">Frequency of clearance of waste containers</label>
+						</div>
+
+						<div class="col-md-3">
+							{{form.frequency_of_clearance_of_waste_containers}}
+						</div>
+						
+						<div class="col-md-3">
+							<label for="waste_management_info_left_image">Waste management info left image</label>
+						</div>
+
+						<div class="col-md-3">
+							{{form.waste_management_info_left_image }}
+						</div>
+
+					</div>
+
+					<div class="row">
+						<div class="col-md-6">
+							{{ form.frequency_of_clearance_of_waste_containers.errors }}
+						</div>
+						<div class="col-md-6">
+							{{ form.waste_management_info_left_image.errors }}
+						</div>
+
+					</div>
+
+					<br>
+					<br>
+
+					<div class ="row">
+						<div class="col-md-3">
+							<label for="waste_management_image_bottomdown1">Waste management image bottomdown1</label>
+						</div>
+
+						<div class="col-md-3">
+							{{form.waste_management_image_bottomdown1 }}
+						</div>
+
+						<div class="col-md-3">
+							<label for="waste_management_image_bottomdown2">Waste management image bottomdown2</label>
+						</div>
+
+						
+						<div class="col-md-3">
+							{{form.waste_management_image_bottomdown2 }}
+						</div>
+					</div>
+
+
+					<div class="row">
+						<div class="col-md-6">
+							{{ form.waste_management_image_bottomdown1.errors }}
+						</div>
+						<div class="col-md-6">
+							{{ form.waste_management_image_bottomdown2.errors }}
+						</div>
+					</div>
+				</div>
+				<br>
+				
+				<!-- Button -->
+				<div class ="row">
+					<div class="col-md-12" align="center">
+						<a href="{% url 'rimdisplay' %}"style="text-decoration: none; color: #FFF" class="btn btn-primary" role="button">Back</a>
+						<button type="submit" class="btn btn-primary">
+							Submit
+						</button>
+					</div>
+
+				</div>
+				<!-- complete form -->
+			</form>
+
+		</div>
+
+
+	{% endblock %}
+
+	{% block content %}
+
+	{% endblock %}
+
+	{% block sidebar %}
+	{% endblock %}

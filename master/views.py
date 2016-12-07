@@ -5,7 +5,6 @@
 import json
 import psycopg2
 
-
 from django.core.urlresolvers import reverse
 from django.contrib.admin.views.decorators import staff_member_required 
 from django.contrib.auth.decorators import login_required
@@ -17,8 +16,8 @@ from django.views.generic.edit import FormView
 
 from master.models import Survey, CityReference, Rapid_Slum_Appraisal, \
                           Slum, AdministrativeWard, ElectoralWard, City, \
-                          WardOfficeContact, ElectedRepresentative
-from master.forms import SurveyCreateForm, ReportForm, Rapid_Slum_AppraisalForm
+                          WardOfficeContact, ElectedRepresentative, drainage
+from master.forms import SurveyCreateForm, ReportForm, Rapid_Slum_AppraisalForm, DrainageForm
 
 from django.views.generic.base import View
 from django.shortcuts import render
@@ -142,69 +141,59 @@ def search(request):
 
 
 @csrf_exempt
-def display(request):
+def rimdisplay(request):
     """Display Rapid Slum Appraisal Records"""
     if request.method=='POST':
         deleteList=[]
         deleteList=request.POST.getlist('delete')
-        print deleteList
         if deleteList :
             for i in deleteList:
                 R = Rapid_Slum_Appraisal.objects.get(pk=i)
                 R.delete()
-    
-    print request.GET.get("q")         
-    query = request.GET.get("q") 
+            
+    query = request.GET.get("q")
+    R = ""
+    RA = "" 
     if(query):
         R = Rapid_Slum_Appraisal.objects.filter(slum_name__name__contains=query)
-        paginator = Paginator(R, 6) 
-        page = request.GET.get('page')
-        try:
-            RA = paginator.page(page)
-        except PageNotAnInteger:
-            RA = paginator.page(1)
-        except EmptyPage:
-            RA = paginator.page(paginator.num_pages)      
-        return render(request, 'display.html',{'R':R,'RA':RA})
     else:    
         R = Rapid_Slum_Appraisal.objects.all()
-        paginator = Paginator(R, 6) 
-        page = request.GET.get('page')
-        try:
-            RA = paginator.page(page)
-        except PageNotAnInteger:
-            RA = paginator.page(1)
-        except EmptyPage:
-            RA = paginator.page(paginator.num_pages)      
-        return render(request, 'display.html',{'R':R,'RA':RA})
+    paginator = Paginator(R, 6) 
+    page = request.GET.get('page')
+    try:
+        RA = paginator.page(page)
+    except PageNotAnInteger:
+        RA = paginator.page(1)
+    except EmptyPage:
+        RA = paginator.page(paginator.num_pages)      
+    return render(request, 'rimdisplay.html',{'R':R,'RA':RA})
 
 
 @csrf_exempt
-def edit(request,Rapid_Slum_Appraisal_id):
+def rimedit(request,Rapid_Slum_Appraisal_id):
     """Update Rapid Slum Appraisal Record"""
     if request.method == 'POST':
         R = Rapid_Slum_Appraisal.objects.get(pk=Rapid_Slum_Appraisal_id)
         form = Rapid_Slum_AppraisalForm(request.POST or None,request.FILES,instance=R)
         if form.is_valid():
             form.save()
-            return HttpResponseRedirect('/admin/factsheet/')
+            return HttpResponseRedirect('/admin/sluminformation/rim/display')
     elif request.method=="GET":
         R = Rapid_Slum_Appraisal.objects.get(pk=Rapid_Slum_Appraisal_id)
-        form = Rapid_Slum_AppraisalForm(instance= R)
-    return render(request, 'insert.html', {'form': form})
-   # return render(request, 'edit.html', {'form': form})
+        form = Rapid_Slum_AppraisalForm(instance=R)
+    return render(request, 'riminsert.html', {'form': form})
 
 @csrf_exempt
-def insert(request):
+def riminsert(request):
     """Insert Rapid Slum Appraisal Record"""
     if request.method == 'POST':
         form = Rapid_Slum_AppraisalForm(request.POST,request.FILES)
         if form.is_valid():
             form.save()
-            return HttpResponseRedirect('/admin/factsheet/')
+            return HttpResponseRedirect('/admin/sluminformation/rim/display')
     else:
         form = Rapid_Slum_AppraisalForm()  
-    return render(request, 'insert.html', {'form': form})
+    return render(request, 'riminsert.html', {'form': form})
 
 
 @csrf_exempt
@@ -215,7 +204,7 @@ def report(request):
 
 
 @csrf_exempt
-def AdministrativewardList(request):
+def administrativewardList(request):
     """Administrativeward List Display"""
     cid = request.POST['id']
     Aobj = AdministrativeWard.objects.filter(city=cid)
@@ -227,13 +216,12 @@ def AdministrativewardList(request):
     data ={}
     data = { 'idArray'  : idArray,
              'nameArray': nameArray
-            }       
-    print json.dumps(data)    
+            }           
     return HttpResponse(json.dumps(data),content_type='application/json')
 
 
 @csrf_exempt
-def ElectoralWardList(request):
+def electoralWardList(request):
     """Electoral Ward List"""
     Aid = request.POST['id']
     Eobj = ElectoralWard.objects.filter(administrative_ward=Aid)
@@ -247,7 +235,7 @@ def ElectoralWardList(request):
     return HttpResponse(json.dumps(data),content_type='application/json')
 
 @csrf_exempt
-def SlumList(request):
+def slumList(request):
     """Slum Ward List"""
     Eid = request.POST['id']
     Sobj = Slum.objects.filter(electoral_ward=Eid)
@@ -261,7 +249,7 @@ def SlumList(request):
     return HttpResponse(json.dumps(data),content_type='application/json')
 
 @csrf_exempt
-def ReportGenerate(request):
+def rimreportgenerate(request):
     """Generate RIM Report"""
     sid = request.POST['Sid']
     Fid = request.POST['Fid']
@@ -273,21 +261,27 @@ def ReportGenerate(request):
     data = {'string': string}
     return HttpResponse(json.dumps(data),content_type='application/json')
 
+
 @csrf_exempt
-def VulnerabilityReport(request):
+def drainagereportgenerate(request):
+    """Generate RIM Report"""
+    sid = request.POST['Sid']
+    Fid = request.POST['Fid']
+    SlumObj = Slum.objects.get(id=sid)
+    rp_slum_code = str(SlumObj.shelter_slum_code)
+    rp_xform_title = Fid
+    string = settings.BIRT_REPORT_URL + "Birt/frameset?__format=pdf&__report=Drainage.rptdesign&rp_xform_title=" + rp_xform_title + "&rp_slum_code=" + str(rp_slum_code)
+    data ={}
+    data = {'string': string}
+    return HttpResponse(json.dumps(data),content_type='application/json')
+
+
+@csrf_exempt
+def vulnerabilityreport(request):
     """Generate Vulnerability Report """
     string = settings.BIRT_REPORT_URL + "Birt/frameset?__format=pdf&__report=Vulnerability_Report.rptdesign"
     return HttpResponseRedirect(string)    
 
-
-@csrf_exempt
-def jsondata(request):
-    old = psycopg2.connect(database='onadata1',user='shelter',password='Sh3lt3rAss0ciat3s',host='45.56.104.240',port='5432')
-    cursor_old = old.cursor()
-    cursor_old.execute("select json from logger_instance where xform_id=106 and id=9;")
-    fetch_data = cursor_old.fetchone()
-    data = fetch_data
-    return HttpResponse(json.dumps(data),content_type='application/json')
 
 def slummap(request):
     template = loader.get_template('slummapdisplay.html')
@@ -405,3 +399,119 @@ def modelmapdisplay(request):
     return HttpResponse(json.dumps(data),content_type='application/json')
 
 
+
+def drainageinsert(request):
+    """ RIM Report Form"""
+    if request.method == 'POST':
+        form = DrainageForm(request.POST,request.FILES)
+        if form.is_valid():
+            form.save()
+            return HttpResponseRedirect('/admin/sluminformation/drainage/display/')
+    else:
+        form = DrainageForm()  
+    return render(request,'drainageinsert.html', {'form':form})
+
+
+def drainagedisplay(request):
+    """ drainage display List Form"""
+    if request.method=='POST':
+        deleteList=[]
+        deleteList=request.POST.getlist('delete')
+        for i in deleteList:
+            R = drainage.objects.get(pk=i)
+            R.delete()
+    query = request.GET.get("q")
+    R=""
+    RA =""  
+    if(query):
+        R = drainage.objects.filter(slum_name__name__contains=query)
+    else:    
+        R = drainage.objects.all()
+    paginator = Paginator(R, 10) 
+    page = request.GET.get('page')
+    try:
+        RA = paginator.page(page)
+    except PageNotAnInteger:
+        RA = paginator.page(1)
+    except EmptyPage:
+        RA = paginator.page(paginator.num_pages)      
+    return render(request, 'drainagedisplay.html',{'R':R,'RA':RA})
+    
+def drainageedit(request,drainage_id):
+    if request.method == 'POST':
+        d = drainage.objects.get(pk=drainage_id)
+        form = DrainageForm(request.POST or None,request.FILES,instance=d)
+        if form.is_valid():
+            form.save()
+            return HttpResponseRedirect('/admin/sluminformation/drainage/display/')
+    elif request.method=="GET":
+        d = drainage.objects.get(pk=drainage_id)
+        form = DrainageForm(instance=d)
+    return render(request, 'drainageinsert.html', {'form': form})
+
+
+def sluminformation(request):
+    return render(request,'sluminformation.html')
+
+
+@csrf_exempt
+def cityList(request):
+    """city List Display"""
+    Cobj = City.objects.all()
+    idArray = []
+    nameArray = []
+    for i in Cobj:
+        nameArray.append(str(i.name))
+        idArray.append(i.id)
+    data ={}
+    data = { 'idArray'  : idArray,
+             'nameArray': nameArray
+            }        
+    return HttpResponse(json.dumps(data),content_type='application/json')
+
+
+
+@csrf_exempt
+def formList(request):
+    """ Form List"""
+    old = psycopg2.connect(database='onadata1',user='shelter',password='Sh3lt3rAss0ciat3s',host='45.56.104.240',port='5432')
+    cursor_old = old.cursor()
+    cursor_old.execute("select id, title from logger_xform;")
+    fetch_data = cursor_old.fetchall()
+    idArray = []
+    nameArray = []
+    for i in fetch_data:
+        nameArray.append(str(i[1]))
+        idArray.append(i[0])
+    data ={}
+    data = { 'idArray'  : idArray,
+             'nameArray': nameArray
+           }      
+    return HttpResponse(json.dumps(data),content_type='application/json')
+
+
+@csrf_exempt
+def modelList(request):
+    """city adminstravive electrol ward dropdown list"""
+    sid = request.POST['id']
+    SlumObj = Slum.objects.get(id=sid)
+    sname=SlumObj.name
+    eid=SlumObj.electoral_ward.id
+    ename=str(SlumObj.electoral_ward.name)
+    aid=SlumObj.electoral_ward.administrative_ward.id
+    aname=str(SlumObj.electoral_ward.administrative_ward.name)
+    cid=SlumObj.electoral_ward.administrative_ward.city.id
+    cref=CityReference.objects.get(id=SlumObj.electoral_ward.administrative_ward.city.name_id)
+    cname=cref.city_name
+    data ={}
+    data = {
+            'sid'  : sid,
+            'sname': sname,
+            'eid'  : eid,
+            'ename': ename,
+            'aid' : aid,
+            'aname': aname,
+            'cid'  : cid,
+            'cname': cname
+           }      
+    return HttpResponse(json.dumps(data),content_type='application/json')

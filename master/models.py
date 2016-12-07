@@ -11,6 +11,7 @@ from colorfield.fields import ColorField
 
 FACTSHEET_PHOTO="factsheet/"
 SHELTER_PHOTO="ShelterPhotos/"
+DRAINAGE_PHOTO="ShelterPhotos/FactsheetPhotos/"
 
 class CityReference(models.Model):
     """Worldwide City Database"""
@@ -24,7 +25,7 @@ class CityReference(models.Model):
     def __unicode__(self):
         """Returns string representation of object"""
         return str(self.city_name)
-
+    
 class City(models.Model):
     """Shelter City Database"""
     name = models.ForeignKey(CityReference)
@@ -301,3 +302,15 @@ class Rapid_Slum_Appraisal(models.Model):
 
     class Meta:
         ordering = ['slum_name']
+
+
+
+class drainage(models.Model):
+    def validate_image(fieldfile_obj):
+        filesize = fieldfile_obj.file.size
+        megabyte_limit = 3.0
+        if filesize > megabyte_limit*1024*1024:
+            raise ValidationError("Max file size is %sMB" % str(megabyte_limit))     
+    slum_name = models.ForeignKey(Slum)
+    drainage_image = models.ImageField(upload_to=DRAINAGE_PHOTO,blank=True, null=True)
+   

@@ -4,7 +4,7 @@
 from django.contrib import admin
 from django.contrib.gis import admin
 from master.models import CityReference, City, \
-    AdministrativeWard, ElectoralWard, Slum, WardOfficeContact, ElectedRepresentative, Rapid_Slum_Appraisal, Survey
+    AdministrativeWard, ElectoralWard, Slum, WardOfficeContact, ElectedRepresentative, Rapid_Slum_Appraisal, Survey, drainage 
 from master.forms import CityFrom, AdministrativeWardFrom, ElectoralWardForm, SlumForm
 
 # Register your models here.
@@ -110,4 +110,8 @@ class ElectoralWardFormAdmin(admin.ModelAdmin):
     search_fields = ('name',)
 admin.site.register(ElectoralWard,ElectoralWardFormAdmin) 
 
+
+
+admin.site.register(Rapid_Slum_Appraisal)
+admin.site.register(drainage)
 
