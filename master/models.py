@@ -77,9 +77,9 @@ class Survey(models.Model):
 class AdministrativeWard(models.Model):
     """Administrative Ward Database"""
     city = models.ForeignKey(City)
-    name = models.CharField(max_length=2048)
-    shape = models.PolygonField(srid=4326)
-    ward_no = models.CharField(max_length=2048)
+    name = models.CharField(max_length=2048, default="")
+    shape = models.PolygonField(srid=4326, default="")
+    ward_no = models.CharField(max_length=2048, default="")
     description = models.TextField(max_length=2048,blank=True,null=True)
     office_address = models.CharField(max_length=2048,blank=True,null=True)
     border_color = ColorField(default='#BFFFD0')
@@ -98,10 +98,10 @@ class AdministrativeWard(models.Model):
 class ElectoralWard(models.Model):
     """Electoral Ward Database"""
     administrative_ward = models.ForeignKey(AdministrativeWard)
-    name = models.CharField(max_length=2048)
-    shape = models.PolygonField(srid=4326)
-    ward_no = models.CharField(max_length=2048)
-    ward_code = models.TextField(max_length=2048)
+    name = models.CharField(max_length=2048, default="")
+    shape = models.PolygonField(srid=4326, default="")
+    ward_no = models.CharField(max_length=2048, default="")
+    ward_code = models.TextField(max_length=2048, default="")
     extra_info = models.CharField(max_length=2048,blank=True,null=True)
     border_color = ColorField(default='#FFEFA1')
     background_color = ColorField(default='#FFEFA1')
@@ -141,7 +141,7 @@ class WardOfficeContact(models.Model):
     administrative_ward = models.ForeignKey(AdministrativeWard)
     title = models.CharField(max_length=2048)
     name = models.CharField(max_length=2048)
-    address_info = models.CharField(max_length=2048)
+    address_info = models.CharField(max_length=2048, default="")
     telephone = models.CharField(max_length=2048,blank=True,null=True)
 
     def __unicode__(self):
@@ -265,6 +265,12 @@ class ProjectMaster(models.Model):
         """Metadata for class ProjectMaster"""
         verbose_name = 'Project Master'
         verbose_name_plural = 'Project Masters'
+
+def validate_image(fieldfile_obj):
+    filesize = fieldfile_obj.file.size
+    megabyte_limit = 3.0
+    if filesize > megabyte_limit*1024*1024:
+        raise ValidationError("Max file size is %sMB" % str(megabyte_limit))
 
 class Rapid_Slum_Appraisal(models.Model):
     def validate_image(fieldfile_obj):
