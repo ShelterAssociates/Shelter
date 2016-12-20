@@ -9,6 +9,8 @@
     <script src="{% static "js/jquery.min.js" %}"></script>
     <script src="{% static "js/bootstrap.min.js" %}"></script>  
 <head>
+
+
 <script type="text/javascript">
 
 
@@ -214,6 +216,7 @@ $(document).ready(function(){
      $("#id_Slum").on('change',function()
      {
         $("#forms").show();
+        $("#HouseNos").show();
               
     });
 
@@ -223,6 +226,8 @@ $(document).ready(function(){
     $("#ElectoralWards").hide();
     $("#Slums").hide();
     $("#forms").hide();
+    $("#HouseNos").hide();
+
     cityList();
     formList();     
 
@@ -315,6 +320,38 @@ $(document).ready(function(){
     });
 
   });
+
+
+  $("#familybutton").click(function(){
+ 
+        var Sid = $("#id_Slum option:selected").val();        
+        var Cid = $("#id_City option:selected").val();
+        var Fid = $("#id_form option:selected").text();
+        var HouseNo = $('#HouseNo').val();
+
+        var url = "{% url 'familyrportgenerate' %}";
+   
+        $.ajax({
+
+        url : url,
+               
+        data : { Sid : Sid,Fid : Fid, HouseNo : HouseNo},
+       
+        type: "POST",
+        
+        contenttype : "json",
+
+        success : function(json){           
+
+            url = json.string;
+            window.open("" + url );                  
+        }
+
+    });
+
+  });
+
+
 });
 
 </script>
@@ -384,26 +421,41 @@ $(document).ready(function(){
         </div>
     </div>
 
-    
-
-    <div class="row" id="buttons" style="margin-bottom: 20px">
-   
-        <div class="col-md-4">
-            
-            <button id ="rimbutton" type="submit" class="btn btn-primary" >Generate RIM Report </button> 
+    <div class="row"id ="HouseNos" style="margin-bottom: 20px">
+        <div class ="col-md-4">  
+            <label for=""> House No </label>
+        </div> 
+        <div class="col-md-8" >
+            <input id='HouseNo' type="text" name="HouseNo" value=""><br>
         </div>
-
-        <div class="col-md-8">
-
-            <button id ="drainagebutton" type="submit" class="btn btn-primary" >Generate Drainage Report </button> 
-        </div>
-
-        
-
     </div>
+
+    
+   
 
   </div>
  </div> 
+
+
+  <div class="row" id="buttons" style="margin-bottom: 20px">
+    <div class="col-md-9">   
+        <div class="col-md-2">         
+            <button id ="rimbutton" type="submit" class="btn btn-primary btn-block" > Generate RIM Report </button> 
+        </div>
+
+        <div class="col-md-2">
+
+            <button id ="drainagebutton" type="submit" class="btn btn-primary btn-block" > Generate Drainage Report </button> 
+        </div>
+
+         <div class="col-md-2">
+
+            <button id ="familybutton" type="submit" class="btn btn-primary btn-block" >Generate Family Report </button> 
+        </div>
+        
+        </div>
+    </div>
+
 </div>
 
 </body>

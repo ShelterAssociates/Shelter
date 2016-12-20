@@ -24,7 +24,8 @@ from master.views import index, SurveyListView, SurveyCreateView, \
     administrativewardList, electoralWardList, slumList, rimreportgenerate, \
     vulnerabilityreport,formList,slummapdisplay,slummap,citymapdisplay, \
     modelmapdisplay, drainageinsert, sluminformation, drainagedisplay , \
-    drainageedit, cityList, drainagereportgenerate, modelList
+    drainageedit, cityList, drainagereportgenerate, modelList, kmlinsert, \
+    familyrportgenerate 
 
 from django.conf import settings
 from django.conf.urls.static import static
@@ -60,6 +61,8 @@ urlpatterns = [
     url(r'^sluminformation/drainage/edit/(?P<drainage_id>\d+)$', drainageedit, name='drainageedit'), 
     url(r'^cityList/$', cityList, name='cityList'), 
     url(r'^drainagereportgenerate/$', drainagereportgenerate, name='drainagereportgenerate'),
-    url(r'^modelList/$', modelList, name='modelList')    
+    url(r'^modelList/$', modelList, name='modelList'),
+    url(r'^sluminformation/kmlinsert/$', kmlinsert, name='kmlinsert'),     
+    url(r'^familyrportgenerate/$', familyrportgenerate, name='familyrportgenerate')          
 ]
 
