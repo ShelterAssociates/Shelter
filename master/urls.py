@@ -24,8 +24,8 @@ from master.views import index, SurveyListView, SurveyCreateView, \
     administrativewardList, electoralWardList, slumList, rimreportgenerate, \
     vulnerabilityreport,formList,slummapdisplay,slummap,citymapdisplay, \
     modelmapdisplay, drainageinsert, sluminformation, drainagedisplay , \
-    drainageedit, cityList, drainagereportgenerate, modelList, kmlinsert, \
-    familyrportgenerate 
+    drainageedit, cityList, drainagereportgenerate, modelList, \
+    familyrportgenerate
 
 from django.conf import settings
 from django.conf.urls.static import static
@@ -44,7 +44,7 @@ urlpatterns = [
     url(r'^sluminformation/rim/edit/(?P<Rapid_Slum_Appraisal_id>\d+)$', rimedit, name='rimedit'),
     url(r'^sluminformation/rim/display/$', rimdisplay, name='rimdisplay'),
     url(r'^sluminformation/rim/insert/$', riminsert, name='riminsert'),
-    url(r'^report/$', report, name='report'),            
+    url(r'^report/$', report, name='report'),
     url(r'^administrativewardList/$', administrativewardList, name='administrativewardList'),
     url(r'^electoralWardList/$',electoralWardList, name='electoralWardList'),
     url(r'^slumList/$',slumList, name='slumList'),
@@ -53,16 +53,14 @@ urlpatterns = [
     url(r'^formList/$',formList, name='formList'),
     url(r'^slummap/$',slummap, name='slummap'),
     url(r'^slummapdisplay/(?P<id>[0-9]+)/$',slummapdisplay, name='slummapdisplay'),
-    url(r'^citymapdisplay/$',citymapdisplay, name='citymapdisplay'),    
-    url(r'^modelmapdisplay/$',modelmapdisplay, name='modelmapdisplay'), 
-    url(r'^sluminformation/$',sluminformation, name='sluminformation'), 
+    url(r'^citymapdisplay/$',citymapdisplay, name='citymapdisplay'),
+    url(r'^modelmapdisplay/$',modelmapdisplay, name='modelmapdisplay'),
+    url(r'^sluminformation/$',sluminformation, name='sluminformation'),
     url(r'^sluminformation/drainage/display/$',drainagedisplay, name='drainagedisplay'),
     url(r'^sluminformation/drainage/insert/$',drainageinsert, name='drainageinsert'),
-    url(r'^sluminformation/drainage/edit/(?P<drainage_id>\d+)$', drainageedit, name='drainageedit'), 
-    url(r'^cityList/$', cityList, name='cityList'), 
+    url(r'^sluminformation/drainage/edit/(?P<drainage_id>\d+)$', drainageedit, name='drainageedit'),
+    url(r'^cityList/$', cityList, name='cityList'),
     url(r'^drainagereportgenerate/$', drainagereportgenerate, name='drainagereportgenerate'),
     url(r'^modelList/$', modelList, name='modelList'),
-    url(r'^sluminformation/kmlinsert/$', kmlinsert, name='kmlinsert'),     
-    url(r'^familyrportgenerate/$', familyrportgenerate, name='familyrportgenerate')          
+    url(r'^familyrportgenerate/$', familyrportgenerate, name='familyrportgenerate')
 ]
-
