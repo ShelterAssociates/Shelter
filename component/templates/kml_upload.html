@@ -1,0 +1,80 @@
+{% extends "admin/base_site.html" %}
+{% load i18n %}
+{% block breadcrumbs %}
+{% load staticfiles %}
+<link rel="stylesheet"  type="text/css" href="{% static "css/bootstrap.min.css" %}"/>
+<script src="{% static "js/jquery.min.js" %}"></script>
+<script src="{% static "js/bootstrap.min.js" %}"></script>
+<script src="{% static "js/common_cascading.js" %}"></script>
+{% endblock %}
+{% block sidebar %}
+{% endblock %}
+
+{% block content %}
+<h3>Upload slum components</h3>
+<script>
+var city_url = "{% url 'cityList' %}";
+var administrative_url = "{% url 'administrativewardList' %}";
+var electoral_url = "{% url 'electoralWardList' %}";
+var slum_url = "{% url 'slumList' %}";
+var url = "{% url 'modelList' %}";
+</script>
+<form enctype="multipart/form-data" method="post">
+    {% csrf_token %}
+
+    <div class="col-md-12">
+      <div class="row" style="margin-bottom: 20px">
+          <div class ="col-md-2">
+              <label> City </label>
+          </div>
+          <div class="col-md-2">
+              <select id="id_City">
+              </select>
+          </div>
+      </div>
+      <div class="row" id='AdministrativeWards' style="margin-bottom: 20px">
+          <div class ="col-md-2">
+              <label> Administrative Ward </label>
+          </div>
+          <div class="col-md-2">
+              <select id="id_AdministrativeWard">
+              </select>
+          </div>
+      </div>
+      <div class="row" id="ElectoralWards" style="margin-bottom: 20px">
+          <div class ="col-md-2">
+              <label> Electoral Ward </label>
+          </div>
+          <div class="col-md-2">
+              <select id="id_ElectoralWard">
+              </select>
+          </div>
+      </div>
+      <div class="row" id="Slums" style="margin-bottom: 20px">
+        <div class ="col-md-2">
+          <label for="id_slum_name"> Slum name </label>
+        </div>
+        <div class="col-md-2">
+          <select id="id_slum_name">
+          </select>
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="col-md-2"><label>{{form.flag.label_tag}}</label></div>
+        <div class="col-md-2">{{form.flag}}</div>
+      </div>
+      <div class="row">
+        <div class="col-md-2">{{form.kml_file.label_tag}}</div>
+        <div class="col-md-2">{{form.kml_file}}</div>
+      </div>
+
+
+    <div class="row" style="padding-top:20px;">
+      <div class="col-md-4">
+        <input class="btn btn-primary" type="submit" value="Submit" />
+      </div>
+    </div>
+    </div>
+</form>
+{% endblock %}
