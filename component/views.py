@@ -1,13 +1,10 @@
 from django.shortcuts import render
 #from pykml import parser
+from .forms import KMLUpload
 
-"""
-#url(r'^sluminformation/kmlinsert/$', kmlinsert, name='kmlinsert'),
-
-@csrf_exempt
-def kmlinsert(request):
+def kml_upload(request):
 	if request.method == 'POST':
-		form = KMLForm(request.POST or None,request.FILES)
+		form = KMLUpload(request.POST or None,request.FILES)
 		if form.is_valid():
 			docFile = request.FILES['kmlfile'].read()
 			root = parser.fromstring(docFile)
@@ -21,6 +18,5 @@ def kmlinsert(request):
 				}
 		return HttpResponse(json.dumps(data),content_type='application/json')
 	else:
-		form = KMLForm()
-	return render(request, 'kmlinsert.html', {'form': form})
-    """
+		form = KMLUpload()
+	return render(request, 'kml_upload.html', {'form': form})
