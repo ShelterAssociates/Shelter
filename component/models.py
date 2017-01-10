@@ -39,6 +39,7 @@ class Metadata(models.Model):
     visible  = models.BooleanField() # BooleanField
     order  = models.FloatField()
     blob  = JSONField()
+    code = models.CharField(max_length=512)
 
 
     def __unicode__(self):

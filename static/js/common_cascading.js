@@ -1,14 +1,16 @@
 
 function cityList(){
+  $('#id_City').empty();
+  var str='<option value="';
+  str = str +'"'+'>' + "--Please select--" + '</option>';
+  $('#id_City').append(str);
     $.ajax({
         url : city_url,
         //data : {},
         type: "GET",
         contenttype : "json",
         success : function(json){
-            var str='<option value="';
-            str = str +"0" +'"'+'>' + "---select---" + '</option>';
-            $('#id_City').append(str);
+
             for (i = 0; i < json.nameArray.length; i++){
               var str='<option value="';
               str = str +json.idArray[i] +'"'+'>' + json.nameArray[i] + '</option>';
@@ -26,6 +28,9 @@ function cityList(){
 
 function administrativewardList(){
     $('#id_AdministrativeWard').empty();
+    var str='<option value="';
+    str = str +'"'+'>' + "--Please select--" + '</option>';
+    $('#id_AdministrativeWard').append(str);
     var cityname = $("#id_City option:selected").text();
     var id = $("#id_City option:selected").val();
     $.ajax({
@@ -34,9 +39,6 @@ function administrativewardList(){
         type: "POST",
         contenttype : "json",
         success : function(json){
-              var str='<option value="';
-              str = str +"0" +'"'+'>' + "---select---" + '</option>';
-              $('#id_AdministrativeWard').append(str);
         for (i = 0; i < json.nameArray.length; i++){
                 var str='<option value="';
                 str = str +json.idArray[i] +'"'+'>' + json.nameArray[i] + '</option>';
@@ -49,6 +51,9 @@ function administrativewardList(){
 
 function electoralWardList(){
     $('#id_ElectoralWard').empty();
+    var str='<option value="';
+      str = str +'"'+'>' + "--Please select--" + '</option>';
+    $('#id_ElectoralWard').append(str);
     var Administrativewardname = $("#id_AdministrativeWard option:selected").text();
     var id = $("#id_AdministrativeWard option:selected").val();
 
@@ -58,9 +63,6 @@ function electoralWardList(){
         type: "POST",
         contenttype : "json",
         success : function(json){
-            var str='<option value="';
-              str = str +"0" +'"'+'>' + "---select---" + '</option>';
-            $('#id_ElectoralWard').append(str);
         for (i = 0; i < json.nameArray.length; i++) {
             var str='<option value="';
             str = str +json.idArray[i] +'"'+'>' + json.nameArray[i] + '</option>';
@@ -72,6 +74,9 @@ function electoralWardList(){
 }
 function slumList(){
     $('#id_slum_name').empty();
+    var str='<option value="';
+    str = str +'"'+'>' + "--Please select--" + '</option>';
+    $('#id_slum_name').append(str);
     var Administrativewardname = $("#id_ElectoralWard option:selected").text();
     var id = $("#id_ElectoralWard option:selected").val();
 
@@ -81,9 +86,6 @@ function slumList(){
         type: "POST",
         contenttype : "json",
         success : function(json){
-          var str='<option value="';
-          str = str +"0" +'"'+'>' + "---select---" + '</option>';
-          $('#id_slum_name').append(str);
         for (i = 0; i < json.nameArray.length; i++) {
             var str='<option value="';
             str = str +json.idArray[i] +'"'+'>' + json.nameArray[i] + '</option>';
@@ -135,8 +137,9 @@ $(document).ready(function(){
    	   $("#ElectoralWards").show();
        $("#Slums").show();
     }
+    console.log(slumid);
 
-    cityList();
+    //cityList();
 
     $("#id_City").on('change',function()
     {
