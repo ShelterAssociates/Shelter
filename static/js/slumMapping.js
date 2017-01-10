@@ -7,6 +7,7 @@ var mydatatable;
 var wdofficer;
 var wdaddress;
 var wdhead;
+var compochk;
 var url = "/admin/citymapdisplay";
 
 //var ShapeValue;
@@ -33,7 +34,7 @@ function initMap12() {
 	wdaddress = $("#wdaddress");
 	wdofficer = $("#wdofficer");
 	wdhead = $("#wdhead");
-
+	compochk=$("#compochk")
 
 	loadcity();
 	viewIndiaBorder();
@@ -124,7 +125,7 @@ function latlongformat(ShapeValue, shapename , bgcolor , bordercolor) {
 	// Events on Polygon
 	google.maps.event.addListener(Poly1, 'mouseover', function(event) {
 		infoWindowover.setContent(shapename);
-		infoWindowover.setPosition(Poly1.center);
+		infoWindowover.setPosition(bounds.getCenter());
 		infoWindowover.open(map);
 
 	});
@@ -133,10 +134,11 @@ function latlongformat(ShapeValue, shapename , bgcolor , bordercolor) {
 		infoWindowover.close();
 	});
     
-    var indiWindow;
+    var indiWindow=true;
+    
 	google.maps.event.addListener(Poly1, 'click', function(event) {
 		infoWindowover.close();
-
+		
 		if (arr.length == 4) {
 			if (indiWindow == true) {
 				var contentString = '<div id="content" >' +
@@ -151,19 +153,20 @@ function latlongformat(ShapeValue, shapename , bgcolor , bordercolor) {
 				 '</div>'+
 				'<div class="col-md-3" style="margin-left:-20px"><img width="100px" height="120px" src="' + obj[arr[0]]["content"][arr[1]]["content"][arr[2]]["content"][arr[3]]['photo'] +'"></img></div>'+
 				'</div>';
-
-				var infoWindow = new google.maps.InfoWindow({maxWidth: 430});
+				
+				var infoWindow= new google.maps.InfoWindow({maxWidth: 430});
 				infoWindow.setContent(contentString);
 				infoWindow.setPosition(event.latLng);
 				infoWindow.open(map);
-
+                
+                indiWindow=false;
 			}
-			indiWindow = true;
+			
 
 		} else {
 
 			createMap(shapename, false);
-			indiWindow = false;
+			
 		}
 	});
 }
@@ -172,6 +175,7 @@ function createMap(jsondata, arrRemoveInd) {
     var wdname="";
     var wdadd="";
     var head="";
+    compochk.html('');
 	if (arrRemoveInd == true) {
 		if (arr.indexOf(jsondata) > -1 == true) {
 			var indi = arr.indexOf(jsondata);
@@ -284,12 +288,14 @@ function createMap(jsondata, arrRemoveInd) {
 		wdofficer.html('');
 
 	    val = obj[arr[0]]["content"][arr[1]]["content"][arr[2]]["content"][arr[3]]
-		initMap(val, 16);
+		objmap=initMap(val, 16);
 
     	mydatatable.fnDestroy();
     	$("#datatable").empty();
+    	
+    	
+    	compo(val['id']);
 	}
-
 }
 
 function fetchData(obj) {
@@ -310,12 +316,12 @@ function setMaplink() {
 			aTag += '>> <label id=' + arr[i] + ' onclick="getArea(this);">' + " <span style='text-decoration: underline;cursor:pointer;color:blue;'>" + arr[i] + "</span></label>&nbsp;&nbsp; ";
 		}
     }
-
 	mydiv.html(aTag);
 }
 
 function getArea(initlink) {
 	removeIndi = "";
+	
 	var textelement = (initlink.textContent).toString().trim();
 
 	if(textelement == "Home"){
@@ -329,6 +335,7 @@ function getArea(initlink) {
 		wdofficer.html('');
 		myheader.html('');
 		mydesc.html('');
+		compochk.html('');
 		$("#datatable").empty();
 		$("#datatablecontainer").hide();
 		return;
@@ -343,7 +350,7 @@ function drawPolygon(PolygonPoints,centerlatlang , bgcolor ,bordercolor) {
 	var Poly;
 	var newbgcolor="#FFA3A3";
 	var newbordercolor="#FF0000";
-
+    var opacity=0.2;
 	if(bgcolor != undefined && bgcolor != ""){
 		newbgcolor=bgcolor;
 	}
@@ -351,19 +358,23 @@ function drawPolygon(PolygonPoints,centerlatlang , bgcolor ,bordercolor) {
 	if(bordercolor != undefined && bordercolor != ""){
 		newbordercolor=bordercolor;
 	}
-
+	
+	if(arr.length > 2){		
+		opacity=0.1;
+	}
+	
 	Poly = new google.maps.Polygon({
 		paths : PolygonPoints,
 		strokeColor : newbordercolor,
 		strokeOpacity : 0.7,
 		strokeWeight : 2,
 		fillColor : newbgcolor ,
-		fillOpacity : 0.2,
+		fillOpacity : opacity,
 		center : centerlatlang.getCenter()
 	});
-	 Poly.setMap(map);
-	 map.setCenter(centerlatlang.getCenter() );
-	 return Poly;
+	Poly.setMap(map);
+	map.setCenter(centerlatlang.getCenter() );
+	return Poly;
 }
 
 var dataset = [];
@@ -450,3 +461,200 @@ function viewIndiaBorder() {
 
 	layer.setMap(map);
 }
+
+function compo(slumId)
+{
+	$.ajax({
+			url : '/component/fetchcomponents/'+slumId,
+			type : "GET",
+			contenttype : "json",
+			success : function(json) {
+				viewcompo(jsond);
+			}
+	});
+}
+
+function viewcompo(dvalue){
+	str="";
+	counter=1;
+	
+	var chkPoly;
+	chkpoly1=[]
+	chkpolydata={}
+	
+	$.each(dvalue, function(k,v){
+		/*
+		 str +='<div name="div_group" class="panel-group panel  panel-default panel-heading"> '
+			+'<input style="font-size:12%;" class="panel-title" name="chk_group"  value="'+ k +'"  >&nbsp;'
+        	+'<a name="chk_group" data-toggle="collapse" href="#'+counter+'">'+k+'</a>'
+			+'</input></br>'
+		 * */
+		counter=counter+1; 
+		str +='<div name="div_group" class=" panel  panel-default panel-heading"> '	
+        	+'<a name="chk_group" data-toggle="collapse" href="#'+counter+'">'+k+'</a>'
+			+'</br>'
+			
+		str +='<div id="'+counter+'" class="panel-collapse collapse">'	
+		$.each(v,function(k1,v1){
+			
+			var chkcolor=v1['color'];
+		    chkpolydata[k1]={};
+		        
+			str += '<div name="div_group" >'
+					+'&nbsp;&nbsp;&nbsp;'		     	
+		    		+'<input name="chk1" style="background-color:'+chkcolor+'; -webkit-appearance: none; border: 1px solid black; height: 1.2em; width: 0.8em;"  type="checkbox" value="'+k1+'" onclick="checkSingleGroup(this);" >'
+		    		+'<a>&nbsp;'+k1+'</a>'
+		    		+'</input>'
+		    		+'</div>'
+		        		
+	    	$.each(v1['child'],function(k2,v2){
+	    		var flightPlanCoordinates = [
+		          {lat: 37.772, lng: -122.214},
+		          {lat: 21.291, lng: -157.821},
+		          {lat: -18.142, lng: 178.431},
+		          {lat: -27.467, lng: 153.027}
+		        ];
+	    	
+	    		
+	    		chkPoly = new google.maps.Polyline({
+					path : flightPlanCoordinates,
+					strokeColor : chkcolor,
+					strokeOpacity : 0.8,
+					strokeWeight : 8
+					//center : centerlatlang.getCenter()
+				 });
+	    				    		
+	    		chkpolydata[k1][v2['houseno']]= chkPoly;
+	    		
+	    	});	
+		});		
+		str +='</div></div>' ;
+		
+	});
+	
+	compochk.html(str) ; 
+	
+	  			                 
+		
+}
+
+
+
+function checkAll(checkbox_group)
+{
+	
+	checktoggle = checkbox_group.checked;
+	var checkboxes = new Array();
+	divParent = checkbox_group.parentElement	    			
+	checkboxes = divParent.getElementsByTagName('input')
+	
+    for (var i=0; i<checkboxes.length; i++)  {
+        if (checkboxes[i].type == 'checkbox')   {
+          checkboxes[i].checked = checktoggle;
+        }
+    }
+}
+
+
+function checkSingleGroup(single_checkbox) {	
+	//componentfillmap();
+}
+
+function componentfillmap(){
+	chkchild="";
+	chkparent="";
+	
+	
+	$('input[name=chk1]').each(function () {
+      
+       if(this.checked==true){
+			chkchild = $(this).val();	    
+	       	chkparent = $(this).parent().parent().parent().children().attr("value") ;
+	        jsonv=jsond[chkparent][chkchild]
+	                    
+            jsonv['child'].length
+            
+            var chkcolor=jsonv['color']
+            
+            $(jsonv['child']).each(function(){
+            	household_points=[]
+            	
+            	$(this.latlang).each(function(){            		
+            		household_points.push(new google.maps.LatLng(18.48, 17.78));
+            		household_points.push(new google.maps.LatLng(18.50, 17.98));            		
+            	});
+            	
+            	
+            	Poly = new google.maps.Polyline({
+ 						path : household_points,
+ 						strokeColor : chkcolor,
+ 						strokeOpacity : 0.8,
+ 						strokeWeight : 8
+ 						//center : centerlatlang.getCenter()
+ 					 });
+ 				Poly.setMap(map);	 
+            });
+            	
+       }
+       
+  	});
+}
+
+
+
+/*
+ lat : 18.484913,
+			lng : 73.785493
+		},
+ * */
+
+
+
+
+jsond={
+	
+  general:{
+    household:{
+      disname:"AAA",
+      color:"RED",
+      order:"1",
+      type:"map",
+      child:[{houseno:"0001",latlang:"18.485,73.786"},{houseno:"0002",latlang:"18.487,73.788"},{houseno:"0003",latlang:"18.485,73.786"}]
+    }
+    
+},
+drainage:{
+  drainage10:{
+    disname:"AAA",
+      color:"YELLOW",
+      order:"1",
+      type:"map",
+      child:[{houseno:"0001",latlang:"18.485,73.786"},{houseno:"0002",latlang:"18.487,73.788"},{houseno:"0003",latlang:"18.485,73.786"}]
+  },
+  draainage12:{
+    disname:"AAA",
+      color:"GREEN",
+      order:"1",
+      type:"map",
+      child:[{houseno:"0001",latlang:"123,343"},{houseno:"0002",latlang:"123,343"},{houseno:"0003",latlang:"123,343"}]
+  }
+},
+
+toilet:{
+  toilet1:{
+    disname:"AAA",
+      color:"BLUE",
+      order:"1",
+      type:"map",
+      child:[{houseno:"0001",latlang:"123,343"},{houseno:"0002",latlang:"123,343"},{houseno:"0003",latlang:"123,343"}]
+  },
+  toilet2:{
+    disname:"AAA",
+      color:"Aqua",
+      order:"1",
+      type:"map",
+      child:[{houseno:"0001",latlang:"123,343"},{houseno:"0002",latlang:"123,343"},{houseno:"0003",latlang:"123,343"}]
+  }
+}
+}
+
