@@ -62,7 +62,7 @@ class Component(models.Model):
 
     def __unicode__(self):
         """Returns string representation of object"""
-        return self.type.name
+        return self.metadata.name
 
     class Meta:
         """Metadata for class Component"""
