@@ -4,7 +4,11 @@ from __future__ import unicode_literals
 from django.db import models, migrations
 import picklefield.fields
 import django.contrib.gis.db.models.fields
+from django.core.management import call_command
 
+
+def loadfixture(apps, schema_editor):
+    call_command('loaddata', 'initial_data.json')
 
 class Migration(migrations.Migration):
 
@@ -47,6 +51,7 @@ class Migration(migrations.Migration):
                 ('visible', models.BooleanField()),
                 ('order', models.FloatField()),
                 ('blob', picklefield.fields.PickledObjectField(editable=False)),
+                ('code', models.CharField(max_length=512)),
             ],
             options={
                 'verbose_name': 'Metadata',
@@ -90,4 +95,5 @@ class Migration(migrations.Migration):
             name='slum',
             field=models.ForeignKey(to='master.Slum'),
         ),
+        migrations.RunPython(loadfixture),
     ]
