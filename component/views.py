@@ -1,46 +1,50 @@
 from django.shortcuts import render
-#from pykml import parser
-from .forms import KMLUpload
-from .models import  Component
-from django.views.decorators.csrf import csrf_exempt
-from django.http import HttpResponse, HttpResponseRedirect
+from django.http import HttpResponse
+from django.contrib import messages
+
+from itertools import groupby
 import json
+from .forms import KMLUpload
+from .kmlparser import KMLParser
+from .models import Metadata, Component
+from master.models import Slum
 
 def kml_upload(request):
-	if request.method == 'POST':
-		form = KMLUpload(request.POST or None,request.FILES)
-		if form.is_valid():
-			docFile = request.FILES['kmlfile'].read()
-			root = parser.fromstring(docFile)
-			data ={}
-			for number in range((root.Document.Folder.Placemark.__len__()-1)):
-				description=str(root.Document.Folder.Placemark[number].description)
-				coordinates=str(root.Document.Folder.Placemark[number].MultiGeometry.Polygon.outerBoundaryIs.LinearRing.coordinates)
-				data = {
-					'description' : description ,
-					'coordinates' : coordinates ,
-				}
-		return HttpResponse(json.dumps(data),content_type='application/json')
-	else:
-		form = KMLUpload()
-	return render(request, 'kml_upload.html', {'form': form})
+    if request.method == 'POST':
+        form = KMLUpload(request.POST or None,request.FILES)
+        if form.is_valid():
+            docFile = request.FILES['kml_file'].read()
+            print form.cleaned_data
+            objKML = KMLParser(docFile, form.cleaned_data['slum_name'])
+            messages.success(request,'Form submission successful')
+    else:
+        form = KMLUpload()
+    return render(request, 'kml_upload.html', {'form': form})
 
+def get_component(request, slum_id):
+    slum = Slum.objects.get(pk=slum_id)
+    metadata = Metadata.objects.filter(visible=True).order_by('type')
+    lstcomponent = []
+    for metad in metadata:
+        component = {}
+        component['name'] = metad.name
+        component['level'] = metad.level
+        component['section'] = metad.section.name
+        component['type'] = metad.type
+        component['order'] = metad.order
+        component['blob'] = metad.blob
+        component['child'] = []
+        if metad.type == 'C':
+            for comp in metad.component_set.filter(slum=slum):
+                component['child'].append({'housenumber':comp.housenumber, 'shape':json.loads(comp.shape.json)})
+        lstcomponent.append(component)
 
+    dtcomponent = {}
+    for key, comp in  groupby(lstcomponent, key=lambda x:x['section']):
+        if key not in dtcomponent:
+            dtcomponent[key] = {}
+        for c in comp:
+            dtcomponent[key][c['name']] = c
 
-@csrf_exempt
-def fetchcomponentdata(request,slumid):
-	compo_dict={}
-	compo_main={}
+    return HttpResponse(json.dumps(dtcomponent),content_type='application/json')
 
-	for c in Component.objects.all():
-		compo_dict={}
-		compo_dict["name"]= c.name.compo_name
-		compo_dict["id"]= c.id
-		compo_dict["lat"]= str(c.shape)
-		compo_dict["bgColor"]= c.background_color
-		compo_dict["borderColor"]= c.border_color
-		compo_dict["content"]={}
-		compo_main.update({str(c.name.compo_name) : compo_dict })
-
-
-	return HttpResponse(json.dumps(compo_main),content_type='application/json')
