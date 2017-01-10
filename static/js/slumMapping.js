@@ -465,7 +465,7 @@ function viewIndiaBorder() {
 function compo(slumId)
 {
 	$.ajax({
-			url : '/component/fetchcomponents/'+slumId,
+			url : '/component/get_component/'+slumId,
 			type : "GET",
 			contenttype : "json",
 			success : function(json) {
@@ -598,63 +598,5 @@ function componentfillmap(){
        }
        
   	});
-}
-
-
-
-/*
- lat : 18.484913,
-			lng : 73.785493
-		},
- * */
-
-
-
-
-jsond={
-	
-  general:{
-    household:{
-      disname:"AAA",
-      color:"RED",
-      order:"1",
-      type:"map",
-      child:[{houseno:"0001",latlang:"18.485,73.786"},{houseno:"0002",latlang:"18.487,73.788"},{houseno:"0003",latlang:"18.485,73.786"}]
-    }
-    
-},
-drainage:{
-  drainage10:{
-    disname:"AAA",
-      color:"YELLOW",
-      order:"1",
-      type:"map",
-      child:[{houseno:"0001",latlang:"18.485,73.786"},{houseno:"0002",latlang:"18.487,73.788"},{houseno:"0003",latlang:"18.485,73.786"}]
-  },
-  draainage12:{
-    disname:"AAA",
-      color:"GREEN",
-      order:"1",
-      type:"map",
-      child:[{houseno:"0001",latlang:"123,343"},{houseno:"0002",latlang:"123,343"},{houseno:"0003",latlang:"123,343"}]
-  }
-},
-
-toilet:{
-  toilet1:{
-    disname:"AAA",
-      color:"BLUE",
-      order:"1",
-      type:"map",
-      child:[{houseno:"0001",latlang:"123,343"},{houseno:"0002",latlang:"123,343"},{houseno:"0003",latlang:"123,343"}]
-  },
-  toilet2:{
-    disname:"AAA",
-      color:"Aqua",
-      order:"1",
-      type:"map",
-      child:[{houseno:"0001",latlang:"123,343"},{houseno:"0002",latlang:"123,343"},{houseno:"0003",latlang:"123,343"}]
-  }
-}
 }
 

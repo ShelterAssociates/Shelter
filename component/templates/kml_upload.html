@@ -19,6 +19,27 @@ var electoral_url = "{% url 'electoralWardList' %}";
 var slum_url = "{% url 'slumList' %}";
 var url = "{% url 'modelList' %}";
 </script>
+{% if form.errors %}
+    {% for field in form %}
+        {% for error in field.errors %}
+            <div class="alert alert-danger">
+                <strong>{{ error|escape }}</strong>
+            </div>
+        {% endfor %}
+    {% endfor %}
+    {% for error in form.non_field_errors %}
+        <div class="alert alert-danger">
+            <strong>{{ error|escape }}</strong>
+        </div>
+    {% endfor %}
+{% endif %}
+{% if messages %}
+<ul class="messages">
+    {% for message in messages %}
+    <li{% if message.tags %} class="{{ message.tags }}"{% endif %}>{{ message }}</li>
+    {% endfor %}
+</ul>
+{% endif %}
 <form enctype="multipart/form-data" method="post">
     {% csrf_token %}
 
@@ -28,8 +49,7 @@ var url = "{% url 'modelList' %}";
               <label> City </label>
           </div>
           <div class="col-md-2">
-              <select id="id_City">
-              </select>
+              {{form.City}}
           </div>
       </div>
       <div class="row" id='AdministrativeWards' style="margin-bottom: 20px">
@@ -37,8 +57,7 @@ var url = "{% url 'modelList' %}";
               <label> Administrative Ward </label>
           </div>
           <div class="col-md-2">
-              <select id="id_AdministrativeWard">
-              </select>
+              {{form.AdministrativeWard}}
           </div>
       </div>
       <div class="row" id="ElectoralWards" style="margin-bottom: 20px">
@@ -46,8 +65,7 @@ var url = "{% url 'modelList' %}";
               <label> Electoral Ward </label>
           </div>
           <div class="col-md-2">
-              <select id="id_ElectoralWard">
-              </select>
+              {{form.ElectoralWard}}
           </div>
       </div>
       <div class="row" id="Slums" style="margin-bottom: 20px">
@@ -55,14 +73,8 @@ var url = "{% url 'modelList' %}";
           <label for="id_slum_name"> Slum name </label>
         </div>
         <div class="col-md-2">
-          <select id="id_slum_name">
-          </select>
+          {{form.slum_name}}
         </div>
-      </div>
-
-      <div class="row">
-        <div class="col-md-2"><label>{{form.flag.label_tag}}</label></div>
-        <div class="col-md-2">{{form.flag}}</div>
       </div>
       <div class="row">
         <div class="col-md-2">{{form.kml_file.label_tag}}</div>
