@@ -62,5 +62,6 @@ urlpatterns = [
     url(r'^cityList/$', cityList, name='cityList'),
     url(r'^drainagereportgenerate/$', drainagereportgenerate, name='drainagereportgenerate'),
     url(r'^modelList/$', modelList, name='modelList'),
-    url(r'^familyrportgenerate/$', familyrportgenerate, name='familyrportgenerate')
+    url(r'^familyrportgenerate/$', familyrportgenerate, name='familyrportgenerate'),
+   # url(r'^slummap/component/fetchcomponents', include('component.urls')),
 ]
