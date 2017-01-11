@@ -13,9 +13,12 @@ var url = "/admin/citymapdisplay";
 //var ShapeValue;
 //var shapecount = "";
 var arr = [];
+var chkdata={}
+var markershape={}
+var glob_polygon;
 var removeIndi;
+var chkobj;
 
-//var centerlat;
 
 
 function initMap12() {
@@ -40,19 +43,20 @@ function initMap12() {
 	viewIndiaBorder();
 }
 
-function initMap(obj, zoomlavel) {
+function initMap(obj1, zoomlavel) {
 
 	map = new google.maps.Map(document.getElementById('map12'), {
 
 		zoom : zoomlavel,
 		mapTypeId : 'satellite',
 	});
-	getcordinates(obj);
+	getcordinates(obj1);
 
 }
 
 function loadcity() {
-	$(".overlay").show();
+	
+ 	$(".overlay").show();
 	$.ajax({
 		url : url,
 		type : "GET",
@@ -83,14 +87,17 @@ function loadslum() {
 
 }
 
-function getcordinates(obj) {
-	for (var key in obj) {
+function getcordinates(obj1) {
+	
+	for (var key in obj1) {
 		try {
-			latlongformat(obj[key]['lat'], obj[key]['name'],obj[key]['bgColor'],obj[key]['borderColor']);
+			latlongformat(obj1[key]['lat'], obj1[key]['name'],obj1[key]['bgColor'],obj1[key]['borderColor']);
 		} catch(err) {
-			latlongformat(obj['lat'], obj['name'],obj['bgColor'],obj['borderColor']);
+			latlongformat(obj1['lat'], obj1['name'],obj1['bgColor'],obj1['borderColor']);
+			break;
 		}
 	}
+	
 }
 
 function latlongformat(ShapeValue, shapename , bgcolor , bordercolor) {
@@ -120,7 +127,8 @@ function latlongformat(ShapeValue, shapename , bgcolor , bordercolor) {
     	bordercolor="";
     }
 	var Poly1 = drawPolygon(PolygonPoints,bounds, bgcolor, bordercolor);
-
+    glob_polygon=Poly1;
+    
 	var infoWindowover = new google.maps.InfoWindow;
 	// Events on Polygon
 	google.maps.event.addListener(Poly1, 'mouseover', function(event) {
@@ -135,6 +143,11 @@ function latlongformat(ShapeValue, shapename , bgcolor , bordercolor) {
 	});
     
     var indiWindow=true;
+    
+    /*if (arr.length == 4){
+    	alert("hello");
+    	console.log(obj[arr[0]]["content"][arr[1]]["content"][arr[2]]["content"][arr[3]]['info']);
+    }*/
     
 	google.maps.event.addListener(Poly1, 'click', function(event) {
 		infoWindowover.close();
@@ -162,9 +175,10 @@ function latlongformat(ShapeValue, shapename , bgcolor , bordercolor) {
                 indiWindow=false;
 			}
 			
+			
 
 		} else {
-
+			
 			createMap(shapename, false);
 			
 		}
@@ -289,7 +303,8 @@ function createMap(jsondata, arrRemoveInd) {
 
 	    val = obj[arr[0]]["content"][arr[1]]["content"][arr[2]]["content"][arr[3]]
 		objmap=initMap(val, 16);
-
+        chkobj=val;
+        
     	mydatatable.fnDestroy();
     	$("#datatable").empty();
     	
@@ -350,7 +365,7 @@ function drawPolygon(PolygonPoints,centerlatlang , bgcolor ,bordercolor) {
 	var Poly;
 	var newbgcolor="#FFA3A3";
 	var newbordercolor="#FF0000";
-    var opacity=0.2;
+    var opacity=0.4;
 	if(bgcolor != undefined && bgcolor != ""){
 		newbgcolor=bgcolor;
 	}
@@ -359,9 +374,9 @@ function drawPolygon(PolygonPoints,centerlatlang , bgcolor ,bordercolor) {
 		newbordercolor=bordercolor;
 	}
 	
-	if(arr.length > 2){		
+	/*if(arr.length > 2){		
 		opacity=0.1;
-	}
+	}*/
 	
 	Poly = new google.maps.Polygon({
 		paths : PolygonPoints,
@@ -469,18 +484,19 @@ function compo(slumId)
 			type : "GET",
 			contenttype : "json",
 			success : function(json) {
-				viewcompo(jsond);
+				viewcompo(json);
 			}
 	});
 }
 
+
+var demovar={}
 function viewcompo(dvalue){
 	str="";
 	counter=1;
 	
 	var chkPoly;
-	chkpoly1=[]
-	chkpolydata={}
+	
 	
 	$.each(dvalue, function(k,v){
 		/*
@@ -489,42 +505,74 @@ function viewcompo(dvalue){
         	+'<a name="chk_group" data-toggle="collapse" href="#'+counter+'">'+k+'</a>'
 			+'</input></br>'
 		 * */
-		counter=counter+1; 
+		counter=counter+1;
+		//chkdata[k]={} 
 		str +='<div name="div_group" class=" panel  panel-default panel-heading"> '	
         	+'<a name="chk_group" data-toggle="collapse" href="#'+counter+'">'+k+'</a>'
 			+'</br>'
 			
 		str +='<div id="'+counter+'" class="panel-collapse collapse">'	
+		demovar=v;
 		$.each(v,function(k1,v1){
 			
-			var chkcolor=v1['color'];
-		    chkpolydata[k1]={};
-		        
+			
+			var chkcolor = v1['blob']['polycolor'];
+			var chklinecolor = v1['blob']['linecolor'];
+			var chklinewidth =v1['blob']['linewidth'];
+		    
+		    chkdata[k1]={}    
 			str += '<div name="div_group" >'
 					+'&nbsp;&nbsp;&nbsp;'		     	
-		    		+'<input name="chk1" style="background-color:'+chkcolor+'; -webkit-appearance: none; border: 1px solid black; height: 1.2em; width: 0.8em;"  type="checkbox" value="'+k1+'" onclick="checkSingleGroup(this);" >'
+		    		+'<input name="chk1" style="background-color:'+chkcolor+'; -webkit-appearance: none; border: 1px solid black; height: 1.2em; width: 1.2em;"  type="checkbox" value="'+k1+'" onclick="checkSingleGroup(this);" >'
 		    		+'<a>&nbsp;'+k1+'</a>'
 		    		+'</input>'
 		    		+'</div>'
 		        		
 	    	$.each(v1['child'],function(k2,v2){
-	    		var flightPlanCoordinates = [
-		          {lat: 37.772, lng: -122.214},
-		          {lat: 21.291, lng: -157.821},
-		          {lat: -18.142, lng: 178.431},
-		          {lat: -27.467, lng: 153.027}
-		        ];
-	    	
 	    		
-	    		chkPoly = new google.maps.Polyline({
-					path : flightPlanCoordinates,
-					strokeColor : chkcolor,
-					strokeOpacity : 0.8,
-					strokeWeight : 8
-					//center : centerlatlang.getCenter()
-				 });
-	    				    		
-	    		chkpolydata[k1][v2['houseno']]= chkPoly;
+	    		var house_point=[]
+	    		
+	    		if(v2['shape']['type']=="LineString"){
+	    			$.each(v2['shape']['coordinates'],function(k3, coordinate){	    			
+	    				house_point.push(new google.maps.LatLng(coordinate[1], coordinate[0]));
+	    			});
+	    			
+	    			chkPoly = new google.maps.Polyline({
+						path : house_point,
+						strokeColor : chklinecolor,
+						strokeOpacity : 0.8,
+						strokeWeight : chklinewidth
+						//center : centerlatlang.getCenter()
+				 	});
+	    		
+	    		}else if(v2['shape']['type']=="Point"){
+	    			house_point.push(new google.maps.LatLng(v2['shape']['coordinates'][1], v2['shape']['coordinates'][0]));
+	    			var pinImage = new google.maps.MarkerImage("http://www.googlemapsmarkers.com/v1/"+chklinecolor.substring(1,chklinecolor.length)+"/");
+					
+	    			chkPoly = new google.maps.Marker({
+			          position: {lat : v2['shape']['coordinates'][1], lng : v2['shape']['coordinates'][0] },
+			          icon: pinImage,
+			         
+			        });
+	    			
+	    		}else if(v2['shape']['type']=="Polygon"){
+	    			$.each(v2['shape']['coordinates'][0],function(k3, coordinate){	    			
+	    				house_point.push(new google.maps.LatLng(coordinate[1], coordinate[0]));	    				
+	    			});
+	    			
+	    			chkPoly = new google.maps.Polygon({
+						paths : house_point,
+						strokeColor : chklinecolor,
+						strokeOpacity : 0.7,
+						strokeWeight : chklinewidth,
+						fillColor : chkcolor ,
+						fillOpacity : 0.5
+						//center : house_point.getCenter()
+					});
+	    			
+	    		}
+	    		//chkPoly.setMap(map);
+				chkdata[k1][v2['housenumber']]=chkPoly;
 	    		
 	    	});	
 		});		
@@ -532,9 +580,7 @@ function viewcompo(dvalue){
 		
 	});
 	
-	compochk.html(str) ; 
-	
-	  			                 
+	compochk.html(str) ; 			                 
 		
 }
 
@@ -557,7 +603,7 @@ function checkAll(checkbox_group)
 
 
 function checkSingleGroup(single_checkbox) {	
-	//componentfillmap();
+	componentfillmap();
 }
 
 function componentfillmap(){
@@ -568,33 +614,21 @@ function componentfillmap(){
 	$('input[name=chk1]').each(function () {
       
        if(this.checked==true){
+       	    //glob_polygon.setOptions({fillOpacity : "0.0",fillColor : "#000000"});
+       	    glob_polygon.setMap(null);
 			chkchild = $(this).val();	    
-	       	chkparent = $(this).parent().parent().parent().children().attr("value") ;
-	        jsonv=jsond[chkparent][chkchild]
-	                    
-            jsonv['child'].length
-            
-            var chkcolor=jsonv['color']
-            
-            $(jsonv['child']).each(function(){
-            	household_points=[]
-            	
-            	$(this.latlang).each(function(){            		
-            		household_points.push(new google.maps.LatLng(18.48, 17.78));
-            		household_points.push(new google.maps.LatLng(18.50, 17.98));            		
-            	});
-            	
-            	
-            	Poly = new google.maps.Polyline({
- 						path : household_points,
- 						strokeColor : chkcolor,
- 						strokeOpacity : 0.8,
- 						strokeWeight : 8
- 						//center : centerlatlang.getCenter()
- 					 });
- 				Poly.setMap(map);	 
-            });
-            	
+	       
+	        $.each(chkdata[chkchild],function(k4,v4){
+	        	v4.setMap(map);
+	        });
+	        
+	        
+       }else{
+       	    chkchild = $(this).val();	    
+	       
+	        $.each(chkdata[chkchild],function(k4,v4){
+	        	v4.setMap(null);
+	        }); 
        }
        
   	});
