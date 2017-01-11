@@ -148,7 +148,7 @@
       "display_type":"M",
       "visible":true,
       "order":1.0,
-      "blob":"{\"color\":\"red\"}",
+      "blob":"{\"linecolor\":\"#FFFFFF\"}",
       "code":""
     }
   },
