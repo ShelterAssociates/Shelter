@@ -4,7 +4,6 @@ from django.contrib import messages
 
 from itertools import groupby
 import json
-
 from .forms import KMLUpload
 from .kmlparser import KMLParser
 from .models import Metadata, Component
@@ -48,3 +47,4 @@ def get_component(request, slum_id):
             dtcomponent[key][c['name']] = c
 
     return HttpResponse(json.dumps(dtcomponent),content_type='application/json')
+
