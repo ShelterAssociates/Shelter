@@ -61,7 +61,7 @@ function initMap(obj1, zoomlavel) {
 }
 
 function loadcity() {
-    
+
 	$(".overlay").show();
 	$.ajax({
 		url : url,
@@ -96,7 +96,7 @@ function loadslum() {
 }
 
 function getcordinates(obj1) {
-	
+
 	for (var key in obj1) {
 		try {
 			latlongformat(obj1[key]['lat'], obj1[key]['name'],obj1[key]['bgColor'],obj1[key]['borderColor']);
@@ -105,7 +105,7 @@ function getcordinates(obj1) {
 			break;
 		}
 	}
-	
+
 }
 
 function latlongformat(ShapeValue, shapename , bgcolor , bordercolor) {
@@ -136,7 +136,7 @@ function latlongformat(ShapeValue, shapename , bgcolor , bordercolor) {
     }
 	var Poly1 = drawPolygon(PolygonPoints,bounds, bgcolor, bordercolor);
     glob_polygon=Poly1;
-    
+
 	var infoWindowover = new google.maps.InfoWindow;
 	// Events on Polygon
 	google.maps.event.addListener(Poly1, 'mouseover', function(event) {
@@ -149,17 +149,17 @@ function latlongformat(ShapeValue, shapename , bgcolor , bordercolor) {
 	google.maps.event.addListener(Poly1, 'mouseout', function(event) {
 		infoWindowover.close();
 	});
-    
+
     var indiWindow=true;
-    
+
     /*if (arr.length == 4){
     	alert("hello");
     	console.log(obj[arr[0]]["content"][arr[1]]["content"][arr[2]]["content"][arr[3]]['info']);
     }*/
-    
+
 	google.maps.event.addListener(Poly1, 'click', function(event) {
 		infoWindowover.close();
-		
+
 		if (arr.length == 4) {
 			if (indiWindow == true) {
 				var contentString = '<div id="content" >' +
@@ -174,17 +174,17 @@ function latlongformat(ShapeValue, shapename , bgcolor , bordercolor) {
 				 '</div>'+
 				'<div class="col-md-3" style="margin-left:-20px"><img width="100px" height="120px" src="' + obj[arr[0]]["content"][arr[1]]["content"][arr[2]]["content"][arr[3]]['photo'] +'"></img></div>'+
 				'</div>';
-				
+
 				var infoWindow= new google.maps.InfoWindow({maxWidth: 430});
 				infoWindow.setContent(contentString);
 				infoWindow.setPosition(event.latLng);
 				infoWindow.open(map);
-                
+
                 indiWindow=false;
 			}
 
 		} else {
-			
+
 			createMap(shapename, false);
 		}
 	});
@@ -309,11 +309,11 @@ function createMap(jsondata, arrRemoveInd) {
 	    val = obj[arr[0]]["content"][arr[1]]["content"][arr[2]]["content"][arr[3]]
 		objmap=initMap(val, 18);
         chkobj=val;
-        
+
     	mydatatable.fnDestroy();
     	$("#datatable").empty();
-    	
-    	
+
+
     	compo(val['id']);
 	}
 }
@@ -341,7 +341,7 @@ function setMaplink() {
 
 function getArea(initlink) {
 	removeIndi = "";
-	
+
 	var textelement = (initlink.textContent).toString().trim();
 
 	if(textelement == "Home"){
@@ -378,11 +378,11 @@ function drawPolygon(PolygonPoints,centerlatlang , bgcolor ,bordercolor) {
 	if(bordercolor != undefined && bordercolor != ""){
 		newbordercolor=bordercolor;
 	}
-	
-	/*if(arr.length > 2){		
+
+	/*if(arr.length > 2){
 		opacity=0.1;
 	}*/
-	
+
 	Poly = new google.maps.Polygon({
 		paths : PolygonPoints,
 		strokeColor : newbordercolor,
@@ -492,7 +492,7 @@ function compo(slumId)
 				viewcompo(json);
 			}
 	});
-	
+
 	$.ajax({
 			url : '/component/get_kobo_data/'+slumId,
 			type : "GET",
@@ -501,7 +501,7 @@ function compo(slumId)
 				//viewcompo(json);
 			}
 	});
-	
+
 }
 
 
@@ -509,10 +509,10 @@ var demovar={}
 function viewcompo(dvalue){
 	str="";
 	counter=1;
-	
+
 	var chkPoly;
-	
-	
+
+
 	$.each(dvalue, function(k,v){
 		/*
 		 str +='<div name="div_group" class="panel-group panel  panel-default panel-heading"> '
@@ -521,45 +521,45 @@ function viewcompo(dvalue){
 			+'</input></br>'
 		 * */
 		counter=counter+1;
-		//chkdata[k]={} 
-		str +='<div name="div_group" class=" panel  panel-default panel-heading"> '	
+		//chkdata[k]={}
+		str +='<div name="div_group" class=" panel  panel-default panel-heading"> '
         	+'<a name="chk_group" data-toggle="collapse" href="#'+counter+'">'+k+'</a>'
 			+'</br>'
-			
-		str +='<div id="'+counter+'" class="panel-collapse collapse">'	
-		
+
+		str +='<div id="'+counter+'" class="panel-collapse collapse">'
+
 		/******* code for model ****************/
 		str += '<div name="div_group" >'
-					+'&nbsp;&nbsp;&nbsp;'		     	
+					+'&nbsp;&nbsp;&nbsp;'
 		    		+'<span><a style="cursor:pointer;color:darkred;" selection="'+k+'" onclick="tabularSingleGroup(this);">View Tabular Data</a><span>'
 		    		+'</div>'
 		/********************/
-		
+
 		demovar=v;
 		$.each(v,function(k1,v1){
-			
-			
+
+
 			var chkcolor = v1['blob']['polycolor'];
 			var chklinecolor = v1['blob']['linecolor'];
 			var chklinewidth =v1['blob']['linewidth'];
-		    
-		    chkdata[k1]={}    
+
+		    chkdata[k1]={}
 			str += '<div name="div_group" >'
-					+'&nbsp;&nbsp;&nbsp;'		     	
-		    		+'<input name="chk1" style="background-color:'+chkcolor+'; -webkit-appearance: none; border: 1px solid black; height: 1.2em; width: 1.2em;"  type="checkbox" value="'+k1+'" onclick="checkSingleGroup(this);" >'
+					+'&nbsp;&nbsp;&nbsp;'
+		    		+'<input name="chk1" style="background-color:'+chkcolor+'; -webkit-appearance: none; border: 1px solid black; height: 1.2em; width: 1.2em;" component_type="'+v1['type']+'" type="checkbox" value="'+k1+'" onclick="checkSingleGroup(this);" >'
 		    		+'<a>&nbsp;'+k1+'</a>'
 		    		+'</input>'
 		    		+'</div>'
-		        		
+		    if(v1['type'] == 'C'){
 	    	$.each(v1['child'],function(k2,v2){
-	    		
+
 	    		var house_point=[]
-	    		
+
 	    		if(v2['shape']['type']=="LineString"){
-	    			$.each(v2['shape']['coordinates'],function(k3, coordinate){	    			
+	    			$.each(v2['shape']['coordinates'],function(k3, coordinate){
 	    				house_point.push(new google.maps.LatLng(coordinate[1], coordinate[0]));
 	    			});
-	    			
+
 	    			chkPoly = new google.maps.Polyline({
 						path : house_point,
 						strokeColor : chklinecolor,
@@ -567,22 +567,22 @@ function viewcompo(dvalue){
 						strokeWeight : chklinewidth
 						//center : centerlatlang.getCenter()
 				 	});
-	    		
+
 	    		}else if(v2['shape']['type']=="Point"){
 	    			house_point.push(new google.maps.LatLng(v2['shape']['coordinates'][1], v2['shape']['coordinates'][0]));
 	    			var pinImage = new google.maps.MarkerImage("http://www.googlemapsmarkers.com/v1/"+chklinecolor.substring(1,chklinecolor.length)+"/");
-					
+
 	    			chkPoly = new google.maps.Marker({
 			          position: {lat : v2['shape']['coordinates'][1], lng : v2['shape']['coordinates'][0] },
 			          icon: pinImage,
-			         
+
 			        });
-	    			
+
 	    		}else if(v2['shape']['type']=="Polygon"){
-	    			$.each(v2['shape']['coordinates'][0],function(k3, coordinate){	    			
-	    				house_point.push(new google.maps.LatLng(coordinate[1], coordinate[0]));	    				
+	    			$.each(v2['shape']['coordinates'][0],function(k3, coordinate){
+	    				house_point.push(new google.maps.LatLng(coordinate[1], coordinate[0]));
 	    			});
-	    			
+
 	    			chkPoly = new google.maps.Polygon({
 						paths : house_point,
 						strokeColor : chklinecolor,
@@ -592,31 +592,32 @@ function viewcompo(dvalue){
 						fillOpacity : 0.5
 						//center : house_point.getCenter()
 					});
-	    			
+
 	    		}
 	    		//chkPoly.setMap(map);
 				chkdata[k1][v2['housenumber']]=chkPoly;
-	    		
-	    	});	
-		});		
+
+	    	});
+			}
+		});
 		str +='</div></div>' ;
-		
+
 	});
-	
-	compochk.html(str) ; 			                 
-		
+
+	compochk.html(str) ;
+
 }
 
 
 
 function checkAll(checkbox_group)
 {
-	
+
 	checktoggle = checkbox_group.checked;
 	var checkboxes = new Array();
-	divParent = checkbox_group.parentElement	    			
+	divParent = checkbox_group.parentElement
 	checkboxes = divParent.getElementsByTagName('input')
-	
+
     for (var i=0; i<checkboxes.length; i++)  {
         if (checkboxes[i].type == 'checkbox')   {
           checkboxes[i].checked = checktoggle;
@@ -625,38 +626,38 @@ function checkAll(checkbox_group)
 }
 
 
-function checkSingleGroup(single_checkbox) {	
+function checkSingleGroup(single_checkbox) {
 	componentfillmap();
 }
 
 function componentfillmap(){
 	chkchild="";
 	chkparent="";
-	
+
 	$('input[name=chk1]').each(function () {
-      
+
        if(this.checked==true){
        	    //glob_polygon.setOptions({fillOpacity : "0.0",fillColor : "#000000"});
        	    glob_polygon.setMap(null);
-			chkchild = $(this).val();	    
-	       
+			chkchild = $(this).val();
+
 	        $.each(chkdata[chkchild],function(k4,v4){
 	        	v4.setMap(map);
 	        });
-	        
+
        }else{
-       	    chkchild = $(this).val();	    
-	       
+       	    chkchild = $(this).val();
+
 	        $.each(chkdata[chkchild],function(k4,v4){
 	        	v4.setMap(null);
-	        }); 
+	        });
        }
-       
+
   	});
 }
 
 function tabularSingleGroup(single_model){
-	
+
 	mk = $(single_model).attr('selection');
 	alert(modelsection[mk]);
 	/*$.each(modelsection,function(mk,mv){
@@ -664,19 +665,17 @@ function tabularSingleGroup(single_model){
 			console.log("select section :  "+mv);
 		}
 	});*/
-	
+
 	var modelheader = $("#modelheader");
 	var modelbody = $("#modelbody");
 	var chkstr="";
-	
+
 	chkstr +='<h4 id="modelheader" class="modal-title">'+mk+'</h4>';
 	modelheader.html(chkstr);
 	chkstr="";
 	//chkstr += '<table><tr><td>1<td><td>my name</td></tr><tr><td>2<td><td>my name123</td></tr></table>'
 	modelbody.html(chkstr);
-	
+
 	chkmodel.modal('show');
 
 }
-
-

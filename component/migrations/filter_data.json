@@ -1,0 +1,280 @@
+[
+  {
+    "pk":7,
+    "model":"component.Section",
+    "fields":{
+      "name":"Sponsor",
+      "order":7.0
+    }
+  },
+  {
+    "pk":17,
+    "model": "component.Metadata",
+    "fields":{
+      "name":"Own toilet",
+      "section":2,
+      "level":"H",
+      "type":"F",
+      "display_type":"M",
+      "visible":true,
+      "order":3.0,
+      "blob":"{\"linecolor\":\"#b2f780\", \"linewidth\":2, \"polycolor\":\"#b2f780\"}",
+      "code":"group_ye18c77/group_yw8pj39/Current_place_of_defecation_toilet:01"
+    }
+  },
+  {
+    "pk":18,
+    "model": "component.Metadata",
+    "fields":{
+      "name":"SBM (own) toilet",
+      "section":2,
+      "level":"H",
+      "type":"F",
+      "display_type":"M",
+      "visible":true,
+      "order":4.0,
+      "blob":"{\"linecolor\":\"#f3f780\", \"linewidth\":2, \"polycolor\":\"#f3f780\"}",
+      "code":"group_ye18c77/group_yw8pj39/Current_place_of_defecation_toilet:02"
+    }
+  },
+  {
+    "pk":19,
+    "model": "component.Metadata",
+    "fields":{
+      "name":"Community toilet block (CTB)",
+      "section":2,
+      "level":"H",
+      "type":"F",
+      "display_type":"M",
+      "visible":true,
+      "order":5.0,
+      "blob":"{\"linecolor\":\"#ea2727\", \"linewidth\":2, \"polycolor\":\"#ea2727\"}",
+      "code":"group_ye18c77/group_yw8pj39/Current_place_of_defecation_toilet:03"
+    }
+  },
+  {
+    "pk":20,
+    "model": "component.Metadata",
+    "fields":{
+      "name":"Shared toilet",
+      "section":2,
+      "level":"H",
+      "type":"F",
+      "display_type":"M",
+      "visible":true,
+      "order":6.0,
+      "blob":"{\"linecolor\":\"#27e7ea\", \"linewidth\":2, \"polycolor\":\"#27e7ea\"}",
+      "code":"group_ye18c77/group_yw8pj39/Current_place_of_defecation_toilet:04"
+    }
+  },
+  {
+    "pk":21,
+    "model": "component.Metadata",
+    "fields":{
+      "name":"Public toilet outside slum",
+      "section":2,
+      "level":"H",
+      "type":"F",
+      "display_type":"M",
+      "visible":true,
+      "order":7.0,
+      "blob":"{\"linecolor\":\"#da27ea\", \"linewidth\":2, \"polycolor\":\"#da27ea\"}",
+      "code":"group_ye18c77/group_yw8pj39/Current_place_of_defecation_toilet:05"
+    }
+  },
+  {
+    "pk":23,
+    "model": "component.Metadata",
+    "fields":{
+      "name":"Interested in individual toilet",
+      "section":2,
+      "level":"H",
+      "type":"F",
+      "display_type":"M",
+      "visible":true,
+      "order":9.0,
+      "blob":"{\"linecolor\":\"#bdf780\", \"linewidth\":2, \"polycolor\":\"#bdf780\"}",
+      "code":"group_ye18c77/group_yw8pj39/Are_you_interested_in_individu:01"
+    }
+  },
+  {
+    "pk":24,
+    "model": "component.Metadata",
+    "fields":{
+      "name":"Not interested in individual toilet",
+      "section":2,
+      "level":"H",
+      "type":"F",
+      "display_type":"M",
+      "visible":true,
+      "order":10.0,
+      "blob":"{\"linecolor\":\"#f78086\", \"linewidth\":2, \"polycolor\":\"#f78086\"}",
+      "code":"group_ye18c77/group_yw8pj39/Are_you_interested_in_individu:02"
+    }
+  },
+  {
+    "pk":25,
+    "model": "component.Metadata",
+    "fields":{
+      "name":"Own house",
+      "section":1,
+      "level":"H",
+      "type":"F",
+      "display_type":"M",
+      "visible":true,
+      "order":2.0,
+      "blob":"{\"linecolor\":\"#d580f7\", \"linewidth\":2, \"polycolor\":\"#d580f7\"}",
+      "code":"group_ye18c77/group_yw8pj39/what_is_the_ownership_status_of_the_house:01"
+    }
+  },
+  {
+    "pk":26,
+    "model": "component.Metadata",
+    "fields":{
+      "name":"Tenant",
+      "section":1,
+      "level":"H",
+      "type":"F",
+      "display_type":"M",
+      "visible":true,
+      "order":3.0,
+      "blob":"{\"linecolor\":\"#f1f780\", \"linewidth\":2, \"polycolor\":\"#f1f780\"}",
+      "code":"group_ye18c77/group_yw8pj39/what_is_the_ownership_status_of_the_house:02"
+    }
+  },
+  {
+    "pk":27,
+    "model": "component.Metadata",
+    "fields":{
+      "name":"Individual water connection",
+      "section":4,
+      "level":"H",
+      "type":"F",
+      "display_type":"M",
+      "visible":true,
+      "order":2.0,
+      "blob":"{\"linecolor\":\"#f78880\", \"linewidth\":2, \"polycolor\":\"#f78880\"}",
+      "code":"group_ye18c77/group_yw8pj39/type_of_water_connection:01"
+    }
+  },
+  {
+    "pk":28,
+    "model": "component.Metadata",
+    "fields":{
+      "name":"Shared connection",
+      "section":4,
+      "level":"H",
+      "type":"F",
+      "display_type":"M",
+      "visible":true,
+      "order":3.0,
+      "blob":"{\"linecolor\":\"#f7db80\", \"linewidth\":2, \"polycolor\":\"#f7db80\"}",
+      "code":"group_ye18c77/group_yw8pj39/type_of_water_connection:02"
+    }
+  },
+  {
+    "pk":29,
+    "model": "component.Metadata",
+    "fields":{
+      "name":"Water stand-posts",
+      "section":4,
+      "level":"H",
+      "type":"F",
+      "display_type":"M",
+      "visible":true,
+      "order":4.0,
+      "blob":"{\"linecolor\":\"#8096f7\", \"linewidth\":2, \"polycolor\":\"#8096f7\"}",
+      "code":"group_ye18c77/group_yw8pj39/type_of_water_connection:03"
+    }
+  },
+  {
+    "pk":30,
+    "model": "component.Metadata",
+    "fields":{
+      "name":"Handpump",
+      "section":4,
+      "level":"H",
+      "type":"F",
+      "display_type":"M",
+      "visible":true,
+      "order":5.0,
+      "blob":"{\"linecolor\":\"#a2f780\", \"linewidth\":2, \"polycolor\":\"#a2f780\"}",
+      "code":"group_ye18c77/group_yw8pj39/type_of_water_connection:04"
+    }
+  },
+  {
+    "pk":31,
+    "model": "component.Metadata",
+    "fields":{
+      "name":"Water tanker",
+      "section":4,
+      "level":"H",
+      "type":"F",
+      "display_type":"M",
+      "visible":true,
+      "order":6.0,
+      "blob":"{\"linecolor\":\"#f78086\", \"linewidth\":2, \"polycolor\":\"#f78086\"}",
+      "code":"group_ye18c77/group_yw8pj39/type_of_water_connection:05"
+    }
+  },
+  {
+    "pk":32,
+    "model": "component.Metadata",
+    "fields":{
+      "name":"Well",
+      "section":4,
+      "level":"H",
+      "type":"F",
+      "display_type":"M",
+      "visible":true,
+      "order":7.0,
+      "blob":"{\"linecolor\":\"#b280f7\", \"linewidth\":2, \"polycolor\":\"#b280f7\"}",
+      "code":"group_ye18c77/group_yw8pj39/type_of_water_connection:06"
+    }
+  },
+  {
+    "pk":33,
+    "model": "component.Metadata",
+    "fields":{
+      "name":"Alfa Laval",
+      "section":7,
+      "level":"H",
+      "type":"F",
+      "display_type":"M",
+      "visible":true,
+      "order":1.0,
+      "blob":"{\"linecolor\":\"#b8cef2\", \"linewidth\":2, \"polycolor\":\"#b8cef2\"}",
+      "code":""
+    }
+  },
+  {
+    "pk":34,
+    "model": "component.Metadata",
+    "fields":{
+      "name":"BAML",
+      "section":7,
+      "level":"H",
+      "type":"F",
+      "display_type":"M",
+      "visible":true,
+      "order":2.0,
+      "blob":"{\"linecolor\":\"#80f7f1\", \"linewidth\":2, \"polycolor\":\"#80f7f1\"}",
+      "code":""
+    }
+  },
+  {
+    "pk":35,
+    "model": "component.Metadata",
+    "fields":{
+      "name":"Indostar",
+      "section":7,
+      "level":"H",
+      "type":"F",
+      "display_type":"M",
+      "visible":true,
+      "order":3.0,
+      "blob":"{\"linecolor\":\"#f780f5\", \"linewidth\":2, \"polycolor\":\"#f780f5\"}",
+      "code":""
+    }
+  }
+]
