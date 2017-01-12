@@ -2,16 +2,13 @@ import json
 import urllib2
 from django.conf import settings
 
-def get_household_analysis_data(survey_id, slum_code):
+def get_household_analysis_data(slum_code, fields):
     '''Gets the kobotoolbox RHS data for selected questions
     '''
     household_field = 'group_ce0hf58/house_no'
-    #List of fields required for analysis
-    fields = { 'group_ye18c77/group_yw8pj39/type_of_water_connection': 'type_of_water',
-                'group_ye18c77/group_yw8pj39/facility_of_waste_collection': 'facility_of_waste'}
 
     #Setting up API call and header data
-    url = settings.KOBOCAT_FORM_URL + 'data/'+ survey_id +'?query={"group_ce0hf58/slum_name":"'+slum_code+'"}&fields="'+ str(fields.keys() + [household_field] )+ '"'
+    url = settings.KOBOCAT_FORM_URL + 'data/'+ settings.KOBOCAT_RHS_SURVEY +'?query={"group_ce0hf58/slum_name":"'+slum_code+'"}&fields="'+ str(fields + [household_field] )+ '"'
 
     kobotoolbox_request = urllib2.Request(url)
     kobotoolbox_request.add_header('User-agent', 'Mozilla 5.10')
@@ -26,12 +23,14 @@ def get_household_analysis_data(survey_id, slum_code):
     #Process received data
     for record in records:
         household_no = record[household_field]
-        for key, field in fields.items():
-            data = record[key]
-            for val in data.split():
-                if field not in output:
-                    output[field] = {}
-                if data not in output[field]:
-                    output[field][data]=[]
-                output[field][data].append(household_no)
+        for field in fields:
+            if field != "":
+                data = record[field]
+                for val in data.split():
+                    if field not in output:
+                        output[field] = {}
+                    if data not in output[field]:
+                        output[field][data]=[]
+                    if household_no not in output[field][data]:
+                        output[field][data].append(household_no)
     return output
