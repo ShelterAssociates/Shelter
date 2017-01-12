@@ -24,7 +24,8 @@ def get_household_analysis_data(slum_code, fields):
     for record in records:
         household_no = record[household_field]
         for field in fields:
-            if field != "":
+            if field != "" and field in record:
+
                 data = record[field]
                 for val in data.split():
                     if field not in output:
