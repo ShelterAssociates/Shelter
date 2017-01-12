@@ -8,6 +8,7 @@ var wdofficer;
 var wdaddress;
 var wdhead;
 var compochk;
+var chkmodel;
 var url = "/admin/citymapdisplay";
 
 //var ShapeValue;
@@ -18,6 +19,7 @@ var markershape={}
 var glob_polygon;
 var removeIndi;
 var chkobj;
+var modelsection;
 
 
 
@@ -37,10 +39,14 @@ function initMap12() {
 	wdaddress = $("#wdaddress");
 	wdofficer = $("#wdofficer");
 	wdhead = $("#wdhead");
-	compochk=$("#compochk")
+	compochk=$("#compochk");
+	chkmodel=$("#myModal");
 
 	loadcity();
 	viewIndiaBorder();
+	modelsection={ "General information":"General","Toilet information":"Toilet","Water information":"Water",
+	              "Waste management information":"Waste","Drainage information":"Drainage",
+	              "Road & access information":"Road","Gutter information":"Gutter" }
 }
 
 function initMap(obj1, zoomlavel) {
@@ -55,8 +61,8 @@ function initMap(obj1, zoomlavel) {
 }
 
 function loadcity() {
-	
- 	$(".overlay").show();
+    
+	$(".overlay").show();
 	$.ajax({
 		url : url,
 		type : "GET",
@@ -68,6 +74,8 @@ function loadcity() {
 		}
 	});
 }
+
+
 function loadslum() {
 	var arr_slum_url = [];
 	//$(".overlay").show();
@@ -174,13 +182,10 @@ function latlongformat(ShapeValue, shapename , bgcolor , bordercolor) {
                 
                 indiWindow=false;
 			}
-			
-			
 
 		} else {
 			
 			createMap(shapename, false);
-			
 		}
 	});
 }
@@ -302,7 +307,7 @@ function createMap(jsondata, arrRemoveInd) {
 		wdofficer.html('');
 
 	    val = obj[arr[0]]["content"][arr[1]]["content"][arr[2]]["content"][arr[3]]
-		objmap=initMap(val, 16);
+		objmap=initMap(val, 18);
         chkobj=val;
         
     	mydatatable.fnDestroy();
@@ -487,6 +492,16 @@ function compo(slumId)
 				viewcompo(json);
 			}
 	});
+	
+	$.ajax({
+			url : '/component/get_kobo_data/'+slumId,
+			type : "GET",
+			contenttype : "json",
+			success : function(json) {
+				//viewcompo(json);
+			}
+	});
+	
 }
 
 
@@ -512,6 +527,14 @@ function viewcompo(dvalue){
 			+'</br>'
 			
 		str +='<div id="'+counter+'" class="panel-collapse collapse">'	
+		
+		/******* code for model ****************/
+		str += '<div name="div_group" >'
+					+'&nbsp;&nbsp;&nbsp;'		     	
+		    		+'<span><a style="cursor:pointer;color:darkred;" selection="'+k+'" onclick="tabularSingleGroup(this);">View Tabular Data</a><span>'
+		    		+'</div>'
+		/********************/
+		
 		demovar=v;
 		$.each(v,function(k1,v1){
 			
@@ -610,7 +633,6 @@ function componentfillmap(){
 	chkchild="";
 	chkparent="";
 	
-	
 	$('input[name=chk1]').each(function () {
       
        if(this.checked==true){
@@ -622,7 +644,6 @@ function componentfillmap(){
 	        	v4.setMap(map);
 	        });
 	        
-	        
        }else{
        	    chkchild = $(this).val();	    
 	       
@@ -633,4 +654,29 @@ function componentfillmap(){
        
   	});
 }
+
+function tabularSingleGroup(single_model){
+	
+	mk = $(single_model).attr('selection');
+	alert(modelsection[mk]);
+	/*$.each(modelsection,function(mk,mv){
+		if(mk==modelsel){
+			console.log("select section :  "+mv);
+		}
+	});*/
+	
+	var modelheader = $("#modelheader");
+	var modelbody = $("#modelbody");
+	var chkstr="";
+	
+	chkstr +='<h4 id="modelheader" class="modal-title">'+mk+'</h4>';
+	modelheader.html(chkstr);
+	chkstr="";
+	//chkstr += '<table><tr><td>1<td><td>my name</td></tr><tr><td>2<td><td>my name123</td></tr></table>'
+	modelbody.html(chkstr);
+	
+	chkmodel.modal('show');
+
+}
+
 
