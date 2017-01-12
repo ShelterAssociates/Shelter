@@ -9,6 +9,7 @@ from django.conf import settings
 
 from itertools import groupby
 import json
+from collections import OrderedDict
 from kobotoolbox import get_household_analysis_data
 
 from .forms import KMLUpload
@@ -32,7 +33,7 @@ def kml_upload(request):
 #@user_passes_test(lambda u: u.is_superuser)
 def get_component(request, slum_id):
     slum = get_object_or_404(Slum, pk=slum_id)
-    metadata = Metadata.objects.filter(visible=True).order_by('type')
+    metadata = Metadata.objects.filter(visible=True)
     rhs_analysis = {}
     try:
         #Fetch RHS data from kobotoolbox
@@ -48,6 +49,7 @@ def get_component(request, slum_id):
         component['name'] = metad.name
         component['level'] = metad.level
         component['section'] = metad.section.name
+        component['section_order'] = metad.section.order
         component['type'] = metad.type
         component['order'] = metad.order
         component['blob'] = metad.blob
@@ -65,14 +67,13 @@ def get_component(request, slum_id):
                     component['child'] = settings.SPONSOR[metad.name]
         if len(component['child']) > 0:
             lstcomponent.append(component)
-
-    dtcomponent = {}
+    lstcomponent = sorted(lstcomponent, key=lambda x:x['section_order'])
+    dtcomponent = OrderedDict()
     for key, comp in  groupby(lstcomponent, key=lambda x:x['section']):
         if key not in dtcomponent:
             dtcomponent[key] = {}
         for c in comp:
             dtcomponent[key][c['name']] = c
-
     return HttpResponse(json.dumps(dtcomponent),content_type='application/json')
 
 def get_kobo_data(request, slum_id):
