@@ -74,3 +74,6 @@ def get_component(request, slum_id):
             dtcomponent[key][c['name']] = c
 
     return HttpResponse(json.dumps(dtcomponent),content_type='application/json')
+
+def get_kobo_data(request, slum_id):
+   pass
