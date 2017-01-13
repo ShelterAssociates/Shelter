@@ -10,7 +10,7 @@ from django.conf import settings
 from itertools import groupby
 import json
 from collections import OrderedDict
-from kobotoolbox import get_household_analysis_data
+from kobotoolbox import get_household_analysis_data,get_kobo_FF_list,get_kobo_RIM_detail
 
 from .forms import KMLUpload
 from .kmlparser import KMLParser
@@ -33,7 +33,7 @@ def kml_upload(request):
 #@user_passes_test(lambda u: u.is_superuser)
 def get_component(request, slum_id):
     slum = get_object_or_404(Slum, pk=slum_id)
-    metadata = Metadata.objects.filter(visible=True)
+    metadata = Metadata.objects.filter(visible=True).order_by('section__order','order')
     rhs_analysis = {}
     try:
         #Fetch RHS data from kobotoolbox
@@ -66,21 +66,34 @@ def get_component(request, slum_id):
                 if metad.name in settings.SPONSOR and slum_id == '288':
                     component['child'] = settings.SPONSOR[metad.name]
         if len(component['child']) > 0:
+            component['count']=len(component['child'])
             lstcomponent.append(component)
     #lstcomponent = sorted(lstcomponent, key=lambda x:x['section_order'])
     dtcomponent = OrderedDict()
     for key, comp in  groupby(lstcomponent, key=lambda x:x['section']):
         if key not in dtcomponent:
-            dtcomponent[key] = {}
+            dtcomponent[key] = OrderedDict()
         for c in comp:
             dtcomponent[key][c['name']] = c
     return HttpResponse(json.dumps(dtcomponent),content_type='application/json')
 
-def get_kobo_FF_data(request, slum_id):
-   pass
+def get_kobo_FF_data(request, slum_id,house_num):
+     print "#####################################"
+     print slum_id,house_num
+     slum = get_object_or_404(Slum, pk=slum_id)
+     print slum
+     output = get_kobo_FF_list(slum.shelter_slum_code,house_num)
+     print output
+     return HttpResponse(json.dumps(output),content_type='application/json')
 
 
-def get_kobo_data(request, slum_id):
-   pass
+def get_kobo_RIM_data(request, slum_id):
+    
+    slum = get_object_or_404(Slum, pk=slum_id)
+    print slum
+    output = get_kobo_RIM_detail(slum.shelter_slum_code)
+    print output
+    return HttpResponse(json.dumps(output),content_type='application/json')
+
 
 
