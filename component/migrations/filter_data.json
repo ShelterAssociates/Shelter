@@ -18,7 +18,7 @@
       "display_type":"M",
       "visible":true,
       "order":3.0,
-      "blob":"{\"linecolor\":\"#b2f780\", \"linewidth\":2, \"polycolor\":\"#b2f780\"}",
+      "blob":"{\"linecolor\":\"#FFF200\", \"linewidth\":2, \"polycolor\":\"#FFF200\"}",
       "code":"group_ye18c77/group_yw8pj39/Current_place_of_defecation_toilet:01"
     }
   },
@@ -41,7 +41,7 @@
     "pk":19,
     "model": "component.Metadata",
     "fields":{
-      "name":"Community toilet block (CTB)",
+      "name":"Were using Community toilet block",
       "section":2,
       "level":"H",
       "type":"F",
@@ -108,7 +108,7 @@
       "display_type":"M",
       "visible":true,
       "order":10.0,
-      "blob":"{\"linecolor\":\"#f78086\", \"linewidth\":2, \"polycolor\":\"#f78086\"}",
+      "blob":"{\"linecolor\":\"#00A7E4\", \"linewidth\":2, \"polycolor\":\"#00A7E4\"}",
       "code":"group_ye18c77/group_yw8pj39/Are_you_interested_in_individu:02"
     }
   },
@@ -123,7 +123,7 @@
       "display_type":"M",
       "visible":true,
       "order":2.0,
-      "blob":"{\"linecolor\":\"#d580f7\", \"linewidth\":2, \"polycolor\":\"#d580f7\"}",
+      "blob":"{\"linecolor\":\"#B2E71D\", \"linewidth\":2, \"polycolor\":\"#B2E71D\"}",
       "code":"group_ye18c77/group_yw8pj39/what_is_the_ownership_status_of_the_house:01"
     }
   },
@@ -138,7 +138,7 @@
       "display_type":"M",
       "visible":true,
       "order":3.0,
-      "blob":"{\"linecolor\":\"#f1f780\", \"linewidth\":2, \"polycolor\":\"#f1f780\"}",
+      "blob":"{\"linecolor\":\"#27AF4B\", \"linewidth\":2, \"polycolor\":\"#27AF4B\"}",
       "code":"group_ye18c77/group_yw8pj39/what_is_the_ownership_status_of_the_house:02"
     }
   },
@@ -153,7 +153,7 @@
       "display_type":"M",
       "visible":true,
       "order":2.0,
-      "blob":"{\"linecolor\":\"#f78880\", \"linewidth\":2, \"polycolor\":\"#f78880\"}",
+      "blob":"{\"linecolor\":\"#03FD06\", \"linewidth\":2, \"polycolor\":\"#03FD06\"}",
       "code":"group_ye18c77/group_yw8pj39/type_of_water_connection:01"
     }
   },
@@ -168,7 +168,7 @@
       "display_type":"M",
       "visible":true,
       "order":3.0,
-      "blob":"{\"linecolor\":\"#f7db80\", \"linewidth\":2, \"polycolor\":\"#f7db80\"}",
+      "blob":"{\"linecolor\":\"#FCF400\", \"linewidth\":2, \"polycolor\":\"#FCF400\"}",
       "code":"group_ye18c77/group_yw8pj39/type_of_water_connection:02"
     }
   },
@@ -183,7 +183,7 @@
       "display_type":"M",
       "visible":true,
       "order":4.0,
-      "blob":"{\"linecolor\":\"#8096f7\", \"linewidth\":2, \"polycolor\":\"#8096f7\"}",
+      "blob":"{\"linecolor\":\"#3C49CB\", \"linewidth\":2, \"polycolor\":\"#3C49CB\"}",
       "code":"group_ye18c77/group_yw8pj39/type_of_water_connection:03"
     }
   },
@@ -242,8 +242,8 @@
       "type":"F",
       "display_type":"M",
       "visible":true,
-      "order":1.0,
-      "blob":"{\"linecolor\":\"#b8cef2\", \"linewidth\":2, \"polycolor\":\"#b8cef2\"}",
+      "order":2.0,
+      "blob":"{\"linecolor\":\"#2AAD50\", \"linewidth\":2, \"polycolor\":\"#2AAD50\"}",
       "code":""
     }
   },
@@ -257,7 +257,7 @@
       "type":"F",
       "display_type":"M",
       "visible":true,
-      "order":2.0,
+      "order":3.0,
       "blob":"{\"linecolor\":\"#80f7f1\", \"linewidth\":2, \"polycolor\":\"#80f7f1\"}",
       "code":""
     }
@@ -272,8 +272,23 @@
       "type":"F",
       "display_type":"M",
       "visible":true,
-      "order":3.0,
-      "blob":"{\"linecolor\":\"#f780f5\", \"linewidth\":2, \"polycolor\":\"#f780f5\"}",
+      "order":4.0,
+      "blob":"{\"linecolor\":\"#FF7E2B\", \"linewidth\":2, \"polycolor\":\"#FF7E2B\"}",
+      "code":""
+    }
+  },
+  {
+    "pk":36,
+    "model": "component.Metadata",
+    "fields":{
+      "name":"Facilitated by Shelter",
+      "section":7,
+      "level":"H",
+      "type":"F",
+      "display_type":"M",
+      "visible":true,
+      "order":1.0,
+      "blob":"{\"linecolor\":\"#FCF400\", \"linewidth\":2, \"polycolor\":\"#FCF400\"}",
       "code":""
     }
   }
