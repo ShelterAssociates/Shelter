@@ -37,12 +37,12 @@ def get_component(request, slum_id):
     rhs_analysis = {}
     try:
         #Fetch RHS data from kobotoolbox
-        fields_code = metadata.filter(type='F').values_list('code')
+        fields_code = metadata.filter(type='F').exclude(code="").values_list('code')
         fields = map(lambda x: x[0].split(':')[0],set(fields_code))
         rhs_analysis = get_household_analysis_data(slum.shelter_slum_code, fields)
     except:
         pass
-    print rhs_analysis
+    
     lstcomponent = []
     for metad in metadata:
         component = {}
@@ -67,7 +67,7 @@ def get_component(request, slum_id):
                     component['child'] = settings.SPONSOR[metad.name]
         if len(component['child']) > 0:
             lstcomponent.append(component)
-    lstcomponent = sorted(lstcomponent, key=lambda x:x['section_order'])
+    #lstcomponent = sorted(lstcomponent, key=lambda x:x['section_order'])
     dtcomponent = OrderedDict()
     for key, comp in  groupby(lstcomponent, key=lambda x:x['section']):
         if key not in dtcomponent:

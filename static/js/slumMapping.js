@@ -20,7 +20,7 @@ var glob_polygon;
 var removeIndi;
 var chkobj;
 var modelsection;
-
+var global_component_info;
 
 
 function initMap12() {
@@ -489,6 +489,7 @@ function compo(slumId)
 			type : "GET",
 			contenttype : "json",
 			success : function(json) {
+				global_component_info = json;
 				viewcompo(json);
 			}
 	});
@@ -546,7 +547,7 @@ function viewcompo(dvalue){
 		    chkdata[k1]={}
 			str += '<div name="div_group" >'
 					+'&nbsp;&nbsp;&nbsp;'
-		    		+'<input name="chk1" style="background-color:'+chkcolor+'; -webkit-appearance: none; border: 1px solid black; height: 1.2em; width: 1.2em;" component_type="'+v1['type']+'" type="checkbox" value="'+k1+'" onclick="checkSingleGroup(this);" >'
+		    		+'<input name="chk1" style="background-color:'+chkcolor+'; -webkit-appearance: none; border: 1px solid black; height: 1.2em; width: 1.2em;" selection="'+k+'" component_type="'+v1['type']+'" type="checkbox" value="'+k1+'" onclick="checkSingleGroup(this);" >'
 		    		+'<a>&nbsp;'+k1+'</a>'
 		    		+'</input>'
 		    		+'</div>'
@@ -600,19 +601,15 @@ function viewcompo(dvalue){
 	    	});
 			}
 		});
-		str +='</div></div>' ;
+		str +='</div></div>';
 
 	});
 
-	compochk.html(str) ;
-
+	compochk.html(str);
 }
-
-
 
 function checkAll(checkbox_group)
 {
-
 	checktoggle = checkbox_group.checked;
 	var checkboxes = new Array();
 	divParent = checkbox_group.parentElement
@@ -625,41 +622,52 @@ function checkAll(checkbox_group)
     }
 }
 
-
 function checkSingleGroup(single_checkbox) {
-	componentfillmap();
-}
-
-function componentfillmap(){
-	chkchild="";
-	chkparent="";
-
-	$('input[name=chk1]').each(function () {
-
-       if(this.checked==true){
-       	    //glob_polygon.setOptions({fillOpacity : "0.0",fillColor : "#000000"});
-       	    glob_polygon.setMap(null);
-			chkchild = $(this).val();
-
-	        $.each(chkdata[chkchild],function(k4,v4){
-	        	v4.setMap(map);
-	        });
-
-       }else{
-       	    chkchild = $(this).val();
-
-	        $.each(chkdata[chkchild],function(k4,v4){
-	        	v4.setMap(null);
-	        });
-       }
-
-  	});
+	//componentfillmap();
+	var chkchild = $(single_checkbox).val();
+	var section = $(single_checkbox).attr('selection');
+	var component_type = $(single_checkbox).attr('component_type');
+	//glob_polygon.setOptions({fillOpacity : "0.0",fillColor : "#000000"});
+	glob_polygon.setMap(null);
+	if (component_type == "C"){
+		 $.each(chkdata[chkchild],function(k4,v4){
+			 if($(single_checkbox).is(':checked')){
+				 v4.setMap(map);
+			 }
+			 else{
+				 v4.setMap(null);
+			 }
+		 });
+ 	}
+	else{
+		if($(single_checkbox).is(':checked')){
+			component_checked = global_component_info[section][chkchild];
+			$.each(component_checked['child'], function(index, house){
+				  var fillColor = component_checked['blob']['polycolor'];
+					var strokeColor = component_checked['blob']['linecolor'];
+					chkdata["Houses"][house].setMap(map);
+					chkdata["Houses"][house].setOptions({fillOpacity : "0.8",fillColor : fillColor,strokeColor:strokeColor});
+			});
+		}
+		else{
+			component_checked = global_component_info[section][chkchild];
+			component_houses = global_component_info['General information']['Houses'];
+			$.each(component_checked['child'], function(index, house){
+				var fillColor = component_houses['blob']['polycolor'];
+				var strokeColor = component_houses['blob']['linecolor'];
+				chkdata["Houses"][house].setOptions({fillOpacity : "0.8",fillColor : fillColor, strokeColor:strokeColor});
+				if(!$('input[name=chk1][value=Houses]').is(':checked')){
+					chkdata["Houses"][house].setMap(null);
+				}
+			});
+		}
+	}
 }
 
 function tabularSingleGroup(single_model){
 
 	mk = $(single_model).attr('selection');
-	alert(modelsection[mk]);
+	//alert(modelsection[mk]);
 	/*$.each(modelsection,function(mk,mv){
 		if(mk==modelsel){
 			console.log("select section :  "+mv);
