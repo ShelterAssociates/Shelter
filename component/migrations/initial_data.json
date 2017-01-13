@@ -66,7 +66,7 @@
     "pk":2,
     "model": "component.Metadata",
     "fields":{
-      "name":"Community toilet blocks (CTBs)",
+      "name":"Community toilet blocks",
       "section":2,
       "level":"H",
       "type":"C",
@@ -178,7 +178,7 @@
       "display_type":"M",
       "visible":true,
       "order":3.0,
-      "blob":"{\"linecolor\":\"#ff1182\", \"linewidth\":4, \"polycolor\":\"#ff1182\"}",
+      "blob":"{\"linecolor\":\"#1DB44D\", \"linewidth\":4, \"polycolor\":\"#1DB44D\"}",
       "code":""
     }
   },
