@@ -21,7 +21,7 @@ var removeIndi;
 var chkobj;
 var modelsection;
 var global_component_info;
-
+var global_slum_id;
 
 function initMap12() {
 
@@ -169,7 +169,7 @@ function latlongformat(ShapeValue, shapename , bgcolor , bordercolor) {
 				'<div class="col-md-9">'+
 				 '<p>' + obj[arr[0]]["content"][arr[1]]["content"][arr[2]]["content"][arr[3]]['info'] +'</p> ';
 				 if(obj[arr[0]]["content"][arr[1]]["content"][arr[2]]["content"][arr[3]]['factsheet']){
-				 	contentString += '<p><a href="' + obj[arr[0]]["content"][arr[1]]["content"][arr[2]]["content"][arr[3]]['factsheet'] +'">Factsheet</a></p>' ;
+				 	contentString += '<p><a target="blank" href="' + obj[arr[0]]["content"][arr[1]]["content"][arr[2]]["content"][arr[3]]['factsheet'] +'">Factsheet</a></p>' ;
 				 }
 				 '</div>'+
 				'<div class="col-md-3" style="margin-left:-20px"><img width="100px" height="120px" src="' + obj[arr[0]]["content"][arr[1]]["content"][arr[2]]["content"][arr[3]]['photo'] +'"></img></div>'+
@@ -313,8 +313,8 @@ function createMap(jsondata, arrRemoveInd) {
     	mydatatable.fnDestroy();
     	$("#datatable").empty();
 
-
-    	compo(val['id']);
+        global_slum_id=val['id']
+    	compo(global_slum_id);
 	}
 }
 
@@ -493,16 +493,17 @@ function compo(slumId)
 				viewcompo(json);
 			}
 	});
-
 	$.ajax({
-			url : '/component/get_kobo_data/'+slumId,
+			url : '/component/get_kobo_RIM_data/'+slumId,
 			type : "GET",
 			contenttype : "json",
 			success : function(json) {
-				//viewcompo(json);
+				global_RIM=json;
+				
 			}
 	});
 
+	
 }
 
 
@@ -528,14 +529,15 @@ function viewcompo(dvalue){
 			+'</br>'
 
 		str +='<div id="'+counter+'" class="panel-collapse collapse">'
-
-		/******* code for model ****************/
-		str += '<div name="div_group" >'
-					+'&nbsp;&nbsp;&nbsp;'
-		    		+'<span><a style="cursor:pointer;color:darkred;" selection="'+k+'" onclick="tabularSingleGroup(this);">View Tabular Data</a><span>'
-		    		+'</div>'
-		/********************/
-
+		
+		if(k != "Sponsor"){
+			/******* code for model ****************/
+			str += '<div name="div_group" >'
+						+'&nbsp;&nbsp;&nbsp;'
+			    		+'<span><a style="cursor:pointer;color:darkred;" selection="'+k+'" onclick="tabularSingleGroup(this);">View Tabular Data</a><span>'
+			    		+'</div>'
+			/********************/
+		}
 		demovar=v;
 		$.each(v,function(k1,v1){
 
@@ -548,7 +550,7 @@ function viewcompo(dvalue){
 			str += '<div name="div_group" >'
 					+'&nbsp;&nbsp;&nbsp;'
 		    		+'<input name="chk1" style="background-color:'+chkcolor+'; -webkit-appearance: none; border: 1px solid black; height: 1.2em; width: 1.2em;" selection="'+k+'" component_type="'+v1['type']+'" type="checkbox" value="'+k1+'" onclick="checkSingleGroup(this);" >'
-		    		+'<a>&nbsp;'+k1+'</a>'
+		    		+'<a>&nbsp;'+k1+'</a>(&nbsp;'+v1['count']+')'
 		    		+'</input>'
 		    		+'</div>'
 		    if(v1['type'] == 'C'){
@@ -571,8 +573,16 @@ function viewcompo(dvalue){
 
 	    		}else if(v2['shape']['type']=="Point"){
 	    			house_point.push(new google.maps.LatLng(v2['shape']['coordinates'][1], v2['shape']['coordinates'][0]));
-	    			var pinImage = new google.maps.MarkerImage("http://www.googlemapsmarkers.com/v1/"+chklinecolor.substring(1,chklinecolor.length)+"/");
-
+	    			
+	    			var pinImage;
+	    			if(k1=="Manholes"){
+						pinImage = {path: google.maps.SymbolPath.CIRCLE, scale: 3,fillColor:chklinecolor,strokeColor:chklinecolor }
+	    				
+	    			}else{
+	    				pinImage = new google.maps.MarkerImage("http://www.googlemapsmarkers.com/v1/"+chklinecolor.substring(1,chklinecolor.length)+"/");
+	
+	    			}
+	    			
 	    			chkPoly = new google.maps.Marker({
 			          position: {lat : v2['shape']['coordinates'][1], lng : v2['shape']['coordinates'][0] },
 			          icon: pinImage,
@@ -621,7 +631,7 @@ function checkAll(checkbox_group)
         }
     }
 }
-
+var lst_sponsor=[];
 function checkSingleGroup(single_checkbox) {
 	//componentfillmap();
 	var chkchild = $(single_checkbox).val();
@@ -647,6 +657,38 @@ function checkSingleGroup(single_checkbox) {
 					var strokeColor = component_checked['blob']['linecolor'];
 					chkdata["Houses"][house].setMap(map);
 					chkdata["Houses"][house].setOptions({fillOpacity : "0.8",fillColor : fillColor,strokeColor:strokeColor});
+
+					if (section=="Sponsor" ){
+						//var sponsorinfo=new google.maps.InfoWindow({content:""});
+						google.maps.event.addListener(chkdata["Houses"][house], 'click', function(event) {
+							$.each(lst_sponsor,function(k,v){
+								v.close();
+							});
+							lst_sponsor=[];
+							var sponsorinfo= new google.maps.InfoWindow({maxWidth: 430,minWidth:100,minHeight:100});
+							sponsorinfo.setContent('<div class="overlay" style="display: block;"><div id="loading-img"></div></div>');
+							sponsorinfo.setPosition(event.latLng);
+							sponsorinfo.open(map);
+							$.ajax({
+									url : '/component/get_kobo_FF_data/'+global_slum_id+'/'+house,
+									type : "GET",
+									contenttype : "json",
+									success : function(json) {
+										
+										var spstr="";
+										spstr += '<table class="table table-striped" style="font-size: 10px;"><tbody>';
+										spstr +='<tr><td colspan="2"><a href="/media/ambedkarnagar/'+house+'_Ambedkar Nagar_Bibvewadi_Pune_2016.pdf" style="cursor:pointer;color:darkred;" target="blank">View Factsheet</a></td></tr>';
+										$.each(json,function(k,v){
+											spstr +='<tr><td>'+k+'</td><td>'+v+'</td></tr>';
+										});
+										spstr +='</tbody></table>';
+										sponsorinfo.setContent(spstr);
+										lst_sponsor.push(sponsorinfo);
+									}
+							});
+
+						});
+					}
 			});
 		}
 		else{
@@ -658,6 +700,10 @@ function checkSingleGroup(single_checkbox) {
 				chkdata["Houses"][house].setOptions({fillOpacity : "0.8",fillColor : fillColor, strokeColor:strokeColor});
 				if(!$('input[name=chk1][value=Houses]').is(':checked')){
 					chkdata["Houses"][house].setMap(null);
+				}
+				
+				if (section=="Sponsor"){
+					google.maps.event.clearIntanceListeners(chkdata["Houses"][house]);
 				}
 			});
 		}
@@ -681,8 +727,16 @@ function tabularSingleGroup(single_model){
 	chkstr +='<h4 id="modelheader" class="modal-title">'+mk+'</h4>';
 	modelheader.html(chkstr);
 	chkstr="";
+	var spstr="";
+	json=global_RIM[modelsection[mk]];
+	spstr += '<table class="table table-striped" style="font-size: 10px;"><tbody>';
+	//spstr +='<tr><td colspan="2"><a href="/media/ambedkarnagar/'+house+'_Ambedkar Nagar_Bibvewadi_Pune_2016.pdf" style="cursor:pointer;color:darkred;" target="blank">View Factsheet</a></td></tr>';
+	$.each(json,function(k,v){
+		spstr +='<tr><td>'+k+'</td><td>'+v+'</td></tr>';
+	});
+	spstr +='</tbody></table>';
 	//chkstr += '<table><tr><td>1<td><td>my name</td></tr><tr><td>2<td><td>my name123</td></tr></table>'
-	modelbody.html(chkstr);
+	modelbody.html(spstr);
 
 	chkmodel.modal('show');
 
