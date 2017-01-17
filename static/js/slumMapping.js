@@ -728,13 +728,23 @@ function tabularSingleGroup(single_model){
 	modelheader.html(chkstr);
 	chkstr="";
 	var spstr="";
+	var commentstr="";
 	json=global_RIM[modelsection[mk]];
 	spstr += '<table class="table table-striped" style="font-size: 10px;"><tbody>';
 	//spstr +='<tr><td colspan="2"><a href="/media/ambedkarnagar/'+house+'_Ambedkar Nagar_Bibvewadi_Pune_2016.pdf" style="cursor:pointer;color:darkred;" target="blank">View Factsheet</a></td></tr>';
+	
+	console.log(json);
+	
 	$.each(json,function(k,v){
-		spstr +='<tr><td>'+k+'</td><td>'+v+'</td></tr>';
+		
+		if(k.indexOf("comment")!=-1 || k.indexOf("Describe")!=-1){
+			commentstr +='<tr><td  colspan=2><label style="font-weight:bold;">'+k+': </label> '+v+'</td></tr>';
+			
+		}else{
+			spstr +='<tr><td style="font-weight:bold;width:200px;">'+k+'</td><td>'+v+'</td></tr>';	
+		}
 	});
-	spstr +='</tbody></table>';
+	spstr += commentstr + '</tbody></table>';
 	//chkstr += '<table><tr><td>1<td><td>my name</td></tr><tr><td>2<td><td>my name123</td></tr></table>'
 	modelbody.html(spstr);
 
