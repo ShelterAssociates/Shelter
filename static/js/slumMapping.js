@@ -499,14 +499,14 @@ function compo(slumId)
 			contenttype : "json",
 			success : function(json) {
 				global_RIM=json;
-				
+
 			}
 	});
 
-	
+
 }
 
-
+var lst_sponsor=[];
 var demovar={}
 function viewcompo(dvalue){
 	str="";
@@ -529,7 +529,7 @@ function viewcompo(dvalue){
 			+'</br>'
 
 		str +='<div id="'+counter+'" class="panel-collapse collapse">'
-		
+
 		if(k != "Sponsor"){
 			/******* code for model ****************/
 			str += '<div name="div_group" >'
@@ -573,16 +573,16 @@ function viewcompo(dvalue){
 
 	    		}else if(v2['shape']['type']=="Point"){
 	    			house_point.push(new google.maps.LatLng(v2['shape']['coordinates'][1], v2['shape']['coordinates'][0]));
-	    			
+
 	    			var pinImage;
 	    			if(k1=="Manholes"){
 						pinImage = {path: google.maps.SymbolPath.CIRCLE, scale: 3,fillColor:chklinecolor,strokeColor:chklinecolor }
-	    				
+
 	    			}else{
 	    				pinImage = new google.maps.MarkerImage("http://www.googlemapsmarkers.com/v1/"+chklinecolor.substring(1,chklinecolor.length)+"/");
-	
+
 	    			}
-	    			
+
 	    			chkPoly = new google.maps.Marker({
 			          position: {lat : v2['shape']['coordinates'][1], lng : v2['shape']['coordinates'][0] },
 			          icon: pinImage,
@@ -600,7 +600,8 @@ function viewcompo(dvalue){
 						strokeOpacity : 0.7,
 						strokeWeight : chklinewidth,
 						fillColor : chkcolor ,
-						fillOpacity : 0.5
+						fillOpacity : 0.5,
+						zIndex:-1
 						//center : house_point.getCenter()
 					});
 
@@ -609,6 +610,19 @@ function viewcompo(dvalue){
 				chkdata[k1][v2['housenumber']]=chkPoly;
 
 	    	});
+			}
+			else{
+				$.each(v1['child'],function(k2,v2){
+
+					if(chkdata["Houses"][v2] != undefined){
+						var poly_house = $.extend(true, {}, chkdata["Houses"][v2]);
+						var chkcolor = v1['blob']['polycolor'];
+						var chklinecolor = v1['blob']['linecolor'];
+						var chklinewidth =v1['blob']['linewidth'];
+						poly_house.setOptions({fillOpacity : 0.6, strokeOpacity : 0.8, fillColor : chkcolor, strokeColor:chklinecolor});
+						chkdata[k1][v2]=poly_house;
+					}
+				});
 			}
 		});
 		str +='</div></div>';
@@ -631,95 +645,65 @@ function checkAll(checkbox_group)
         }
     }
 }
-var lst_sponsor=[];
+
+var zindex = 0;
 function checkSingleGroup(single_checkbox) {
 	//componentfillmap();
 	var chkchild = $(single_checkbox).val();
 	var section = $(single_checkbox).attr('selection');
 	var component_type = $(single_checkbox).attr('component_type');
-	//glob_polygon.setOptions({fillOpacity : "0.0",fillColor : "#000000"});
 	glob_polygon.setMap(null);
-	if (component_type == "C"){
+	if($(single_checkbox).is(':checked')){
+		 zindex++;
 		 $.each(chkdata[chkchild],function(k4,v4){
-			 if($(single_checkbox).is(':checked')){
 				 v4.setMap(map);
-			 }
-			 else{
-				 v4.setMap(null);
-			 }
+				 v4.set("zIndex", zindex );
+				 if (section=="Sponsor" ){
+		 			//var sponsorinfo=new google.maps.InfoWindow({content:""});
+		 			google.maps.event.addListener(v4, 'click', function(event) {
+		 				$.each(lst_sponsor,function(k,v){
+		 					v.close();
+		 				});
+		 				lst_sponsor=[];
+		 				var sponsorinfo= new google.maps.InfoWindow({maxWidth: 430,minWidth:100,minHeight:100});
+		 				sponsorinfo.setContent('<div class="overlay" style="display: block;"><div id="loading-img"></div></div>');
+		 				sponsorinfo.setPosition(event.latLng);
+		 				sponsorinfo.open(map);
+		 				$.ajax({
+		 						url : '/component/get_kobo_FF_data/'+global_slum_id+'/'+k4,
+		 						type : "GET",
+		 						contenttype : "json",
+		 						success : function(json) {
+
+		 							var spstr="";
+		 							spstr += '<table class="table table-striped" style="font-size: 10px;"><tbody>';
+		 							spstr +='<tr><td colspan="2"><a href="/media/ambedkarnagar/'+k4+'_Ambedkar Nagar_Bibvewadi_Pune_2016.pdf" style="cursor:pointer;color:darkred;" target="blank">View Factsheet</a></td></tr>';
+		 							$.each(json,function(k,v){
+		 								spstr +='<tr><td>'+k+'</td><td>'+v+'</td></tr>';
+		 							});
+		 							spstr +='</tbody></table>';
+		 							sponsorinfo.setContent(spstr);
+		 							lst_sponsor.push(sponsorinfo);
+		 						}
+		 				});
+
+		 			});
+		 		}
 		 });
- 	}
-	else{
-		if($(single_checkbox).is(':checked')){
-			component_checked = global_component_info[section][chkchild];
-			$.each(component_checked['child'], function(index, house){
-				  var fillColor = component_checked['blob']['polycolor'];
-					var strokeColor = component_checked['blob']['linecolor'];
-					chkdata["Houses"][house].setMap(map);
-					chkdata["Houses"][house].setOptions({fillOpacity : "0.8",fillColor : fillColor,strokeColor:strokeColor});
-
-					if (section=="Sponsor" ){
-						//var sponsorinfo=new google.maps.InfoWindow({content:""});
-						google.maps.event.addListener(chkdata["Houses"][house], 'click', function(event) {
-							$.each(lst_sponsor,function(k,v){
-								v.close();
-							});
-							lst_sponsor=[];
-							var sponsorinfo= new google.maps.InfoWindow({maxWidth: 430,minWidth:100,minHeight:100});
-							sponsorinfo.setContent('<div class="overlay" style="display: block;"><div id="loading-img"></div></div>');
-							sponsorinfo.setPosition(event.latLng);
-							sponsorinfo.open(map);
-							$.ajax({
-									url : '/component/get_kobo_FF_data/'+global_slum_id+'/'+house,
-									type : "GET",
-									contenttype : "json",
-									success : function(json) {
-										
-										var spstr="";
-										spstr += '<table class="table table-striped" style="font-size: 10px;"><tbody>';
-										spstr +='<tr><td colspan="2"><a href="/media/ambedkarnagar/'+house+'_Ambedkar Nagar_Bibvewadi_Pune_2016.pdf" style="cursor:pointer;color:darkred;" target="blank">View Factsheet</a></td></tr>';
-										$.each(json,function(k,v){
-											spstr +='<tr><td>'+k+'</td><td>'+v+'</td></tr>';
-										});
-										spstr +='</tbody></table>';
-										sponsorinfo.setContent(spstr);
-										lst_sponsor.push(sponsorinfo);
-									}
-							});
-
-						});
-					}
-			});
-		}
-		else{
-			component_checked = global_component_info[section][chkchild];
-			component_houses = global_component_info['General information']['Houses'];
-			$.each(component_checked['child'], function(index, house){
-				var fillColor = component_houses['blob']['polycolor'];
-				var strokeColor = component_houses['blob']['linecolor'];
-				chkdata["Houses"][house].setOptions({fillOpacity : "0.8",fillColor : fillColor, strokeColor:strokeColor});
-				if(!$('input[name=chk1][value=Houses]').is(':checked')){
-					chkdata["Houses"][house].setMap(null);
-				}
-				
-				if (section=="Sponsor"){
-					google.maps.event.clearIntanceListeners(chkdata["Houses"][house]);
-				}
-			});
-		}
-	}
+	 }
+	 else{
+		 $.each(chkdata[chkchild],function(k4,v4){
+			 	 v4.set("zIndex", null);
+				 //v4.setZIndex(null);
+				 v4.setMap(null);
+		 });
+		 zindex--;
+	 }
 }
 
 function tabularSingleGroup(single_model){
 
 	mk = $(single_model).attr('selection');
-	//alert(modelsection[mk]);
-	/*$.each(modelsection,function(mk,mv){
-		if(mk==modelsel){
-			console.log("select section :  "+mv);
-		}
-	});*/
-
 	var modelheader = $("#modelheader");
 	var modelbody = $("#modelbody");
 	var chkstr="";
