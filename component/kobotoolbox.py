@@ -2,6 +2,7 @@ import json
 import urllib2
 from django.conf import settings
 import copy
+from collections import OrderedDict
 
 def get_household_analysis_data(slum_code, fields):
     '''Gets the kobotoolbox RHS data for selected questions
@@ -42,9 +43,9 @@ def get_kobo_FF_list(slum_code,house_number):
     # url="http://kc.shelter-associates.org/api/v1/forms?format=json"
     """Method which fetches the KoboCat ID's and URL's from the Kobo Toolbox API"""
     
-    print slum_code,house_number
+    #print slum_code,house_number
     temp_arr={}
-    output={}
+    output=OrderedDict()
     try:
         url = settings.KOBOCAT_FORM_URL+'data/'+settings.KOBOCAT_FF_SURVEY+'?query={"group_vq77l17/slum_name":"'+slum_code+'","group_vq77l17/Household_number":"'+house_number+'"}'
     
@@ -69,7 +70,7 @@ def get_kobo_FF_list(slum_code,house_number):
     content1 = resp1.read()
     data1 = json.loads(content1)
     values=dictdata(data1)
-    print temp_arr
+    #print temp_arr
     ans=""
     for k1,v1 in temp_arr.items():
         if 'group' in k1:
@@ -91,7 +92,7 @@ def get_kobo_FF_list(slum_code,house_number):
 
         if ans != "":
             output[maindata['label']]= ans
-    print ("output " , output)
+    #print ("output " , output)
     return output
 
 
@@ -104,15 +105,15 @@ def get_kobo_RIM_detail(slum_code):
     content = resp.read()
     data = json.loads(content)
     #print data
-    temp_arr = {}
-    temp_arr['General']={}
-    temp_arr['Toilet']={}
-    temp_arr['Water']={}
-    temp_arr['Waste']={}
-    temp_arr['Drainage']={}
-    temp_arr['Gutter']={}
-    temp_arr['Road']={}    
-    output={}
+    temp_arr = OrderedDict()
+    temp_arr['General']=OrderedDict()
+    temp_arr['Toilet']=OrderedDict()
+    temp_arr['Water']=OrderedDict()
+    temp_arr['Waste']=OrderedDict()
+    temp_arr['Drainage']=OrderedDict()
+    temp_arr['Gutter']=OrderedDict()
+    temp_arr['Road']=OrderedDict()
+    output=OrderedDict()
     
     RIM_GENERAL="group_zl6oo94"
     RIM_TOILET="group_te3dx03"
@@ -171,7 +172,9 @@ def get_kobo_RIM_detail(slum_code):
                         que= maindata['label']
                     elif 'repeat' in maindata['type']:
                         que=[]
+                     
                         for val1 in v1:
+                            print val1
                             que_dict={}
                             for kn1,vn1 in val1.items():
                                 arr_kn1=kn1.split('/')
@@ -180,8 +183,18 @@ def get_kobo_RIM_detail(slum_code):
                                     for vall in vn1.split(): 
                                         ans+=str(maindata['children'][arr_kn1[len(arr_kn1)-1]]['children'][vall]['label']) +', '
                                     vn1 = ans[:-2]
-                                    que_dict[maindata['children'][arr_kn1[len(arr_kn1)-1]]['label']]= vn1   
+                                    que_dict[maindata['children'][arr_kn1[len(arr_kn1)-1]]['label']]= vn1
+                                else:
+                                    que_dict[maindata['children'][arr_kn1[len(arr_kn1)-1]]['label']]= vn1
+                                   
                             que.append(que_dict) 
+                        
+                        '''keylist=v1[0].keys()
+                        print keylist
+                        print "************************************"
+                        final = dict ((k,', '.join(map(lambda d: d[k], v1)))for k in keylist) 
+                        print final
+                        print "#######################################################" '''
                     else:
                         ans=v1    
                         que= maindata['label']
@@ -192,7 +205,7 @@ def get_kobo_RIM_detail(slum_code):
                 except:
                     ans=""
                     pass
-    print output  
+    #print output  
     return output
 
 
