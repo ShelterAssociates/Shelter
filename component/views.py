@@ -18,19 +18,19 @@ from .models import Metadata, Component
 from master.models import Slum
 
 #@staff_member_required
+@user_passes_test(lambda u: u.is_superuser)
 def kml_upload(request):
     if request.method == 'POST':
         form = KMLUpload(request.POST or None,request.FILES)
         if form.is_valid():
             docFile = request.FILES['kml_file'].read()
-            print form.cleaned_data
             objKML = KMLParser(docFile, form.cleaned_data['slum_name'])
             messages.success(request,'Form submission successful')
     else:
         form = KMLUpload()
     return render(request, 'kml_upload.html', {'form': form})
 
-#@user_passes_test(lambda u: u.is_superuser)
+@user_passes_test(lambda u: u.is_superuser)
 def get_component(request, slum_id):
     slum = get_object_or_404(Slum, pk=slum_id)
     metadata = Metadata.objects.filter(visible=True).order_by('section__order','order')
@@ -77,22 +77,17 @@ def get_component(request, slum_id):
             dtcomponent[key][c['name']] = c
     return HttpResponse(json.dumps(dtcomponent),content_type='application/json')
 
+@user_passes_test(lambda u: u.is_superuser)
 def get_kobo_FF_data(request, slum_id,house_num):
-     print "#####################################"
-     print slum_id,house_num
      slum = get_object_or_404(Slum, pk=slum_id)
-     print slum
      output = get_kobo_FF_list(slum.shelter_slum_code,house_num)
-     print output
      return HttpResponse(json.dumps(output),content_type='application/json')
 
-
+@user_passes_test(lambda u: u.is_superuser)
 def get_kobo_RIM_data(request, slum_id):
     
     slum = get_object_or_404(Slum, pk=slum_id)
-    print slum
     output = get_kobo_RIM_detail(slum.shelter_slum_code)
-    print output
     return HttpResponse(json.dumps(output),content_type='application/json')
 
 
