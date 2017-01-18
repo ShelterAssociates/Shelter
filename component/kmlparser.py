@@ -3,9 +3,9 @@ from .models import Component, Metadata
 from master.models import Slum
 from django.contrib.gis.geos import GEOSGeometry
 
-POINT = ['GarbageBins', 'OpenGarbage', 'Manhole', 'WaterStandPost', 'Chambers']
-POLYGON = ['OpenDefecationArea', 'Community Toilet Block', 'Houses']
-LINESTRING = ['TarRoad', 'Coba', 'Farshi', 'Kutcha', 'Drainage Line 18inch', 'Drainage Line 12inch', 'Drainage Line 10inch', 'Drainage Line 24inch']
+POINT = ['garbagebins', 'opengarbage', 'manholes', 'waterstandpost', 'chambers']
+POLYGON = ['opendefecationarea', 'communitytoiletblock', 'houses']
+LINESTRING = ['tarroad', 'coba', 'farshi', 'kutcha', 'drainageline18inch', 'drainageline12inch', 'drainageline10inch', 'drainageline24inch']
 
 class KMLParser(object):
     ''' KML file parser to fetch component data and shape
@@ -19,11 +19,11 @@ class KMLParser(object):
         'LineString': LINESTRING
     }
     #Database constants for adding components
-    metadata_component = {  'Houses' : 1, 'Community Toilet Block': 2, 'OpenDefecationArea': 3,
-                            'GarbageBins': 4, 'OpenGarbage': 5, 'TarRoad': 6,
-                            'Manhole': 7, 'Drainage Line 10inch' :8,'Drainage Line 12inch' :9,
-                            'Drainage Line 18inch':10, 'Coba': 11, 'Farshi':12, 'WaterStandPost':13,
-                            'Drainage Line 24inch':14, 'Chambers':15, 'Kutcha':16
+    metadata_component = {  'houses' : 1, 'communitytoiletblock': 2, 'opendefecationarea': 3,
+                            'garbagebins': 4, 'opengarbage': 5, 'tarroad': 6,
+                            'manholes': 7, 'drainageline10inch' :8,'drainageline12inch' :9,
+                            'drainageline18inch':10, 'coba': 11, 'farshi':12, 'waterstandpost':13,
+                            'drainageline24inch':14, 'chambers':15, 'kutcha':16
                             }
 
     def __init__(self, docFile, slum):
@@ -80,7 +80,8 @@ class KMLParser(object):
             folders = self.root.Folder.Document.Folder
         for folder in folders:
             shape = self.KML_SHAPE.items()[0][0]
-            kml_name = str(folder.name).split(' (')[0]
+            kml_name = str(folder.name).split('(')[0]
+            kml_name = kml_name.replace(' ','').lower()
             for key, val in self.KML_SHAPE.items():
                 if kml_name in val:
                     shape = key
