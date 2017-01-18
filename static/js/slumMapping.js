@@ -668,7 +668,7 @@ function checkSingleGroup(single_checkbox) {
 
 							var spstr = "";
 							spstr += '<table class="table table-striped" style="font-size: 10px;"><tbody>';
-							spstr += '<tr><td colspan="2"><a href="/media/ambedkarnagar/' + k4 + '_Ambedkar Nagar_Bibvewadi_Pune_2016.pdf" style="cursor:pointer;color:darkred;" target="blank">View Factsheet</a></td></tr>';
+							spstr += '<tr><td colspan="2"><a href="/media/report/' + k4 + '_'+arr[3].replace(/ /g,"_").replace(/,/g,"_")+'.pdf" style="cursor:pointer;color:darkred;" target="blank">View Factsheet</a></td></tr>';
 							$.each(json, function(k, v) {
 								spstr += '<tr><td>' + k + '</td><td>' + v + '</td></tr>';
 							});
