@@ -42,7 +42,7 @@ def get_component(request, slum_id):
         rhs_analysis = get_household_analysis_data(slum.shelter_slum_code, fields)
     except:
         pass
-    
+
     lstcomponent = []
     for metad in metadata:
         component = {}
@@ -63,8 +63,8 @@ def get_component(request, slum_id):
                 if field[0] in rhs_analysis and field[1] in rhs_analysis[field[0]]:
                     component['child'] = rhs_analysis[field[0]][field[1]]
             else:
-                if metad.name in settings.SPONSOR and slum_id == '288':
-                    component['child'] = settings.SPONSOR[metad.name]
+                if slum_id + '_'+ metad.name in settings.SPONSOR:
+                    component['child'] = settings.SPONSOR[slum_id + '_' + metad.name]
         if len(component['child']) > 0:
             component['count']=len(component['child'])
             lstcomponent.append(component)
@@ -85,10 +85,7 @@ def get_kobo_FF_data(request, slum_id,house_num):
 
 @user_passes_test(lambda u: u.is_superuser)
 def get_kobo_RIM_data(request, slum_id):
-    
+
     slum = get_object_or_404(Slum, pk=slum_id)
     output = get_kobo_RIM_detail(slum.shelter_slum_code)
     return HttpResponse(json.dumps(output),content_type='application/json')
-
-
-
