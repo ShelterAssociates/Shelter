@@ -82,13 +82,15 @@ class KMLParser(object):
             shape = self.KML_SHAPE.items()[0][0]
             kml_name = str(folder.name).split('(')[0]
             kml_name = kml_name.replace(' ','').lower()
-            for key, val in self.KML_SHAPE.items():
-                if kml_name in val:
-                    shape = key
-            self.component_data = []
-            for pm in folder.Placemark:
-                #Fetch household number from extended data
-                (household_no, coordinates) = self.component_latlong(pm, shape)
-                self.component_data.append({'house_no':household_no, 'coordinates':coordinates})
+            
+	    if kml_name in self.metadata_component.keys():
+	    	for key, val in self.KML_SHAPE.items():
+                    if kml_name in val:
+                    	shape = key
+            	self.component_data = []
+            	for pm in folder.Placemark:
+                    #Fetch household number from extended data
+                    (household_no, coordinates) = self.component_latlong(pm, shape)
+                    self.component_data.append({'house_no':household_no, 'coordinates':coordinates})
 
-            self.bulk_update_or_create(shape, self.metadata_component[kml_name])
+            	self.bulk_update_or_create(shape, self.metadata_component[kml_name])
