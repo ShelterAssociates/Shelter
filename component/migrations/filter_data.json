@@ -291,5 +291,20 @@
       "blob":"{\"linecolor\":\"#FCF400\", \"linewidth\":2, \"polycolor\":\"#FCF400\"}",
       "code":""
     }
+  },
+  {
+    "pk":37,
+    "model": "component.Metadata",
+    "fields":{
+      "name":"Paving Block",
+      "section":5,
+      "level":"H",
+      "type":"C",
+      "display_type":"M",
+      "visible":true,
+      "order":5.0,
+      "blob":"{\"linecolor\":\"#ff00eb\", \"linewidth\":2, \"polycolor\":\"#ff00eb\"}",
+      "code":""
+    }
   }
 ]

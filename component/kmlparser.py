@@ -5,7 +5,7 @@ from django.contrib.gis.geos import GEOSGeometry
 
 POINT = ['garbagebins', 'opengarbage', 'manholes', 'waterstandpost', 'chambers']
 POLYGON = ['opendefecationarea', 'communitytoiletblock', 'houses']
-LINESTRING = ['tarroad', 'coba', 'farshi', 'kutcha', 'drainageline18inch', 'drainageline12inch', 'drainageline10inch', 'drainageline24inch']
+LINESTRING = ['tarroad', 'coba', 'farshi', 'kutcha', 'drainageline18inch', 'drainageline12inch', 'drainageline10inch', 'drainageline24inch', 'pavingblock']
 
 class KMLParser(object):
     ''' KML file parser to fetch component data and shape
@@ -23,7 +23,7 @@ class KMLParser(object):
                             'garbagebins': 4, 'opengarbage': 5, 'tarroad': 6,
                             'manholes': 7, 'drainageline10inch' :8,'drainageline12inch' :9,
                             'drainageline18inch':10, 'coba': 11, 'farshi':12, 'waterstandpost':13,
-                            'drainageline24inch':14, 'chambers':15, 'kutcha':16
+                            'drainageline24inch':14, 'chambers':15, 'kutcha':16, 'pavingblock':37
                             }
 
     def __init__(self, docFile, slum):
@@ -82,7 +82,7 @@ class KMLParser(object):
             shape = self.KML_SHAPE.items()[0][0]
             kml_name = str(folder.name).split('(')[0]
             kml_name = kml_name.replace(' ','').lower()
-            
+
 	    if kml_name in self.metadata_component.keys():
 	    	for key, val in self.KML_SHAPE.items():
                     if kml_name in val:
