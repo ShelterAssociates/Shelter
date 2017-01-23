@@ -22,6 +22,7 @@ admin.autodiscover()
 
 urlpatterns = [
     url(r'^admin/', include('master.urls')),
+    url(r'^component/', include('component.urls')),
 ] + static(settings.STATIC_URL, document_root=settings.STATIC_ROOT) + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 
 

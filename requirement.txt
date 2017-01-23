@@ -15,3 +15,6 @@ pylint==1.5.5
 six==1.10.0
 wrapt==1.10.8
 django-colorfield==0.1.10
+#django-picklefield==0.3.2
+jsonfield==1.0.3
+pykml==0.1.3

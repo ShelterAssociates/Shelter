@@ -36,11 +36,13 @@ INSTALLED_APPS = (
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
-    'django.contrib.staticfiles',    
+    'django.contrib.staticfiles',
+    'django.contrib.gis',
    # 'south',
    'master',
+   'component',
    #'Filter',
-   'sponsor',
+   #'sponsor',
 )
 
 
@@ -101,9 +103,7 @@ from local_settings import *
 
 STATIC_URL = '/static/'
 
-"""
-STATIC_ROOT = os.path.join( BASE_DIR, 'static') 
-"""
+#STATIC_ROOT = os.path.join( BASE_DIR, 'static')
 
 STATICFILES_DIRS = (
    # Put strings here, like "/home/html/static" or "C:/www/django/static".
@@ -111,7 +111,6 @@ STATICFILES_DIRS = (
    # Don't forget to use absolute paths, not relative paths.
    os.path.join( BASE_DIR, 'static'),
 )
-
 
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media/')

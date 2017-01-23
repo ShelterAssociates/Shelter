@@ -4,33 +4,26 @@
 
 import json
 import psycopg2
-from pykml import parser
-
-
 from django.core.urlresolvers import reverse
-from django.contrib.admin.views.decorators import staff_member_required 
+from django.contrib.admin.views.decorators import staff_member_required
 from django.contrib.auth.decorators import login_required
 from django.template import RequestContext, loader
 from django.http import HttpResponse, HttpResponseRedirect
 from django.views.generic import ListView
 from django.views.decorators.csrf import csrf_exempt
 from django.views.generic.edit import FormView
-
-from master.models import Survey, CityReference, Rapid_Slum_Appraisal, \
-						  Slum, AdministrativeWard, ElectoralWard, City, \
-						  WardOfficeContact, ElectedRepresentative, drainage
-from master.forms import SurveyCreateForm, ReportForm, Rapid_Slum_AppraisalForm, \
-						 DrainageForm, KMLForm
-
-
 from django.views.generic.base import View
 from django.shortcuts import render
 from django.core.paginator import Paginator, PageNotAnInteger, EmptyPage
 from django.conf import settings
 from django.contrib.auth.decorators import login_required
 from django.contrib.contenttypes.models import ContentType
-
 from django.contrib.gis import geos
+
+from master.models import Survey, CityReference, Rapid_Slum_Appraisal, \
+						  Slum, AdministrativeWard, ElectoralWard, City, \
+						  WardOfficeContact, ElectedRepresentative, drainage
+from master.forms import SurveyCreateForm, ReportForm, Rapid_Slum_AppraisalForm, DrainageForm
 
 @staff_member_required
 def index(request):
@@ -154,22 +147,22 @@ def rimdisplay(request):
 			for i in deleteList:
 				R = Rapid_Slum_Appraisal.objects.get(pk=i)
 				R.delete()
-			
+
 	query = request.GET.get("q")
 	R = ""
-	RA = "" 
+	RA = ""
 	if(query):
 		R = Rapid_Slum_Appraisal.objects.filter(slum_name__name__contains=query)
-	else:    
+	else:
 		R = Rapid_Slum_Appraisal.objects.all()
-	paginator = Paginator(R, 6) 
+	paginator = Paginator(R, 6)
 	page = request.GET.get('page')
 	try:
 		RA = paginator.page(page)
 	except PageNotAnInteger:
 		RA = paginator.page(1)
 	except EmptyPage:
-		RA = paginator.page(paginator.num_pages)      
+		RA = paginator.page(paginator.num_pages)
 	return render(request, 'rimdisplay.html',{'R':R,'RA':RA})
 
 
@@ -196,7 +189,7 @@ def riminsert(request):
 			form.save()
 			return HttpResponseRedirect('/admin/sluminformation/rim/display')
 	else:
-		form = Rapid_Slum_AppraisalForm()  
+		form = Rapid_Slum_AppraisalForm()
 	return render(request, 'riminsert.html', {'form': form})
 
 
@@ -220,7 +213,7 @@ def administrativewardList(request):
 	data ={}
 	data = { 'idArray'  : idArray,
 			 'nameArray': nameArray
-			}           
+			}
 	return HttpResponse(json.dumps(data),content_type='application/json')
 
 
@@ -284,7 +277,7 @@ def drainagereportgenerate(request):
 def vulnerabilityreport(request):
 	"""Generate Vulnerability Report """
 	string = settings.BIRT_REPORT_URL + "Birt/frameset?__format=pdf&__report=Vulnerability_Report.rptdesign"
-	return HttpResponseRedirect(string)    
+	return HttpResponseRedirect(string)
 
 
 def slummap(request):
@@ -296,7 +289,7 @@ def slummap(request):
 def citymapdisplay(request):
 	city_dict={}
 	city_main={}
-	
+
 	for c in City.objects.all():
 		city_dict={}
 		city_dict["name"]= c.name.city_name
@@ -306,9 +299,9 @@ def citymapdisplay(request):
 		city_dict["borderColor"]= c.border_color
 		city_dict["content"]={}
 		city_main.update({str(c.name.city_name) : city_dict })
-		
-	
-	return HttpResponse(json.dumps(city_main),content_type='application/json')   
+
+
+	return HttpResponse(json.dumps(city_main),content_type='application/json')
 
 
 @csrf_exempt
@@ -323,9 +316,9 @@ def slummapdisplay(request,id):
 	slum_dict=dict()
 	slum_main=dict()
 	main_list=[]
-	
-	
-		 
+
+
+
 	admin_main={}
 	for a in AdministrativeWard.objects.filter(city__id=id):
 		admin_dict={}
@@ -335,17 +328,17 @@ def slummapdisplay(request,id):
 		admin_dict["info"]=a.description
 		admin_dict["bgColor"]=a.background_color
 		admin_dict["borderColor"]=a.border_color
-		
+
 		adminwd=WardOfficeContact.objects.filter(administrative_ward = a.id)
 		if adminwd :
 			admin_dict["wardOfficerName"]=adminwd[0].name
-			admin_dict["wardOfficeAddress"]= adminwd[0].address_info 
+			admin_dict["wardOfficeAddress"]= adminwd[0].address_info
 			admin_dict["wardOfficeTel"] = adminwd[0].telephone
 		admin_dict["content"]={}
 		city_main["content"].update({a.name:admin_dict})
-	
-		
-		
+
+
+
 	for e in ElectoralWard.objects.filter(administrative_ward__city__id=id):
 		elctrol_dict={}
 		elctrol_dict["name"]=e.name
@@ -354,17 +347,17 @@ def slummapdisplay(request,id):
 		elctrol_dict["info"]=e.extra_info
 		elctrol_dict["bgColor"]=e.background_color
 		elctrol_dict["borderColor"]=e.border_color
-		
+
 		electrolwd=ElectedRepresentative.objects.filter(electoral_ward = e.id)
 		if electrolwd :
 			elctrol_dict["wardOfficerName"]=electrolwd[0].name
 			elctrol_dict["wardOfficeAddress"]= electrolwd[0].address +" "+electrolwd[0].post_code
 			elctrol_dict["wardOfficeTel"] = electrolwd[0].tel_nos
-		
+
 		elctrol_dict["content"]={}
-				   
-		city_main["content"][str(e.administrative_ward.name)]["content"].update({e.name : elctrol_dict })                
-			 
+
+		city_main["content"][str(e.administrative_ward.name)]["content"].update({e.name : elctrol_dict })
+
 	for s in Slum.objects.filter(electoral_ward__administrative_ward__city__id=id):
 		slum_dict={}
 		slum_dict["name"]=s.name
@@ -373,16 +366,16 @@ def slummapdisplay(request,id):
 		slum_dict["info"]=s.description
 		slum_dict["factsheet"]=s.factsheet.url if s.factsheet else ''
 		slum_dict["photo"]=s.photo.url if s.photo else ''
-		
+
 		city_main["content"]\
 		[str(s.electoral_ward.administrative_ward.name)]["content"]\
-		[str(s.electoral_ward.name)]["content"].update({s.name : slum_dict })                
+		[str(s.electoral_ward.name)]["content"].update({s.name : slum_dict })
 	return HttpResponse(json.dumps(city_main),content_type='application/json')
 
 
 @csrf_exempt
 def modelmapdisplay(request):
-	""" ftech reference polygon """    
+	""" ftech reference polygon """
 	shape = "";
 	background_color="";
 	modelList=['city','administrativeward','electoralward']
@@ -399,7 +392,7 @@ def modelmapdisplay(request):
 		shape =""
 		background_color=""
 	data ={}
-	data = {'shape': shape,'background_color':background_color}   
+	data = {'shape': shape,'background_color':background_color}
 	return HttpResponse(json.dumps(data),content_type='application/json')
 
 
@@ -412,7 +405,7 @@ def drainageinsert(request):
 			form.save()
 			return HttpResponseRedirect('/admin/sluminformation/drainage/display/')
 	else:
-		form = DrainageForm()  
+		form = DrainageForm()
 	return render(request,'drainageinsert.html', {'form':form})
 
 
@@ -426,21 +419,21 @@ def drainagedisplay(request):
 			R.delete()
 	query = request.GET.get("q")
 	R=""
-	RA =""  
+	RA =""
 	if(query):
 		R = drainage.objects.filter(slum_name__name__contains=query)
-	else:    
+	else:
 		R = drainage.objects.all()
-	paginator = Paginator(R, 10) 
+	paginator = Paginator(R, 10)
 	page = request.GET.get('page')
 	try:
 		RA = paginator.page(page)
 	except PageNotAnInteger:
 		RA = paginator.page(1)
 	except EmptyPage:
-		RA = paginator.page(paginator.num_pages)      
+		RA = paginator.page(paginator.num_pages)
 	return render(request, 'drainagedisplay.html',{'R':R,'RA':RA})
-	
+
 def drainageedit(request,drainage_id):
 	if request.method == 'POST':
 		d = drainage.objects.get(pk=drainage_id)
@@ -470,15 +463,13 @@ def cityList(request):
 	data ={}
 	data = { 'idArray'  : idArray,
 			 'nameArray': nameArray
-			}        
+			}
 	return HttpResponse(json.dumps(data),content_type='application/json')
-
-
 
 @csrf_exempt
 def formList(request):
 	""" Form List"""
-	old = psycopg2.connect(database='onadata1',user='shelter',password='Sh3lt3rAss0ciat3s',host='45.56.104.240',port='5432')
+	old = psycopg2.connect(database='kobotoolbox',user='kobo',password='kobo',host='172.17.0.4',port='5432')
 	cursor_old = old.cursor()
 	cursor_old.execute("select id, title from logger_xform;")
 	fetch_data = cursor_old.fetchall()
@@ -490,7 +481,7 @@ def formList(request):
 	data ={}
 	data = { 'idArray'  : idArray,
 			 'nameArray': nameArray
-		   }      
+		   }
 	return HttpResponse(json.dumps(data),content_type='application/json')
 
 
@@ -517,51 +508,8 @@ def modelList(request):
 			'aname': aname,
 			'cid'  : cid,
 			'cname': cname
-		   }      
+		   }
 	return HttpResponse(json.dumps(data),content_type='application/json')
-
-
-
-"""
-@csrf_exempt
-def kmlinsert(request):
-	if request.method == 'POST':
-		form = KMLForm(request.POST or None,request.FILES)
-		if form.is_valid():
-			docFile = request.FILES['kmlfile'].read()#print docFile
-			root = parser.fromstring(docFile)
-			for number in range(895):
-				print root.Document.Folder.Placemark[number].Polygon.outerBoundaryIs.LinearRing.coordinates#print root.Document.Folder.Placemark[0].Polygon.outerBoundaryIs.LinearRing.coordinates
-			return HttpResponseRedirect('/')
-	else:
-		form = KMLForm()    
-	return render(request, 'kmlinsert.html', {'form': form})
-"""
-
-
-
-@csrf_exempt
-def kmlinsert(request):
-	if request.method == 'POST':
-		form = KMLForm(request.POST or None,request.FILES)
-		if form.is_valid():
-			docFile = request.FILES['kmlfile'].read()
-			root = parser.fromstring(docFile)
-			data ={}                
-			for number in range((root.Document.Folder.Placemark.__len__()-1)):
-				description=str(root.Document.Folder.Placemark[number].description)
-				coordinates=str(root.Document.Folder.Placemark[number].MultiGeometry.Polygon.outerBoundaryIs.LinearRing.coordinates)
-				data = {
-					'description' : description ,
-					'coordinates' : coordinates ,
-				}
-		return HttpResponse(json.dumps(data),content_type='application/json')        
-	else:
-		form = KMLForm()    
-	return render(request, 'kmlinsert.html', {'form': form})
-
-
-
 
 @csrf_exempt
 def familyrportgenerate(request):
@@ -573,7 +521,7 @@ def familyrportgenerate(request):
 	rp_slum_code = str(SlumObj.shelter_slum_code)
 	rp_xform_title = Fid
 	rp_household_number = houseno
-	string = settings.BIRT_REPORT_URL + "Birt/frameset?__format=pdf&__report=Family.rptdesign&rp_xform_title=" + rp_xform_title + "&rp_slum_code=" + str(rp_slum_code) +  "&rp_household_number=" + str(rp_household_number) 
+	string = settings.BIRT_REPORT_URL + "Birt/frameset?__format=pdf&__report=Family.rptdesign&rp_xform_title=" + rp_xform_title + "&rp_slum_code=" + str(rp_slum_code) +  "&rp_household_number=" + str(rp_household_number)
 	data ={}
 	data = {'string': string}
 	return HttpResponse(json.dumps(data),content_type='application/json')
