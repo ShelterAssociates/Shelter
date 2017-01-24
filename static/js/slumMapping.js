@@ -528,7 +528,7 @@ function viewcompo(dvalue) {
 			var chklinewidth = v1['blob']['linewidth'];
 
 			chkdata[k1] = {}
-			str += '<div name="div_group" >' + '&nbsp;&nbsp;&nbsp;' + '<input name="chk1" style="background-color:' + chkcolor + '; -webkit-appearance: none; border: 1px solid black; height: 1.2em; width: 1.2em;" selection="' + k + '" component_type="' + v1['type'] + '" type="checkbox" value="' + k1 + '" onclick="checkSingleGroup(this);" >' + '<a>&nbsp;' + k1 + '</a>(&nbsp;' + v1['count'] + ')' + '</input>' + '</div>'
+			str += '<div name="div_group" >' + '&nbsp;&nbsp;&nbsp;' + '<input name="chk1" style="background-color:' + chkcolor + '; -webkit-appearance: none; border: 1px solid black; height: 1.2em; width: 1.2em;" selection="' + k + '" component_type="' + v1['type'] + '" type="checkbox" value="' + k1 + '" onclick="checkSingleGroup(this);" >' + '<a>&nbsp;' + k1 + '</a>&nbsp;(' + v1['count'] + ')' + '</input>' + '</div>'
 			if (v1['type'] == 'C') {
 				$.each(v1['child'], function(k2, v2) {
 
@@ -584,7 +584,7 @@ function viewcompo(dvalue) {
 							strokeOpacity : 0.7,
 							strokeWeight : chklinewidth,
 							fillColor : chkcolor,
-							fillOpacity : 0.5,
+							fillOpacity : 0.6,
 							zIndex : -1
 							//center : house_point.getCenter()
 						});
@@ -668,7 +668,7 @@ function checkSingleGroup(single_checkbox) {
 
 							var spstr = "";
 							spstr += '<table class="table table-striped" style="font-size: 10px;"><tbody>';
-							spstr += '<tr><td colspan="2"><a href="/media/report/' + k4 + '_'+arr[3].replace(/ /g,"_").replace(/,/g,"_")+'.pdf" style="cursor:pointer;color:darkred;" target="blank">View Factsheet</a></td></tr>';
+							spstr += '<tr><td colspan="2"><a href="/media/report/' + k4 + '_'+arr[3].replace(/ /g,"_").replace(/,/g,"")+'.pdf" style="cursor:pointer;color:darkred;" target="blank">View Factsheet</a></td></tr>';
 							$.each(json, function(k, v) {
 								spstr += '<tr><td>' + k + '</td><td>' + v + '</td></tr>';
 							});
