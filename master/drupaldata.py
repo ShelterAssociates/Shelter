@@ -14,9 +14,9 @@ http = urllib3.PoolManager()
 def get_admin_wards(city):
     url = SHELTER + 'ward-data/' + str(city)
     response = http.request('GET', url)
-    list_admin=[]
+    list_admin={}
     for n in json.loads(response.data)['nodes']:
-        list_admin.append(n['node']['id'])
+        list_admin[n['node']['id']] = n['node']['name']
     return list_admin
 
 def get_electoral_wards(drupal_admin_id,local_ward_id):
