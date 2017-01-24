@@ -29,7 +29,7 @@
             <property name="dataType">string</property>
             <property name="distinct">true</property>
             <simple-property-list name="defaultValue">
-                <value type="constant">272171491001</value>
+                <value type="constant">272171491002</value>
             </simple-property-list>
             <list-property name="selectionList"/>
             <property name="paramType">simple</property>
@@ -59,9 +59,9 @@
                 </ex-property>
             </list-property>
             <property name="odaDriverClass">org.postgresql.Driver</property>
-            <property name="odaURL">jdbc:postgresql://45.56.104.240/onadata1</property>
-            <property name="odaUser">shelter</property>
-            <encrypted-property name="odaPassword" encryptionID="jce">Sh3lt3rAss0ciat3s</encrypted-property>
+            <property name="odaURL">jdbc:postgresql://*********/*************</property>
+            <property name="odaUser">**************</property>
+            <encrypted-property name="odaPassword" encryptionID="jce">************</encrypted-property>
         </oda-data-source>
         <oda-data-source extensionID="org.eclipse.birt.report.data.oda.jdbc" name="Data Source1" id="2206">
             <list-property name="privateDriverProperties">
@@ -81,9 +81,9 @@
                 </ex-property>
             </list-property>
             <property name="odaDriverClass">org.postgresql.Driver</property>
-            <property name="odaURL">jdbc:postgresql://45.56.104.240/shelter_migrate</property>
-            <property name="odaUser">shelter</property>
-            <encrypted-property name="odaPassword" encryptionID="jce">Sh3lt3rAss0ciat3s</encrypted-property>
+            <property name="odaURL">jdbc:postgresql://*************/************</property>
+            <property name="odaUser">************</property>
+            <encrypted-property name="odaPassword" encryptionID="jce">****************</encrypted-property>
         </oda-data-source>
     </data-sources>
     <data-sets>
@@ -5644,6 +5644,298 @@ from public.master_cityreference;]]></xml-property>
                 </structure>
             </list-property>
         </joint-data-set>
+        <oda-data-set extensionID="org.eclipse.birt.report.data.oda.jdbc.JdbcSelectDataSet" name="drainage_image" id="3835">
+            <list-property name="columnHints">
+                <structure>
+                    <property name="columnName">id</property>
+                    <text-property name="displayName">id</text-property>
+                    <text-property name="heading">id</text-property>
+                </structure>
+                <structure>
+                    <property name="columnName">drainage_image</property>
+                    <text-property name="displayName">drainage_image</text-property>
+                    <text-property name="heading">drainage_image</text-property>
+                </structure>
+                <structure>
+                    <property name="columnName">slum_name_id</property>
+                    <text-property name="displayName">slum_name_id</text-property>
+                    <text-property name="heading">slum_name_id</text-property>
+                </structure>
+            </list-property>
+            <structure name="cachedMetaData">
+                <list-property name="resultSet">
+                    <structure>
+                        <property name="position">1</property>
+                        <property name="name">id</property>
+                        <property name="dataType">integer</property>
+                    </structure>
+                    <structure>
+                        <property name="position">2</property>
+                        <property name="name">drainage_image</property>
+                        <property name="dataType">string</property>
+                    </structure>
+                    <structure>
+                        <property name="position">3</property>
+                        <property name="name">slum_name_id</property>
+                        <property name="dataType">integer</property>
+                    </structure>
+                </list-property>
+            </structure>
+            <property name="dataSource">Data Source1</property>
+            <list-property name="resultSet">
+                <structure>
+                    <property name="position">1</property>
+                    <property name="name">id</property>
+                    <property name="nativeName">id</property>
+                    <property name="dataType">integer</property>
+                    <property name="nativeDataType">4</property>
+                </structure>
+                <structure>
+                    <property name="position">2</property>
+                    <property name="name">drainage_image</property>
+                    <property name="nativeName">drainage_image</property>
+                    <property name="dataType">string</property>
+                    <property name="nativeDataType">12</property>
+                </structure>
+                <structure>
+                    <property name="position">3</property>
+                    <property name="name">slum_name_id</property>
+                    <property name="nativeName">slum_name_id</property>
+                    <property name="dataType">integer</property>
+                    <property name="nativeDataType">4</property>
+                </structure>
+            </list-property>
+            <xml-property name="queryText"><![CDATA[select *
+from public.master_drainage;]]></xml-property>
+            <xml-property name="designerValues"><![CDATA[<?xml version="1.0" encoding="UTF-8"?>
+<model:DesignValues xmlns:design="http://www.eclipse.org/datatools/connectivity/oda/design" xmlns:model="http://www.eclipse.org/birt/report/model/adapter/odaModel">
+  <Version>2.0</Version>
+  <design:ResultSets derivedMetaData="true">
+    <design:resultSetDefinitions>
+      <design:resultSetColumns>
+        <design:resultColumnDefinitions>
+          <design:attributes>
+            <design:identifier>
+              <design:name>id</design:name>
+              <design:position>1</design:position>
+            </design:identifier>
+            <design:nativeDataTypeCode>4</design:nativeDataTypeCode>
+            <design:precision>10</design:precision>
+            <design:scale>0</design:scale>
+            <design:nullability>NotNullable</design:nullability>
+            <design:uiHints>
+              <design:displayName>id</design:displayName>
+            </design:uiHints>
+          </design:attributes>
+          <design:usageHints>
+            <design:label>id</design:label>
+            <design:formattingHints>
+              <design:displaySize>11</design:displaySize>
+            </design:formattingHints>
+          </design:usageHints>
+        </design:resultColumnDefinitions>
+        <design:resultColumnDefinitions>
+          <design:attributes>
+            <design:identifier>
+              <design:name>drainage_image</design:name>
+              <design:position>2</design:position>
+            </design:identifier>
+            <design:nativeDataTypeCode>12</design:nativeDataTypeCode>
+            <design:precision>100</design:precision>
+            <design:scale>0</design:scale>
+            <design:nullability>Nullable</design:nullability>
+            <design:uiHints>
+              <design:displayName>drainage_image</design:displayName>
+            </design:uiHints>
+          </design:attributes>
+          <design:usageHints>
+            <design:label>drainage_image</design:label>
+            <design:formattingHints>
+              <design:displaySize>100</design:displaySize>
+            </design:formattingHints>
+          </design:usageHints>
+        </design:resultColumnDefinitions>
+        <design:resultColumnDefinitions>
+          <design:attributes>
+            <design:identifier>
+              <design:name>slum_name_id</design:name>
+              <design:position>3</design:position>
+            </design:identifier>
+            <design:nativeDataTypeCode>4</design:nativeDataTypeCode>
+            <design:precision>10</design:precision>
+            <design:scale>0</design:scale>
+            <design:nullability>NotNullable</design:nullability>
+            <design:uiHints>
+              <design:displayName>slum_name_id</design:displayName>
+            </design:uiHints>
+          </design:attributes>
+          <design:usageHints>
+            <design:label>slum_name_id</design:label>
+            <design:formattingHints>
+              <design:displaySize>11</design:displaySize>
+            </design:formattingHints>
+          </design:usageHints>
+        </design:resultColumnDefinitions>
+      </design:resultSetColumns>
+      <design:criteria/>
+    </design:resultSetDefinitions>
+  </design:ResultSets>
+</model:DesignValues>]]></xml-property>
+        </oda-data-set>
+        <joint-data-set name="Drainage_image_name" id="3836">
+            <list-property name="columnHints">
+                <structure>
+                    <property name="columnName">SlumInfo::shelter_slum_code</property>
+                    <property name="alias">shelter_slum_code</property>
+                    <property name="analysis">dimension</property>
+                    <text-property name="displayName">SlumInfo::shelter_slum_code</text-property>
+                </structure>
+                <structure>
+                    <property name="columnName">SlumInfo::shape</property>
+                    <property name="alias">shape</property>
+                    <property name="analysis">dimension</property>
+                    <text-property name="displayName">SlumInfo::shape</text-property>
+                </structure>
+                <structure>
+                    <property name="columnName">SlumInfo::factsheet</property>
+                    <property name="alias">factsheet</property>
+                    <property name="analysis">dimension</property>
+                    <text-property name="displayName">SlumInfo::factsheet</text-property>
+                </structure>
+                <structure>
+                    <property name="columnName">SlumInfo::electoral_ward_id</property>
+                    <property name="alias">electoral_ward_id</property>
+                    <property name="analysis">measure</property>
+                    <text-property name="displayName">SlumInfo::electoral_ward_id</text-property>
+                </structure>
+                <structure>
+                    <property name="columnName">SlumInfo::name</property>
+                    <property name="alias">name</property>
+                    <property name="analysis">dimension</property>
+                    <text-property name="displayName">SlumInfo::name</text-property>
+                </structure>
+                <structure>
+                    <property name="columnName">drainage_image::drainage_image</property>
+                    <property name="alias">drainage_image</property>
+                    <property name="analysis">dimension</property>
+                    <text-property name="displayName">drainage_image::drainage_image</text-property>
+                </structure>
+                <structure>
+                    <property name="columnName">drainage_image::id</property>
+                    <property name="alias">drainage_image::id</property>
+                    <property name="analysis">measure</property>
+                    <text-property name="displayName">drainage_image::id</text-property>
+                </structure>
+                <structure>
+                    <property name="columnName">SlumInfo::description</property>
+                    <property name="alias">description</property>
+                    <property name="analysis">dimension</property>
+                    <text-property name="displayName">SlumInfo::description</text-property>
+                </structure>
+                <structure>
+                    <property name="columnName">SlumInfo::photo</property>
+                    <property name="alias">photo</property>
+                    <property name="analysis">dimension</property>
+                    <text-property name="displayName">SlumInfo::photo</text-property>
+                </structure>
+                <structure>
+                    <property name="columnName">SlumInfo::id</property>
+                    <property name="alias">SlumInfo::id</property>
+                    <property name="analysis">measure</property>
+                    <text-property name="displayName">SlumInfo::id</text-property>
+                </structure>
+                <structure>
+                    <property name="columnName">drainage_image::slum_name_id</property>
+                    <property name="alias">slum_name_id</property>
+                    <property name="analysis">measure</property>
+                    <text-property name="displayName">drainage_image::slum_name_id</text-property>
+                </structure>
+            </list-property>
+            <list-property name="parameters">
+                <structure>
+                    <property name="name">SlumInfo::param_1</property>
+                    <property name="dataType">string</property>
+                    <property name="position">0</property>
+                    <property name="isOptional">false</property>
+                    <property name="allowNull">false</property>
+                    <property name="isInput">true</property>
+                    <property name="isOutput">false</property>
+                </structure>
+            </list-property>
+            <structure name="cachedMetaData">
+                <list-property name="resultSet">
+                    <structure>
+                        <property name="position">1</property>
+                        <property name="name">drainage_image::id</property>
+                        <property name="dataType">integer</property>
+                    </structure>
+                    <structure>
+                        <property name="position">2</property>
+                        <property name="name">drainage_image</property>
+                        <property name="dataType">string</property>
+                    </structure>
+                    <structure>
+                        <property name="position">3</property>
+                        <property name="name">slum_name_id</property>
+                        <property name="dataType">integer</property>
+                    </structure>
+                    <structure>
+                        <property name="position">4</property>
+                        <property name="name">SlumInfo::id</property>
+                        <property name="dataType">integer</property>
+                    </structure>
+                    <structure>
+                        <property name="position">5</property>
+                        <property name="name">electoral_ward_id</property>
+                        <property name="dataType">integer</property>
+                    </structure>
+                    <structure>
+                        <property name="position">6</property>
+                        <property name="name">name</property>
+                        <property name="dataType">string</property>
+                    </structure>
+                    <structure>
+                        <property name="position">7</property>
+                        <property name="name">shape</property>
+                        <property name="dataType">string</property>
+                    </structure>
+                    <structure>
+                        <property name="position">8</property>
+                        <property name="name">description</property>
+                        <property name="dataType">string</property>
+                    </structure>
+                    <structure>
+                        <property name="position">9</property>
+                        <property name="name">shelter_slum_code</property>
+                        <property name="dataType">string</property>
+                    </structure>
+                    <structure>
+                        <property name="position">10</property>
+                        <property name="name">factsheet</property>
+                        <property name="dataType">string</property>
+                    </structure>
+                    <structure>
+                        <property name="position">11</property>
+                        <property name="name">photo</property>
+                        <property name="dataType">string</property>
+                    </structure>
+                </list-property>
+            </structure>
+            <simple-property-list name="dataSets">
+                <value>drainage_image</value>
+                <value>SlumInfo</value>
+            </simple-property-list>
+            <list-property name="joinConditions">
+                <structure>
+                    <property name="joinType">inner</property>
+                    <property name="joinOperator">eq</property>
+                    <property name="leftDataSet">drainage_image</property>
+                    <property name="rightDataSet">SlumInfo</property>
+                    <expression name="leftExpression">dataSetRow["slum_name_id"]</expression>
+                    <expression name="rightExpression">dataSetRow["id"]</expression>
+                </structure>
+            </list-property>
+        </joint-data-set>
     </data-sets>
     <page-setup>
         <simple-master-page name="Simple MasterPage" id="2">
@@ -6136,7 +6428,7 @@ from public.master_cityreference;]]></xml-property>
                                     <property name="paddingBottom">2pt</property>
                                     <text id="3128">
                                         <property name="paddingTop">2pt</property>
-                                        <property name="paddingLeft">4pt</property>
+                                        <property name="paddingLeft">2pt</property>
                                         <property name="paddingBottom">2pt</property>
                                         <property name="contentType">auto</property>
                                         <text-property name="content"><![CDATA[Year of Establishment]]></text-property>
@@ -7528,12 +7820,12 @@ from public.master_cityreference;]]></xml-property>
             <row id="3089">
                 <cell id="3090">
                     <grid id="3830">
-                        <property name="dataSet">images_info</property>
+                        <property name="dataSet">Drainage_image_name</property>
                         <list-property name="boundDataColumns">
                             <structure>
-                                <property name="name">general_info_left_image</property>
-                                <text-property name="displayName">general_info_left_image</text-property>
-                                <expression name="expression" type="javascript">dataSetRow["general_info_left_image"]</expression>
+                                <property name="name">drainage_image</property>
+                                <text-property name="displayName">drainage_image::drainage_image</text-property>
+                                <expression name="expression" type="javascript">dataSetRow["drainage_image"]</expression>
                                 <property name="dataType">string</property>
                             </structure>
                         </list-property>
@@ -7548,11 +7840,11 @@ from public.master_cityreference;]]></xml-property>
                                     <property name="height">5in</property>
                                     <property name="width">6in</property>
                                     <property name="source">url</property>
-                                    <expression name="uri" type="javascript">if(row["general_info_left_image"] == null || row["general_info_left_image"] == ''){
+                                    <expression name="uri" type="javascript">if(row["drainage_image"]== null || row["drainage_image"] == ''){
 "http://app.shelter-associates.org/static/images/no-image.png"
 }
 else{
-"http://app.shelter-associates.org/media/" + row["general_info_left_image"]
+"http://45.56.104.240/media/" + row["drainage_image"]
 }</expression>
                                 </image>
                             </cell>
