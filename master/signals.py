@@ -13,7 +13,7 @@ from master.models import Survey, Slum, Rapid_Slum_Appraisal
 import BeautifulSoup as Soup
 
 
-@receiver(post_save, sender=Slum)
+#@receiver(post_save, sender=Slum)
 def slum_created_trigger(sender, instance, **kwargs):
     """Triggers the below code when a slum is created"""
     conn = psycopg2.connect(database=settings.KOBOCAT_DATABASES['DBNAME'],
