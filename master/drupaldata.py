@@ -3,7 +3,6 @@ import urllib3
 import json
 from master.models import ElectoralWard,AdministrativeWard
 from django.contrib.gis.geos import GEOSGeometry
-'
 
 PUNE= 14
 SANGLI = 15
