@@ -32,7 +32,7 @@ def kml_upload(request):
                 context_data['unparsed'] = [k for k,v in parsed_data.items() if v==False]
                 messages.success(request,'KML uploaded successfully')
             except Exception as e:
-                messages.error(request, 'Some error occurred while parsing. KML file is not in the required format')
+                messages.error(request, 'Some error occurred while parsing. KML file is not in the required format ('+str(e)+')')
     else:
         form = KMLUpload()
     context_data['form'] = form
