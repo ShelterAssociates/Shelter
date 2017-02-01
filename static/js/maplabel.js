@@ -29,6 +29,7 @@
  * @extends google.maps.OverlayView
  * @param {Object.<string, *>=} opt_options Optional properties to set.
  */
+function labelmap(){
 function MapLabel(opt_options) {
   this.set('fontFamily', 'sans-serif');
   this.set('fontSize', 12);
@@ -43,9 +44,7 @@ function MapLabel(opt_options) {
 }
 
 MapLabel.prototype = new google.maps.OverlayView;
-
 window['MapLabel'] = MapLabel;
-
 
 /** @inheritDoc */
 MapLabel.prototype.changed = function(prop) {
@@ -205,3 +204,4 @@ MapLabel.prototype.onRemove = function() {
   }
 };
 MapLabel.prototype['onRemove'] = MapLabel.prototype.onRemove;
+}
