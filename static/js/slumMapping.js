@@ -16,11 +16,11 @@ var glob_polygon;
 var removeIndi;
 var modelsection;
 var global_slum_id;
-$(document).ready(function(){
-	initMap12();
-});
+// $(document).ready(function(){
+// 	initMap12();
+// });
 function initMap12() {
-
+	labelmap();
 	map = new google.maps.Map(document.getElementById('map12'), {
 		center : {
 			lat : 18.484913,
