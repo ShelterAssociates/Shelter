@@ -105,7 +105,7 @@
 		"visible": true,
 		"display_type": "M",
 		"type": "C",
-		"order": 2.0,
+		"order": 4.0,
 		"blob": "{\"polycolor\":\"#ff0080\",\"linewidth\":3.33,\"linecolor\":\"#ff0080\"}"
 	},
 	"model": "component.metadata",
@@ -119,7 +119,7 @@
 		"visible": true,
 		"display_type": "M",
 		"type": "C",
-		"order": 3.0,
+		"order": 5.0,
 		"blob": "{\"polycolor\":\"#1DB44D\",\"linewidth\":4,\"linecolor\":\"#1DB44D\"}"
 	},
 	"model": "component.metadata",
@@ -133,7 +133,7 @@
 		"visible": true,
 		"display_type": "M",
 		"type": "C",
-		"order": 4.0,
+		"order": 6.0,
 		"blob": "{\"polycolor\":\"#ffb600\",\"linewidth\":4,\"linecolor\":\"#ffb600\"}"
 	},
 	"model": "component.metadata",
@@ -189,7 +189,7 @@
 		"visible": true,
 		"display_type": "M",
 		"type": "C",
-		"order": 4.0,
+		"order": 7.0,
 		"blob": "{\"polycolor\":\"#ff0000\",\"linewidth\":4,\"linecolor\":\"#ff0000\"}"
 	},
 	"model": "component.metadata",
@@ -502,4 +502,63 @@
 	},
 	"model": "component.metadata",
 	"pk": 37
+},{
+	"pk":38,
+	"model": "component.Metadata",
+	"fields":{
+		"name":"Drainage line 8inch",
+		"section":6,
+		"level":"H",
+		"type":"C",
+		"display_type":"M",
+		"visible":true,
+		"order":3.0,
+		"blob":"{\"linecolor\":\"#ff0080\", \"linewidth\":2, \"polycolor\":\"#ff0080\"}",
+		"code":"drainageline8inch"
+	}
+},
+{
+	"pk":39,
+	"model": "component.Metadata",
+	"fields":{
+		"name":"Existing Drainage Line",
+		"section":6,
+		"level":"H",
+		"type":"C",
+		"display_type":"M",
+		"visible":true,
+		"order":8.0,
+		"blob":"{\"linecolor\":\"#ffbfbf\", \"linewidth\":4, \"polycolor\":\"#ffbfbf\"}",
+		"code":"existingdrainageline"
+	}
+},
+{
+	"pk":40,
+	"model": "component.Metadata",
+	"fields":{
+		"name":"Open Gutter",
+		"section":8,
+		"level":"H",
+		"type":"C",
+		"display_type":"M",
+		"visible":true,
+		"order":1.0,
+		"blob":"{\"linecolor\":\"#ff5e5e\", \"linewidth\":4, \"polycolor\":\"#ff5e5e\"}",
+		"code":"opengutter"
+	}
+},
+{
+	"pk":41,
+	"model": "component.Metadata",
+	"fields":{
+		"name":"Hand Pump",
+		"section":3,
+		"level":"H",
+		"type":"C",
+		"display_type":"M",
+		"visible":true,
+		"order":3.0,
+		"blob":"{\"linecolor\":\"#ffeeb6\", \"linewidth\":2, \"polycolor\":\"#ffeeb6\"}",
+		"code":"handpump"
+	}
 }]
