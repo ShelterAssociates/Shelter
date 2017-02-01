@@ -20,15 +20,23 @@ from master.models import Slum
 #@staff_member_required
 @user_passes_test(lambda u: u.is_superuser)
 def kml_upload(request):
+    context_data = {}
     if request.method == 'POST':
         form = KMLUpload(request.POST or None,request.FILES)
         if form.is_valid():
             docFile = request.FILES['kml_file'].read()
             objKML = KMLParser(docFile, form.cleaned_data['slum_name'])
-            messages.success(request,'Form submission successful')
+            try:
+                parsed_data = objKML.other_components()
+                context_data['parsed'] = [k for k,v in parsed_data.items() if v==True]
+                context_data['unparsed'] = [k for k,v in parsed_data.items() if v==False]
+                messages.success(request,'KML uploaded successfully')
+            except Exception as e:
+                messages.error(request, 'Some error occurred while parsing. KML file is not in the required format')
     else:
         form = KMLUpload()
-    return render(request, 'kml_upload.html', {'form': form})
+    context_data['form'] = form
+    return render(request, 'kml_upload.html', context_data)
 
 @user_passes_test(lambda u: u.is_superuser)
 def get_component(request, slum_id):

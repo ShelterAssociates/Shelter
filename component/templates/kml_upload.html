@@ -6,6 +6,10 @@
 <script src="{% static "js/jquery.min.js" %}"></script>
 <script src="{% static "js/bootstrap.min.js" %}"></script>
 <script src="{% static "js/common_cascading.js" %}"></script>
+
+<ol class="breadcrumb">
+    <li><a href="{% url 'index' %}">Home</a></li>
+</ol>
 {% endblock %}
 {% block sidebar %}
 {% endblock %}
@@ -32,13 +36,6 @@ var url = "{% url 'modelList' %}";
             <strong>{{ error|escape }}</strong>
         </div>
     {% endfor %}
-{% endif %}
-{% if messages %}
-<ul class="messages">
-    {% for message in messages %}
-    <li{% if message.tags %} class="{{ message.tags }}"{% endif %}>{{ message }}</li>
-    {% endfor %}
-</ul>
 {% endif %}
 <form enctype="multipart/form-data" method="post">
     {% csrf_token %}
@@ -81,7 +78,16 @@ var url = "{% url 'modelList' %}";
         <div class="col-md-2">{{form.kml_file}}</div>
       </div>
 
-
+    <div class="row" style="padding-top:20px;">
+      <div class="col-md-12">
+        {% if parsed != None and parsed|length > 0%}
+          <li{% if message.tags %} class="{{ message.tags }}"{% endif %}>Parsed data : {{parsed|join:', '}}</li>
+        {% endif %}
+        {% if unparsed != None and unparsed|length > 0%}
+          <li{% if message.tags %} class="{{ message.tags }}"{% endif %}>Unparsed data : {{unparsed|join:', '}}</li>
+        {% endif %}
+      </div>
+    </div>
     <div class="row" style="padding-top:20px;">
       <div class="col-md-4">
         <input class="btn btn-primary" type="submit" value="Submit" />

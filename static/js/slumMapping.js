@@ -1,6 +1,5 @@
 var map;
 var obj;
-var mydiv;
 var myheader;
 var mydesc;
 var mydatatable;
@@ -8,23 +7,20 @@ var wdofficer;
 var wdaddress;
 var wdhead;
 var compochk;
-var chkmodel;
+
 var url = "/admin/citymapdisplay";
 
-//var ShapeValue;
-//var shapecount = "";
 var arr = [];
 var chkdata = {}
-var markershape = {}
 var glob_polygon;
 var removeIndi;
-var chkobj;
 var modelsection;
-var global_component_info;
 var global_slum_id;
-
+// $(document).ready(function(){
+// 	initMap12();
+// });
 function initMap12() {
-
+	labelmap();
 	map = new google.maps.Map(document.getElementById('map12'), {
 		center : {
 			lat : 18.484913,
@@ -33,14 +29,13 @@ function initMap12() {
 		zoom : 8,
 		mapTypeId : 'satellite',
 	});
-	mydiv = $("#maplink");
+
 	myheader = $("#maphead");
 	mydesc = $("#mapdesc");
 	wdaddress = $("#wdaddress");
 	wdofficer = $("#wdofficer");
 	wdhead = $("#wdhead");
 	compochk = $("#compochk");
-	chkmodel = $("#myModal");
 
 	loadcity();
 	viewIndiaBorder();
@@ -141,19 +136,35 @@ function latlongformat(ShapeValue, shapename, bgcolor, bordercolor) {
 	}
 	var Poly1 = drawPolygon(PolygonPoints, bounds, bgcolor, bordercolor);
 	glob_polygon = Poly1;
-
+	var options = {
+				map: map,
+				position: bounds.getCenter(),
+				text: '',
+				minZoom: 8,
+				zIndex : 999
+			};
+	var slumLabel = new MapLabel(options);
+		//slumLabel.changed('text');
+	google.maps.event.addListener(Poly1, 'mouseover', function(event) {
+    slumLabel.text = shapename;
+    slumLabel.changed('text');
+  });
+  google.maps.event.addListener(Poly1, 'mouseout', function(event) {
+    slumLabel.text = '';
+    slumLabel.changed('text');
+	});
 	var infoWindowover = new google.maps.InfoWindow;
 	// Events on Polygon
-	google.maps.event.addListener(Poly1, 'mouseover', function(event) {
-		infoWindowover.setContent(shapename);
-		infoWindowover.setPosition(bounds.getCenter());
-		infoWindowover.open(map);
-
-	});
-
-	google.maps.event.addListener(Poly1, 'mouseout', function(event) {
-		infoWindowover.close();
-	});
+	// google.maps.event.addListener(Poly1, 'mouseover', function(event) {
+	// 	infoWindowover.setContent(shapename);
+	// 	infoWindowover.setPosition(bounds.getCenter());
+	// 	infoWindowover.open(map);
+	//
+	// });
+	//
+	// google.maps.event.addListener(Poly1, 'mouseout', function(event) {
+	// 	infoWindowover.close();
+	// });
 
 	var indiWindow = true;
 
@@ -215,20 +226,14 @@ function createMap(jsondata, arrRemoveInd) {
 	drawDatatable();
 	if (arr.length == 1) {
 		mydesc.html(obj[arr[0]]['info']);
-		wdhead.html('');
-		wdaddress.html('');
-		wdofficer.html('');
 		myheader.html('');
 		mydesc.html('');
 		initMap(data, 11);
 
 	} else if (arr.length == 2) {
 		mydesc.html(obj[arr[0]]["content"][arr[1]]['info']);
-		wdhead.html('');
-		wdaddress.html('');
-		wdofficer.html('');
 
-		wdadd += "<div class='row'><div  class='col-md-2' style='margin-left:25px'><b>Address :</b> </div><div class='col-md-9'>";
+		wdadd = "<div class='row'><div  class='col-md-2' style='margin-left:25px'><b>Address :</b> </div><div class='col-md-9'>";
 		if (obj[arr[0]]["content"][arr[1]]['wardOfficeAddress']) {
 			wdadd += (obj[arr[0]]["content"][arr[1]]['wardOfficeAddress']).trim();
 		} else {
@@ -236,7 +241,7 @@ function createMap(jsondata, arrRemoveInd) {
 		}
 		wdadd += "</div></div>";
 
-		wdname += "<div class='row'><div class='row' style='margin-left:25px'><div class='col-md-2' ><b>Name :</b></div><div class='col-md-10'> ";
+		wdname = "<div class='row'><div class='row' style='margin-left:25px'><div class='col-md-2' ><b>Name :</b></div><div class='col-md-10'> ";
 		if (obj[arr[0]]["content"][arr[1]]['wardOfficerName']) {
 			wdname += obj[arr[0]]["content"][arr[1]]['wardOfficerName'];
 		} else {
@@ -250,20 +255,14 @@ function createMap(jsondata, arrRemoveInd) {
 		}
 		wdname += "</div></div></div>";
 
-		head += "<div><b>Administrative Ward : </b></div>";
-		wdhead.html(head);
-		wdaddress.html(wdadd);
-		wdofficer.html(wdname);
+		head = "<div><b>Administrative Ward : </b></div>";
 
 		initMap(data, 12);
 
 	} else if (arr.length == 3) {
 		mydesc.html(obj[arr[0]]["content"][arr[1]]["content"][arr[2]]['info']);
-		wdhead.html('');
-		wdaddress.html('');
-		wdofficer.html('');
 
-		wdadd += "<div class='row'><div  class='col-md-2' style='margin-left:25px'><b>Address :</b> </div><div class='col-md-9'>";
+		wdadd = "<div class='row'><div  class='col-md-2' style='margin-left:25px'><b>Address :</b> </div><div class='col-md-9'>";
 		if (obj[arr[0]]["content"][arr[1]]["content"][arr[2]]['wardOfficeAddress']) {
 			wdadd += (obj[arr[0]]["content"][arr[1]]["content"][arr[2]]['wardOfficeAddress']).trim();
 		} else {
@@ -271,13 +270,13 @@ function createMap(jsondata, arrRemoveInd) {
 		}
 		wdadd += "</div></div>";
 
-		wdname += "<div class='row'><div class='row' style='margin-left:25px'><div class='col-md-2' ><b>Name :</b></div><div class='col-md-10'> ";
+		wdname = "<div class='row'><div class='row' style='margin-left:25px'><div class='col-md-2' ><b>Name :</b></div><div class='col-md-10'> ";
 		if (obj[arr[0]]["content"][arr[1]]["content"][arr[2]]['wardOfficerName']) {
 			wdname += obj[arr[0]]["content"][arr[1]]["content"][arr[2]]['wardOfficerName'];
 		} else {
 			wdname += " - ";
 		}
-		wdname += "</div></div>" + "<div class='row' style='margin-left:25px'><div class='col-md-2' ><b> Contact :</b></div><div class='col-md-10'> ";
+		wdname = "</div></div>" + "<div class='row' style='margin-left:25px'><div class='col-md-2' ><b> Contact :</b></div><div class='col-md-10'> ";
 		if (obj[arr[0]]["content"][arr[1]]["content"][arr[2]]['wardOfficeTel']) {
 			wdname += obj[arr[0]]["content"][arr[1]]["content"][arr[2]]['wardOfficeTel'];
 		} else {
@@ -285,10 +284,7 @@ function createMap(jsondata, arrRemoveInd) {
 		}
 		wdname += "</div></div></div>";
 
-		head += "<div><b>Electoral Ward : </b></div>";
-		wdhead.html(head);
-		wdaddress.html(wdadd);
-		wdofficer.html(wdname);
+		head = "<div><b>Electoral Ward : </b></div>";
 
 		val = obj[arr[0]]["content"][arr[1]]["content"][arr[2]]
 		initMap(val, 13);
@@ -296,13 +292,8 @@ function createMap(jsondata, arrRemoveInd) {
 
 	} else if (arr.length == 4) {
 		mydesc.html(obj[arr[0]]["content"][arr[1]]["content"][arr[2]]["content"][arr[3]]['info']);
-		wdhead.html('');
-		wdaddress.html('');
-		wdofficer.html('');
-
 		val = obj[arr[0]]["content"][arr[1]]["content"][arr[2]]["content"][arr[3]]
 		objmap = initMap(val, 18);
-		chkobj = val;
 
 		mydatatable.fnDestroy();
 		$("#datatable").empty();
@@ -310,6 +301,9 @@ function createMap(jsondata, arrRemoveInd) {
 		global_slum_id = val['id']
 		compo(global_slum_id);
 	}
+	wdhead.html(head);
+	wdaddress.html(wdadd);
+	wdofficer.html(wdname);
 }
 
 function fetchData(obj) {
@@ -321,6 +315,7 @@ function fetchData(obj) {
 }
 
 function setMaplink() {
+	var mydiv = $("#maplink");
 	mydiv.html("");
 	var aTag = "";
 	aTag += '<label id="Home" onclick="getArea(this);">' + " <span style='text-decoration: underline;cursor:pointer;color:blue;'>Home</span></label>&nbsp;&nbsp;";
@@ -372,10 +367,6 @@ function drawPolygon(PolygonPoints, centerlatlang, bgcolor, bordercolor) {
 	if (bordercolor != undefined && bordercolor != "") {
 		newbordercolor = bordercolor;
 	}
-
-	/*if(arr.length > 2){
-	 opacity=0.1;
-	 }*/
 
 	Poly = new google.maps.Polygon({
 		paths : PolygonPoints,
@@ -478,7 +469,6 @@ function compo(slumId) {
 		type : "GET",
 		contenttype : "json",
 		success : function(json) {
-			global_component_info = json;
 			viewcompo(json);
 		}
 	});
@@ -496,6 +486,7 @@ function compo(slumId) {
 
 var lst_sponsor = [];
 var demovar = {}
+
 function viewcompo(dvalue) {
 	str = "";
 	counter = 1;
@@ -533,10 +524,11 @@ function viewcompo(dvalue) {
 				$.each(v1['child'], function(k2, v2) {
 
 					var house_point = []
-
+					var bounds = new google.maps.LatLngBounds();
 					if (v2['shape']['type'] == "LineString") {
 						$.each(v2['shape']['coordinates'], function(k3, coordinate) {
 							house_point.push(new google.maps.LatLng(coordinate[1], coordinate[0]));
+							bounds.extend(new google.maps.LatLng(coordinate[1], coordinate[0]));
 						});
 
 						chkPoly = new google.maps.Polyline({
@@ -549,7 +541,7 @@ function viewcompo(dvalue) {
 
 					} else if (v2['shape']['type'] == "Point") {
 						house_point.push(new google.maps.LatLng(v2['shape']['coordinates'][1], v2['shape']['coordinates'][0]));
-
+						bounds.extend(new google.maps.LatLng(v2['shape']['coordinates'][1], v2['shape']['coordinates'][0]));
 						var pinImage;
 						if (k1 == "Manholes") {
 							pinImage = {
@@ -576,6 +568,7 @@ function viewcompo(dvalue) {
 					} else if (v2['shape']['type'] == "Polygon") {
 						$.each(v2['shape']['coordinates'][0], function(k3, coordinate) {
 							house_point.push(new google.maps.LatLng(coordinate[1], coordinate[0]));
+							bounds.extend(new google.maps.LatLng(coordinate[1], coordinate[0]));
 						});
 
 						chkPoly = new google.maps.Polygon({
@@ -592,6 +585,23 @@ function viewcompo(dvalue) {
 					}
 					//chkPoly.setMap(map);
 					chkdata[k1][v2['housenumber']] = chkPoly;
+					var options = {
+								map: map,
+								position: bounds.getCenter(),
+								text: '',
+								minZoom: 8,
+								zIndex : 999
+							};
+					var slumLabel = new MapLabel(options);
+						//slumLabel.changed('text');
+					google.maps.event.addListener(chkPoly, 'mouseover', function(event) {
+				    slumLabel.text = v2['housenumber'];
+				    slumLabel.changed('text');
+				  });
+				  google.maps.event.addListener(chkPoly, 'mouseout', function(event) {
+				    slumLabel.text = '';
+				    slumLabel.changed('text');
+					});
 
 				});
 			} else {
@@ -620,20 +630,8 @@ function viewcompo(dvalue) {
 	compochk.html(str);
 }
 
-function checkAll(checkbox_group) {
-	checktoggle = checkbox_group.checked;
-	var checkboxes = new Array();
-	divParent = checkbox_group.parentElement
-	checkboxes = divParent.getElementsByTagName('input')
-
-	for (var i = 0; i < checkboxes.length; i++) {
-		if (checkboxes[i].type == 'checkbox') {
-			checkboxes[i].checked = checktoggle;
-		}
-	}
-}
-
 var zindex = 0;
+//Filter checkbox selection to display relavent data on MAP
 function checkSingleGroup(single_checkbox) {
 	//componentfillmap();
 	var chkchild = $(single_checkbox).val();
@@ -646,7 +644,6 @@ function checkSingleGroup(single_checkbox) {
 			v4.setMap(map);
 			v4.set("zIndex", zindex);
 			if (section == "Sponsor") {
-				//var sponsorinfo=new google.maps.InfoWindow({content:""});
 				google.maps.event.addListener(v4, 'click', function(event) {
 					$.each(lst_sponsor, function(k, v) {
 						v.close();
@@ -665,8 +662,7 @@ function checkSingleGroup(single_checkbox) {
 						type : "GET",
 						contenttype : "json",
 						success : function(json) {
-
-							var spstr = "";
+  						var spstr = "";
 							spstr += '<table class="table table-striped" style="font-size: 10px;"><tbody>';
 							spstr += '<tr><td colspan="2"><a href="/media/report/' + k4 + '_'+arr[3].replace(/ /g,"_").replace(/,/g,"")+'.pdf" style="cursor:pointer;color:darkred;" target="blank">View Factsheet</a></td></tr>';
 							$.each(json, function(k, v) {
@@ -691,6 +687,7 @@ function checkSingleGroup(single_checkbox) {
 	}
 }
 
+//RIM data display in modal popup
 function tabularSingleGroup(single_model) {
 
 	mk = $(single_model).attr('selection');
@@ -698,15 +695,13 @@ function tabularSingleGroup(single_model) {
 	var modelbody = $("#modelbody");
 	var chkstr = "";
 
-	//chkstr += '<h4 id="modelheader" class="modal-title"  >' + mk + '</h4>';
 	modelheader.html(mk);
 	chkstr = "";
 	var spstr = "";
 	var commentstr = "";
 	json = global_RIM[modelsection[mk]];
 	spstr += '<table class="table table-striped"  style="margin-bottom:0px;font-size: 10px;"><tbody>';
-	//spstr +='<tr><td colspan="2"><a href="/media/ambedkarnagar/'+house+'_Ambedkar Nagar_Bibvewadi_Pune_2016.pdf" style="cursor:pointer;color:darkred;" target="blank">View Factsheet</a></td></tr>';
-    $("#myModal>div").removeClass("modal-lg");
+  $("#myModal>div").removeClass("modal-lg");
 	if ( json instanceof Array) {
 		$("#myModal>div").addClass("modal-lg");
 		var jsoncount;
@@ -719,10 +714,8 @@ function tabularSingleGroup(single_model) {
 		}
 
 		$.each(Object.keys(json[jsoncount]), function(k, v) {
-			console.log(v);
 			spstr += '<tr><td style="font-weight:bold;width:200px;">' + v + '</td>';
 			$.each(json, function(k1, v1) {
-				console.log(v1[v]);
 				val=v1[v];
 				if(val == undefined){
 				   val="&nbsp;";
@@ -732,23 +725,17 @@ function tabularSingleGroup(single_model) {
 			spstr += '</tr>';
 		});
 	} else {
-
 		$.each(json, function(k, v) {
 
 			if (k.indexOf("comment") != -1 || k.indexOf("Describe") != -1) {
 				commentstr += '<tr><td  colspan=2><label style="font-weight:bold;">' + k + ': </label> ' + v + '</td></tr>';
-
 			} else {
 				spstr += '<tr><td style="font-weight:bold;width:200px;">' + k + '</td><td>' + v + '</td></tr>';
 			}
+
 		});
-
 	}
-
 	spstr += commentstr + '</tbody></table>';
-	//chkstr += '<table><tr><td>1<td><td>my name</td></tr><tr><td>2<td><td>my name123</td></tr></table>'
 	modelbody.html(spstr);
-
-	chkmodel.modal('show');
-
+  $("#myModal").modal('show');
 }
