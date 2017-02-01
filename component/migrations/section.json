@@ -43,8 +43,15 @@
 }, {
 	"fields": {
 		"name": "Sponsor",
-		"order": 7.0
+		"order": 8.0
 	},
 	"model": "component.section",
 	"pk": 7
+}, {
+	"fields": {
+		"name": "Gutter information",
+		"order": 7.0
+	},
+	"model": "component.section",
+	"pk": 8
 }]

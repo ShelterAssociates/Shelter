@@ -2,22 +2,25 @@
 {% load i18n %}
 
 {% block breadcrumbs %}
-
-<div class ="row" style = "margin-left:0.5%;">
-
-<div style ="margin:auto;witdth:20%,margin-top:100px;">
-  <a href="rim/display/"><h2>Rapid Infrastructure Mapping</h2></a> 
-</div>
-
-<div style ="margin:auto;witdth:20%,margin-top:100px;">
-  <a href="drainage/display/"><h2>Drainage </h2></a> 
-</div>
-
-
+{% load staticfiles %}
+<link rel="stylesheet"  type="text/css" href="{% static "css/bootstrap.min.css" %}"/>
+<script src="{% static "js/jquery.min.js" %}"></script>
+<script src="{% static "js/bootstrap.min.js" %}"></script>
+<ol class="breadcrumb">
+    <li><a href="{% url 'index' %}">Home</a></li>
+</ol>
 {% endblock %}
 
 {% block content %}
+<div class ="row" style = "margin-left:0.5%;">
 
+<div style ="margin:auto;witdth:20%,margin-top:100px;">
+  <a href="rim/display/"><h4>Rapid Infrastructure Mapping</h4></a>
+</div>
+
+<div style ="margin:auto;witdth:20%,margin-top:100px;">
+  <a href="drainage/display/"><h4>Drainage </h4></a>
+</div>
 {% endblock %}
 
 {% block sidebar %}
