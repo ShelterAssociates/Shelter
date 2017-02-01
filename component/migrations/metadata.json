@@ -1,0 +1,505 @@
+[{
+	"fields": {
+		"code": "houses",
+		"name": "Houses",
+		"level": "H",
+		"section": 1,
+		"visible": true,
+		"display_type": "M",
+		"type": "C",
+		"order": 1.0,
+		"blob": "{\"polycolor\":\"#0000ff\",\"linewidth\":0.33,\"linecolor\":\"#0000ff\"}"
+	},
+	"model": "component.metadata",
+	"pk": 1
+}, {
+	"fields": {
+		"code": "communitytoiletblock",
+		"name": "Community toilet blocks",
+		"level": "H",
+		"section": 2,
+		"visible": true,
+		"display_type": "M",
+		"type": "C",
+		"order": 1.0,
+		"blob": "{\"polycolor\":\"#ff0000\",\"linewidth\":0.33,\"linecolor\":\"#ff0000\"}"
+	},
+	"model": "component.metadata",
+	"pk": 2
+}, {
+	"fields": {
+		"code": "opendefecationarea",
+		"name": "Open defecation areas",
+		"level": "H",
+		"section": 2,
+		"visible": true,
+		"display_type": "M",
+		"type": "C",
+		"order": 2.0,
+		"blob": "{\"polycolor\":\"#ff0080\",\"linewidth\":0.33,\"linecolor\":\"#ff0000\"}"
+	},
+	"model": "component.metadata",
+	"pk": 3
+}, {
+	"fields": {
+		"code": "garbagebins",
+		"name": "Garbage bins",
+		"level": "H",
+		"section": 3,
+		"visible": true,
+		"display_type": "M",
+		"type": "C",
+		"order": 1.0,
+		"blob": "{\"polycolor\":\"#ff00eb\",\"linewidth\":0.33,\"linecolor\":\"#ff00eb\"}"
+	},
+	"model": "component.metadata",
+	"pk": 4
+}, {
+	"fields": {
+		"code": "opengarbage",
+		"name": "Open garbage area",
+		"level": "H",
+		"section": 3,
+		"visible": true,
+		"display_type": "M",
+		"type": "C",
+		"order": 2.0,
+		"blob": "{\"polycolor\":\"#ffb600\",\"linewidth\":0.33,\"linecolor\":\"#ffb600\"}"
+	},
+	"model": "component.metadata",
+	"pk": 5
+}, {
+	"fields": {
+		"code": "tarroad",
+		"name": "Tar road",
+		"level": "H",
+		"section": 5,
+		"visible": true,
+		"display_type": "M",
+		"type": "C",
+		"order": 2.0,
+		"blob": "{\"polycolor\":\"#ff00eb\",\"linewidth\":4.0,\"linecolor\":\"#ff00eb\"}"
+	},
+	"model": "component.metadata",
+	"pk": 6
+}, {
+	"fields": {
+		"code": "manholes",
+		"name": "Manholes",
+		"level": "H",
+		"section": 6,
+		"visible": true,
+		"display_type": "M",
+		"type": "C",
+		"order": 1.0,
+		"blob": "{\"linecolor\":\"#FFFFFF\"}"
+	},
+	"model": "component.metadata",
+	"pk": 7
+}, {
+	"fields": {
+		"code": "drainageline10inch",
+		"name": "Drainage line 10inch",
+		"level": "H",
+		"section": 6,
+		"visible": true,
+		"display_type": "M",
+		"type": "C",
+		"order": 2.0,
+		"blob": "{\"polycolor\":\"#ff0080\",\"linewidth\":3.33,\"linecolor\":\"#ff0080\"}"
+	},
+	"model": "component.metadata",
+	"pk": 8
+}, {
+	"fields": {
+		"code": "drainageline12inch",
+		"name": "Drainage line 12inch",
+		"level": "H",
+		"section": 6,
+		"visible": true,
+		"display_type": "M",
+		"type": "C",
+		"order": 3.0,
+		"blob": "{\"polycolor\":\"#1DB44D\",\"linewidth\":4,\"linecolor\":\"#1DB44D\"}"
+	},
+	"model": "component.metadata",
+	"pk": 9
+}, {
+	"fields": {
+		"code": "drainageline18inch",
+		"name": "Drainage inch 18inch",
+		"level": "H",
+		"section": 6,
+		"visible": true,
+		"display_type": "M",
+		"type": "C",
+		"order": 4.0,
+		"blob": "{\"polycolor\":\"#ffb600\",\"linewidth\":4,\"linecolor\":\"#ffb600\"}"
+	},
+	"model": "component.metadata",
+	"pk": 10
+}, {
+	"fields": {
+		"code": "coba",
+		"name": "Coba road",
+		"level": "H",
+		"section": 5,
+		"visible": true,
+		"display_type": "M",
+		"type": "C",
+		"order": 2.0,
+		"blob": "{\"polycolor\":\"#ff0080\",\"linewidth\":4,\"linecolor\":\"#ff0080\"}"
+	},
+	"model": "component.metadata",
+	"pk": 11
+}, {
+	"fields": {
+		"code": "farshi",
+		"name": "Farshi",
+		"level": "H",
+		"section": 5,
+		"visible": true,
+		"display_type": "M",
+		"type": "C",
+		"order": 3.0,
+		"blob": "{\"polycolor\":\"#ff0000\",\"linewidth\":2,\"linecolor\":\"#ff0000\"}"
+	},
+	"model": "component.metadata",
+	"pk": 12
+}, {
+	"fields": {
+		"code": "waterstandpost",
+		"name": "Water stand post",
+		"level": "H",
+		"section": 4,
+		"visible": true,
+		"display_type": "M",
+		"type": "C",
+		"order": 1.0,
+		"blob": "{\"polycolor\":\"#ffffff\",\"linewidth\":2,\"linecolor\":\"#ffffff\"}"
+	},
+	"model": "component.metadata",
+	"pk": 13
+}, {
+	"fields": {
+		"code": "drainageline24inch",
+		"name": "Drainage line 24inch",
+		"level": "H",
+		"section": 6,
+		"visible": true,
+		"display_type": "M",
+		"type": "C",
+		"order": 4.0,
+		"blob": "{\"polycolor\":\"#ff0000\",\"linewidth\":4,\"linecolor\":\"#ff0000\"}"
+	},
+	"model": "component.metadata",
+	"pk": 14
+}, {
+	"fields": {
+		"code": "chambers",
+		"name": "Chambers",
+		"level": "H",
+		"section": 6,
+		"visible": true,
+		"display_type": "M",
+		"type": "C",
+		"order": 2.0,
+		"blob": "{\"linecolor\":\"#ffff7f\"}"
+	},
+	"model": "component.metadata",
+	"pk": 15
+}, {
+	"fields": {
+		"code": "kutcha",
+		"name": "Kucha road",
+		"level": "H",
+		"section": 5,
+		"visible": true,
+		"display_type": "M",
+		"type": "C",
+		"order": 4.0,
+		"blob": "{\"polycolor\":\"#ffff00\",\"linewidth\":2,\"linecolor\":\"#ffff00\"}"
+	},
+	"model": "component.metadata",
+	"pk": 16
+}, {
+	"fields": {
+		"code": "group_ye18c77/group_yw8pj39/Current_place_of_defecation_toilet:01",
+		"name": "Own toilet",
+		"level": "H",
+		"section": 2,
+		"visible": true,
+		"display_type": "M",
+		"type": "F",
+		"order": 3.0,
+		"blob": "{\"polycolor\":\"#FFF200\",\"linewidth\":2,\"linecolor\":\"#FFF200\"}"
+	},
+	"model": "component.metadata",
+	"pk": 17
+}, {
+	"fields": {
+		"code": "group_ye18c77/group_yw8pj39/Current_place_of_defecation_toilet:02",
+		"name": "SBM (own) toilet",
+		"level": "H",
+		"section": 2,
+		"visible": true,
+		"display_type": "M",
+		"type": "F",
+		"order": 4.0,
+		"blob": "{\"polycolor\":\"#f3f780\",\"linewidth\":2,\"linecolor\":\"#f3f780\"}"
+	},
+	"model": "component.metadata",
+	"pk": 18
+}, {
+	"fields": {
+		"code": "group_ye18c77/group_yw8pj39/Current_place_of_defecation_toilet:03",
+		"name": "Were using Community toilet block",
+		"level": "H",
+		"section": 2,
+		"visible": true,
+		"display_type": "M",
+		"type": "F",
+		"order": 5.0,
+		"blob": "{\"polycolor\":\"#ea2727\",\"linewidth\":2,\"linecolor\":\"#ea2727\"}"
+	},
+	"model": "component.metadata",
+	"pk": 19
+}, {
+	"fields": {
+		"code": "group_ye18c77/group_yw8pj39/Current_place_of_defecation_toilet:04",
+		"name": "Shared toilet",
+		"level": "H",
+		"section": 2,
+		"visible": true,
+		"display_type": "M",
+		"type": "F",
+		"order": 6.0,
+		"blob": "{\"polycolor\":\"#27e7ea\",\"linewidth\":2,\"linecolor\":\"#27e7ea\"}"
+	},
+	"model": "component.metadata",
+	"pk": 20
+}, {
+	"fields": {
+		"code": "group_ye18c77/group_yw8pj39/Current_place_of_defecation_toilet:05",
+		"name": "Public toilet outside slum",
+		"level": "H",
+		"section": 2,
+		"visible": true,
+		"display_type": "M",
+		"type": "F",
+		"order": 7.0,
+		"blob": "{\"polycolor\":\"#da27ea\",\"linewidth\":2,\"linecolor\":\"#da27ea\"}"
+	},
+	"model": "component.metadata",
+	"pk": 21
+}, {
+	"fields": {
+		"code": "group_ye18c77/group_yw8pj39/Are_you_interested_in_individu:01",
+		"name": "Interested in individual toilet",
+		"level": "H",
+		"section": 2,
+		"visible": true,
+		"display_type": "M",
+		"type": "F",
+		"order": 9.0,
+		"blob": "{\"polycolor\":\"#bdf780\",\"linewidth\":2,\"linecolor\":\"#bdf780\"}"
+	},
+	"model": "component.metadata",
+	"pk": 23
+}, {
+	"fields": {
+		"code": "group_ye18c77/group_yw8pj39/Are_you_interested_in_individu:02",
+		"name": "Not interested in individual toilet",
+		"level": "H",
+		"section": 2,
+		"visible": true,
+		"display_type": "M",
+		"type": "F",
+		"order": 10.0,
+		"blob": "{\"polycolor\":\"#00A7E4\",\"linewidth\":2,\"linecolor\":\"#00A7E4\"}"
+	},
+	"model": "component.metadata",
+	"pk": 24
+}, {
+	"fields": {
+		"code": "group_ye18c77/group_yw8pj39/what_is_the_ownership_status_of_the_house:01",
+		"name": "Own house",
+		"level": "H",
+		"section": 1,
+		"visible": true,
+		"display_type": "M",
+		"type": "F",
+		"order": 2.0,
+		"blob": "{\"polycolor\":\"#B2E71D\",\"linewidth\":2,\"linecolor\":\"#B2E71D\"}"
+	},
+	"model": "component.metadata",
+	"pk": 25
+}, {
+	"fields": {
+		"code": "group_ye18c77/group_yw8pj39/what_is_the_ownership_status_of_the_house:02",
+		"name": "Tenant",
+		"level": "H",
+		"section": 1,
+		"visible": true,
+		"display_type": "M",
+		"type": "F",
+		"order": 3.0,
+		"blob": "{\"polycolor\":\"#FCF400\",\"linewidth\":2,\"linecolor\":\"#FCF400\"}"
+	},
+	"model": "component.metadata",
+	"pk": 26
+}, {
+	"fields": {
+		"code": "group_ye18c77/group_yw8pj39/type_of_water_connection:01",
+		"name": "Individual water connection",
+		"level": "H",
+		"section": 4,
+		"visible": true,
+		"display_type": "M",
+		"type": "F",
+		"order": 2.0,
+		"blob": "{\"polycolor\":\"#03FD06\",\"linewidth\":2,\"linecolor\":\"#03FD06\"}"
+	},
+	"model": "component.metadata",
+	"pk": 27
+}, {
+	"fields": {
+		"code": "group_ye18c77/group_yw8pj39/type_of_water_connection:02",
+		"name": "Shared connection",
+		"level": "H",
+		"section": 4,
+		"visible": true,
+		"display_type": "M",
+		"type": "F",
+		"order": 3.0,
+		"blob": "{\"polycolor\":\"#FCF400\",\"linewidth\":2,\"linecolor\":\"#FCF400\"}"
+	},
+	"model": "component.metadata",
+	"pk": 28
+}, {
+	"fields": {
+		"code": "group_ye18c77/group_yw8pj39/type_of_water_connection:03",
+		"name": "HH using water stand-posts",
+		"level": "H",
+		"section": 4,
+		"visible": true,
+		"display_type": "M",
+		"type": "F",
+		"order": 4.0,
+		"blob": "{\"polycolor\":\"#0000ff\",\"linewidth\":2,\"linecolor\":\"#0000ff\"}"
+	},
+	"model": "component.metadata",
+	"pk": 29
+}, {
+	"fields": {
+		"code": "group_ye18c77/group_yw8pj39/type_of_water_connection:04",
+		"name": "Handpump",
+		"level": "H",
+		"section": 4,
+		"visible": true,
+		"display_type": "M",
+		"type": "F",
+		"order": 5.0,
+		"blob": "{\"polycolor\":\"#a2f780\",\"linewidth\":2,\"linecolor\":\"#a2f780\"}"
+	},
+	"model": "component.metadata",
+	"pk": 30
+}, {
+	"fields": {
+		"code": "group_ye18c77/group_yw8pj39/type_of_water_connection:05",
+		"name": "Water tanker",
+		"level": "H",
+		"section": 4,
+		"visible": true,
+		"display_type": "M",
+		"type": "F",
+		"order": 6.0,
+		"blob": "{\"polycolor\":\"#f78086\",\"linewidth\":2,\"linecolor\":\"#f78086\"}"
+	},
+	"model": "component.metadata",
+	"pk": 31
+}, {
+	"fields": {
+		"code": "group_ye18c77/group_yw8pj39/type_of_water_connection:06",
+		"name": "Well",
+		"level": "H",
+		"section": 4,
+		"visible": true,
+		"display_type": "M",
+		"type": "F",
+		"order": 7.0,
+		"blob": "{\"polycolor\":\"#b280f7\",\"linewidth\":2,\"linecolor\":\"#b280f7\"}"
+	},
+	"model": "component.metadata",
+	"pk": 32
+}, {
+	"fields": {
+		"code": "",
+		"name": "Alfa Laval",
+		"level": "H",
+		"section": 7,
+		"visible": true,
+		"display_type": "M",
+		"type": "F",
+		"order": 2.0,
+		"blob": "{\"polycolor\":\"#2AAD50\",\"linewidth\":2,\"linecolor\":\"#2AAD50\"}"
+	},
+	"model": "component.metadata",
+	"pk": 33
+}, {
+	"fields": {
+		"code": "",
+		"name": "BAML",
+		"level": "H",
+		"section": 7,
+		"visible": true,
+		"display_type": "M",
+		"type": "F",
+		"order": 3.0,
+		"blob": "{\"polycolor\":\"#80f7f1\",\"linewidth\":2,\"linecolor\":\"#80f7f1\"}"
+	},
+	"model": "component.metadata",
+	"pk": 34
+}, {
+	"fields": {
+		"code": "",
+		"name": "Indostar",
+		"level": "H",
+		"section": 7,
+		"visible": true,
+		"display_type": "M",
+		"type": "F",
+		"order": 4.0,
+		"blob": "{\"polycolor\":\"#FF7E2B\",\"linewidth\":2,\"linecolor\":\"#FF7E2B\"}"
+	},
+	"model": "component.metadata",
+	"pk": 35
+}, {
+	"fields": {
+		"code": "",
+		"name": "Facilitated by Shelter",
+		"level": "H",
+		"section": 7,
+		"visible": true,
+		"display_type": "M",
+		"type": "F",
+		"order": 1.0,
+		"blob": "{\"polycolor\":\"#FCF400\",\"linewidth\":2,\"linecolor\":\"#FCF400\"}"
+	},
+	"model": "component.metadata",
+	"pk": 36
+}, {
+	"fields": {
+		"code": "pavingblock",
+		"name": "Paving block",
+		"level": "H",
+		"section": 5,
+		"visible": true,
+		"display_type": "M",
+		"type": "C",
+		"order": 4.0,
+		"blob": "{\"polycolor\":\"#FCF400\",\"linewidth\":2,\"linecolor\":\"#FCF400\"}"
+	},
+	"model": "component.metadata",
+	"pk": 37
+}]
