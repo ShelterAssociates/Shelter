@@ -77,8 +77,13 @@ var url = "{% url 'modelList' %}";
         <div class="col-md-2">{{form.kml_file.label_tag}}</div>
         <div class="col-md-2">{{form.kml_file}}</div>
       </div>
-
-    <div class="row" style="padding-top:20px;">
+    <div class="row" style="padding-top:2px;">
+      <div class="col-md-12 breadcrumb" style="font-style: italic;margin-bottom:0px;">
+        <li><label>Note :</label><br/>
+            Components in KML should have names - {{component|join:', '}} </li>
+      </div>
+    </div>
+    <div class="row" style="">
       <div class="col-md-12">
         {% if parsed != None and parsed|length > 0%}
           <li{% if message.tags %} class="{{ message.tags }}"{% endif %}>Parsed data : {{parsed|join:', '}}</li>
