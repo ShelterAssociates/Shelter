@@ -35,6 +35,8 @@ def kml_upload(request):
                 messages.error(request, 'Some error occurred while parsing. KML file is not in the required format ('+str(e)+')')
     else:
         form = KMLUpload()
+    metadata_component = Metadata.objects.filter(type='C').values_list('code', flat=True)
+    context_data['component'] = metadata_component
     context_data['form'] = form
     return render(request, 'kml_upload.html', context_data)
 
