@@ -73,16 +73,21 @@ class KMLParser(object):
             folders = self.root.Folder.Document.Folder
         metadata_component = Metadata.objects.filter(type='C').values_list('code', flat=True)
         for folder in folders:
-            kml_name = str(folder.name).split('(')[0]
+          try:
+	    kml_name = str(folder.name).split('(')[0]
             kml_name = kml_name.replace(' ','').lower()
             kml_folder[kml_name] = False
     	    if kml_name in metadata_component:
             	self.component_data = []
             	for pm in folder.Placemark:
                     #Fetch household number from extended data
+		  try:
                     (household_no, coordinates) = self.component_latlong(pm)
                     self.component_data.append({'house_no':household_no, 'coordinates':coordinates})
-
+		  except Exception as ex:
+			raise Exception(" -> "+str(pm.name) +' ]] '+ str(ex))
             	self.bulk_update_or_create(kml_name)
                 kml_folder[kml_name] = True
+	  except Exception as e:
+	 	raise Exception("[[ " + str(folder.name) +  str(e))
         return kml_folder
