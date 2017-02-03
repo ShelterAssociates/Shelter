@@ -84,6 +84,15 @@ where s.id = %s and p.id = %s and f.content_type_id = 27 and household.slum_id= 
 # get list of option to set as text instead of option
 qry_fact_option_text_list = "select code, description from survey_factoption where desired_fact_id=%s order by code asc"
 
+qry_ff_survey_slum_household_photos = "select household.household_code, f.desired_fact_id as question_id, fi.image_name as photo_url from survey_fact f \
+join ray_survey_factimage fi on f.id = fi.fact_id \
+join survey_survey s on s.id = f.survey_id join survey_project p on p.id = s.project_id \
+join survey_surveydesiredfact sdf on f.desired_fact_id = sdf.desired_fact_id and s.id = sdf.survey_id \
+join slum_data_household household on household.id = f.object_id \
+where s.id = %s and p.id = %s and f.content_type_id = 27 and household.slum_id= %s \
+and f.desired_fact_id in (436, 438) \
+order by household.household_code, sdf.weight asc"
+
 # path of survey excel file(xls) to read option and xml keys
 FF_excelFile = os.path.join(root_folder_path, 'FilesToRead', 'FF.xls')
 
@@ -99,6 +108,7 @@ def create_ff_xml(options):
 	global qry_slum_list
 	global qry_ff_slum_household_survey_list
 	global qry_ff_survey_slum_household_question_answer
+	global qry_ff_survey_slum_household_photos
 	
 	global qry_fact_option_text_list
 	
@@ -182,6 +192,8 @@ def create_ff_xml(options):
 			#print(household_fact)
 			total_process_house += len(household_fact)
 			
+			household_photo_fact = get_household_wise_question_answer(qry_ff_survey_slum_household_photos % (survey_id, project_id, slum))
+			
 			# process each household in slum
 			for household in household_list:
 				try:
@@ -190,6 +202,10 @@ def create_ff_xml(options):
 					
 					#get question and its answers for household
 					fact = household_fact[household]
+					
+					photo_fact = None
+					if household in household_photo_fact.keys():
+						photo_fact = household_photo_fact[household]
 					
 					#print('question answer', fact)
 					
@@ -322,8 +338,10 @@ def create_ff_xml(options):
 					#write_log('process - Toilet Information')
 					
 					ff_xml_dict['Note'] = get_answer('Note', fact)
-					ff_xml_dict['Family_Photo'] = None #get_answer('Family_Photo', fact)
-					ff_xml_dict['Toilet_Photo'] = None #get_answer('Toilet_Photo', fact)
+					
+					photo_downlaod_folder = os.path.join(output_folder_path, "photos", "slum_" +str(slum))
+					ff_xml_dict['Family_Photo'] = get_ff_photo('Family_Photo', photo_fact, photo_downlaod_folder)
+					ff_xml_dict['Toilet_Photo'] = get_ff_photo('Toilet_Photo', photo_fact, photo_downlaod_folder)
 					
 					ff_xml_dict['__version__'] = xml_root_attr_version
 					
