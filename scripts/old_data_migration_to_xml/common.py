@@ -11,6 +11,11 @@ import psycopg2
 import datetime
 import dicttoxml
 import xml.etree.ElementTree as ET
+import requests
+import shutil
+import traceback
+
+requests.packages.urllib3.disable_warnings()
 
 from local_settings import *
 
@@ -689,6 +694,56 @@ def set_survey_log_path_option(log_folder_path):
 	
 	options_dict['log_folder_path'] = log_folder_path
 	return;
+
+# get photo - return photo name as answer and download photo from url (use for FF survey only)
+def get_ff_photo(xml_key, fact_dict, download_folder_path):
+	answer = None
+	photo_name = None
+	
+	url_prefix = "http://survey.shelter-associates.org/media/"
+	
+	#check if answer is available
+	if fact_dict:
+		photo = get_answer(xml_key, fact_dict)
+		
+		# get photo path (relative path)
+		photo_path = photo if not isinstance(photo, list) else photo[0]
+		
+		#\print('\nanswer => ', xml_key, ' => ', photo_path)
+		
+		if photo_path:
+			if download_folder_path:
+				photo_url = url_prefix + photo_path
+				#print('photo_url => ', photo_url)
+				
+				photo_name = photo_path.split('/')[-1]
+				#print('photo_name => ', photo_name)
+				
+				download_photo_path = os.path.join(download_folder_path, photo_name)
+				#print('download_photo_path => ', download_photo_path)
+				
+				try:
+					if not os.path.exists(download_folder_path):
+						os.makedirs(download_folder_path)
+				
+					# Download the file from `url` and save it locally under `file_name`:
+					response = requests.get(photo_url, stream=True, verify=False)
+					with open(download_photo_path, 'wb') as out_file:
+						shutil.copyfileobj(response.raw, out_file) # copy from temp location to final location
+					del response
+					
+					# check if file is downloaded or not 
+					if os.path.isfile(download_photo_path):
+						answer = photo_name
+
+				except Exception as ex:
+					exception_log = 'Exception occurred for fetching photo \t  exception : '+ str(ex) +' \t  traceback : '+ traceback.format_exc()
+					write_log(exception_log)
+					pass
+	
+	return answer;
+
+
 
 
 
