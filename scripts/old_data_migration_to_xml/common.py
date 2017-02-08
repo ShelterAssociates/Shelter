@@ -664,7 +664,7 @@ def reset_survey_option():
 		
 	return;
 
-def set_survey_option(project, survey, mapped_excelFile, output_path, survey2=None):
+def set_survey_option(project, survey, mapped_excelFile, survey2=None):
 	global options_dict
 	
 	options_dict['project'] = project
@@ -672,8 +672,6 @@ def set_survey_option(project, survey, mapped_excelFile, output_path, survey2=No
 	options_dict['survey'] = survey
 	
 	options_dict['mapped_excelFile'] = mapped_excelFile
-	
-	options_dict['output_path'] = output_path
 	
 	options_dict['survey2'] = survey2
 	
@@ -694,6 +692,20 @@ def set_survey_log_path_option(log_folder_path):
 	
 	options_dict['log_folder_path'] = log_folder_path
 	return;
+
+def set_survey_output_path_option(output_path):
+	global options_dict
+	
+	options_dict['output_path'] = output_path
+	
+	return;
+
+def get_survey_option_output_path():
+	global options_dict
+	
+	output_path = options_dict['output_path']
+	
+	return output_path;
 
 # get photo - return photo name as answer and download photo from url (use for FF survey only)
 def get_ff_photo(xml_key, fact_dict, download_folder_path):
@@ -742,6 +754,14 @@ def get_ff_photo(xml_key, fact_dict, download_folder_path):
 					pass
 	
 	return answer;
+
+
+
+
+
+
+
+
 
 
 
