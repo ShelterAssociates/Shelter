@@ -19,8 +19,8 @@ city_option = {
 }
 
 survey_type_option = {
-	'1': 'Rapid Apprisal',
-	'2': 'Rapid Household Apprisal',
+	'1': 'Rapid Infrastructure Mapping(RIM)',
+	'2': 'Rapid Household Survey(RHS)',
 	'3': 'Family Factsheet',
 }
 
@@ -66,26 +66,26 @@ mapped_excel_path_mapping = {
 }
 
 survey_xml_value_mapping = {
-	# RA
+	# RA/RIM
 	'1': {
-		'xml_root': 'aLgeqjc9AzPHE2sDHuXqeH',
-		'xml_root_attr_id': 'aLgeqjc9AzPHE2sDHuXqeH',
-		'xml_root_attr_version': 'vqHbK4eJqHpdq4RodWyrvu',
-		'formhub_uuid': 'c4b78cd3aa354882befb0919586c2096',
+		'xml_root': 'aQPuZBqwRijfvAwaStCxaB',
+		'xml_root_attr_id': 'aQPuZBqwRijfvAwaStCxaB',
+		'xml_root_attr_version': 'vFj7RvJEym3fLv6SXxRpob',
+		'formhub_uuid': 'ea15aac487e7498e883a0447e0bce41c',
 	},
 	# RHS
 	'2': { 
-		'xml_root': 'agGEx5SL9H4QjcUp7FBF7z',
-		'xml_root_attr_id': 'agGEx5SL9H4QjcUp7FBF7z',
-		'xml_root_attr_version': 'vwu8oHVqQ9Ebzq9jJDyZER',
-		'formhub_uuid': '4e443b93e589419f9463ee742c8cfe77',
+		'xml_root': 'a4K9qAQYGwsKxrpwvHuViw',
+		'xml_root_attr_id': 'a4K9qAQYGwsKxrpwvHuViw',
+		'xml_root_attr_version': 'vXS3hfQDM2CGiAZiFkupZQ',
+		'formhub_uuid': 'd00bbe550e6f463dbb66730ed8b0b663',
 	},
 	# FF
 	'3': { 
-		'xml_root': 'aG7Ju4AGq5WfdMfNvGMypH',
-		'xml_root_attr_id': 'aG7Ju4AGq5WfdMfNvGMypH',
-		'xml_root_attr_version': 'vY9Bs39cHooJ3VeQQ9nLPQ',
-		'formhub_uuid': 'cfad7aa6f505437bbd35b1b9a1c12dc0',
+		'xml_root': 'arirRzBR5dGH9VxJ6ycmK2',
+		'xml_root_attr_id': 'arirRzBR5dGH9VxJ6ycmK2',
+		'xml_root_attr_version': 'vyvX8gWwcMqaKzuR3sZatW',
+		'formhub_uuid': '4e86fd4b227f4ea092bccf182fc25d4c',
 	},
 }
 
@@ -698,6 +698,8 @@ def run_program():
 
 if __name__ == "__main__":
 	run_program()
+	
+
 
 
 

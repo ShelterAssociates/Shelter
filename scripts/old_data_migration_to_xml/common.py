@@ -56,6 +56,20 @@ options_dict = {
 # get list of all slum and slum code
 qry_slum_list = "select distinct slum_id, slum_code from ray_survey_slumsurveymetadata where survey_id = %s order by slum_id"
 
+# process status dictionary
+process_status = {
+	'slum': 0,
+	'slum_unprocess': 0,
+	
+	'household': 0,
+	'household_unprocess': 0,
+	
+	'proceess': 0,
+	'success': 0,
+	'fail': 0,
+	
+	'upload': 0
+}
 
 # get data from database
 def fetch_db_records(query):
@@ -756,9 +770,98 @@ def get_ff_photo(xml_key, fact_dict, download_folder_path):
 	return answer;
 
 
+# display progress
+def show_progress_bar (iteration, total_count, status_for = ''):
+	prefix = status_for +' \t Progress status:'
+	suffix = 'Completed'
+	decimal_length = 0
+	progress_char = '-'
+	max_length = 50
+	
+	complete_percent = ("{0:." + str(decimal_length) + "f}").format(100 * (iteration / float(total_count)))
+	
+	progress_bar_length = int(max_length * iteration // total_count)
+	
+	progress_bar = progress_char * progress_bar_length + ' ' * (max_length - progress_bar_length)
+	
+	print('\r%s [%s] %s%% %s' % (prefix, progress_bar, complete_percent, suffix), end = '\r', flush=True)
+    
+	return;
 
+# set count for slum process
+def set_process_slum_count(total_slum, unprocess_slum):
+	process_status['slum'] = total_slum
+	process_status['slum_unprocess'] = unprocess_slum
+	return;
 
+# set count for household process	
+def set_process_household_count(total_household, unprocess_household):
+	process_status['household'] = total_household
+	process_status['household_unprocess'] = unprocess_household
+	return;
 
+# set count for total records process
+def set_process_count(total_process, success, fail):
+	process_status['proceess'] = total_process
+	process_status['success'] = success
+	process_status['fail'] = fail
+	return;
+
+# set count for file upload
+def set_upload_count(total_upload, success, fail):
+	process_status['upload'] = total_upload
+	process_status['success'] = success
+	process_status['fail'] = fail
+	return;
+
+# display result after process
+def show_process_status():
+	if process_status['slum']:
+		slum_status = 'Total slums : ' + str(process_status['slum'])
+		slum_status += ('' if process_status['slum_unprocess'] == 0 else '\t total slums unable to process '+str(process_status['slum_unprocess']))
+		
+		print(slum_status)
+		write_log(slum_status)
+		
+		process_status['slum'] = 0
+		process_status['slum_unprocess'] = 0
+	
+	if process_status['household']:
+		household_status = 'Total household in all slums : ' + str(process_status['household'])
+		household_status += ('' if process_status['household_unprocess'] == 0 else '\t total household unable to process '+str(process_status['household_unprocess']))
+		
+		print(household_status)
+		write_log(household_status)
+		
+		process_status['household'] = 0
+		process_status['household_unprocess'] = 0
+		
+	
+	if process_status['proceess']:
+		create_xml_status = 'Total process records : ' + str(process_status['proceess'])
+		create_xml_status += '\t Success : ' + str(process_status['success'])
+		create_xml_status += '\t Fail : ' + str(process_status['fail'])
+		
+		print(create_xml_status)
+		write_log(create_xml_status)
+		
+		process_status['proceess'] = 0
+		process_status['success'] = 0
+		process_status['fail'] = 0
+		
+	if process_status['upload']:
+		upload_status = 'Total records for upload : ' + str(process_status['upload'])
+		upload_status += '\t Success : ' + str(process_status['success'])
+		upload_status += '\t Fail : ' + str(process_status['fail'])
+		
+		print(upload_status)
+		write_log(upload_status)
+		
+		process_status['upload'] = 0
+		process_status['success'] = 0
+		process_status['fail'] = 0
+	
+	return;
 
 
 
