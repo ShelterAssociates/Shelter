@@ -216,9 +216,18 @@ def create_rhs_xml(options):
 	
 	rhs_group['New'] = new_slum_household_list
 	
+	total_slum = 0
+	unprocess_slum = 0
+	
+	total_household = 0
+	unprocess_household = 0
+	
+	total_process = 0
 	fail = 0
 	success = 0
+	
 	total_process_house = 0
+	progess_counter = 0
 	
 	# check for each survey into group
 	for rhs_key, slum_household_list in rhs_group.items():
@@ -230,7 +239,10 @@ def create_rhs_xml(options):
 		if slum_household_list:
 			# check per household in each slum
 			for slum, household_list in slum_household_list.items():
-				print("proocessing data for slum - ", slum)
+				total_slum += 1
+				total_household += len(household_list)
+				
+				#print("proocessing data for slum - ", slum)
 				write_log("proocessing data for slum - "+str(slum))
 				
 				unprocess_records.setdefault(str(slum), [])
@@ -262,8 +274,13 @@ def create_rhs_xml(options):
 					#print(household_fact)
 					total_process_house += len(household_fact)
 					
+					# set progress bar
+					show_progress_bar(progess_counter, total_process_house)
+					
 					# process each household in slum
 					for household in household_list:
+						total_process += 1
+						
 						try:
 							#print("proocessing data for household - %s in slum - %s" % (household, slum))
 							#write_log("proocessing data for household - %s in slum - %s" % (household, str(slum)))
@@ -441,14 +458,19 @@ def create_rhs_xml(options):
 							
 							#break;
 							pass
+							
+						progess_counter += 1
+						show_progress_bar(progess_counter, total_process_house)
 					#break;
 				else:
+					unprocess_slum += 1
+					
 					# write log that slum code is not found for slum id
 					write_log('slum code is not found for slum id '+str(slum))
 					unprocess_records[str(slum)].append([None, 'slum code is not found when mapped'])
-					fail += 1
 			#break;
-		
+			
+			
 	if unprocess_records:
 		write_log('List of slum and household for which unable to create xml')
 		write_log('slum_id \t household_code \t exception')
@@ -460,16 +482,10 @@ def create_rhs_xml(options):
 	write_log('End : Log for RHS Survey for slum \n')
 	print("End processing")
 	
-	total_slum = (len(rhs_group['master']) if rhs_group['master'] else 0) + len(rhs_group['New'])
-	total_house = (sum(len(v1) for v1 in iter(rhs_group['master'].values())) if rhs_group['master'] else 0) + sum(len(v2) for v2 in iter(rhs_group['New'].values()))
-		
-	result_log = 'total slum records : '+str(total_slum) +'\t total house records in all slum : '+str(total_house)
-	print(result_log)
-	write_log(result_log)
-	
-	result_log2 = 'process house records in all slum : '+str(total_process_house) + ' \t fail to process : '+str(fail) + ' \t success : '+str(success)	
-	print(result_log2)
-	write_log(result_log2)
+	set_process_slum_count(total_slum, unprocess_slum)
+	set_process_household_count(total_household, unprocess_household)
+	set_process_count(total_process, success, fail)
+	show_process_status()
 	
 	return;
 
