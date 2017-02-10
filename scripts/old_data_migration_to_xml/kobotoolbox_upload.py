@@ -22,25 +22,6 @@ process_file_count = 0
 success_file_upload_count = 0
 fail_file_upload_count = 0
 
-# upload xml to Kobo Tool Box 
-def set_upload_xml_details(url, user, password):
-	global xml_upload_details
-	
-	xml_upload_details['upload_url'] = url
-	xml_upload_details['auth_user'] = user
-	xml_upload_details['auth_password'] = password
-	
-	return;
-
-def reset_upload_xml_details():
-	global xml_upload_details
-	
-	xml_upload_details['upload_url'] = None
-	xml_upload_details['auth_user'] = None
-	xml_upload_details['auth_password'] = None
-	
-	return;
-
 def upload_xml(xml_file):
 	
 	global xml_upload_details
@@ -49,35 +30,41 @@ def upload_xml(xml_file):
 	global success_file_upload_count
 	global fail_file_upload_count
 	
-	url = xml_upload_details['upload_url']
-	user = xml_upload_details['auth_user']
-	password = xml_upload_details['auth_password']
+	global kobotoolbox_url
+	global kobotoolbox_user
+	global kobotoolbox_password
+	
+	response_obj = None
 	
 	try:
 		xml_upload_folder_path = os.path.dirname(xml_file)
 		xml_file_name = os.path.basename(xml_file)
 		
-		print(process_file_count, ' path -> ', xml_upload_folder_path, '  file => ',xml_file_name)
+		#print(process_file_count, ' path -> ', xml_upload_folder_path, '  file => ',xml_file_name)
+		#print(' url -> ', kobotoolbox_url, '  user => ', kobotoolbox_user, '  password => ', kobotoolbox_password)
 		
 		upload_file_handler = open(xml_file, 'rb')
 			
 		process_file_count += 1
+		#print(process_file_count)
 		
-		response_obj = None # requests.post(url, auth=(user, password), files={"xml_submission_file": upload_file_handler})
+		response_obj = requests.post(kobotoolbox_url, auth=(kobotoolbox_user, kobotoolbox_password), files={"xml_submission_file": upload_file_handler})
 		
-		if False:#response_obj.status_code == requests.codes.ok:
+		#print(xml_file_name, ' response_obj.response_obj.status_code -> ', response_obj.status_code, ' requests.codes.ok -> ', requests.codes.ok)
+		
+		if response_obj.status_code == 201: #success status
 			success_file_upload_count += 1
 		else:
 			fail_file_upload_count += 1
 			
-			write_log(xml_upload_folder_path +' \t\t' + xml_file +' \t\t' + (response_obj.status_code if response_obj.status_code else "") +' \t\t\t' + (response_obj.text if response_obj.text else ""))
+			write_log(xml_upload_folder_path +' \t\t' + xml_file +' \t\t' + (str(response_obj.status_code) if response_obj.status_code else "") +' \t\t\t' + (response_obj.text if response_obj.text else ""))
 		
 		upload_file_handler.close()
 	except Exception as ex:
 		exception_log = 'Exception occurred for uploading xml file \t  exception : '+ str(ex) +' \t  traceback : '+ traceback.format_exc()
 		write_log(exception_log)
 	
-	return response_obj;
+	return response_obj
 
 def upload_to_kobotoolbox(url, user, password):
 	
@@ -102,21 +89,22 @@ def upload_to_kobotoolbox(url, user, password):
 	success_file_upload_count = 0
 	fail_file_upload_count = 0
 	
-	set_upload_xml_details(url, user, password)
+	#print('xml_file_list => ', xml_file_list)
+	
+	write_log('Start Uploading xml files to KoboToolBox')
 	
 	# use threading to upload file faster
 	pool_obj = Pool(processes=5)
 	
-	result = pool_obj.map(upload_xml, xml_file_list)
+	response_obj = pool_obj.map(upload_xml, xml_file_list)
 	
 	pool_obj.close()
 	pool_obj.join()
 	
-	reset_upload_xml_details()
-	
-	result_log = 'Total xml files to upload : '+str(upload_file_count) + ' \t process files : '+str(process_file_count) + ' \t fail to upload : '+str(fail_file_upload_count) + ' \t total success : '+str(success_file_upload_count)
-	print(result_log)
-	write_log(result_log)
+	write_log('Finish upload to KoboToolBox')
+	#result_log = 'Total xml files to upload : '+str(upload_file_count) + ' \t process files : '+str(total_process)  + ' \t total success : '+str(total_success) + ' \t fail to upload : '+str(total_fail)
+	#print(result_log)
+	#write_log(result_log)
 	
 	return;
 
