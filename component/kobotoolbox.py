@@ -38,30 +38,30 @@ def get_household_analysis_data(slum_code, fields):
                         output[field][data].append(household_no)
     return output
 
-def get_kobo_FF_list(slum_code,house_number):
+def get_kobo_RHS_list(slum_code,house_number):
 
     # url="http://kc.shelter-associates.org/api/v1/forms?format=json"
     """Method which fetches the KoboCat ID's and URL's from the Kobo Toolbox API"""
-   
+
     temp_arr={}
     output=OrderedDict()
     try:
-        url = settings.KOBOCAT_FORM_URL+'data/'+settings.KOBOCAT_FF_SURVEY+'?query={"group_vq77l17/slum_name":"'+slum_code+'","group_vq77l17/Household_number":"'+house_number+'"}'
+        url = settings.KOBOCAT_FORM_URL+'data/'+settings.KOBOCAT_RHS_SURVEY+'?query={"group_ce0hf58/slum_name":"'+slum_code+'","group_ce0hf58/house_no":"'+house_number+'"}'
     except Exception as e:
         print e
-        
+
     req = urllib2.Request(url)
     req.add_header('Authorization', settings.KOBOCAT_TOKEN)
     resp = urllib2.urlopen(req)
-    
+
     content = resp.read()
     data = json.loads(content)
-    
-    for val in data:    
+
+    for val in data:
         for k,v in val.items():
             temp_arr[k]= v
-            
-    url1 = settings.KOBOCAT_FORM_URL+'forms/'+settings.KOBOCAT_FF_SURVEY+'/form.json'
+
+    url1 = settings.KOBOCAT_FORM_URL+'forms/'+settings.KOBOCAT_RHS_SURVEY+'/form.json'
     req1 = urllib2.Request(url1)
     req1.add_header('Authorization', settings.KOBOCAT_TOKEN)
     resp1 = urllib2.urlopen(req1)
@@ -78,11 +78,11 @@ def get_kobo_FF_list(slum_code,house_number):
             try:
                 ans=""
                 if 'select' in maindata['type']:
-                    for vall in v1.split(): 
+                    for vall in v1.split():
                         ans+=str(maindata['children'][vall]['label']) +', '
-                    ans = ans[:-2]    
+                    ans = ans[:-2]
                 else:
-                    ans=v1    
+                    ans=v1
             except:
                 ans=""
                 pass
@@ -94,7 +94,7 @@ def get_kobo_FF_list(slum_code,house_number):
 
 def get_kobo_RIM_detail(slum_code):
     url = settings.KOBOCAT_FORM_URL+'data/'+settings.KOBOCAT_RIM_SURVEY+'?query={"group_zl6oo94/group_uj8eg07/slum_name":"'+slum_code+'"}'
-    
+
     req = urllib2.Request(url)
     req.add_header('Authorization', settings.KOBOCAT_TOKEN)
     resp = urllib2.urlopen(req)
@@ -110,7 +110,7 @@ def get_kobo_RIM_detail(slum_code):
     temp_arr['Gutter']=OrderedDict()
     temp_arr['Road']=OrderedDict()
     output=OrderedDict()
-    
+
     RIM_GENERAL="group_zl6oo94"
     RIM_TOILET="group_te3dx03"
     RIM_WATER="group_zj8tc43"
@@ -118,7 +118,7 @@ def get_kobo_RIM_detail(slum_code):
     RIM_DRAINAGE="group_kk5gz02"
     RIM_GUTTER="group_bv7hf31"
     RIM_ROAD="group_xy9hz30"
-    
+
     for val in data:
         for k,v in val.items():
             if RIM_GENERAL==k.split('/')[0]:
@@ -136,7 +136,7 @@ def get_kobo_RIM_detail(slum_code):
             elif RIM_ROAD==k.split('/')[0]:
              temp_arr['Road'][k]=v
 
-   
+
     url1 = settings.KOBOCAT_FORM_URL+'forms/'+settings.KOBOCAT_RIM_SURVEY+'/form.json'
     req1 = urllib2.Request(url1)
     req1.add_header('Authorization', settings.KOBOCAT_TOKEN)
@@ -144,9 +144,9 @@ def get_kobo_RIM_detail(slum_code):
     content1 = resp1.read()
     data1 = json.loads(content1)
     values=dictdata(data1)
-   
+
     #*****************************************/
-    
+
     ans=""
     for key,section_list in temp_arr.items():
         output[key]={}
@@ -156,55 +156,54 @@ def get_kobo_RIM_detail(slum_code):
                 maindata=values.copy()
                 for n in c_split:
                     maindata=maindata['children'][n]
-                    
+
                 try:
                     ans=""
                     que=""
                     if 'select' in maindata['type']:
-                        for vall in v1.split(): 
+                        for vall in v1.split():
                             ans+=str(maindata['children'][vall]['label']) +', '
                         ans = ans[:-2]
                         que= maindata['label']
                     elif 'repeat' in maindata['type']:
                         que=[]
-                     
+
                         for val1 in v1:
                             que_dict={}
                             for kn1,vn1 in val1.items():
                                 arr_kn1=kn1.split('/')
                                 if 'select' in maindata['children'][arr_kn1[len(arr_kn1)-1]]['type']:
                                     ans=""
-                                    for vall in vn1.split(): 
+                                    for vall in vn1.split():
                                         ans+=str(maindata['children'][arr_kn1[len(arr_kn1)-1]]['children'][vall]['label']) +', '
                                     vn1 = ans[:-2]
                                     que_dict[maindata['children'][arr_kn1[len(arr_kn1)-1]]['label']]= vn1
                                 else:
                                     que_dict[maindata['children'][arr_kn1[len(arr_kn1)-1]]['label']]= vn1
-                                   
-                            que.append(que_dict) 
-        
+
+                            que.append(que_dict)
+
                     else:
-                        ans=v1    
+                        ans=v1
                         que= maindata['label']
                     if type(que)==list:
-                        output[key]=que 
+                        output[key]=que
                     else:
-                        output[key][que]=ans  
+                        output[key][que]=ans
                 except:
                     ans=""
                     pass
-   
+
     return output
 
 
 
 def dictdata(data):
-    
+
     data['children'] = dict((str(topic['name']), topic) for topic in data['children'])
-    
+
     for k,v in data['children'].items():
         if 'children' in v:
-            if isinstance(v['children'], list):    
+            if isinstance(v['children'], list):
                 v = dictdata(v)
     return data
-

@@ -23,10 +23,10 @@ function initMap12() {
 	labelmap();
 	map = new google.maps.Map(document.getElementById('map12'), {
 		center : {
-			lat : 18.484913,
-			lng : 73.785493
+			lat : 19.489339,
+			lng : 74.631617
 		},
-		zoom : 8,
+		zoom : 4,
 		mapTypeId : 'satellite',
 	});
 
@@ -49,7 +49,15 @@ function initMap12() {
 		"Gutter information" : "Gutter"
 	}
 }
-
+function animateMapZoomTo(map, targetZoom) {
+    var currentZoom = arguments[2] || map.getZoom();
+    if (currentZoom != targetZoom) {
+        google.maps.event.addListenerOnce(map, 'zoom_changed', function (event) {
+            animateMapZoomTo(map, targetZoom, currentZoom + (targetZoom > currentZoom ? 1 : -1));
+        });
+        setTimeout(function(){ map.setZoom(currentZoom) }, 80);
+    }
+}
 function initMap(obj1, zoomlavel) {
 
 	map = new google.maps.Map(document.getElementById('map12'), {
@@ -91,6 +99,10 @@ function loadslum() {
 	});
 	Promise.all(arr_slum_url).then(function(result) {
 		$(".overlay").hide();
+		setTimeout(function(){
+			animateMapZoomTo(map,8);
+		},40);
+
 	});
 
 }
@@ -205,6 +217,7 @@ function createMap(jsondata, arrRemoveInd) {
 	var wdadd = "";
 	var head = "";
 	compochk.html('');
+
 	if (arrRemoveInd == true) {
 		if (arr.indexOf(jsondata) > -1 == true) {
 			var indi = arr.indexOf(jsondata);
@@ -418,15 +431,17 @@ function drawDatatable() {
 				var desc = "";
 				if (setval.legend != "")
 					desc = ' (' + setval.legend.replace(":", " >> ") + ')';
-				return '<div><span style="font-weight: 900;font-size: small;color: blue;cursor: pointer;" name="divSlum" data="' + setval.legend + ":" + setval.name + '">' + setval.name + desc + ' </span></div>' + '<div style="font-size: small;">' + setval.info + '</div>';
+				return '<div><span onclick="slum_list(this);" style="font-weight: 900;font-size: small;color: blue;cursor: pointer;" name="divSlum" data="' + setval.legend + ":" + setval.name + '">' + setval.name + desc + ' </span></div>' + '<div style="font-size: small;">' + setval.info + '</div>';
 			}
 		}]
 	});
-
 	$("#datatablecontainer").show();
 
-	$("#datatable").on("click", "span", function() {
-		data = $(this).attr("data");
+}
+
+function slum_list(val){
+	//mydatatable.on("click", "span", function(e) {
+		data = $(val).attr("data");
 		arr_data = data.split(":");
 		$.each(arr_data, function(k, v) {
 			if (arr.indexOf(v) == -1)
@@ -435,7 +450,8 @@ function drawDatatable() {
 		slum_pop = arr.pop();
 		arr.push(slum_pop);
 		createMap(slum_pop, false);
-	});
+		//e.stopPropagation();
+	//});
 }
 
 function viewIndiaBorder() {
@@ -464,12 +480,16 @@ function viewIndiaBorder() {
 }
 
 function compo(slumId) {
+	compochk.html('<div style="height:300px;width:300px;"><div id="loading-img"></div></div>');
 	$.ajax({
 		url : '/component/get_component/' + slumId,
 		type : "GET",
 		contenttype : "json",
 		success : function(json) {
 			viewcompo(json);
+		},
+		error:function(json){
+			compochk.html('');
 		}
 	});
 	$.ajax({
@@ -478,7 +498,6 @@ function compo(slumId) {
 		contenttype : "json",
 		success : function(json) {
 			global_RIM = json;
-
 		}
 	});
 
@@ -584,6 +603,43 @@ function viewcompo(dvalue) {
 
 					}
 					//chkPoly.setMap(map);
+					if (k1=="Houses"){
+						google.maps.event.addListener(chkPoly, 'click', function(event) {
+							$.each(lst_sponsor, function(k, v) {
+								v.close();
+							});
+							lst_sponsor = [];
+							var sponsorinfo = new google.maps.InfoWindow({
+								maxWidth : 430,
+								minWidth : 100,
+								minHeight : 100
+							});
+							sponsorinfo.setContent('<div class="overlay" style="display: block;"><div id="loading-img"></div></div>');
+							sponsorinfo.setPosition(event.latLng);
+							//lst_sponsor.push(sponsorinfo);
+							//sponsorinfo.open(map);
+							$.ajax({
+								url : '/component/get_kobo_RHS_list/' + global_slum_id + '/' + v2['housenumber'],
+								type : "GET",
+								contenttype : "json",
+								success : function(json) {
+		  						var spstr = "";
+									spstr += '<table class="table table-striped" style="font-size: 10px;"><tbody>';
+									//spstr += '<tr><td colspan="2"><a href="/media/report/' + k4 + '_'+arr[3].replace(/ /g,"_").replace(/,/g,"")+'.pdf" style="cursor:pointer;color:darkred;" target="blank">View Factsheet</a></td></tr>';
+									$.each(json, function(k, v) {
+										spstr += '<tr><td>' + k + '</td><td>' + v + '</td></tr>';
+									});
+									spstr += '</tbody></table>';
+									sponsorinfo.setContent(spstr);
+									lst_sponsor.push(sponsorinfo);
+									sponsorinfo.open(map);
+								}
+
+							});
+
+						});
+					}
+
 					chkdata[k1][v2['housenumber']] = chkPoly;
 					var options = {
 								map: map,
@@ -643,39 +699,40 @@ function checkSingleGroup(single_checkbox) {
 		$.each(chkdata[chkchild], function(k4, v4) {
 			v4.setMap(map);
 			v4.set("zIndex", zindex);
-			if (section == "Sponsor") {
-				google.maps.event.addListener(v4, 'click', function(event) {
-					$.each(lst_sponsor, function(k, v) {
-						v.close();
-					});
-					lst_sponsor = [];
-					var sponsorinfo = new google.maps.InfoWindow({
-						maxWidth : 430,
-						minWidth : 100,
-						minHeight : 100
-					});
-					sponsorinfo.setContent('<div class="overlay" style="display: block;"><div id="loading-img"></div></div>');
-					sponsorinfo.setPosition(event.latLng);
-					sponsorinfo.open(map);
-					$.ajax({
-						url : '/component/get_kobo_FF_data/' + global_slum_id + '/' + k4,
-						type : "GET",
-						contenttype : "json",
-						success : function(json) {
-  						var spstr = "";
-							spstr += '<table class="table table-striped" style="font-size: 10px;"><tbody>';
-							spstr += '<tr><td colspan="2"><a href="/media/report/' + k4 + '_'+arr[3].replace(/ /g,"_").replace(/,/g,"")+'.pdf" style="cursor:pointer;color:darkred;" target="blank">View Factsheet</a></td></tr>';
-							$.each(json, function(k, v) {
-								spstr += '<tr><td>' + k + '</td><td>' + v + '</td></tr>';
-							});
-							spstr += '</tbody></table>';
-							sponsorinfo.setContent(spstr);
-							lst_sponsor.push(sponsorinfo);
-						}
-					});
-
-				});
-			}
+		//	if (section == "Sponsor") {
+				// google.maps.event.addListener(v4, 'click', function(event) {
+				// 	$.each(lst_sponsor, function(k, v) {
+				// 		v.close();
+				// 	});
+				// 	lst_sponsor = [];
+				// 	var sponsorinfo = new google.maps.InfoWindow({
+				// 		maxWidth : 430,
+				// 		minWidth : 100,
+				// 		minHeight : 100
+				// 	});
+				// 	sponsorinfo.setContent('<div class="overlay" style="display: block;"><div id="loading-img"></div></div>');
+				// 	sponsorinfo.setPosition(event.latLng);
+				// 	$.ajax({
+				// 		url : '/component/get_kobo_RHS_list/' + global_slum_id + '/' + k4,
+				// 		type : "GET",
+				// 		contenttype : "json",
+				// 		success : function(json) {
+  			// 			var spstr = "";
+				// 			spstr += '<table class="table table-striped" style="font-size: 10px;"><tbody>';
+				// 			spstr += '<tr><td colspan="2"><a href="/media/report/' + k4 + '_'+arr[3].replace(/ /g,"_").replace(/,/g,"")+'.pdf" style="cursor:pointer;color:darkred;" target="blank">View Factsheet</a></td></tr>';
+				// 			$.each(json, function(k, v) {
+				// 				spstr += '<tr><td>' + k + '</td><td>' + v + '</td></tr>';
+				// 			});
+				// 			spstr += '</tbody></table>';
+				// 			sponsorinfo.setContent(spstr);
+				// 			lst_sponsor.push(sponsorinfo);
+				// 			sponsorinfo.open(map);
+				// 		}
+				//
+				// 	});
+				//
+				// });
+			//}
 		});
 	} else {
 		$.each(chkdata[chkchild], function(k4, v4) {
@@ -700,7 +757,7 @@ function tabularSingleGroup(single_model) {
 	var spstr = "";
 	var commentstr = "";
 	json = global_RIM[modelsection[mk]];
-	spstr += '<table class="table table-striped"  style="margin-bottom:0px;font-size: 10px;"><tbody>';
+	spstr += '<table class="table table-striped"  style="margin-bottom:0px;font-size: 12px;"><tbody>';
   $("#myModal>div").removeClass("modal-lg");
 	if ( json instanceof Array) {
 		$("#myModal>div").addClass("modal-lg");
