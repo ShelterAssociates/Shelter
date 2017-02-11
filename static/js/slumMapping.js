@@ -623,16 +623,21 @@ function viewcompo(dvalue) {
 								type : "GET",
 								contenttype : "json",
 								success : function(json) {
+
 		  						var spstr = "";
 									spstr += '<table class="table table-striped" style="font-size: 10px;"><tbody>';
 									//spstr += '<tr><td colspan="2"><a href="/media/report/' + k4 + '_'+arr[3].replace(/ /g,"_").replace(/,/g,"")+'.pdf" style="cursor:pointer;color:darkred;" target="blank">View Factsheet</a></td></tr>';
+									var flag = false;
 									$.each(json, function(k, v) {
+										flag = true;
 										spstr += '<tr><td>' + k + '</td><td>' + v + '</td></tr>';
 									});
 									spstr += '</tbody></table>';
+									if (flag){
 									sponsorinfo.setContent(spstr);
 									lst_sponsor.push(sponsorinfo);
 									sponsorinfo.open(map);
+								 }
 								}
 
 							});
