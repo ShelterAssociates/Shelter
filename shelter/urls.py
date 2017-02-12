@@ -17,10 +17,11 @@ from django.contrib import admin
 from django.conf.urls.static import static
 from django.conf import settings
 from settings import *
-
+from master.views import slummap
 admin.autodiscover()
 
 urlpatterns = [
+    url(r'^$',slummap, name='slummap'),
     url(r'^admin/', include('master.urls')),
     url(r'^component/', include('component.urls')),
 ] + static(settings.STATIC_URL, document_root=settings.STATIC_ROOT) + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
