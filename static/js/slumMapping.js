@@ -58,6 +58,20 @@ function animateMapZoomTo(map, targetZoom) {
         setTimeout(function(){ map.setZoom(currentZoom) }, 80);
     }
 }
+var slum_list = function slum_list(val){
+	//mydatatable.on("click", "span", function(e) {
+		data = $(val).attr("data");
+		arr_data = data.split(":");
+		$.each(arr_data, function(k, v) {
+			if (arr.indexOf(v) == -1)
+				  arr.push(v);
+		});
+		slum_pop = arr.pop();
+		arr.push(slum_pop);
+		createMap(slum_pop, false);
+		//e.stopPropagation();
+	//});
+}
 function initMap(obj1, zoomlavel) {
 
 	map = new google.maps.Map(document.getElementById('map12'), {
@@ -107,20 +121,20 @@ function loadslum() {
 
 }
 
-function getcordinates(obj1) {
+function getcordinates(obj1, flag=true) {
 
 	for (var key in obj1) {
 		try {
-			latlongformat(obj1[key]['lat'], obj1[key]['name'], obj1[key]['bgColor'], obj1[key]['borderColor']);
+			latlongformat(obj1[key]['lat'], obj1[key]['name'], obj1[key]['bgColor'], obj1[key]['borderColor'], flag);
 		} catch(err) {
-			latlongformat(obj1['lat'], obj1['name'], obj1['bgColor'], obj1['borderColor']);
+			latlongformat(obj1['lat'], obj1['name'], obj1['bgColor'], obj1['borderColor'], flag);
 			break;
 		}
 	}
 
 }
 
-function latlongformat(ShapeValue, shapename, bgcolor, bordercolor) {
+function latlongformat(ShapeValue, shapename, bgcolor, bordercolor, flag=true) {
 
 	var PolygonPoints = [];
 	var centerlatlang = [];
@@ -146,13 +160,19 @@ function latlongformat(ShapeValue, shapename, bgcolor, bordercolor) {
 		bgcolor = "";
 		bordercolor = "";
 	}
-	var Poly1 = drawPolygon(PolygonPoints, bounds, bgcolor, bordercolor);
+	var Poly1;
+	if(flag){
+	 Poly1 = drawPolygon(PolygonPoints, bounds, bgcolor, bordercolor);
+}
+else{
+	 Poly1 = drawPolygon(PolygonPoints, bounds, bgcolor, bordercolor, 99);
+}
 	glob_polygon = Poly1;
 	var options = {
 				map: map,
 				position: bounds.getCenter(),
 				text: '',
-				minZoom: 8,
+				minZoom: 7,
 				zIndex : 999
 			};
 	var slumLabel = new MapLabel(options);
@@ -184,7 +204,7 @@ function latlongformat(ShapeValue, shapename, bgcolor, bordercolor) {
 	 alert("hello");
 	 console.log(obj[arr[0]]["content"][arr[1]]["content"][arr[2]]["content"][arr[3]]['info']);
 	 }*/
-
+  if(flag){
 	google.maps.event.addListener(Poly1, 'click', function(event) {
 		infoWindowover.close();
 
@@ -210,6 +230,28 @@ function latlongformat(ShapeValue, shapename, bgcolor, bordercolor) {
 			createMap(shapename, false);
 		}
 	});
+ }
+ else{
+	 //Poly1.setZIndex(99);
+	 google.maps.event.addListener(Poly1, 'click', function(event) {
+		 $("#datatable_filter").find("input").val(shapename);
+		 $("#datatable_filter").find("input").trigger('keyup');
+		  $("#datatable").find('tbody>tr>td>div>span:contains('+shapename+')').trigger('click');
+	 });
+ }
+
+}
+var slum_list_data = [];
+function fetchSlum(obj1) {
+	$.each(obj1, function(index, val) {
+		if (val['content']!=undefined){
+				fetchSlum(val['content']);
+			}
+		else {
+				slum_list_data.push(val);
+		}
+	});
+	return slum_list_data
 }
 
 function createMap(jsondata, arrRemoveInd) {
@@ -242,7 +284,9 @@ function createMap(jsondata, arrRemoveInd) {
 		myheader.html('');
 		mydesc.html('');
 		initMap(data, 11);
-
+		slum_list_data=[];
+		var slumdataonly = fetchSlum(data);
+		getcordinates(slumdataonly, false);
 	} else if (arr.length == 2) {
 		mydesc.html(obj[arr[0]]["content"][arr[1]]['info']);
 
@@ -271,7 +315,9 @@ function createMap(jsondata, arrRemoveInd) {
 		head = "<div><b>Administrative Ward : </b></div>";
 
 		initMap(data, 12);
-
+		slum_list_data=[];
+		var slumdataonly = fetchSlum(data);
+		getcordinates(slumdataonly, false);
 	} else if (arr.length == 3) {
 		mydesc.html(obj[arr[0]]["content"][arr[1]]["content"][arr[2]]['info']);
 
@@ -301,7 +347,7 @@ function createMap(jsondata, arrRemoveInd) {
 
 		val = obj[arr[0]]["content"][arr[1]]["content"][arr[2]]
 		initMap(val, 13);
-		getcordinates(data);
+		getcordinates(data, false);
 
 	} else if (arr.length == 4) {
 		mydesc.html(obj[arr[0]]["content"][arr[1]]["content"][arr[2]]["content"][arr[3]]['info']);
@@ -368,7 +414,7 @@ function getArea(initlink) {
 	createMap(textelement, true);
 }
 
-function drawPolygon(PolygonPoints, centerlatlang, bgcolor, bordercolor) {
+function drawPolygon(PolygonPoints, centerlatlang, bgcolor, bordercolor, index=1) {
 	var Poly;
 	var newbgcolor = "#FFA3A3";
 	var newbordercolor = "#FF0000";
@@ -388,7 +434,8 @@ function drawPolygon(PolygonPoints, centerlatlang, bgcolor, bordercolor) {
 		strokeWeight : 2,
 		fillColor : newbgcolor,
 		fillOpacity : opacity,
-		center : centerlatlang.getCenter()
+		center : centerlatlang.getCenter(),
+		zIndex:index,
 	});
 	Poly.setMap(map);
 	map.setCenter(centerlatlang.getCenter());
@@ -437,21 +484,6 @@ function drawDatatable() {
 	});
 	$("#datatablecontainer").show();
 
-}
-
-function slum_list(val){
-	//mydatatable.on("click", "span", function(e) {
-		data = $(val).attr("data");
-		arr_data = data.split(":");
-		$.each(arr_data, function(k, v) {
-			if (arr.indexOf(v) == -1)
-				arr.push(v);
-		});
-		slum_pop = arr.pop();
-		arr.push(slum_pop);
-		createMap(slum_pop, false);
-		//e.stopPropagation();
-	//});
 }
 
 function viewIndiaBorder() {
