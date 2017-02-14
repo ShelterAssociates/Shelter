@@ -347,7 +347,7 @@ function createMap(jsondata, arrRemoveInd) {
 
 		val = obj[arr[0]]["content"][arr[1]]["content"][arr[2]]
 		initMap(val, 13);
-		getcordinates(data, false);
+		getcordinates(data);
 
 	} else if (arr.length == 4) {
 		mydesc.html(obj[arr[0]]["content"][arr[1]]["content"][arr[2]]["content"][arr[3]]['info']);
