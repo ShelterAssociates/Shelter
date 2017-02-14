@@ -82,11 +82,18 @@ survey_xml_value_mapping = {
 	},
 	# FF
 	'3': { 
-		'xml_root': 'arirRzBR5dGH9VxJ6ycmK2',
-		'xml_root_attr_id': 'arirRzBR5dGH9VxJ6ycmK2',
-		'xml_root_attr_version': 'vyvX8gWwcMqaKzuR3sZatW',
-		'formhub_uuid': '4e86fd4b227f4ea092bccf182fc25d4c',
+		'xml_root': 'arYdwNvdtxSQACTGudh8CH',
+		'xml_root_attr_id': 'arYdwNvdtxSQACTGudh8CH',
+		'xml_root_attr_version': 'v6eYZVeo6V3vqy6jhcDueQ',
+		'formhub_uuid': '53d6a92a6af14094b24b25a3bc7d3861',
 	},
+}
+
+survey_photo_mapping = {
+	# List of key/xml element which has photo name
+	'1': None, 	# RA
+	'2': None, 	# RHS
+	'3': ['Family_Photo', 'Toilet_Photo'],  # FF
 }
 
 root_output_folder = os.path.join(root_folder_path, 'xml_output')
@@ -347,7 +354,6 @@ def migrate():
 			xml_root_attr_version = survey_xml_value_mapping[survey]['xml_root_attr_version']
 			formhub_uuid = survey_xml_value_mapping[survey]['formhub_uuid']
 			
-			
 			set_survey_log_path_option(log_folder_path)
 			
 			set_survey_option(city_id, survey_id, mapped_excelFile, survey_id2)
@@ -412,9 +418,8 @@ def confirm_upload_xml():
 	return return_choice;
 	
 def upload_xml():
-	global kobotoolbox_url
-	global kobotoolbox_user
-	global kobotoolbox_password
+	global survey_photo_mapping
+	global select_option
 
 	choice = confirm_upload_xml()
 	
@@ -428,11 +433,15 @@ def upload_xml():
 			city_name = city_option[city]
 			survey_name = survey_type_option[survey]
 			
+			log_folder_path = os.path.join(root_output_folder, city_name, 'log')
+			
 			output_folder_path = os.path.join(root_output_folder, city_name, survey_name)
+			
+			set_survey_log_path_option(log_folder_path)
 			
 			set_survey_output_path_option(output_folder_path)
 			
-			upload_to_kobotoolbox(kobotoolbox_url, kobotoolbox_user, kobotoolbox_password)
+			upload_to_kobotoolbox(survey_photo_mapping, select_option)
 			
 			reset_survey_option()
 			

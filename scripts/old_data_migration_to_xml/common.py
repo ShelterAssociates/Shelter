@@ -863,9 +863,65 @@ def show_process_status():
 	
 	return;
 
-
-
-
+# get values from xml file
+def get_xml_photo_value(file_folder, file_name, xml_element):
+	xml_value = {}
+	
+	# read xml file
+	# find element and return value
+	# if xml_element is list then find for each element in key
+	# if xml_element is more than once then return list 
+	
+	
+	# check if element name exists
+	if xml_element:
+		xml_file = os.path.join(file_folder, file_name)
+		
+		base_folder, slum_folder = os.path.split(os.path.dirname(xml_file))
+		
+		if os.path.isfile(xml_file):
+			xml_tree = ET.parse(xml_file)
+			
+			xml_root = xml_tree.getroot();
+			
+			# check if single element or list of elements
+			if isinstance(xml_element, list): 
+				for element in xml_element:
+					value_list = []
+					
+					for value in xml_root.findall(element):
+						photo_name = value.text
+						if photo_name:
+							photo_file = os.path.join(base_folder, "photos", slum_folder, photo_name)
+							if os.path.isfile(photo_file):
+								value_list.append(photo_file)
+					
+					if value_list:
+						# check if value is only one or multiple
+						if len(value_list) == 1:
+							xml_value.setdefault(element, value_list[0])
+						else:
+							xml_value.setdefault(element, value_list)
+			else:  
+				value_list = []
+				# check for single element 
+				for value in xml_root.findall(xml_element):
+					photo_name = value.text
+					if photo_name:
+						photo_file = os.path.join(base_folder, "photos", slum_folder, photo_name)
+						if os.path.isfile(photo_file):
+							value_list.append(photo_file)
+				
+				if value_list:
+					# check if value is only one or multiple
+					if len(value_list) == 1:
+						xml_value.setdefault(xml_element, value_list[0])
+					else:
+						xml_value.setdefault(xml_element, value_list)
+	
+	#print(xml_value)
+	
+	return xml_value;
 
 
 
