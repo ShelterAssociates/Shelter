@@ -25,7 +25,7 @@ def kml_upload(request):
         form = KMLUpload(request.POST or None,request.FILES)
         if form.is_valid():
             docFile = request.FILES['kml_file'].read()
-            objKML = KMLParser(docFile, form.cleaned_data['slum_name'])
+            objKML = KMLParser(docFile, form.cleaned_data['slum_name'], form.cleaned_data['delete_flag'])
             try:
                 parsed_data = objKML.other_components()
                 context_data['parsed'] = [k for k,v in parsed_data.items() if v==True]

@@ -73,9 +73,12 @@ var url = "{% url 'modelList' %}";
           {{form.slum_name}}
         </div>
       </div>
-      <div class="row">
+      <div class="row"  style="margin-bottom: 20px">
         <div class="col-md-2">{{form.kml_file.label_tag}}</div>
         <div class="col-md-2">{{form.kml_file}}</div>
+      </div>
+      <div class="row"  style="margin-bottom: 20px">
+        <div class="col-md-4">{{form.delete_flag}}&nbsp;{{form.delete_flag.label_tag}}</div>
       </div>
     <div class="row" style="padding-top:2px;">
       <div class="col-md-12 breadcrumb" style="font-style: italic;margin-bottom:0px;">
