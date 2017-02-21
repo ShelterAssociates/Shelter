@@ -794,31 +794,32 @@ function tabularSingleGroup(single_model) {
 	var spstr = "";
 	var commentstr = "";
 	json = global_RIM[modelsection[mk]];
-	spstr += '<table class="table table-striped"  style="margin-bottom:0px;font-size: 12px;"><tbody>';
+	spstr += '<table class="table table-striped"  style="margin-bottom:0px;font-size: 12px;">';
   $("#myModal>div").removeClass("modal-lg");
 	if ( json instanceof Array) {
 		$("#myModal>div").addClass("modal-lg");
-		var jsoncount;
-		var maxcount = 0;
-		for (var i = 0; i < json.length; i++) {
-			if (maxcount < Object.keys(json[i]).length) {
-				maxcount = Object.keys(json[i]).length;
-				jsoncount = i;
-			}
+		var data = json.sort(function(a,b){return Object.keys(b).length - Object.keys(a).length}).slice(0,1);
+		var toilet_header = "<thead><tr><th>&nbsp;</th>";
+		var toilet_body = "<tbody>";
+		for (i=0; i<json.length; i++){
+			toilet_header += "<th> CTB " +(i+1) + "</th>";
 		}
+		toilet_header+= "</tr></thead>";
+		$.each(Object.keys(data), function(k, v) {
+			toilet_body += '<tr><td style="font-weight:bold;width:200px;">' + v + '</td>';
 
-		$.each(Object.keys(json[jsoncount]), function(k, v) {
-			spstr += '<tr><td style="font-weight:bold;width:200px;">' + v + '</td>';
-			$.each(json, function(k1, v1) {
-				val=v1[v];
-				if(val == undefined){
-				   val="&nbsp;";
-				}
-				spstr += '<td>' + val + '</td>'
-			});
-			spstr += '</tr>';
+			for (i=0; i<json.length; i++){
+				val = json[i][v];
+				if(val == undefined)
+						val="&nbsp;";
+				toilet_body += '<td>' + val + '</td>';
+			}
+			toilet_body += '</tr>';
 		});
+		spstr += toilet_header + toilet_body;
+
 	} else {
+		spstr += "<tbody>";
 		$.each(json, function(k, v) {
 
 			if (k.indexOf("comment") != -1 || k.indexOf("Describe") != -1) {
