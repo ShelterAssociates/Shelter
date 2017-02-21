@@ -12,8 +12,9 @@ class KMLParser(object):
     '''
     component_data = []
 
-    def __init__(self, docFile, slum):
+    def __init__(self, docFile, slum, delete_flag):
         self.slum = slum
+        self.delete_flag = delete_flag
         self.root = parser.fromstring(docFile)
 
     def component_latlong(self, placemark):
@@ -72,6 +73,10 @@ class KMLParser(object):
         except:
             folders = self.root.Folder.Document.Folder
         metadata_component = Metadata.objects.filter(type='C').values_list('code', flat=True)
+
+        if self.delete_flag:
+            Component.objects.filter(slum = self.slum).delete()
+
         for folder in folders:
           try:
 	    kml_name = str(folder.name).split('(')[0]

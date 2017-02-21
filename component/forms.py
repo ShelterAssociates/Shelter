@@ -7,6 +7,7 @@ class KMLUpload(forms.Form):
     ElectoralWard = forms.ModelChoiceField(queryset=ElectoralWard.objects.all(), required=True, error_messages={'required':'Please select electoral ward'})
     slum_name = forms.ModelChoiceField(queryset=Slum.objects.all(),required=True, error_messages={'required':'Please select slum'})
     kml_file = forms.FileField(required=True, label="Upload KML file", error_messages={'required':'Please select KML file'})
+    delete_flag = forms.BooleanField(required=False, label="Do you want to deleted previous records?")
 
     def __init__(self, *args, **kwargs):
         super(KMLUpload, self).__init__(*args, **kwargs)
