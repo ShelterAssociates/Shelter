@@ -3,6 +3,7 @@ import urllib2
 from django.conf import settings
 import copy
 from collections import OrderedDict
+from itertools import chain
 
 def get_household_analysis_data(slum_code, fields):
     '''Gets the kobotoolbox RHS data for selected questions
@@ -123,10 +124,10 @@ def get_kobo_RIM_detail(slum_code):
                     sub_key.append(sub_k)
             #Default values
             if data['name'] != RIM_TOILET:
-                output[data['label']] = OrderedDict()
+                output[section[data['name']]] = OrderedDict()
             else:
-                output[data['label']] = []
-                [output[data['label']].append(OrderedDict()) for i in range(count)]
+                output[section[data['name']]] = []
+                [output[section[data['name']]].append(OrderedDict()) for i in range(count)]
             #Iterate through the list of questions for the group
             for sect_form in sect_form_data:
                 key = [x for x in sub_key if sect_form['name'] in x]
