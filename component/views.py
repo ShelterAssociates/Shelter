@@ -40,7 +40,7 @@ def kml_upload(request):
     context_data['form'] = form
     return render(request, 'kml_upload.html', context_data)
 
-@user_passes_test(lambda u: u.is_superuser)
+#@user_passes_test(lambda u: u.is_superuser)
 def get_component(request, slum_id):
     slum = get_object_or_404(Slum, pk=slum_id)
     metadata = Metadata.objects.filter(visible=True).order_by('section__order','order')
@@ -93,7 +93,7 @@ def get_kobo_RHS_data(request, slum_id,house_num):
      output = get_kobo_RHS_list(slum.shelter_slum_code,house_num)
      return HttpResponse(json.dumps(output),content_type='application/json')
 
-@user_passes_test(lambda u: u.is_superuser)
+#@user_passes_test(lambda u: u.is_superuser)
 def get_kobo_RIM_data(request, slum_id):
 
     slum = get_object_or_404(Slum, pk=slum_id)
