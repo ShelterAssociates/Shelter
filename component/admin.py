@@ -2,7 +2,20 @@ from django.contrib import admin
 from django.contrib.gis import admin
 from models import *
 
-admin.site.register(Section)
+class MetadataInline(admin.TabularInline):
+    """Inline to add metadata while adding sections
+    """
+    model = Metadata
+    fk_name = 'section'
+    max_num = 1
+    extra = 1
+    can_delete = False
+
+class SectionAdmin(admin.ModelAdmin):
+    inlines = [MetadataInline]
+    search_fields = ['name']
+
+admin.site.register(Section, SectionAdmin)
 admin.site.register(Metadata)
 admin.site.register(Fact)
 
