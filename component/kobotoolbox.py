@@ -136,7 +136,7 @@ def get_kobo_RIM_detail(slum_code):
                     if data['name'] != RIM_TOILET:
                         #Fetch the answer for select one/text/select multiple type question
                         ans = fetch_answer(sect_form, key, submission[0])
-                        output[data['label']][sect_form['label']]  = ans
+                        output[section[data['name']]][sect_form['label']]  = ans
                     else:
                         #For toilet repeative section append the set of questions for all the CTB's if available
                         for ind in range(count):
@@ -150,11 +150,16 @@ def fetch_answer(sect_form, key, submission):
     #Fetch answer and convert it to label
     val = ""
     if 'select' in sect_form['type'] and type(key[0]) != list and 'children' in sect_form:
-        options = dict((opt['name'], opt['label']) for opt in sect_form['children'])
+        options = dict((str(opt['name']), str(opt['label'])) for opt in sect_form['children'])
         sub_option = submission[key[0]].split(' ')
-        val = options[sub_option[0]]
-        if len(sub_option) > 1:
-            val = reduce(lambda x,y: options[x] +',' + options[y], sub_option)
+        val = '  '#options[sub_option[0]]
+        if len(sub_option) > 0:
+            for sub in sub_option:
+		if sub in options:
+                   val += options[sub] + ', '
+            val = val[:-2]
+            val = val.strip()
+            #val = reduce(lambda x,y: options[x] +',' + options[y], sub_option)
     else:
         val = submission[key[0]]
     return val

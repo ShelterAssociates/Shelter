@@ -530,6 +530,11 @@ function compo(slumId) {
 		contenttype : "json",
 		success : function(json) {
 			global_RIM = json;
+                        //global_RIM['General']['']= arr[0];
+                        try{
+                        global_RIM['General']['admin_ward']=arr[1];
+                        global_RIM['General']['slum_name']=arr[3];
+                        }catch(e){}
 		}
 	});
 
@@ -655,7 +660,10 @@ function viewcompo(dvalue) {
 								type : "GET",
 								contenttype : "json",
 								success : function(json) {
-
+                                                                try{
+                                                                json['admin_ward']=arr[1];
+                                                                json['slum_name']=arr[3];
+                                                                }catch(e){}
 		  						var spstr = "";
 									spstr += '<table class="table table-striped" style="font-size: 10px;"><tbody>';
 									//spstr += '<tr><td colspan="2"><a href="/media/report/' + k4 + '_'+arr[3].replace(/ /g,"_").replace(/,/g,"")+'.pdf" style="cursor:pointer;color:darkred;" target="blank">View Factsheet</a></td></tr>';
@@ -825,7 +833,7 @@ function tabularSingleGroup(single_model) {
 			if (k.indexOf("comment") != -1 || k.indexOf("Describe") != -1) {
 				commentstr += '<tr><td  colspan=2><label style="font-weight:bold;">' + k + ': </label> ' + v + '</td></tr>';
 			} else {
-				spstr += '<tr><td style="font-weight:bold;width:200px;">' + k + '</td><td>' + v + '</td></tr>';
+				spstr += '<tr><td style="font-weight:bold;width:50%;">' + k + '</td><td>' + v + '</td></tr>';
 			}
 
 		});
