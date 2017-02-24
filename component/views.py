@@ -97,5 +97,5 @@ def get_kobo_RHS_data(request, slum_id,house_num):
 def get_kobo_RIM_data(request, slum_id):
 
     slum = get_object_or_404(Slum, pk=slum_id)
-    output = get_kobo_RIM_detail(slum.shelter_slum_code)
+    output = get_kobo_RIM_detail(slum.electoral_ward.administrative_ward.city.id, slum.shelter_slum_code)
     return HttpResponse(json.dumps(output),content_type='application/json')
