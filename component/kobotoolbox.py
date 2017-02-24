@@ -6,18 +6,18 @@ from collections import OrderedDict
 from itertools import chain
 from master.models import SURVEYTYPE_CHOICES, Survey
 
-def survey_mapping(type):
+def survey_mapping(survey_type):
     def real_decorator(function):
         def wrapper(*args, **kwargs):
-            city_id = args['city']
+            city_id = args[0]
             try:
-                survey = Survey.objects.filter(city__id=city_id, survey_type=type)
+                survey = Survey.objects.filter(city__id=city_id, survey_type=survey_type)
             except:
                 survey = None
             kwargs['kobo_survey'] = ''
             if survey:
-                kwargs['kobo_survey'] =  survey.kobotool_survey_id
-            function(*args, **kwargs)
+                kwargs['kobo_survey'] =  survey[0].kobotool_survey_id
+            return function(*args, **kwargs)
         return wrapper
     return real_decorator
 
@@ -92,13 +92,12 @@ def get_kobo_RHS_list(slum_code,house_number):
                     output[sect_form['label']]  = ans
     return output
 
-@survey_mapping(SURVEYTYPE_CHOICES['Slum Level'])
+@survey_mapping(SURVEYTYPE_CHOICES[0][0])
 def get_kobo_RIM_detail(city, slum_code, kobo_survey=''):
 
     output=OrderedDict()
     if kobo_survey:
         url = settings.KOBOCAT_FORM_URL+'data/'+kobo_survey+'?query={"group_zl6oo94/group_uj8eg07/slum_name":"'+slum_code+'"}'
-
         req = urllib2.Request(url)
         req.add_header('Authorization', settings.KOBOCAT_TOKEN)
         resp = urllib2.urlopen(req)
@@ -160,7 +159,6 @@ def get_kobo_RIM_detail(city, slum_code, kobo_survey=''):
                                 if key[0] in sub[ind].keys():
                                     ans = fetch_answer(sect_form, key, sub[ind])
                                     output[section[data['name']]][ind][sect_form['label']] = ans
-
     return output
 
 def fetch_answer(sect_form, key, submission):
