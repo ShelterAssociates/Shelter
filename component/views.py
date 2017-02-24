@@ -49,7 +49,7 @@ def get_component(request, slum_id):
         #Fetch RHS data from kobotoolbox
         fields_code = metadata.filter(type='F').exclude(code="").values_list('code')
         fields = map(lambda x: x[0].split(':')[0],set(fields_code))
-        rhs_analysis = get_household_analysis_data(slum.shelter_slum_code, fields)
+        rhs_analysis = get_household_analysis_data(slum.electoral_ward.administrative_ward.city.id, slum.shelter_slum_code, fields)
     except:
         pass
 
