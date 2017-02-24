@@ -55,41 +55,41 @@ def get_household_analysis_data(slum_code, fields):
                         output[field][data].append(household_no)
     return output
 
-def get_kobo_RHS_list(slum_code,house_number):
+@survey_mapping(SURVEYTYPE_CHOICES[1][0])
+def get_kobo_RHS_list(city, slum_code,house_number, kobo_survey=''):
 
     # url="http://kc.shelter-associates.org/api/v1/forms?format=json"
     """Method which fetches the KoboCat ID's and URL's from the Kobo Toolbox API"""
-
-    temp_arr={}
     output=OrderedDict()
-    try:
-        url = settings.KOBOCAT_FORM_URL+'data/'+settings.KOBOCAT_RHS_SURVEY+'?query={"group_ce0hf58/slum_name":"'+slum_code+'","group_ce0hf58/house_no":"'+house_number+'"}'
-    except Exception as e:
-        print e
+    if kobo_survey:
+        try:
+            url = settings.KOBOCAT_FORM_URL+'data/'+kobo_survey+'?query={"group_ce0hf58/slum_name":"'+slum_code+'","group_ce0hf58/house_no":"'+house_number+'"}'
+        except Exception as e:
+            print e
 
-    req = urllib2.Request(url)
-    req.add_header('Authorization', settings.KOBOCAT_TOKEN)
-    resp = urllib2.urlopen(req)
-    content = resp.read()
-    submission = json.loads(content)
+        req = urllib2.Request(url)
+        req.add_header('Authorization', settings.KOBOCAT_TOKEN)
+        resp = urllib2.urlopen(req)
+        content = resp.read()
+        submission = json.loads(content)
 
-    url1 = settings.KOBOCAT_FORM_URL+'forms/'+settings.KOBOCAT_RHS_SURVEY+'/form.json'
-    req1 = urllib2.Request(url1)
-    req1.add_header('Authorization', settings.KOBOCAT_TOKEN)
-    resp1 = urllib2.urlopen(req1)
-    content1 = resp1.read()
-    data1 = json.loads(content1)
+        url1 = settings.KOBOCAT_FORM_URL+'forms/'+kobo_survey+'/form.json'
+        req1 = urllib2.Request(url1)
+        req1.add_header('Authorization', settings.KOBOCAT_TOKEN)
+        resp1 = urllib2.urlopen(req1)
+        content1 = resp1.read()
+        data1 = json.loads(content1)
 
-    output = OrderedDict()
-    for data in data1['children']:
-        if data['type'] == "group":
-            sect_form_data = trav(data)
-            sub_key = [ str(k) for k in submission[0].keys() if data['name'] in k]
-            for sect_form in sect_form_data:
-                key = [x for x in sub_key if sect_form['name'] in x]
-                if len(key)>0 and 'label' in sect_form:
-                    ans = fetch_answer(sect_form, key, submission[0])
-                    output[sect_form['label']]  = ans
+        output = OrderedDict()
+        for data in data1['children']:
+            if data['type'] == "group":
+                sect_form_data = trav(data)
+                sub_key = [ str(k) for k in submission[0].keys() if data['name'] in k]
+                for sect_form in sect_form_data:
+                    key = [x for x in sub_key if sect_form['name'] in x]
+                    if len(key)>0 and 'label' in sect_form:
+                        ans = fetch_answer(sect_form, key, submission[0])
+                        output[sect_form['label']]  = ans
     return output
 
 @survey_mapping(SURVEYTYPE_CHOICES[0][0])

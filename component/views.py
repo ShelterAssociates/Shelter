@@ -90,7 +90,7 @@ def get_component(request, slum_id):
 @user_passes_test(lambda u: u.is_superuser)
 def get_kobo_RHS_data(request, slum_id,house_num):
      slum = get_object_or_404(Slum, pk=slum_id)
-     output = get_kobo_RHS_list(slum.shelter_slum_code,house_num)
+     output = get_kobo_RHS_list(slum.electoral_ward.administrative_ward.city.id, slum.shelter_slum_code, house_num)
      return HttpResponse(json.dumps(output),content_type='application/json')
 
 #@user_passes_test(lambda u: u.is_superuser)
