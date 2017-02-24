@@ -62,7 +62,7 @@ class Survey(models.Model):
                                    choices=SURVEYTYPE_CHOICES)
     analysis_threshold = models.IntegerField()
     kobotool_survey_id = models.CharField(max_length=2048)
-    kobotool_survey_url = models.CharField(max_length=2048)
+    kobotool_survey_url = models.CharField(max_length=2048, null=True, blank=True)
 
     def __unicode__(self):
         """Returns string representation of object"""

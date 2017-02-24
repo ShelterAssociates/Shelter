@@ -27,7 +27,7 @@ function fun(id)
 </script>
 </head>
 <body>
-	<div align = "right" style = "margin-right:5%;"><a href="/admin/AddSurveyMapping"><h2>Add New Survey </h2></a> 
+	<div align = "right" style = "margin-right:5%;"><a href="/admin/survey"><h2>Add New Survey </h2></a>
 	</div>
 	<div style = "margin-left:5%;margin-right:5%;">
 	Filter Results : &nbsp;&nbsp;&nbsp;
@@ -39,23 +39,23 @@ function fun(id)
 		<th> Name </th><th> Description </th> <th> City </th><th> Type </th><th> Analysis Threshold </th> <th> KoboCat ID </th><th> KoboCat URL </th><th></th>
         {% for surveyFields in object_list %}
             <tr>
-            <td><a href = "/admin/Survey/{{surveyFields.id}}">{{ surveyFields.name }}</a></td>
+            <td><a href = "/admin/survey/{{surveyFields.id}}">{{ surveyFields.name }}</a></td>
             <td>{{ surveyFields.description }}</td>
             <td>{{ surveyFields.city }}</td>
             <td>{{ surveyFields.survey_type }}</td>
             <td>{{ surveyFields.analysis_threshold }}</td>
             <td>{{ surveyFields.kobotool_survey_id }}</td>
             <td>{{ surveyFields.kobotool_survey_url }}</td>
-            <td><a href="/admin/deletesurvey/{{surveyFields.id}}" onclick="return confirm('Are you sure want to delete');"><img src = "{% static "images/binc.png" %}" height=20 width=20 ></img></a></td>      
+            <td><a href="/admin/deletesurvey/{{surveyFields.id}}" onclick="return confirm('Are you sure want to delete');"><img src = "{% static "images/binc.png" %}" height=20 width=20 ></img></a></td>
             </tr>
-        {% endfor %}  
+        {% endfor %}
     </table>
 {% if not object_list %}
 	<div align = "left" style = "margin-left:40%;">
-    		<br><br> 
+    		<br><br>
     		No records found
-    	</div>	
-{% endif %}	
+    	</div>
+{% endif %}
 <script src="{% static "admin/js/sorttable.js" %} "></script>
 {% endblock %}
 {% block content %}
