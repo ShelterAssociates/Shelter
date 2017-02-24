@@ -2,103 +2,66 @@
 {% load i18n %}
 
 {% block breadcrumbs %}
+{% load staticfiles %}
+<link rel="stylesheet"  type="text/css" href="{% static "css/bootstrap.min.css" %}"/>
+<script src="{% static "js/jquery.min.js" %}"></script>
+<script src="{% static "js/bootstrap.min.js" %}"></script>
+<ol class="breadcrumb">
+    <li><a href="{% url 'index' %}">Home</a></li>
+		<li><a href="{% url 'SurveyCreate' %}">Survey List</a></li>
 
-<!doctype html>
-<head>
-<title>Add a New Survey</title>
-
-</head>
-<body>
-<form action="" method="POST" style = "margin-left:10%;">
-{% csrf_token %} 
-<table>
-	<br>
-    <th><h1>Add a new Survey</h1></th>
-    <tr><td></td><td></td></tr>
-  <tr>
-  	<td colspan="2">
-  		{{ form.name.errors }}
-  	</td>
-  </tr>  
-  <tr>
-    <td>Name</td>
-    <td>{{form.name}}</td>
-  </tr>
-  
-  
-  <tr>
-  	<td colspan="2">
-  		{{ form.description.errors }}
-  	</td>
-  </tr> 
-  <tr>
-    <td>Description</td>
-    <td>{{form.description}}</td>
-  </tr>
-  
-  
-  <tr>
-  	<td colspan="2">
-  		{{ form.city.errors }}
-  	</td>
-  </tr> 
-  <tr>
-    <td>City</td>
-    <td>{{form.city}}</td>
-  </tr>
-  
-  <tr>
-  	<td colspan="2">
-  		{{ form.survey_type.errors }}
-  	</td>
-  </tr> 
-  <tr>
-    <td>Survey Type</td>
-    <td>{{form.survey_type}}</td>
-  </tr>
-  
-  <tr>
-  	<td colspan="2">
-  		{{ form.analysis_threshold.errors }}
-  	</td>
-  </tr> 
-  <tr>
-    <td>Analysis Threshold</td>
-    <td>{{form.analysis_threshold}}</td>
-  </tr>
-  
-  
-  <tr>
-  	<td colspan="2">
-  		{{ form.kobotool_survey_id.errors }}
-  	</td>
-  </tr> 
-  <tr>
-    <td>Kobo Toolbox Survey</td>
-    <td>{{form.kobotool_survey_id}}</td>
-  </tr>
- <tr>
-  <td><input  style = "width:195px;-ms-box-sizing:content-box;-moz-box-sizing:content-box;-webkit-box-sizing:content-box; box-sizing:content-box;" type="submit" name="Save" value="Save" /></td> 
-  <td>
-  	<!--<input  style = "width:195px;-ms-box-sizing:content-box;-moz-box-sizing:content-box;-webkit-box-sizing:content-box; box-sizing:content-box;" type="href" name="Canel" value="Cancel" />-->
-  	<a href="/admin/surveymapping/">Cancel</a> 
-  	</td>
-  </tr>
-
-</table> 
-
-</form>
-</body>
-</html>
-
-
+</ol>
 {% endblock %}
 
 {% block content %}
+<div class="container">
+	<h3 style="margin-bottom: 20px">Survey mapping</h3>
+<form action="" method="POST" >
+{% csrf_token %}
 
+<div class="row">
+	<div class="col-md-4">
+		<div class="row"  style="margin-bottom: 20px">
+			<div class="col-md-6">Name</div>
+			<div class="col-md-6">{{form.name}}</div>
+			<div class="col-offset-6 col-md-6">{{ form.name.errors }}</div>
+		</div>
+		<div class="row"  style="margin-bottom: 20px">
+			<div class="col-md-6">Description</div>
+			<div class="col-md-6">{{form.description}}</div>
+			<div class="col-offset-6 col-md-6">{{ form.description.errors }}</div>
+		</div>
+		<div class="row"  style="margin-bottom: 20px">
+			<div class="col-md-6">City</div>
+			<div class="col-md-6">{{form.city}}</div>
+			<div class="col-offset-6 col-md-6">{{ form.city.errors }}</div>
+		</div>
+		<div class="row"  style="margin-bottom: 20px">
+			<div class="col-md-6">Survey type</div>
+			<div class="col-md-6">{{form.survey_type}}</div>
+			<div class="col-offset-6 col-md-6">{{ form.survey_type.errors }}</div>
+		</div>
+		<div class="row"  style="margin-bottom: 20px">
+			<div class="col-md-6">Analysis threshold</div>
+			<div class="col-md-6">{{form.analysis_threshold}}</div>
+			<div class="col-offset-6 col-md-6">{{ form.analysis_threshold.errors }}</div>
+		</div>
+		<div class="row"  style="margin-bottom: 20px">
+			<div class="col-md-6">KoboToolbox Survey</div>
+			<div class="col-md-6">{{form.kobotool_survey_id}}</div>
+			<div class="col-offset-6 col-md-6">{{ form.kobotool_survey_id.errors }}</div>
+		</div>
+		<div class="row"  style="margin-bottom: 20px">
+			<div class="col-md-12">
+				<input  class="btn" type="submit" name="Save" value="Save" />
+				<a class="btn" href="/admin/surveymapping/">Cancel</a>
+			</div>
+		</div>
+	</div>
+</div>
+</form>
+</div>
 {% endblock %}
 
 {% block sidebar %}
 {% endblock %}
-
-
