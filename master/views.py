@@ -226,7 +226,7 @@ def rimreportgenerate(request):
 	Fid = request.POST['Fid']
 	SlumObj = Slum.objects.get(id=sid)
 	rp_slum_code = str(SlumObj.shelter_slum_code)
-	rp_xform_title = Fid
+	rp_xform_title = "Rapid infrastructure Mapping (RIM)_V1"#Fid
 	string = settings.BIRT_REPORT_URL + "Birt/frameset?__format=pdf&__report=FactSheet.rptdesign&rp_xform_title=" + rp_xform_title + "&rp_slum_code=" + str(rp_slum_code)
 	data ={}
 	data = {'string': string}
