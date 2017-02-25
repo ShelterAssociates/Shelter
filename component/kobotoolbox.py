@@ -4,6 +4,7 @@ from django.conf import settings
 import copy
 from collections import OrderedDict
 from itertools import chain
+from collections import Counter
 from master.models import SURVEYTYPE_CHOICES, Survey
 
 def survey_mapping(survey_type):
@@ -161,6 +162,69 @@ def get_kobo_RIM_detail(city, slum_code, kobo_survey=''):
                                 if key[0] in sub[ind].keys():
                                     ans = fetch_answer(sect_form, key, sub[ind])
                                     output[section[data['name']]][ind][sect_form['label']] = ans
+    return output
+
+@survey_mapping(SURVEYTYPE_CHOICES[0][0])
+def get_kobo_RIM_report_detail(city, slum_code, kobo_survey=''):
+
+    output=OrderedDict()
+    RIM_TOILET="group_te3dx03"
+    if kobo_survey:
+        url = settings.KOBOCAT_FORM_URL+'data/'+kobo_survey+'?query={"group_zl6oo94/group_uj8eg07/slum_name":"'+slum_code+'"}'
+        req = urllib2.Request(url)
+        req.add_header('Authorization', settings.KOBOCAT_TOKEN)
+        resp = urllib2.urlopen(req)
+        content = resp.read()
+        submission = json.loads(content)
+
+        url1 = settings.KOBOCAT_FORM_URL+'forms/'+kobo_survey+'/form.json'
+        req1 = urllib2.Request(url1)
+        req1.add_header('Authorization', settings.KOBOCAT_TOKEN)
+        resp1 = urllib2.urlopen(req1)
+        content1 = resp1.read()
+        data1 = json.loads(content1)
+        #To maintain the order in which questions are displayed we iterate through the form data
+        for data in data1['children']:
+            if data['type'] == "group":
+                #Group wise get the entire list for questions
+                sect_form_data = trav(data)
+                #Find the list of keys available in the submission data
+                toil_keys = [ str(k) for k in submission[0].keys() if data['name'] in k]
+                count = 1
+                sub_key = []
+                sub = []
+                # Needed for toilet section which has repeat section
+                for sub_k in toil_keys:
+                    if type(submission[0][sub_k]) == list:
+                        count = len(submission[0][sub_k])
+                        sub = submission[0][sub_k]
+                        sub_key.extend(sum([k.keys() for k in submission[0][sub_k]], []))
+                    else:
+                        sub_key.append(sub_k)
+
+                #Iterate through the list of questions for the group
+                for sect_form in sect_form_data:
+                    key = [x for x in sub_key if sect_form['name'] in x]
+                    #Check if the question has answer in the submission then only proceed further
+                    if len(key)>0 and 'label' in sect_form:
+                        if data['name'] != RIM_TOILET:
+                            #Fetch the answer for select one/text/select multiple type question
+                            ans = fetch_answer(sect_form, key, submission[0])
+                            output[sect_form['name']]  = ans
+                        else:
+                            #For toilet repeative section append the set of questions for all the CTB's if available
+                            if key[0] in submission[0].keys():
+                                ans = fetch_answer(sect_form, key, submission[0])
+                                output[sect_form['name']]  = ans
+                            else:
+                                arr_ans = []
+                                for ind in range(count):
+                                    if key[0] in sub[ind].keys():
+                                        ans = fetch_answer(sect_form, key, sub[ind])
+                                        if ans:
+                                            arr_ans.append(ans)
+                                c = Counter(arr_ans)
+                                output[sect_form['name']] = ', '.join([ "{}({})".format(x,y) for x,y in c.items()])
     return output
 
 def fetch_answer(sect_form, key, submission):

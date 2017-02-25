@@ -133,7 +133,21 @@ function getcordinates(obj1, flag=true) {
 	}
 
 }
-
+function factsheet_click(obj){
+		var Sid = global_slum_id;
+		var url = "/admin/rimreportgenerate/";
+    var Fid = "54";
+		$.ajax({
+			url : url,
+			data : { Sid : Sid,Fid : Fid},
+			type: "POST",
+			contenttype : "json",
+			success : function(json){
+					url = json.string;
+					window.open("" + url );
+			}
+		});
+}
 function latlongformat(ShapeValue, shapename, bgcolor, bordercolor, flag=true) {
 
 	var PolygonPoints = [];
@@ -211,9 +225,10 @@ else{
 		if (arr.length == 4) {
 			if (indiWindow == true) {
 				var contentString = '<div id="content" >' + '<div id="bodyContent">' + '<p><b>' + shapename + '</b></p>' + '<div class="row">' + '<div class="col-md-9">' + '<p>' + obj[arr[0]]["content"][arr[1]]["content"][arr[2]]["content"][arr[3]]['info'] + '</p> ';
-				if (obj[arr[0]]["content"][arr[1]]["content"][arr[2]]["content"][arr[3]]['factsheet']) {
-					contentString += '<p><a target="blank" href="' + obj[arr[0]]["content"][arr[1]]["content"][arr[2]]["content"][arr[3]]['factsheet'] + '">Factsheet</a></p>';
-				}'</div>' + '<div class="col-md-3" style="margin-left:-20px"><img width="100px" height="120px" src="' + obj[arr[0]]["content"][arr[1]]["content"][arr[2]]["content"][arr[3]]['photo'] + '"></img></div>' + '</div>';
+				//if (obj[arr[0]]["content"][arr[1]]["content"][arr[2]]["content"][arr[3]]['factsheet']) {
+					contentString += '<p><a href="javascript:factsheet_click(this)">Factsheet</a></p>';
+				//}
+				contentString +='</div>' + '<div class="col-md-3" style="margin-left:-20px"><img width="100px" height="120px" src="' + obj[arr[0]]["content"][arr[1]]["content"][arr[2]]["content"][arr[3]]['photo'] + '"></img></div>' + '</div>';
 
 				var infoWindow = new google.maps.InfoWindow({
 					maxWidth : 430
@@ -350,7 +365,7 @@ function createMap(jsondata, arrRemoveInd) {
 		getcordinates(data);
 
 	} else if (arr.length == 4) {
-		mydesc.html(obj[arr[0]]["content"][arr[1]]["content"][arr[2]]["content"][arr[3]]['info']);
+		mydesc.html(obj[arr[0]]["content"][arr[1]]["content"][arr[2]]["content"][arr[3]]['info'] +"<br/><div style='padding-top:10px;'><a style='font-weight:bold;text-decoration: underline;cursor:pointer;' href='javascript:factsheet_click(this)'>View Factsheet</a></div>");
 		val = obj[arr[0]]["content"][arr[1]]["content"][arr[2]]["content"][arr[3]]
 		objmap = initMap(val, 18);
 

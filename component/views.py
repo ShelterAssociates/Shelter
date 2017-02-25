@@ -99,3 +99,14 @@ def get_kobo_RIM_data(request, slum_id):
     slum = get_object_or_404(Slum, pk=slum_id)
     output = get_kobo_RIM_detail(slum.electoral_ward.administrative_ward.city.id, slum.shelter_slum_code)
     return HttpResponse(json.dumps(output),content_type='application/json')
+
+def get_kobo_RIM_report_data(request, slum_id):
+    try:
+        slum = Slum.objects.filter(shelter_slum_code=slum_id)
+    except:
+        slum = None
+    print slum
+    output = {"status":"error"}
+    if slum and len(slum)>0:
+        output = get_kobo_RIM_report_detail(slum[0].electoral_ward.administrative_ward.city.id, slum[0].shelter_slum_code)
+    return HttpResponse(json.dumps(output),content_type='application/json')
