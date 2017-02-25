@@ -660,10 +660,6 @@ function viewcompo(dvalue) {
 								type : "GET",
 								contenttype : "json",
 								success : function(json) {
-                                                                try{
-                                                                json['admin_ward']=arr[1];
-                                                                json['slum_name']=arr[3];
-                                                                }catch(e){}
 		  						var spstr = "";
 									spstr += '<table class="table table-striped" style="font-size: 10px;"><tbody>';
 									//spstr += '<tr><td colspan="2"><a href="/media/report/' + k4 + '_'+arr[3].replace(/ /g,"_").replace(/,/g,"")+'.pdf" style="cursor:pointer;color:darkred;" target="blank">View Factsheet</a></td></tr>';
