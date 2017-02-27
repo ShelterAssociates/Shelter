@@ -10,7 +10,7 @@ from django.conf import settings
 from itertools import groupby
 import json
 from collections import OrderedDict
-from kobotoolbox import get_household_analysis_data,get_kobo_FF_list,get_kobo_RIM_detail
+from kobotoolbox import *
 
 from .forms import KMLUpload
 from .kmlparser import KMLParser
@@ -20,17 +20,27 @@ from master.models import Slum
 #@staff_member_required
 @user_passes_test(lambda u: u.is_superuser)
 def kml_upload(request):
+    context_data = {}
     if request.method == 'POST':
         form = KMLUpload(request.POST or None,request.FILES)
         if form.is_valid():
             docFile = request.FILES['kml_file'].read()
-            objKML = KMLParser(docFile, form.cleaned_data['slum_name'])
-            messages.success(request,'Form submission successful')
+            objKML = KMLParser(docFile, form.cleaned_data['slum_name'], form.cleaned_data['delete_flag'])
+            try:
+                parsed_data = objKML.other_components()
+                context_data['parsed'] = [k for k,v in parsed_data.items() if v==True]
+                context_data['unparsed'] = [k for k,v in parsed_data.items() if v==False]
+                messages.success(request,'KML uploaded successfully')
+            except Exception as e:
+                messages.error(request, 'Some error occurred while parsing. KML file is not in the required format ('+str(e)+')')
     else:
         form = KMLUpload()
-    return render(request, 'kml_upload.html', {'form': form})
+    metadata_component = Metadata.objects.filter(type='C').values_list('code', flat=True)
+    context_data['component'] = metadata_component
+    context_data['form'] = form
+    return render(request, 'kml_upload.html', context_data)
 
-@user_passes_test(lambda u: u.is_superuser)
+#@user_passes_test(lambda u: u.is_superuser)
 def get_component(request, slum_id):
     slum = get_object_or_404(Slum, pk=slum_id)
     metadata = Metadata.objects.filter(visible=True).order_by('section__order','order')
@@ -39,7 +49,7 @@ def get_component(request, slum_id):
         #Fetch RHS data from kobotoolbox
         fields_code = metadata.filter(type='F').exclude(code="").values_list('code')
         fields = map(lambda x: x[0].split(':')[0],set(fields_code))
-        rhs_analysis = get_household_analysis_data(slum.shelter_slum_code, fields)
+        rhs_analysis = get_household_analysis_data(slum.electoral_ward.administrative_ward.city.id, slum.shelter_slum_code, fields)
     except:
         pass
 
@@ -78,14 +88,25 @@ def get_component(request, slum_id):
     return HttpResponse(json.dumps(dtcomponent),content_type='application/json')
 
 @user_passes_test(lambda u: u.is_superuser)
-def get_kobo_FF_data(request, slum_id,house_num):
+def get_kobo_RHS_data(request, slum_id,house_num):
      slum = get_object_or_404(Slum, pk=slum_id)
-     output = get_kobo_FF_list(slum.shelter_slum_code,house_num)
+     output = get_kobo_RHS_list(slum.electoral_ward.administrative_ward.city.id, slum.shelter_slum_code, house_num)
      return HttpResponse(json.dumps(output),content_type='application/json')
 
-@user_passes_test(lambda u: u.is_superuser)
+#@user_passes_test(lambda u: u.is_superuser)
 def get_kobo_RIM_data(request, slum_id):
 
     slum = get_object_or_404(Slum, pk=slum_id)
-    output = get_kobo_RIM_detail(slum.shelter_slum_code)
+    output = get_kobo_RIM_detail(slum.electoral_ward.administrative_ward.city.id, slum.shelter_slum_code)
+    return HttpResponse(json.dumps(output),content_type='application/json')
+
+def get_kobo_RIM_report_data(request, slum_id):
+    try:
+        slum = Slum.objects.filter(shelter_slum_code=slum_id)
+    except:
+        slum = None
+    print slum
+    output = {"status":"error"}
+    if slum and len(slum)>0:
+        output = get_kobo_RIM_report_detail(slum[0].electoral_ward.administrative_ward.city.id, slum[0].shelter_slum_code)
     return HttpResponse(json.dumps(output),content_type='application/json')

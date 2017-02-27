@@ -54,60 +54,34 @@ class SurveyCreateView(FormView):
 	"""Fetches and renders the Add New Survey Mapping template in browser"""
 	template_name = 'SurveyCreate_form.html'
 	form_class = SurveyCreateForm
-	success_url = 'SurveyCreate/'
+	success_url = '/admin/surveymapping/'
 
 	def dispatch(self, request, *args, **kwargs):
 		"""Signal Dispatcher"""
 		try:
+			self.survey = 0
 			if kwargs['survey']:
-				self.id = kwargs['survey']
+				self.survey = kwargs['survey']
 		except KeyError:
 			print 'Error'
 		return super(SurveyCreateView, self).dispatch(request, *args,
 													  **kwargs)
 
-	def get_context_data(self, **kwargs):
-		"""Returns a dictionary(json data format)"""
-		context_data = super(SurveyCreateView,
-							 self).get_context_data(**kwargs)
+	def get_form(self, form_class):
+		"""
+		Check if the user already saved contact details. If so, then show
+		the form populated with those details, to let user change them.
+		"""
 		try:
-			if self.id:
-				self.surveydata = Survey.objects.get(id=self.id)
-				context_data['form'] = self.form_class(initial={
-					'name': self.surveydata.name,
-					'description': self.surveydata.description,
-					'city': self.surveydata.city,
-					'survey_type': self.surveydata.survey_type,
-					'analysis_threshold': self.surveydata.analysis_threshold,
-					'kobotool_survey_id': self.surveydata.kobotool_survey_id,
-					'survey': self.surveydata.id,
-					})
-		except RuntimeError:
-			print 'get_context_data Error'
-		return context_data
-
-	def get_form_kwargs(self):
-		"""'Get' request for form data"""
-		kwargs = super(SurveyCreateView, self).get_form_kwargs()
-		try:
-			kwargs['survey'] = self.id
-		except AttributeError:
-			print 'get_form_kwargs Error'
-		return kwargs
+		    survey = Survey.objects.get(id=self.survey)
+		    return form_class(instance=survey, **self.get_form_kwargs())
+		except Survey.DoesNotExist:
+		    return form_class(**self.get_form_kwargs())
 
 	def form_valid(self, form):
 		"""Actions to perform if form is valid"""
 		form.save()
 		return super(SurveyCreateView, self).form_valid(form)
-
-	def form_invalid(self, form):
-		"""Actions to perform if form is invalid"""
-		return super(SurveyCreateView, self).form_invalid(form)
-
-	def get_success_url(self):
-		"""If form is valid -> redirect to"""
-		return reverse('SurveyCreate')
-
 
 def survey_delete_view(survey):
 	"""Delete Survey Object"""
@@ -252,7 +226,7 @@ def rimreportgenerate(request):
 	Fid = request.POST['Fid']
 	SlumObj = Slum.objects.get(id=sid)
 	rp_slum_code = str(SlumObj.shelter_slum_code)
-	rp_xform_title = Fid
+	rp_xform_title = "Rapid infrastructure Mapping (RIM)_V1"#Fid
 	string = settings.BIRT_REPORT_URL + "Birt/frameset?__format=pdf&__report=FactSheet.rptdesign&rp_xform_title=" + rp_xform_title + "&rp_slum_code=" + str(rp_slum_code)
 	data ={}
 	data = {'string': string}

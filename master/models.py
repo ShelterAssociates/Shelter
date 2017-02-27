@@ -25,7 +25,7 @@ class CityReference(models.Model):
     def __unicode__(self):
         """Returns string representation of object"""
         return str(self.city_name)
-    
+
 class City(models.Model):
     """Shelter City Database"""
     name = models.ForeignKey(CityReference)
@@ -62,7 +62,7 @@ class Survey(models.Model):
                                    choices=SURVEYTYPE_CHOICES)
     analysis_threshold = models.IntegerField()
     kobotool_survey_id = models.CharField(max_length=2048)
-    kobotool_survey_url = models.CharField(max_length=2048)
+    kobotool_survey_url = models.CharField(max_length=2048, null=True, blank=True)
 
     def __unicode__(self):
         """Returns string representation of object"""
@@ -119,8 +119,8 @@ class ElectoralWard(models.Model):
 class Slum(models.Model):
     """Slum Database"""
     electoral_ward = models.ForeignKey(ElectoralWard)
-    name = models.CharField(max_length=2048,blank=True,null=True)
-    shape = models.PolygonField(srid=4326,blank=True,null=True)
+    name = models.CharField(max_length=2048)
+    shape = models.PolygonField(srid=4326)
     description = models.TextField(max_length=2048,blank=True,null=True)
     shelter_slum_code = models.CharField(max_length=2048,blank=True,null=True)
     factsheet = models.FileField(upload_to=FACTSHEET_PHOTO ,blank=True,null=True)
@@ -277,7 +277,7 @@ class Rapid_Slum_Appraisal(models.Model):
         filesize = fieldfile_obj.file.size
         megabyte_limit = 3.0
         if filesize > megabyte_limit*1024*1024:
-            raise ValidationError("Max file size is %sMB" % str(megabyte_limit))     
+            raise ValidationError("Max file size is %sMB" % str(megabyte_limit))
     slum_name = models.ForeignKey(Slum)
     approximate_population=models.CharField(max_length=2048,blank=True, null=True)
     toilet_cost=models.CharField(max_length=2048,blank=True, null=True)
@@ -289,10 +289,10 @@ class Rapid_Slum_Appraisal(models.Model):
     waste_management_info_left_image = models.ImageField(validate_image,upload_to=SHELTER_PHOTO,blank=True, null=True)
     water_info_left_image = models.ImageField(validate_image,upload_to=SHELTER_PHOTO,blank=True, null=True)
     roads_and_access_info_left_image = models.ImageField(validate_image,upload_to=SHELTER_PHOTO,blank=True, null=True)
-    drainage_info_left_image = models.ImageField(validate_image,upload_to=SHELTER_PHOTO,blank=True, null=True) 
+    drainage_info_left_image = models.ImageField(validate_image,upload_to=SHELTER_PHOTO,blank=True, null=True)
     gutter_info_left_image = models.ImageField(validate_image,upload_to=SHELTER_PHOTO,blank=True, null=True)
     general_image_bottomdown1 = models.ImageField(validate_image,upload_to=SHELTER_PHOTO,blank=True, null=True)
-    general_image_bottomdown2 = models.ImageField(validate_image,upload_to=SHELTER_PHOTO,blank=True, null=True)    
+    general_image_bottomdown2 = models.ImageField(validate_image,upload_to=SHELTER_PHOTO,blank=True, null=True)
     toilet_image_bottomdown1 = models.ImageField(validate_image,upload_to=SHELTER_PHOTO,blank=True, null=True)
     toilet_image_bottomdown2 = models.ImageField(validate_image,upload_to=SHELTER_PHOTO,blank=True, null=True)
     waste_management_image_bottomdown1 = models.ImageField(validate_image,upload_to=SHELTER_PHOTO,blank=True, null=True)
@@ -302,9 +302,9 @@ class Rapid_Slum_Appraisal(models.Model):
     roads_image_bottomdown1 = models.ImageField(validate_image,upload_to=SHELTER_PHOTO,blank=True, null=True)
     road_image_bottomdown2  = models.ImageField(validate_image,upload_to=SHELTER_PHOTO,blank=True, null=True)
     drainage_image_bottomdown1 = models.ImageField(validate_image,upload_to=SHELTER_PHOTO,blank=True, null=True)
-    drainage_image_bottomdown2 = models.ImageField(validate_image,upload_to=SHELTER_PHOTO,blank=True, null=True) 
+    drainage_image_bottomdown2 = models.ImageField(validate_image,upload_to=SHELTER_PHOTO,blank=True, null=True)
     gutter_image_bottomdown1  = models.ImageField(validate_image,upload_to=SHELTER_PHOTO,blank=True, null=True)
-    gutter_image_bottomdown2 = models.ImageField(validate_image,upload_to=SHELTER_PHOTO,blank=True, null=True)  
+    gutter_image_bottomdown2 = models.ImageField(validate_image,upload_to=SHELTER_PHOTO,blank=True, null=True)
 
     class Meta:
         ordering = ['slum_name']
@@ -316,7 +316,6 @@ class drainage(models.Model):
         filesize = fieldfile_obj.file.size
         megabyte_limit = 3.0
         if filesize > megabyte_limit*1024*1024:
-            raise ValidationError("Max file size is %sMB" % str(megabyte_limit))     
+            raise ValidationError("Max file size is %sMB" % str(megabyte_limit))
     slum_name = models.ForeignKey(Slum)
     drainage_image = models.ImageField(upload_to=DRAINAGE_PHOTO,blank=True, null=True)
-   

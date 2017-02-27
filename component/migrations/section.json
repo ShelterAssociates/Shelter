@@ -1,0 +1,57 @@
+[{
+	"fields": {
+		"name": "General information",
+		"order": 1.0
+	},
+	"model": "component.section",
+	"pk": 1
+}, {
+	"fields": {
+		"name": "Toilet information",
+		"order": 2.0
+	},
+	"model": "component.section",
+	"pk": 2
+}, {
+	"fields": {
+		"name": "Waste management information",
+		"order": 3.0
+	},
+	"model": "component.section",
+	"pk": 3
+}, {
+	"fields": {
+		"name": "Water information",
+		"order": 4.0
+	},
+	"model": "component.section",
+	"pk": 4
+}, {
+	"fields": {
+		"name": "Road & access information",
+		"order": 5.0
+	},
+	"model": "component.section",
+	"pk": 5
+}, {
+	"fields": {
+		"name": "Drainage information",
+		"order": 6.0
+	},
+	"model": "component.section",
+	"pk": 6
+}, {
+	"fields": {
+		"name": "Sponsor",
+		"order": 8.0
+	},
+	"model": "component.section",
+	"pk": 7
+}, {
+	"fields": {
+		"name": "Gutter information",
+		"order": 7.0
+	},
+	"model": "component.section",
+	"pk": 8
+}]
