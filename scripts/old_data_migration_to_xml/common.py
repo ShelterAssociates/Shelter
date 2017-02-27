@@ -56,6 +56,20 @@ options_dict = {
 # get list of all slum and slum code
 qry_slum_list = "select distinct slum_id, slum_code from ray_survey_slumsurveymetadata where survey_id = %s order by slum_id"
 
+# process status dictionary
+process_status = {
+	'slum': 0,
+	'slum_unprocess': 0,
+	
+	'household': 0,
+	'household_unprocess': 0,
+	
+	'proceess': 0,
+	'success': 0,
+	'fail': 0,
+	
+	'upload': 0
+}
 
 # get data from database
 def fetch_db_records(query):
@@ -664,7 +678,7 @@ def reset_survey_option():
 		
 	return;
 
-def set_survey_option(project, survey, mapped_excelFile, output_path, survey2=None):
+def set_survey_option(project, survey, mapped_excelFile, survey2=None):
 	global options_dict
 	
 	options_dict['project'] = project
@@ -672,8 +686,6 @@ def set_survey_option(project, survey, mapped_excelFile, output_path, survey2=No
 	options_dict['survey'] = survey
 	
 	options_dict['mapped_excelFile'] = mapped_excelFile
-	
-	options_dict['output_path'] = output_path
 	
 	options_dict['survey2'] = survey2
 	
@@ -694,6 +706,20 @@ def set_survey_log_path_option(log_folder_path):
 	
 	options_dict['log_folder_path'] = log_folder_path
 	return;
+
+def set_survey_output_path_option(output_path):
+	global options_dict
+	
+	options_dict['output_path'] = output_path
+	
+	return;
+
+def get_survey_option_output_path():
+	global options_dict
+	
+	output_path = options_dict['output_path']
+	
+	return output_path;
 
 # get photo - return photo name as answer and download photo from url (use for FF survey only)
 def get_ff_photo(xml_key, fact_dict, download_folder_path):
@@ -743,6 +769,159 @@ def get_ff_photo(xml_key, fact_dict, download_folder_path):
 	
 	return answer;
 
+
+# display progress
+def show_progress_bar (iteration, total_count, status_for = ''):
+	prefix = status_for +' \t Progress status:'
+	suffix = 'Completed'
+	decimal_length = 0
+	progress_char = '-'
+	max_length = 50
+	
+	complete_percent = ("{0:." + str(decimal_length) + "f}").format(100 * (iteration / float(total_count)))
+	
+	progress_bar_length = int(max_length * iteration // total_count)
+	
+	progress_bar = progress_char * progress_bar_length + ' ' * (max_length - progress_bar_length)
+	
+	print('\r%s [%s] %s%% %s' % (prefix, progress_bar, complete_percent, suffix), end = '\r', flush=True)
+    
+	return;
+
+# set count for slum process
+def set_process_slum_count(total_slum, unprocess_slum):
+	process_status['slum'] = total_slum
+	process_status['slum_unprocess'] = unprocess_slum
+	return;
+
+# set count for household process	
+def set_process_household_count(total_household, unprocess_household):
+	process_status['household'] = total_household
+	process_status['household_unprocess'] = unprocess_household
+	return;
+
+# set count for total records process
+def set_process_count(total_process, success, fail):
+	process_status['proceess'] = total_process
+	process_status['success'] = success
+	process_status['fail'] = fail
+	return;
+
+# set count for file upload
+def set_upload_count(total_upload, success, fail):
+	process_status['upload'] = total_upload
+	process_status['success'] = success
+	process_status['fail'] = fail
+	return;
+
+# display result after process
+def show_process_status():
+	if process_status['slum']:
+		slum_status = 'Total slums : ' + str(process_status['slum'])
+		slum_status += ('' if process_status['slum_unprocess'] == 0 else '\t total slums unable to process '+str(process_status['slum_unprocess']))
+		
+		print(slum_status)
+		write_log(slum_status)
+		
+		process_status['slum'] = 0
+		process_status['slum_unprocess'] = 0
+	
+	if process_status['household']:
+		household_status = 'Total household in all slums : ' + str(process_status['household'])
+		household_status += ('' if process_status['household_unprocess'] == 0 else '\t total household unable to process '+str(process_status['household_unprocess']))
+		
+		print(household_status)
+		write_log(household_status)
+		
+		process_status['household'] = 0
+		process_status['household_unprocess'] = 0
+		
+	
+	if process_status['proceess']:
+		create_xml_status = 'Total process records : ' + str(process_status['proceess'])
+		create_xml_status += '\t Success : ' + str(process_status['success'])
+		create_xml_status += '\t Fail : ' + str(process_status['fail'])
+		
+		print(create_xml_status)
+		write_log(create_xml_status)
+		
+		process_status['proceess'] = 0
+		process_status['success'] = 0
+		process_status['fail'] = 0
+		
+	if process_status['upload']:
+		upload_status = 'Total records for upload : ' + str(process_status['upload'])
+		upload_status += '\t Success : ' + str(process_status['success'])
+		upload_status += '\t Fail : ' + str(process_status['fail'])
+		
+		print(upload_status)
+		write_log(upload_status)
+		
+		process_status['upload'] = 0
+		process_status['success'] = 0
+		process_status['fail'] = 0
+	
+	return;
+
+# get values from xml file
+def get_xml_photo_value(file_folder, file_name, xml_element):
+	xml_value = {}
+	
+	# read xml file
+	# find element and return value
+	# if xml_element is list then find for each element in key
+	# if xml_element is more than once then return list 
+	
+	
+	# check if element name exists
+	if xml_element:
+		xml_file = os.path.join(file_folder, file_name)
+		
+		base_folder, slum_folder = os.path.split(os.path.dirname(xml_file))
+		
+		if os.path.isfile(xml_file):
+			xml_tree = ET.parse(xml_file)
+			
+			xml_root = xml_tree.getroot();
+			
+			# check if single element or list of elements
+			if isinstance(xml_element, list): 
+				for element in xml_element:
+					value_list = []
+					
+					for value in xml_root.findall(element):
+						photo_name = value.text
+						if photo_name:
+							photo_file = os.path.join(base_folder, "photos", slum_folder, photo_name)
+							if os.path.isfile(photo_file):
+								value_list.append(photo_file)
+					
+					if value_list:
+						# check if value is only one or multiple
+						if len(value_list) == 1:
+							xml_value.setdefault(element, value_list[0])
+						else:
+							xml_value.setdefault(element, value_list)
+			else:  
+				value_list = []
+				# check for single element 
+				for value in xml_root.findall(xml_element):
+					photo_name = value.text
+					if photo_name:
+						photo_file = os.path.join(base_folder, "photos", slum_folder, photo_name)
+						if os.path.isfile(photo_file):
+							value_list.append(photo_file)
+				
+				if value_list:
+					# check if value is only one or multiple
+					if len(value_list) == 1:
+						xml_value.setdefault(xml_element, value_list[0])
+					else:
+						xml_value.setdefault(xml_element, value_list)
+	
+	#print(xml_value)
+	
+	return xml_value;
 
 
 
