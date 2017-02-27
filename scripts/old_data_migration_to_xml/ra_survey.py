@@ -244,14 +244,23 @@ def create_ra_xml(options):
 	#print("fetch survey list")
 	#print(survey_list)
 	write_log("fetch survey list")
-		
+	
+	total_slum = len(survey_list)
+	unprocess_slum = 0
+	total_process = 0
 	fail = 0
 	success = 0
 	
+	progress_max_count = len(survey_list)
+	progess_counter = 0
+	# set progress bar
+	show_progress_bar(progess_counter, progress_max_count)
+	
 	# check per slum
 	for slum in survey_list:
+		total_process += 1
 		try:
-			print("proocessing data for slum - ", slum)
+			#print("proocessing data for slum - ", slum)
 			write_log("proocessing data for slum id : "+ str(slum))
 			toilet_info = []
 			
@@ -716,10 +725,10 @@ def create_ra_xml(options):
 				
 				del ra_xml_dict
 			else:
+				unprocess_slum += 1
 				# write log that slum code is not found for slum id
 				write_log('slum code is not found for slum id '+str(slum))
 				unprocess_records[str(slum)] = 'slum code is not found when mapped'
-				fail += 1
 			
 			#print ('ra data - ', ra_xml_dict)
 			#print ('ra toilate data - ', toilet_info)
@@ -734,7 +743,11 @@ def create_ra_xml(options):
 			
 			#break;
 			pass
-	
+		
+		progess_counter += 1
+		show_progress_bar(progess_counter, progress_max_count)
+		
+		
 	if unprocess_records:
 		write_log('List of slum for which unable to create xml')
 		write_log('slum_id \t exception')
@@ -744,18 +757,17 @@ def create_ra_xml(options):
 	write_log('End : Log for RA Survey for each slum \n')
 	print("End processing")
 	
-	total = len(survey_list)
-	result_log = 'total records : '+str(total) + ' \t fail to process : '+str(fail) + ' \t success : '+str(success)
+	set_process_slum_count(total_slum, unprocess_slum)
+	set_process_count(total_process, success, fail)
+	show_process_status()
 	
-	print(result_log)
-	write_log(result_log)
 	
-	name_mismatch_records_log = 'Name of surveyor not match -  \t '
-	name_mismatch_records_log += ' name_of_surveyor_s_who_checke : '+str(name_mismatch_records['name_of_surveyor_s_who_checke']['count']) + ' \t '
-	name_mismatch_records_log += ' name_of_surveyor_s_who_collec : '+str(name_mismatch_records['name_of_surveyor_s_who_collec']['count']) + ' \t '
-	name_mismatch_records_log += ' name_of_surveyor_s_who_took_t : '+str(name_mismatch_records['name_of_surveyor_s_who_took_t']['count']) + ' \t '
+	#name_mismatch_records_log = 'Name of surveyor not match -  \t '
+	#name_mismatch_records_log += ' name_of_surveyor_s_who_checke : '+str(name_mismatch_records['name_of_surveyor_s_who_checke']['count']) + ' \t '
+	#name_mismatch_records_log += ' name_of_surveyor_s_who_collec : '+str(name_mismatch_records['name_of_surveyor_s_who_collec']['count']) + ' \t '
+	#name_mismatch_records_log += ' name_of_surveyor_s_who_took_t : '+str(name_mismatch_records['name_of_surveyor_s_who_took_t']['count']) + ' \t '
 	#print(name_mismatch_records_log)
-	write_log(name_mismatch_records_log)
+	#write_log(name_mismatch_records_log)
 	
 	return;
 
