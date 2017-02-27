@@ -204,6 +204,7 @@ def get_kobo_RIM_report_detail(city, slum_code, kobo_survey=''):
 
                 #Iterate through the list of questions for the group
                 for sect_form in sect_form_data:
+                    output[sect_form['name']]  = ""
                     key = [x for x in sub_key if x.endswith(sect_form['name'])]
                     #Check if the question has answer in the submission then only proceed further
                     if len(key)>0 and 'label' in sect_form:
@@ -222,7 +223,7 @@ def get_kobo_RIM_report_detail(city, slum_code, kobo_survey=''):
                                     if key[0] in sub[ind].keys():
                                         ans = fetch_answer(sect_form, key, sub[ind])
                                         if ans:
-                                            arr_ans.append(ans)
+                                            arr_ans.extend(ans.split(','))
 
                                 ans = ""
                                 if 'integer' in sect_form['type']:
