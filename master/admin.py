@@ -4,7 +4,7 @@
 from django.contrib import admin
 from django.contrib.gis import admin
 from master.models import CityReference, City, \
-    AdministrativeWard, ElectoralWard, Slum, WardOfficeContact, ElectedRepresentative, Rapid_Slum_Appraisal, Survey, drainage 
+    AdministrativeWard, ElectoralWard, Slum, WardOfficeContact, ElectedRepresentative, Rapid_Slum_Appraisal, Survey, drainage
 from master.forms import CityFrom, AdministrativeWardFrom, ElectoralWardForm, SlumForm
 
 # Register your models here.
@@ -52,7 +52,27 @@ admin.site.register(ElectoralWard, ElectedRepresentativeAdmin)
 
 class SlumDetailAdmin(admin.ModelAdmin):
     form = SlumForm
-    search_fields = ('name',)
+    list_display = ('name', 'electoral_ward', 'administrative_ward', 'city')
+    search_fields = ['name']
+    ordering = ['electoral_ward__name', 'name']
+
+    def electoral_ward(self, obj):
+        return obj.electoral_ward.name
+
+    def administrative_ward(self, obj):
+        return obj.electoral_ward.administrative_ward.name
+
+    def city(self, obj):
+        return obj.electoral_ward.administrative_ward.city.name
+
+    def get_search_results(self, request, queryset, search_term):
+        queryset, use_distinct = super(SlumDetailAdmin, self).get_search_results(request, queryset, search_term)
+
+        queryset |= self.model.objects.filter(electoral_ward__name__contains=search_term)
+        queryset |= self.model.objects.filter(electoral_ward__administrative_ward__name__contains=search_term)
+        queryset |= self.model.objects.filter(electoral_ward__administrative_ward__city__name__city_name__contains=search_term)
+        return queryset, use_distinct
+
 admin.site.register(Slum, SlumDetailAdmin)
 
 # class SurveyDetailAdmin(admin.ModelAdmin):
@@ -78,7 +98,7 @@ class PlottedShapeAdmin(admin.ModelAdmin):
 # admin.site.register(PlottedShape,PlottedShapeAdmin)
 class CityAdmin(admin.ModelAdmin):
     """Display panel of CityAdmin Model"""
-    form = CityFrom 
+    form = CityFrom
     model = City
     search_fields = ('name',)
     def save_model(self, request, obj, form, change):
@@ -86,32 +106,24 @@ class CityAdmin(admin.ModelAdmin):
         obj.save()
 admin.site.register(City, CityAdmin)
 
-
-
 class WardOfficeContactAdmin(admin.ModelAdmin):
     """Display panel of WardOfficeContact Model"""
     inlines = [WardOfficeContactInline]
     list_display = ('name', 'ward_no', 'city', 'office_address')
     search_fields = ('name',)
 admin.site.register(AdministrativeWard, WardOfficeContactAdmin)
-
 admin.site.unregister(AdministrativeWard)
 
 class AdministrativeWardAdmin(admin.ModelAdmin):
     form = AdministrativeWardFrom
     search_fields = ('name',)
-admin.site.register(AdministrativeWard,AdministrativeWardAdmin)    
-
-
+admin.site.register(AdministrativeWard,AdministrativeWardAdmin)
 admin.site.unregister(ElectoralWard)
 
 class ElectoralWardFormAdmin(admin.ModelAdmin):
     form = ElectoralWardForm
     search_fields = ('name',)
-admin.site.register(ElectoralWard,ElectoralWardFormAdmin) 
-
-
+admin.site.register(ElectoralWard,ElectoralWardFormAdmin)
 
 admin.site.register(Rapid_Slum_Appraisal)
 admin.site.register(drainage)
-
