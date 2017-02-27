@@ -223,8 +223,14 @@ def get_kobo_RIM_report_detail(city, slum_code, kobo_survey=''):
                                         ans = fetch_answer(sect_form, key, sub[ind])
                                         if ans:
                                             arr_ans.append(ans)
-                                c = Counter(arr_ans)
-                                output[sect_form['name']] = ', '.join([ "{}({})".format(x,y) for x,y in c.items()])
+
+                                ans = ""
+                                if 'integer' in sect_form['type']:
+                                    ans = sum(map(int, arr_ans))
+                                else:
+                                    c = Counter(arr_ans)
+                                    ans = ', '.join([ "{}({})".format(x,y) for x,y in c.items()])
+                                output[sect_form['name']] = ans
     return output
 
 def fetch_answer(sect_form, key, submission):
