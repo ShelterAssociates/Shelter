@@ -19,6 +19,7 @@ from django.conf import settings
 from django.contrib.auth.decorators import login_required
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.gis import geos
+from django.views.decorators.clickjacking import xframe_options_exempt
 
 from master.models import Survey, CityReference, Rapid_Slum_Appraisal, \
 						  Slum, AdministrativeWard, ElectoralWard, City, \
@@ -253,7 +254,7 @@ def vulnerabilityreport(request):
 	string = settings.BIRT_REPORT_URL + "Birt/frameset?__format=pdf&__report=Vulnerability_Report.rptdesign"
 	return HttpResponseRedirect(string)
 
-
+@xframe_options_exempt
 def slummap(request):
 	template = loader.get_template('slummapdisplay.html')
 	context = RequestContext(request, {})
@@ -443,7 +444,7 @@ def cityList(request):
 @csrf_exempt
 def formList(request):
 	""" Form List"""
-	old = psycopg2.connect(database='kobotoolbox',user='kobo',password='kobo',host='172.17.0.4',port='5432')
+	old = psycopg2.connect(database='kobotoolbox',user='kobo',password='kobo',host='172.17.0.7',port='5432')
 	cursor_old = old.cursor()
 	cursor_old.execute("select id, title from logger_xform;")
 	fetch_data = cursor_old.fetchall()
