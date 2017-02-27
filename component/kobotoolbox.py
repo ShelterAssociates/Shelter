@@ -89,7 +89,7 @@ def get_kobo_RHS_list(city, slum_code,house_number, kobo_survey=''):
                 sect_form_data = trav(data)
                 sub_key = [ str(k) for k in submission[0].keys() if data['name'] in k]
                 for sect_form in sect_form_data:
-                    key = [x for x in sub_key if sect_form['name'] in x]
+                    key = [x for x in sub_key if x.endswith(sect_form['name'])]
                     if len(key)>0 and 'label' in sect_form:
                         ans = fetch_answer(sect_form, key, submission[0])
                         output[sect_form['label']]  = ans
@@ -149,7 +149,7 @@ def get_kobo_RIM_detail(city, slum_code, kobo_survey=''):
                     [output[section[data['name']]].append(OrderedDict()) for i in range(count)]
                 #Iterate through the list of questions for the group
                 for sect_form in sect_form_data:
-                    key = [x for x in sub_key if sect_form['name'] in x]
+                    key = [x for x in sub_key if x.endswith(sect_form['name'])]
                     #Check if the question has answer in the submission then only proceed further
                     if len(key)>0 and 'label' in sect_form:
                         if data['name'] != RIM_TOILET:
@@ -204,7 +204,7 @@ def get_kobo_RIM_report_detail(city, slum_code, kobo_survey=''):
 
                 #Iterate through the list of questions for the group
                 for sect_form in sect_form_data:
-                    key = [x for x in sub_key if sect_form['name'] in x]
+                    key = [x for x in sub_key if x.endswith(sect_form['name'])]
                     #Check if the question has answer in the submission then only proceed further
                     if len(key)>0 and 'label' in sect_form:
                         if data['name'] != RIM_TOILET:
