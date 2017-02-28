@@ -4231,7 +4231,7 @@ return false;]]></method>
             <row id="304">
                 <cell id="305">
                     <property name="colSpan">1</property>
-                    <property name="rowSpan">13</property>
+                    <property name="rowSpan">12</property>
                     <property name="style">mapImageContainer</property>
                     <image id="636">
                         <property name="style">MapImage</property>
@@ -4256,7 +4256,7 @@ return false;]]></method>
                 </cell>
                 <cell id="781">
                     <property name="colSpan">1</property>
-                    <property name="rowSpan">13</property>
+                    <property name="rowSpan">12</property>
                     <property name="style">SectionDividerContainer</property>
                     <property name="borderBottomStyle">none</property>
                     <property name="borderLeftStyle">none</property>
@@ -4324,29 +4324,6 @@ return false;]]></method>
                             </structure>
                         </list-property>
                         <property name="resultSetColumn">type_of_roads_within_the_settlement</property>
-                    </data>
-                </cell>
-            </row>
-            <row id="316">
-                <cell id="318">
-                    <label id="558">
-                        <property name="style">SectionLabel</property>
-                        <text-property name="text">Coverage of Roads Across the Settlement</text-property>
-                    </label>
-                </cell>
-                <cell id="319">
-                    <data id="716">
-                        <property name="style">SectionData</property>
-                        <property name="dataSet">Script - json_data</property>
-                        <list-property name="boundDataColumns">
-                            <structure>
-                                <property name="name">coverage_of_road_across_settlement</property>
-                                <text-property name="displayName">coverage_of_road_across_settlement</text-property>
-                                <expression name="expression" type="javascript">dataSetRow["coverage_of_road_across_settlement"]</expression>
-                                <property name="dataType">string</property>
-                            </structure>
-                        </list-property>
-                        <property name="resultSetColumn">coverage_of_road_across_settlement</property>
                     </data>
                 </cell>
             </row>
