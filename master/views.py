@@ -224,15 +224,11 @@ def slumList(request):
 def rimreportgenerate(request):
 	"""Generate RIM Report"""
 	sid = request.POST['Sid']
-	Fid = request.POST['Fid']
 	SlumObj = Slum.objects.get(id=sid)
 	rp_slum_code = str(SlumObj.shelter_slum_code)
-	rp_xform_title = "Rapid infrastructure Mapping (RIM)_V1"#Fid
-	string = settings.BIRT_REPORT_URL + "Birt/frameset?__format=pdf&__report=FactSheet.rptdesign&rp_xform_title=" + rp_xform_title + "&rp_slum_code=" + str(rp_slum_code)
-	data ={}
+	string = settings.BIRT_REPORT_URL + "Birt/frameset?__format=pdf&__report=RIMReport.rptdesign&slum=" + str(rp_slum_code)
 	data = {'string': string}
 	return HttpResponse(json.dumps(data),content_type='application/json')
-
 
 @csrf_exempt
 def drainagereportgenerate(request):

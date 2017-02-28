@@ -134,9 +134,10 @@ function getcordinates(obj1, flag=true) {
 
 }
 function factsheet_click(obj){
+	  $(".overlay").show();
 		var Sid = global_slum_id;
 		var url = "/admin/rimreportgenerate/";
-    var Fid = "54";
+    var Fid = "154";
 		$.ajax({
 			url : url,
 			data : { Sid : Sid,Fid : Fid},
@@ -144,6 +145,7 @@ function factsheet_click(obj){
 			contenttype : "json",
 			success : function(json){
 					url = json.string;
+					$(".overlay").hide();
 					window.open("" + url );
 			}
 		});
