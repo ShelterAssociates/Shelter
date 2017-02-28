@@ -396,7 +396,7 @@ function setMaplink() {
 
 	if (arr.length > 0) {
 		for (var i = 0; i < arr.length; i++) {
-			aTag += '>> <label id=' + arr[i] + ' onclick="getArea(this);">' + " <span style='text-decoration: underline;cursor:pointer;color:blue;'>" + arr[i] + "</span></label>&nbsp;&nbsp; ";
+			aTag += '>> <label id="' + arr[i] + '" onclick="getArea(this);">' + " <span style='text-decoration: underline;cursor:pointer;color:blue;'>" + arr[i] + "</span></label>&nbsp;&nbsp; ";
 		}
 	}
 	mydiv.html(aTag);
