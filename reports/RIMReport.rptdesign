@@ -2641,6 +2641,20 @@ return false;]]></method>
             <property name="marginRight">5pt</property>
             <property name="paddingLeft">1pt</property>
             <property name="paddingRight">1pt</property>
+            <property name="textAlign">justify</property>
+        </style>
+        <style name="SectionDividerContainer" id="758">
+            <property name="borderBottomColor">#FFFFFF</property>
+            <property name="borderLeftColor">#FFFFFF</property>
+            <property name="borderTopColor">#FFFFFF</property>
+        </style>
+        <style name="SectionDividerImage" id="759">
+            <property name="paddingTop">0pt</property>
+            <property name="paddingLeft">0pt</property>
+            <property name="paddingBottom">0pt</property>
+            <property name="paddingRight">0pt</property>
+            <property name="height">160mm</property>
+            <property name="width">10px</property>
         </style>
     </styles>
     <page-setup>
@@ -2749,7 +2763,7 @@ return false;]]></method>
                             <property name="paddingBottom">1pt</property>
                             <property name="paddingRight">1pt</property>
                             <image id="738">
-                                <property name="marginLeft">20pt</property>
+                                <property name="marginLeft">10pt</property>
                                 <property name="marginRight">0pt</property>
                                 <property name="height">60px</property>
                                 <property name="width">229px</property>
@@ -2797,6 +2811,9 @@ return false;]]></method>
             <column id="45">
                 <property name="width">5.572916666666667in</property>
             </column>
+            <column id="851">
+                <property name="width">2pt</property>
+            </column>
             <column id="46">
                 <property name="width">2.583in</property>
             </column>
@@ -2827,6 +2844,24 @@ return false;]]></method>
                         </list-property>
                         <property name="source">url</property>
                         <expression name="uri" type="javascript">vars["var_report_prefix_image_path"].concat(row["general_info_left_image"])</expression>
+                    </image>
+                </cell>
+                <cell id="834">
+                    <property name="colSpan">1</property>
+                    <property name="rowSpan">17</property>
+                    <property name="style">SectionDividerContainer</property>
+                    <property name="borderBottomStyle">none</property>
+                    <property name="borderLeftStyle">none</property>
+                    <property name="borderRightStyle">none</property>
+                    <property name="borderTopStyle">none</property>
+                    <property name="paddingTop">0pt</property>
+                    <property name="paddingLeft">0pt</property>
+                    <property name="paddingBottom">0pt</property>
+                    <property name="paddingRight">0pt</property>
+                    <image id="852">
+                        <property name="style">SectionDividerImage</property>
+                        <property name="source">url</property>
+                        <expression name="uri" type="javascript">vars["var_report_divider_image"]</expression>
                     </image>
                 </cell>
                 <cell id="50">
@@ -3182,6 +3217,9 @@ return false;]]></method>
             <column id="109">
                 <property name="width">5.572916666666667in</property>
             </column>
+            <column id="833">
+                <property name="width">2pt</property>
+            </column>
             <column id="110">
                 <property name="width">2.583in</property>
             </column>
@@ -3212,6 +3250,24 @@ return false;]]></method>
                         </list-property>
                         <property name="source">url</property>
                         <expression name="uri" type="javascript">vars["var_report_prefix_image_path"].concat(row["toilet_info_left_image"])</expression>
+                    </image>
+                </cell>
+                <cell id="819">
+                    <property name="colSpan">1</property>
+                    <property name="rowSpan">14</property>
+                    <property name="style">SectionDividerContainer</property>
+                    <property name="borderBottomStyle">none</property>
+                    <property name="borderLeftStyle">none</property>
+                    <property name="borderRightStyle">none</property>
+                    <property name="borderTopStyle">none</property>
+                    <property name="paddingTop">0pt</property>
+                    <property name="paddingLeft">0pt</property>
+                    <property name="paddingBottom">0pt</property>
+                    <property name="paddingRight">0pt</property>
+                    <image id="853">
+                        <property name="style">SectionDividerImage</property>
+                        <property name="source">url</property>
+                        <expression name="uri" type="javascript">vars["var_report_divider_image"]</expression>
                     </image>
                 </cell>
                 <cell id="114">
@@ -3540,6 +3596,9 @@ return false;]]></method>
             <column id="173">
                 <property name="width">5.572916666666667in</property>
             </column>
+            <column id="818">
+                <property name="width">2pt</property>
+            </column>
             <column id="174">
                 <property name="width">2.583in</property>
             </column>
@@ -3570,6 +3629,24 @@ return false;]]></method>
                         </list-property>
                         <property name="source">url</property>
                         <expression name="uri" type="javascript">vars["var_report_prefix_image_path"].concat(row["waste_management_info_left_image"])</expression>
+                    </image>
+                </cell>
+                <cell id="809">
+                    <property name="colSpan">1</property>
+                    <property name="rowSpan">9</property>
+                    <property name="style">SectionDividerContainer</property>
+                    <property name="borderBottomStyle">none</property>
+                    <property name="borderLeftStyle">none</property>
+                    <property name="borderRightStyle">none</property>
+                    <property name="borderTopStyle">none</property>
+                    <property name="paddingTop">0pt</property>
+                    <property name="paddingLeft">0pt</property>
+                    <property name="paddingBottom">0pt</property>
+                    <property name="paddingRight">0pt</property>
+                    <image id="854">
+                        <property name="style">SectionDividerImage</property>
+                        <property name="source">url</property>
+                        <expression name="uri" type="javascript">vars["var_report_divider_image"]</expression>
                     </image>
                 </cell>
                 <cell id="178">
@@ -3783,6 +3860,9 @@ return false;]]></method>
             <column id="237">
                 <property name="width">5.572916666666667in</property>
             </column>
+            <column id="808">
+                <property name="width">2pt</property>
+            </column>
             <column id="238">
                 <property name="width">2.583in</property>
             </column>
@@ -3813,6 +3893,24 @@ return false;]]></method>
                         </list-property>
                         <property name="source">url</property>
                         <expression name="uri" type="javascript">vars["var_report_prefix_image_path"].concat(row["water_info_left_image"])</expression>
+                    </image>
+                </cell>
+                <cell id="795">
+                    <property name="colSpan">1</property>
+                    <property name="rowSpan">13</property>
+                    <property name="style">SectionDividerContainer</property>
+                    <property name="borderBottomStyle">none</property>
+                    <property name="borderLeftStyle">none</property>
+                    <property name="borderRightStyle">none</property>
+                    <property name="borderTopStyle">none</property>
+                    <property name="paddingTop">0pt</property>
+                    <property name="paddingLeft">0pt</property>
+                    <property name="paddingBottom">0pt</property>
+                    <property name="paddingRight">0pt</property>
+                    <image id="855">
+                        <property name="style">SectionDividerImage</property>
+                        <property name="source">url</property>
+                        <expression name="uri" type="javascript">vars["var_report_divider_image"]</expression>
                     </image>
                 </cell>
                 <cell id="242">
@@ -4121,6 +4219,9 @@ return false;]]></method>
             <column id="301">
                 <property name="width">5.572916666666667in</property>
             </column>
+            <column id="794">
+                <property name="width">2pt</property>
+            </column>
             <column id="302">
                 <property name="width">2.583in</property>
             </column>
@@ -4151,6 +4252,24 @@ return false;]]></method>
                         </list-property>
                         <property name="source">url</property>
                         <expression name="uri" type="javascript">vars["var_report_prefix_image_path"].concat(row["roads_and_access_info_left_image"])</expression>
+                    </image>
+                </cell>
+                <cell id="781">
+                    <property name="colSpan">1</property>
+                    <property name="rowSpan">13</property>
+                    <property name="style">SectionDividerContainer</property>
+                    <property name="borderBottomStyle">none</property>
+                    <property name="borderLeftStyle">none</property>
+                    <property name="borderRightStyle">none</property>
+                    <property name="borderTopStyle">none</property>
+                    <property name="paddingTop">0pt</property>
+                    <property name="paddingLeft">0pt</property>
+                    <property name="paddingBottom">0pt</property>
+                    <property name="paddingRight">0pt</property>
+                    <image id="856">
+                        <property name="style">SectionDividerImage</property>
+                        <property name="source">url</property>
+                        <expression name="uri" type="javascript">vars["var_report_divider_image"]</expression>
                     </image>
                 </cell>
                 <cell id="306">
@@ -4456,6 +4575,9 @@ return false;]]></method>
             <column id="365">
                 <property name="width">5.572916666666667in</property>
             </column>
+            <column id="780">
+                <property name="width">2pt</property>
+            </column>
             <column id="366">
                 <property name="width">2.583in</property>
             </column>
@@ -4486,6 +4608,24 @@ return false;]]></method>
                         </list-property>
                         <property name="source">url</property>
                         <expression name="uri" type="javascript">vars["var_report_prefix_image_path"].concat(row["drainage_info_left_image"])</expression>
+                    </image>
+                </cell>
+                <cell id="772">
+                    <property name="colSpan">1</property>
+                    <property name="rowSpan">8</property>
+                    <property name="style">SectionDividerContainer</property>
+                    <property name="borderBottomStyle">none</property>
+                    <property name="borderLeftStyle">none</property>
+                    <property name="borderRightStyle">none</property>
+                    <property name="borderTopStyle">none</property>
+                    <property name="paddingTop">0pt</property>
+                    <property name="paddingLeft">0pt</property>
+                    <property name="paddingBottom">0pt</property>
+                    <property name="paddingRight">0pt</property>
+                    <image id="857">
+                        <property name="style">SectionDividerImage</property>
+                        <property name="source">url</property>
+                        <expression name="uri" type="javascript">vars["var_report_divider_image"]</expression>
                     </image>
                 </cell>
                 <cell id="370">
@@ -4675,6 +4815,9 @@ return false;]]></method>
             <column id="429">
                 <property name="width">5.572916666666667in</property>
             </column>
+            <column id="771">
+                <property name="width">2pt</property>
+            </column>
             <column id="430">
                 <property name="width">2.583in</property>
             </column>
@@ -4705,6 +4848,24 @@ return false;]]></method>
                         </list-property>
                         <property name="source">url</property>
                         <expression name="uri" type="javascript">vars["var_report_prefix_image_path"].concat(row["gutter_info_left_image"])</expression>
+                    </image>
+                </cell>
+                <cell id="760">
+                    <property name="colSpan">1</property>
+                    <property name="rowSpan">11</property>
+                    <property name="style">SectionDividerContainer</property>
+                    <property name="borderBottomStyle">none</property>
+                    <property name="borderLeftStyle">none</property>
+                    <property name="borderRightStyle">none</property>
+                    <property name="borderTopStyle">none</property>
+                    <property name="paddingTop">0pt</property>
+                    <property name="paddingLeft">0pt</property>
+                    <property name="paddingBottom">0pt</property>
+                    <property name="paddingRight">0pt</property>
+                    <image id="858">
+                        <property name="style">SectionDividerImage</property>
+                        <property name="source">url</property>
+                        <expression name="uri" type="javascript">vars["var_report_divider_image"]</expression>
                     </image>
                 </cell>
                 <cell id="434">
@@ -4927,6 +5088,10 @@ return false;]]></method>
         </variable-element>
         <variable-element name="var_report_footer_image">
             <expression name="value" type="javascript">"http://app.shelter-associates.org/static/images/shelter_footer.png"</expression>
+            <property name="type">report</property>
+        </variable-element>
+        <variable-element name="var_report_divider_image">
+            <expression name="value" type="javascript">"http://app.shelter-associates.org/static/images/rpt_background.png";</expression>
             <property name="type">report</property>
         </variable-element>
     </property>
