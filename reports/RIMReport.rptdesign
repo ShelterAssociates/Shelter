@@ -71,7 +71,7 @@
             <property name="databaseName">shelter_migrate</property>
             <property name="username">postgres</property>
             <encrypted-property name="password" encryptionID="base64">c29mdGNvcm5lcg==</encrypted-property>
-            <property name="URL">jdbc:postgresql://192.168.0.79:5432/shelter_migrate_20170217</property>
+            <property name="URL">jdbc:postgresql://192.168.0.61:5432/shelter_migrate_20170217</property>
             <property name="driverClass">org.postgresql.Driver</property>
             <property name="jarList">D:\Projects\Shelter\DevWorkspace\brit connection jar\postgresql-9.4.1212.jre6.jar</property>
         </oda-data-source>
@@ -2558,13 +2558,13 @@ return false;]]></method>
         <style name="SectionHeader" id="497">
             <property name="fontFamily">"Trebuchet MS"</property>
             <property name="fontSize">16pt</property>
-            <property name="fontWeight">bold</property>
+            <property name="fontWeight">normal</property>
             <property name="paddingLeft">4pt</property>
             <property name="paddingBottom">4pt</property>
         </style>
         <style name="SectionLabel" id="513">
             <property name="fontFamily">"Trebuchet MS"</property>
-            <property name="paddingLeft">4pt</property>
+            <property name="paddingLeft">10pt</property>
             <property name="paddingBottom">4pt</property>
         </style>
         <style name="SectionBackground" id="579">
@@ -2581,6 +2581,7 @@ return false;]]></method>
             <property name="fontFamily">"Trebuchet MS"</property>
             <property name="fontSize">18pt</property>
             <property name="color">#FFFFFF</property>
+            <property name="paddingLeft">10pt</property>
         </style>
         <style name="DataImageContainer" id="657">
             <property name="paddingTop">4pt</property>
@@ -2614,6 +2615,7 @@ return false;]]></method>
             <property name="fontSize">14pt</property>
             <property name="fontStyle">italic</property>
             <property name="color">#FFFFFF</property>
+            <property name="paddingLeft">10pt</property>
         </style>
         <style name="PageGrid" id="740">
             <property name="backgroundColor">#D1E2F4</property>
@@ -2625,10 +2627,20 @@ return false;]]></method>
             <property name="borderTopWidth">6pt</property>
             <property name="paddingTop">5pt</property>
             <property name="paddingBottom">5pt</property>
+            <property name="height">100%</property>
+            <property name="width">100%</property>
         </style>
         <style name="SectionData" id="741">
             <property name="fontFamily">"Trebuchet MS"</property>
             <property name="fontWeight">bold</property>
+        </style>
+        <style name="SectionData_GenObservation" id="743">
+            <property name="fontFamily">"Trebuchet MS"</property>
+            <property name="fontWeight">bold</property>
+            <property name="marginLeft">10pt</property>
+            <property name="marginRight">5pt</property>
+            <property name="paddingLeft">1pt</property>
+            <property name="paddingRight">1pt</property>
         </style>
     </styles>
     <page-setup>
@@ -2786,7 +2798,7 @@ return false;]]></method>
                 <property name="width">5.572916666666667in</property>
             </column>
             <column id="46">
-                <property name="width">3.1041666666666665in</property>
+                <property name="width">2.583in</property>
             </column>
             <column id="47">
                 <property name="width">2.5833333333333335in</property>
@@ -3131,6 +3143,7 @@ return false;]]></method>
                     <property name="rowSpan">1</property>
                     <label id="512">
                         <property name="style">SectionLabel</property>
+                        <property name="paddingBottom">1pt</property>
                         <text-property name="text">General Observations</text-property>
                     </label>
                 </cell>
@@ -3140,7 +3153,8 @@ return false;]]></method>
                     <property name="colSpan">2</property>
                     <property name="rowSpan">1</property>
                     <data id="690">
-                        <property name="style">SectionData</property>
+                        <property name="style">SectionData_GenObservation</property>
+                        <property name="paddingLeft">1pt</property>
                         <property name="dataSet">Script - json_data</property>
                         <list-property name="boundDataColumns">
                             <structure>
@@ -3169,7 +3183,7 @@ return false;]]></method>
                 <property name="width">5.572916666666667in</property>
             </column>
             <column id="110">
-                <property name="width">3.1041666666666665in</property>
+                <property name="width">2.583in</property>
             </column>
             <column id="111">
                 <property name="width">2.5833333333333335in</property>
@@ -3445,6 +3459,7 @@ return false;]]></method>
                     <property name="rowSpan">1</property>
                     <label id="534">
                         <property name="style">SectionLabel</property>
+                        <property name="paddingBottom">1pt</property>
                         <text-property name="text">General Observations</text-property>
                     </label>
                 </cell>
@@ -3454,7 +3469,8 @@ return false;]]></method>
                     <property name="colSpan">2</property>
                     <property name="rowSpan">1</property>
                     <data id="699">
-                        <property name="style">SectionData</property>
+                        <property name="style">SectionData_GenObservation</property>
+                        <property name="paddingLeft">1pt</property>
                         <property name="dataSet">Script - json_data</property>
                         <list-property name="boundDataColumns">
                             <structure>
@@ -3525,7 +3541,7 @@ return false;]]></method>
                 <property name="width">5.572916666666667in</property>
             </column>
             <column id="174">
-                <property name="width">3.1041666666666665in</property>
+                <property name="width">2.583in</property>
             </column>
             <column id="175">
                 <property name="width">2.5833333333333335in</property>
@@ -3686,6 +3702,7 @@ return false;]]></method>
                     <property name="rowSpan">1</property>
                     <label id="544">
                         <property name="style">SectionLabel</property>
+                        <property name="paddingBottom">1pt</property>
                         <text-property name="text">General Obeservation</text-property>
                     </label>
                 </cell>
@@ -3695,7 +3712,8 @@ return false;]]></method>
                     <property name="colSpan">2</property>
                     <property name="rowSpan">1</property>
                     <data id="704">
-                        <property name="style">SectionData</property>
+                        <property name="style">SectionData_GenObservation</property>
+                        <property name="paddingLeft">1pt</property>
                         <property name="dataSet">Script - json_data</property>
                         <list-property name="boundDataColumns">
                             <structure>
@@ -3766,7 +3784,7 @@ return false;]]></method>
                 <property name="width">5.572916666666667in</property>
             </column>
             <column id="238">
-                <property name="width">3.1041666666666665in</property>
+                <property name="width">2.583in</property>
             </column>
             <column id="239">
                 <property name="width">2.5833333333333335in</property>
@@ -4022,6 +4040,7 @@ return false;]]></method>
                     <property name="rowSpan">1</property>
                     <label id="555">
                         <property name="style">SectionLabel</property>
+                        <property name="paddingBottom">1pt</property>
                         <text-property name="text">General Observation</text-property>
                     </label>
                 </cell>
@@ -4031,7 +4050,8 @@ return false;]]></method>
                     <property name="colSpan">2</property>
                     <property name="rowSpan">1</property>
                     <data id="713">
-                        <property name="style">SectionData</property>
+                        <property name="style">SectionData_GenObservation</property>
+                        <property name="paddingLeft">1pt</property>
                         <property name="dataSet">Script - json_data</property>
                         <list-property name="boundDataColumns">
                             <structure>
@@ -4102,7 +4122,7 @@ return false;]]></method>
                 <property name="width">5.572916666666667in</property>
             </column>
             <column id="302">
-                <property name="width">3.1041666666666665in</property>
+                <property name="width">2.583in</property>
             </column>
             <column id="303">
                 <property name="width">2.5833333333333335in</property>
@@ -4355,6 +4375,7 @@ return false;]]></method>
                     <property name="rowSpan">1</property>
                     <label id="565">
                         <property name="style">SectionLabel</property>
+                        <property name="paddingBottom">1pt</property>
                         <text-property name="text">General Observations</text-property>
                     </label>
                 </cell>
@@ -4364,7 +4385,8 @@ return false;]]></method>
                     <property name="colSpan">2</property>
                     <property name="rowSpan">1</property>
                     <data id="723">
-                        <property name="style">SectionData</property>
+                        <property name="style">SectionData_GenObservation</property>
+                        <property name="paddingLeft">1pt</property>
                         <property name="dataSet">Script - json_data</property>
                         <list-property name="boundDataColumns">
                             <structure>
@@ -4435,7 +4457,7 @@ return false;]]></method>
                 <property name="width">5.572916666666667in</property>
             </column>
             <column id="366">
-                <property name="width">3.1041666666666665in</property>
+                <property name="width">2.583in</property>
             </column>
             <column id="367">
                 <property name="width">2.5833333333333335in</property>
@@ -4573,6 +4595,7 @@ return false;]]></method>
                     <property name="rowSpan">1</property>
                     <label id="570">
                         <property name="style">SectionLabel</property>
+                        <property name="paddingBottom">1pt</property>
                         <text-property name="text">General Obeservation</text-property>
                     </label>
                 </cell>
@@ -4582,7 +4605,8 @@ return false;]]></method>
                     <property name="colSpan">2</property>
                     <property name="rowSpan">1</property>
                     <data id="728">
-                        <property name="style">SectionData</property>
+                        <property name="style">SectionData_GenObservation</property>
+                        <property name="paddingLeft">1pt</property>
                         <property name="dataSet">Script - json_data</property>
                         <list-property name="boundDataColumns">
                             <structure>
@@ -4652,7 +4676,7 @@ return false;]]></method>
                 <property name="width">5.572916666666667in</property>
             </column>
             <column id="430">
-                <property name="width">3.1041666666666665in</property>
+                <property name="width">2.583in</property>
             </column>
             <column id="431">
                 <property name="width">2.5833333333333335in</property>
@@ -4859,6 +4883,7 @@ return false;]]></method>
                     <property name="rowSpan">1</property>
                     <label id="578">
                         <property name="style">SectionLabel</property>
+                        <property name="paddingBottom">1pt</property>
                         <text-property name="text">General Obeservation</text-property>
                     </label>
                 </cell>
@@ -4868,7 +4893,8 @@ return false;]]></method>
                     <property name="colSpan">2</property>
                     <property name="rowSpan">1</property>
                     <data id="736">
-                        <property name="style">SectionData</property>
+                        <property name="style">SectionData_GenObservation</property>
+                        <property name="paddingLeft">1pt</property>
                         <property name="dataSet">Script - json_data</property>
                         <list-property name="boundDataColumns">
                             <structure>
