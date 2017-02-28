@@ -2589,7 +2589,7 @@ return false;]]></method>
             <property name="paddingBottom">4pt</property>
             <property name="paddingRight">4pt</property>
             <property name="textAlign">center</property>
-            <property name="verticalAlign">middle</property>
+            <property name="verticalAlign">bottom</property>
         </style>
         <style name="DataImage" id="658">
             <property name="height">1.7in</property>
