@@ -31,7 +31,7 @@ def get_household_analysis_data(city, slum_code, fields, kobo_survey=''):
 
     if kobo_survey:
         #Setting up API call and header data
-        url = settings.KOBOCAT_FORM_URL + 'data/'+ kobo_survey +'?query={"group_ce0hf58/slum_name":"'+slum_code+'"}&fields="'+ str(fields + [household_field] )+ '"'
+        url = settings.KOBOCAT_FORM_URL + 'data/'+ kobo_survey +'?query={"group_ce0hf58/slum_name":"'+slum_code+'"}&fields=["'+ '","'.join(fields + [household_field, 'end'] ) + '"]'
 
         kobotoolbox_request = urllib2.Request(url)
         kobotoolbox_request.add_header('User-agent', 'Mozilla 5.10')
