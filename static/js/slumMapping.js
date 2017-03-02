@@ -226,11 +226,11 @@ else{
 
 		if (arr.length == 4) {
 			if (indiWindow == true) {
-				var contentString = '<div id="content" >' + '<div id="bodyContent">' + '<p><b>' + shapename + '</b></p>' + '<div class="row">' + '<div class="col-md-9">' + '<p>' + obj[arr[0]]["content"][arr[1]]["content"][arr[2]]["content"][arr[3]]['info'] + '</p> ';
+				var contentString = '<div id="content" >' + '<div id="bodyContent">' + '<p><b>' + shapename + '</b></p>' + '<div class="row">' + '<div class="col-md-12">' + '<p>' + obj[arr[0]]["content"][arr[1]]["content"][arr[2]]["content"][arr[3]]['info'] + '</p> ';
 				//if (obj[arr[0]]["content"][arr[1]]["content"][arr[2]]["content"][arr[3]]['factsheet']) {
 					contentString += '<p><a href="javascript:factsheet_click(this)">Factsheet</a></p>';
 				//}
-				contentString +='</div>' + '<div class="col-md-3" style="margin-left:-20px"><img width="100px" height="120px" src="' + obj[arr[0]]["content"][arr[1]]["content"][arr[2]]["content"][arr[3]]['photo'] + '"></img></div>' + '</div>';
+				contentString +='</div>' + '</div>';
 
 				var infoWindow = new google.maps.InfoWindow({
 					maxWidth : 430
