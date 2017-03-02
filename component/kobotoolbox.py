@@ -6,6 +6,7 @@ from collections import OrderedDict
 from itertools import chain
 from collections import Counter
 from master.models import SURVEYTYPE_CHOICES, Survey
+import itertools
 
 def survey_mapping(survey_type):
     def real_decorator(function):
@@ -41,10 +42,13 @@ def get_household_analysis_data(city, slum_code, fields, kobo_survey=''):
         #Read json data from kobotoolbox API
         html = res.read()
         records = json.loads(html)
+        grouped_records = itertools.groupby(sorted(records, key=lambda x:int(x['group_ce0hf58/house_no'])), key=lambda x:x["group_ce0hf58/house_no"])
 
-        #Process received data
-        for record in records:
-            household_no = record[household_field]
+        for household, list_record in grouped_records:
+            record_sorted = sorted(list(list_record), key=lambda x:x['end'], reverse=True)
+            household_no = household
+            if len(record_sorted)>0:
+                record = record_sorted[0]
             for field in fields:
                 if field != "" and field in record:
 

@@ -50,7 +50,7 @@ def get_component(request, slum_id):
         fields_code = metadata.filter(type='F').exclude(code="").values_list('code', flat=True)
         fields = list(set([str(x.split(':')[0]) for x in fields_code]))
         rhs_analysis = get_household_analysis_data(slum.electoral_ward.administrative_ward.city.id, slum.shelter_slum_code, fields)
-    except:
+    except Exception as e:
         pass
 
     lstcomponent = []
@@ -91,6 +91,9 @@ def get_component(request, slum_id):
 def get_kobo_RHS_data(request, slum_id,house_num):
      slum = get_object_or_404(Slum, pk=slum_id)
      output = get_kobo_RHS_list(slum.electoral_ward.administrative_ward.city.id, slum.shelter_slum_code, house_num)
+     if 'admin_ward' in output:
+         output['admin_ward'] = slum.electoral_ward.administrative_ward.name
+         output['slum_name'] = slum.name
      return HttpResponse(json.dumps(output),content_type='application/json')
 
 #@user_passes_test(lambda u: u.is_superuser)
