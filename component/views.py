@@ -108,11 +108,15 @@ def get_kobo_RIM_report_data(request, slum_id):
     try:
         rim_image = Rapid_Slum_Appraisal.objects.filter(slum_name=slum[0]).values()
     except:
-        rim_image = [{}]
-    output = {"status":"error"}
+        rim_image = []
+    output = {"status":False, "image":False}
     if slum and len(slum)>0:
         output = get_kobo_RIM_report_detail(slum[0].electoral_ward.administrative_ward.city.id, slum[0].shelter_slum_code)
-        output.update(rim_image[0])
+        output['status'] = True
+        if rim_image and len(rim_image) > 0:
+            output.update(rim_image[0])
+            output['image'] = True
         output['admin_ward'] = slum[0].electoral_ward.administrative_ward.name
         output['slum_name'] = slum[0].name
+
     return HttpResponse(json.dumps(output),content_type='application/json')
