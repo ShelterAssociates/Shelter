@@ -15,7 +15,7 @@ from kobotoolbox import *
 from .forms import KMLUpload
 from .kmlparser import KMLParser
 from .models import Metadata, Component
-from master.models import Slum
+from master.models import Slum, Rapid_Slum_Appraisal
 
 #@staff_member_required
 @user_passes_test(lambda u: u.is_superuser)
@@ -105,8 +105,14 @@ def get_kobo_RIM_report_data(request, slum_id):
         slum = Slum.objects.filter(shelter_slum_code=slum_id)
     except:
         slum = None
-    print slum
+    try:
+        rim_image = Rapid_Slum_Appraisal.objects.filter(slum_name=slum[0]).values()
+    except:
+        rim_image = [{}]
     output = {"status":"error"}
     if slum and len(slum)>0:
         output = get_kobo_RIM_report_detail(slum[0].electoral_ward.administrative_ward.city.id, slum[0].shelter_slum_code)
+        output.update(rim_image[0])
+        output['admin_ward'] = slum[0].electoral_ward.administrative_ward.name
+        output['slum_name'] = slum[0].name
     return HttpResponse(json.dumps(output),content_type='application/json')
