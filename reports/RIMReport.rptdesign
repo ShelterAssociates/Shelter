@@ -1456,6 +1456,16 @@ return false;]]></method>
             <property name="height">160mm</property>
             <property name="width">10px</property>
         </style>
+        <style name="ErrorMessage" id="930">
+            <property name="fontFamily">"Trebuchet MS"</property>
+            <property name="fontSize">16pt</property>
+            <property name="fontWeight">bold</property>
+            <property name="paddingTop">25%</property>
+            <property name="paddingLeft">1pt</property>
+            <property name="paddingBottom">25%</property>
+            <property name="textAlign">center</property>
+            <property name="verticalAlign">middle</property>
+        </style>
     </styles>
     <page-setup>
         <simple-master-page name="Shelter Report Master Page" id="2">
@@ -1498,19 +1508,12 @@ return false;]]></method>
                     </row>
                     <row id="586">
                         <cell id="587">
-                            <data id="924">
+                            <text-data id="928">
                                 <property name="style">SectionSubHeader</property>
-                                <property name="dataSet">Script - json_data</property>
-                                <list-property name="boundDataColumns">
-                                    <structure>
-                                        <property name="name">slum_name</property>
-                                        <text-property name="displayName">slum_name</text-property>
-                                        <expression name="expression" type="javascript">dataSetRow["slum_name"]</expression>
-                                        <property name="dataType">string</property>
-                                    </structure>
-                                </list-property>
-                                <property name="resultSetColumn">slum_name</property>
-                            </data>
+                                <property name="dataBindingRef">General Information</property>
+                                <expression name="valueExpr">row["slum_name"]</expression>
+                                <property name="contentType">html</property>
+                            </text-data>
                         </cell>
                     </row>
                 </grid>
@@ -1518,7 +1521,6 @@ return false;]]></method>
             <page-footer>
                 <grid id="4">
                     <property name="height">0.6458333333333334in</property>
-                    <property name="width">11.354166666666666in</property>
                     <column id="5">
                         <property name="width">3.21875in</property>
                     </column>
@@ -1604,14 +1606,29 @@ return false;]]></method>
         </simple-master-page>
     </page-setup>
     <body>
-        <grid id="44">
+        <text-data id="929">
+            <property name="style">ErrorMessage</property>
+            <property name="marginTop">0pt</property>
+            <property name="marginLeft">0pt</property>
+            <property name="paddingLeft">1pt</property>
+            <property name="dataBindingRef">General Information</property>
+            <list-property name="visibility">
+                <structure>
+                    <property name="format">all</property>
+                    <expression name="valueExpr" type="javascript">row["status_flag"].toString() == "true";</expression>
+                </structure>
+            </list-property>
+            <expression name="valueExpr">"No Data Found for The Slum"</expression>
+            <property name="contentType">html</property>
+        </text-data>
+        <grid name="General Information" id="44">
             <property name="style">PageGrid</property>
             <property name="pageBreakAfter">always</property>
             <property name="dataSet">Script - json_data</property>
             <list-property name="visibility">
                 <structure>
                     <property name="format">all</property>
-                    <expression name="valueExpr" type="javascript">(row["status_flag"] == false)</expression>
+                    <expression name="valueExpr" type="javascript">row["status_flag"].toString() == "false"</expression>
                 </structure>
             </list-property>
             <list-property name="boundDataColumns">
@@ -1741,7 +1758,7 @@ return false;]]></method>
                         <list-property name="visibility">
                             <structure>
                                 <property name="format">all</property>
-                                <expression name="valueExpr" type="javascript">(row["image_flag"] == false) || (row["general_info_map_image"]==null || row["general_info_map_image"]=="")</expression>
+                                <expression name="valueExpr" type="javascript">(row["image_flag"].toString() == "false") || (row["general_info_map_image"]==null || row["general_info_map_image"]=="")</expression>
                             </structure>
                         </list-property>
                         <property name="source">url</property>
@@ -1999,7 +2016,7 @@ return false;]]></method>
                 <cell id="656"/>
             </row>
         </grid>
-        <grid id="108">
+        <grid name="Toilet Information" id="108">
             <property name="style">PageGrid</property>
             <property name="pageBreakAfter">always</property>
             <property name="pageBreakBefore">always</property>
@@ -2007,7 +2024,7 @@ return false;]]></method>
             <list-property name="visibility">
                 <structure>
                     <property name="format">all</property>
-                    <expression name="valueExpr" type="javascript">(row["status_flag"] == false)</expression>
+                    <expression name="valueExpr" type="javascript">row["status_flag"].toString() == "false"</expression>
                 </structure>
             </list-property>
             <list-property name="boundDataColumns">
@@ -2130,7 +2147,7 @@ return false;]]></method>
                         <list-property name="visibility">
                             <structure>
                                 <property name="format">all</property>
-                                <expression name="valueExpr" type="javascript">(row["image_flag"] == false) || (row["toilet_info_map_image"]==null || row["toilet_info_map_image"]=="")</expression>
+                                <expression name="valueExpr" type="javascript">(row["image_flag"].toString() == "false") || (row["toilet_info_map_image"]==null || row["toilet_info_map_image"]=="")</expression>
                             </structure>
                         </list-property>
                         <property name="source">url</property>
@@ -2344,7 +2361,7 @@ return false;]]></method>
                         <list-property name="visibility">
                             <structure>
                                 <property name="format">all</property>
-                                <expression name="valueExpr" type="javascript">(row["image_flag"] == false) || (row["toilet_info_data_left_image"]==null || row["toilet_info_data_left_image"]=="")</expression>
+                                <expression name="valueExpr" type="javascript">(row["image_flag"].toString() == "false") || (row["toilet_info_data_left_image"]==null || row["toilet_info_data_left_image"]=="")</expression>
                             </structure>
                         </list-property>
                         <property name="source">url</property>
@@ -2358,7 +2375,7 @@ return false;]]></method>
                         <list-property name="visibility">
                             <structure>
                                 <property name="format">all</property>
-                                <expression name="valueExpr" type="javascript">(row["image_flag"] == false) || (row["toilet_info_data_right_image"]==null || row["toilet_info_data_right_image"]=="")</expression>
+                                <expression name="valueExpr" type="javascript">(row["image_flag"].toString() == "false") || (row["toilet_info_data_right_image"]==null || row["toilet_info_data_right_image"]=="")</expression>
                             </structure>
                         </list-property>
                         <property name="source">url</property>
@@ -2367,7 +2384,7 @@ return false;]]></method>
                 </cell>
             </row>
         </grid>
-        <grid id="172">
+        <grid name="Waste Management Information" id="172">
             <property name="style">PageGrid</property>
             <property name="pageBreakAfter">always</property>
             <property name="pageBreakBefore">always</property>
@@ -2375,7 +2392,7 @@ return false;]]></method>
             <list-property name="visibility">
                 <structure>
                     <property name="format">all</property>
-                    <expression name="valueExpr" type="javascript">(row["status_flag"] == false)</expression>
+                    <expression name="valueExpr" type="javascript">row["status_flag"].toString() == "false"</expression>
                 </structure>
             </list-property>
             <list-property name="boundDataColumns">
@@ -2468,7 +2485,7 @@ return false;]]></method>
                         <list-property name="visibility">
                             <structure>
                                 <property name="format">all</property>
-                                <expression name="valueExpr" type="javascript">(row["image_flag"] == false) || (row["waste_management_map_image"]==null || row["waste_management_map_image"]=="")</expression>
+                                <expression name="valueExpr" type="javascript">(row["image_flag"].toString() == "false") || (row["waste_management_map_image"]==null || row["waste_management_map_image"]=="")</expression>
                             </structure>
                         </list-property>
                         <property name="source">url</property>
@@ -2607,7 +2624,7 @@ return false;]]></method>
                         <list-property name="visibility">
                             <structure>
                                 <property name="format">all</property>
-                                <expression name="valueExpr" type="javascript">(row["image_flag"] == false) || (row["waste_management_data_left_image"]==null || row["waste_management_data_left_image"]=="")</expression>
+                                <expression name="valueExpr" type="javascript">(row["image_flag"].toString() == "false") || (row["waste_management_data_left_image"]==null || row["waste_management_data_left_image"]=="")</expression>
                             </structure>
                         </list-property>
                         <property name="source">url</property>
@@ -2621,7 +2638,7 @@ return false;]]></method>
                         <list-property name="visibility">
                             <structure>
                                 <property name="format">all</property>
-                                <expression name="valueExpr" type="javascript">(row["image_flag"] == false) || (row["waste_management_data_right_image"]==null || row["waste_management_data_right_image"]=="")</expression>
+                                <expression name="valueExpr" type="javascript">(row["image_flag"].toString() == "false") || (row["waste_management_data_right_image"]==null || row["waste_management_data_right_image"]=="")</expression>
                             </structure>
                         </list-property>
                         <property name="source">url</property>
@@ -2630,7 +2647,7 @@ return false;]]></method>
                 </cell>
             </row>
         </grid>
-        <grid id="236">
+        <grid name="Water Information" id="236">
             <property name="style">PageGrid</property>
             <property name="pageBreakAfter">always</property>
             <property name="pageBreakBefore">always</property>
@@ -2638,7 +2655,7 @@ return false;]]></method>
             <list-property name="visibility">
                 <structure>
                     <property name="format">all</property>
-                    <expression name="valueExpr" type="javascript">(row["status_flag"] == false)</expression>
+                    <expression name="valueExpr" type="javascript">row["status_flag"].toString() == "false"</expression>
                 </structure>
             </list-property>
             <list-property name="boundDataColumns">
@@ -2755,7 +2772,7 @@ return false;]]></method>
                         <list-property name="visibility">
                             <structure>
                                 <property name="format">all</property>
-                                <expression name="valueExpr" type="javascript">(row["image_flag"] == false) || (row["water_info_map_image"]==null || row["water_info_map_image"]=="")</expression>
+                                <expression name="valueExpr" type="javascript">(row["image_flag"].toString() == "false") || (row["water_info_map_image"]==null || row["water_info_map_image"]=="")</expression>
                             </structure>
                         </list-property>
                         <property name="source">url</property>
@@ -2957,7 +2974,7 @@ return false;]]></method>
                         <list-property name="visibility">
                             <structure>
                                 <property name="format">all</property>
-                                <expression name="valueExpr" type="javascript">(row["image_flag"] == false) || (row["water_info_data_left_image"]==null || row["water_info_data_left_image"]=="")</expression>
+                                <expression name="valueExpr" type="javascript">(row["image_flag"].toString() == "false") || (row["water_info_data_left_image"]==null || row["water_info_data_left_image"]=="")</expression>
                             </structure>
                         </list-property>
                         <property name="source">url</property>
@@ -2971,7 +2988,7 @@ return false;]]></method>
                         <list-property name="visibility">
                             <structure>
                                 <property name="format">all</property>
-                                <expression name="valueExpr" type="javascript">(row["image_flag"] == false) || (row["water_info_data_right_image"]==null || row["water_info_data_right_image"]=="")</expression>
+                                <expression name="valueExpr" type="javascript">(row["image_flag"].toString() == "false") || (row["water_info_data_right_image"]==null || row["water_info_data_right_image"]=="")</expression>
                             </structure>
                         </list-property>
                         <property name="source">url</property>
@@ -2980,7 +2997,7 @@ return false;]]></method>
                 </cell>
             </row>
         </grid>
-        <grid id="300">
+        <grid name="Roads &amp; Access Information" id="300">
             <property name="style">PageGrid</property>
             <property name="pageBreakAfter">always</property>
             <property name="pageBreakBefore">always</property>
@@ -2988,7 +3005,7 @@ return false;]]></method>
             <list-property name="visibility">
                 <structure>
                     <property name="format">all</property>
-                    <expression name="valueExpr" type="javascript">(row["status_flag"] == false)</expression>
+                    <expression name="valueExpr" type="javascript">row["status_flag"].toString() == "false"</expression>
                 </structure>
             </list-property>
             <list-property name="boundDataColumns">
@@ -3099,7 +3116,7 @@ return false;]]></method>
                         <list-property name="visibility">
                             <structure>
                                 <property name="format">all</property>
-                                <expression name="valueExpr" type="javascript">(row["image_flag"] == false) || (row["road_and_access_map_image"]==null || row["road_and_access_map_image"]=="")</expression>
+                                <expression name="valueExpr" type="javascript">(row["image_flag"].toString() == "false") || (row["road_and_access_map_image"]==null || row["road_and_access_map_image"]=="")</expression>
                             </structure>
                         </list-property>
                         <property name="source">url</property>
@@ -3283,7 +3300,7 @@ return false;]]></method>
                         <list-property name="visibility">
                             <structure>
                                 <property name="format">all</property>
-                                <expression name="valueExpr" type="javascript">(row["image_flag"] == false) || (row["road_and_access_data_left_image"]==null || row["road_and_access_data_left_image"]=="")</expression>
+                                <expression name="valueExpr" type="javascript">(row["image_flag"].toString() == "false") || (row["road_and_access_data_left_image"]==null || row["road_and_access_data_left_image"]=="")</expression>
                             </structure>
                         </list-property>
                         <property name="source">url</property>
@@ -3297,7 +3314,7 @@ return false;]]></method>
                         <list-property name="visibility">
                             <structure>
                                 <property name="format">all</property>
-                                <expression name="valueExpr" type="javascript">(row["image_flag"] == false) || (row["road_and_access_data_right_image"]==null || row["road_and_access_data_right_image"]=="")</expression>
+                                <expression name="valueExpr" type="javascript">(row["image_flag"].toString() == "false") || (row["road_and_access_data_right_image"]==null || row["road_and_access_data_right_image"]=="")</expression>
                             </structure>
                         </list-property>
                         <property name="source">url</property>
@@ -3306,7 +3323,7 @@ return false;]]></method>
                 </cell>
             </row>
         </grid>
-        <grid id="364">
+        <grid name="Drainage Information" id="364">
             <property name="style">PageGrid</property>
             <property name="pageBreakAfter">always</property>
             <property name="pageBreakBefore">always</property>
@@ -3314,7 +3331,7 @@ return false;]]></method>
             <list-property name="visibility">
                 <structure>
                     <property name="format">all</property>
-                    <expression name="valueExpr" type="javascript">(row["status_flag"] == false)</expression>
+                    <expression name="valueExpr" type="javascript">row["status_flag"].toString() == "false"</expression>
                 </structure>
             </list-property>
             <list-property name="boundDataColumns">
@@ -3401,7 +3418,7 @@ return false;]]></method>
                         <list-property name="visibility">
                             <structure>
                                 <property name="format">all</property>
-                                <expression name="valueExpr" type="javascript">(row["image_flag"] == false) || (row["drainage_info_map_image"]==null || row["drainage_info_map_image"]=="")</expression>
+                                <expression name="valueExpr" type="javascript">(row["image_flag"].toString() == "false") || (row["drainage_info_map_image"]==null || row["drainage_info_map_image"]=="")</expression>
                             </structure>
                         </list-property>
                         <property name="source">url</property>
@@ -3525,7 +3542,7 @@ return false;]]></method>
                         <list-property name="visibility">
                             <structure>
                                 <property name="format">all</property>
-                                <expression name="valueExpr" type="javascript">(row["image_flag"] == false) || (row["drainage_info_data_left_image"]==null || row["drainage_info_data_left_image"]=="")</expression>
+                                <expression name="valueExpr" type="javascript">(row["image_flag"].toString() == "false") || (row["drainage_info_data_left_image"]==null || row["drainage_info_data_left_image"]=="")</expression>
                             </structure>
                         </list-property>
                         <property name="source">url</property>
@@ -3539,7 +3556,7 @@ return false;]]></method>
                         <list-property name="visibility">
                             <structure>
                                 <property name="format">all</property>
-                                <expression name="valueExpr" type="javascript">(row["image_flag"] == false) || (row["drainage_info_data_right_image"]==null || row["drainage_info_data_right_image"]=="")</expression>
+                                <expression name="valueExpr" type="javascript">(row["image_flag"].toString() == "false") || (row["drainage_info_data_right_image"]==null || row["drainage_info_data_right_image"]=="")</expression>
                             </structure>
                         </list-property>
                         <property name="source">url</property>
@@ -3548,14 +3565,14 @@ return false;]]></method>
                 </cell>
             </row>
         </grid>
-        <grid id="428">
+        <grid name="Gutter Information" id="428">
             <property name="style">PageGrid</property>
             <property name="pageBreakBefore">always</property>
             <property name="dataSet">Script - json_data</property>
             <list-property name="visibility">
                 <structure>
                     <property name="format">all</property>
-                    <expression name="valueExpr" type="javascript">(row["status_flag"] == false)</expression>
+                    <expression name="valueExpr" type="javascript">row["status_flag"].toString() == "false"</expression>
                 </structure>
             </list-property>
             <list-property name="boundDataColumns">
@@ -3660,7 +3677,7 @@ return false;]]></method>
                         <list-property name="visibility">
                             <structure>
                                 <property name="format">all</property>
-                                <expression name="valueExpr" type="javascript">(row["image_flag"] == false) || (row["gutter_info_map_image"]==null || row["gutter_info_map_image"]=="")</expression>
+                                <expression name="valueExpr" type="javascript">(row["image_flag"].toString() == "false") || (row["gutter_info_map_image"]==null || row["gutter_info_map_image"]=="")</expression>
                             </structure>
                         </list-property>
                         <property name="source">url</property>
@@ -3831,7 +3848,7 @@ return false;]]></method>
                         <list-property name="visibility">
                             <structure>
                                 <property name="format">all</property>
-                                <expression name="valueExpr" type="javascript">(row["image_flag"] == false) || (row["gutter_info_data_left_image"]==null || row["gutter_info_data_left_image"]=="")</expression>
+                                <expression name="valueExpr" type="javascript">(row["image_flag"].toString() == "false") || (row["gutter_info_data_left_image"]==null || row["gutter_info_data_left_image"]=="")</expression>
                             </structure>
                         </list-property>
                         <property name="source">url</property>
@@ -3845,7 +3862,7 @@ return false;]]></method>
                         <list-property name="visibility">
                             <structure>
                                 <property name="format">all</property>
-                                <expression name="valueExpr" type="javascript">(row["image_flag"] == false) || (row["gutter_info_data_right_image"]==null || row["gutter_info_data_right_image"]=="")</expression>
+                                <expression name="valueExpr" type="javascript">(row["image_flag"].toString() == "false") || (row["gutter_info_data_right_image"]==null || row["gutter_info_data_right_image"]=="")</expression>
                             </structure>
                         </list-property>
                         <property name="source">url</property>
