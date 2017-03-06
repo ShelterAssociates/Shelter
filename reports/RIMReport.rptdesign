@@ -1242,7 +1242,7 @@ row_count =1;]]></method>
 	//General Information
 	row["slum_name"] = jsonObject["slum_name"];
 	row["administrativeward_name"] = jsonObject["admin_ward"];
-	row["electoralward_name"] = jsonObject["year_established_according_to"];
+	row["electoralward_name"] = jsonObject["electoral_ward"];
 	row["approximate_population"] = jsonObject["approximate_population"];
 	row["year_establishment"] = jsonObject["year_established_according_to"];
 	row["legal_status"] = jsonObject["legal_status"];
@@ -1524,9 +1524,7 @@ return false;]]></method>
                     <column id="5">
                         <property name="width">3.21875in</property>
                     </column>
-                    <column id="6">
-                        <property name="width">5.177083333333333in</property>
-                    </column>
+                    <column id="6"/>
                     <column id="7">
                         <property name="width">2.9583333333333335in</property>
                     </column>
@@ -1535,10 +1533,11 @@ return false;]]></method>
                             <property name="colSpan">1</property>
                             <property name="rowSpan">3</property>
                             <property name="backgroundColor">#85BAE4</property>
-                            <text id="27">
-                                <property name="color">#FFFFFF</property>
+                            <text id="1271">
+                                <property name="color">white</property>
+                                <property name="paddingLeft">10pt</property>
                                 <property name="contentType">html</property>
-                                <text-property name="content"><![CDATA[<value-of>(new Date()).toLocaleDateString()</value-of>]]></text-property>
+                                <text-property name="content"><![CDATA[<value-of format="MMMM yyyy">new Date()</value-of> ]]></text-property>
                             </text>
                         </cell>
                         <cell id="10">
@@ -1553,7 +1552,7 @@ return false;]]></method>
                                 <property name="borderTopStyle">none</property>
                                 <property name="textAlign">right</property>
                                 <property name="contentType">html</property>
-                                <text-property name="content"><![CDATA[&amp;copy copyright Shelter Associates, 2013]]></text-property>
+                                <text-property name="content"><![CDATA[&amp;copy copyright Shelter Associates, <value-of format="yyyy">new Date()</value-of> ]]></text-property>
                             </text>
                         </cell>
                         <cell id="11">
@@ -1732,6 +1731,408 @@ return false;]]></method>
                     <property name="name">image_flag</property>
                     <text-property name="displayName">image_flag</text-property>
                     <expression name="expression" type="javascript">dataSetRow["image_flag"]</expression>
+                    <property name="dataType">string</property>
+                </structure>
+                <structure>
+                    <property name="name">number_of_community_toilet_blocks</property>
+                    <text-property name="displayName">number_of_community_toilet_blocks</text-property>
+                    <expression name="expression" type="javascript">dataSetRow["number_of_community_toilet_blocks"]</expression>
+                    <property name="dataType">string</property>
+                </structure>
+                <structure>
+                    <property name="name">number_of_seats_allotted_to_men_and_women</property>
+                    <text-property name="displayName">number_of_seats_allotted_to_men_and_women</text-property>
+                    <expression name="expression" type="javascript">dataSetRow["number_of_seats_allotted_to_men_and_women"]</expression>
+                    <property name="dataType">string</property>
+                </structure>
+                <structure>
+                    <property name="name">toilet_cost</property>
+                    <text-property name="displayName">toilet_cost</text-property>
+                    <expression name="expression" type="javascript">dataSetRow["toilet_cost"]</expression>
+                    <property name="dataType">string</property>
+                </structure>
+                <structure>
+                    <property name="name">toilet_maintenance_provided_by</property>
+                    <text-property name="displayName">toilet_maintenance_provided_by</text-property>
+                    <expression name="expression" type="javascript">dataSetRow["toilet_maintenance_provided_by"]</expression>
+                    <property name="dataType">string</property>
+                </structure>
+                <structure>
+                    <property name="name">condition_of_toilet_block</property>
+                    <text-property name="displayName">condition_of_toilet_block</text-property>
+                    <expression name="expression" type="javascript">dataSetRow["condition_of_toilet_block"]</expression>
+                    <property name="dataType">string</property>
+                </structure>
+                <structure>
+                    <property name="name">cleanliness_of_toilet</property>
+                    <text-property name="displayName">cleanliness_of_toilet</text-property>
+                    <expression name="expression" type="javascript">dataSetRow["cleanliness_of_toilet"]</expression>
+                    <property name="dataType">string</property>
+                </structure>
+                <structure>
+                    <property name="name">type_of_water_supply</property>
+                    <text-property name="displayName">type_of_water_supply</text-property>
+                    <expression name="expression" type="javascript">dataSetRow["type_of_water_supply"]</expression>
+                    <property name="dataType">string</property>
+                </structure>
+                <structure>
+                    <property name="name">facility_in_the_toilet_block_for_5_yr_age</property>
+                    <text-property name="displayName">facility_in_the_toilet_block_for_5_yr_age</text-property>
+                    <expression name="expression" type="javascript">dataSetRow["facility_in_the_toilet_block_for_5_yr_age"]</expression>
+                    <property name="dataType">string</property>
+                </structure>
+                <structure>
+                    <property name="name">sewage_disposal_system</property>
+                    <text-property name="displayName">sewage_disposal_system</text-property>
+                    <expression name="expression" type="javascript">dataSetRow["sewage_disposal_system"]</expression>
+                    <property name="dataType">string</property>
+                </structure>
+                <structure>
+                    <property name="name">toilet_seat_to_persons_ratio</property>
+                    <text-property name="displayName">toilet_seat_to_persons_ratio</text-property>
+                    <expression name="expression" type="javascript">dataSetRow["toilet_seat_to_persons_ratio"]</expression>
+                    <property name="dataType">string</property>
+                </structure>
+                <structure>
+                    <property name="name">toilet_comment</property>
+                    <text-property name="displayName">toilet_comment</text-property>
+                    <expression name="expression" type="javascript">dataSetRow["toilet_comment"]</expression>
+                    <property name="dataType">string</property>
+                </structure>
+                <structure>
+                    <property name="name">total_number_of_waste_containe</property>
+                    <text-property name="displayName">total_number_of_waste_containe</text-property>
+                    <expression name="expression" type="javascript">dataSetRow["total_number_of_waste_containe"]</expression>
+                    <property name="dataType">string</property>
+                </structure>
+                <structure>
+                    <property name="name">frequency_of_clearance_of_waste_containers</property>
+                    <text-property name="displayName">frequency_of_clearance_of_waste_containers</text-property>
+                    <expression name="expression" type="javascript">dataSetRow["frequency_of_clearance_of_waste_containers"]</expression>
+                    <property name="dataType">string</property>
+                </structure>
+                <structure>
+                    <property name="name">facility_of_waste_collection</property>
+                    <text-property name="displayName">facility_of_waste_collection</text-property>
+                    <expression name="expression" type="javascript">dataSetRow["facility_of_waste_collection"]</expression>
+                    <property name="dataType">string</property>
+                </structure>
+                <structure>
+                    <property name="name">coverage_of_waste_collection_across_settlement</property>
+                    <text-property name="displayName">coverage_of_waste_collection_across_settlement</text-property>
+                    <expression name="expression" type="javascript">dataSetRow["coverage_of_waste_collection_across_settlement"]</expression>
+                    <property name="dataType">string</property>
+                </structure>
+                <structure>
+                    <property name="name">location_of_community_open_dump_site</property>
+                    <text-property name="displayName">location_of_community_open_dump_site</text-property>
+                    <expression name="expression" type="javascript">dataSetRow["location_of_community_open_dump_site"]</expression>
+                    <property name="dataType">string</property>
+                </structure>
+                <structure>
+                    <property name="name">Waste_management_comments</property>
+                    <text-property name="displayName">Waste_management_comments</text-property>
+                    <expression name="expression" type="javascript">dataSetRow["Waste_management_comments"]</expression>
+                    <property name="dataType">string</property>
+                </structure>
+                <structure>
+                    <property name="name">total_number_of_standposts</property>
+                    <text-property name="displayName">total_number_of_standposts</text-property>
+                    <expression name="expression" type="javascript">dataSetRow["total_number_of_standposts"]</expression>
+                    <property name="dataType">string</property>
+                </structure>
+                <structure>
+                    <property name="name">total_number_of_handpumps</property>
+                    <text-property name="displayName">total_number_of_handpumps</text-property>
+                    <expression name="expression" type="javascript">dataSetRow["total_number_of_handpumps"]</expression>
+                    <property name="dataType">string</property>
+                </structure>
+                <structure>
+                    <property name="name">percentage_with_indivdual_water_connection</property>
+                    <text-property name="displayName">percentage_with_indivdual_water_connection</text-property>
+                    <expression name="expression" type="javascript">dataSetRow["percentage_with_indivdual_water_connection"]</expression>
+                    <property name="dataType">string</property>
+                </structure>
+                <structure>
+                    <property name="name">availability_of_water</property>
+                    <text-property name="displayName">availability_of_water</text-property>
+                    <expression name="expression" type="javascript">dataSetRow["availability_of_water"]</expression>
+                    <property name="dataType">string</property>
+                </structure>
+                <structure>
+                    <property name="name">pressure_of_water_in_the_system</property>
+                    <text-property name="displayName">pressure_of_water_in_the_system</text-property>
+                    <expression name="expression" type="javascript">dataSetRow["pressure_of_water_in_the_system"]</expression>
+                    <property name="dataType">string</property>
+                </structure>
+                <structure>
+                    <property name="name">coverage_of_wateracross_settlement</property>
+                    <text-property name="displayName">coverage_of_wateracross_settlement</text-property>
+                    <expression name="expression" type="javascript">dataSetRow["coverage_of_wateracross_settlement"]</expression>
+                    <property name="dataType">string</property>
+                </structure>
+                <structure>
+                    <property name="name">quality_of_water_in_the_system</property>
+                    <text-property name="displayName">quality_of_water_in_the_system</text-property>
+                    <expression name="expression" type="javascript">dataSetRow["quality_of_water_in_the_system"]</expression>
+                    <property name="dataType">string</property>
+                </structure>
+                <structure>
+                    <property name="name">alternative_source_of_water</property>
+                    <text-property name="displayName">alternative_source_of_water</text-property>
+                    <expression name="expression" type="javascript">dataSetRow["alternative_source_of_water"]</expression>
+                    <property name="dataType">string</property>
+                </structure>
+                <structure>
+                    <property name="name">total_number_of_taps</property>
+                    <text-property name="displayName">total_number_of_taps</text-property>
+                    <expression name="expression" type="javascript">dataSetRow["total_number_of_taps"]</expression>
+                    <property name="dataType">string</property>
+                </structure>
+                <structure>
+                    <property name="name">water_supply_comment</property>
+                    <text-property name="displayName">water_supply_comment</text-property>
+                    <expression name="expression" type="javascript">dataSetRow["water_supply_comment"]</expression>
+                    <property name="dataType">string</property>
+                </structure>
+                <structure>
+                    <property name="name">presence_of_roads_within_the_settlement</property>
+                    <text-property name="displayName">presence_of_roads_within_the_settlement</text-property>
+                    <expression name="expression" type="javascript">dataSetRow["presence_of_roads_within_the_settlement"]</expression>
+                    <property name="dataType">string</property>
+                </structure>
+                <structure>
+                    <property name="name">type_of_roads_within_the_settlement</property>
+                    <text-property name="displayName">type_of_roads_within_the_settlement</text-property>
+                    <expression name="expression" type="javascript">dataSetRow["type_of_roads_within_the_settlement"]</expression>
+                    <property name="dataType">string</property>
+                </structure>
+                <structure>
+                    <property name="name">finish_of_the_road_accross_settlement</property>
+                    <text-property name="displayName">finish_of_the_road_accross_settlement</text-property>
+                    <expression name="expression" type="javascript">dataSetRow["finish_of_the_road_accross_settlement"]</expression>
+                    <property name="dataType">string</property>
+                </structure>
+                <structure>
+                    <property name="name">average_width_of_internal_road</property>
+                    <text-property name="displayName">average_width_of_internal_road</text-property>
+                    <expression name="expression" type="javascript">dataSetRow["average_width_of_internal_road"]</expression>
+                    <property name="dataType">string</property>
+                </structure>
+                <structure>
+                    <property name="name">average_width_of_arterial_road</property>
+                    <text-property name="displayName">average_width_of_arterial_road</text-property>
+                    <expression name="expression" type="javascript">dataSetRow["average_width_of_arterial_road"]</expression>
+                    <property name="dataType">string</property>
+                </structure>
+                <structure>
+                    <property name="name">point_of_vehicular_access</property>
+                    <text-property name="displayName">point_of_vehicular_access</text-property>
+                    <expression name="expression" type="javascript">dataSetRow["point_of_vehicular_access"]</expression>
+                    <property name="dataType">string</property>
+                </structure>
+                <structure>
+                    <property name="name">level_variation_between_settlement_and_main_road</property>
+                    <text-property name="displayName">level_variation_between_settlement_and_main_road</text-property>
+                    <expression name="expression" type="javascript">dataSetRow["level_variation_between_settlement_and_main_road"]</expression>
+                    <property name="dataType">string</property>
+                </structure>
+                <structure>
+                    <property name="name">level_variation_between_huts_and_internal_road</property>
+                    <text-property name="displayName">level_variation_between_huts_and_internal_road</text-property>
+                    <expression name="expression" type="javascript">dataSetRow["level_variation_between_huts_and_internal_road"]</expression>
+                    <property name="dataType">string</property>
+                </structure>
+                <structure>
+                    <property name="name">road_and_access_comment</property>
+                    <text-property name="displayName">road_and_access_comment</text-property>
+                    <expression name="expression" type="javascript">dataSetRow["road_and_access_comment"]</expression>
+                    <property name="dataType">string</property>
+                </structure>
+                <structure>
+                    <property name="name">presence_of_drains_within_settlement</property>
+                    <text-property name="displayName">presence_of_drains_within_settlement</text-property>
+                    <expression name="expression" type="javascript">dataSetRow["presence_of_drains_within_settlement"]</expression>
+                    <property name="dataType">string</property>
+                </structure>
+                <structure>
+                    <property name="name">coverage_of_drains_across_settlement</property>
+                    <text-property name="displayName">coverage_of_drains_across_settlement</text-property>
+                    <expression name="expression" type="javascript">dataSetRow["coverage_of_drains_across_settlement"]</expression>
+                    <property name="dataType">string</property>
+                </structure>
+                <structure>
+                    <property name="name">do_the_drains_get_blocked</property>
+                    <text-property name="displayName">do_the_drains_get_blocked</text-property>
+                    <expression name="expression" type="javascript">dataSetRow["do_the_drains_get_blocked"]</expression>
+                    <property name="dataType">string</property>
+                </structure>
+                <structure>
+                    <property name="name">is_the_drainage_gradient_adequate</property>
+                    <text-property name="displayName">is_the_drainage_gradient_adequate</text-property>
+                    <expression name="expression" type="javascript">dataSetRow["is_the_drainage_gradient_adequate"]</expression>
+                    <property name="dataType">string</property>
+                </structure>
+                <structure>
+                    <property name="name">drainage_comment</property>
+                    <text-property name="displayName">drainage_comment</text-property>
+                    <expression name="expression" type="javascript">dataSetRow["drainage_comment"]</expression>
+                    <property name="dataType">string</property>
+                </structure>
+                <structure>
+                    <property name="name">Presence_of_gutter</property>
+                    <text-property name="displayName">Presence_of_gutter</text-property>
+                    <expression name="expression" type="javascript">dataSetRow["Presence_of_gutter"]</expression>
+                    <property name="dataType">string</property>
+                </structure>
+                <structure>
+                    <property name="name">type_of_gutter_within_the_settlement</property>
+                    <text-property name="displayName">type_of_gutter_within_the_settlement</text-property>
+                    <expression name="expression" type="javascript">dataSetRow["type_of_gutter_within_the_settlement"]</expression>
+                    <property name="dataType">string</property>
+                </structure>
+                <structure>
+                    <property name="name">coverage_of_gutter</property>
+                    <text-property name="displayName">coverage_of_gutter</text-property>
+                    <expression name="expression" type="javascript">dataSetRow["coverage_of_gutter"]</expression>
+                    <property name="dataType">string</property>
+                </structure>
+                <structure>
+                    <property name="name">are_gutter_covered</property>
+                    <text-property name="displayName">are_gutter_covered</text-property>
+                    <expression name="expression" type="javascript">dataSetRow["are_gutter_covered"]</expression>
+                    <property name="dataType">string</property>
+                </structure>
+                <structure>
+                    <property name="name">do_gutters_flood</property>
+                    <text-property name="displayName">do_gutters_flood</text-property>
+                    <expression name="expression" type="javascript">dataSetRow["do_gutters_flood"]</expression>
+                    <property name="dataType">string</property>
+                </structure>
+                <structure>
+                    <property name="name">do_gutter_get_choked</property>
+                    <text-property name="displayName">do_gutter_get_choked</text-property>
+                    <expression name="expression" type="javascript">dataSetRow["do_gutter_get_choked"]</expression>
+                    <property name="dataType">string</property>
+                </structure>
+                <structure>
+                    <property name="name">is_gutter_gradient_adequate</property>
+                    <text-property name="displayName">is_gutter_gradient_adequate</text-property>
+                    <expression name="expression" type="javascript">dataSetRow["is_gutter_gradient_adequate"]</expression>
+                    <property name="dataType">string</property>
+                </structure>
+                <structure>
+                    <property name="name">comments_on_gutter</property>
+                    <text-property name="displayName">comments_on_gutter</text-property>
+                    <expression name="expression" type="javascript">dataSetRow["comments_on_gutter"]</expression>
+                    <property name="dataType">string</property>
+                </structure>
+                <structure>
+                    <property name="name">toilet_info_map_image</property>
+                    <text-property name="displayName">toilet_info_map_image</text-property>
+                    <expression name="expression" type="javascript">dataSetRow["toilet_info_map_image"]</expression>
+                    <property name="dataType">string</property>
+                </structure>
+                <structure>
+                    <property name="name">toilet_info_data_left_image</property>
+                    <text-property name="displayName">toilet_info_data_left_image</text-property>
+                    <expression name="expression" type="javascript">dataSetRow["toilet_info_data_left_image"]</expression>
+                    <property name="dataType">string</property>
+                </structure>
+                <structure>
+                    <property name="name">toilet_info_data_right_image</property>
+                    <text-property name="displayName">toilet_info_data_right_image</text-property>
+                    <expression name="expression" type="javascript">dataSetRow["toilet_info_data_right_image"]</expression>
+                    <property name="dataType">string</property>
+                </structure>
+                <structure>
+                    <property name="name">waste_management_map_image</property>
+                    <text-property name="displayName">waste_management_map_image</text-property>
+                    <expression name="expression" type="javascript">dataSetRow["waste_management_map_image"]</expression>
+                    <property name="dataType">string</property>
+                </structure>
+                <structure>
+                    <property name="name">waste_management_data_left_image</property>
+                    <text-property name="displayName">waste_management_data_left_image</text-property>
+                    <expression name="expression" type="javascript">dataSetRow["waste_management_data_left_image"]</expression>
+                    <property name="dataType">string</property>
+                </structure>
+                <structure>
+                    <property name="name">waste_management_data_right_image</property>
+                    <text-property name="displayName">waste_management_data_right_image</text-property>
+                    <expression name="expression" type="javascript">dataSetRow["waste_management_data_right_image"]</expression>
+                    <property name="dataType">string</property>
+                </structure>
+                <structure>
+                    <property name="name">water_info_map_image</property>
+                    <text-property name="displayName">water_info_map_image</text-property>
+                    <expression name="expression" type="javascript">dataSetRow["water_info_map_image"]</expression>
+                    <property name="dataType">string</property>
+                </structure>
+                <structure>
+                    <property name="name">water_info_data_left_image</property>
+                    <text-property name="displayName">water_info_data_left_image</text-property>
+                    <expression name="expression" type="javascript">dataSetRow["water_info_data_left_image"]</expression>
+                    <property name="dataType">string</property>
+                </structure>
+                <structure>
+                    <property name="name">water_info_data_right_image</property>
+                    <text-property name="displayName">water_info_data_right_image</text-property>
+                    <expression name="expression" type="javascript">dataSetRow["water_info_data_right_image"]</expression>
+                    <property name="dataType">string</property>
+                </structure>
+                <structure>
+                    <property name="name">road_and_access_map_image</property>
+                    <text-property name="displayName">road_and_access_map_image</text-property>
+                    <expression name="expression" type="javascript">dataSetRow["road_and_access_map_image"]</expression>
+                    <property name="dataType">string</property>
+                </structure>
+                <structure>
+                    <property name="name">road_and_access_data_left_image</property>
+                    <text-property name="displayName">road_and_access_data_left_image</text-property>
+                    <expression name="expression" type="javascript">dataSetRow["road_and_access_data_left_image"]</expression>
+                    <property name="dataType">string</property>
+                </structure>
+                <structure>
+                    <property name="name">road_and_access_data_right_image</property>
+                    <text-property name="displayName">road_and_access_data_right_image</text-property>
+                    <expression name="expression" type="javascript">dataSetRow["road_and_access_data_right_image"]</expression>
+                    <property name="dataType">string</property>
+                </structure>
+                <structure>
+                    <property name="name">drainage_info_map_image</property>
+                    <text-property name="displayName">drainage_info_map_image</text-property>
+                    <expression name="expression" type="javascript">dataSetRow["drainage_info_map_image"]</expression>
+                    <property name="dataType">string</property>
+                </structure>
+                <structure>
+                    <property name="name">drainage_info_data_left_image</property>
+                    <text-property name="displayName">drainage_info_data_left_image</text-property>
+                    <expression name="expression" type="javascript">dataSetRow["drainage_info_data_left_image"]</expression>
+                    <property name="dataType">string</property>
+                </structure>
+                <structure>
+                    <property name="name">drainage_info_data_right_image</property>
+                    <text-property name="displayName">drainage_info_data_right_image</text-property>
+                    <expression name="expression" type="javascript">dataSetRow["drainage_info_data_right_image"]</expression>
+                    <property name="dataType">string</property>
+                </structure>
+                <structure>
+                    <property name="name">gutter_info_map_image</property>
+                    <text-property name="displayName">gutter_info_map_image</text-property>
+                    <expression name="expression" type="javascript">dataSetRow["gutter_info_map_image"]</expression>
+                    <property name="dataType">string</property>
+                </structure>
+                <structure>
+                    <property name="name">gutter_info_data_left_image</property>
+                    <text-property name="displayName">gutter_info_data_left_image</text-property>
+                    <expression name="expression" type="javascript">dataSetRow["gutter_info_data_left_image"]</expression>
+                    <property name="dataType">string</property>
+                </structure>
+                <structure>
+                    <property name="name">gutter_info_data_right_image</property>
+                    <text-property name="displayName">gutter_info_data_right_image</text-property>
+                    <expression name="expression" type="javascript">dataSetRow["gutter_info_data_right_image"]</expression>
                     <property name="dataType">string</property>
                 </structure>
             </list-property>
@@ -2010,135 +2411,15 @@ return false;]]></method>
                 </cell>
             </row>
             <row id="653">
+                <property name="pageBreakAfter">always</property>
                 <cell id="655">
                     <property name="style">DataImage</property>
                 </cell>
                 <cell id="656"/>
             </row>
-        </grid>
-        <grid name="Toilet Information" id="108">
-            <property name="style">PageGrid</property>
-            <property name="pageBreakAfter">always</property>
-            <property name="pageBreakBefore">always</property>
-            <property name="dataSet">Script - json_data</property>
-            <list-property name="visibility">
-                <structure>
-                    <property name="format">all</property>
-                    <expression name="valueExpr" type="javascript">row["status_flag"].toString() == "false"</expression>
-                </structure>
-            </list-property>
-            <list-property name="boundDataColumns">
-                <structure>
-                    <property name="name">number_of_community_toilet_blocks</property>
-                    <text-property name="displayName">number_of_community_toilet_blocks</text-property>
-                    <expression name="expression" type="javascript">dataSetRow["number_of_community_toilet_blocks"]</expression>
-                    <property name="dataType">string</property>
-                </structure>
-                <structure>
-                    <property name="name">number_of_seats_allotted_to_men_and_women</property>
-                    <text-property name="displayName">number_of_seats_allotted_to_men_and_women</text-property>
-                    <expression name="expression" type="javascript">dataSetRow["number_of_seats_allotted_to_men_and_women"]</expression>
-                    <property name="dataType">string</property>
-                </structure>
-                <structure>
-                    <property name="name">toilet_cost</property>
-                    <text-property name="displayName">toilet_cost</text-property>
-                    <expression name="expression" type="javascript">dataSetRow["toilet_cost"]</expression>
-                    <property name="dataType">string</property>
-                </structure>
-                <structure>
-                    <property name="name">toilet_maintenance_provided_by</property>
-                    <text-property name="displayName">toilet_maintenance_provided_by</text-property>
-                    <expression name="expression" type="javascript">dataSetRow["toilet_maintenance_provided_by"]</expression>
-                    <property name="dataType">string</property>
-                </structure>
-                <structure>
-                    <property name="name">condition_of_toilet_block</property>
-                    <text-property name="displayName">condition_of_toilet_block</text-property>
-                    <expression name="expression" type="javascript">dataSetRow["condition_of_toilet_block"]</expression>
-                    <property name="dataType">string</property>
-                </structure>
-                <structure>
-                    <property name="name">cleanliness_of_toilet</property>
-                    <text-property name="displayName">cleanliness_of_toilet</text-property>
-                    <expression name="expression" type="javascript">dataSetRow["cleanliness_of_toilet"]</expression>
-                    <property name="dataType">string</property>
-                </structure>
-                <structure>
-                    <property name="name">type_of_water_supply</property>
-                    <text-property name="displayName">type_of_water_supply</text-property>
-                    <expression name="expression" type="javascript">dataSetRow["type_of_water_supply"]</expression>
-                    <property name="dataType">string</property>
-                </structure>
-                <structure>
-                    <property name="name">facility_in_the_toilet_block_for_5_yr_age</property>
-                    <text-property name="displayName">facility_in_the_toilet_block_for_5_yr_age</text-property>
-                    <expression name="expression" type="javascript">dataSetRow["facility_in_the_toilet_block_for_5_yr_age"]</expression>
-                    <property name="dataType">string</property>
-                </structure>
-                <structure>
-                    <property name="name">sewage_disposal_system</property>
-                    <text-property name="displayName">sewage_disposal_system</text-property>
-                    <expression name="expression" type="javascript">dataSetRow["sewage_disposal_system"]</expression>
-                    <property name="dataType">string</property>
-                </structure>
-                <structure>
-                    <property name="name">toilet_seat_to_persons_ratio</property>
-                    <text-property name="displayName">toilet_seat_to_persons_ratio</text-property>
-                    <expression name="expression" type="javascript">dataSetRow["toilet_seat_to_persons_ratio"]</expression>
-                    <property name="dataType">string</property>
-                </structure>
-                <structure>
-                    <property name="name">toilet_comment</property>
-                    <text-property name="displayName">toilet_comment</text-property>
-                    <expression name="expression" type="javascript">dataSetRow["toilet_comment"]</expression>
-                    <property name="dataType">string</property>
-                </structure>
-                <structure>
-                    <property name="name">toilet_info_map_image</property>
-                    <text-property name="displayName">toilet_info_map_image</text-property>
-                    <expression name="expression" type="javascript">dataSetRow["toilet_info_map_image"]</expression>
-                    <property name="dataType">string</property>
-                </structure>
-                <structure>
-                    <property name="name">toilet_info_data_left_image</property>
-                    <text-property name="displayName">toilet_info_data_left_image</text-property>
-                    <expression name="expression" type="javascript">dataSetRow["toilet_info_data_left_image"]</expression>
-                    <property name="dataType">string</property>
-                </structure>
-                <structure>
-                    <property name="name">toilet_info_data_right_image</property>
-                    <text-property name="displayName">toilet_info_data_right_image</text-property>
-                    <expression name="expression" type="javascript">dataSetRow["toilet_info_data_right_image"]</expression>
-                    <property name="dataType">string</property>
-                </structure>
-                <structure>
-                    <property name="name">status_flag</property>
-                    <text-property name="displayName">status_flag</text-property>
-                    <expression name="expression" type="javascript">dataSetRow["status_flag"]</expression>
-                    <property name="dataType">string</property>
-                </structure>
-                <structure>
-                    <property name="name">image_flag</property>
-                    <text-property name="displayName">image_flag</text-property>
-                    <expression name="expression" type="javascript">dataSetRow["image_flag"]</expression>
-                    <property name="dataType">string</property>
-                </structure>
-            </list-property>
-            <column id="109">
-                <property name="width">5.572916666666667in</property>
-            </column>
-            <column id="833">
-                <property name="width">2pt</property>
-            </column>
-            <column id="110">
-                <property name="width">2.583in</property>
-            </column>
-            <column id="111">
-                <property name="width">2.5833333333333335in</property>
-            </column>
-            <row id="112">
-                <cell id="113">
+            <row id="931">
+                <property name="pageBreakBefore">always</property>
+                <cell id="932">
                     <property name="colSpan">1</property>
                     <property name="rowSpan">14</property>
                     <property name="style">mapImageContainer</property>
@@ -2154,7 +2435,7 @@ return false;]]></method>
                         <expression name="uri" type="javascript">vars["var_report_prefix_image_path"].concat(row["toilet_info_map_image"])</expression>
                     </image>
                 </cell>
-                <cell id="819">
+                <cell id="933">
                     <property name="colSpan">1</property>
                     <property name="rowSpan">14</property>
                     <property name="style">SectionDividerContainer</property>
@@ -2172,23 +2453,25 @@ return false;]]></method>
                         <expression name="uri" type="javascript">vars["var_report_divider_image"]</expression>
                     </image>
                 </cell>
-                <cell id="114">
+                <cell id="934">
                     <property name="colSpan">2</property>
                     <property name="rowSpan">1</property>
+                    <property name="style">DataImage</property>
                     <label id="514">
                         <property name="style">SectionHeader</property>
                         <text-property name="text">Toilet Information</text-property>
                     </label>
                 </cell>
             </row>
-            <row id="116">
-                <cell id="118">
+            <row id="936">
+                <cell id="939">
+                    <property name="style">DataImage</property>
                     <label id="523">
                         <property name="style">SectionLabel</property>
                         <text-property name="text">Number of Community Toilet Blocks</text-property>
                     </label>
                 </cell>
-                <cell id="119">
+                <cell id="940">
                     <text-data id="874">
                         <property name="style">SectionData</property>
                         <expression name="valueExpr">row["number_of_community_toilet_blocks"]</expression>
@@ -2196,14 +2479,15 @@ return false;]]></method>
                     </text-data>
                 </cell>
             </row>
-            <row id="120">
-                <cell id="122">
+            <row id="946">
+                <cell id="949">
+                    <property name="style">DataImage</property>
                     <label id="525">
                         <property name="style">SectionLabel</property>
                         <text-property name="text">Number of Seats (male+female)</text-property>
                     </label>
                 </cell>
-                <cell id="123">
+                <cell id="950">
                     <text-data id="875">
                         <property name="style">SectionData</property>
                         <expression name="valueExpr">row["number_of_seats_allotted_to_men_and_women"]</expression>
@@ -2211,14 +2495,15 @@ return false;]]></method>
                     </text-data>
                 </cell>
             </row>
-            <row id="124">
-                <cell id="126">
+            <row id="941">
+                <cell id="944">
+                    <property name="style">DataImage</property>
                     <label id="526">
                         <property name="style">SectionLabel</property>
                         <text-property name="text">Cost (per use/per family per month)</text-property>
                     </label>
                 </cell>
-                <cell id="127">
+                <cell id="945">
                     <text-data id="876">
                         <property name="style">SectionData</property>
                         <expression name="valueExpr">row["toilet_cost"]</expression>
@@ -2226,14 +2511,15 @@ return false;]]></method>
                     </text-data>
                 </cell>
             </row>
-            <row id="128">
-                <cell id="130">
+            <row id="986">
+                <cell id="989">
+                    <property name="style">DataImage</property>
                     <label id="527">
                         <property name="style">SectionLabel</property>
                         <text-property name="text">Toilet maintenance provided by</text-property>
                     </label>
                 </cell>
-                <cell id="131">
+                <cell id="990">
                     <text-data id="877">
                         <property name="style">SectionData</property>
                         <expression name="valueExpr">row["toilet_maintenance_provided_by"]</expression>
@@ -2241,14 +2527,15 @@ return false;]]></method>
                     </text-data>
                 </cell>
             </row>
-            <row id="132">
-                <cell id="134">
+            <row id="981">
+                <cell id="984">
+                    <property name="style">DataImage</property>
                     <label id="528">
                         <property name="style">SectionLabel</property>
                         <text-property name="text">Condition of toilet block structure</text-property>
                     </label>
                 </cell>
-                <cell id="135">
+                <cell id="985">
                     <text-data id="878">
                         <property name="style">SectionData</property>
                         <expression name="valueExpr">row["condition_of_toilet_block"]</expression>
@@ -2256,14 +2543,15 @@ return false;]]></method>
                     </text-data>
                 </cell>
             </row>
-            <row id="136">
-                <cell id="138">
+            <row id="976">
+                <cell id="979">
+                    <property name="style">DataImage</property>
                     <label id="529">
                         <property name="style">SectionLabel</property>
                         <text-property name="text">Cleanliness of toilet block</text-property>
                     </label>
                 </cell>
-                <cell id="139">
+                <cell id="980">
                     <text-data id="879">
                         <property name="style">SectionData</property>
                         <expression name="valueExpr">row["cleanliness_of_toilet"]</expression>
@@ -2271,14 +2559,15 @@ return false;]]></method>
                     </text-data>
                 </cell>
             </row>
-            <row id="140">
-                <cell id="142">
+            <row id="971">
+                <cell id="974">
+                    <property name="style">DataImage</property>
                     <label id="530">
                         <property name="style">SectionLabel</property>
                         <text-property name="text">Type of Water Supply</text-property>
                     </label>
                 </cell>
-                <cell id="143">
+                <cell id="975">
                     <text-data id="880">
                         <property name="style">SectionData</property>
                         <expression name="valueExpr">row["type_of_water_supply"]</expression>
@@ -2286,14 +2575,15 @@ return false;]]></method>
                     </text-data>
                 </cell>
             </row>
-            <row id="144">
-                <cell id="146">
+            <row id="966">
+                <cell id="969">
+                    <property name="style">DataImage</property>
                     <label id="531">
                         <property name="style">SectionLabel</property>
                         <text-property name="text">Facilities for children under 5 years of age</text-property>
                     </label>
                 </cell>
-                <cell id="147">
+                <cell id="970">
                     <text-data id="881">
                         <property name="style">SectionData</property>
                         <expression name="valueExpr">row["facility_in_the_toilet_block_for_5_yr_age"]</expression>
@@ -2301,14 +2591,15 @@ return false;]]></method>
                     </text-data>
                 </cell>
             </row>
-            <row id="148">
-                <cell id="150">
+            <row id="961">
+                <cell id="964">
+                    <property name="style">DataImage</property>
                     <label id="532">
                         <property name="style">SectionLabel</property>
                         <text-property name="text">Sewage Disposal System</text-property>
                     </label>
                 </cell>
-                <cell id="151">
+                <cell id="965">
                     <text-data id="882">
                         <property name="style">SectionData</property>
                         <expression name="valueExpr">row["sewage_disposal_system"]</expression>
@@ -2316,14 +2607,15 @@ return false;]]></method>
                     </text-data>
                 </cell>
             </row>
-            <row id="152">
-                <cell id="154">
+            <row id="956">
+                <cell id="959">
+                    <property name="style">DataImage</property>
                     <label id="533">
                         <property name="style">SectionLabel</property>
                         <text-property name="text">Toilet seat to persons ratio</text-property>
                     </label>
                 </cell>
-                <cell id="155">
+                <cell id="960">
                     <text-data id="883">
                         <property name="style">SectionData</property>
                         <expression name="valueExpr">row["toilet_seat_to_persons_ratio"]</expression>
@@ -2331,10 +2623,11 @@ return false;]]></method>
                     </text-data>
                 </cell>
             </row>
-            <row id="156">
-                <cell id="158">
+            <row id="951">
+                <cell id="954">
                     <property name="colSpan">2</property>
                     <property name="rowSpan">1</property>
+                    <property name="style">DataImage</property>
                     <label id="534">
                         <property name="style">SectionLabel</property>
                         <property name="paddingBottom">1pt</property>
@@ -2342,10 +2635,11 @@ return false;]]></method>
                     </label>
                 </cell>
             </row>
-            <row id="160">
-                <cell id="162">
+            <row id="996">
+                <cell id="999">
                     <property name="colSpan">2</property>
                     <property name="rowSpan">1</property>
+                    <property name="style">DataImage</property>
                     <text-data id="884">
                         <property name="style">SectionData_GenObservation</property>
                         <expression name="valueExpr">row["toilet_comment"]</expression>
@@ -2353,8 +2647,9 @@ return false;]]></method>
                     </text-data>
                 </cell>
             </row>
-            <row id="164">
-                <cell id="166">
+            <row id="991">
+                <property name="pageBreakAfter">always</property>
+                <cell id="994">
                     <property name="style">DataImageContainer</property>
                     <image id="639">
                         <property name="style">DataImage</property>
@@ -2368,7 +2663,7 @@ return false;]]></method>
                         <expression name="uri" type="javascript">vars["var_report_prefix_image_path"].concat(row["toilet_info_data_left_image"])</expression>
                     </image>
                 </cell>
-                <cell id="167">
+                <cell id="995">
                     <property name="style">DataImageContainer</property>
                     <image id="640">
                         <property name="style">DataImage</property>
@@ -2383,100 +2678,9 @@ return false;]]></method>
                     </image>
                 </cell>
             </row>
-        </grid>
-        <grid name="Waste Management Information" id="172">
-            <property name="style">PageGrid</property>
-            <property name="pageBreakAfter">always</property>
-            <property name="pageBreakBefore">always</property>
-            <property name="dataSet">Script - json_data</property>
-            <list-property name="visibility">
-                <structure>
-                    <property name="format">all</property>
-                    <expression name="valueExpr" type="javascript">row["status_flag"].toString() == "false"</expression>
-                </structure>
-            </list-property>
-            <list-property name="boundDataColumns">
-                <structure>
-                    <property name="name">total_number_of_waste_containe</property>
-                    <text-property name="displayName">total_number_of_waste_containe</text-property>
-                    <expression name="expression" type="javascript">dataSetRow["total_number_of_waste_containe"]</expression>
-                    <property name="dataType">string</property>
-                </structure>
-                <structure>
-                    <property name="name">frequency_of_clearance_of_waste_containers</property>
-                    <text-property name="displayName">frequency_of_clearance_of_waste_containers</text-property>
-                    <expression name="expression" type="javascript">dataSetRow["frequency_of_clearance_of_waste_containers"]</expression>
-                    <property name="dataType">string</property>
-                </structure>
-                <structure>
-                    <property name="name">facility_of_waste_collection</property>
-                    <text-property name="displayName">facility_of_waste_collection</text-property>
-                    <expression name="expression" type="javascript">dataSetRow["facility_of_waste_collection"]</expression>
-                    <property name="dataType">string</property>
-                </structure>
-                <structure>
-                    <property name="name">coverage_of_waste_collection_across_settlement</property>
-                    <text-property name="displayName">coverage_of_waste_collection_across_settlement</text-property>
-                    <expression name="expression" type="javascript">dataSetRow["coverage_of_waste_collection_across_settlement"]</expression>
-                    <property name="dataType">string</property>
-                </structure>
-                <structure>
-                    <property name="name">location_of_community_open_dump_site</property>
-                    <text-property name="displayName">location_of_community_open_dump_site</text-property>
-                    <expression name="expression" type="javascript">dataSetRow["location_of_community_open_dump_site"]</expression>
-                    <property name="dataType">string</property>
-                </structure>
-                <structure>
-                    <property name="name">Waste_management_comments</property>
-                    <text-property name="displayName">Waste_management_comments</text-property>
-                    <expression name="expression" type="javascript">dataSetRow["Waste_management_comments"]</expression>
-                    <property name="dataType">string</property>
-                </structure>
-                <structure>
-                    <property name="name">status_flag</property>
-                    <text-property name="displayName">status_flag</text-property>
-                    <expression name="expression" type="javascript">dataSetRow["status_flag"]</expression>
-                    <property name="dataType">string</property>
-                </structure>
-                <structure>
-                    <property name="name">image_flag</property>
-                    <text-property name="displayName">image_flag</text-property>
-                    <expression name="expression" type="javascript">dataSetRow["image_flag"]</expression>
-                    <property name="dataType">string</property>
-                </structure>
-                <structure>
-                    <property name="name">waste_management_map_image</property>
-                    <text-property name="displayName">waste_management_map_image</text-property>
-                    <expression name="expression" type="javascript">dataSetRow["waste_management_map_image"]</expression>
-                    <property name="dataType">string</property>
-                </structure>
-                <structure>
-                    <property name="name">waste_management_data_left_image</property>
-                    <text-property name="displayName">waste_management_data_left_image</text-property>
-                    <expression name="expression" type="javascript">dataSetRow["waste_management_data_left_image"]</expression>
-                    <property name="dataType">string</property>
-                </structure>
-                <structure>
-                    <property name="name">waste_management_data_right_image</property>
-                    <text-property name="displayName">waste_management_data_right_image</text-property>
-                    <expression name="expression" type="javascript">dataSetRow["waste_management_data_right_image"]</expression>
-                    <property name="dataType">string</property>
-                </structure>
-            </list-property>
-            <column id="173">
-                <property name="width">5.572916666666667in</property>
-            </column>
-            <column id="818">
-                <property name="width">2pt</property>
-            </column>
-            <column id="174">
-                <property name="width">2.583in</property>
-            </column>
-            <column id="175">
-                <property name="width">2.5833333333333335in</property>
-            </column>
-            <row id="176">
-                <cell id="177">
+            <row id="1000">
+                <property name="pageBreakBefore">always</property>
+                <cell id="1001">
                     <property name="colSpan">1</property>
                     <property name="rowSpan">9</property>
                     <property name="style">mapImageContainer</property>
@@ -2492,7 +2696,7 @@ return false;]]></method>
                         <expression name="uri" type="javascript">vars["var_report_prefix_image_path"].concat(row["waste_management_map_image"])</expression>
                     </image>
                 </cell>
-                <cell id="809">
+                <cell id="1002">
                     <property name="colSpan">1</property>
                     <property name="rowSpan">9</property>
                     <property name="style">SectionDividerContainer</property>
@@ -2510,7 +2714,7 @@ return false;]]></method>
                         <expression name="uri" type="javascript">vars["var_report_divider_image"]</expression>
                     </image>
                 </cell>
-                <cell id="178">
+                <cell id="1003">
                     <property name="colSpan">2</property>
                     <property name="rowSpan">1</property>
                     <label id="515">
@@ -2519,14 +2723,14 @@ return false;]]></method>
                     </label>
                 </cell>
             </row>
-            <row id="180">
-                <cell id="182">
+            <row id="1005">
+                <cell id="1008">
                     <label id="539">
                         <property name="style">SectionLabel</property>
                         <text-property name="text">Total number of waste containers</text-property>
                     </label>
                 </cell>
-                <cell id="183">
+                <cell id="1009">
                     <text-data id="885">
                         <property name="style">SectionData</property>
                         <expression name="valueExpr">row["total_number_of_waste_containe"]</expression>
@@ -2534,14 +2738,14 @@ return false;]]></method>
                     </text-data>
                 </cell>
             </row>
-            <row id="184">
-                <cell id="186">
+            <row id="1015">
+                <cell id="1018">
                     <label id="540">
                         <property name="style">SectionLabel</property>
                         <text-property name="text">Frequency of clearance of waste containers</text-property>
                     </label>
                 </cell>
-                <cell id="187">
+                <cell id="1019">
                     <text-data id="886">
                         <property name="style">SectionData</property>
                         <expression name="valueExpr">row["frequency_of_clearance_of_waste_containers"]</expression>
@@ -2549,14 +2753,14 @@ return false;]]></method>
                     </text-data>
                 </cell>
             </row>
-            <row id="188">
-                <cell id="190">
+            <row id="1010">
+                <cell id="1013">
                     <label id="541">
                         <property name="style">SectionLabel</property>
                         <text-property name="text">Facility Waste Collection</text-property>
                     </label>
                 </cell>
-                <cell id="191">
+                <cell id="1014">
                     <text-data id="887">
                         <property name="style">SectionData</property>
                         <expression name="valueExpr">row["facility_of_waste_collection"]</expression>
@@ -2564,14 +2768,14 @@ return false;]]></method>
                     </text-data>
                 </cell>
             </row>
-            <row id="192">
-                <cell id="194">
+            <row id="1035">
+                <cell id="1038">
                     <label id="542">
                         <property name="style">SectionLabel</property>
                         <text-property name="text">Coverage of Waste Collection Across the Settlement</text-property>
                     </label>
                 </cell>
-                <cell id="195">
+                <cell id="1039">
                     <text-data id="888">
                         <property name="style">SectionData</property>
                         <expression name="valueExpr">row["coverage_of_waste_collection_across_settlement"]</expression>
@@ -2579,14 +2783,14 @@ return false;]]></method>
                     </text-data>
                 </cell>
             </row>
-            <row id="196">
-                <cell id="198">
+            <row id="1030">
+                <cell id="1033">
                     <label id="543">
                         <property name="style">SectionLabel</property>
                         <text-property name="text">Location of community open dump site(s)</text-property>
                     </label>
                 </cell>
-                <cell id="199">
+                <cell id="1034">
                     <text-data id="889">
                         <property name="style">SectionData</property>
                         <expression name="valueExpr">row["location_of_community_open_dump_site"]</expression>
@@ -2594,8 +2798,8 @@ return false;]]></method>
                     </text-data>
                 </cell>
             </row>
-            <row id="200">
-                <cell id="202">
+            <row id="1025">
+                <cell id="1028">
                     <property name="colSpan">2</property>
                     <property name="rowSpan">1</property>
                     <label id="544">
@@ -2605,8 +2809,8 @@ return false;]]></method>
                     </label>
                 </cell>
             </row>
-            <row id="204">
-                <cell id="206">
+            <row id="1020">
+                <cell id="1023">
                     <property name="colSpan">2</property>
                     <property name="rowSpan">1</property>
                     <text-data id="890">
@@ -2616,8 +2820,9 @@ return false;]]></method>
                     </text-data>
                 </cell>
             </row>
-            <row id="208">
-                <cell id="210">
+            <row id="1040">
+                <property name="pageBreakAfter">always</property>
+                <cell id="1043">
                     <property name="style">DataImageContainer</property>
                     <image id="641">
                         <property name="style">DataImage</property>
@@ -2631,7 +2836,7 @@ return false;]]></method>
                         <expression name="uri" type="javascript">vars["var_report_prefix_image_path"].concat(row["waste_management_data_left_image"])</expression>
                     </image>
                 </cell>
-                <cell id="211">
+                <cell id="1044">
                     <property name="style">DataImageContainer</property>
                     <image id="642">
                         <property name="style">DataImage</property>
@@ -2646,124 +2851,9 @@ return false;]]></method>
                     </image>
                 </cell>
             </row>
-        </grid>
-        <grid name="Water Information" id="236">
-            <property name="style">PageGrid</property>
-            <property name="pageBreakAfter">always</property>
-            <property name="pageBreakBefore">always</property>
-            <property name="dataSet">Script - json_data</property>
-            <list-property name="visibility">
-                <structure>
-                    <property name="format">all</property>
-                    <expression name="valueExpr" type="javascript">row["status_flag"].toString() == "false"</expression>
-                </structure>
-            </list-property>
-            <list-property name="boundDataColumns">
-                <structure>
-                    <property name="name">total_number_of_standposts</property>
-                    <text-property name="displayName">total_number_of_standposts</text-property>
-                    <expression name="expression" type="javascript">dataSetRow["total_number_of_standposts"]</expression>
-                    <property name="dataType">string</property>
-                </structure>
-                <structure>
-                    <property name="name">total_number_of_handpumps</property>
-                    <text-property name="displayName">total_number_of_handpumps</text-property>
-                    <expression name="expression" type="javascript">dataSetRow["total_number_of_handpumps"]</expression>
-                    <property name="dataType">string</property>
-                </structure>
-                <structure>
-                    <property name="name">percentage_with_indivdual_water_connection</property>
-                    <text-property name="displayName">percentage_with_indivdual_water_connection</text-property>
-                    <expression name="expression" type="javascript">dataSetRow["percentage_with_indivdual_water_connection"]</expression>
-                    <property name="dataType">string</property>
-                </structure>
-                <structure>
-                    <property name="name">availability_of_water</property>
-                    <text-property name="displayName">availability_of_water</text-property>
-                    <expression name="expression" type="javascript">dataSetRow["availability_of_water"]</expression>
-                    <property name="dataType">string</property>
-                </structure>
-                <structure>
-                    <property name="name">pressure_of_water_in_the_system</property>
-                    <text-property name="displayName">pressure_of_water_in_the_system</text-property>
-                    <expression name="expression" type="javascript">dataSetRow["pressure_of_water_in_the_system"]</expression>
-                    <property name="dataType">string</property>
-                </structure>
-                <structure>
-                    <property name="name">coverage_of_wateracross_settlement</property>
-                    <text-property name="displayName">coverage_of_wateracross_settlement</text-property>
-                    <expression name="expression" type="javascript">dataSetRow["coverage_of_wateracross_settlement"]</expression>
-                    <property name="dataType">string</property>
-                </structure>
-                <structure>
-                    <property name="name">quality_of_water_in_the_system</property>
-                    <text-property name="displayName">quality_of_water_in_the_system</text-property>
-                    <expression name="expression" type="javascript">dataSetRow["quality_of_water_in_the_system"]</expression>
-                    <property name="dataType">string</property>
-                </structure>
-                <structure>
-                    <property name="name">alternative_source_of_water</property>
-                    <text-property name="displayName">alternative_source_of_water</text-property>
-                    <expression name="expression" type="javascript">dataSetRow["alternative_source_of_water"]</expression>
-                    <property name="dataType">string</property>
-                </structure>
-                <structure>
-                    <property name="name">total_number_of_taps</property>
-                    <text-property name="displayName">total_number_of_taps</text-property>
-                    <expression name="expression" type="javascript">dataSetRow["total_number_of_taps"]</expression>
-                    <property name="dataType">string</property>
-                </structure>
-                <structure>
-                    <property name="name">water_supply_comment</property>
-                    <text-property name="displayName">water_supply_comment</text-property>
-                    <expression name="expression" type="javascript">dataSetRow["water_supply_comment"]</expression>
-                    <property name="dataType">string</property>
-                </structure>
-                <structure>
-                    <property name="name">water_info_map_image</property>
-                    <text-property name="displayName">water_info_map_image</text-property>
-                    <expression name="expression" type="javascript">dataSetRow["water_info_map_image"]</expression>
-                    <property name="dataType">string</property>
-                </structure>
-                <structure>
-                    <property name="name">water_info_data_left_image</property>
-                    <text-property name="displayName">water_info_data_left_image</text-property>
-                    <expression name="expression" type="javascript">dataSetRow["water_info_data_left_image"]</expression>
-                    <property name="dataType">string</property>
-                </structure>
-                <structure>
-                    <property name="name">water_info_data_right_image</property>
-                    <text-property name="displayName">water_info_data_right_image</text-property>
-                    <expression name="expression" type="javascript">dataSetRow["water_info_data_right_image"]</expression>
-                    <property name="dataType">string</property>
-                </structure>
-                <structure>
-                    <property name="name">status_flag</property>
-                    <text-property name="displayName">status_flag</text-property>
-                    <expression name="expression" type="javascript">dataSetRow["status_flag"]</expression>
-                    <property name="dataType">string</property>
-                </structure>
-                <structure>
-                    <property name="name">image_flag</property>
-                    <text-property name="displayName">image_flag</text-property>
-                    <expression name="expression" type="javascript">dataSetRow["image_flag"]</expression>
-                    <property name="dataType">string</property>
-                </structure>
-            </list-property>
-            <column id="237">
-                <property name="width">5.572916666666667in</property>
-            </column>
-            <column id="808">
-                <property name="width">2pt</property>
-            </column>
-            <column id="238">
-                <property name="width">2.583in</property>
-            </column>
-            <column id="239">
-                <property name="width">2.5833333333333335in</property>
-            </column>
-            <row id="240">
-                <cell id="241">
+            <row id="1045">
+                <property name="pageBreakBefore">always</property>
+                <cell id="1046">
                     <property name="colSpan">1</property>
                     <property name="rowSpan">13</property>
                     <property name="style">mapImageContainer</property>
@@ -2779,7 +2869,7 @@ return false;]]></method>
                         <expression name="uri" type="javascript">vars["var_report_prefix_image_path"].concat(row["water_info_map_image"])</expression>
                     </image>
                 </cell>
-                <cell id="795">
+                <cell id="1047">
                     <property name="colSpan">1</property>
                     <property name="rowSpan">13</property>
                     <property name="style">SectionDividerContainer</property>
@@ -2797,7 +2887,7 @@ return false;]]></method>
                         <expression name="uri" type="javascript">vars["var_report_divider_image"]</expression>
                     </image>
                 </cell>
-                <cell id="242">
+                <cell id="1048">
                     <property name="colSpan">2</property>
                     <property name="rowSpan">1</property>
                     <label id="516">
@@ -2806,15 +2896,15 @@ return false;]]></method>
                     </label>
                 </cell>
             </row>
-            <row id="244">
-                <cell id="246">
+            <row id="1050">
+                <cell id="1053">
                     <label id="545">
                         <property name="style">SectionLabel</property>
                         <text-property name="text">Total Number of Stand-Posts&#13;
 (in use/NOT in use)</text-property>
                     </label>
                 </cell>
-                <cell id="247">
+                <cell id="1054">
                     <text-data id="891">
                         <property name="style">SectionData</property>
                         <expression name="valueExpr">row["total_number_of_standposts"]</expression>
@@ -2822,15 +2912,15 @@ return false;]]></method>
                     </text-data>
                 </cell>
             </row>
-            <row id="248">
-                <cell id="250">
+            <row id="1060">
+                <cell id="1063">
                     <label id="547">
                         <property name="style">SectionLabel</property>
                         <text-property name="text">Total Number of Hand-pumps&#13;
 (in use/NOT in use)</text-property>
                     </label>
                 </cell>
-                <cell id="251">
+                <cell id="1064">
                     <text-data id="892">
                         <property name="style">SectionData</property>
                         <expression name="valueExpr">row["total_number_of_handpumps"]</expression>
@@ -2838,14 +2928,14 @@ return false;]]></method>
                     </text-data>
                 </cell>
             </row>
-            <row id="252">
-                <cell id="254">
+            <row id="1055">
+                <cell id="1058">
                     <label id="548">
                         <property name="style">SectionLabel</property>
                         <text-property name="text">Percentage with an Individual Water Connection</text-property>
                     </label>
                 </cell>
-                <cell id="255">
+                <cell id="1059">
                     <text-data id="893">
                         <property name="style">SectionData</property>
                         <expression name="valueExpr">row["percentage_with_indivdual_water_connection"]</expression>
@@ -2853,14 +2943,14 @@ return false;]]></method>
                     </text-data>
                 </cell>
             </row>
-            <row id="256">
-                <cell id="258">
+            <row id="1100">
+                <cell id="1103">
                     <label id="549">
                         <property name="style">SectionLabel</property>
                         <text-property name="text">Availability of Water</text-property>
                     </label>
                 </cell>
-                <cell id="259">
+                <cell id="1104">
                     <text-data id="894">
                         <property name="style">SectionData</property>
                         <expression name="valueExpr">row["availability_of_water"]</expression>
@@ -2868,14 +2958,14 @@ return false;]]></method>
                     </text-data>
                 </cell>
             </row>
-            <row id="260">
-                <cell id="262">
+            <row id="1095">
+                <cell id="1098">
                     <label id="550">
                         <property name="style">SectionLabel</property>
                         <text-property name="text">Pressure of water in the system</text-property>
                     </label>
                 </cell>
-                <cell id="263">
+                <cell id="1099">
                     <text-data id="895">
                         <property name="style">SectionData</property>
                         <expression name="valueExpr">row["pressure_of_water_in_the_system"]</expression>
@@ -2883,14 +2973,14 @@ return false;]]></method>
                     </text-data>
                 </cell>
             </row>
-            <row id="264">
-                <cell id="266">
+            <row id="1090">
+                <cell id="1093">
                     <label id="551">
                         <property name="style">SectionLabel</property>
                         <text-property name="text">Coverage of water across the settlement</text-property>
                     </label>
                 </cell>
-                <cell id="267">
+                <cell id="1094">
                     <text-data id="896">
                         <property name="style">SectionData</property>
                         <expression name="valueExpr">row["coverage_of_wateracross_settlement"]</expression>
@@ -2898,14 +2988,14 @@ return false;]]></method>
                     </text-data>
                 </cell>
             </row>
-            <row id="268">
-                <cell id="270">
+            <row id="1085">
+                <cell id="1088">
                     <label id="552">
                         <property name="style">SectionLabel</property>
                         <text-property name="text">Quality of water in the system</text-property>
                     </label>
                 </cell>
-                <cell id="271">
+                <cell id="1089">
                     <text-data id="897">
                         <property name="style">SectionData</property>
                         <expression name="valueExpr">row["quality_of_water_in_the_system"]</expression>
@@ -2913,14 +3003,14 @@ return false;]]></method>
                     </text-data>
                 </cell>
             </row>
-            <row id="272">
-                <cell id="274">
+            <row id="1080">
+                <cell id="1083">
                     <label id="553">
                         <property name="style">SectionLabel</property>
                         <text-property name="text">Alternative Source of Water</text-property>
                     </label>
                 </cell>
-                <cell id="275">
+                <cell id="1084">
                     <text-data id="898">
                         <property name="style">SectionData</property>
                         <expression name="valueExpr">row["alternative_source_of_water"]</expression>
@@ -2928,15 +3018,15 @@ return false;]]></method>
                     </text-data>
                 </cell>
             </row>
-            <row id="276">
-                <cell id="278">
+            <row id="1075">
+                <cell id="1078">
                     <label id="554">
                         <property name="style">SectionLabel</property>
                         <text-property name="text">Total Number of Taps&#13;
 (in use/NOT in use)</text-property>
                     </label>
                 </cell>
-                <cell id="279">
+                <cell id="1079">
                     <text-data id="899">
                         <property name="style">SectionData</property>
                         <expression name="valueExpr">row["total_number_of_taps"]</expression>
@@ -2944,8 +3034,8 @@ return false;]]></method>
                     </text-data>
                 </cell>
             </row>
-            <row id="280">
-                <cell id="282">
+            <row id="1070">
+                <cell id="1073">
                     <property name="colSpan">2</property>
                     <property name="rowSpan">1</property>
                     <label id="555">
@@ -2955,8 +3045,8 @@ return false;]]></method>
                     </label>
                 </cell>
             </row>
-            <row id="284">
-                <cell id="286">
+            <row id="1065">
+                <cell id="1068">
                     <property name="colSpan">2</property>
                     <property name="rowSpan">1</property>
                     <text-data id="900">
@@ -2966,8 +3056,9 @@ return false;]]></method>
                     </text-data>
                 </cell>
             </row>
-            <row id="643">
-                <cell id="645">
+            <row id="1110">
+                <property name="pageBreakAfter">always</property>
+                <cell id="1113">
                     <property name="style">DataImageContainer</property>
                     <image id="647">
                         <property name="style">DataImage</property>
@@ -2981,7 +3072,7 @@ return false;]]></method>
                         <expression name="uri" type="javascript">vars["var_report_prefix_image_path"].concat(row["water_info_data_left_image"])</expression>
                     </image>
                 </cell>
-                <cell id="646">
+                <cell id="1114">
                     <property name="style">DataImageContainer</property>
                     <image id="648">
                         <property name="style">DataImage</property>
@@ -2996,118 +3087,9 @@ return false;]]></method>
                     </image>
                 </cell>
             </row>
-        </grid>
-        <grid name="Roads &amp; Access Information" id="300">
-            <property name="style">PageGrid</property>
-            <property name="pageBreakAfter">always</property>
-            <property name="pageBreakBefore">always</property>
-            <property name="dataSet">Script - json_data</property>
-            <list-property name="visibility">
-                <structure>
-                    <property name="format">all</property>
-                    <expression name="valueExpr" type="javascript">row["status_flag"].toString() == "false"</expression>
-                </structure>
-            </list-property>
-            <list-property name="boundDataColumns">
-                <structure>
-                    <property name="name">finish_of_the_road_accross_settlement</property>
-                    <text-property name="displayName">finish_of_the_road_accross_settlement</text-property>
-                    <expression name="expression" type="javascript">dataSetRow["finish_of_the_road_accross_settlement"]</expression>
-                    <property name="dataType">string</property>
-                </structure>
-                <structure>
-                    <property name="name">average_width_of_internal_road</property>
-                    <text-property name="displayName">average_width_of_internal_road</text-property>
-                    <expression name="expression" type="javascript">dataSetRow["average_width_of_internal_road"]</expression>
-                    <property name="dataType">string</property>
-                </structure>
-                <structure>
-                    <property name="name">average_width_of_arterial_road</property>
-                    <text-property name="displayName">average_width_of_arterial_road</text-property>
-                    <expression name="expression" type="javascript">dataSetRow["average_width_of_arterial_road"]</expression>
-                    <property name="dataType">string</property>
-                </structure>
-                <structure>
-                    <property name="name">point_of_vehicular_access</property>
-                    <text-property name="displayName">point_of_vehicular_access</text-property>
-                    <expression name="expression" type="javascript">dataSetRow["point_of_vehicular_access"]</expression>
-                    <property name="dataType">string</property>
-                </structure>
-                <structure>
-                    <property name="name">level_variation_between_settlement_and_main_road</property>
-                    <text-property name="displayName">level_variation_between_settlement_and_main_road</text-property>
-                    <expression name="expression" type="javascript">dataSetRow["level_variation_between_settlement_and_main_road"]</expression>
-                    <property name="dataType">string</property>
-                </structure>
-                <structure>
-                    <property name="name">level_variation_between_huts_and_internal_road</property>
-                    <text-property name="displayName">level_variation_between_huts_and_internal_road</text-property>
-                    <expression name="expression" type="javascript">dataSetRow["level_variation_between_huts_and_internal_road"]</expression>
-                    <property name="dataType">string</property>
-                </structure>
-                <structure>
-                    <property name="name">road_and_access_comment</property>
-                    <text-property name="displayName">road_and_access_comment</text-property>
-                    <expression name="expression" type="javascript">dataSetRow["road_and_access_comment"]</expression>
-                    <property name="dataType">string</property>
-                </structure>
-                <structure>
-                    <property name="name">road_and_access_map_image</property>
-                    <text-property name="displayName">road_and_access_map_image</text-property>
-                    <expression name="expression" type="javascript">dataSetRow["road_and_access_map_image"]</expression>
-                    <property name="dataType">string</property>
-                </structure>
-                <structure>
-                    <property name="name">road_and_access_data_left_image</property>
-                    <text-property name="displayName">road_and_access_data_left_image</text-property>
-                    <expression name="expression" type="javascript">dataSetRow["road_and_access_data_left_image"]</expression>
-                    <property name="dataType">string</property>
-                </structure>
-                <structure>
-                    <property name="name">road_and_access_data_right_image</property>
-                    <text-property name="displayName">road_and_access_data_right_image</text-property>
-                    <expression name="expression" type="javascript">dataSetRow["road_and_access_data_right_image"]</expression>
-                    <property name="dataType">string</property>
-                </structure>
-                <structure>
-                    <property name="name">status_flag</property>
-                    <text-property name="displayName">status_flag</text-property>
-                    <expression name="expression" type="javascript">dataSetRow["status_flag"]</expression>
-                    <property name="dataType">string</property>
-                </structure>
-                <structure>
-                    <property name="name">image_flag</property>
-                    <text-property name="displayName">image_flag</text-property>
-                    <expression name="expression" type="javascript">dataSetRow["image_flag"]</expression>
-                    <property name="dataType">string</property>
-                </structure>
-                <structure>
-                    <property name="name">presence_of_roads_within_the_settlement</property>
-                    <text-property name="displayName">presence_of_roads_within_the_settlement</text-property>
-                    <expression name="expression" type="javascript">dataSetRow["presence_of_roads_within_the_settlement"]</expression>
-                    <property name="dataType">string</property>
-                </structure>
-                <structure>
-                    <property name="name">type_of_roads_within_the_settlement</property>
-                    <text-property name="displayName">type_of_roads_within_the_settlement</text-property>
-                    <expression name="expression" type="javascript">dataSetRow["type_of_roads_within_the_settlement"]</expression>
-                    <property name="dataType">string</property>
-                </structure>
-            </list-property>
-            <column id="301">
-                <property name="width">5.572916666666667in</property>
-            </column>
-            <column id="794">
-                <property name="width">2pt</property>
-            </column>
-            <column id="302">
-                <property name="width">2.583in</property>
-            </column>
-            <column id="303">
-                <property name="width">2.5833333333333335in</property>
-            </column>
-            <row id="304">
-                <cell id="305">
+            <row id="1105">
+                <property name="pageBreakBefore">always</property>
+                <cell id="1106">
                     <property name="colSpan">1</property>
                     <property name="rowSpan">12</property>
                     <property name="style">mapImageContainer</property>
@@ -3123,7 +3105,7 @@ return false;]]></method>
                         <expression name="uri" type="javascript">vars["var_report_prefix_image_path"].concat(row["road_and_access_map_image"])</expression>
                     </image>
                 </cell>
-                <cell id="781">
+                <cell id="1107">
                     <property name="colSpan">1</property>
                     <property name="rowSpan">12</property>
                     <property name="style">SectionDividerContainer</property>
@@ -3141,7 +3123,7 @@ return false;]]></method>
                         <expression name="uri" type="javascript">vars["var_report_divider_image"]</expression>
                     </image>
                 </cell>
-                <cell id="306">
+                <cell id="1108">
                     <property name="colSpan">2</property>
                     <property name="rowSpan">1</property>
                     <label id="517">
@@ -3150,14 +3132,14 @@ return false;]]></method>
                     </label>
                 </cell>
             </row>
-            <row id="308">
-                <cell id="310">
+            <row id="1115">
+                <cell id="1118">
                     <label id="556">
                         <property name="style">SectionLabel</property>
                         <text-property name="text">Presence of Roads Within the Settlement</text-property>
                     </label>
                 </cell>
-                <cell id="311">
+                <cell id="1119">
                     <text-data id="902">
                         <property name="style">SectionData</property>
                         <expression name="valueExpr">row["presence_of_roads_within_the_settlement"]</expression>
@@ -3165,14 +3147,14 @@ return false;]]></method>
                     </text-data>
                 </cell>
             </row>
-            <row id="312">
-                <cell id="314">
+            <row id="1125">
+                <cell id="1128">
                     <label id="557">
                         <property name="style">SectionLabel</property>
                         <text-property name="text">Type of roads within the settlement</text-property>
                     </label>
                 </cell>
-                <cell id="315">
+                <cell id="1129">
                     <text-data id="903">
                         <property name="style">SectionData</property>
                         <expression name="valueExpr">row["type_of_roads_within_the_settlement"]</expression>
@@ -3180,14 +3162,14 @@ return false;]]></method>
                     </text-data>
                 </cell>
             </row>
-            <row id="320">
-                <cell id="322">
+            <row id="1120">
+                <cell id="1123">
                     <label id="559">
                         <property name="style">SectionLabel</property>
                         <text-property name="text">Finish of the Roads Across the Settlement</text-property>
                     </label>
                 </cell>
-                <cell id="323">
+                <cell id="1124">
                     <text-data id="904">
                         <property name="style">SectionData</property>
                         <expression name="valueExpr">row["finish_of_the_road_accross_settlement"]</expression>
@@ -3195,14 +3177,14 @@ return false;]]></method>
                     </text-data>
                 </cell>
             </row>
-            <row id="324">
-                <cell id="326">
+            <row id="1165">
+                <cell id="1168">
                     <label id="560">
                         <property name="style">SectionLabel</property>
                         <text-property name="text">Average Width of Internal Road</text-property>
                     </label>
                 </cell>
-                <cell id="327">
+                <cell id="1169">
                     <text-data id="905">
                         <property name="style">SectionData</property>
                         <expression name="valueExpr">row["average_width_of_internal_road"]</expression>
@@ -3210,14 +3192,14 @@ return false;]]></method>
                     </text-data>
                 </cell>
             </row>
-            <row id="328">
-                <cell id="330">
+            <row id="1160">
+                <cell id="1163">
                     <label id="561">
                         <property name="style">SectionLabel</property>
                         <text-property name="text">Average Width Arterial Roads</text-property>
                     </label>
                 </cell>
-                <cell id="331">
+                <cell id="1164">
                     <text-data id="906">
                         <property name="style">SectionData</property>
                         <expression name="valueExpr">row["average_width_of_arterial_road"]</expression>
@@ -3225,14 +3207,14 @@ return false;]]></method>
                     </text-data>
                 </cell>
             </row>
-            <row id="332">
-                <cell id="334">
+            <row id="1155">
+                <cell id="1158">
                     <label id="562">
                         <property name="style">SectionLabel</property>
                         <text-property name="text">Points of Vehicular Access</text-property>
                     </label>
                 </cell>
-                <cell id="335">
+                <cell id="1159">
                     <text-data id="907">
                         <property name="style">SectionData</property>
                         <expression name="valueExpr">row["point_of_vehicular_access"]</expression>
@@ -3240,14 +3222,14 @@ return false;]]></method>
                     </text-data>
                 </cell>
             </row>
-            <row id="336">
-                <cell id="338">
+            <row id="1150">
+                <cell id="1153">
                     <label id="563">
                         <property name="style">SectionLabel</property>
                         <text-property name="text">Level Variation between the Settlement and the Main Road</text-property>
                     </label>
                 </cell>
-                <cell id="339">
+                <cell id="1154">
                     <text-data id="908">
                         <property name="style">SectionData</property>
                         <expression name="valueExpr">row["level_variation_between_settlement_and_main_road"]</expression>
@@ -3255,14 +3237,14 @@ return false;]]></method>
                     </text-data>
                 </cell>
             </row>
-            <row id="340">
-                <cell id="342">
+            <row id="1145">
+                <cell id="1148">
                     <label id="564">
                         <property name="style">SectionLabel</property>
                         <text-property name="text">Level Variation between  Huts and the Internal Road</text-property>
                     </label>
                 </cell>
-                <cell id="343">
+                <cell id="1149">
                     <text-data id="909">
                         <property name="style">SectionData</property>
                         <expression name="valueExpr">row["level_variation_between_huts_and_internal_road"]</expression>
@@ -3270,8 +3252,8 @@ return false;]]></method>
                     </text-data>
                 </cell>
             </row>
-            <row id="344">
-                <cell id="346">
+            <row id="1140">
+                <cell id="1143">
                     <property name="colSpan">2</property>
                     <property name="rowSpan">1</property>
                     <label id="565">
@@ -3281,8 +3263,8 @@ return false;]]></method>
                     </label>
                 </cell>
             </row>
-            <row id="348">
-                <cell id="350">
+            <row id="1135">
+                <cell id="1138">
                     <property name="colSpan">2</property>
                     <property name="rowSpan">1</property>
                     <text-data id="910">
@@ -3292,8 +3274,9 @@ return false;]]></method>
                     </text-data>
                 </cell>
             </row>
-            <row id="352">
-                <cell id="354">
+            <row id="1130">
+                <property name="pageBreakAfter">always</property>
+                <cell id="1133">
                     <property name="style">DataImageContainer</property>
                     <image id="649">
                         <property name="style">DataImage</property>
@@ -3307,7 +3290,7 @@ return false;]]></method>
                         <expression name="uri" type="javascript">vars["var_report_prefix_image_path"].concat(row["road_and_access_data_left_image"])</expression>
                     </image>
                 </cell>
-                <cell id="355">
+                <cell id="1134">
                     <property name="style">DataImageContainer</property>
                     <image id="650">
                         <property name="style">DataImage</property>
@@ -3322,94 +3305,9 @@ return false;]]></method>
                     </image>
                 </cell>
             </row>
-        </grid>
-        <grid name="Drainage Information" id="364">
-            <property name="style">PageGrid</property>
-            <property name="pageBreakAfter">always</property>
-            <property name="pageBreakBefore">always</property>
-            <property name="dataSet">Script - json_data</property>
-            <list-property name="visibility">
-                <structure>
-                    <property name="format">all</property>
-                    <expression name="valueExpr" type="javascript">row["status_flag"].toString() == "false"</expression>
-                </structure>
-            </list-property>
-            <list-property name="boundDataColumns">
-                <structure>
-                    <property name="name">presence_of_drains_within_settlement</property>
-                    <text-property name="displayName">presence_of_drains_within_settlement</text-property>
-                    <expression name="expression" type="javascript">dataSetRow["presence_of_drains_within_settlement"]</expression>
-                    <property name="dataType">string</property>
-                </structure>
-                <structure>
-                    <property name="name">coverage_of_drains_across_settlement</property>
-                    <text-property name="displayName">coverage_of_drains_across_settlement</text-property>
-                    <expression name="expression" type="javascript">dataSetRow["coverage_of_drains_across_settlement"]</expression>
-                    <property name="dataType">string</property>
-                </structure>
-                <structure>
-                    <property name="name">do_the_drains_get_blocked</property>
-                    <text-property name="displayName">do_the_drains_get_blocked</text-property>
-                    <expression name="expression" type="javascript">dataSetRow["do_the_drains_get_blocked"]</expression>
-                    <property name="dataType">string</property>
-                </structure>
-                <structure>
-                    <property name="name">is_the_drainage_gradient_adequate</property>
-                    <text-property name="displayName">is_the_drainage_gradient_adequate</text-property>
-                    <expression name="expression" type="javascript">dataSetRow["is_the_drainage_gradient_adequate"]</expression>
-                    <property name="dataType">string</property>
-                </structure>
-                <structure>
-                    <property name="name">drainage_comment</property>
-                    <text-property name="displayName">drainage_comment</text-property>
-                    <expression name="expression" type="javascript">dataSetRow["drainage_comment"]</expression>
-                    <property name="dataType">string</property>
-                </structure>
-                <structure>
-                    <property name="name">drainage_info_map_image</property>
-                    <text-property name="displayName">drainage_info_map_image</text-property>
-                    <expression name="expression" type="javascript">dataSetRow["drainage_info_map_image"]</expression>
-                    <property name="dataType">string</property>
-                </structure>
-                <structure>
-                    <property name="name">drainage_info_data_left_image</property>
-                    <text-property name="displayName">drainage_info_data_left_image</text-property>
-                    <expression name="expression" type="javascript">dataSetRow["drainage_info_data_left_image"]</expression>
-                    <property name="dataType">string</property>
-                </structure>
-                <structure>
-                    <property name="name">drainage_info_data_right_image</property>
-                    <text-property name="displayName">drainage_info_data_right_image</text-property>
-                    <expression name="expression" type="javascript">dataSetRow["drainage_info_data_right_image"]</expression>
-                    <property name="dataType">string</property>
-                </structure>
-                <structure>
-                    <property name="name">status_flag</property>
-                    <text-property name="displayName">status_flag</text-property>
-                    <expression name="expression" type="javascript">dataSetRow["status_flag"]</expression>
-                    <property name="dataType">string</property>
-                </structure>
-                <structure>
-                    <property name="name">image_flag</property>
-                    <text-property name="displayName">image_flag</text-property>
-                    <expression name="expression" type="javascript">dataSetRow["image_flag"]</expression>
-                    <property name="dataType">string</property>
-                </structure>
-            </list-property>
-            <column id="365">
-                <property name="width">5.572916666666667in</property>
-            </column>
-            <column id="780">
-                <property name="width">2pt</property>
-            </column>
-            <column id="366">
-                <property name="width">2.583in</property>
-            </column>
-            <column id="367">
-                <property name="width">2.5833333333333335in</property>
-            </column>
-            <row id="368">
-                <cell id="369">
+            <row id="1170">
+                <property name="pageBreakBefore">always</property>
+                <cell id="1171">
                     <property name="colSpan">1</property>
                     <property name="rowSpan">8</property>
                     <property name="style">mapImageContainer</property>
@@ -3425,7 +3323,7 @@ return false;]]></method>
                         <expression name="uri" type="javascript">vars["var_report_prefix_image_path"].concat(row["drainage_info_map_image"])</expression>
                     </image>
                 </cell>
-                <cell id="772">
+                <cell id="1172">
                     <property name="colSpan">1</property>
                     <property name="rowSpan">8</property>
                     <property name="style">SectionDividerContainer</property>
@@ -3443,7 +3341,7 @@ return false;]]></method>
                         <expression name="uri" type="javascript">vars["var_report_divider_image"]</expression>
                     </image>
                 </cell>
-                <cell id="370">
+                <cell id="1173">
                     <property name="colSpan">2</property>
                     <property name="rowSpan">1</property>
                     <label id="518">
@@ -3452,14 +3350,14 @@ return false;]]></method>
                     </label>
                 </cell>
             </row>
-            <row id="372">
-                <cell id="374">
+            <row id="1175">
+                <cell id="1178">
                     <label id="566">
                         <property name="style">SectionLabel</property>
                         <text-property name="text">Presence of drains within the settlement</text-property>
                     </label>
                 </cell>
-                <cell id="375">
+                <cell id="1179">
                     <text-data id="911">
                         <property name="style">SectionData</property>
                         <expression name="valueExpr">row["presence_of_drains_within_settlement"]</expression>
@@ -3467,14 +3365,14 @@ return false;]]></method>
                     </text-data>
                 </cell>
             </row>
-            <row id="376">
-                <cell id="378">
+            <row id="1185">
+                <cell id="1188">
                     <label id="567">
                         <property name="style">SectionLabel</property>
                         <text-property name="text">Coverage of drains across the settlement</text-property>
                     </label>
                 </cell>
-                <cell id="379">
+                <cell id="1189">
                     <text-data id="912">
                         <property name="style">SectionData</property>
                         <expression name="valueExpr">row["coverage_of_drains_across_settlement"]</expression>
@@ -3482,14 +3380,14 @@ return false;]]></method>
                     </text-data>
                 </cell>
             </row>
-            <row id="380">
-                <cell id="382">
+            <row id="1180">
+                <cell id="1183">
                     <label id="568">
                         <property name="style">SectionLabel</property>
                         <text-property name="text">Do the drains get blocked?</text-property>
                     </label>
                 </cell>
-                <cell id="383">
+                <cell id="1184">
                     <text-data id="913">
                         <property name="style">SectionData</property>
                         <expression name="valueExpr">row["do_the_drains_get_blocked"]</expression>
@@ -3497,14 +3395,14 @@ return false;]]></method>
                     </text-data>
                 </cell>
             </row>
-            <row id="384">
-                <cell id="386">
+            <row id="1225">
+                <cell id="1228">
                     <label id="569">
                         <property name="style">SectionLabel</property>
                         <text-property name="text">Is the drainage gradient adequate?</text-property>
                     </label>
                 </cell>
-                <cell id="387">
+                <cell id="1229">
                     <text-data id="914">
                         <property name="style">SectionData</property>
                         <expression name="valueExpr">row["is_the_drainage_gradient_adequate"]</expression>
@@ -3512,8 +3410,8 @@ return false;]]></method>
                     </text-data>
                 </cell>
             </row>
-            <row id="388">
-                <cell id="390">
+            <row id="1220">
+                <cell id="1223">
                     <property name="colSpan">2</property>
                     <property name="rowSpan">1</property>
                     <label id="570">
@@ -3523,8 +3421,8 @@ return false;]]></method>
                     </label>
                 </cell>
             </row>
-            <row id="392">
-                <cell id="394">
+            <row id="1215">
+                <cell id="1218">
                     <property name="colSpan">2</property>
                     <property name="rowSpan">1</property>
                     <text-data id="915">
@@ -3534,8 +3432,9 @@ return false;]]></method>
                     </text-data>
                 </cell>
             </row>
-            <row id="396">
-                <cell id="398">
+            <row id="1210">
+                <property name="pageBreakAfter">always</property>
+                <cell id="1213">
                     <property name="style">DataImageContainer</property>
                     <image id="651">
                         <property name="style">DataImage</property>
@@ -3549,7 +3448,7 @@ return false;]]></method>
                         <expression name="uri" type="javascript">vars["var_report_prefix_image_path"].concat(row["drainage_info_data_left_image"])</expression>
                     </image>
                 </cell>
-                <cell id="399">
+                <cell id="1214">
                     <property name="style">DataImageContainer</property>
                     <image id="652">
                         <property name="style">DataImage</property>
@@ -3564,111 +3463,9 @@ return false;]]></method>
                     </image>
                 </cell>
             </row>
-        </grid>
-        <grid name="Gutter Information" id="428">
-            <property name="style">PageGrid</property>
-            <property name="pageBreakBefore">always</property>
-            <property name="dataSet">Script - json_data</property>
-            <list-property name="visibility">
-                <structure>
-                    <property name="format">all</property>
-                    <expression name="valueExpr" type="javascript">row["status_flag"].toString() == "false"</expression>
-                </structure>
-            </list-property>
-            <list-property name="boundDataColumns">
-                <structure>
-                    <property name="name">Presence_of_gutter</property>
-                    <text-property name="displayName">Presence_of_gutter</text-property>
-                    <expression name="expression" type="javascript">dataSetRow["Presence_of_gutter"]</expression>
-                    <property name="dataType">string</property>
-                </structure>
-                <structure>
-                    <property name="name">type_of_gutter_within_the_settlement</property>
-                    <text-property name="displayName">type_of_gutter_within_the_settlement</text-property>
-                    <expression name="expression" type="javascript">dataSetRow["type_of_gutter_within_the_settlement"]</expression>
-                    <property name="dataType">string</property>
-                </structure>
-                <structure>
-                    <property name="name">coverage_of_gutter</property>
-                    <text-property name="displayName">coverage_of_gutter</text-property>
-                    <expression name="expression" type="javascript">dataSetRow["coverage_of_gutter"]</expression>
-                    <property name="dataType">string</property>
-                </structure>
-                <structure>
-                    <property name="name">are_gutter_covered</property>
-                    <text-property name="displayName">are_gutter_covered</text-property>
-                    <expression name="expression" type="javascript">dataSetRow["are_gutter_covered"]</expression>
-                    <property name="dataType">string</property>
-                </structure>
-                <structure>
-                    <property name="name">do_gutters_flood</property>
-                    <text-property name="displayName">do_gutters_flood</text-property>
-                    <expression name="expression" type="javascript">dataSetRow["do_gutters_flood"]</expression>
-                    <property name="dataType">string</property>
-                </structure>
-                <structure>
-                    <property name="name">do_gutter_get_choked</property>
-                    <text-property name="displayName">do_gutter_get_choked</text-property>
-                    <expression name="expression" type="javascript">dataSetRow["do_gutter_get_choked"]</expression>
-                    <property name="dataType">string</property>
-                </structure>
-                <structure>
-                    <property name="name">is_gutter_gradient_adequate</property>
-                    <text-property name="displayName">is_gutter_gradient_adequate</text-property>
-                    <expression name="expression" type="javascript">dataSetRow["is_gutter_gradient_adequate"]</expression>
-                    <property name="dataType">string</property>
-                </structure>
-                <structure>
-                    <property name="name">comments_on_gutter</property>
-                    <text-property name="displayName">comments_on_gutter</text-property>
-                    <expression name="expression" type="javascript">dataSetRow["comments_on_gutter"]</expression>
-                    <property name="dataType">string</property>
-                </structure>
-                <structure>
-                    <property name="name">gutter_info_map_image</property>
-                    <text-property name="displayName">gutter_info_map_image</text-property>
-                    <expression name="expression" type="javascript">dataSetRow["gutter_info_map_image"]</expression>
-                    <property name="dataType">string</property>
-                </structure>
-                <structure>
-                    <property name="name">gutter_info_data_left_image</property>
-                    <text-property name="displayName">gutter_info_data_left_image</text-property>
-                    <expression name="expression" type="javascript">dataSetRow["gutter_info_data_left_image"]</expression>
-                    <property name="dataType">string</property>
-                </structure>
-                <structure>
-                    <property name="name">gutter_info_data_right_image</property>
-                    <text-property name="displayName">gutter_info_data_right_image</text-property>
-                    <expression name="expression" type="javascript">dataSetRow["gutter_info_data_right_image"]</expression>
-                    <property name="dataType">string</property>
-                </structure>
-                <structure>
-                    <property name="name">status_flag</property>
-                    <text-property name="displayName">status_flag</text-property>
-                    <expression name="expression" type="javascript">dataSetRow["status_flag"]</expression>
-                    <property name="dataType">string</property>
-                </structure>
-                <structure>
-                    <property name="name">image_flag</property>
-                    <text-property name="displayName">image_flag</text-property>
-                    <expression name="expression" type="javascript">dataSetRow["image_flag"]</expression>
-                    <property name="dataType">string</property>
-                </structure>
-            </list-property>
-            <column id="429">
-                <property name="width">5.572916666666667in</property>
-            </column>
-            <column id="771">
-                <property name="width">2pt</property>
-            </column>
-            <column id="430">
-                <property name="width">2.583in</property>
-            </column>
-            <column id="431">
-                <property name="width">2.5833333333333335in</property>
-            </column>
-            <row id="432">
-                <cell id="433">
+            <row id="1205">
+                <property name="pageBreakBefore">always</property>
+                <cell id="1206">
                     <property name="colSpan">1</property>
                     <property name="rowSpan">11</property>
                     <property name="style">mapImageContainer</property>
@@ -3684,7 +3481,7 @@ return false;]]></method>
                         <expression name="uri" type="javascript">vars["var_report_prefix_image_path"].concat(row["gutter_info_map_image"])</expression>
                     </image>
                 </cell>
-                <cell id="760">
+                <cell id="1207">
                     <property name="colSpan">1</property>
                     <property name="rowSpan">11</property>
                     <property name="style">SectionDividerContainer</property>
@@ -3702,7 +3499,7 @@ return false;]]></method>
                         <expression name="uri" type="javascript">vars["var_report_divider_image"]</expression>
                     </image>
                 </cell>
-                <cell id="434">
+                <cell id="1208">
                     <property name="colSpan">2</property>
                     <property name="rowSpan">1</property>
                     <label id="519">
@@ -3711,14 +3508,14 @@ return false;]]></method>
                     </label>
                 </cell>
             </row>
-            <row id="436">
-                <cell id="438">
+            <row id="1200">
+                <cell id="1203">
                     <label id="571">
                         <property name="style">SectionLabel</property>
                         <text-property name="text">Presence of gutters within the settlement</text-property>
                     </label>
                 </cell>
-                <cell id="439">
+                <cell id="1204">
                     <text-data id="916">
                         <property name="style">SectionData</property>
                         <expression name="valueExpr">row["Presence_of_gutter"]</expression>
@@ -3726,14 +3523,14 @@ return false;]]></method>
                     </text-data>
                 </cell>
             </row>
-            <row id="440">
-                <cell id="442">
+            <row id="1195">
+                <cell id="1198">
                     <label id="572">
                         <property name="style">SectionLabel</property>
                         <text-property name="text">Type of gutters within the settlement</text-property>
                     </label>
                 </cell>
-                <cell id="443">
+                <cell id="1199">
                     <text-data id="917">
                         <property name="style">SectionData</property>
                         <expression name="valueExpr">row["type_of_gutter_within_the_settlement"]</expression>
@@ -3741,14 +3538,14 @@ return false;]]></method>
                     </text-data>
                 </cell>
             </row>
-            <row id="444">
-                <cell id="446">
+            <row id="1190">
+                <cell id="1193">
                     <label id="573">
                         <property name="style">SectionLabel</property>
                         <text-property name="text">Coverage of gutters within the settlement</text-property>
                     </label>
                 </cell>
-                <cell id="447">
+                <cell id="1194">
                     <text-data id="918">
                         <property name="style">SectionData</property>
                         <expression name="valueExpr">row["coverage_of_gutter"]</expression>
@@ -3756,14 +3553,14 @@ return false;]]></method>
                     </text-data>
                 </cell>
             </row>
-            <row id="448">
-                <cell id="450">
+            <row id="1265">
+                <cell id="1268">
                     <label id="574">
                         <property name="style">SectionLabel</property>
                         <text-property name="text">Are the gutters covered?</text-property>
                     </label>
                 </cell>
-                <cell id="451">
+                <cell id="1269">
                     <text-data id="919">
                         <property name="style">SectionData</property>
                         <expression name="valueExpr">row["are_gutter_covered"]</expression>
@@ -3771,14 +3568,14 @@ return false;]]></method>
                     </text-data>
                 </cell>
             </row>
-            <row id="452">
-                <cell id="454">
+            <row id="1260">
+                <cell id="1263">
                     <label id="575">
                         <property name="style">SectionLabel</property>
                         <text-property name="text">Do the gutters flood?</text-property>
                     </label>
                 </cell>
-                <cell id="455">
+                <cell id="1264">
                     <text-data id="920">
                         <property name="style">SectionData</property>
                         <expression name="valueExpr">row["do_gutters_flood"]</expression>
@@ -3786,14 +3583,14 @@ return false;]]></method>
                     </text-data>
                 </cell>
             </row>
-            <row id="456">
-                <cell id="458">
+            <row id="1255">
+                <cell id="1258">
                     <label id="576">
                         <property name="style">SectionLabel</property>
                         <text-property name="text">Do the gutters get choked?</text-property>
                     </label>
                 </cell>
-                <cell id="459">
+                <cell id="1259">
                     <text-data id="921">
                         <property name="style">SectionData</property>
                         <expression name="valueExpr">row["do_gutter_get_choked"]</expression>
@@ -3801,14 +3598,14 @@ return false;]]></method>
                     </text-data>
                 </cell>
             </row>
-            <row id="460">
-                <cell id="462">
+            <row id="1250">
+                <cell id="1253">
                     <label id="577">
                         <property name="style">SectionLabel</property>
                         <text-property name="text">Is the gutter gradient adequate?</text-property>
                     </label>
                 </cell>
-                <cell id="463">
+                <cell id="1254">
                     <text-data id="922">
                         <property name="style">SectionData</property>
                         <expression name="valueExpr">row["is_gutter_gradient_adequate"]</expression>
@@ -3816,8 +3613,8 @@ return false;]]></method>
                     </text-data>
                 </cell>
             </row>
-            <row id="464">
-                <cell id="466">
+            <row id="1245">
+                <cell id="1248">
                     <property name="colSpan">2</property>
                     <property name="rowSpan">1</property>
                     <label id="578">
@@ -3827,8 +3624,8 @@ return false;]]></method>
                     </label>
                 </cell>
             </row>
-            <row id="468">
-                <cell id="470">
+            <row id="1240">
+                <cell id="1243">
                     <property name="colSpan">2</property>
                     <property name="rowSpan">1</property>
                     <text-data id="923">
@@ -3838,10 +3635,8 @@ return false;]]></method>
                     </text-data>
                 </cell>
             </row>
-            <row id="472">
-                <cell id="474">
-                    <property name="colSpan">1</property>
-                    <property name="rowSpan">1</property>
+            <row id="1235">
+                <cell id="1238">
                     <property name="style">DataImageContainer</property>
                     <image id="926">
                         <property name="style">DataImage</property>
@@ -3855,7 +3650,7 @@ return false;]]></method>
                         <expression name="uri" type="javascript">vars["var_report_prefix_image_path"].concat(row["gutter_info_data_left_image"])</expression>
                     </image>
                 </cell>
-                <cell id="925">
+                <cell id="1239">
                     <property name="style">DataImageContainer</property>
                     <image id="927">
                         <property name="style">DataImage</property>
