@@ -134,7 +134,7 @@ def get_kobo_RIM_detail(city, slum_code, kobo_survey=''):
                 sect_form_data = trav(data)
                 #Find the list of keys available in the submission data
                 toil_keys = [ str(k) for k in submission[0].keys() if data['name'] in k]
-                count = 1
+                count = 0
                 sub_key = []
                 sub = []
                 # Needed for toilet section which has repeat section
@@ -194,7 +194,7 @@ def get_kobo_RIM_report_detail(city, slum_code, kobo_survey=''):
                 sect_form_data = trav(data)
                 #Find the list of keys available in the submission data
                 toil_keys = [ str(k) for k in submission[0].keys() if data['name'] in k]
-                count = 1
+                count = 0
                 sub_key = []
                 sub = []
                 # Needed for toilet section which has repeat section
