@@ -192,15 +192,21 @@ else{
 				zIndex : 999
 			};
 	var slumLabel = new MapLabel(options);
-		//slumLabel.changed('text');
-	google.maps.event.addListener(Poly1, 'mouseover', function(event) {
-    slumLabel.text = shapename;
-    slumLabel.changed('text');
-  });
-  google.maps.event.addListener(Poly1, 'mouseout', function(event) {
-    slumLabel.text = '';
-    slumLabel.changed('text');
-	});
+	if (arr.length == 0) {
+		slumLabel.text = shapename;
+		slumLabel.changed('text');
+	}
+	else{
+				//slumLabel.changed('text');
+			google.maps.event.addListener(Poly1, 'mouseover', function(event) {
+		    slumLabel.text = shapename;
+		    slumLabel.changed('text');
+		  });
+		  google.maps.event.addListener(Poly1, 'mouseout', function(event) {
+		    slumLabel.text = '';
+		    slumLabel.changed('text');
+			});
+		}
 	var infoWindowover = new google.maps.InfoWindow;
 	// Events on Polygon
 	// google.maps.event.addListener(Poly1, 'mouseover', function(event) {
@@ -826,17 +832,22 @@ function tabularSingleGroup(single_model) {
 			toilet_header += "<th> CTB " +(i+1) + "</th>";
 		}
 		toilet_header+= "</tr></thead>";
-		$.each(Object.keys(largest_keys[0]), function(k, v) {
-			toilet_body += '<tr><td style="font-weight:bold;width:200px;">' + v + '</td>';
+		if(largest_keys.length > 0){
+			$.each(Object.keys(largest_keys[0]), function(k, v) {
+				toilet_body += '<tr><td style="font-weight:bold;width:200px;">' + v + '</td>';
 
-			for (i=0; i<json.length; i++){
-				val = json[i][v];
-				if(val == undefined)
-						val="&nbsp;";
-				toilet_body += '<td>' + val + '</td>';
-			}
-			toilet_body += '</tr>';
-		});
+				for (i=0; i<json.length; i++){
+					val = json[i][v];
+					if(val == undefined)
+							val="&nbsp;";
+					toilet_body += '<td>' + val + '</td>';
+				}
+				toilet_body += '</tr>';
+			});
+		}
+		else{
+			toilet_body += '<tr><td>No CTB\'s</td></tr>';
+		}
 		spstr += toilet_header + toilet_body;
 
 	} else {
