@@ -130,7 +130,7 @@ def rimdisplay(request):
 		R = Rapid_Slum_Appraisal.objects.filter(slum_name__name__contains=query)
 	else:
 		R = Rapid_Slum_Appraisal.objects.all()
-	paginator = Paginator(R, 6)
+	paginator = Paginator(R, 10)
 	page = request.GET.get('page')
 	try:
 		RA = paginator.page(page)
