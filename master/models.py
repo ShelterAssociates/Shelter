@@ -49,9 +49,10 @@ class City(models.Model):
         verbose_name = 'City'
         verbose_name_plural = 'Cities'
 
-SURVEYTYPE_CHOICES = (('Slum Level', 'Slum Level'), ('Household Level',
-                                                     'Household Level'), ('Household Member Level',
-                                                                          'Household Member Level'))
+SURVEYTYPE_CHOICES = (('Slum Level', 'Slum Level'),
+                      ('Household Level', 'Household Level'),
+                      ('Household Member Level', 'Household Member Level'),
+                      ('Family Factsheet', 'Family Factsheet'))
 
 class Survey(models.Model):
     """Shelter Survey Database"""

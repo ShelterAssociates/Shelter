@@ -9,6 +9,6 @@ urlpatterns = [
     url(r'^get_kobo_RIM_data/(?P<slum_id>\d+)$', views.get_kobo_RIM_data, name='get_kobo_RIM_data'),
     url(r'^get_kobo_RHS_list/(?P<slum_id>\d+)/(?P<house_num>\d+)$', views.get_kobo_RHS_data, name='get_kobo_RHS_data'),
     url(r'^get_kobo_RIM_report_data/(?P<slum_id>\d+)$', views.get_kobo_RIM_report_data, name='get_kobo_RIM_report_data'),
-
-
+    url(r'^get_kobo_FF_report_data/(?P<slum_id>\d+)/(?P<house_num>\d+)$', views.get_kobo_FF_report_data, name='get_kobo_FF_report_data'),
+    url(r'^get_kobo_drainage_report_data/(?P<slum_id>\d+)$', views.get_kobo_drainage_report_data, name='get_kobo_drainage_report_data'),
 ]
