@@ -64,9 +64,7 @@ def get_household_analysis_data(city, slum_code, fields, kobo_survey=''):
 
 @survey_mapping(SURVEYTYPE_CHOICES[1][0])
 def get_kobo_RHS_list(city, slum_code,house_number, kobo_survey=''):
-
-    # url="http://kc.shelter-associates.org/api/v1/forms?format=json"
-    """Method which fetches the KoboCat ID's and URL's from the Kobo Toolbox API"""
+    """Method which fetches RHS data using the Kobo Toolbox API. Data contains question and answer decrypted. """
     output=OrderedDict()
     if kobo_survey:
         try:
@@ -101,7 +99,8 @@ def get_kobo_RHS_list(city, slum_code,house_number, kobo_survey=''):
 
 @survey_mapping(SURVEYTYPE_CHOICES[0][0])
 def get_kobo_RIM_detail(city, slum_code, kobo_survey=''):
-
+    """Method to get RIM data from kobotoolbox using the API. Data contains question and answer decrypted.
+    """
     output=OrderedDict()
     if kobo_survey:
         url = settings.KOBOCAT_FORM_URL+'data/'+kobo_survey+'?query={"group_zl6oo94/group_uj8eg07/slum_name":"'+slum_code+'"}'
@@ -170,7 +169,8 @@ def get_kobo_RIM_detail(city, slum_code, kobo_survey=''):
 
 @survey_mapping(SURVEYTYPE_CHOICES[0][0])
 def get_kobo_RIM_report_detail(city, slum_code, kobo_survey=''):
-
+    """Method to get RIM data from kobotoolbox using the API. Data contain only answers decrypted.
+    """
     output=OrderedDict()
     RIM_TOILET="group_te3dx03"
     if kobo_survey:
@@ -238,6 +238,42 @@ def get_kobo_RIM_report_detail(city, slum_code, kobo_survey=''):
                                 output[sect_form['name']] = ans
     return output
 
+@survey_mapping(SURVEYTYPE_CHOICES[3][0])
+def get_kobo_FF_report_detail(city, slum_code,house_number, kobo_survey=''):
+    """Method which fetches family factsheet data from kobotoolbox using the API's. Data contain only answers decrypted."""
+    output=OrderedDict()
+    if kobo_survey:
+        try:
+            url = settings.KOBOCAT_FORM_URL+'data/'+kobo_survey+'?query={"group_vq77l17/slum_name":"'+slum_code+'","group_vq77l17/Household_number":"'+house_number+'"}'
+        except Exception as e:
+            print e
+
+        req = urllib2.Request(url)
+        req.add_header('Authorization', settings.KOBOCAT_TOKEN)
+        resp = urllib2.urlopen(req)
+        content = resp.read()
+        submission = json.loads(content)
+
+        url1 = settings.KOBOCAT_FORM_URL+'forms/'+kobo_survey+'/form.json'
+        req1 = urllib2.Request(url1)
+        req1.add_header('Authorization', settings.KOBOCAT_TOKEN)
+        resp1 = urllib2.urlopen(req1)
+        content1 = resp1.read()
+        data1 = json.loads(content1)
+
+        output = OrderedDict()
+        for data in data1['children']:
+            if data['type'] == "group" or data['type'] == "photo" or data['type'] == "text":
+                sect_form_data = trav(data)
+                sub_key = [ str(k) for k in submission[0].keys() if data['name'] in k] + ['_attachments']
+                for sect_form in sect_form_data:
+                    key = [x for x in sub_key if x.endswith(sect_form['name'])]
+                    if len(key)>0 and 'name' in sect_form:
+                        ans = fetch_answer(sect_form, key, submission[0])
+                        output[sect_form['name']]  = ans
+
+    return output
+
 def fetch_answer(sect_form, key, submission):
     #Fetch answer and convert it to label
     val = ""
@@ -252,6 +288,11 @@ def fetch_answer(sect_form, key, submission):
             val = val[:-2]
             val = val.strip()
             #val = reduce(lambda x,y: options[x] +',' + options[y], sub_option)
+    elif 'photo' in sect_form['type']:
+        photos = submission['_attachments']
+        val = [photo['download_url'] for photo in photos if submission[key[0]] in photo['download_url']]
+        if val and len(val)>0:
+            val = val[0]
     else:
         val = submission[key[0]]
     return val

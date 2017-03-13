@@ -15,7 +15,7 @@ from kobotoolbox import *
 from .forms import KMLUpload
 from .kmlparser import KMLParser
 from .models import Metadata, Component
-from master.models import Slum, Rapid_Slum_Appraisal
+from master.models import Slum, Rapid_Slum_Appraisal, drainage
 
 #@staff_member_required
 @user_passes_test(lambda u: u.is_superuser)
@@ -114,7 +114,6 @@ def get_kobo_RIM_report_data(request, slum_id):
         rim_image = []
     output = {"status":False, "image":False}
     if slum and len(slum)>0:
-
         output = get_kobo_RIM_report_detail(slum[0].electoral_ward.administrative_ward.city.id, slum[0].shelter_slum_code)
         output['status'] = True
         output['admin_ward'] = slum[0].electoral_ward.administrative_ward.name
@@ -123,6 +122,37 @@ def get_kobo_RIM_report_data(request, slum_id):
         if rim_image and len(rim_image) > 0:
             output.update(rim_image[0])
             output['image'] = True
-
-
     return HttpResponse(json.dumps(output),content_type='application/json')
+
+@user_passes_test(lambda u: u.is_superuser)
+def get_kobo_FF_report_data(request, slum_id,house_num):
+     output = {"status":False}
+     try:
+         slum = Slum.objects.filter(shelter_slum_code=slum_id)
+     except:
+         slum = None
+     if slum and len(slum)>0:
+         output = get_kobo_FF_report_detail(slum[0].electoral_ward.administrative_ward.city.id, slum[0].shelter_slum_code, house_num)
+         output['admin_ward'] = slum[0].electoral_ward.administrative_ward.name
+         output['slum_name'] = slum[0].name
+         output['status'] = True
+     return HttpResponse(json.dumps(output),content_type='application/json')
+
+@user_passes_test(lambda u: u.is_superuser)
+def get_kobo_drainage_report_data(request, slum_id):
+     output = {"status":False, "image":False}
+     try:
+         slum = Slum.objects.filter(shelter_slum_code=slum_id)
+     except:
+         slum = None
+     if slum and len(slum)>0:
+         output = get_kobo_RIM_report_detail(slum[0].electoral_ward.administrative_ward.city.id, slum[0].shelter_slum_code)
+         output["image"] = False
+         drainage_image = drainage.objects.filter(slum_name = slum[0]).values()
+         if drainage_image and len(drainage_image) > 0:
+             output.update(drainage_image[0])
+             output["image"] = True
+         output['admin_ward'] = slum[0].electoral_ward.administrative_ward.name
+         output['slum_name'] = slum[0].name
+         output['status'] = True
+     return HttpResponse(json.dumps(output),content_type='application/json')
