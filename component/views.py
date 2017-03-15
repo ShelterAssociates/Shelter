@@ -115,7 +115,8 @@ def get_kobo_RIM_report_data(request, slum_id):
     output = {"status":False, "image":False}
     if slum and len(slum)>0:
         output = get_kobo_RIM_report_detail(slum[0].electoral_ward.administrative_ward.city.id, slum[0].shelter_slum_code)
-        if len(output.keys()) > 0:
+        output["status"] = False
+        if len(output.keys()) > 1:
             output['status'] = True
         output['admin_ward'] = slum[0].electoral_ward.administrative_ward.name
         output['electoral_ward'] = slum[0].electoral_ward.name
@@ -134,7 +135,8 @@ def get_kobo_FF_report_data(request, slum_id,house_num):
          slum = None
      if slum and len(slum)>0:
          output = get_kobo_FF_report_detail(slum[0].electoral_ward.administrative_ward.city.id, slum[0].shelter_slum_code, house_num)
-         if len(output.keys()) > 0:
+         output["status"] = False
+         if len(output.keys()) > 1:
              output['status'] = True
          output['admin_ward'] = slum[0].electoral_ward.administrative_ward.name
          output['slum_name'] = slum[0].name
@@ -149,7 +151,8 @@ def get_kobo_drainage_report_data(request, slum_id):
          slum = None
      if slum and len(slum)>0:
          output = get_kobo_RIM_report_detail(slum[0].electoral_ward.administrative_ward.city.id, slum[0].shelter_slum_code)
-         if len(output.keys()) > 0:
+         output["status"] = False
+         if len(output.keys()) > 1:
              output['status'] = True
          output["image"] = False
          drainage_image = drainage.objects.filter(slum_name = slum[0]).values()
