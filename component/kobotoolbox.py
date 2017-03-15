@@ -271,6 +271,7 @@ def get_kobo_FF_report_detail(city, slum_code,house_number, kobo_survey=''):
                     sect_form_data = trav(data)
                     sub_key = [ str(k) for k in submission[0].keys() if data['name'] in k] + ['_attachments']
                     for sect_form in sect_form_data:
+                        output[sect_form['name']] = ""
                         key = [x for x in sub_key if x.endswith(sect_form['name'])]
                         if len(key)>0 and 'name' in sect_form:
                             ans = fetch_answer(sect_form, key, submission[0])
