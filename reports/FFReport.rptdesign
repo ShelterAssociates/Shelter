@@ -1,0 +1,1278 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<report xmlns="http://www.eclipse.org/birt/2005/design" version="3.2.23" id="1">
+    <property name="createdBy">Eclipse BIRT Designer Version 4.6.0.v201606072122</property>
+    <property name="units">in</property>
+    <property name="iconFile">/templates/blank_report.gif</property>
+    <property name="bidiLayoutOrientation">ltr</property>
+    <property name="imageDPI">96</property>
+    <parameters>
+        <scalar-parameter name="slum" id="225">
+            <text-property name="helpText">Slum Code</text-property>
+            <text-property name="promptText">Enter slum code</text-property>
+            <property name="valueType">static</property>
+            <property name="dataType">string</property>
+            <property name="distinct">true</property>
+            <list-property name="selectionList"/>
+            <property name="paramType">simple</property>
+            <property name="controlType">text-box</property>
+            <structure name="format">
+                <property name="category">Unformatted</property>
+            </structure>
+        </scalar-parameter>
+        <scalar-parameter name="house" id="226">
+            <text-property name="helpText">Household number</text-property>
+            <text-property name="promptText">Enter house number</text-property>
+            <property name="valueType">static</property>
+            <property name="dataType">string</property>
+            <property name="distinct">true</property>
+            <list-property name="selectionList"/>
+            <property name="paramType">simple</property>
+            <property name="controlType">text-box</property>
+            <structure name="format">
+                <property name="category">Unformatted</property>
+            </structure>
+        </scalar-parameter>
+    </parameters>
+    <data-sources>
+        <script-data-source name="Shelter Data Script" id="223"/>
+    </data-sources>
+    <data-sets>
+        <script-data-set name="Script - json_data" id="224">
+            <list-property name="resultSetHints">
+                <structure>
+                    <property name="position">1</property>
+                    <property name="name">slum_name</property>
+                    <property name="dataType">string</property>
+                </structure>
+                <structure>
+                    <property name="position">2</property>
+                    <property name="name">settlement_address</property>
+                    <property name="dataType">string</property>
+                </structure>
+                <structure>
+                    <property name="position">3</property>
+                    <property name="name">household_number</property>
+                    <property name="dataType">string</property>
+                </structure>
+                <structure>
+                    <property name="position">4</property>
+                    <property name="name">name_of_the_family_head</property>
+                    <property name="dataType">string</property>
+                </structure>
+                <structure>
+                    <property name="position">5</property>
+                    <property name="name">name_of_Native_villa_district_and_state</property>
+                    <property name="dataType">string</property>
+                </structure>
+                <structure>
+                    <property name="position">6</property>
+                    <property name="name">duration_of_stay_in_the_city</property>
+                    <property name="dataType">string</property>
+                </structure>
+                <structure>
+                    <property name="position">7</property>
+                    <property name="name">duration_of_stay_in_current_settlement</property>
+                    <property name="dataType">string</property>
+                </structure>
+                <structure>
+                    <property name="position">8</property>
+                    <property name="name">type_of_house</property>
+                    <property name="dataType">string</property>
+                </structure>
+                <structure>
+                    <property name="position">9</property>
+                    <property name="name">ownership_status</property>
+                    <property name="dataType">string</property>
+                </structure>
+                <structure>
+                    <property name="position">10</property>
+                    <property name="name">total_family_members</property>
+                    <property name="dataType">string</property>
+                </structure>
+                <structure>
+                    <property name="position">11</property>
+                    <property name="name">total_number_of_Male_and_female_members</property>
+                    <property name="dataType">string</property>
+                </structure>
+                <structure>
+                    <property name="position">12</property>
+                    <property name="name">number_of_Children_under_5_years_of_age</property>
+                    <property name="dataType">string</property>
+                </structure>
+                <structure>
+                    <property name="position">13</property>
+                    <property name="name">number_of_members_over_60_years_of_age</property>
+                    <property name="dataType">string</property>
+                </structure>
+                <structure>
+                    <property name="position">14</property>
+                    <property name="name">number_of_Girl_children_between_0_18_yrs</property>
+                    <property name="dataType">string</property>
+                </structure>
+                <structure>
+                    <property name="position">15</property>
+                    <property name="name">number_of_disabled_members</property>
+                    <property name="dataType">string</property>
+                </structure>
+                <structure>
+                    <property name="position">16</property>
+                    <property name="name">if_yes_specify_type_of_disability</property>
+                    <property name="dataType">string</property>
+                </structure>
+                <structure>
+                    <property name="position">17</property>
+                    <property name="name">occupation_s_of_earning_members</property>
+                    <property name="dataType">string</property>
+                </structure>
+                <structure>
+                    <property name="position">18</property>
+                    <property name="name">approximate_monthly_family_income</property>
+                    <property name="dataType">string</property>
+                </structure>
+                <structure>
+                    <property name="position">19</property>
+                    <property name="name">have_you_upgraded_yo_ng_individual_toilet</property>
+                    <property name="dataType">string</property>
+                </structure>
+                <structure>
+                    <property name="position">20</property>
+                    <property name="name">cost_of_upgradation</property>
+                    <property name="dataType">string</property>
+                </structure>
+                <structure>
+                    <property name="position">21</property>
+                    <property name="name">note</property>
+                    <property name="dataType">string</property>
+                </structure>
+                <structure>
+                    <property name="position">22</property>
+                    <property name="name">family_photo</property>
+                    <property name="dataType">string</property>
+                </structure>
+                <structure>
+                    <property name="position">23</property>
+                    <property name="name">toilet_photo</property>
+                    <property name="dataType">string</property>
+                </structure>
+                <structure>
+                    <property name="position">24</property>
+                    <property name="name">status_flag</property>
+                    <property name="dataType">string</property>
+                </structure>
+                <structure>
+                    <property name="position">25</property>
+                    <property name="name">image_flag</property>
+                    <property name="dataType">string</property>
+                </structure>
+            </list-property>
+            <list-property name="columnHints">
+                <structure>
+                    <property name="columnName">slum_name</property>
+                    <text-property name="displayName">slum_name</text-property>
+                </structure>
+                <structure>
+                    <property name="columnName">settlement_address</property>
+                    <text-property name="displayName">settlement_address</text-property>
+                </structure>
+                <structure>
+                    <property name="columnName">household_number</property>
+                    <text-property name="displayName">household_number</text-property>
+                </structure>
+                <structure>
+                    <property name="columnName">name_of_the_family_head</property>
+                    <text-property name="displayName">name_of_the_family_head</text-property>
+                </structure>
+                <structure>
+                    <property name="columnName">name_of_Native_villa_district_and_state</property>
+                    <text-property name="displayName">name_of_Native_villa_district_and_state</text-property>
+                </structure>
+                <structure>
+                    <property name="columnName">duration_of_stay_in_the_city</property>
+                    <text-property name="displayName">duration_of_stay_in_the_city</text-property>
+                </structure>
+                <structure>
+                    <property name="columnName">duration_of_stay_in_current_settlement</property>
+                    <text-property name="displayName">duration_of_stay_in_current_settlement</text-property>
+                </structure>
+                <structure>
+                    <property name="columnName">type_of_house</property>
+                    <text-property name="displayName">type_of_house</text-property>
+                </structure>
+                <structure>
+                    <property name="columnName">ownership_status</property>
+                    <text-property name="displayName">ownership_status</text-property>
+                </structure>
+                <structure>
+                    <property name="columnName">total_family_members</property>
+                    <text-property name="displayName">total_family_members</text-property>
+                </structure>
+                <structure>
+                    <property name="columnName">total_number_of_Male_and_female_members</property>
+                    <text-property name="displayName">total_number_of_Male_and_female_members</text-property>
+                </structure>
+                <structure>
+                    <property name="columnName">number_of_Children_under_5_years_of_age</property>
+                    <text-property name="displayName">number_of_Children_under_5_years_of_age</text-property>
+                </structure>
+                <structure>
+                    <property name="columnName">number_of_members_over_60_years_of_age</property>
+                    <text-property name="displayName">number_of_members_over_60_years_of_age</text-property>
+                </structure>
+                <structure>
+                    <property name="columnName">number_of_Girl_children_between_0_18_yrs</property>
+                    <text-property name="displayName">number_of_Girl_children_between_0_18_yrs</text-property>
+                </structure>
+                <structure>
+                    <property name="columnName">number_of_disabled_members</property>
+                    <text-property name="displayName">number_of_disabled_members</text-property>
+                </structure>
+                <structure>
+                    <property name="columnName">if_yes_specify_type_of_disability</property>
+                    <text-property name="displayName">if_yes_specify_type_of_disability</text-property>
+                </structure>
+                <structure>
+                    <property name="columnName">occupation_s_of_earning_members</property>
+                    <text-property name="displayName">occupation_s_of_earning_members</text-property>
+                </structure>
+                <structure>
+                    <property name="columnName">approximate_monthly_family_income</property>
+                    <text-property name="displayName">approximate_monthly_family_income</text-property>
+                </structure>
+                <structure>
+                    <property name="columnName">have_you_upgraded_yo_ng_individual_toilet</property>
+                    <text-property name="displayName">have_you_upgraded_yo_ng_individual_toilet</text-property>
+                </structure>
+                <structure>
+                    <property name="columnName">cost_of_upgradation</property>
+                    <text-property name="displayName">cost_of_upgradation</text-property>
+                </structure>
+                <structure>
+                    <property name="columnName">note</property>
+                    <text-property name="displayName">note</text-property>
+                </structure>
+                <structure>
+                    <property name="columnName">family_photo</property>
+                    <text-property name="displayName">family_photo</text-property>
+                </structure>
+                <structure>
+                    <property name="columnName">toilet_photo</property>
+                    <text-property name="displayName">toilet_photo</text-property>
+                </structure>
+                <structure>
+                    <property name="columnName">status_flag</property>
+                    <text-property name="displayName">status_flag</text-property>
+                </structure>
+                <structure>
+                    <property name="columnName">image_flag</property>
+                    <text-property name="displayName">image_flag</text-property>
+                </structure>
+            </list-property>
+            <structure name="cachedMetaData">
+                <list-property name="resultSet">
+                    <structure>
+                        <property name="position">1</property>
+                        <property name="name">slum_name</property>
+                        <property name="dataType">string</property>
+                    </structure>
+                    <structure>
+                        <property name="position">2</property>
+                        <property name="name">settlement_address</property>
+                        <property name="dataType">string</property>
+                    </structure>
+                    <structure>
+                        <property name="position">3</property>
+                        <property name="name">household_number</property>
+                        <property name="dataType">string</property>
+                    </structure>
+                    <structure>
+                        <property name="position">4</property>
+                        <property name="name">name_of_the_family_head</property>
+                        <property name="dataType">string</property>
+                    </structure>
+                    <structure>
+                        <property name="position">5</property>
+                        <property name="name">name_of_Native_villa_district_and_state</property>
+                        <property name="dataType">string</property>
+                    </structure>
+                    <structure>
+                        <property name="position">6</property>
+                        <property name="name">duration_of_stay_in_the_city</property>
+                        <property name="dataType">string</property>
+                    </structure>
+                    <structure>
+                        <property name="position">7</property>
+                        <property name="name">duration_of_stay_in_current_settlement</property>
+                        <property name="dataType">string</property>
+                    </structure>
+                    <structure>
+                        <property name="position">8</property>
+                        <property name="name">type_of_house</property>
+                        <property name="dataType">string</property>
+                    </structure>
+                    <structure>
+                        <property name="position">9</property>
+                        <property name="name">ownership_status</property>
+                        <property name="dataType">string</property>
+                    </structure>
+                    <structure>
+                        <property name="position">10</property>
+                        <property name="name">total_family_members</property>
+                        <property name="dataType">string</property>
+                    </structure>
+                    <structure>
+                        <property name="position">11</property>
+                        <property name="name">total_number_of_Male_and_female_members</property>
+                        <property name="dataType">string</property>
+                    </structure>
+                    <structure>
+                        <property name="position">12</property>
+                        <property name="name">number_of_Children_under_5_years_of_age</property>
+                        <property name="dataType">string</property>
+                    </structure>
+                    <structure>
+                        <property name="position">13</property>
+                        <property name="name">number_of_members_over_60_years_of_age</property>
+                        <property name="dataType">string</property>
+                    </structure>
+                    <structure>
+                        <property name="position">14</property>
+                        <property name="name">number_of_Girl_children_between_0_18_yrs</property>
+                        <property name="dataType">string</property>
+                    </structure>
+                    <structure>
+                        <property name="position">15</property>
+                        <property name="name">number_of_disabled_members</property>
+                        <property name="dataType">string</property>
+                    </structure>
+                    <structure>
+                        <property name="position">16</property>
+                        <property name="name">if_yes_specify_type_of_disability</property>
+                        <property name="dataType">string</property>
+                    </structure>
+                    <structure>
+                        <property name="position">17</property>
+                        <property name="name">occupation_s_of_earning_members</property>
+                        <property name="dataType">string</property>
+                    </structure>
+                    <structure>
+                        <property name="position">18</property>
+                        <property name="name">approximate_monthly_family_income</property>
+                        <property name="dataType">string</property>
+                    </structure>
+                    <structure>
+                        <property name="position">19</property>
+                        <property name="name">have_you_upgraded_yo_ng_individual_toilet</property>
+                        <property name="dataType">string</property>
+                    </structure>
+                    <structure>
+                        <property name="position">20</property>
+                        <property name="name">cost_of_upgradation</property>
+                        <property name="dataType">string</property>
+                    </structure>
+                    <structure>
+                        <property name="position">21</property>
+                        <property name="name">note</property>
+                        <property name="dataType">string</property>
+                    </structure>
+                    <structure>
+                        <property name="position">22</property>
+                        <property name="name">family_photo</property>
+                        <property name="dataType">string</property>
+                    </structure>
+                    <structure>
+                        <property name="position">23</property>
+                        <property name="name">toilet_photo</property>
+                        <property name="dataType">string</property>
+                    </structure>
+                    <structure>
+                        <property name="position">24</property>
+                        <property name="name">status_flag</property>
+                        <property name="dataType">string</property>
+                    </structure>
+                    <structure>
+                        <property name="position">25</property>
+                        <property name="name">image_flag</property>
+                        <property name="dataType">string</property>
+                    </structure>
+                </list-property>
+            </structure>
+            <property name="dataSource">Shelter Data Script</property>
+            <method name="open"><![CDATA[importPackage(Packages.java.io);
+importPackage(Packages.java.net);
+
+var inStream = new URL("http://app.shelter-associates.org/component/get_kobo_FF_report_data/"+params["slum"].value+"/"+params["house"].value).openStream();
+
+var inStreamReader = new InputStreamReader(inStream);
+
+var bufferedReader = new BufferedReader(inStreamReader);
+
+var line;
+result = "";
+while ((line = bufferedReader.readLine()) != null)
+	result += line;
+	
+inStream.close();
+
+jsonObject = JSON.parse(result);
+
+count = 0;
+row_count =1;]]></method>
+            <method name="fetch"><![CDATA[if(count < row_count)
+{
+	//Flages
+	row["status_flag"] = jsonObject["status"];
+	
+	//Slum Information
+	row["slum_name"] = jsonObject["slum_name"];
+	row["settlement_address"] = jsonObject["Settlement_address"];
+	row["household_number"] = jsonObject["Household_number"];
+	
+	//Family Information
+	row["name_of_the_family_head"] = jsonObject["Name_of_the_family_head"];
+	row["name_of_Native_villa_district_and_state"] = jsonObject["Name_of_Native_villa_district_and_state"]
+	row["duration_of_stay_in_the_city"] = jsonObject["Duration_of_stay_in_the_city"];
+	row["duration_of_stay_in_current_settlement"] = jsonObject["Duration_of_stay_in_s_current_settlement"];
+	row["type_of_house"] = jsonObject["Type_of_house"];
+	row["ownership_status"] = jsonObject["Ownership_status"];
+	
+	//Family Member
+	row["total_family_members"] = jsonObject["Total_family_members"];
+	row["total_number_of_Male_and_female_members"] = jsonObject["Number_of_Male_members"] + jsonObject["Number_of_Female_members"];
+	row["number_of_Children_under_5_years_of_age"] = jsonObject["Number_of_Children_under_5_years_of_age"];
+	row["number_of_members_over_60_years_of_age"] = jsonObject["Number_of_members_over_60_years_of_age"];
+	row["number_of_Girl_children_between_0_18_yrs"] = jsonObject["Number_of_Girl_children_between_0_18_yrs"];
+	row["number_of_disabled_members"] = jsonObject["Number_of_disabled_members"];
+	row["if_yes_specify_type_of_disability"] = jsonObject["If_yes_specify_type_of_disability"];
+	row["occupation_s_of_earning_members"] = jsonObject["Occupation_s_of_earning_membe"];
+	row["approximate_monthly_family_income"] = jsonObject["Approximate_monthly_family_income"];
+	row["Have_you_upgraded_yo_ng_individual_toilet"] = jsonObject["Have_you_upgraded_yo_ng_individual_toilet"];
+	row["Cost_of_upgradation"] = jsonObject["Cost_of_upgradation"];
+	row["note"] = jsonObject["Note"];
+	
+	//images path 
+	row["family_photo"] = jsonObject["Family_Photo"];
+	row["toilet_photo"] = jsonObject["Toilet_Photo"];
+	
+	count++;
+	return true;
+}
+
+return false;]]></method>
+        </script-data-set>
+    </data-sets>
+    <styles>
+        <style name="FooterText" id="24">
+            <property name="fontSize">8pt</property>
+            <property name="fontWeight">bold</property>
+            <property name="color">#FFFFFF</property>
+            <property name="textAlign">right</property>
+        </style>
+        <style name="ReportTitle" id="40">
+            <property name="fontFamily">"Trebuchet MS"</property>
+            <property name="fontSize">18pt</property>
+            <property name="color">#FFFFFF</property>
+            <property name="paddingLeft">10pt</property>
+        </style>
+        <style name="ErrorMessage" id="43">
+            <property name="fontFamily">"Trebuchet MS"</property>
+            <property name="fontSize">16pt</property>
+            <property name="fontWeight">bold</property>
+            <property name="paddingTop">25%</property>
+            <property name="paddingBottom">25%</property>
+            <property name="textAlign">center</property>
+            <property name="verticalAlign">middle</property>
+        </style>
+        <style name="PageGrid" id="169">
+            <property name="backgroundColor">#D1E2F4</property>
+            <property name="paddingTop">10pt</property>
+            <property name="paddingBottom">10pt</property>
+        </style>
+        <style name="SectionHeader" id="173">
+            <property name="fontFamily">serif</property>
+            <property name="fontSize">14pt</property>
+            <property name="fontWeight">normal</property>
+            <property name="paddingTop">4pt</property>
+            <property name="paddingLeft">4pt</property>
+            <property name="paddingBottom">1pt</property>
+        </style>
+        <style name="SectionLabel" id="195">
+            <property name="fontFamily">serif</property>
+            <property name="paddingLeft">10pt</property>
+            <property name="paddingBottom">1pt</property>
+        </style>
+        <style name="SectionDividerContainer" id="220">
+            <property name="borderBottomColor">#FFFFFF</property>
+            <property name="borderLeftColor">#FFFFFF</property>
+            <property name="borderTopColor">#FFFFFF</property>
+        </style>
+        <style name="SectionDividerImage" id="221">
+            <property name="paddingTop">0pt</property>
+            <property name="paddingLeft">0pt</property>
+            <property name="paddingBottom">0pt</property>
+            <property name="paddingRight">0pt</property>
+            <property name="height">163mm</property>
+            <property name="width">10px</property>
+        </style>
+        <style name="ImageContainer" id="222">
+            <property name="backgroundColor">#FFFFFF</property>
+            <property name="borderBottomStyle">none</property>
+            <property name="borderBottomWidth">medium</property>
+            <property name="borderTopStyle">none</property>
+            <property name="borderTopWidth">medium</property>
+            <property name="marginTop">6pt</property>
+            <property name="marginBottom">6pt</property>
+            <property name="marginRight">6pt</property>
+            <property name="paddingTop">2pt</property>
+            <property name="paddingLeft">2pt</property>
+            <property name="paddingBottom">2pt</property>
+            <property name="paddingRight">2pt</property>
+            <property name="textAlign">center</property>
+            <property name="verticalAlign">middle</property>
+        </style>
+        <style name="SectionHeaderSubTitle" id="252">
+            <property name="fontFamily">"Trebuchet MS"</property>
+            <property name="fontSize">14pt</property>
+            <property name="fontStyle">italic</property>
+            <property name="color">#FFFFFF</property>
+            <property name="paddingLeft">10pt</property>
+        </style>
+        <style name="Images" id="253">
+            <property name="marginTop">0pt</property>
+            <property name="marginBottom">10pt</property>
+        </style>
+        <style name="SectionData" id="254">
+            <property name="fontWeight">bold</property>
+        </style>
+    </styles>
+    <page-setup>
+        <simple-master-page name="Shelter FF Report Master Page" id="2">
+            <property name="type">a4</property>
+            <property name="orientation">landscape</property>
+            <property name="leftMargin">0.19in</property>
+            <property name="rightMargin">0.19in</property>
+            <property name="headerHeight">0.6in</property>
+            <property name="footerHeight">0.6in</property>
+            <page-header>
+                <grid id="28">
+                    <property name="backgroundColor">#85BAE4</property>
+                    <property name="width">100%</property>
+                    <property name="dataBindingRef">Family Factsheet Data</property>
+                    <column id="29"/>
+                    <column id="30"/>
+                    <column id="31"/>
+                    <row id="32">
+                        <cell id="33">
+                            <property name="colSpan">3</property>
+                            <property name="rowSpan">1</property>
+                            <property name="style">ReportTitle</property>
+                            <text-data id="41">
+                                <expression name="valueExpr">vars["var_report_title"]</expression>
+                                <property name="contentType">html</property>
+                            </text-data>
+                        </cell>
+                    </row>
+                    <row id="36">
+                        <cell id="37">
+                            <property name="colSpan">3</property>
+                            <property name="rowSpan">1</property>
+                            <text-data id="250">
+                                <property name="style">SectionHeaderSubTitle</property>
+                                <expression name="valueExpr">row["slum_name"].concat(" : ", row["household_number"])</expression>
+                                <property name="contentType">html</property>
+                            </text-data>
+                        </cell>
+                    </row>
+                </grid>
+            </page-header>
+            <page-footer>
+                <grid id="4">
+                    <property name="backgroundColor">#85BAE4</property>
+                    <property name="fontSize">8pt</property>
+                    <property name="fontWeight">bold</property>
+                    <property name="color">white</property>
+                    <property name="height">0.6458333333333334in</property>
+                    <property name="width">100%</property>
+                    <column id="5">
+                        <property name="width">3.219in</property>
+                    </column>
+                    <column id="6"/>
+                    <column id="7">
+                        <property name="width">2.9583333333333335in</property>
+                    </column>
+                    <row id="8">
+                        <property name="height">0.21875in</property>
+                        <cell id="9">
+                            <property name="colSpan">1</property>
+                            <property name="rowSpan">3</property>
+                            <text id="20">
+                                <property name="contentType">html</property>
+                                <text-property name="content"><![CDATA[<value-of  format="MMMM yyyy">new Date()</value-of>]]></text-property>
+                            </text>
+                        </cell>
+                        <cell id="10">
+                            <text id="23">
+                                <property name="style">FooterText</property>
+                                <property name="contentType">html</property>
+                                <text-property name="content"><![CDATA[&amp;copy copyright Shelter Associates, <value-of format="yyyy">new Date()</value-of> ]]></text-property>
+                            </text>
+                        </cell>
+                        <cell id="11">
+                            <property name="colSpan">1</property>
+                            <property name="rowSpan">3</property>
+                            <image id="21">
+                                <property name="marginLeft">10pt</property>
+                                <property name="height">60px</property>
+                                <property name="width">229px</property>
+                                <property name="source">url</property>
+                                <expression name="uri" type="javascript">vars["var_report_footer_image"]</expression>
+                            </image>
+                        </cell>
+                    </row>
+                    <row id="12">
+                        <property name="height">0.21875in</property>
+                        <cell id="14">
+                            <label id="25">
+                                <property name="style">FooterText</property>
+                                <text-property name="text">For more information, please visit our website</text-property>
+                            </label>
+                        </cell>
+                    </row>
+                    <row id="16">
+                        <property name="height">0.20833333333333334in</property>
+                        <cell id="18">
+                            <label id="26">
+                                <property name="style">FooterText</property>
+                                <text-property name="text">www.shelter-associates.org</text-property>
+                            </label>
+                        </cell>
+                    </row>
+                </grid>
+            </page-footer>
+        </simple-master-page>
+    </page-setup>
+    <body>
+        <text-data id="42">
+            <property name="style">ErrorMessage</property>
+            <property name="dataBindingRef">Family Factsheet Data</property>
+            <list-property name="visibility">
+                <structure>
+                    <property name="format">all</property>
+                    <expression name="valueExpr" type="javascript">row["status_flag"].toString() == "true";</expression>
+                </structure>
+            </list-property>
+            <expression name="valueExpr">"No Data Found for The Family Factsheet"</expression>
+            <property name="contentType">html</property>
+        </text-data>
+        <grid name="Family Factsheet Data" id="44">
+            <property name="style">PageGrid</property>
+            <property name="width">100%</property>
+            <property name="dataSet">Script - json_data</property>
+            <list-property name="visibility">
+                <structure>
+                    <property name="format">all</property>
+                    <expression name="valueExpr" type="javascript">row["status_flag"].toString() == "false"</expression>
+                </structure>
+            </list-property>
+            <list-property name="boundDataColumns">
+                <structure>
+                    <property name="name">slum_name</property>
+                    <text-property name="displayName">slum_name</text-property>
+                    <expression name="expression" type="javascript">dataSetRow["slum_name"]</expression>
+                    <property name="dataType">string</property>
+                </structure>
+                <structure>
+                    <property name="name">settlement_address</property>
+                    <text-property name="displayName">settlement_address</text-property>
+                    <expression name="expression" type="javascript">dataSetRow["settlement_address"]</expression>
+                    <property name="dataType">string</property>
+                </structure>
+                <structure>
+                    <property name="name">household_number</property>
+                    <text-property name="displayName">household_number</text-property>
+                    <expression name="expression" type="javascript">dataSetRow["household_number"]</expression>
+                    <property name="dataType">string</property>
+                </structure>
+                <structure>
+                    <property name="name">name_of_the_family_head</property>
+                    <text-property name="displayName">name_of_the_family_head</text-property>
+                    <expression name="expression" type="javascript">dataSetRow["name_of_the_family_head"]</expression>
+                    <property name="dataType">string</property>
+                </structure>
+                <structure>
+                    <property name="name">name_of_Native_villa_district_and_state</property>
+                    <text-property name="displayName">name_of_Native_villa_district_and_state</text-property>
+                    <expression name="expression" type="javascript">dataSetRow["name_of_Native_villa_district_and_state"]</expression>
+                    <property name="dataType">string</property>
+                </structure>
+                <structure>
+                    <property name="name">duration_of_stay_in_the_city</property>
+                    <text-property name="displayName">duration_of_stay_in_the_city</text-property>
+                    <expression name="expression" type="javascript">dataSetRow["duration_of_stay_in_the_city"]</expression>
+                    <property name="dataType">string</property>
+                </structure>
+                <structure>
+                    <property name="name">duration_of_stay_in_current_settlement</property>
+                    <text-property name="displayName">duration_of_stay_in_current_settlement</text-property>
+                    <expression name="expression" type="javascript">dataSetRow["duration_of_stay_in_current_settlement"]</expression>
+                    <property name="dataType">string</property>
+                </structure>
+                <structure>
+                    <property name="name">type_of_house</property>
+                    <text-property name="displayName">type_of_house</text-property>
+                    <expression name="expression" type="javascript">dataSetRow["type_of_house"]</expression>
+                    <property name="dataType">string</property>
+                </structure>
+                <structure>
+                    <property name="name">ownership_status</property>
+                    <text-property name="displayName">ownership_status</text-property>
+                    <expression name="expression" type="javascript">dataSetRow["ownership_status"]</expression>
+                    <property name="dataType">string</property>
+                </structure>
+                <structure>
+                    <property name="name">total_family_members</property>
+                    <text-property name="displayName">total_family_members</text-property>
+                    <expression name="expression" type="javascript">dataSetRow["total_family_members"]</expression>
+                    <property name="dataType">string</property>
+                </structure>
+                <structure>
+                    <property name="name">total_number_of_Male_and_female_members</property>
+                    <text-property name="displayName">total_number_of_Male_and_female_members</text-property>
+                    <expression name="expression" type="javascript">dataSetRow["total_number_of_Male_and_female_members"]</expression>
+                    <property name="dataType">string</property>
+                </structure>
+                <structure>
+                    <property name="name">number_of_Children_under_5_years_of_age</property>
+                    <text-property name="displayName">number_of_Children_under_5_years_of_age</text-property>
+                    <expression name="expression" type="javascript">dataSetRow["number_of_Children_under_5_years_of_age"]</expression>
+                    <property name="dataType">string</property>
+                </structure>
+                <structure>
+                    <property name="name">number_of_members_over_60_years_of_age</property>
+                    <text-property name="displayName">number_of_members_over_60_years_of_age</text-property>
+                    <expression name="expression" type="javascript">dataSetRow["number_of_members_over_60_years_of_age"]</expression>
+                    <property name="dataType">string</property>
+                </structure>
+                <structure>
+                    <property name="name">number_of_Girl_children_between_0_18_yrs</property>
+                    <text-property name="displayName">number_of_Girl_children_between_0_18_yrs</text-property>
+                    <expression name="expression" type="javascript">dataSetRow["number_of_Girl_children_between_0_18_yrs"]</expression>
+                    <property name="dataType">string</property>
+                </structure>
+                <structure>
+                    <property name="name">number_of_disabled_members</property>
+                    <text-property name="displayName">number_of_disabled_members</text-property>
+                    <expression name="expression" type="javascript">dataSetRow["number_of_disabled_members"]</expression>
+                    <property name="dataType">string</property>
+                </structure>
+                <structure>
+                    <property name="name">if_yes_specify_type_of_disability</property>
+                    <text-property name="displayName">if_yes_specify_type_of_disability</text-property>
+                    <expression name="expression" type="javascript">dataSetRow["if_yes_specify_type_of_disability"]</expression>
+                    <property name="dataType">string</property>
+                </structure>
+                <structure>
+                    <property name="name">occupation_s_of_earning_members</property>
+                    <text-property name="displayName">occupation_s_of_earning_members</text-property>
+                    <expression name="expression" type="javascript">dataSetRow["occupation_s_of_earning_members"]</expression>
+                    <property name="dataType">string</property>
+                </structure>
+                <structure>
+                    <property name="name">approximate_monthly_family_income</property>
+                    <text-property name="displayName">approximate_monthly_family_income</text-property>
+                    <expression name="expression" type="javascript">dataSetRow["approximate_monthly_family_income"]</expression>
+                    <property name="dataType">string</property>
+                </structure>
+                <structure>
+                    <property name="name">have_you_upgraded_yo_ng_individual_toilet</property>
+                    <text-property name="displayName">have_you_upgraded_yo_ng_individual_toilet</text-property>
+                    <expression name="expression" type="javascript">dataSetRow["have_you_upgraded_yo_ng_individual_toilet"]</expression>
+                    <property name="dataType">string</property>
+                </structure>
+                <structure>
+                    <property name="name">cost_of_upgradation</property>
+                    <text-property name="displayName">cost_of_upgradation</text-property>
+                    <expression name="expression" type="javascript">dataSetRow["cost_of_upgradation"]</expression>
+                    <property name="dataType">string</property>
+                </structure>
+                <structure>
+                    <property name="name">note</property>
+                    <text-property name="displayName">note</text-property>
+                    <expression name="expression" type="javascript">dataSetRow["note"]</expression>
+                    <property name="dataType">string</property>
+                </structure>
+                <structure>
+                    <property name="name">family_photo</property>
+                    <text-property name="displayName">family_photo</text-property>
+                    <expression name="expression" type="javascript">dataSetRow["family_photo"]</expression>
+                    <property name="dataType">string</property>
+                </structure>
+                <structure>
+                    <property name="name">toilet_photo</property>
+                    <text-property name="displayName">toilet_photo</text-property>
+                    <expression name="expression" type="javascript">dataSetRow["toilet_photo"]</expression>
+                    <property name="dataType">string</property>
+                </structure>
+                <structure>
+                    <property name="name">status_flag</property>
+                    <text-property name="displayName">status_flag</text-property>
+                    <expression name="expression" type="javascript">dataSetRow["status_flag"]</expression>
+                    <property name="dataType">string</property>
+                </structure>
+                <structure>
+                    <property name="name">image_flag</property>
+                    <text-property name="displayName">image_flag</text-property>
+                    <expression name="expression" type="javascript">dataSetRow["image_flag"]</expression>
+                    <property name="dataType">string</property>
+                </structure>
+            </list-property>
+            <column id="45">
+                <property name="width">5in</property>
+            </column>
+            <column id="168">
+                <property name="width">20px</property>
+            </column>
+            <column id="46">
+                <property name="width">2.583in</property>
+            </column>
+            <column id="47">
+                <property name="width">100%</property>
+            </column>
+            <row id="255">
+                <property name="backgroundColor">white</property>
+                <cell id="256">
+                    <property name="style">ImageContainer</property>
+                </cell>
+                <cell id="257">
+                    <property name="style">SectionDividerContainer</property>
+                    <property name="paddingTop">0pt</property>
+                    <property name="paddingLeft">0pt</property>
+                    <property name="paddingBottom">0pt</property>
+                    <property name="paddingRight">0pt</property>
+                </cell>
+                <cell id="258"/>
+                <cell id="259"/>
+            </row>
+            <row id="48">
+                <cell id="49">
+                    <property name="colSpan">1</property>
+                    <property name="rowSpan">24</property>
+                    <property name="style">ImageContainer</property>
+                    <image id="227">
+                        <property name="style">Images</property>
+                        <property name="height">280px</property>
+                        <list-property name="visibility">
+                            <structure>
+                                <property name="format">all</property>
+                                <expression name="valueExpr" type="javascript">(row["family_photo"]==null || row["family_photo"]=="")</expression>
+                            </structure>
+                        </list-property>
+                        <property name="source">url</property>
+                        <expression name="uri" type="javascript">vars["var_report_prefix_image_path"].concat(row["family_photo"])</expression>
+                    </image>
+                    <image id="228">
+                        <property name="style">Images</property>
+                        <property name="height">280px</property>
+                        <list-property name="visibility">
+                            <structure>
+                                <property name="format">all</property>
+                                <expression name="valueExpr" type="javascript">(row["toilet_photo"]==null || row["toilet_photo"]=="")</expression>
+                            </structure>
+                        </list-property>
+                        <property name="source">url</property>
+                        <expression name="uri" type="javascript">vars["var_report_prefix_image_path"].concat(row["toilet_photo"])</expression>
+                    </image>
+                </cell>
+                <cell id="144">
+                    <property name="colSpan">1</property>
+                    <property name="rowSpan">24</property>
+                    <property name="style">SectionDividerContainer</property>
+                    <property name="paddingTop">0pt</property>
+                    <property name="paddingLeft">0pt</property>
+                    <property name="paddingBottom">0pt</property>
+                    <property name="paddingRight">0pt</property>
+                    <image id="219">
+                        <property name="style">SectionDividerImage</property>
+                        <property name="source">url</property>
+                        <expression name="uri" type="javascript">vars["var_report_divider_image"]</expression>
+                    </image>
+                </cell>
+                <cell id="50">
+                    <property name="colSpan">2</property>
+                    <property name="rowSpan">1</property>
+                    <label id="170">
+                        <property name="style">SectionHeader</property>
+                        <text-property name="text">Slum Information</text-property>
+                    </label>
+                </cell>
+            </row>
+            <row id="52">
+                <cell id="54">
+                    <label id="174">
+                        <property name="style">SectionLabel</property>
+                        <text-property name="text">Name of Settlement</text-property>
+                    </label>
+                </cell>
+                <cell id="55">
+                    <text-data id="229">
+                        <property name="style">SectionData</property>
+                        <expression name="valueExpr">row["slum_name"]</expression>
+                        <property name="contentType">html</property>
+                    </text-data>
+                </cell>
+            </row>
+            <row id="56">
+                <cell id="58">
+                    <label id="175">
+                        <property name="style">SectionLabel</property>
+                        <text-property name="text">Settlement address</text-property>
+                    </label>
+                </cell>
+                <cell id="59">
+                    <text-data id="230">
+                        <property name="style">SectionData</property>
+                        <expression name="valueExpr">row["settlement_address"]</expression>
+                        <property name="contentType">html</property>
+                    </text-data>
+                </cell>
+            </row>
+            <row id="60">
+                <cell id="62">
+                    <label id="176">
+                        <property name="style">SectionLabel</property>
+                        <text-property name="text">House number</text-property>
+                    </label>
+                </cell>
+                <cell id="63">
+                    <text-data id="231">
+                        <property name="style">SectionData</property>
+                        <expression name="valueExpr">row["household_number"]</expression>
+                        <property name="contentType">html</property>
+                    </text-data>
+                </cell>
+            </row>
+            <row id="64">
+                <cell id="66">
+                    <property name="colSpan">2</property>
+                    <property name="rowSpan">1</property>
+                    <label id="171">
+                        <property name="style">SectionHeader</property>
+                        <text-property name="text">Family Information</text-property>
+                    </label>
+                </cell>
+            </row>
+            <row id="68">
+                <cell id="70">
+                    <label id="177">
+                        <property name="style">SectionLabel</property>
+                        <text-property name="text">Name of the family head</text-property>
+                    </label>
+                </cell>
+                <cell id="71">
+                    <text-data id="232">
+                        <property name="style">SectionData</property>
+                        <expression name="valueExpr">row["name_of_the_family_head"]</expression>
+                        <property name="contentType">html</property>
+                    </text-data>
+                </cell>
+            </row>
+            <row id="72">
+                <cell id="74">
+                    <label id="178">
+                        <property name="style">SectionLabel</property>
+                        <text-property name="text">Name of Native village, district and state</text-property>
+                    </label>
+                </cell>
+                <cell id="75">
+                    <text-data id="233">
+                        <property name="style">SectionData</property>
+                        <expression name="valueExpr">row["name_of_Native_villa_district_and_state"]</expression>
+                        <property name="contentType">html</property>
+                    </text-data>
+                </cell>
+            </row>
+            <row id="76">
+                <cell id="78">
+                    <label id="179">
+                        <property name="style">SectionLabel</property>
+                        <text-property name="text">Duration of stay in the city</text-property>
+                    </label>
+                </cell>
+                <cell id="79">
+                    <text-data id="234">
+                        <property name="style">SectionData</property>
+                        <expression name="valueExpr">row["duration_of_stay_in_the_city"]</expression>
+                        <property name="contentType">html</property>
+                    </text-data>
+                </cell>
+            </row>
+            <row id="80">
+                <cell id="82">
+                    <label id="180">
+                        <property name="style">SectionLabel</property>
+                        <text-property name="text">Duration of stay in this current settlement</text-property>
+                    </label>
+                </cell>
+                <cell id="83">
+                    <text-data id="235">
+                        <property name="style">SectionData</property>
+                        <expression name="valueExpr">row["duration_of_stay_in_current_settlement"]</expression>
+                        <property name="contentType">html</property>
+                    </text-data>
+                </cell>
+            </row>
+            <row id="84">
+                <cell id="86">
+                    <label id="181">
+                        <property name="style">SectionLabel</property>
+                        <text-property name="text">Type of house</text-property>
+                    </label>
+                </cell>
+                <cell id="87">
+                    <text-data id="236">
+                        <property name="style">SectionData</property>
+                        <expression name="valueExpr">row["type_of_house"]</expression>
+                        <property name="contentType">html</property>
+                    </text-data>
+                </cell>
+            </row>
+            <row id="88">
+                <cell id="90">
+                    <label id="182">
+                        <property name="style">SectionLabel</property>
+                        <text-property name="text">Owner or tenant</text-property>
+                    </label>
+                </cell>
+                <cell id="91">
+                    <text-data id="237">
+                        <property name="style">SectionData</property>
+                        <expression name="valueExpr">row["ownership_status"]</expression>
+                        <property name="contentType">html</property>
+                    </text-data>
+                </cell>
+            </row>
+            <row id="92">
+                <cell id="94">
+                    <property name="colSpan">2</property>
+                    <property name="rowSpan">1</property>
+                    <label id="172">
+                        <property name="style">SectionHeader</property>
+                        <text-property name="text">Family Members</text-property>
+                    </label>
+                </cell>
+            </row>
+            <row id="96">
+                <cell id="98">
+                    <label id="189">
+                        <property name="style">SectionLabel</property>
+                        <text-property name="text">Total family members</text-property>
+                    </label>
+                </cell>
+                <cell id="99">
+                    <text-data id="238">
+                        <property name="style">SectionData</property>
+                        <expression name="valueExpr">row["total_family_members"]</expression>
+                        <property name="contentType">html</property>
+                    </text-data>
+                </cell>
+            </row>
+            <row id="100">
+                <cell id="102">
+                    <label id="190">
+                        <property name="style">SectionLabel</property>
+                        <text-property name="text">Total male/ Female members</text-property>
+                    </label>
+                </cell>
+                <cell id="103">
+                    <text-data id="239">
+                        <property name="style">SectionData</property>
+                        <expression name="valueExpr">row["total_number_of_Male_and_female_members"]</expression>
+                        <property name="contentType">html</property>
+                    </text-data>
+                </cell>
+            </row>
+            <row id="104">
+                <cell id="106">
+                    <label id="191">
+                        <property name="style">SectionLabel</property>
+                        <text-property name="text">Number of children under 5 years of age</text-property>
+                    </label>
+                </cell>
+                <cell id="107">
+                    <text-data id="240">
+                        <property name="style">SectionData</property>
+                        <expression name="valueExpr">row["number_of_Children_under_5_years_of_age"]</expression>
+                        <property name="contentType">html</property>
+                    </text-data>
+                </cell>
+            </row>
+            <row id="108">
+                <cell id="110">
+                    <label id="192">
+                        <property name="style">SectionLabel</property>
+                        <text-property name="text">Number of members over 60 years of age</text-property>
+                    </label>
+                </cell>
+                <cell id="111">
+                    <text-data id="241">
+                        <property name="style">SectionData</property>
+                        <expression name="valueExpr">row["number_of_members_over_60_years_of_age"]</expression>
+                        <property name="contentType">html</property>
+                    </text-data>
+                </cell>
+            </row>
+            <row id="112">
+                <cell id="114">
+                    <label id="193">
+                        <property name="style">SectionLabel</property>
+                        <text-property name="text">Number of girl children between 0-18 yrs</text-property>
+                    </label>
+                </cell>
+                <cell id="115">
+                    <text-data id="242">
+                        <property name="style">SectionData</property>
+                        <expression name="valueExpr">row["number_of_Girl_children_between_0_18_yrs"]</expression>
+                        <property name="contentType">html</property>
+                    </text-data>
+                </cell>
+            </row>
+            <row id="116">
+                <cell id="118">
+                    <label id="194">
+                        <property name="style">SectionLabel</property>
+                        <text-property name="text">Number of disabled members</text-property>
+                    </label>
+                </cell>
+                <cell id="119">
+                    <text-data id="243">
+                        <property name="style">SectionData</property>
+                        <expression name="valueExpr">row["number_of_disabled_members"]</expression>
+                        <property name="contentType">html</property>
+                    </text-data>
+                </cell>
+            </row>
+            <row id="120">
+                <cell id="122">
+                    <label id="188">
+                        <property name="style">SectionLabel</property>
+                        <text-property name="text">If yes, specify type of disability</text-property>
+                    </label>
+                </cell>
+                <cell id="123">
+                    <text-data id="244">
+                        <property name="style">SectionData</property>
+                        <expression name="valueExpr">row["if_yes_specify_type_of_disability"]</expression>
+                        <property name="contentType">html</property>
+                    </text-data>
+                </cell>
+            </row>
+            <row id="124">
+                <cell id="126">
+                    <label id="187">
+                        <property name="style">SectionLabel</property>
+                        <text-property name="text">Occupation(s) of earning members</text-property>
+                    </label>
+                </cell>
+                <cell id="127">
+                    <text-data id="245">
+                        <property name="style">SectionData</property>
+                        <expression name="valueExpr">row["occupation_s_of_earning_members"]</expression>
+                        <property name="contentType">html</property>
+                    </text-data>
+                </cell>
+            </row>
+            <row id="128">
+                <cell id="130">
+                    <label id="186">
+                        <property name="style">SectionLabel</property>
+                        <text-property name="text">Approximate monthly family income</text-property>
+                    </label>
+                </cell>
+                <cell id="131">
+                    <text-data id="246">
+                        <property name="style">SectionData</property>
+                        <expression name="valueExpr">row["approximate_monthly_family_income"]</expression>
+                        <property name="contentType">html</property>
+                    </text-data>
+                </cell>
+            </row>
+            <row id="132">
+                <cell id="134">
+                    <label id="185">
+                        <property name="style">SectionLabel</property>
+                        <text-property name="text">Have you upgraded your toilet/bathroom/house while constructing individual toilet</text-property>
+                    </label>
+                </cell>
+                <cell id="135">
+                    <text-data id="247">
+                        <property name="style">SectionData</property>
+                        <expression name="valueExpr">row["have_you_upgraded_yo_ng_individual_toilet"]</expression>
+                        <property name="contentType">html</property>
+                    </text-data>
+                </cell>
+            </row>
+            <row id="136">
+                <cell id="138">
+                    <label id="184">
+                        <property name="style">SectionLabel</property>
+                        <text-property name="text">Cost of upgradation</text-property>
+                    </label>
+                </cell>
+                <cell id="139">
+                    <text-data id="248">
+                        <property name="style">SectionData</property>
+                        <expression name="valueExpr">row["cost_of_upgradation"]</expression>
+                        <property name="contentType">html</property>
+                    </text-data>
+                </cell>
+            </row>
+            <row id="140">
+                <cell id="142">
+                    <label id="183">
+                        <property name="style">SectionLabel</property>
+                        <text-property name="text">Note</text-property>
+                    </label>
+                </cell>
+                <cell id="143">
+                    <text-data id="249">
+                        <property name="style">SectionData</property>
+                        <expression name="valueExpr">row["note"]</expression>
+                        <property name="contentType">html</property>
+                    </text-data>
+                </cell>
+            </row>
+            <row id="260">
+                <property name="backgroundColor">white</property>
+                <cell id="261">
+                    <property name="style">ImageContainer</property>
+                </cell>
+                <cell id="262">
+                    <property name="style">SectionDividerContainer</property>
+                    <property name="paddingTop">0pt</property>
+                    <property name="paddingLeft">0pt</property>
+                    <property name="paddingBottom">0pt</property>
+                    <property name="paddingRight">0pt</property>
+                </cell>
+                <cell id="263"/>
+                <cell id="264"/>
+            </row>
+        </grid>
+    </body>
+    <property name="pageVariables">
+        <variable-element name="var_report_footer_image">
+            <expression name="value" type="javascript">"http://app.shelter-associates.org/static/images/shelter_footer.png"</expression>
+            <property name="type">report</property>
+        </variable-element>
+        <variable-element name="var_report_title">
+            <expression name="value" type="javascript">"INDIVIDUAL TOILET FACTSHEET"</expression>
+            <property name="type">report</property>
+        </variable-element>
+        <variable-element name="var_report_prefix_image_path">
+            <expression name="value" type="javascript">"https://kc.shelter-associates.org"</expression>
+            <property name="type">report</property>
+        </variable-element>
+        <variable-element name="var_report_divider_image">
+            <expression name="value" type="javascript">"http://app.shelter-associates.org/static/images/rpt_background.png";</expression>
+            <property name="type">report</property>
+        </variable-element>
+    </property>
+</report>
