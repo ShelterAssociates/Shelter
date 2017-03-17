@@ -6,7 +6,7 @@ import json
 import psycopg2
 from django.core.urlresolvers import reverse
 from django.contrib.admin.views.decorators import staff_member_required
-from django.contrib.auth.decorators import login_required
+from django.contrib.auth.decorators import login_required, user_passes_test
 from django.template import RequestContext, loader
 from django.http import HttpResponse, HttpResponseRedirect
 from django.views.generic import ListView
@@ -25,6 +25,7 @@ from master.models import Survey, CityReference, Rapid_Slum_Appraisal, \
 						  Slum, AdministrativeWard, ElectoralWard, City, \
 						  WardOfficeContact, ElectedRepresentative, drainage
 from master.forms import SurveyCreateForm, ReportForm, Rapid_Slum_AppraisalForm, DrainageForm
+from sponsor.models import SponsorProjectDetails
 
 @staff_member_required
 def index(request):
@@ -483,16 +484,26 @@ def modelList(request):
 	return HttpResponse(json.dumps(data),content_type='application/json')
 
 @csrf_exempt
+@login_required
+@user_passes_test(lambda u: u.is_superuser or u.groups.filter(name='sponsor').exists())
 def familyrportgenerate(request):
 	"""Generate RIM Report"""
 	sid = request.POST['Sid']
-	Fid = request.POST['Fid']
+	#Fid = request.POST['Fid']
 	houseno = request.POST['HouseNo']
 	SlumObj = Slum.objects.get(id=sid)
 	rp_slum_code = str(SlumObj.shelter_slum_code)
-	rp_xform_title = Fid
-	rp_household_number = houseno
-	string = settings.BIRT_REPORT_URL + "Birt/frameset?__format=pdf&__report=Family.rptdesign&rp_xform_title=" + rp_xform_title + "&rp_slum_code=" + str(rp_slum_code) +  "&rp_household_number=" + str(rp_household_number)
+
+	project_details = False
+	if not request.user.is_superuser:
+		project_details = SponsorProjectDetails.objects.filter(slum=SlumObj, sponsor__user=request.user, household_code__contains=[int(houseno)]).exists()
+	else:
+		project_details = True
+	#rp_xform_title = Fid
 	data ={}
-	data = {'string': string}
+	if project_details:
+		string = settings.BIRT_REPORT_URL + "Birt/frameset?__format=pdf&__report=FFReport.rptdesign&slum=" + str(rp_slum_code) +  "&house=" + str(houseno)
+		data = {'string': string}
+	else:
+		data = {'error':'Not authorized'}
 	return HttpResponse(json.dumps(data),content_type='application/json')

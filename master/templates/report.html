@@ -337,9 +337,13 @@ $(document).ready(function(){
         contenttype : "json",
 
         success : function(json){
-
+            if (json['string']!=undefined){
             url = json.string;
             window.open("" + url );
+          }
+          else{
+            alert(json['error']);
+          }
         }
 
     });

@@ -4,7 +4,6 @@ from django.contrib import messages
 from django.shortcuts import get_object_or_404
 from django.contrib.auth.decorators import user_passes_test
 from django.contrib.admin.views.decorators import staff_member_required
-
 from django.conf import settings
 
 from itertools import groupby
@@ -16,6 +15,7 @@ from .forms import KMLUpload
 from .kmlparser import KMLParser
 from .models import Metadata, Component
 from master.models import Slum, Rapid_Slum_Appraisal, drainage
+from sponsor.models import SponsorProjectDetails
 
 #@staff_member_required
 @user_passes_test(lambda u: u.is_superuser)
@@ -140,6 +140,9 @@ def get_kobo_FF_report_data(request, slum_id,house_num):
              output['status'] = True
          output['admin_ward'] = slum[0].electoral_ward.administrative_ward.name
          output['slum_name'] = slum[0].name
+     project_details = SponsorProjectDetails.objects.filter(slum=slum[0], household_code__contains=[int(house_num)])
+     if len(project_details)>0:
+         output['sponsor_logo'] = project_details[0].sponsor.logo.url if project_details[0].sponsor.logo else ""
      return HttpResponse(json.dumps(output),content_type='application/json')
 
 @user_passes_test(lambda u: u.is_superuser)

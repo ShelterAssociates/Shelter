@@ -1,0 +1,10 @@
+[
+  {
+    "fields": {
+      "name": "sponsor",
+      "permissions": []
+    }, 
+    "model": "auth.group",
+    "pk": 1
+  }
+]

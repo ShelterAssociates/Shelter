@@ -1,15 +1,16 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 
-from django.db import migrations, models
+from django.db import models, migrations
 import datetime
+import jsonfield.fields
 from django.conf import settings
 
 
 class Migration(migrations.Migration):
 
     dependencies = [
-        
+        ('master', '0001_initial'),
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
     ]
 
@@ -18,12 +19,13 @@ class Migration(migrations.Migration):
             name='Sponsor',
             fields=[
                 ('id', models.AutoField(verbose_name='ID', serialize=False, auto_created=True, primary_key=True)),
-                ('organization', models.CharField(max_length=200)),
+                ('organization_name', models.CharField(max_length=1024)),
                 ('address', models.CharField(max_length=2048)),
-                ('website', models.CharField(max_length=2048)),
-                ('intro_date', models.DateTimeField(default=datetime.datetime(2016, 5, 4, 14, 57, 10, 206692))),
-                ('other_info', models.CharField(max_length=2048)),
-                ('image', models.CharField(max_length=2048)),
+                ('website_link', models.CharField(max_length=2048, null=True, blank=True)),
+                ('intro_date', models.DateTimeField(default=datetime.datetime(2017, 3, 15, 18, 14, 46, 84877))),
+                ('other_info', models.TextField(null=True, blank=True)),
+                ('logo', models.ImageField(null=True, upload_to=b'sponsor_logo/', blank=True)),
+                ('user', models.ForeignKey(to=settings.AUTH_USER_MODEL)),
             ],
             options={
                 'verbose_name': 'Sponsor',
@@ -36,7 +38,7 @@ class Migration(migrations.Migration):
                 ('id', models.AutoField(verbose_name='ID', serialize=False, auto_created=True, primary_key=True)),
                 ('name', models.CharField(max_length=512)),
                 ('email_id', models.CharField(max_length=512)),
-                ('contact_no', models.CharField(max_length=256)),
+                ('contact_no', models.CharField(max_length=256, null=True, blank=True)),
                 ('status', models.CharField(max_length=2, choices=[(b'0', b'InActive'), (b'1', b'Active')])),
                 ('sponsor', models.ForeignKey(to='sponsor.Sponsor')),
             ],
@@ -50,16 +52,15 @@ class Migration(migrations.Migration):
             fields=[
                 ('id', models.AutoField(verbose_name='ID', serialize=False, auto_created=True, primary_key=True)),
                 ('name', models.CharField(max_length=512)),
-                ('type', models.IntegerField(choices=[(b'0', b'Intervention'), (b'1', b'Collection')])),
+                ('project_type', models.CharField(max_length=2, choices=[(b'1', b'Intervention'), (b'2', b'Collection')])),
                 ('funds_sponsored', models.DecimalField(max_digits=10, decimal_places=2)),
-                ('additional_info', models.CharField(max_length=2048)),
-                ('start_date', models.DateTimeField()),
-                ('end_date', models.DateTimeField()),
-                ('funds_utilised', models.DecimalField(max_digits=10, decimal_places=2)),
-                ('status', models.CharField(max_length=2, choices=[(b'0', b'Planned'), (b'1', b'Activated'), (b'2', b'Closed')])),
-                ('created_on', models.DateTimeField(default=datetime.datetime(2016, 5, 4, 14, 57, 10, 209367))),
+                ('additional_info', models.TextField(null=True, blank=True)),
+                ('start_date', models.DateTimeField(null=True, blank=True)),
+                ('end_date', models.DateTimeField(null=True, blank=True)),
+                ('funds_utilised', models.DecimalField(null=True, max_digits=10, decimal_places=2, blank=True)),
+                ('status', models.CharField(max_length=2, choices=[(b'1', b'Planned'), (b'2', b'Activated'), (b'3', b'Closed')])),
+                ('created_on', models.DateTimeField(default=datetime.datetime(2017, 3, 15, 18, 14, 46, 87019))),
                 ('created_by', models.ForeignKey(to=settings.AUTH_USER_MODEL)),
-                ('sponsor', models.ForeignKey(to='sponsor.Sponsor')),
             ],
             options={
                 'verbose_name': 'Sponsor Project',
@@ -70,13 +71,19 @@ class Migration(migrations.Migration):
             name='SponsorProjectDetails',
             fields=[
                 ('id', models.AutoField(verbose_name='ID', serialize=False, auto_created=True, primary_key=True)),
-                ('household_code', models.IntegerField()),
+                ('household_code', jsonfield.fields.JSONField(null=True, blank=True)),
                 ('slum', models.ForeignKey(to='master.Slum')),
+                ('sponsor', models.ForeignKey(to='sponsor.Sponsor')),
                 ('sponsor_project', models.ForeignKey(to='sponsor.SponsorProject')),
             ],
             options={
                 'verbose_name': 'Sponsor Project Detail',
                 'verbose_name_plural': 'Sponsor Project Details',
             },
+        ),
+        migrations.AddField(
+            model_name='sponsorproject',
+            name='project_details',
+            field=models.ManyToManyField(to='sponsor.Sponsor', through='sponsor.SponsorProjectDetails'),
         ),
     ]
