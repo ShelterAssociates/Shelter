@@ -42,7 +42,8 @@ INSTALLED_APPS = (
    'master',
    'component',
    #'Filter',
-   #'sponsor',
+   'sponsor',
+   'colorfield',
 )
 
 
