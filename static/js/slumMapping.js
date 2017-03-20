@@ -825,15 +825,16 @@ function tabularSingleGroup(single_model) {
   $("#myModal>div").removeClass("modal-lg");
 	if ( json instanceof Array) {
 		$("#myModal>div").addClass("modal-lg");
-		var largest_keys = json.sort(function(a,b){return Object.keys(b).length - Object.keys(a).length}).slice(0,1);
+		//var largest_keys = json[0];//.sort(function(a,b){return Object.keys(b).length - Object.keys(a).length}).slice(0,1);
 		var toilet_header = "<thead><tr><th>&nbsp;</th>";
 		var toilet_body = "<tbody>";
 		for (i=0; i<json.length; i++){
 			toilet_header += "<th> CTB " +(i+1) + "</th>";
 		}
 		toilet_header+= "</tr></thead>";
-		if(largest_keys.length > 0){
-			$.each(Object.keys(largest_keys[0]), function(k, v) {
+		if(json.length > 0){
+			keys_headers = Object.keys(json[0]);
+			$.each(keys_headers.slice(3, keys_headers.length-1), function(k, v) {
 				toilet_body += '<tr><td style="font-weight:bold;width:200px;">' + v + '</td>';
 
 				for (i=0; i<json.length; i++){
