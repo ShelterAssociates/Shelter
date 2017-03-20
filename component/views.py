@@ -126,7 +126,7 @@ def get_kobo_RIM_report_data(request, slum_id):
             output['image'] = True
     return HttpResponse(json.dumps(output),content_type='application/json')
 
-@user_passes_test(lambda u: u.is_superuser)
+#@user_passes_test(lambda u: u.is_superuser)
 def get_kobo_FF_report_data(request, slum_id,house_num):
      output = {"status":False}
      try:
@@ -140,12 +140,12 @@ def get_kobo_FF_report_data(request, slum_id,house_num):
              output['status'] = True
          output['admin_ward'] = slum[0].electoral_ward.administrative_ward.name
          output['slum_name'] = slum[0].name
-     project_details = SponsorProjectDetails.objects.filter(slum=slum[0], household_code__contains=[int(house_num)])
+     project_details = SponsorProjectDetails.objects.filter(slum=slum[0], household_code__contains=int(house_num))
      if len(project_details)>0:
          output['sponsor_logo'] = project_details[0].sponsor.logo.url if project_details[0].sponsor.logo else ""
      return HttpResponse(json.dumps(output),content_type='application/json')
 
-@user_passes_test(lambda u: u.is_superuser)
+#@user_passes_test(lambda u: u.is_superuser)
 def get_kobo_drainage_report_data(request, slum_id):
      output = {"status":False, "image":False}
      try:
