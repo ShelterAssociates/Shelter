@@ -164,6 +164,7 @@ def get_kobo_RIM_detail(city, slum_code, kobo_survey=''):
                             else:
                                 #For toilet repeative section append the set of questions for all the CTB's if available
                                 for ind in range(count):
+                                    output[section[data['name']]][ind][sect_form['label']] = ""
                                     if key[0] in sub[ind].keys():
                                         ans = fetch_answer(sect_form, key, sub[ind])
                                         output[section[data['name']]][ind][sect_form['label']] = ans
