@@ -164,6 +164,11 @@
                     <property name="name">image_flag</property>
                     <property name="dataType">string</property>
                 </structure>
+                <structure>
+                    <property name="position">26</property>
+                    <property name="name">sponsor_logo</property>
+                    <property name="dataType">string</property>
+                </structure>
             </list-property>
             <list-property name="columnHints">
                 <structure>
@@ -265,6 +270,10 @@
                 <structure>
                     <property name="columnName">image_flag</property>
                     <text-property name="displayName">image_flag</text-property>
+                </structure>
+                <structure>
+                    <property name="columnName">sponsor_logo</property>
+                    <text-property name="displayName">sponsor_logo</text-property>
                 </structure>
             </list-property>
             <structure name="cachedMetaData">
@@ -394,6 +403,11 @@
                         <property name="name">image_flag</property>
                         <property name="dataType">string</property>
                     </structure>
+                    <structure>
+                        <property name="position">26</property>
+                        <property name="name">sponsor_logo</property>
+                        <property name="dataType">string</property>
+                    </structure>
                 </list-property>
             </structure>
             <property name="dataSource">Shelter Data Script</property>
@@ -430,8 +444,8 @@ row_count =1;]]></method>
 	//Family Information
 	row["name_of_the_family_head"] = jsonObject["Name_of_the_family_head"];
 	row["name_of_Native_villa_district_and_state"] = jsonObject["Name_of_Native_villa_district_and_state"]
-	row["duration_of_stay_in_the_city"] = jsonObject["Duration_of_stay_in_the_city"];
-	row["duration_of_stay_in_current_settlement"] = jsonObject["Duration_of_stay_in_s_current_settlement"];
+	row["duration_of_stay_in_the_city"] = jsonObject["Duration_of_stay_in_the_city_in_Years"];
+	row["duration_of_stay_in_current_settlement"] = jsonObject["Duration_of_stay_in_settlement_in_Years"];
 	row["type_of_house"] = jsonObject["Type_of_house"];
 	row["ownership_status"] = jsonObject["Ownership_status"];
 	
@@ -444,15 +458,17 @@ row_count =1;]]></method>
 	row["number_of_disabled_members"] = jsonObject["Number_of_disabled_members"];
 	row["if_yes_specify_type_of_disability"] = jsonObject["If_yes_specify_type_of_disability"];
 	row["occupation_s_of_earning_members"] = jsonObject["Occupation_s_of_earning_membe"];
-	row["approximate_monthly_family_income"] = jsonObject["Approximate_monthly_family_income"];
+	row["approximate_monthly_family_income"] = jsonObject["Approximate_monthly_family_income_in_Rs"];
 	row["Have_you_upgraded_yo_ng_individual_toilet"] = jsonObject["Have_you_upgraded_yo_ng_individual_toilet"];
-	row["Cost_of_upgradation"] = jsonObject["Cost_of_upgradation"];
+	row["Cost_of_upgradation"] = jsonObject["Cost_of_upgradation_in_Rs"];
 	row["note"] = jsonObject["Note"];
 	
 	//images path 
 	row["family_photo"] = jsonObject["Family_Photo"];
 	row["toilet_photo"] = jsonObject["Toilet_Photo"];
 	
+	//sponsor logo path
+	row["sponsor_logo"] = jsonObject["sponsor_logo"];
 	count++;
 	return true;
 }
@@ -543,6 +559,21 @@ return false;]]></method>
         <style name="SectionData" id="254">
             <property name="fontWeight">bold</property>
         </style>
+        <style name="HeaderLogoImage" id="269">
+            <property name="paddingTop">1pt</property>
+            <property name="paddingLeft">0pt</property>
+            <property name="paddingBottom">1pt</property>
+            <property name="paddingRight">1pt</property>
+            <property name="height">0.5in</property>
+        </style>
+        <style name="HeaderLogoImageContainer" id="270">
+            <property name="paddingTop">0pt</property>
+            <property name="paddingLeft">0pt</property>
+            <property name="paddingBottom">0pt</property>
+            <property name="paddingRight">5pt</property>
+            <property name="textAlign">right</property>
+            <property name="verticalAlign">middle</property>
+        </style>
     </styles>
     <page-setup>
         <simple-master-page name="Shelter FF Report Master Page" id="2">
@@ -560,6 +591,7 @@ return false;]]></method>
                     <column id="29"/>
                     <column id="30"/>
                     <column id="31"/>
+                    <column id="267"/>
                     <row id="32">
                         <cell id="33">
                             <property name="colSpan">3</property>
@@ -569,6 +601,22 @@ return false;]]></method>
                                 <expression name="valueExpr">vars["var_report_title"]</expression>
                                 <property name="contentType">html</property>
                             </text-data>
+                        </cell>
+                        <cell id="265">
+                            <property name="colSpan">1</property>
+                            <property name="rowSpan">2</property>
+                            <property name="style">HeaderLogoImageContainer</property>
+                            <image id="268">
+                                <property name="style">HeaderLogoImage</property>
+                                <list-property name="visibility">
+                                    <structure>
+                                        <property name="format">all</property>
+                                        <expression name="valueExpr" type="javascript">(row["sponsor_logo"]==null || row["sponsor_logo"]=="")</expression>
+                                    </structure>
+                                </list-property>
+                                <property name="source">url</property>
+                                <expression name="uri" type="javascript">vars["var_report_prefix_sponsor_logo"].concat(row["sponsor_logo"])</expression>
+                            </image>
                         </cell>
                     </row>
                     <row id="36">
@@ -595,9 +643,11 @@ return false;]]></method>
                     <column id="5">
                         <property name="width">3.219in</property>
                     </column>
-                    <column id="6"/>
+                    <column id="6">
+                        <property name="width">100%</property>
+                    </column>
                     <column id="7">
-                        <property name="width">2.9583333333333335in</property>
+                        <property name="width">2.6in</property>
                     </column>
                     <row id="8">
                         <property name="height">0.21875in</property>
@@ -619,9 +669,12 @@ return false;]]></method>
                         <cell id="11">
                             <property name="colSpan">1</property>
                             <property name="rowSpan">3</property>
+                            <property name="paddingBottom">2pt</property>
+                            <property name="paddingRight">5pt</property>
+                            <property name="textAlign">right</property>
                             <image id="21">
-                                <property name="marginLeft">10pt</property>
-                                <property name="height">60px</property>
+                                <property name="marginLeft">0pt</property>
+                                <property name="height">0.55in</property>
                                 <property name="width">229px</property>
                                 <property name="source">url</property>
                                 <expression name="uri" type="javascript">vars["var_report_footer_image"]</expression>
@@ -822,6 +875,12 @@ return false;]]></method>
                     <property name="name">image_flag</property>
                     <text-property name="displayName">image_flag</text-property>
                     <expression name="expression" type="javascript">dataSetRow["image_flag"]</expression>
+                    <property name="dataType">string</property>
+                </structure>
+                <structure>
+                    <property name="name">sponsor_logo</property>
+                    <text-property name="displayName">sponsor_logo</text-property>
+                    <expression name="expression" type="javascript">dataSetRow["sponsor_logo"]</expression>
                     <property name="dataType">string</property>
                 </structure>
             </list-property>
@@ -1272,6 +1331,10 @@ return false;]]></method>
         </variable-element>
         <variable-element name="var_report_divider_image">
             <expression name="value" type="javascript">"http://app.shelter-associates.org/static/images/rpt_background.png";</expression>
+            <property name="type">report</property>
+        </variable-element>
+        <variable-element name="var_report_prefix_sponsor_logo">
+            <expression name="value" type="javascript">"http://app.shelter-associates.org"</expression>
             <property name="type">report</property>
         </variable-element>
     </property>
