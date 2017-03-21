@@ -459,8 +459,8 @@ row_count =1;]]></method>
 	row["if_yes_specify_type_of_disability"] = jsonObject["If_yes_specify_type_of_disability"];
 	row["occupation_s_of_earning_members"] = jsonObject["Occupation_s_of_earning_membe"];
 	row["approximate_monthly_family_income"] = jsonObject["Approximate_monthly_family_income_in_Rs"];
-	row["Have_you_upgraded_yo_ng_individual_toilet"] = jsonObject["Have_you_upgraded_yo_ng_individual_toilet"];
-	row["Cost_of_upgradation"] = jsonObject["Cost_of_upgradation_in_Rs"];
+	row["have_you_upgraded_yo_ng_individual_toilet"] = jsonObject["Have_you_upgraded_yo_ng_individual_toilet"];
+	row["cost_of_upgradation"] = jsonObject["Cost_of_upgradation_in_Rs"];
 	row["note"] = jsonObject["Note"];
 	
 	//images path 
@@ -713,7 +713,7 @@ return false;]]></method>
                     <expression name="valueExpr" type="javascript">row["status_flag"].toString() == "true";</expression>
                 </structure>
             </list-property>
-            <expression name="valueExpr">"No Data Found for The Family Factsheet"</expression>
+            <expression name="valueExpr">"No data found for the Family Factsheet"</expression>
             <property name="contentType">html</property>
         </text-data>
         <grid name="Family Factsheet Data" id="44">
@@ -1262,7 +1262,7 @@ return false;]]></method>
                     </label>
                 </cell>
                 <cell id="135">
-                    <text-data id="247">
+                    <text-data id="271">
                         <property name="style">SectionData</property>
                         <expression name="valueExpr">row["have_you_upgraded_yo_ng_individual_toilet"]</expression>
                         <property name="contentType">html</property>
