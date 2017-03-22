@@ -150,6 +150,28 @@ function factsheet_click(obj){
 			}
 		});
 }
+function familyfactsheet_click(slum, house){
+	$(".overlay").show();
+	$.ajax({
+	url : '/admin/familyrportgenerate/',
+	data : { Sid : slum, HouseNo : house},
+	type: "POST",
+	contenttype : "json",
+	success : function(json){
+		  $(".overlay").hide();
+			if (json['string']!=undefined){
+			url = json.string;
+			window.open("" + url );
+		}
+		else{
+			alert(json['error']);
+		}
+	},
+	error:function(){
+		$(".overlay").hide();
+	}
+});
+}
 function latlongformat(ShapeValue, shapename, bgcolor, bordercolor, flag=true) {
 
 	var PolygonPoints = [];
@@ -598,7 +620,7 @@ function viewcompo(dvalue) {
 			var chklinewidth = v1['blob']['linewidth'];
 
 			chkdata[k1] = {}
-			str += '<div name="div_group" >' + '&nbsp;&nbsp;&nbsp;' + '<input name="chk1" style="background-color:' + chkcolor + '; -webkit-appearance: none; border: 1px solid black; height: 1.2em; width: 1.2em;" selection="' + k + '" component_type="' + v1['type'] + '" type="checkbox" value="' + k1 + '" onclick="checkSingleGroup(this);" >' + '<a>&nbsp;' + k1 + '</a>&nbsp;(' + v1['count'] + ')' + '</input>' + '</div>'
+			str += '<div name="div_group" >' + '&nbsp;&nbsp;&nbsp;' + '<input name="chk1" style="background-color:' + chkcolor + '; -webkit-appearance: none; border: 1px solid black; height: 1.2em; width: 1.2em;" selection="' + k + '" component_type="' + v1['type'] + '" type="checkbox" value="' + k1 + '" onclick="checkSingleGroup(this);" >' + '<a>&nbsp;' + k1 + '</a>&nbsp;(' + v1['child'].length + ')' + '</input>' + '</div>'
 			if (v1['type'] == 'C') {
 				$.each(v1['child'], function(k2, v2) {
 
@@ -685,7 +707,17 @@ function viewcompo(dvalue) {
 								success : function(json) {
 		  						var spstr = "";
 									spstr += '<table class="table table-striped" style="font-size: 10px;"><tbody>';
-									//spstr += '<tr><td colspan="2"><a href="/media/report/' + k4 + '_'+arr[3].replace(/ /g,"_").replace(/,/g,"")+'.pdf" style="cursor:pointer;color:darkred;" target="blank">View Factsheet</a></td></tr>';
+									if(json['FFReport']){
+										flag = false;
+										$("a[name=chk_group]:contains('Sponsor')").parent().find('input[type=checkbox]').slice(1).each(function(ind, chk){
+												if($(chk).is(":checked")){
+														flag=true;
+													}
+										});
+										if (flag){
+									  	spstr += '<tr><td colspan="2"><a href="javascript:familyfactsheet_click('+global_slum_id+', '+v2["housenumber"]+')" style="cursor:pointer;color:darkred;">View Factsheet</a></td></tr>';
+										}
+								  }
 									var flag = false;
 									$.each(json, function(k, v) {
 										flag = true;
