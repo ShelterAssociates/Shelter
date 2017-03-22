@@ -14,6 +14,7 @@ LEVEL_CHOICES  = (
 META_TYPE_CHOICES = (
         ('C', 'Component'),
         ('F', 'Filter'),
+        ('S', 'Sponsor'),
     )
 class Section(models.Model):
     """Section data"""

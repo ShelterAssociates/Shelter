@@ -43,6 +43,8 @@ def kml_upload(request):
 #@user_passes_test(lambda u: u.is_superuser)
 def get_component(request, slum_id):
     slum = get_object_or_404(Slum, pk=slum_id)
+    sponsors = request.user.sponsor_set.all().values_list('id',flat=True)
+
     metadata = Metadata.objects.filter(visible=True).order_by('section__order','order')
     rhs_analysis = {}
     try:
@@ -54,6 +56,7 @@ def get_component(request, slum_id):
         pass
 
     lstcomponent = []
+    sponsor_houses = [00]
     for metad in metadata:
         component = {}
         component['name'] = metad.name
@@ -67,17 +70,24 @@ def get_component(request, slum_id):
         if metad.type == 'C':
             for comp in metad.component_set.filter(slum=slum):
                 component['child'].append({'housenumber':comp.housenumber, 'shape':json.loads(comp.shape.json)})
-        elif metad.type == 'F':
-            if metad.code != "":
-                field = metad.code.split(':')
-                if field[0] in rhs_analysis and field[1] in rhs_analysis[field[0]]:
-                    component['child'] = rhs_analysis[field[0]][field[1]]
+        elif metad.type == 'F' and metad.code != "":
+            field = metad.code.split(':')
+            if field[0] in rhs_analysis and field[1] in rhs_analysis[field[0]]:
+                component['child'] = rhs_analysis[field[0]][field[1]]
+        elif metad.type == 'S':
+            if  metad.code!= "":
+                sponsor_households = []
+                sponsor_households = SponsorProjectDetails.objects.filter(slum = slum, sponsor__id = int(metad.code)).values_list('household_code', flat=True)
+                sponsor_households = sum([json.loads(house) for house in list(sponsor_households)], [])
+                sponsor_houses.extend(sponsor_households)
+                if request.user.is_superuser or int(metad.code) in sponsors:
+                    component['child'] = sponsor_households
             else:
-                if slum_id + '_'+ metad.name in settings.SPONSOR:
-                    component['child'] = settings.SPONSOR[slum_id + '_' + metad.name]
+                component['child'] = sponsor_houses
         if len(component['child']) > 0:
             component['count']=len(component['child'])
             lstcomponent.append(component)
+    sponsor_houses = sponsor_houses.pop(0)
     #lstcomponent = sorted(lstcomponent, key=lambda x:x['section_order'])
     dtcomponent = OrderedDict()
     for key, comp in  groupby(lstcomponent, key=lambda x:x['section']):
@@ -87,13 +97,19 @@ def get_component(request, slum_id):
             dtcomponent[key][c['name']] = c
     return HttpResponse(json.dumps(dtcomponent),content_type='application/json')
 
-@user_passes_test(lambda u: u.is_superuser)
+@user_passes_test(lambda u: u.is_superuser or u.groups.filter(name='sponsor').exists(), login_url='/admin/')
 def get_kobo_RHS_data(request, slum_id,house_num):
      slum = get_object_or_404(Slum, pk=slum_id)
+     project_details = False
+     if request.user.is_superuser:
+         project_details = True
+     elif request.user.groups.filter(name='sponsor').exists():
+         project_details = SponsorProjectDetails.objects.filter(slum=slum, sponsor__user=request.user, household_code__contains=int(house_num)).exists()
      output = get_kobo_RHS_list(slum.electoral_ward.administrative_ward.city.id, slum.shelter_slum_code, house_num)
      if 'admin_ward' in output:
          output['admin_ward'] = slum.electoral_ward.administrative_ward.name
          output['slum_name'] = slum.name
+     output['FFReport'] = project_details
      return HttpResponse(json.dumps(output),content_type='application/json')
 
 #@user_passes_test(lambda u: u.is_superuser)
@@ -140,6 +156,7 @@ def get_kobo_FF_report_data(request, slum_id,house_num):
              output['status'] = True
          output['admin_ward'] = slum[0].electoral_ward.administrative_ward.name
          output['slum_name'] = slum[0].name
+         output['Household_number'] = house_num
      project_details = SponsorProjectDetails.objects.filter(slum=slum[0], household_code__contains=int(house_num))
      if len(project_details)>0:
          output['sponsor_logo'] = project_details[0].sponsor.logo.url if project_details[0].sponsor.logo else ""
