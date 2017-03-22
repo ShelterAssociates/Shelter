@@ -43,8 +43,9 @@ def kml_upload(request):
 #@user_passes_test(lambda u: u.is_superuser)
 def get_component(request, slum_id):
     slum = get_object_or_404(Slum, pk=slum_id)
-    sponsors = request.user.sponsor_set.all().values_list('id',flat=True)
-
+    sponsors=[]
+    if not request.user.is_anonymous():
+       sponsors = request.user.sponsor_set.all().values_list('id',flat=True)
     metadata = Metadata.objects.filter(visible=True).order_by('section__order','order')
     rhs_analysis = {}
     try:
@@ -74,11 +75,12 @@ def get_component(request, slum_id):
             field = metad.code.split(':')
             if field[0] in rhs_analysis and field[1] in rhs_analysis[field[0]]:
                 component['child'] = rhs_analysis[field[0]][field[1]]
-        elif metad.type == 'S':
+        elif metad.type == 'S' and not request.user.is_anonymous():
             if  metad.code!= "":
                 sponsor_households = []
                 sponsor_households = SponsorProjectDetails.objects.filter(slum = slum, sponsor__id = int(metad.code)).values_list('household_code', flat=True)
-                sponsor_households = sum([json.loads(house) for house in list(sponsor_households)], [])
+                if len(sponsor_households)>0:
+                   sponsor_households = sum(list(sponsor_households), [])
                 sponsor_houses.extend(sponsor_households)
                 if request.user.is_superuser or int(metad.code) in sponsors:
                     component['child'] = sponsor_households
