@@ -451,7 +451,7 @@ row_count =1;]]></method>
 	
 	//Family Member
 	row["total_family_members"] = jsonObject["Total_family_members"];
-	row["total_number_of_Male_and_female_members"] = jsonObject["Number_of_Male_members"] + jsonObject["Number_of_Female_members"];
+	row["total_number_of_Male_and_female_members"] = jsonObject["Number_of_Male_members"] + ' / ' + jsonObject["Number_of_Female_members"];
 	row["number_of_Children_under_5_years_of_age"] = jsonObject["Number_of_Children_under_5_years_of_age"];
 	row["number_of_members_over_60_years_of_age"] = jsonObject["Number_of_members_over_60_years_of_age"];
 	row["number_of_Girl_children_between_0_18_yrs"] = jsonObject["Number_of_Girl_children_between_0_18_yrs"];
