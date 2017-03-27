@@ -6,22 +6,9 @@
     <property name="bidiLayoutOrientation">ltr</property>
     <property name="imageDPI">96</property>
     <parameters>
-        <scalar-parameter name="slum" id="225">
-            <text-property name="helpText">Slum Code</text-property>
-            <text-property name="promptText">Enter slum code</text-property>
-            <property name="valueType">static</property>
-            <property name="dataType">string</property>
-            <property name="distinct">true</property>
-            <list-property name="selectionList"/>
-            <property name="paramType">simple</property>
-            <property name="controlType">text-box</property>
-            <structure name="format">
-                <property name="category">Unformatted</property>
-            </structure>
-        </scalar-parameter>
-        <scalar-parameter name="house" id="226">
-            <text-property name="helpText">Household number</text-property>
-            <text-property name="promptText">Enter house number</text-property>
+        <scalar-parameter name="key" id="272">
+            <text-property name="helpText">Required Key</text-property>
+            <text-property name="promptText">Enter Key</text-property>
             <property name="valueType">static</property>
             <property name="dataType">string</property>
             <property name="distinct">true</property>
@@ -414,7 +401,7 @@
             <method name="open"><![CDATA[importPackage(Packages.java.io);
 importPackage(Packages.java.net);
 
-var inStream = new URL("http://app.shelter-associates.org/component/get_kobo_FF_report_data/"+params["slum"].value+"/"+params["house"].value).openStream();
+var inStream = new URL("http://app.shelter-associates.org/component/get_kobo_FF_report_data/"+params["key"].value).openStream();
 
 var inStreamReader = new InputStreamReader(inStream);
 
