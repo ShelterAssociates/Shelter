@@ -296,7 +296,7 @@ def fetch_answer(sect_form, key, submission):
             #val = reduce(lambda x,y: options[x] +',' + options[y], sub_option)
     elif 'photo' in sect_form['type']:
         photos = submission['_attachments']
-        val = [photo['download_url'] for photo in photos if submission[key[0]] in photo['download_url']]
+        val = [photo['download_url'] for photo in photos if submission[key[0]] in photo['filename']]
         if val and len(val)>0:
             val = val[0]
     else:
