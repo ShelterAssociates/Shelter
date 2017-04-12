@@ -5,6 +5,7 @@ from django.shortcuts import get_object_or_404
 from django.contrib.auth.decorators import user_passes_test
 from django.contrib.admin.views.decorators import staff_member_required
 from django.conf import settings
+from django.contrib.auth.models import User
 
 from itertools import groupby
 import json
@@ -14,6 +15,7 @@ from kobotoolbox import *
 from .forms import KMLUpload
 from .kmlparser import KMLParser
 from .models import Metadata, Component
+from .cipher import *
 from master.models import Slum, Rapid_Slum_Appraisal, drainage
 from sponsor.models import SponsorProjectDetails
 
@@ -103,9 +105,10 @@ def get_kobo_RHS_data(request, slum_id,house_num):
      project_details = False
      if request.user.is_superuser:
          project_details = True
+         output = get_kobo_RHS_list(slum.electoral_ward.administrative_ward.city.id, slum.shelter_slum_code, house_num)
      elif request.user.groups.filter(name='sponsor').exists():
          project_details = SponsorProjectDetails.objects.filter(slum=slum, sponsor__user=request.user, household_code__contains=int(house_num)).exists()
-     output = get_kobo_RHS_list(slum.electoral_ward.administrative_ward.city.id, slum.shelter_slum_code, house_num)
+
      if 'admin_ward' in output:
          output['admin_ward'] = slum.electoral_ward.administrative_ward.name
          output['slum_name'] = slum.name
@@ -143,13 +146,21 @@ def get_kobo_RIM_report_data(request, slum_id):
     return HttpResponse(json.dumps(output),content_type='application/json')
 
 #@user_passes_test(lambda u: u.is_superuser)
-def get_kobo_FF_report_data(request, slum_id,house_num):
+def get_kobo_FF_report_data(request, key):
      output = {"status":False}
+     cipher = AESCipher()
+     slum, user = None, None
      try:
+         (slum_id, house_num, user_id) = cipher.decrypt(key).split('|')
          slum = Slum.objects.filter(shelter_slum_code=slum_id)
+         user = User.objects.get(id=user_id)
      except:
-         slum = None
-     if slum and len(slum)>0:
+         user = None
+     if user and (user.is_superuser or user.groups.filter(name="sponsor").exists()) and slum and len(slum)>0:
+         filter_data ={"slum":slum[0], "household_code__contains":int(house_num)}
+         if user.groups.filter(name="sponsor").exists():
+             filter_data["sponsor__user"] = user
+         project_details = SponsorProjectDetails.objects.filter(**filter_data)
          output = get_kobo_FF_report_detail(slum[0].electoral_ward.administrative_ward.city.id, slum[0].shelter_slum_code, house_num)
          output["status"] = False
          if len(output.keys()) > 1:
@@ -157,9 +168,9 @@ def get_kobo_FF_report_data(request, slum_id,house_num):
          output['admin_ward'] = slum[0].electoral_ward.administrative_ward.name
          output['slum_name'] = slum[0].name
          output['Household_number'] = house_num
-     project_details = SponsorProjectDetails.objects.filter(slum=slum[0], household_code__contains=int(house_num))
-     if len(project_details)>0:
-         output['sponsor_logo'] = project_details[0].sponsor.logo.url if project_details[0].sponsor.logo else ""
+
+         if len(project_details)>0:
+             output['sponsor_logo'] = project_details[0].sponsor.logo.url if project_details[0].sponsor.logo else ""
      return HttpResponse(json.dumps(output),content_type='application/json')
 
 #@user_passes_test(lambda u: u.is_superuser)
