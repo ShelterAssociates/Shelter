@@ -25,7 +25,7 @@ from master.views import index, SurveyListView, SurveyCreateView, \
     vulnerabilityreport,formList,slummapdisplay,slummap,citymapdisplay, \
     modelmapdisplay, drainageinsert, sluminformation, drainagedisplay , \
     drainageedit, cityList, drainagereportgenerate, modelList, \
-    familyrportgenerate
+    familyrportgenerate, user_login
 
 from django.conf import settings
 from django.conf.urls.static import static
@@ -64,4 +64,6 @@ urlpatterns = [
     url(r'^modelList/$', modelList, name='modelList'),
     url(r'^familyrportgenerate/$', familyrportgenerate, name='familyrportgenerate'),
    # url(r'^slummap/component/fetchcomponents', include('component.urls')),
+    url(r'^user_login/$',user_login, name='user_login'),
+   
 ]
