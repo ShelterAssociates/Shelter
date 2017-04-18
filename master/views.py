@@ -26,6 +26,7 @@ from master.models import Survey, CityReference, Rapid_Slum_Appraisal, \
 						  WardOfficeContact, ElectedRepresentative, drainage
 from master.forms import SurveyCreateForm, ReportForm, Rapid_Slum_AppraisalForm, DrainageForm
 from sponsor.models import SponsorProjectDetails
+from component.cipher import *
 
 @staff_member_required
 def index(request):
@@ -502,7 +503,9 @@ def familyrportgenerate(request):
 	#rp_xform_title = Fid
 	data ={}
 	if project_details:
-		string = settings.BIRT_REPORT_URL + "Birt/frameset?__format=pdf&__report=FFReport.rptdesign&slum=" + str(rp_slum_code) +  "&house=" + str(houseno)
+		cipher = AESCipher()
+		key = cipher.encrypt(str(rp_slum_code) + '|' + str(houseno) + '|' +  str(request.user.id))
+		string = settings.BIRT_REPORT_URL + "Birt/frameset?__format=pdf&__report=FFReport.rptdesign&key=" + key
 		data = {'string': string}
 	else:
 		data = {'error':'Not authorized'}
