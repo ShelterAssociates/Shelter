@@ -1,0 +1,5 @@
+dicttoxml==1.7.4
+openpyxl==2.4.1
+psycopg2==2.6.2
+requests==2.12.4
+xlrd==1.0.0
