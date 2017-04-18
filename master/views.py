@@ -240,7 +240,7 @@ def drainagereportgenerate(request):
 	SlumObj = Slum.objects.get(id=sid)
 	rp_slum_code = str(SlumObj.shelter_slum_code)
 	rp_xform_title = Fid
-	string = settings.BIRT_REPORT_URL + "Birt/frameset?__format=pdf&__report=Drainage.rptdesign&rp_xform_title=" + rp_xform_title + "&rp_slum_code=" + str(rp_slum_code)
+	string = settings.BIRT_REPORT_URL + "Birt/frameset?__format=pdf&__report=Drainage.rptdesign&slum=" + str(rp_slum_code)
 	data ={}
 	data = {'string': string}
 	return HttpResponse(json.dumps(data),content_type='application/json')
