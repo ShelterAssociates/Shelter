@@ -16,39 +16,39 @@
 function cityList(){
 
     var url = "{% url 'cityList' %}";
-    
+
     $.ajax({
 
         url : url,
-        
+
         //data : {},
-        
+
         type: "GET",
-        
+
         contenttype : "json",
 
-        success : function(json){           
-        
+        success : function(json){
+
               var str='<option value="';
               str = str +"0" +'"'+'>' + "---select---" + '</option>';
               $('#id_City').append(str);
 
-        
-            for (i = 0; i < json.nameArray.length; i++){ 
+
+            for (i = 0; i < json.nameArray.length; i++){
                 var str='<option value="';
                 str = str +json.idArray[i] +'"'+'>' + json.nameArray[i] + '</option>';
                 $('#id_City').append(str);
             }
 
-            slumid=$('#id_slum_name').val();  
+            slumid=$('#id_slum_name').val();
     		if(slumid)
     		{
-        		filllist();    
+        		filllist();
 
     		}
 
         },
-        
+
         sync:false
 
     });
@@ -58,35 +58,35 @@ function cityList(){
 function administrativewardList(){
 
     $('#id_AdministrativeWard').empty();
-   
+
     var cityname = $("#id_City option:selected").text();
 
     var id = $("#id_City option:selected").val();
 
     var url = "{% url 'administrativewardList' %}";
-    
+
     $.ajax({
 
         url : url,
-        
+
         data : { id : id},
-        
+
         type: "POST",
-        
+
         contenttype : "json",
 
-        success : function(json){           
-        
+        success : function(json){
+
               var str='<option value="';
               str = str +"0" +'"'+'>' + "---select---" + '</option>';
               $('#id_AdministrativeWard').append(str);
 
-        
-        for (i = 0; i < json.nameArray.length; i++){ 
+
+        for (i = 0; i < json.nameArray.length; i++){
                 var str='<option value="';
                 str = str +json.idArray[i] +'"'+'>' + json.nameArray[i] + '</option>';
                 $('#id_AdministrativeWard').append(str);
-            }            
+            }
 
         },
 
@@ -101,37 +101,37 @@ function administrativewardList(){
 function electoralWardList(){
 
     $('#id_ElectoralWard').empty();
-  
+
     var Administrativewardname = $("#id_AdministrativeWard option:selected").text();
 
     var id = $("#id_AdministrativeWard option:selected").val();
 
     var url = "{% url 'electoralWardList' %}";
-    
+
 
     $.ajax({
 
         url : url,
-        
+
         data : { id : id},
-        
+
         type: "POST",
-        
+
         contenttype : "json",
 
-        success : function(json){  
+        success : function(json){
 
 
             var str='<option value="';
               str = str +"0" +'"'+'>' + "---select---" + '</option>';
             $('#id_ElectoralWard').append(str);
 
-        
-        for (i = 0; i < json.nameArray.length; i++) { 
+
+        for (i = 0; i < json.nameArray.length; i++) {
             var str='<option value="';
             str = str +json.idArray[i] +'"'+'>' + json.nameArray[i] + '</option>';
             $('#id_ElectoralWard').append(str);
-     
+
 
         }
 
@@ -142,9 +142,9 @@ function electoralWardList(){
 
 }
 function slumList(){
-    
+
    $('#id_slum_name').empty();
-      
+
     var Administrativewardname = $("#id_ElectoralWard option:selected").text();
     var id = $("#id_ElectoralWard option:selected").val();
 
@@ -152,26 +152,26 @@ function slumList(){
     $.ajax({
 
         url : url,
-        
+
         data : { id : id},
-        
+
         type: "POST",
-        
+
         contenttype : "json",
 
- 
-        success : function(json){  
+
+        success : function(json){
           var str='<option value="';
           str = str +"0" +'"'+'>' + "---select---" + '</option>';
           $('#id_slum_name').append(str);
-              
-   
-        
-        for (i = 0; i < json.nameArray.length; i++) { 
+
+
+
+        for (i = 0; i < json.nameArray.length; i++) {
             var str='<option value="';
             str = str +json.idArray[i] +'"'+'>' + json.nameArray[i] + '</option>';
             $('#id_slum_name').append(str);
-     
+
             }
 
         },
@@ -187,9 +187,9 @@ function slumList(){
 function filllist(){
 
     var id = $('#id_slum_name').val();
-    
+
     var url = "{% url 'modelList' %}";
-    
+
     $.ajax({
         url : url,
         data : { id : id },
@@ -200,28 +200,28 @@ function filllist(){
 
            var a=json.cid;
            $("#id_City option[value='"+json.cid+"']").attr("selected", "selected");
-           
+
             administrativewardList();
 
             $("#id_AdministrativeWard option:selected").val(json.aid);
             $("#id_AdministrativeWard option:selected").text(json.aname);
 
-            electoralWardList(); 
+            electoralWardList();
 
             $("id_ElectoralWard option[value='"+json.eid+"']").attr("selected", "selected");
-           
+
             $("#id_ElectoralWard option:selected").val(json.eid);
             $("#id_ElectoralWard option:selected").text(json.ename);
 
              slumList();
-    
+
             $("#id_slum_name option:selected").val(json.sid);
             $("#id_slum_name option:selected").text(json.sname);
 
-          
+
         },
 
-        async:false   
+        async:false
     });
 }
 
@@ -234,7 +234,7 @@ $(document).ready(function(){
    	$("#ElectoralWards").hide();
     $("#Slums").hide();
 
-	slumid=$('#id_slum_name').val();  
+	slumid=$('#id_slum_name').val();
     if(slumid)
     {
        $("#AdministrativeWards").show();
@@ -243,7 +243,7 @@ $(document).ready(function(){
     }
 
     cityList();
-    
+
      $("#id_City").on('change',function()
     {
         $("#AdministrativeWards").show();
@@ -256,17 +256,17 @@ $(document).ready(function(){
     {
         $("#ElectoralWards").show();
         $("#Slums").hide();
-        electoralWardList();   
+        electoralWardList();
 
     });
 
     $("#id_ElectoralWard").on('change',function()
     {
         $("#Slums").show();
-         slumList();        
+         slumList();
     });
 
-}); 
+});
 
 
 </script>
@@ -302,13 +302,13 @@ $(document).ready(function(){
                         </div>
                         <div class="col-md-6">
                             <select id="id_City">
-                                
+
                             </select>
                         </div>
                     </div>
 
 
-              
+
 
                 <div class="row" id='AdministrativeWards' style="margin-bottom: 20px">
                         <div class ="col-md-5">
@@ -316,7 +316,7 @@ $(document).ready(function(){
                         </div>
                         <div class="col-md-6">
                             <select id="id_AdministrativeWard">
-                                
+
                             </select>
                         </div>
                     </div>
@@ -329,7 +329,7 @@ $(document).ready(function(){
                         </div>
                         <div class="col-md-6">
                             <select id="id_ElectoralWard">
-                                
+
                             </select>
                         </div>
                     </div>
@@ -348,14 +348,14 @@ $(document).ready(function(){
 					</div>
 
 					<div class="row">
-						
+
 							{{ form.slum_name.errors }}
-			
+
 					</div>
 				</div>
-				
+
 				<br>
-				
+
 				<!-- General Information -->
 				<div class="row">
 					<div class ="col-md-6" style = "font-size: 150%";>
@@ -363,22 +363,22 @@ $(document).ready(function(){
 					</div>
 				</div>
 
-				
+
 				<div id="rcorners2" style="width:100%;">
 				<div>
 					<div class="row" >
 						<div class="col-md-3">
 							<label for="id_approximate_population"> Approximate population </label>
 						</div>
-					
+
 						<div class="col-md-3">
 							{{ form.approximate_population }}
 						</div>
-					
+
 						<div class="col-md-3">
 							<label for="general_info_left_image">General info left image </label>
 						</div>
-					
+
 						<div class="col-md-3">
 							{{form.general_info_left_image }}
 						</div>
@@ -397,15 +397,15 @@ $(document).ready(function(){
 						</div>
 
 				</div>
-				
+
 				<br>
-				
+
 				<div class ="row">
 
 						<div class="col-md-3">
 							<label for="general_image_bottomdown1"> General image bottomdown1</label>
 						</div>
-						
+
 
 						<div class="col-md-3">
 							{{form.general_image_bottomdown1 }}
@@ -414,7 +414,7 @@ $(document).ready(function(){
 						<div class="col-md-3">
 							<label for="general_image_bottomdown2"> General image bottomdown2</label>
 						</div>
-						
+
 						<div class="col-md-3">
 							{{form.general_image_bottomdown2 }}
 						</div>
@@ -432,7 +432,7 @@ $(document).ready(function(){
 
 
 			</div>
-				
+
 				<br>
 				<!-- Toilet Information -->
 				<div class="row">
@@ -446,7 +446,7 @@ $(document).ready(function(){
 						<div class="col-md-3">
 							<label for="id_toilet_cost">Toilet cost </label>
 						</div>
-						
+
 						<div class="col-md-3">
 							{{ form.toilet_cost }}
 						</div>
@@ -468,7 +468,7 @@ $(document).ready(function(){
 							{{ form.toilet_seat_to_persons_ratio.errors }}
 						</div>
 					</div>
-					
+
 					<br>
 					<br>
 
@@ -476,10 +476,10 @@ $(document).ready(function(){
 						<div class="col-md-3">
 							<label for="toilet_info_left_image">Toilet info left image</label>
 						</div>
-									
+
 						<div class="col-md-3">
 							{{form.toilet_info_left_image }}
-						</div>						
+						</div>
 
 						<div class="col-md-3">
 							<label for="toilet_image_bottomdown1">Toilet image bottomdown1</label>
@@ -513,7 +513,7 @@ $(document).ready(function(){
 							{{form.toilet_image_bottomdown2 }}
 						</div>
 					</div>
-				
+
 					<div class="row">
 						<div class="col-md-6">
 							{{ form.toilet_image_bottomdown2.errors }}
@@ -541,7 +541,7 @@ $(document).ready(function(){
 						<div class="col-md-3">
 							{{ form.percentage_with_an_individual_water_connection }}
 						</div>
-					
+
 						<div class="col-md-3">
 							<label for="water_info_left_image">Water info left image</label>
 						</div>
@@ -552,7 +552,7 @@ $(document).ready(function(){
 					</div>
 
 				<br>
-				<br>	
+				<br>
 
 				<div class="row">
 						<div class="col-md-6">
@@ -569,15 +569,15 @@ $(document).ready(function(){
 					<div class="col-md-3">
 							<label for="water_image_bottomdown1">Water image bottomdown1</label>
 					</div>
-					
-					
+
+
 					<div class="col-md-3">
 							{{form.water_image_bottomdown1 }}
 						</div>
 
 					<div class="col-md-3">
 							<label for="water_image_bottomdown2">Water image bottomdown2</label>
-					</div>	
+					</div>
 					<div class="col-md-3">
 							{{form.water_image_bottomdown2 }}
 						</div>
@@ -592,7 +592,7 @@ $(document).ready(function(){
 						</div>
 					</div>
 				</div>
-				
+
 				<br>
 				<br>
 
@@ -611,14 +611,14 @@ $(document).ready(function(){
 						<div class="col-md-3">
 							<label for="roads_and_access_info_left_image">Roads and access info left image</label>
 						</div>
-					
+
 						<div class="col-md-3">
 							{{form.roads_and_access_info_left_image }}
 						</div>
 
 						<div class="col-md-3">
 							<label for="roads_image_bottomdown1">Roads image bottomdown1</label>
-							
+
 						</div>
 
 						<div class="col-md-3">
@@ -642,7 +642,7 @@ $(document).ready(function(){
 						<div class="col-md-3">
 							<label for="roads_image_bottomdown2">Roads image bottomdown2</label>
 						</div>
-					
+
 						<div class="col-md-3">
 							{{form.road_image_bottomdown2 }}
 						</div>
@@ -653,7 +653,7 @@ $(document).ready(function(){
 							{{ form.road_image_bottomdown2.errors }}
 						</div>
 					</div>
-			
+
 					<br>
 					<br>
 			</div>
@@ -665,14 +665,14 @@ $(document).ready(function(){
 						<label for="gutter_Information"> Drainage Information : </label>
 					</div>
 				</div>
-			
+
 				<div id="rcorners2">
 					<div class ="row">
 						<div class="col-md-3">
 							<label for="drainage_info_left_image">Drainage info left image</label>
 						</div>
-						
-					
+
+
 						<div class="col-md-3">
 							{{form.drainage_info_left_image }}
 						</div>
@@ -716,7 +716,7 @@ $(document).ready(function(){
 					</div>
 				</div>
 				<br>
-				
+
 
 				<!-- Gutter Information -->
 				<div class="row">
@@ -730,14 +730,14 @@ $(document).ready(function(){
 						<div class="col-md-3">
 							<label for="gutter_info_left_image">Gutter info left image</label>
 						</div>
-						
+
 						<div class="col-md-3">
 							{{form.gutter_info_left_image }}
 						</div>
-						
+
 						<div class="col-md-3">
 							<label for="gutter_image_bottomdown2">Gutter image bottomdown1 </label>
-						</div>		
+						</div>
 
 						<div class="col-md-3">
 							{{form.gutter_image_bottomdown1 }}
@@ -789,7 +789,7 @@ $(document).ready(function(){
 						<div class="col-md-3">
 							{{form.frequency_of_clearance_of_waste_containers}}
 						</div>
-						
+
 						<div class="col-md-3">
 							<label for="waste_management_info_left_image">Waste management info left image</label>
 						</div>
@@ -826,7 +826,7 @@ $(document).ready(function(){
 							<label for="waste_management_image_bottomdown2">Waste management image bottomdown2</label>
 						</div>
 
-						
+
 						<div class="col-md-3">
 							{{form.waste_management_image_bottomdown2 }}
 						</div>
@@ -843,7 +843,33 @@ $(document).ready(function(){
 					</div>
 				</div>
 				<br>
-				
+        <!--Drainage report -->
+        <div class="row">
+          <div class ="col-md-6" style = "font-size: 150%";>
+            <label for="Drainage_report_Information">Drainage Report Information : </label>
+          </div>
+        </div>
+        <div id="rcorners2">
+          <div class ="row">
+            <div class="col-md-3">
+              <label for="drainage_report_image">Drainage report image</label>
+            </div>
+
+            <div class="col-md-3">
+              {{form.drainage_report_image}}
+            </div>
+
+            <div class="col-md-3">
+              <label for="location_of_defecation">Location of defecation site</label>
+            </div>
+
+            <div class="col-md-3">
+              {{form.location_of_defecation }}
+            </div>
+
+          </div>
+        </div>
+
 				<!-- Button -->
 				<div class ="row">
 					<div class="col-md-12" align="center">

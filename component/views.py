@@ -188,10 +188,11 @@ def get_kobo_drainage_report_data(request, slum_id):
          if len(output.keys()) > 1:
              output['status'] = True
          output["image"] = False
-         drainage_image = drainage.objects.filter(slum_name = slum[0]).values()
+         drainage_image = Rapid_Slum_Appraisal.objects.filter(slum_name = slum[0]).values()
          if drainage_image and len(drainage_image) > 0:
              output.update(drainage_image[0])
              output["image"] = True
          output['admin_ward'] = slum[0].electoral_ward.administrative_ward.name
+         output['electoral_ward'] = slum[0].electoral_ward.name
          output['slum_name'] = slum[0].name
      return HttpResponse(json.dumps(output),content_type='application/json')
