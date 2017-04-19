@@ -1,0 +1,2142 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<report xmlns="http://www.eclipse.org/birt/2005/design" version="3.2.23" id="1">
+    <property name="createdBy">Eclipse BIRT Designer Version 4.6.0.v201606072122</property>
+    <property name="units">in</property>
+    <property name="iconFile">/templates/blank_report.gif</property>
+    <property name="bidiLayoutOrientation">ltr</property>
+    <property name="imageDPI">96</property>
+    <parameters>
+        <scalar-parameter name="slum" id="365">
+            <text-property name="helpText">Slum Code</text-property>
+            <text-property name="promptText">Enter Slum Code</text-property>
+            <property name="valueType">static</property>
+            <property name="dataType">string</property>
+            <property name="distinct">true</property>
+            <list-property name="selectionList"/>
+            <property name="paramType">simple</property>
+            <property name="controlType">text-box</property>
+            <structure name="format">
+                <property name="category">Unformatted</property>
+            </structure>
+        </scalar-parameter>
+    </parameters>
+    <data-sources>
+        <script-data-source name="Shelter Data Script" id="366"/>
+    </data-sources>
+    <data-sets>
+        <script-data-set name="Script - json_data" id="367">
+            <list-property name="resultSetHints">
+                <structure>
+                    <property name="position">1</property>
+                    <property name="name">city_name</property>
+                    <property name="dataType">string</property>
+                </structure>
+                <structure>
+                    <property name="position">2</property>
+                    <property name="name">administrativeward_name</property>
+                    <property name="dataType">string</property>
+                </structure>
+                <structure>
+                    <property name="position">3</property>
+                    <property name="name">slum_name</property>
+                    <property name="dataType">string</property>
+                </structure>
+                <structure>
+                    <property name="position">4</property>
+                    <property name="name">year_establishment</property>
+                    <property name="dataType">string</property>
+                </structure>
+                <structure>
+                    <property name="position">5</property>
+                    <property name="name">legal_status</property>
+                    <property name="dataType">string</property>
+                </structure>
+                <structure>
+                    <property name="position">6</property>
+                    <property name="name">electoralward_name</property>
+                    <property name="dataType">string</property>
+                </structure>
+                <structure>
+                    <property name="position">7</property>
+                    <property name="name">land_owner</property>
+                    <property name="dataType">string</property>
+                </structure>
+                <structure>
+                    <property name="position">8</property>
+                    <property name="name">development_plan_reservation</property>
+                    <property name="dataType">string</property>
+                </structure>
+                <structure>
+                    <property name="position">9</property>
+                    <property name="name">development_plan_reservation_type</property>
+                    <property name="dataType">string</property>
+                </structure>
+                <structure>
+                    <property name="position">10</property>
+                    <property name="name">approximate_area</property>
+                    <property name="dataType">string</property>
+                </structure>
+                <structure>
+                    <property name="position">11</property>
+                    <property name="name">approximate_no_of_huts</property>
+                    <property name="dataType">string</property>
+                </structure>
+                <structure>
+                    <property name="position">12</property>
+                    <property name="name">approximate_population</property>
+                    <property name="dataType">string</property>
+                </structure>
+                <structure>
+                    <property name="position">13</property>
+                    <property name="name">location</property>
+                    <property name="dataType">string</property>
+                </structure>
+                <structure>
+                    <property name="position">14</property>
+                    <property name="name">topography</property>
+                    <property name="dataType">string</property>
+                </structure>
+                <structure>
+                    <property name="position">15</property>
+                    <property name="name">number_of_community_toilet_blocks</property>
+                    <property name="dataType">string</property>
+                </structure>
+                <structure>
+                    <property name="position">16</property>
+                    <property name="name">number_of_seats_allotted_to_men_and_women</property>
+                    <property name="dataType">string</property>
+                </structure>
+                <structure>
+                    <property name="position">17</property>
+                    <property name="name">toilet_seat_to_persons_ratio</property>
+                    <property name="dataType">string</property>
+                </structure>
+                <structure>
+                    <property name="position">18</property>
+                    <property name="name">condition_of_toilet_block</property>
+                    <property name="dataType">string</property>
+                </structure>
+                <structure>
+                    <property name="position">19</property>
+                    <property name="name">cleanliness_of_toilet_block</property>
+                    <property name="dataType">string</property>
+                </structure>
+                <structure>
+                    <property name="position">20</property>
+                    <property name="name">toilet_maintenance_provided_by</property>
+                    <property name="dataType">string</property>
+                </structure>
+                <structure>
+                    <property name="position">21</property>
+                    <property name="name">facility_in_the_toilet_block_for_5_yr_age</property>
+                    <property name="dataType">string</property>
+                </structure>
+                <structure>
+                    <property name="position">22</property>
+                    <property name="name">status_of_defecation</property>
+                    <property name="dataType">string</property>
+                </structure>
+                <structure>
+                    <property name="position">23</property>
+                    <property name="name">location_of_open_defecation_site</property>
+                    <property name="dataType">string</property>
+                </structure>
+                <structure>
+                    <property name="position">24</property>
+                    <property name="name">approximate_huts_with_individual_toilet</property>
+                    <property name="dataType">string</property>
+                </structure>
+                <structure>
+                    <property name="position">25</property>
+                    <property name="name">total_number_of_waste_container</property>
+                    <property name="dataType">string</property>
+                </structure>
+                <structure>
+                    <property name="position">26</property>
+                    <property name="name">frequency_of_clearance_of_waste_containers</property>
+                    <property name="dataType">string</property>
+                </structure>
+                <structure>
+                    <property name="position">27</property>
+                    <property name="name">facility_of_waste_collection</property>
+                    <property name="dataType">string</property>
+                </structure>
+                <structure>
+                    <property name="position">28</property>
+                    <property name="name">location_of_community_open_dump_site</property>
+                    <property name="dataType">string</property>
+                </structure>
+                <structure>
+                    <property name="position">29</property>
+                    <property name="name">status_of_water_supply</property>
+                    <property name="dataType">string</property>
+                </structure>
+                <structure>
+                    <property name="position">30</property>
+                    <property name="name">coverage_of_wateracross_settlement</property>
+                    <property name="dataType">string</property>
+                </structure>
+                <structure>
+                    <property name="position">31</property>
+                    <property name="name">pressure_of_water_in_the_system</property>
+                    <property name="dataType">string</property>
+                </structure>
+                <structure>
+                    <property name="position">32</property>
+                    <property name="name">quality_of_water_in_the_system</property>
+                    <property name="dataType">string</property>
+                </structure>
+                <structure>
+                    <property name="position">33</property>
+                    <property name="name">type_of_roads_within_the_settlement</property>
+                    <property name="dataType">string</property>
+                </structure>
+                <structure>
+                    <property name="position">34</property>
+                    <property name="name">finish_of_the_road_accross_settlement</property>
+                    <property name="dataType">string</property>
+                </structure>
+                <structure>
+                    <property name="position">35</property>
+                    <property name="name">average_width_of_internal_road</property>
+                    <property name="dataType">string</property>
+                </structure>
+                <structure>
+                    <property name="position">36</property>
+                    <property name="name">presence_of_drains_within_settlement</property>
+                    <property name="dataType">string</property>
+                </structure>
+                <structure>
+                    <property name="position">37</property>
+                    <property name="name">coverage_of_drains_across_settlement</property>
+                    <property name="dataType">string</property>
+                </structure>
+                <structure>
+                    <property name="position">38</property>
+                    <property name="name">do_the_drains_get_blocked</property>
+                    <property name="dataType">string</property>
+                </structure>
+                <structure>
+                    <property name="position">39</property>
+                    <property name="name">is_the_drainage_gradient_adequate</property>
+                    <property name="dataType">string</property>
+                </structure>
+                <structure>
+                    <property name="position">40</property>
+                    <property name="name">drainage_comment</property>
+                    <property name="dataType">string</property>
+                </structure>
+                <structure>
+                    <property name="position">41</property>
+                    <property name="name">drainage_image</property>
+                    <property name="dataType">string</property>
+                </structure>
+                <structure>
+                    <property name="position">42</property>
+                    <property name="name">status_flag</property>
+                    <property name="dataType">string</property>
+                </structure>
+                <structure>
+                    <property name="position">43</property>
+                    <property name="name">image_flag</property>
+                    <property name="dataType">string</property>
+                </structure>
+            </list-property>
+            <list-property name="columnHints">
+                <structure>
+                    <property name="columnName">city_name</property>
+                    <text-property name="displayName">city_name</text-property>
+                </structure>
+                <structure>
+                    <property name="columnName">administrativeward_name</property>
+                    <text-property name="displayName">administrativeward_name</text-property>
+                </structure>
+                <structure>
+                    <property name="columnName">slum_name</property>
+                    <text-property name="displayName">slum_name</text-property>
+                </structure>
+                <structure>
+                    <property name="columnName">year_establishment</property>
+                    <text-property name="displayName">year_establishment</text-property>
+                </structure>
+                <structure>
+                    <property name="columnName">legal_status</property>
+                    <text-property name="displayName">legal_status</text-property>
+                </structure>
+                <structure>
+                    <property name="columnName">electoralward_name</property>
+                    <text-property name="displayName">electoralward_name</text-property>
+                </structure>
+                <structure>
+                    <property name="columnName">land_owner</property>
+                    <text-property name="displayName">land_owner</text-property>
+                </structure>
+                <structure>
+                    <property name="columnName">development_plan_reservation</property>
+                    <text-property name="displayName">development_plan_reservation</text-property>
+                </structure>
+                <structure>
+                    <property name="columnName">development_plan_reservation_type</property>
+                    <text-property name="displayName">development_plan_reservation_type</text-property>
+                </structure>
+                <structure>
+                    <property name="columnName">approximate_area</property>
+                    <text-property name="displayName">approximate_area</text-property>
+                </structure>
+                <structure>
+                    <property name="columnName">approximate_no_of_huts</property>
+                    <text-property name="displayName">approximate_no_of_huts</text-property>
+                </structure>
+                <structure>
+                    <property name="columnName">approximate_population</property>
+                    <text-property name="displayName">approximate_population</text-property>
+                </structure>
+                <structure>
+                    <property name="columnName">location</property>
+                    <text-property name="displayName">location</text-property>
+                </structure>
+                <structure>
+                    <property name="columnName">topography</property>
+                    <text-property name="displayName">topography</text-property>
+                </structure>
+                <structure>
+                    <property name="columnName">number_of_community_toilet_blocks</property>
+                    <text-property name="displayName">number_of_community_toilet_blocks</text-property>
+                </structure>
+                <structure>
+                    <property name="columnName">number_of_seats_allotted_to_men_and_women</property>
+                    <text-property name="displayName">number_of_seats_allotted_to_men_and_women</text-property>
+                </structure>
+                <structure>
+                    <property name="columnName">toilet_seat_to_persons_ratio</property>
+                    <text-property name="displayName">toilet_seat_to_persons_ratio</text-property>
+                </structure>
+                <structure>
+                    <property name="columnName">condition_of_toilet_block</property>
+                    <text-property name="displayName">condition_of_toilet_block</text-property>
+                </structure>
+                <structure>
+                    <property name="columnName">cleanliness_of_toilet_block</property>
+                    <text-property name="displayName">cleanliness_of_toilet_block</text-property>
+                </structure>
+                <structure>
+                    <property name="columnName">toilet_maintenance_provided_by</property>
+                    <text-property name="displayName">toilet_maintenance_provided_by</text-property>
+                </structure>
+                <structure>
+                    <property name="columnName">facility_in_the_toilet_block_for_5_yr_age</property>
+                    <text-property name="displayName">facility_in_the_toilet_block_for_5_yr_age</text-property>
+                </structure>
+                <structure>
+                    <property name="columnName">status_of_defecation</property>
+                    <text-property name="displayName">status_of_defecation</text-property>
+                </structure>
+                <structure>
+                    <property name="columnName">location_of_open_defecation_site</property>
+                    <text-property name="displayName">location_of_open_defecation_site</text-property>
+                </structure>
+                <structure>
+                    <property name="columnName">approximate_huts_with_individual_toilet</property>
+                    <text-property name="displayName">approximate_huts_with_individual_toilet</text-property>
+                </structure>
+                <structure>
+                    <property name="columnName">total_number_of_waste_container</property>
+                    <text-property name="displayName">total_number_of_waste_container</text-property>
+                </structure>
+                <structure>
+                    <property name="columnName">frequency_of_clearance_of_waste_containers</property>
+                    <text-property name="displayName">frequency_of_clearance_of_waste_containers</text-property>
+                </structure>
+                <structure>
+                    <property name="columnName">facility_of_waste_collection</property>
+                    <text-property name="displayName">facility_of_waste_collection</text-property>
+                </structure>
+                <structure>
+                    <property name="columnName">location_of_community_open_dump_site</property>
+                    <text-property name="displayName">location_of_community_open_dump_site</text-property>
+                </structure>
+                <structure>
+                    <property name="columnName">status_of_water_supply</property>
+                    <text-property name="displayName">status_of_water_supply</text-property>
+                </structure>
+                <structure>
+                    <property name="columnName">coverage_of_wateracross_settlement</property>
+                    <text-property name="displayName">coverage_of_wateracross_settlement</text-property>
+                </structure>
+                <structure>
+                    <property name="columnName">pressure_of_water_in_the_system</property>
+                    <text-property name="displayName">pressure_of_water_in_the_system</text-property>
+                </structure>
+                <structure>
+                    <property name="columnName">quality_of_water_in_the_system</property>
+                    <text-property name="displayName">quality_of_water_in_the_system</text-property>
+                </structure>
+                <structure>
+                    <property name="columnName">type_of_roads_within_the_settlement</property>
+                    <text-property name="displayName">type_of_roads_within_the_settlement</text-property>
+                </structure>
+                <structure>
+                    <property name="columnName">finish_of_the_road_accross_settlement</property>
+                    <text-property name="displayName">finish_of_the_road_accross_settlement</text-property>
+                </structure>
+                <structure>
+                    <property name="columnName">average_width_of_internal_road</property>
+                    <text-property name="displayName">average_width_of_internal_road</text-property>
+                </structure>
+                <structure>
+                    <property name="columnName">presence_of_drains_within_settlement</property>
+                    <text-property name="displayName">presence_of_drains_within_settlement</text-property>
+                </structure>
+                <structure>
+                    <property name="columnName">coverage_of_drains_across_settlement</property>
+                    <text-property name="displayName">coverage_of_drains_across_settlement</text-property>
+                </structure>
+                <structure>
+                    <property name="columnName">do_the_drains_get_blocked</property>
+                    <text-property name="displayName">do_the_drains_get_blocked</text-property>
+                </structure>
+                <structure>
+                    <property name="columnName">is_the_drainage_gradient_adequate</property>
+                    <text-property name="displayName">is_the_drainage_gradient_adequate</text-property>
+                </structure>
+                <structure>
+                    <property name="columnName">drainage_comment</property>
+                    <text-property name="displayName">drainage_comment</text-property>
+                </structure>
+                <structure>
+                    <property name="columnName">drainage_image</property>
+                    <text-property name="displayName">drainage_image</text-property>
+                </structure>
+                <structure>
+                    <property name="columnName">status_flag</property>
+                    <text-property name="displayName">status_flag</text-property>
+                </structure>
+                <structure>
+                    <property name="columnName">image_flag</property>
+                    <text-property name="displayName">image_flag</text-property>
+                </structure>
+            </list-property>
+            <structure name="cachedMetaData">
+                <list-property name="resultSet">
+                    <structure>
+                        <property name="position">1</property>
+                        <property name="name">city_name</property>
+                        <property name="dataType">string</property>
+                    </structure>
+                    <structure>
+                        <property name="position">2</property>
+                        <property name="name">administrativeward_name</property>
+                        <property name="dataType">string</property>
+                    </structure>
+                    <structure>
+                        <property name="position">3</property>
+                        <property name="name">slum_name</property>
+                        <property name="dataType">string</property>
+                    </structure>
+                    <structure>
+                        <property name="position">4</property>
+                        <property name="name">year_establishment</property>
+                        <property name="dataType">string</property>
+                    </structure>
+                    <structure>
+                        <property name="position">5</property>
+                        <property name="name">legal_status</property>
+                        <property name="dataType">string</property>
+                    </structure>
+                    <structure>
+                        <property name="position">6</property>
+                        <property name="name">electoralward_name</property>
+                        <property name="dataType">string</property>
+                    </structure>
+                    <structure>
+                        <property name="position">7</property>
+                        <property name="name">land_owner</property>
+                        <property name="dataType">string</property>
+                    </structure>
+                    <structure>
+                        <property name="position">8</property>
+                        <property name="name">development_plan_reservation</property>
+                        <property name="dataType">string</property>
+                    </structure>
+                    <structure>
+                        <property name="position">9</property>
+                        <property name="name">development_plan_reservation_type</property>
+                        <property name="dataType">string</property>
+                    </structure>
+                    <structure>
+                        <property name="position">10</property>
+                        <property name="name">approximate_area</property>
+                        <property name="dataType">string</property>
+                    </structure>
+                    <structure>
+                        <property name="position">11</property>
+                        <property name="name">approximate_no_of_huts</property>
+                        <property name="dataType">string</property>
+                    </structure>
+                    <structure>
+                        <property name="position">12</property>
+                        <property name="name">approximate_population</property>
+                        <property name="dataType">string</property>
+                    </structure>
+                    <structure>
+                        <property name="position">13</property>
+                        <property name="name">location</property>
+                        <property name="dataType">string</property>
+                    </structure>
+                    <structure>
+                        <property name="position">14</property>
+                        <property name="name">topography</property>
+                        <property name="dataType">string</property>
+                    </structure>
+                    <structure>
+                        <property name="position">15</property>
+                        <property name="name">number_of_community_toilet_blocks</property>
+                        <property name="dataType">string</property>
+                    </structure>
+                    <structure>
+                        <property name="position">16</property>
+                        <property name="name">number_of_seats_allotted_to_men_and_women</property>
+                        <property name="dataType">string</property>
+                    </structure>
+                    <structure>
+                        <property name="position">17</property>
+                        <property name="name">toilet_seat_to_persons_ratio</property>
+                        <property name="dataType">string</property>
+                    </structure>
+                    <structure>
+                        <property name="position">18</property>
+                        <property name="name">condition_of_toilet_block</property>
+                        <property name="dataType">string</property>
+                    </structure>
+                    <structure>
+                        <property name="position">19</property>
+                        <property name="name">cleanliness_of_toilet_block</property>
+                        <property name="dataType">string</property>
+                    </structure>
+                    <structure>
+                        <property name="position">20</property>
+                        <property name="name">toilet_maintenance_provided_by</property>
+                        <property name="dataType">string</property>
+                    </structure>
+                    <structure>
+                        <property name="position">21</property>
+                        <property name="name">facility_in_the_toilet_block_for_5_yr_age</property>
+                        <property name="dataType">string</property>
+                    </structure>
+                    <structure>
+                        <property name="position">22</property>
+                        <property name="name">status_of_defecation</property>
+                        <property name="dataType">string</property>
+                    </structure>
+                    <structure>
+                        <property name="position">23</property>
+                        <property name="name">location_of_open_defecation_site</property>
+                        <property name="dataType">string</property>
+                    </structure>
+                    <structure>
+                        <property name="position">24</property>
+                        <property name="name">approximate_huts_with_individual_toilet</property>
+                        <property name="dataType">string</property>
+                    </structure>
+                    <structure>
+                        <property name="position">25</property>
+                        <property name="name">total_number_of_waste_container</property>
+                        <property name="dataType">string</property>
+                    </structure>
+                    <structure>
+                        <property name="position">26</property>
+                        <property name="name">frequency_of_clearance_of_waste_containers</property>
+                        <property name="dataType">string</property>
+                    </structure>
+                    <structure>
+                        <property name="position">27</property>
+                        <property name="name">facility_of_waste_collection</property>
+                        <property name="dataType">string</property>
+                    </structure>
+                    <structure>
+                        <property name="position">28</property>
+                        <property name="name">location_of_community_open_dump_site</property>
+                        <property name="dataType">string</property>
+                    </structure>
+                    <structure>
+                        <property name="position">29</property>
+                        <property name="name">status_of_water_supply</property>
+                        <property name="dataType">string</property>
+                    </structure>
+                    <structure>
+                        <property name="position">30</property>
+                        <property name="name">coverage_of_wateracross_settlement</property>
+                        <property name="dataType">string</property>
+                    </structure>
+                    <structure>
+                        <property name="position">31</property>
+                        <property name="name">pressure_of_water_in_the_system</property>
+                        <property name="dataType">string</property>
+                    </structure>
+                    <structure>
+                        <property name="position">32</property>
+                        <property name="name">quality_of_water_in_the_system</property>
+                        <property name="dataType">string</property>
+                    </structure>
+                    <structure>
+                        <property name="position">33</property>
+                        <property name="name">type_of_roads_within_the_settlement</property>
+                        <property name="dataType">string</property>
+                    </structure>
+                    <structure>
+                        <property name="position">34</property>
+                        <property name="name">finish_of_the_road_accross_settlement</property>
+                        <property name="dataType">string</property>
+                    </structure>
+                    <structure>
+                        <property name="position">35</property>
+                        <property name="name">average_width_of_internal_road</property>
+                        <property name="dataType">string</property>
+                    </structure>
+                    <structure>
+                        <property name="position">36</property>
+                        <property name="name">presence_of_drains_within_settlement</property>
+                        <property name="dataType">string</property>
+                    </structure>
+                    <structure>
+                        <property name="position">37</property>
+                        <property name="name">coverage_of_drains_across_settlement</property>
+                        <property name="dataType">string</property>
+                    </structure>
+                    <structure>
+                        <property name="position">38</property>
+                        <property name="name">do_the_drains_get_blocked</property>
+                        <property name="dataType">string</property>
+                    </structure>
+                    <structure>
+                        <property name="position">39</property>
+                        <property name="name">is_the_drainage_gradient_adequate</property>
+                        <property name="dataType">string</property>
+                    </structure>
+                    <structure>
+                        <property name="position">40</property>
+                        <property name="name">drainage_comment</property>
+                        <property name="dataType">string</property>
+                    </structure>
+                    <structure>
+                        <property name="position">41</property>
+                        <property name="name">drainage_image</property>
+                        <property name="dataType">string</property>
+                    </structure>
+                    <structure>
+                        <property name="position">42</property>
+                        <property name="name">status_flag</property>
+                        <property name="dataType">string</property>
+                    </structure>
+                    <structure>
+                        <property name="position">43</property>
+                        <property name="name">image_flag</property>
+                        <property name="dataType">string</property>
+                    </structure>
+                </list-property>
+            </structure>
+            <property name="dataSource">Shelter Data Script</property>
+            <method name="open"><![CDATA[importPackage(Packages.java.io);
+importPackage(Packages.java.net);
+
+var inStream = new URL("http://app.shelter-associates.org/component/get_kobo_drainage_report_data/"+params["slum"].value).openStream();
+
+var inStreamReader = new InputStreamReader(inStream);
+
+var bufferedReader = new BufferedReader(inStreamReader);
+
+var line;
+result = "";
+while ((line = bufferedReader.readLine()) != null)
+	result += line;
+	
+inStream.close();
+
+jsonObject = JSON.parse(result);
+
+count = 0;
+row_count =1;]]></method>
+            <method name="fetch"><![CDATA[if(count < row_count)
+{
+	//Flages
+	row["status_flag"] = jsonObject["status"];
+	row["image_flag"] = jsonObject["image"];
+	
+	//General Information
+	row["city_name"] = jsonObject["city"];
+	row["administrativeward_name"] = jsonObject["admin_ward"];
+	row["slum_name"] = jsonObject["slum_name"];
+	
+	//General Information
+	row["year_establishment"] = jsonObject["year_established_according_to"];
+	row["legal_status"] = jsonObject["legal_status"];
+	row["electoralward_name"] = jsonObject["electoral_ward"];
+	row["land_owner"] = jsonObject["land_owner"];
+	row["development_plan_reservation"] = jsonObject["development_plan_reservation"];
+	row["development_plan_reservation_type"] = jsonObject["development_plan_reservation_t"];
+	row["approximate_area"] = jsonObject["approximate_area_of_the_settle"];
+	row["approximate_no_of_huts"] = jsonObject["Date_of_declaration"];
+	row["approximate_population"] = jsonObject["approximate_population"];	
+	row["location"] = jsonObject["location"];
+	row["topography"] = jsonObject["topography"];
+	
+	//Toilet Information
+	row["number_of_community_toilet_blocks"] = jsonObject["number_of_community_toilet_blo"];
+	row["number_of_seats_allotted_to_men_and_women"] = jsonObject["number_of_seats_allotted_to_me"] + ' / ' +  jsonObject["number_of_seats_allotted_to_wo"];
+	row["toilet_seat_to_persons_ratio"] = jsonObject["toilet_seat_to_persons_ratio"];
+	row["condition_of_toilet_block"] = jsonObject["condition_of_ctb_structure"];
+	row["cleanliness_of_toilet_block"] = jsonObject["cleanliness_of_the_ctb"];
+	row["toilet_maintenance_provided_by"] = jsonObject["ctb_maintenance_provided_by"];
+	row["facility_in_the_toilet_block_for_5_yr_age"] = jsonObject["facility_in_the_toilet_block_f"];
+	row["status_of_defecation"] = jsonObject["status_of_defecation"];
+	row["location_of_open_defecation_site"] = jsonObject["location_of_defecation"];
+	row["approximate_huts_with_individual_toilet"] = jsonObject["number_of_huts_in_settlement"];
+	
+	//Waste Management Information
+	row["total_number_of_waste_container"] = jsonObject["total_number_of_waste_containe"];
+	row["frequency_of_clearance_of_waste_containers"] = jsonObject["frequency_of_clearance_of_waste_containers"];
+	row["facility_of_waste_collection"] = jsonObject["facility_of_waste_collection"];
+	row["location_of_community_open_dump_site"] = jsonObject["where_are_the_communty_open_du"];
+	
+	var status_of_water_supply = "";
+	
+	if(parseInt(jsonObject["Total_number_of_standposts_in_"]) > 0){
+		status_of_water_supply += "Standposts, ";
+	}
+	if(parseInt(jsonObject["total_number_of_taps_in_use_n"]) > 0){
+		status_of_water_supply += "Taps, ";
+	}
+	if(parseInt(jsonObject["total_number_of_handpumps_in_u"]) > 0){
+		status_of_water_supply += "Handpumps, ";
+	}
+	if(jsonObject["percentage_with_an_individual_water_connection"].length > 0){
+		status_of_water_supply += "Individual water connection, ";
+	}
+	
+	if(status_of_water_supply.length > 0 ){
+		status_of_water_supply = status_of_water_supply.substring(0, status_of_water_supply.length - 2);
+	}
+	
+	
+	//Water Information
+	row["status_of_water_supply"] = status_of_water_supply;
+	row["coverage_of_wateracross_settlement"] = jsonObject["coverage_of_wateracross_settle"];
+	row["pressure_of_water_in_the_system"] = jsonObject["pressure_of_water_in_the_syste"];
+	row["quality_of_water_in_the_system"] = jsonObject["quality_of_water_in_the_system"];
+	
+	//Roads &amp; Access Information
+	row["type_of_roads_within_the_settlement"] = jsonObject["type_of_roads_within_the_settl"];
+	row["finish_of_the_road_accross_settlement"] = jsonObject["finish_of_the_road"];
+	row["average_width_of_internal_road"] = jsonObject["average_width_of_internal_road"];
+	
+	//Drainage Information
+	row["presence_of_drains_within_settlement"] = jsonObject["presence_of_drains_within_the"];
+	row["coverage_of_drains_across_settlement"] = jsonObject["coverage_of_drains_across_the"];
+	row["do_the_drains_get_blocked"] = jsonObject["do_the_drains_get_blocked"];
+	row["is_the_drainage_gradient_adequate"] = jsonObject["is_the_drainage_gradient_adequ"];
+	row["drainage_comment"] = jsonObject["drainage_comment"];
+	
+	
+	//images path 
+	if(jsonObject["image"]){
+		row["drainage_image"] = jsonObject["drainage_report_image"];
+	}
+	
+	count++;
+	return true;
+}
+
+return false;]]></method>
+        </script-data-set>
+    </data-sets>
+    <styles>
+        <style name="FooterText" id="17">
+            <property name="fontWeight">bold</property>
+            <property name="color">#FFFFFF</property>
+            <property name="marginRight">5pt</property>
+            <property name="textAlign">right</property>
+        </style>
+        <style name="ErrorMessage" id="311">
+            <property name="fontFamily">"Trebuchet MS"</property>
+            <property name="fontSize">16pt</property>
+            <property name="fontWeight">bold</property>
+            <property name="paddingTop">25%</property>
+            <property name="paddingBottom">25%</property>
+            <property name="textAlign">center</property>
+            <property name="verticalAlign">middle</property>
+        </style>
+        <style name="SectionHeader" id="316">
+            <property name="fontSize">16pt</property>
+            <property name="paddingLeft">4pt</property>
+            <property name="paddingBottom">4pt</property>
+        </style>
+        <style name="SectionLabel" id="328">
+            <property name="paddingTop">1pt</property>
+            <property name="paddingLeft">10pt</property>
+            <property name="paddingBottom">2pt</property>
+        </style>
+        <style name="SectionData" id="409">
+            <property name="backgroundColor">#114282</property>
+            <property name="fontWeight">bold</property>
+            <property name="color">#FFFFFF</property>
+            <property name="borderBottomColor">#114282</property>
+            <property name="borderBottomWidth">0pt</property>
+            <property name="borderLeftColor">#114282</property>
+            <property name="borderLeftWidth">0pt</property>
+            <property name="borderRightColor">#114282</property>
+            <property name="borderRightWidth">0pt</property>
+            <property name="borderTopColor">#114282</property>
+            <property name="borderTopWidth">0pt</property>
+            <property name="marginLeft">4pt</property>
+            <property name="paddingTop">0pt</property>
+            <property name="paddingLeft">0pt</property>
+            <property name="paddingBottom">0pt</property>
+            <property name="paddingRight">0pt</property>
+        </style>
+        <style name="SectionDataTitle" id="410">
+            <property name="fontSize">18pt</property>
+            <property name="color">#114282</property>
+        </style>
+        <style name="HeaderLogoImage" id="412"/>
+        <style name="HeaderLogImageContainer" id="413">
+            <property name="paddingLeft">1pt</property>
+            <property name="textAlign">left</property>
+            <property name="verticalAlign">middle</property>
+        </style>
+        <style name="SectionDataContainer" id="414">
+            <property name="backgroundColor">#114282</property>
+            <property name="borderBottomColor">#114282</property>
+            <property name="borderLeftColor">#114282</property>
+            <property name="borderRightColor">#114282</property>
+            <property name="borderTopColor">#114282</property>
+            <property name="paddingTop">0pt</property>
+            <property name="paddingLeft">1pt</property>
+            <property name="paddingBottom">0pt</property>
+            <property name="paddingRight">1pt</property>
+        </style>
+        <style name="SectionlabelContainer" id="415">
+            <property name="paddingTop">0pt</property>
+            <property name="paddingLeft">1pt</property>
+            <property name="paddingBottom">0pt</property>
+            <property name="paddingRight">1pt</property>
+        </style>
+        <style name="ImageContainer" id="428">
+            <property name="textAlign">center</property>
+            <property name="verticalAlign">top</property>
+        </style>
+        <style name="Report_Image" id="429">
+            <property name="paddingTop">5pt</property>
+            <property name="width">100%</property>
+        </style>
+    </styles>
+    <page-setup>
+        <simple-master-page name="Shelter Drainage Report Master Page" id="2">
+            <property name="type">a4</property>
+            <property name="orientation">portrait</property>
+            <property name="footerHeight">0.6in</property>
+            <page-footer>
+                <grid id="4">
+                    <property name="backgroundColor">#114282</property>
+                    <property name="marginTop">0pt</property>
+                    <column id="5">
+                        <property name="width">2in</property>
+                    </column>
+                    <column id="6">
+                        <property name="width">100%</property>
+                    </column>
+                    <row id="7">
+                        <property name="height">0.20833333333333334in</property>
+                        <cell id="8">
+                            <label id="21">
+                                <property name="fontWeight">bold</property>
+                                <property name="color">white</property>
+                                <property name="paddingLeft">10pt</property>
+                                <text-property name="text">Sanitation</text-property>
+                            </label>
+                        </cell>
+                        <cell id="9">
+                            <text id="20">
+                                <property name="style">FooterText</property>
+                                <property name="contentType">html</property>
+                                <text-property name="content"><![CDATA[&amp;copy copyright Shelter Associates, <value-of format="yyyy">new Date()</value-of>]]></text-property>
+                            </text>
+                        </cell>
+                    </row>
+                    <row id="10">
+                        <property name="height">0.20833333333333334in</property>
+                        <cell id="11">
+                            <property name="colSpan">1</property>
+                            <property name="rowSpan">2</property>
+                            <property name="paddingLeft">8pt</property>
+                            <image id="426">
+                                <property name="height">35px</property>
+                                <property name="source">url</property>
+                                <expression name="uri" type="javascript">vars["var_report_footer_image"]</expression>
+                            </image>
+                        </cell>
+                        <cell id="12">
+                            <label id="18">
+                                <property name="style">FooterText</property>
+                                <text-property name="text">For more information, please visit our website</text-property>
+                            </label>
+                        </cell>
+                    </row>
+                    <row id="13">
+                        <property name="height">0.20833333333333334in</property>
+                        <cell id="15">
+                            <label id="16">
+                                <property name="style">FooterText</property>
+                                <text-property name="text">www.shelter-associates.org</text-property>
+                            </label>
+                        </cell>
+                    </row>
+                </grid>
+            </page-footer>
+        </simple-master-page>
+    </page-setup>
+    <body>
+        <text-data id="166">
+            <property name="style">ErrorMessage</property>
+            <property name="dataBindingRef">Drainage Details</property>
+            <list-property name="visibility">
+                <structure>
+                    <property name="format">all</property>
+                    <expression name="valueExpr" type="javascript">row["status_flag"].toString() == "true";</expression>
+                </structure>
+            </list-property>
+            <expression name="valueExpr">"No Data Found For Drainage In Slum"</expression>
+            <property name="contentType">html</property>
+        </text-data>
+        <grid name="Drainage Details" id="167">
+            <property name="borderBottomStyle">none</property>
+            <property name="borderLeftStyle">none</property>
+            <property name="borderRightStyle">none</property>
+            <property name="borderTopStyle">none</property>
+            <property name="dataSet">Script - json_data</property>
+            <list-property name="visibility">
+                <structure>
+                    <property name="format">all</property>
+                    <expression name="valueExpr" type="javascript">row["status_flag"].toString() == "false"</expression>
+                </structure>
+            </list-property>
+            <list-property name="boundDataColumns">
+                <structure>
+                    <property name="name">city_name</property>
+                    <text-property name="displayName">city_name</text-property>
+                    <expression name="expression" type="javascript">dataSetRow["city_name"]</expression>
+                    <property name="dataType">string</property>
+                </structure>
+                <structure>
+                    <property name="name">administrativeward_name</property>
+                    <text-property name="displayName">administrativeward_name</text-property>
+                    <expression name="expression" type="javascript">dataSetRow["administrativeward_name"]</expression>
+                    <property name="dataType">string</property>
+                </structure>
+                <structure>
+                    <property name="name">slum_name</property>
+                    <text-property name="displayName">slum_name</text-property>
+                    <expression name="expression" type="javascript">dataSetRow["slum_name"]</expression>
+                    <property name="dataType">string</property>
+                </structure>
+                <structure>
+                    <property name="name">year_establishment</property>
+                    <text-property name="displayName">year_establishment</text-property>
+                    <expression name="expression" type="javascript">dataSetRow["year_establishment"]</expression>
+                    <property name="dataType">string</property>
+                </structure>
+                <structure>
+                    <property name="name">legal_status</property>
+                    <text-property name="displayName">legal_status</text-property>
+                    <expression name="expression" type="javascript">dataSetRow["legal_status"]</expression>
+                    <property name="dataType">string</property>
+                </structure>
+                <structure>
+                    <property name="name">electoralward_name</property>
+                    <text-property name="displayName">electoralward_name</text-property>
+                    <expression name="expression" type="javascript">dataSetRow["electoralward_name"]</expression>
+                    <property name="dataType">string</property>
+                </structure>
+                <structure>
+                    <property name="name">land_owner</property>
+                    <text-property name="displayName">land_owner</text-property>
+                    <expression name="expression" type="javascript">dataSetRow["land_owner"]</expression>
+                    <property name="dataType">string</property>
+                </structure>
+                <structure>
+                    <property name="name">development_plan_reservation</property>
+                    <text-property name="displayName">development_plan_reservation</text-property>
+                    <expression name="expression" type="javascript">dataSetRow["development_plan_reservation"]</expression>
+                    <property name="dataType">string</property>
+                </structure>
+                <structure>
+                    <property name="name">development_plan_reservation_type</property>
+                    <text-property name="displayName">development_plan_reservation_type</text-property>
+                    <expression name="expression" type="javascript">dataSetRow["development_plan_reservation_type"]</expression>
+                    <property name="dataType">string</property>
+                </structure>
+                <structure>
+                    <property name="name">approximate_area</property>
+                    <text-property name="displayName">approximate_area</text-property>
+                    <expression name="expression" type="javascript">dataSetRow["approximate_area"]</expression>
+                    <property name="dataType">string</property>
+                </structure>
+                <structure>
+                    <property name="name">approximate_no_of_huts</property>
+                    <text-property name="displayName">approximate_no_of_huts</text-property>
+                    <expression name="expression" type="javascript">dataSetRow["approximate_no_of_huts"]</expression>
+                    <property name="dataType">string</property>
+                </structure>
+                <structure>
+                    <property name="name">approximate_population</property>
+                    <text-property name="displayName">approximate_population</text-property>
+                    <expression name="expression" type="javascript">dataSetRow["approximate_population"]</expression>
+                    <property name="dataType">string</property>
+                </structure>
+                <structure>
+                    <property name="name">topography</property>
+                    <text-property name="displayName">topography</text-property>
+                    <expression name="expression" type="javascript">dataSetRow["topography"]</expression>
+                    <property name="dataType">string</property>
+                </structure>
+                <structure>
+                    <property name="name">number_of_community_toilet_blocks</property>
+                    <text-property name="displayName">number_of_community_toilet_blocks</text-property>
+                    <expression name="expression" type="javascript">dataSetRow["number_of_community_toilet_blocks"]</expression>
+                    <property name="dataType">string</property>
+                </structure>
+                <structure>
+                    <property name="name">number_of_seats_allotted_to_men_and_women</property>
+                    <text-property name="displayName">number_of_seats_allotted_to_men_and_women</text-property>
+                    <expression name="expression" type="javascript">dataSetRow["number_of_seats_allotted_to_men_and_women"]</expression>
+                    <property name="dataType">string</property>
+                </structure>
+                <structure>
+                    <property name="name">toilet_seat_to_persons_ratio</property>
+                    <text-property name="displayName">toilet_seat_to_persons_ratio</text-property>
+                    <expression name="expression" type="javascript">dataSetRow["toilet_seat_to_persons_ratio"]</expression>
+                    <property name="dataType">string</property>
+                </structure>
+                <structure>
+                    <property name="name">condition_of_toilet_block</property>
+                    <text-property name="displayName">condition_of_toilet_block</text-property>
+                    <expression name="expression" type="javascript">dataSetRow["condition_of_toilet_block"]</expression>
+                    <property name="dataType">string</property>
+                </structure>
+                <structure>
+                    <property name="name">toilet_maintenance_provided_by</property>
+                    <text-property name="displayName">toilet_maintenance_provided_by</text-property>
+                    <expression name="expression" type="javascript">dataSetRow["toilet_maintenance_provided_by"]</expression>
+                    <property name="dataType">string</property>
+                </structure>
+                <structure>
+                    <property name="name">facility_in_the_toilet_block_for_5_yr_age</property>
+                    <text-property name="displayName">facility_in_the_toilet_block_for_5_yr_age</text-property>
+                    <expression name="expression" type="javascript">dataSetRow["facility_in_the_toilet_block_for_5_yr_age"]</expression>
+                    <property name="dataType">string</property>
+                </structure>
+                <structure>
+                    <property name="name">status_of_defecation</property>
+                    <text-property name="displayName">status_of_defecation</text-property>
+                    <expression name="expression" type="javascript">dataSetRow["status_of_defecation"]</expression>
+                    <property name="dataType">string</property>
+                </structure>
+                <structure>
+                    <property name="name">location_of_open_defecation_site</property>
+                    <text-property name="displayName">location_of_open_defecation_site</text-property>
+                    <expression name="expression" type="javascript">dataSetRow["location_of_open_defecation_site"]</expression>
+                    <property name="dataType">string</property>
+                </structure>
+                <structure>
+                    <property name="name">approximate_huts_with_individual_toilet</property>
+                    <text-property name="displayName">approximate_huts_with_individual_toilet</text-property>
+                    <expression name="expression" type="javascript">dataSetRow["approximate_huts_with_individual_toilet"]</expression>
+                    <property name="dataType">string</property>
+                </structure>
+                <structure>
+                    <property name="name">total_number_of_waste_container</property>
+                    <text-property name="displayName">total_number_of_waste_container</text-property>
+                    <expression name="expression" type="javascript">dataSetRow["total_number_of_waste_container"]</expression>
+                    <property name="dataType">string</property>
+                </structure>
+                <structure>
+                    <property name="name">frequency_of_clearance_of_waste_containers</property>
+                    <text-property name="displayName">frequency_of_clearance_of_waste_containers</text-property>
+                    <expression name="expression" type="javascript">dataSetRow["frequency_of_clearance_of_waste_containers"]</expression>
+                    <property name="dataType">string</property>
+                </structure>
+                <structure>
+                    <property name="name">facility_of_waste_collection</property>
+                    <text-property name="displayName">facility_of_waste_collection</text-property>
+                    <expression name="expression" type="javascript">dataSetRow["facility_of_waste_collection"]</expression>
+                    <property name="dataType">string</property>
+                </structure>
+                <structure>
+                    <property name="name">location_of_community_open_dump_site</property>
+                    <text-property name="displayName">location_of_community_open_dump_site</text-property>
+                    <expression name="expression" type="javascript">dataSetRow["location_of_community_open_dump_site"]</expression>
+                    <property name="dataType">string</property>
+                </structure>
+                <structure>
+                    <property name="name">status_of_water_supply</property>
+                    <text-property name="displayName">status_of_water_supply</text-property>
+                    <expression name="expression" type="javascript">dataSetRow["status_of_water_supply"]</expression>
+                    <property name="dataType">string</property>
+                </structure>
+                <structure>
+                    <property name="name">coverage_of_wateracross_settlement</property>
+                    <text-property name="displayName">coverage_of_wateracross_settlement</text-property>
+                    <expression name="expression" type="javascript">dataSetRow["coverage_of_wateracross_settlement"]</expression>
+                    <property name="dataType">string</property>
+                </structure>
+                <structure>
+                    <property name="name">pressure_of_water_in_the_system</property>
+                    <text-property name="displayName">pressure_of_water_in_the_system</text-property>
+                    <expression name="expression" type="javascript">dataSetRow["pressure_of_water_in_the_system"]</expression>
+                    <property name="dataType">string</property>
+                </structure>
+                <structure>
+                    <property name="name">quality_of_water_in_the_system</property>
+                    <text-property name="displayName">quality_of_water_in_the_system</text-property>
+                    <expression name="expression" type="javascript">dataSetRow["quality_of_water_in_the_system"]</expression>
+                    <property name="dataType">string</property>
+                </structure>
+                <structure>
+                    <property name="name">type_of_roads_within_the_settlement</property>
+                    <text-property name="displayName">type_of_roads_within_the_settlement</text-property>
+                    <expression name="expression" type="javascript">dataSetRow["type_of_roads_within_the_settlement"]</expression>
+                    <property name="dataType">string</property>
+                </structure>
+                <structure>
+                    <property name="name">finish_of_the_road_accross_settlement</property>
+                    <text-property name="displayName">finish_of_the_road_accross_settlement</text-property>
+                    <expression name="expression" type="javascript">dataSetRow["finish_of_the_road_accross_settlement"]</expression>
+                    <property name="dataType">string</property>
+                </structure>
+                <structure>
+                    <property name="name">average_width_of_internal_road</property>
+                    <text-property name="displayName">average_width_of_internal_road</text-property>
+                    <expression name="expression" type="javascript">dataSetRow["average_width_of_internal_road"]</expression>
+                    <property name="dataType">string</property>
+                </structure>
+                <structure>
+                    <property name="name">presence_of_drains_within_settlement</property>
+                    <text-property name="displayName">presence_of_drains_within_settlement</text-property>
+                    <expression name="expression" type="javascript">dataSetRow["presence_of_drains_within_settlement"]</expression>
+                    <property name="dataType">string</property>
+                </structure>
+                <structure>
+                    <property name="name">coverage_of_drains_across_settlement</property>
+                    <text-property name="displayName">coverage_of_drains_across_settlement</text-property>
+                    <expression name="expression" type="javascript">dataSetRow["coverage_of_drains_across_settlement"]</expression>
+                    <property name="dataType">string</property>
+                </structure>
+                <structure>
+                    <property name="name">do_the_drains_get_blocked</property>
+                    <text-property name="displayName">do_the_drains_get_blocked</text-property>
+                    <expression name="expression" type="javascript">dataSetRow["do_the_drains_get_blocked"]</expression>
+                    <property name="dataType">string</property>
+                </structure>
+                <structure>
+                    <property name="name">is_the_drainage_gradient_adequate</property>
+                    <text-property name="displayName">is_the_drainage_gradient_adequate</text-property>
+                    <expression name="expression" type="javascript">dataSetRow["is_the_drainage_gradient_adequate"]</expression>
+                    <property name="dataType">string</property>
+                </structure>
+                <structure>
+                    <property name="name">drainage_comment</property>
+                    <text-property name="displayName">drainage_comment</text-property>
+                    <expression name="expression" type="javascript">dataSetRow["drainage_comment"]</expression>
+                    <property name="dataType">string</property>
+                </structure>
+                <structure>
+                    <property name="name">drainage_image</property>
+                    <text-property name="displayName">drainage_image</text-property>
+                    <expression name="expression" type="javascript">dataSetRow["drainage_image"]</expression>
+                    <property name="dataType">string</property>
+                </structure>
+                <structure>
+                    <property name="name">status_flag</property>
+                    <text-property name="displayName">status_flag</text-property>
+                    <expression name="expression" type="javascript">dataSetRow["status_flag"]</expression>
+                    <property name="dataType">string</property>
+                </structure>
+                <structure>
+                    <property name="name">image_flag</property>
+                    <text-property name="displayName">image_flag</text-property>
+                    <expression name="expression" type="javascript">dataSetRow["image_flag"]</expression>
+                    <property name="dataType">string</property>
+                </structure>
+                <structure>
+                    <property name="name">location</property>
+                    <text-property name="displayName">location</text-property>
+                    <expression name="expression" type="javascript">dataSetRow["location"]</expression>
+                    <property name="dataType">string</property>
+                </structure>
+                <structure>
+                    <property name="name">cleanliness_of_toilet_block</property>
+                    <text-property name="displayName">cleanliness_of_toilet_block</text-property>
+                    <expression name="expression" type="javascript">dataSetRow["cleanliness_of_toilet_block"]</expression>
+                    <property name="dataType">string</property>
+                </structure>
+            </list-property>
+            <column id="168">
+                <property name="width">3in</property>
+            </column>
+            <column id="169"/>
+            <row id="170">
+                <cell id="171">
+                    <property name="colSpan">1</property>
+                    <property name="rowSpan">3</property>
+                    <property name="style">HeaderLogImageContainer</property>
+                    <image id="411">
+                        <property name="style">HeaderLogoImage</property>
+                        <property name="source">url</property>
+                        <expression name="uri" type="javascript">vars["var_report_top_shelter_logo"]</expression>
+                    </image>
+                </cell>
+                <cell id="172">
+                    <text-data id="368">
+                        <property name="style">SectionDataTitle</property>
+                        <expression name="valueExpr">row["city_name"]</expression>
+                        <property name="contentType">html</property>
+                    </text-data>
+                </cell>
+            </row>
+            <row id="173">
+                <cell id="175">
+                    <text-data id="369">
+                        <property name="style">SectionDataTitle</property>
+                        <expression name="valueExpr">row["administrativeward_name"]</expression>
+                        <property name="contentType">html</property>
+                    </text-data>
+                </cell>
+            </row>
+            <row id="176">
+                <cell id="178">
+                    <text-data id="370">
+                        <property name="style">SectionDataTitle</property>
+                        <expression name="valueExpr">row["slum_name"]</expression>
+                        <property name="contentType">html</property>
+                    </text-data>
+                </cell>
+            </row>
+            <row id="416">
+                <cell id="417">
+                    <property name="colSpan">2</property>
+                    <property name="rowSpan">1</property>
+                    <property name="style">SectionDataContainer</property>
+                    <property name="fontSize">14pt</property>
+                    <text-data id="419">
+                        <property name="fontSize">14pt</property>
+                        <property name="color">#114282</property>
+                        <expression name="valueExpr">"."</expression>
+                        <property name="contentType">html</property>
+                    </text-data>
+                </cell>
+            </row>
+            <row id="179">
+                <cell id="180">
+                    <property name="colSpan">2</property>
+                    <property name="rowSpan">1</property>
+                    <text-data id="315">
+                        <expression name="valueExpr">"This flyer is part of an information pack that aims to provide the "+row["city_name"]+" administrative ward offices with information relating to the status of sanitation (particularly open defecation and solid waste management) in their area and inform the sanitation strategy and projects."</expression>
+                        <property name="contentType">html</property>
+                    </text-data>
+                </cell>
+            </row>
+            <row id="182">
+                <cell id="183">
+                    <property name="colSpan">2</property>
+                    <property name="rowSpan">1</property>
+                </cell>
+            </row>
+            <row id="185">
+                <cell id="186">
+                    <property name="colSpan">1</property>
+                    <property name="rowSpan">1</property>
+                    <label id="312">
+                        <property name="style">SectionHeader</property>
+                        <text-property name="text">General Information:</text-property>
+                    </label>
+                </cell>
+                <cell id="420">
+                    <property name="style">SectionDataContainer</property>
+                </cell>
+            </row>
+            <row id="188">
+                <property name="borderBottomStyle">none</property>
+                <property name="borderLeftStyle">none</property>
+                <property name="borderRightStyle">none</property>
+                <property name="borderTopStyle">none</property>
+                <cell id="189">
+                    <property name="style">SectionlabelContainer</property>
+                    <label id="327">
+                        <property name="style">SectionLabel</property>
+                        <text-property name="text">Year of Establishment</text-property>
+                    </label>
+                </cell>
+                <cell id="190">
+                    <property name="style">SectionDataContainer</property>
+                    <text-data id="371">
+                        <property name="style">SectionData</property>
+                        <expression name="valueExpr">row["year_establishment"]</expression>
+                        <property name="contentType">html</property>
+                    </text-data>
+                </cell>
+            </row>
+            <row id="191">
+                <property name="borderBottomStyle">none</property>
+                <property name="borderLeftStyle">none</property>
+                <property name="borderRightStyle">none</property>
+                <property name="borderTopStyle">none</property>
+                <cell id="192">
+                    <property name="style">SectionlabelContainer</property>
+                    <label id="329">
+                        <property name="style">SectionLabel</property>
+                        <text-property name="text">Legal Status</text-property>
+                    </label>
+                </cell>
+                <cell id="193">
+                    <property name="style">SectionDataContainer</property>
+                    <text-data id="372">
+                        <property name="style">SectionData</property>
+                        <expression name="valueExpr">row["legal_status"]</expression>
+                        <property name="contentType">html</property>
+                    </text-data>
+                </cell>
+            </row>
+            <row id="194">
+                <property name="borderBottomStyle">none</property>
+                <property name="borderLeftStyle">none</property>
+                <property name="borderRightStyle">none</property>
+                <property name="borderTopStyle">none</property>
+                <cell id="195">
+                    <property name="style">SectionlabelContainer</property>
+                    <label id="330">
+                        <property name="style">SectionLabel</property>
+                        <text-property name="text">Electoral Ward</text-property>
+                    </label>
+                </cell>
+                <cell id="196">
+                    <property name="style">SectionDataContainer</property>
+                    <text-data id="373">
+                        <property name="style">SectionData</property>
+                        <expression name="valueExpr">row["electoralward_name"]</expression>
+                        <property name="contentType">html</property>
+                    </text-data>
+                </cell>
+            </row>
+            <row id="197">
+                <property name="borderBottomStyle">none</property>
+                <property name="borderLeftStyle">none</property>
+                <property name="borderRightStyle">none</property>
+                <property name="borderTopStyle">none</property>
+                <cell id="198">
+                    <property name="style">SectionlabelContainer</property>
+                    <label id="331">
+                        <property name="style">SectionLabel</property>
+                        <text-property name="text">Land Owner</text-property>
+                    </label>
+                </cell>
+                <cell id="199">
+                    <property name="style">SectionDataContainer</property>
+                    <text-data id="374">
+                        <property name="style">SectionData</property>
+                        <expression name="valueExpr">row["land_owner"]</expression>
+                        <property name="contentType">html</property>
+                    </text-data>
+                </cell>
+            </row>
+            <row id="200">
+                <property name="borderBottomStyle">none</property>
+                <property name="borderLeftStyle">none</property>
+                <property name="borderRightStyle">none</property>
+                <property name="borderTopStyle">none</property>
+                <cell id="201">
+                    <property name="style">SectionlabelContainer</property>
+                    <label id="332">
+                        <property name="style">SectionLabel</property>
+                        <text-property name="text">Development Plan Reservation</text-property>
+                    </label>
+                </cell>
+                <cell id="202">
+                    <property name="style">SectionDataContainer</property>
+                    <text-data id="375">
+                        <property name="style">SectionData</property>
+                        <expression name="valueExpr">row["development_plan_reservation"]</expression>
+                        <property name="contentType">html</property>
+                    </text-data>
+                </cell>
+            </row>
+            <row id="203">
+                <property name="borderBottomStyle">none</property>
+                <property name="borderLeftStyle">none</property>
+                <property name="borderRightStyle">none</property>
+                <property name="borderTopStyle">none</property>
+                <cell id="204">
+                    <property name="style">SectionlabelContainer</property>
+                    <label id="333">
+                        <property name="style">SectionLabel</property>
+                        <text-property name="text">Development Plan Zoning Proposal</text-property>
+                    </label>
+                </cell>
+                <cell id="205">
+                    <property name="style">SectionDataContainer</property>
+                    <text-data id="376">
+                        <property name="style">SectionData</property>
+                        <expression name="valueExpr">row["development_plan_reservation_type"]</expression>
+                        <property name="contentType">html</property>
+                    </text-data>
+                </cell>
+            </row>
+            <row id="206">
+                <property name="borderBottomStyle">none</property>
+                <property name="borderLeftStyle">none</property>
+                <property name="borderRightStyle">none</property>
+                <property name="borderTopStyle">none</property>
+                <cell id="207">
+                    <property name="style">SectionlabelContainer</property>
+                    <label id="334">
+                        <property name="style">SectionLabel</property>
+                        <text-property name="text">Approximate Area</text-property>
+                    </label>
+                </cell>
+                <cell id="208">
+                    <property name="style">SectionDataContainer</property>
+                    <text-data id="377">
+                        <property name="style">SectionData</property>
+                        <expression name="valueExpr">row["approximate_area"]</expression>
+                        <property name="contentType">html</property>
+                    </text-data>
+                </cell>
+            </row>
+            <row id="209">
+                <property name="borderBottomStyle">none</property>
+                <property name="borderLeftStyle">none</property>
+                <property name="borderRightStyle">none</property>
+                <property name="borderTopStyle">none</property>
+                <cell id="210">
+                    <property name="style">SectionlabelContainer</property>
+                    <label id="335">
+                        <property name="style">SectionLabel</property>
+                        <text-property name="text">Approximate No of Huts</text-property>
+                    </label>
+                </cell>
+                <cell id="211">
+                    <property name="style">SectionDataContainer</property>
+                    <text-data id="378">
+                        <property name="style">SectionData</property>
+                        <expression name="valueExpr">row["approximate_no_of_huts"]</expression>
+                        <property name="contentType">html</property>
+                    </text-data>
+                </cell>
+            </row>
+            <row id="212">
+                <property name="borderBottomStyle">none</property>
+                <property name="borderLeftStyle">none</property>
+                <property name="borderRightStyle">none</property>
+                <property name="borderTopStyle">none</property>
+                <cell id="213">
+                    <property name="style">SectionlabelContainer</property>
+                    <label id="336">
+                        <property name="style">SectionLabel</property>
+                        <text-property name="text">Approximate Population</text-property>
+                    </label>
+                </cell>
+                <cell id="214">
+                    <property name="style">SectionDataContainer</property>
+                    <text-data id="379">
+                        <property name="style">SectionData</property>
+                        <expression name="valueExpr">row["approximate_population"]</expression>
+                        <property name="contentType">html</property>
+                    </text-data>
+                </cell>
+            </row>
+            <row id="215">
+                <property name="borderBottomStyle">none</property>
+                <property name="borderLeftStyle">none</property>
+                <property name="borderRightStyle">none</property>
+                <property name="borderTopStyle">none</property>
+                <cell id="216">
+                    <property name="style">SectionlabelContainer</property>
+                    <label id="337">
+                        <property name="style">SectionLabel</property>
+                        <text-property name="text">Location</text-property>
+                    </label>
+                </cell>
+                <cell id="217">
+                    <property name="style">SectionDataContainer</property>
+                    <text-data id="381">
+                        <property name="style">SectionData</property>
+                        <expression name="valueExpr">row["location"]</expression>
+                        <property name="contentType">html</property>
+                    </text-data>
+                </cell>
+            </row>
+            <row id="218">
+                <property name="borderBottomStyle">none</property>
+                <property name="borderLeftStyle">none</property>
+                <property name="borderRightStyle">none</property>
+                <property name="borderTopStyle">none</property>
+                <cell id="219">
+                    <property name="style">SectionlabelContainer</property>
+                    <label id="338">
+                        <property name="style">SectionLabel</property>
+                        <text-property name="text">Topography</text-property>
+                    </label>
+                </cell>
+                <cell id="220">
+                    <property name="style">SectionDataContainer</property>
+                    <text-data id="380">
+                        <property name="style">SectionData</property>
+                        <expression name="valueExpr">row["topography"]</expression>
+                        <property name="contentType">html</property>
+                    </text-data>
+                </cell>
+            </row>
+            <row id="221">
+                <cell id="222">
+                    <property name="colSpan">1</property>
+                    <property name="rowSpan">1</property>
+                    <label id="314">
+                        <property name="style">SectionHeader</property>
+                        <text-property name="text">Toilet Information</text-property>
+                    </label>
+                </cell>
+                <cell id="421">
+                    <property name="style">SectionDataContainer</property>
+                </cell>
+            </row>
+            <row id="224">
+                <property name="borderBottomStyle">none</property>
+                <property name="borderLeftStyle">none</property>
+                <property name="borderRightStyle">none</property>
+                <property name="borderTopStyle">none</property>
+                <cell id="225">
+                    <property name="style">SectionlabelContainer</property>
+                    <label id="355">
+                        <property name="style">SectionLabel</property>
+                        <text-property name="text">Number of Community Toilet Blocks</text-property>
+                    </label>
+                </cell>
+                <cell id="226">
+                    <property name="style">SectionDataContainer</property>
+                    <text-data id="382">
+                        <property name="style">SectionData</property>
+                        <expression name="valueExpr">row["number_of_community_toilet_blocks"]</expression>
+                        <property name="contentType">html</property>
+                    </text-data>
+                </cell>
+            </row>
+            <row id="227">
+                <property name="borderBottomStyle">none</property>
+                <property name="borderLeftStyle">none</property>
+                <property name="borderRightStyle">none</property>
+                <property name="borderTopStyle">none</property>
+                <cell id="228">
+                    <property name="style">SectionlabelContainer</property>
+                    <label id="356">
+                        <property name="style">SectionLabel</property>
+                        <text-property name="text">Number of Seats (male/female)</text-property>
+                    </label>
+                </cell>
+                <cell id="229">
+                    <property name="style">SectionDataContainer</property>
+                    <text-data id="383">
+                        <property name="style">SectionData</property>
+                        <expression name="valueExpr">row["number_of_seats_allotted_to_men_and_women"]</expression>
+                        <property name="contentType">html</property>
+                    </text-data>
+                </cell>
+            </row>
+            <row id="230">
+                <property name="borderBottomStyle">none</property>
+                <property name="borderLeftStyle">none</property>
+                <property name="borderRightStyle">none</property>
+                <property name="borderTopStyle">none</property>
+                <cell id="231">
+                    <property name="style">SectionlabelContainer</property>
+                    <label id="357">
+                        <property name="style">SectionLabel</property>
+                        <text-property name="text">Toilet seat to persons ratio</text-property>
+                    </label>
+                </cell>
+                <cell id="232">
+                    <property name="style">SectionDataContainer</property>
+                    <text-data id="384">
+                        <property name="style">SectionData</property>
+                        <expression name="valueExpr">row["toilet_seat_to_persons_ratio"]</expression>
+                        <property name="contentType">html</property>
+                    </text-data>
+                </cell>
+            </row>
+            <row id="233">
+                <property name="borderBottomStyle">none</property>
+                <property name="borderLeftStyle">none</property>
+                <property name="borderRightStyle">none</property>
+                <property name="borderTopStyle">none</property>
+                <cell id="234">
+                    <property name="style">SectionlabelContainer</property>
+                    <label id="358">
+                        <property name="style">SectionLabel</property>
+                        <text-property name="text">Condition of toilet block structure</text-property>
+                    </label>
+                </cell>
+                <cell id="235">
+                    <property name="style">SectionDataContainer</property>
+                    <text-data id="385">
+                        <property name="style">SectionData</property>
+                        <expression name="valueExpr">row["condition_of_toilet_block"]</expression>
+                        <property name="contentType">html</property>
+                    </text-data>
+                </cell>
+            </row>
+            <row id="236">
+                <property name="borderBottomStyle">none</property>
+                <property name="borderLeftStyle">none</property>
+                <property name="borderRightStyle">none</property>
+                <property name="borderTopStyle">none</property>
+                <cell id="237">
+                    <property name="style">SectionlabelContainer</property>
+                    <label id="359">
+                        <property name="style">SectionLabel</property>
+                        <text-property name="text">Cleanliness of toilet block</text-property>
+                    </label>
+                </cell>
+                <cell id="238">
+                    <property name="style">SectionDataContainer</property>
+                    <text-data id="396">
+                        <property name="style">SectionData</property>
+                        <expression name="valueExpr">row["cleanliness_of_toilet_block"]</expression>
+                        <property name="contentType">html</property>
+                    </text-data>
+                </cell>
+            </row>
+            <row id="239">
+                <property name="borderBottomStyle">none</property>
+                <property name="borderLeftStyle">none</property>
+                <property name="borderRightStyle">none</property>
+                <property name="borderTopStyle">none</property>
+                <cell id="240">
+                    <property name="style">SectionlabelContainer</property>
+                    <label id="360">
+                        <property name="style">SectionLabel</property>
+                        <text-property name="text">Toilet maintenance provided by</text-property>
+                    </label>
+                </cell>
+                <cell id="241">
+                    <property name="style">SectionDataContainer</property>
+                    <text-data id="387">
+                        <property name="style">SectionData</property>
+                        <expression name="valueExpr">row["toilet_maintenance_provided_by"]</expression>
+                        <property name="contentType">html</property>
+                    </text-data>
+                </cell>
+            </row>
+            <row id="242">
+                <property name="borderBottomStyle">none</property>
+                <property name="borderLeftStyle">none</property>
+                <property name="borderRightStyle">none</property>
+                <property name="borderTopStyle">none</property>
+                <cell id="243">
+                    <property name="style">SectionlabelContainer</property>
+                    <label id="361">
+                        <property name="style">SectionLabel</property>
+                        <text-property name="text">Facilities for children under 5 years of age</text-property>
+                    </label>
+                </cell>
+                <cell id="244">
+                    <property name="style">SectionDataContainer</property>
+                    <text-data id="388">
+                        <property name="style">SectionData</property>
+                        <expression name="valueExpr">row["facility_in_the_toilet_block_for_5_yr_age"]</expression>
+                        <property name="contentType">html</property>
+                    </text-data>
+                </cell>
+            </row>
+            <row id="245">
+                <property name="borderBottomStyle">none</property>
+                <property name="borderLeftStyle">none</property>
+                <property name="borderRightStyle">none</property>
+                <property name="borderTopStyle">none</property>
+                <cell id="246">
+                    <property name="style">SectionlabelContainer</property>
+                    <label id="362">
+                        <property name="style">SectionLabel</property>
+                        <text-property name="text">Status of defecation</text-property>
+                    </label>
+                </cell>
+                <cell id="247">
+                    <property name="style">SectionDataContainer</property>
+                    <text-data id="389">
+                        <property name="style">SectionData</property>
+                        <expression name="valueExpr">row["status_of_defecation"]</expression>
+                        <property name="contentType">html</property>
+                    </text-data>
+                </cell>
+            </row>
+            <row id="248">
+                <property name="borderBottomStyle">none</property>
+                <property name="borderLeftStyle">none</property>
+                <property name="borderRightStyle">none</property>
+                <property name="borderTopStyle">none</property>
+                <cell id="249">
+                    <property name="style">SectionlabelContainer</property>
+                    <label id="363">
+                        <property name="style">SectionLabel</property>
+                        <text-property name="text">Location of open defecation site(s)</text-property>
+                    </label>
+                </cell>
+                <cell id="250">
+                    <property name="style">SectionDataContainer</property>
+                    <text-data id="390">
+                        <property name="style">SectionData</property>
+                        <expression name="valueExpr">row["location_of_open_defecation_site"]</expression>
+                        <property name="contentType">html</property>
+                    </text-data>
+                </cell>
+            </row>
+            <row id="251">
+                <property name="borderBottomStyle">none</property>
+                <property name="borderLeftStyle">none</property>
+                <property name="borderRightStyle">none</property>
+                <property name="borderTopStyle">none</property>
+                <cell id="252">
+                    <property name="style">SectionlabelContainer</property>
+                    <label id="364">
+                        <property name="style">SectionLabel</property>
+                        <text-property name="text">Approx. percentile of huts with an individual toilet</text-property>
+                    </label>
+                </cell>
+                <cell id="253">
+                    <property name="style">SectionDataContainer</property>
+                    <text-data id="391">
+                        <property name="style">SectionData</property>
+                        <expression name="valueExpr">row["approximate_huts_with_individual_toilet"]</expression>
+                        <property name="contentType">html</property>
+                    </text-data>
+                </cell>
+            </row>
+            <row id="254">
+                <cell id="255">
+                    <property name="colSpan">1</property>
+                    <property name="rowSpan">1</property>
+                    <label id="317">
+                        <property name="style">SectionHeader</property>
+                        <text-property name="text">Waste Management Information</text-property>
+                    </label>
+                </cell>
+                <cell id="422">
+                    <property name="style">SectionDataContainer</property>
+                </cell>
+            </row>
+            <row id="257">
+                <property name="borderBottomStyle">none</property>
+                <property name="borderLeftStyle">none</property>
+                <property name="borderRightStyle">none</property>
+                <property name="borderTopStyle">none</property>
+                <cell id="258">
+                    <property name="style">SectionlabelContainer</property>
+                    <label id="354">
+                        <property name="style">SectionLabel</property>
+                        <text-property name="text">Total number of waste containers</text-property>
+                    </label>
+                </cell>
+                <cell id="259">
+                    <property name="style">SectionDataContainer</property>
+                    <text-data id="392">
+                        <property name="style">SectionData</property>
+                        <expression name="valueExpr">row["total_number_of_waste_container"]</expression>
+                        <property name="contentType">html</property>
+                    </text-data>
+                </cell>
+            </row>
+            <row id="260">
+                <property name="borderBottomStyle">none</property>
+                <property name="borderLeftStyle">none</property>
+                <property name="borderRightStyle">none</property>
+                <property name="borderTopStyle">none</property>
+                <cell id="261">
+                    <property name="style">SectionlabelContainer</property>
+                    <label id="353">
+                        <property name="style">SectionLabel</property>
+                        <text-property name="text">Frequency of clearance of waste containers</text-property>
+                    </label>
+                </cell>
+                <cell id="262">
+                    <property name="style">SectionDataContainer</property>
+                    <text-data id="393">
+                        <property name="style">SectionData</property>
+                        <expression name="valueExpr">row["frequency_of_clearance_of_waste_containers"]</expression>
+                        <property name="contentType">html</property>
+                    </text-data>
+                </cell>
+            </row>
+            <row id="263">
+                <property name="borderBottomStyle">none</property>
+                <property name="borderLeftStyle">none</property>
+                <property name="borderRightStyle">none</property>
+                <property name="borderTopStyle">none</property>
+                <cell id="264">
+                    <property name="style">SectionlabelContainer</property>
+                    <label id="352">
+                        <property name="style">SectionLabel</property>
+                        <text-property name="text">Facility of waste collection</text-property>
+                    </label>
+                </cell>
+                <cell id="265">
+                    <property name="style">SectionDataContainer</property>
+                    <text-data id="394">
+                        <property name="style">SectionData</property>
+                        <expression name="valueExpr">row["facility_of_waste_collection"]</expression>
+                        <property name="contentType">html</property>
+                    </text-data>
+                </cell>
+            </row>
+            <row id="266">
+                <property name="borderBottomStyle">none</property>
+                <property name="borderLeftStyle">none</property>
+                <property name="borderRightStyle">none</property>
+                <property name="borderTopStyle">none</property>
+                <cell id="267">
+                    <property name="style">SectionlabelContainer</property>
+                    <label id="351">
+                        <property name="style">SectionLabel</property>
+                        <text-property name="text">Location of community open dump site(s)</text-property>
+                    </label>
+                </cell>
+                <cell id="268">
+                    <property name="style">SectionDataContainer</property>
+                    <text-data id="395">
+                        <property name="style">SectionData</property>
+                        <expression name="valueExpr">row["location_of_community_open_dump_site"]</expression>
+                        <property name="contentType">html</property>
+                    </text-data>
+                </cell>
+            </row>
+            <row id="269">
+                <cell id="270">
+                    <property name="colSpan">1</property>
+                    <property name="rowSpan">1</property>
+                    <label id="318">
+                        <property name="style">SectionHeader</property>
+                        <text-property name="text">Water Information</text-property>
+                    </label>
+                </cell>
+                <cell id="423">
+                    <property name="style">SectionDataContainer</property>
+                </cell>
+            </row>
+            <row id="272">
+                <property name="borderBottomStyle">none</property>
+                <property name="borderLeftStyle">none</property>
+                <property name="borderRightStyle">none</property>
+                <property name="borderTopStyle">none</property>
+                <cell id="273">
+                    <property name="style">SectionlabelContainer</property>
+                    <label id="350">
+                        <property name="style">SectionLabel</property>
+                        <text-property name="text">Status of water supply</text-property>
+                    </label>
+                </cell>
+                <cell id="274">
+                    <property name="style">SectionDataContainer</property>
+                    <text-data id="397">
+                        <property name="style">SectionData</property>
+                        <expression name="valueExpr">row["status_of_water_supply"]</expression>
+                        <property name="contentType">html</property>
+                    </text-data>
+                </cell>
+            </row>
+            <row id="275">
+                <property name="borderBottomStyle">none</property>
+                <property name="borderLeftStyle">none</property>
+                <property name="borderRightStyle">none</property>
+                <property name="borderTopStyle">none</property>
+                <cell id="276">
+                    <property name="style">SectionlabelContainer</property>
+                    <label id="349">
+                        <property name="style">SectionLabel</property>
+                        <text-property name="text">Coverage of water across the settlement</text-property>
+                    </label>
+                </cell>
+                <cell id="277">
+                    <property name="style">SectionDataContainer</property>
+                    <text-data id="398">
+                        <property name="style">SectionData</property>
+                        <expression name="valueExpr">row["coverage_of_wateracross_settlement"]</expression>
+                        <property name="contentType">html</property>
+                    </text-data>
+                </cell>
+            </row>
+            <row id="278">
+                <property name="borderBottomStyle">none</property>
+                <property name="borderLeftStyle">none</property>
+                <property name="borderRightStyle">none</property>
+                <property name="borderTopStyle">none</property>
+                <cell id="279">
+                    <property name="style">SectionlabelContainer</property>
+                    <label id="348">
+                        <property name="style">SectionLabel</property>
+                        <text-property name="text">Pressure of water in the system</text-property>
+                    </label>
+                </cell>
+                <cell id="280">
+                    <property name="style">SectionDataContainer</property>
+                    <text-data id="399">
+                        <property name="style">SectionData</property>
+                        <expression name="valueExpr">row["quality_of_water_in_the_system"]</expression>
+                        <property name="contentType">html</property>
+                    </text-data>
+                </cell>
+            </row>
+            <row id="281">
+                <property name="borderBottomStyle">none</property>
+                <property name="borderLeftStyle">none</property>
+                <property name="borderRightStyle">none</property>
+                <property name="borderTopStyle">none</property>
+                <cell id="282">
+                    <property name="style">SectionlabelContainer</property>
+                    <label id="347">
+                        <property name="style">SectionLabel</property>
+                        <text-property name="text">Quality of water in the system</text-property>
+                    </label>
+                </cell>
+                <cell id="283">
+                    <property name="style">SectionDataContainer</property>
+                    <text-data id="400">
+                        <property name="style">SectionData</property>
+                        <expression name="valueExpr">row["quality_of_water_in_the_system"]</expression>
+                        <property name="contentType">html</property>
+                    </text-data>
+                </cell>
+            </row>
+            <row id="284">
+                <cell id="285">
+                    <property name="colSpan">1</property>
+                    <property name="rowSpan">1</property>
+                    <label id="319">
+                        <property name="style">SectionHeader</property>
+                        <text-property name="text">Roads &amp; Access Information</text-property>
+                    </label>
+                </cell>
+                <cell id="424">
+                    <property name="style">SectionDataContainer</property>
+                </cell>
+            </row>
+            <row id="287">
+                <property name="borderBottomStyle">none</property>
+                <property name="borderLeftStyle">none</property>
+                <property name="borderRightStyle">none</property>
+                <property name="borderTopStyle">none</property>
+                <cell id="288">
+                    <property name="style">SectionlabelContainer</property>
+                    <label id="346">
+                        <property name="style">SectionLabel</property>
+                        <text-property name="text">Type of roads within the settlement</text-property>
+                    </label>
+                </cell>
+                <cell id="289">
+                    <property name="style">SectionDataContainer</property>
+                    <text-data id="401">
+                        <property name="style">SectionData</property>
+                        <expression name="valueExpr">row["type_of_roads_within_the_settlement"]</expression>
+                        <property name="contentType">html</property>
+                    </text-data>
+                </cell>
+            </row>
+            <row id="290">
+                <property name="borderBottomStyle">none</property>
+                <property name="borderLeftStyle">none</property>
+                <property name="borderRightStyle">none</property>
+                <property name="borderTopStyle">none</property>
+                <cell id="291">
+                    <property name="style">SectionlabelContainer</property>
+                    <label id="345">
+                        <property name="style">SectionLabel</property>
+                        <text-property name="text">Finish of the Roads Across the Settlement</text-property>
+                    </label>
+                </cell>
+                <cell id="292">
+                    <property name="style">SectionDataContainer</property>
+                    <text-data id="402">
+                        <property name="style">SectionData</property>
+                        <expression name="valueExpr">row["finish_of_the_road_accross_settlement"]</expression>
+                        <property name="contentType">html</property>
+                    </text-data>
+                </cell>
+            </row>
+            <row id="293">
+                <property name="borderBottomStyle">none</property>
+                <property name="borderLeftStyle">none</property>
+                <property name="borderRightStyle">none</property>
+                <property name="borderTopStyle">none</property>
+                <cell id="294">
+                    <property name="style">SectionlabelContainer</property>
+                    <label id="344">
+                        <property name="style">SectionLabel</property>
+                        <text-property name="text">Average width of internal roads</text-property>
+                    </label>
+                </cell>
+                <cell id="295">
+                    <property name="style">SectionDataContainer</property>
+                    <text-data id="403">
+                        <property name="style">SectionData</property>
+                        <expression name="valueExpr">row["average_width_of_internal_road"]</expression>
+                        <property name="contentType">html</property>
+                    </text-data>
+                </cell>
+            </row>
+            <row id="296">
+                <cell id="297">
+                    <property name="colSpan">1</property>
+                    <property name="rowSpan">1</property>
+                    <label id="320">
+                        <property name="style">SectionHeader</property>
+                        <text-property name="text">Drainage Information</text-property>
+                    </label>
+                </cell>
+                <cell id="425">
+                    <property name="style">SectionDataContainer</property>
+                </cell>
+            </row>
+            <row id="299">
+                <property name="borderBottomStyle">none</property>
+                <property name="borderLeftStyle">none</property>
+                <property name="borderRightStyle">none</property>
+                <property name="borderTopStyle">none</property>
+                <cell id="300">
+                    <property name="style">SectionlabelContainer</property>
+                    <label id="343">
+                        <property name="style">SectionLabel</property>
+                        <text-property name="text">Presence of drains within the settlement</text-property>
+                    </label>
+                </cell>
+                <cell id="301">
+                    <property name="style">SectionDataContainer</property>
+                    <text-data id="404">
+                        <property name="style">SectionData</property>
+                        <expression name="valueExpr">row["presence_of_drains_within_settlement"]</expression>
+                        <property name="contentType">html</property>
+                    </text-data>
+                </cell>
+            </row>
+            <row id="302">
+                <property name="borderBottomStyle">none</property>
+                <property name="borderLeftStyle">none</property>
+                <property name="borderRightStyle">none</property>
+                <property name="borderTopStyle">none</property>
+                <cell id="303">
+                    <property name="style">SectionlabelContainer</property>
+                    <label id="342">
+                        <property name="style">SectionLabel</property>
+                        <text-property name="text">Coverage of drains across the settlement</text-property>
+                    </label>
+                </cell>
+                <cell id="304">
+                    <property name="style">SectionDataContainer</property>
+                    <text-data id="405">
+                        <property name="style">SectionData</property>
+                        <expression name="valueExpr">row["coverage_of_drains_across_settlement"]</expression>
+                        <property name="contentType">html</property>
+                    </text-data>
+                </cell>
+            </row>
+            <row id="305">
+                <property name="borderBottomStyle">none</property>
+                <property name="borderLeftStyle">none</property>
+                <property name="borderRightStyle">none</property>
+                <property name="borderTopStyle">none</property>
+                <cell id="306">
+                    <property name="style">SectionlabelContainer</property>
+                    <label id="341">
+                        <property name="style">SectionLabel</property>
+                        <text-property name="text">Do the drains get blocked?</text-property>
+                    </label>
+                </cell>
+                <cell id="307">
+                    <property name="style">SectionDataContainer</property>
+                    <text-data id="406">
+                        <property name="style">SectionData</property>
+                        <expression name="valueExpr">row["do_the_drains_get_blocked"]</expression>
+                        <property name="contentType">html</property>
+                    </text-data>
+                </cell>
+            </row>
+            <row id="308">
+                <property name="borderBottomStyle">none</property>
+                <property name="borderLeftStyle">none</property>
+                <property name="borderRightStyle">none</property>
+                <property name="borderTopStyle">none</property>
+                <cell id="309">
+                    <property name="style">SectionlabelContainer</property>
+                    <label id="340">
+                        <property name="style">SectionLabel</property>
+                        <text-property name="text">Is the drainage gradient adequate?</text-property>
+                    </label>
+                </cell>
+                <cell id="310">
+                    <property name="style">SectionDataContainer</property>
+                    <text-data id="407">
+                        <property name="style">SectionData</property>
+                        <expression name="valueExpr">row["is_the_drainage_gradient_adequate"]</expression>
+                        <property name="contentType">html</property>
+                    </text-data>
+                </cell>
+            </row>
+            <row id="324">
+                <property name="borderBottomStyle">none</property>
+                <property name="borderLeftStyle">none</property>
+                <property name="borderRightStyle">none</property>
+                <property name="borderTopStyle">none</property>
+                <cell id="325">
+                    <property name="style">SectionlabelContainer</property>
+                    <label id="339">
+                        <property name="style">SectionLabel</property>
+                        <text-property name="text">General Observation</text-property>
+                    </label>
+                </cell>
+                <cell id="326">
+                    <property name="style">SectionDataContainer</property>
+                    <text-data id="408">
+                        <property name="style">SectionData</property>
+                        <expression name="valueExpr">row["drainage_comment"]</expression>
+                        <property name="contentType">html</property>
+                    </text-data>
+                </cell>
+            </row>
+            <row id="321">
+                <cell id="322">
+                    <property name="colSpan">2</property>
+                    <property name="rowSpan">1</property>
+                    <property name="style">ImageContainer</property>
+                    <image id="427">
+                        <property name="style">Report_Image</property>
+                        <list-property name="visibility">
+                            <structure>
+                                <property name="format">all</property>
+                                <expression name="valueExpr" type="javascript">(row["image_flag"].toString() == "false") || (row["drainage_image"]==null || row["drainage_image"]=="")</expression>
+                            </structure>
+                        </list-property>
+                        <property name="source">url</property>
+                        <expression name="uri" type="javascript">vars["var_report_prefix_image_path"].concat(row["drainage_image"])</expression>
+                    </image>
+                </cell>
+            </row>
+        </grid>
+    </body>
+    <property name="pageVariables">
+        <variable-element name="var_report_footer_image">
+            <expression name="value" type="javascript">"http://app.shelter-associates.org/static/images/rpt_drainage_footer.png"</expression>
+            <property name="type">report</property>
+        </variable-element>
+        <variable-element name="var_report_top_shelter_logo">
+            <expression name="value" type="javascript">"http://app.shelter-associates.org/static/images/shelter_footer.png"</expression>
+            <property name="type">report</property>
+        </variable-element>
+        <variable-element name="var_report_prefix_image_path">
+            <expression name="value" type="javascript">"http://app.shelter-associates.org/media/"</expression>
+            <property name="type">report</property>
+        </variable-element>
+    </property>
+</report>
