@@ -27,6 +27,7 @@ from master.models import Survey, CityReference, Rapid_Slum_Appraisal, \
 from master.forms import SurveyCreateForm, ReportForm, Rapid_Slum_AppraisalForm, DrainageForm
 from sponsor.models import SponsorProjectDetails
 from component.cipher import *
+import urllib
 
 @staff_member_required
 def index(request):
@@ -505,7 +506,7 @@ def familyrportgenerate(request):
 	if project_details:
 		cipher = AESCipher()
 		key = cipher.encrypt(str(rp_slum_code) + '|' + str(houseno) + '|' +  str(request.user.id))
-		string = settings.BIRT_REPORT_URL + "Birt/frameset?__format=pdf&__report=FFReport.rptdesign&key=" + key
+		string = settings.BIRT_REPORT_URL + "Birt/frameset?__format=pdf&__report=FFReport.rptdesign&key=" + urllib.quote_plus(key)
 		data = {'string': string}
 	else:
 		data = {'error':'Not authorized'}

@@ -57,7 +57,7 @@ class KMLSlumParser(object):
             admin_name = folder.ExtendedData.SchemaData.SimpleData[20]
             name = folder.ExtendedData.SchemaData.SimpleData[21]
             if name == "Not Received":
-                name += " (" + elec_ward_no +")"
+                name += " (" + str(elec_ward_no) +")"
             shape = self.get_coordinate(folder)
             elect = { "name":name , "admin_name": admin_name,
                       "ward_no":elec_ward_no, "shape":shape}
