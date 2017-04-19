@@ -286,17 +286,15 @@ def fetch_answer(sect_form, key, submission):
     if 'select' in sect_form['type'] and type(key[0]) != list and 'children' in sect_form:
         options = dict((str(opt['name']), str(opt['label'])) for opt in sect_form['children'])
         sub_option = submission[key[0]].split(' ')
-        val = '  '#options[sub_option[0]]
+        val = []
         if len(sub_option) > 0:
             for sub in sub_option:
-		if sub in options:
-                   val += options[sub] + ', '
-            val = val[:-2]
-            val = val.strip()
-            #val = reduce(lambda x,y: options[x] +',' + options[y], sub_option)
+                if sub in options:
+                    val.append(str(options[sub]))
+        val = ', '.join(val)
     elif 'photo' in sect_form['type']:
         photos = submission['_attachments']
-        val = [photo['download_url'] for photo in photos if submission[key[0]] in photo['download_url']]
+        val = [photo['download_url'] for photo in photos if submission[key[0]] in photo['filename']]
         if val and len(val)>0:
             val = val[0]
     else:
