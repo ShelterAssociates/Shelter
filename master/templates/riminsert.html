@@ -473,6 +473,13 @@ $(document).ready(function(){
 					<br>
 
 					<div class ="row">
+            <div class="col-md-3">
+              <label for="id_percentage_with_individual_toilet">Percentage of huts using individual toilets</label>
+            </div>
+
+            <div class="col-md-3">
+              {{ form.percentage_with_individual_toilet }}
+            </div>
 						<div class="col-md-3">
 							<label for="toilet_info_left_image">Toilet info left image</label>
 						</div>
@@ -481,30 +488,32 @@ $(document).ready(function(){
 							{{form.toilet_info_left_image }}
 						</div>
 
-						<div class="col-md-3">
-							<label for="toilet_image_bottomdown1">Toilet image bottomdown1</label>
-						</div>
 
-						<div class="col-md-3">
-							{{form.toilet_image_bottomdown1 }}
-						</div>
 					</div>
 
 
 
 					<div class="row">
+            <div class="col-md-6">
+              {{ form.percentage_with_individual_toilet.errors }}
+            </div>
 						<div class="col-md-6">
 							{{ form.toilet_info_left_image.errors }}
 						</div>
-						<div class="col-md-6">
-							{{ form.toilet_image_bottomdown1.errors }}
-						</div>
+
 					</div>
 
 					<br>
 					<br>
 
 					<div class ="row">
+            <div class="col-md-3">
+							<label for="toilet_image_bottomdown1">Toilet image bottomdown1</label>
+						</div>
+
+						<div class="col-md-3">
+							{{form.toilet_image_bottomdown1 }}
+						</div>
 						<div class="col-md-3">
 							<label for="toilet_image_bottomdown2">Toilet image bottomdown2</label>
 						</div>
@@ -515,6 +524,9 @@ $(document).ready(function(){
 					</div>
 
 					<div class="row">
+            <div class="col-md-6">
+							{{ form.toilet_image_bottomdown1.errors }}
+						</div>
 						<div class="col-md-6">
 							{{ form.toilet_image_bottomdown2.errors }}
 						</div>
