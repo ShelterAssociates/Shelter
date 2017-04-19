@@ -289,8 +289,8 @@ def fetch_answer(sect_form, key, submission):
         val = []
         if len(sub_option) > 0:
             for sub in sub_option:
-        		if sub in options:
-                   val.append(str(options[sub]))
+                if sub in options:
+                    val.append(str(options[sub]))
         val = ', '.join(val)
     elif 'photo' in sect_form['type']:
         photos = submission['_attachments']
