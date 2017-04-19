@@ -308,6 +308,7 @@ class Rapid_Slum_Appraisal(models.Model):
     gutter_image_bottomdown2 = models.ImageField(validate_image,upload_to=SHELTER_PHOTO,blank=True, null=True)
     drainage_report_image = models.ImageField(upload_to=DRAINAGE_PHOTO,blank=True, null=True)
     location_of_defecation = models.CharField(max_length=2048,blank=True, null=True)
+    percentage_with_individual_toilet = models.CharField(max_length=2048,blank=True, null=True)
 
     class Meta:
         ordering = ['slum_name']
