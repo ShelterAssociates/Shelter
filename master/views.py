@@ -524,7 +524,7 @@ def user_login(request):
 				if user.is_active:
 					login(request, user)
 					if (request.user.groups.filter(name__in=['sponsor']).exists()):
-						return HttpResponse('Sponsor Login')
+						return HttpResponseRedirect('/sponsor/')
 					else:
 						return HttpResponseRedirect('/admin/')
 				else:
@@ -536,6 +536,4 @@ def user_login(request):
 	return render(request, 'login.html', {'form': form})
 
 
-@csrf_exempt
-def sponsors(request):
-	return render(request, 'sponsors.html', {})
+	
