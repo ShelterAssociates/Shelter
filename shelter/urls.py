@@ -24,6 +24,7 @@ urlpatterns = [
     url(r'^$',slummap, name='slummap'),
     url(r'^admin/', include('master.urls')),
     url(r'^component/', include('component.urls')),
+    url(r'^sponsor/', include('sponsor.urls')),
 ] + static(settings.STATIC_URL, document_root=settings.STATIC_ROOT) + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 
 
