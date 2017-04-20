@@ -1398,7 +1398,7 @@ return false;]]></method>
                     <property name="style">SectionlabelContainer</property>
                     <label id="334">
                         <property name="style">SectionLabel</property>
-                        <text-property name="text">Approximate Area</text-property>
+                        <text-property name="text">Approximate Area (sq. m.)</text-property>
                     </label>
                 </cell>
                 <cell id="208">
