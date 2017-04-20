@@ -690,7 +690,7 @@ row_count =1;]]></method>
 	row["facility_in_the_toilet_block_for_5_yr_age"] = jsonObject["facility_in_the_toilet_block_f"];
 	row["status_of_defecation"] = jsonObject["status_of_defecation"];
 	row["location_of_open_defecation_site"] = jsonObject["location_of_defecation"];
-	row["approximate_huts_with_individual_toilet"] = jsonObject["number_of_huts_in_settlement"];
+	row["approximate_huts_with_individual_toilet"] = jsonObject["percentage_with_individual_toilet"]==null ? '' : jsonObject["percentage_with_individual_toilet"];
 	
 	//Waste Management Information
 	row["total_number_of_waste_container"] = jsonObject["total_number_of_waste_containe"];
