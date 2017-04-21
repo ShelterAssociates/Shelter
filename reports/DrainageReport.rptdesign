@@ -833,6 +833,7 @@ return false;]]></method>
         <simple-master-page name="Shelter Drainage Report Master Page" id="2">
             <property name="type">a4</property>
             <property name="orientation">portrait</property>
+            <property name="headerHeight">0.4in</property>
             <property name="footerHeight">0.6in</property>
             <page-footer>
                 <grid id="4">
@@ -1971,6 +1972,7 @@ return false;]]></method>
                 <property name="borderLeftStyle">none</property>
                 <property name="borderRightStyle">none</property>
                 <property name="borderTopStyle">none</property>
+                <property name="pageBreakAfter">always</property>
                 <cell id="294">
                     <property name="style">SectionlabelContainer</property>
                     <label id="344">
@@ -1988,6 +1990,7 @@ return false;]]></method>
                 </cell>
             </row>
             <row id="296">
+                <property name="pageBreakBefore">always</property>
                 <cell id="297">
                     <property name="colSpan">1</property>
                     <property name="rowSpan">1</property>
