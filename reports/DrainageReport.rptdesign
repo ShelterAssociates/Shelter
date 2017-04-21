@@ -675,7 +675,7 @@ row_count =1;]]></method>
 	row["development_plan_reservation"] = jsonObject["development_plan_reservation"];
 	row["development_plan_reservation_type"] = jsonObject["development_plan_reservation_t"];
 	row["approximate_area"] = jsonObject["approximate_area_of_the_settle"];
-	row["approximate_no_of_huts"] = jsonObject["Date_of_declaration"];
+	row["approximate_no_of_huts"] = jsonObject["number_of_huts_in_settlement"];
 	row["approximate_population"] = jsonObject["approximate_population"];	
 	row["location"] = jsonObject["location"];
 	row["topography"] = jsonObject["topography"];
@@ -1885,7 +1885,7 @@ return false;]]></method>
                     <property name="style">SectionDataContainer</property>
                     <text-data id="399">
                         <property name="style">SectionData</property>
-                        <expression name="valueExpr">row["quality_of_water_in_the_system"]</expression>
+                        <expression name="valueExpr">row["pressure_of_water_in_the_system"]</expression>
                         <property name="contentType">html</property>
                     </text-data>
                 </cell>
