@@ -1,5 +1,17 @@
-{{jsondata}}
+ {{jsondata}}
 
-<html>
+
 <h1>Hello  Sponsors </h1>
-</html>
+
+
+{% for key,value in jsondata.items %}
+ 	{% for i in value %}
+ 	    Sponsor Project : {{i.sponsor_project_name}}
+ 	  		 {% for k in i.slumnames %}
+ 	       		 <li>  {{k.slumname}} </li>
+ 	 		 {% endfor%}
+ 	{% endfor%}
+
+{% endfor %}
+
+ 
