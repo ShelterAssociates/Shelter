@@ -1,17 +1,15 @@
- {{jsondata}}
+{% extends "base_site.html" %}
 
-
-<h1>Hello  Sponsors </h1>
-
-
+{% block content %}
+{{jsondata}}
 {% for key,value in jsondata.items %}
  	{% for i in value %}
  	    Sponsor Project : {{i.sponsor_project_name}}
- 	  		 {% for k in i.slumnames %}
- 	       		 <li>  {{k.slumname}} </li>
- 	 		 {% endfor%}
+ 	  		{% for k in i.slumnames %}
+ 	          <li> {{k.slumname}}[{{k.count}}] <a href="{{k.slumname}}[{{k.count}}]">{{k.slumname}}[{{k.count}}] </a> </li>
+ 	 		{% endfor%}
  	{% endfor%}
-
 {% endfor %}
 
- 
+
+{% endblock %}
