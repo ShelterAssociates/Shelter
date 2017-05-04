@@ -1,15 +1,27 @@
 {% extends "base_site.html" %}
 
+
+
 {% block content %}
 {{jsondata}}
-{% for key,value in jsondata.items %}
- 	{% for i in value %}
- 	    Sponsor Project : {{i.sponsor_project_name}}
+	{% for key,value in jsondata.items %}
+ 		{% for i in value %}
+ 	    	Sponsor Project : {{i.sponsor_project_name}}
  	  		{% for k in i.slumnames %}
- 	          <li> {{k.slumname}}[{{k.count}}] <a href="{{k.slumname}}[{{k.count}}]">{{k.slumname}}[{{k.count}}] </a> </li>
+ 	          <p> <a href="http://127.0.0.1:8000?slumname={{k.slumname}}?cityname={{k.city_id}}">{{k.slumname}}[{{k.count}}] {{k.cityname}}</a>   </p>
  	 		{% endfor%}
- 	{% endfor%}
-{% endfor %}
-
-
+ 		{% endfor%}
+	{% endfor %}
 {% endblock %}
+
+
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+<script>
+<script language="javascript">
+
+$(document).ready(function(){
+    $("p").click(function(){
+        alert("The paragraph was clicked.");
+    });
+});
+</script>

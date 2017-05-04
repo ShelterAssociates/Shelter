@@ -8,6 +8,15 @@ var wdaddress;
 var wdhead;
 var compochk;
 
+var dummy;
+var dummy1;
+
+var dummy2;
+
+
+dummypollyarray = new Array();
+
+
 var url = "/admin/citymapdisplay";
 
 var arr = [];
@@ -16,9 +25,50 @@ var glob_polygon;
 var removeIndi;
 var modelsection;
 var global_slum_id;
-// $(document).ready(function(){
-// 	initMap12();
-// });
+
+/*
+$(document).ready(function(){
+
+});
+
+*/
+
+$(window).load(function(){
+
+	setTimeout(function(){
+
+    }, 2000);
+	
+	alert("Hello map");
+
+
+	setTimeout(function(){
+
+    }, 2000);
+
+	
+	google.maps.event.trigger(dummypollyarray[2], "click", {});
+
+
+	$("#datatable_filter").find("input").val("airoli").click();
+	
+	setTimeout(function(){
+
+    }, 2000);
+
+	$("#datatable_filter").find("input").trigger('keyup');
+	
+	setTimeout(function(){
+
+    }, 2000);
+
+$("#datatable").find('tbody>tr>td>div>span:contains(Airoli)').trigger('click');
+
+
+
+}); 
+
+
 function initMap12() {
 	labelmap();
 	map = new google.maps.Map(document.getElementById('map12'), {
@@ -58,6 +108,7 @@ function animateMapZoomTo(map, targetZoom) {
         setTimeout(function(){ map.setZoom(currentZoom) }, 80);
     }
 }
+
 var slum_list = function slum_list(val){
 	//mydatatable.on("click", "span", function(e) {
 		data = $(val).attr("data");
@@ -72,6 +123,7 @@ var slum_list = function slum_list(val){
 		//e.stopPropagation();
 	//});
 }
+
 function initMap(obj1, zoomlavel) {
 
 	map = new google.maps.Map(document.getElementById('map12'), {
@@ -200,11 +252,11 @@ function latlongformat(ShapeValue, shapename, bgcolor, bordercolor, flag=true) {
 	}
 	var Poly1;
 	if(flag){
-	 Poly1 = drawPolygon(PolygonPoints, bounds, bgcolor, bordercolor);
-}
-else{
-	 Poly1 = drawPolygon(PolygonPoints, bounds, bgcolor, bordercolor, 99);
-}
+	    Poly1 = drawPolygon(PolygonPoints, bounds, bgcolor, bordercolor);
+	}
+	else{
+	    Poly1 = drawPolygon(PolygonPoints, bounds, bgcolor, bordercolor, 99);
+	}
 	glob_polygon = Poly1;
 	var options = {
 				map: map,
@@ -249,7 +301,12 @@ else{
 	 console.log(obj[arr[0]]["content"][arr[1]]["content"][arr[2]]["content"][arr[3]]['info']);
 	 }*/
   if(flag){
-	google.maps.event.addListener(Poly1, 'click', function(event) {
+	google.maps.event.addListener(Poly1, 'click', function(event){
+		dummy2 = Poly1;
+		alert("Hello Polygon")
+		alert(this);
+		console.log(Poly1)
+
 		infoWindowover.close();
 
 		if (arr.length == 4) {
@@ -281,7 +338,7 @@ else{
 	 google.maps.event.addListener(Poly1, 'click', function(event) {
 		 $("#datatable_filter").find("input").val(shapename);
 		 $("#datatable_filter").find("input").trigger('keyup');
-		  $("#datatable").find('tbody>tr>td>div>span:contains('+shapename+')').trigger('click');
+		 $("#datatable").find('tbody>tr>td>div>span:contains('+shapename+')').trigger('click');
 	 });
  }
 
@@ -398,7 +455,8 @@ function createMap(jsondata, arrRemoveInd) {
 		mydesc.html(obj[arr[0]]["content"][arr[1]]["content"][arr[2]]["content"][arr[3]]['info'] +"<br/><div style='padding-top:10px;'><a style='font-weight:bold;text-decoration: underline;cursor:pointer;' href='javascript:factsheet_click(this)'>View Factsheet</a></div>");
 		val = obj[arr[0]]["content"][arr[1]]["content"][arr[2]]["content"][arr[3]]
 		objmap = initMap(val, 18);
-
+		//alert(val);
+		//console.log(val);
 		mydatatable.fnDestroy();
 		$("#datatable").empty();
 
@@ -427,15 +485,35 @@ function setMaplink() {
 	if (arr.length > 0) {
 		for (var i = 0; i < arr.length; i++) {
 			aTag += '>> <label id="' + arr[i] + '" onclick="getArea(this);">' + " <span style='text-decoration: underline;cursor:pointer;color:blue;'>" + arr[i] + "</span></label>&nbsp;&nbsp; ";
+			alert("HHHHHHHHHHHHH");
 		}
 	}
 	mydiv.html(aTag);
 }
 
-function getArea(initlink) {
+function getArea(initlink){
+
+	console.log(initlink);
+	dummy1 = initlink;
 	removeIndi = "";
 
 	var textelement = (initlink.textContent).toString().trim();
+
+	dummy = textelement;
+
+	if(dummy =='Airoli Naka Navi Mumbai')
+	{
+		alert("Yes");
+		//textelement ='Ganpati Colony Navi Mumbai';
+
+	//	obj[arr[0]]["content"][arr[1]]["content"][arr[2]]["content"][arr[3]]['name'] = textelement;
+		//alert("Yes"); //Airoli Naka Navi Mumbai
+	}	
+
+//	textelement = 'Ganpati Colony Navi Mumbai';
+
+	dummy = textelement;
+
 
 	if (textelement == "Home") {
 		arr.splice(0, 4);
@@ -455,6 +533,7 @@ function getArea(initlink) {
 	}
 
 	$("#datatablecontainer").show();
+	//arr[3] = 'Ganpati Colony Navi Mumbai';
 	removeIndi = arr.indexOf(textelement) + 1;
 	createMap(textelement, true);
 }
@@ -472,6 +551,8 @@ function drawPolygon(PolygonPoints, centerlatlang, bgcolor, bordercolor, index=1
 		newbordercolor = bordercolor;
 	}
 
+
+
 	Poly = new google.maps.Polygon({
 		paths : PolygonPoints,
 		strokeColor : newbordercolor,
@@ -482,6 +563,11 @@ function drawPolygon(PolygonPoints, centerlatlang, bgcolor, bordercolor, index=1
 		center : centerlatlang.getCenter(),
 		zIndex:index,
 	});
+
+	
+//	dummypollyarray.push()
+	dummypollyarray.push(Poly);
+
 	Poly.setMap(map);
 	map.setCenter(centerlatlang.getCenter());
 	return Poly;

@@ -1,5 +1,6 @@
 from django.shortcuts import render
-from sponsor.models import *	
+from sponsor.models import *
+from master.models import *	
 from django.views.decorators.csrf import csrf_exempt
 #import json
 import simplejson as json
@@ -98,7 +99,14 @@ def sponsors(request):
 		for j in Spd:
 			slumdict={}
 			print j.slum.name
-			slumdict.update({'slumname':j.slum.name,'id':j.slum.id,'count':len(j.household_code)})
+			print j.slum.electoral_ward.administrative_ward.city
+			print j.slum.electoral_ward.administrative_ward.city.id
+			cref=CityReference.objects.get(id=j.slum.electoral_ward.administrative_ward.city.name_id)
+			print cref.city_name
+			slumdict.update({'slumname':j.slum.name,
+							 'slum_id':j.slum.id,'count':len(j.household_code) ,
+							 'cityname' : str(cref.city_name)
+							 ,'city_id' : j.slum.electoral_ward.administrative_ward.city.id})
 			print slumdict
 			slumnameArray.append(slumdict)
 		data.update({'sponsor_project_name':i,'slumnames':slumnameArray})
