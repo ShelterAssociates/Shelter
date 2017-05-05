@@ -8,7 +8,7 @@
  		{% for i in value %}
  	    	Sponsor Project : {{i.sponsor_project_name}}
  	  		{% for k in i.slumnames %}
- 	          <p> <a href="http://127.0.0.1:8000?slumname={{k.slumname}}?cityname={{k.city_id}}">{{k.slumname}}[{{k.count}}] {{k.cityname}}</a>   </p>
+ 	          <p> <a href="http://127.0.0.1:8000?slum={{k.slumname}}&city={{k.city_id}}">{{k.slumname}}[{{k.count}}] {{k.cityname}}</a>   </p>
  	 		{% endfor%}
  		{% endfor%}
 	{% endfor %}

@@ -33,8 +33,45 @@ $(document).ready(function(){
 
 */
 
+/*
 $(window).load(function(){
 
+	alert("begin");
+
+	var polygonnumber;
+	var slumname;
+
+	var searchString = (window.location.search.substring(1)).replace(/%20/g, " ");
+
+	console.log(searchString);
+
+		
+	params = searchString.split('&');
+
+
+	console.log(params[0]);
+
+	console.log(params[1]);
+
+
+
+	for(var i=0;i<params.length;i++)
+	{
+		var param = params[i].split("=");
+
+		if(param[0]=='slum')			
+		{
+			slumname = param[1];
+			console.log("slum : " + param[1]);
+		}
+		if(param[0]=='city')
+		{
+			polygonnumber = param[1];
+			console.log("city : " + param[1]);
+		}
+	}
+	
+	
 	setTimeout(function(){
 
     }, 2000);
@@ -47,10 +84,10 @@ $(window).load(function(){
     }, 2000);
 
 	
-	google.maps.event.trigger(dummypollyarray[2], "click", {});
+	google.maps.event.trigger(dummypollyarray[polygonnumber-1], "click", {});
 
 
-	$("#datatable_filter").find("input").val("airoli").click();
+	$("#datatable_filter").find("input").val(slumname).click();
 	
 	setTimeout(function(){
 
@@ -62,14 +99,87 @@ $(window).load(function(){
 
     }, 2000);
 
-$("#datatable").find('tbody>tr>td>div>span:contains(Airoli)').trigger('click');
-
+	$("#datatable").find('tbody>tr>td>div>span:contains('+slumname+')').trigger('click');
 
 
 }); 
 
 
+*/
+
+
+
+function sponsor(){
+
+	//alert("begin");
+
+	var polygonnumber;
+	var slumname;
+
+	var searchString = (window.location.search.substring(1)).replace(/%20/g, " ");
+
+	console.log(searchString);
+
+		
+	params = searchString.split('&');
+
+
+	console.log(params[0]);
+
+	console.log(params[1]);
+
+
+
+	for(var i=0;i<params.length;i++)
+	{
+		var param = params[i].split("=");
+
+		if(param[0]=='slum')			
+		{
+			slumname = param[1];
+			console.log("slum : " + param[1]);
+		}
+		if(param[0]=='city')
+		{
+			polygonnumber = param[1];
+			console.log("city : " + param[1]);
+		}
+	}
+	
+	
+	
+	
+	//alert("Hello map");
+
+
+	
+	if(slumname=='')
+	{
+		google.maps.event.trigger(dummypollyarray[polygonnumber-1], "click", {});
+	}
+	else{
+				google.maps.event.trigger(dummypollyarray[polygonnumber-1], "click", {});
+
+
+
+	$("#datatable_filter").find("input").val(slumname).click();
+	
+	
+
+	$("#datatable_filter").find("input").trigger('keyup');
+	
+	
+
+	$("#datatable").find('tbody>tr>td>div>span:contains('+slumname+')').trigger('click');
+	}
+
+} 
+
+
+
+
 function initMap12() {
+
 	labelmap();
 	map = new google.maps.Map(document.getElementById('map12'), {
 		center : {
@@ -99,6 +209,7 @@ function initMap12() {
 		"Gutter information" : "Gutter"
 	}
 }
+
 function animateMapZoomTo(map, targetZoom) {
     var currentZoom = arguments[2] || map.getZoom();
     if (currentZoom != targetZoom) {
@@ -167,6 +278,7 @@ function loadslum() {
 		$(".overlay").hide();
 		setTimeout(function(){
 			animateMapZoomTo(map,8);
+			sponsor();
 		},40);
 
 	});
@@ -303,10 +415,7 @@ function latlongformat(ShapeValue, shapename, bgcolor, bordercolor, flag=true) {
   if(flag){
 	google.maps.event.addListener(Poly1, 'click', function(event){
 		dummy2 = Poly1;
-		alert("Hello Polygon")
-		alert(this);
-		console.log(Poly1)
-
+	
 		infoWindowover.close();
 
 		if (arr.length == 4) {
@@ -485,7 +594,6 @@ function setMaplink() {
 	if (arr.length > 0) {
 		for (var i = 0; i < arr.length; i++) {
 			aTag += '>> <label id="' + arr[i] + '" onclick="getArea(this);">' + " <span style='text-decoration: underline;cursor:pointer;color:blue;'>" + arr[i] + "</span></label>&nbsp;&nbsp; ";
-			alert("HHHHHHHHHHHHH");
 		}
 	}
 	mydiv.html(aTag);
@@ -503,7 +611,7 @@ function getArea(initlink){
 
 	if(dummy =='Airoli Naka Navi Mumbai')
 	{
-		alert("Yes");
+	//	alert("Yes");
 		//textelement ='Ganpati Colony Navi Mumbai';
 
 	//	obj[arr[0]]["content"][arr[1]]["content"][arr[2]]["content"][arr[3]]['name'] = textelement;
