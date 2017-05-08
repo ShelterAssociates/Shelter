@@ -8,12 +8,6 @@ var wdaddress;
 var wdhead;
 var compochk;
 
-var dummy;
-var dummy1;
-
-var dummy2;
-
-
 dummypollyarray = new Array();
 
 dummyshapearray = new Array();
@@ -88,6 +82,17 @@ function sponsor(){
 
 
 function initMap12() {
+
+
+
+	var $iFrame = $('iframe');
+   
+   $iFrame.load(function(){
+       alert("hello");
+   });
+
+
+
 
 	labelmap();
 	map = new google.maps.Map(document.getElementById('map12'), {
@@ -295,7 +300,7 @@ function latlongformat(ShapeValue, shapename, bgcolor, bordercolor, flag=true) {
 
 
 
-	Object.defineProperty(shapepoly, shapename , { value: Poly1 });
+//	Object.defineProperty(shapepoly, shapename , { value: Poly1 });
 
 	//##console.log(dummyshapearray);
 
@@ -304,6 +309,8 @@ function latlongformat(ShapeValue, shapename, bgcolor, bordercolor, flag=true) {
 	if (arr.length == 0) {
 		slumLabel.text = shapename;
 		slumLabel.changed('text');
+		Object.defineProperty(shapepoly, shapename , { value: Poly1 });
+
 	}
 	else{
 				//slumLabel.changed('text');
@@ -996,3 +1003,7 @@ function tabularSingleGroup(single_model) {
 	modelbody.html(spstr);
   $("#myModal").modal('show');
 }
+
+
+
+
