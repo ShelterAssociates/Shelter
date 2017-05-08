@@ -16,6 +16,10 @@ var dummy2;
 
 dummypollyarray = new Array();
 
+dummyshapearray = new Array();
+
+var shapepoly = {};
+
 
 var url = "/admin/citymapdisplay";
 
@@ -26,108 +30,18 @@ var removeIndi;
 var modelsection;
 var global_slum_id;
 
-/*
-$(document).ready(function(){
-
-});
-
-*/
-
-/*
-$(window).load(function(){
-
-	alert("begin");
-
-	var polygonnumber;
-	var slumname;
-
-	var searchString = (window.location.search.substring(1)).replace(/%20/g, " ");
-
-	console.log(searchString);
-
-		
-	params = searchString.split('&');
-
-
-	console.log(params[0]);
-
-	console.log(params[1]);
-
-
-
-	for(var i=0;i<params.length;i++)
-	{
-		var param = params[i].split("=");
-
-		if(param[0]=='slum')			
-		{
-			slumname = param[1];
-			console.log("slum : " + param[1]);
-		}
-		if(param[0]=='city')
-		{
-			polygonnumber = param[1];
-			console.log("city : " + param[1]);
-		}
-	}
-	
-	
-	setTimeout(function(){
-
-    }, 2000);
-	
-	alert("Hello map");
-
-
-	setTimeout(function(){
-
-    }, 2000);
-
-	
-	google.maps.event.trigger(dummypollyarray[polygonnumber-1], "click", {});
-
-
-	$("#datatable_filter").find("input").val(slumname).click();
-	
-	setTimeout(function(){
-
-    }, 2000);
-
-	$("#datatable_filter").find("input").trigger('keyup');
-	
-	setTimeout(function(){
-
-    }, 2000);
-
-	$("#datatable").find('tbody>tr>td>div>span:contains('+slumname+')').trigger('click');
-
-
-}); 
-
-
-*/
-
 
 
 function sponsor(){
 
-	//alert("begin");
 
 	var polygonnumber;
+
 	var slumname;
 
 	var searchString = (window.location.search.substring(1)).replace(/%20/g, " ");
-
-	console.log(searchString);
-
 		
 	params = searchString.split('&');
-
-
-	console.log(params[0]);
-
-	console.log(params[1]);
-
 
 
 	for(var i=0;i<params.length;i++)
@@ -137,40 +51,35 @@ function sponsor(){
 		if(param[0]=='slum')			
 		{
 			slumname = param[1];
-			console.log("slum : " + param[1]);
 		}
 		if(param[0]=='city')
 		{
-			polygonnumber = param[1];
-			console.log("city : " + param[1]);
+			polygonname = param[1];
 		}
 	}
 	
 	
 	
-	
-	//alert("Hello map");
-
-
-	
 	if(slumname=='')
 	{
-		google.maps.event.trigger(dummypollyarray[polygonnumber-1], "click", {});
+		//google.maps.event.trigger(dummypollyarray[polygonnumber-1], "click", {});
+		google.maps.event.trigger(shapepoly[polygonname], "click", {});
+
+
 	}
-	else{
-				google.maps.event.trigger(dummypollyarray[polygonnumber-1], "click", {});
+	else
+	{
+	//	google.maps.event.trigger(dummypollyarray[polygonnumber-1], "click", {});
+
+		google.maps.event.trigger(shapepoly[polygonname], "click", {});
 
 
-
-	$("#datatable_filter").find("input").val(slumname).click();
-	
-	
-
-	$("#datatable_filter").find("input").trigger('keyup');
-	
+		$("#datatable_filter").find("input").val(slumname).click();
 	
 
-	$("#datatable").find('tbody>tr>td>div>span:contains('+slumname+')').trigger('click');
+		$("#datatable_filter").find("input").trigger('keyup');
+	
+		$("#datatable").find('tbody>tr>td>div>span:contains('+slumname+')').trigger('click');
 	}
 
 } 
@@ -369,6 +278,8 @@ function latlongformat(ShapeValue, shapename, bgcolor, bordercolor, flag=true) {
 	else{
 	    Poly1 = drawPolygon(PolygonPoints, bounds, bgcolor, bordercolor, 99);
 	}
+
+
 	glob_polygon = Poly1;
 	var options = {
 				map: map,
@@ -377,7 +288,19 @@ function latlongformat(ShapeValue, shapename, bgcolor, bordercolor, flag=true) {
 				minZoom: 7,
 				zIndex : 999
 			};
+
 	var slumLabel = new MapLabel(options);
+
+	//##dummyshapearray.push(shapename);
+
+
+
+	Object.defineProperty(shapepoly, shapename , { value: Poly1 });
+
+	//##console.log(dummyshapearray);
+
+
+
 	if (arr.length == 0) {
 		slumLabel.text = shapename;
 		slumLabel.changed('text');
@@ -414,7 +337,6 @@ function latlongformat(ShapeValue, shapename, bgcolor, bordercolor, flag=true) {
 	 }*/
   if(flag){
 	google.maps.event.addListener(Poly1, 'click', function(event){
-		dummy2 = Poly1;
 	
 		infoWindowover.close();
 
@@ -564,8 +486,6 @@ function createMap(jsondata, arrRemoveInd) {
 		mydesc.html(obj[arr[0]]["content"][arr[1]]["content"][arr[2]]["content"][arr[3]]['info'] +"<br/><div style='padding-top:10px;'><a style='font-weight:bold;text-decoration: underline;cursor:pointer;' href='javascript:factsheet_click(this)'>View Factsheet</a></div>");
 		val = obj[arr[0]]["content"][arr[1]]["content"][arr[2]]["content"][arr[3]]
 		objmap = initMap(val, 18);
-		//alert(val);
-		//console.log(val);
 		mydatatable.fnDestroy();
 		$("#datatable").empty();
 
@@ -601,26 +521,10 @@ function setMaplink() {
 
 function getArea(initlink){
 
-	console.log(initlink);
-	dummy1 = initlink;
 	removeIndi = "";
 
 	var textelement = (initlink.textContent).toString().trim();
 
-	dummy = textelement;
-
-	if(dummy =='Airoli Naka Navi Mumbai')
-	{
-	//	alert("Yes");
-		//textelement ='Ganpati Colony Navi Mumbai';
-
-	//	obj[arr[0]]["content"][arr[1]]["content"][arr[2]]["content"][arr[3]]['name'] = textelement;
-		//alert("Yes"); //Airoli Naka Navi Mumbai
-	}	
-
-//	textelement = 'Ganpati Colony Navi Mumbai';
-
-	dummy = textelement;
 
 
 	if (textelement == "Home") {
@@ -673,8 +577,7 @@ function drawPolygon(PolygonPoints, centerlatlang, bgcolor, bordercolor, index=1
 	});
 
 	
-//	dummypollyarray.push()
-	dummypollyarray.push(Poly);
+	//##dummypollyarray.push(Poly);
 
 	Poly.setMap(map);
 	map.setCenter(centerlatlang.getCenter());
