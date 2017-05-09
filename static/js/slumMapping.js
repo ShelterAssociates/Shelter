@@ -8,9 +8,9 @@ var wdaddress;
 var wdhead;
 var compochk;
 
-dummypollyarray = new Array();
+//##dummypollyarray = new Array();
 
-dummyshapearray = new Array();
+//##dummyshapearray = new Array();
 
 var shapepoly = {};
 
@@ -35,7 +35,7 @@ function sponsor(){
 
 	var searchString = (window.location.search.substring(1)).replace(/%20/g, " ");
 		
-	params = searchString.split('&');
+	params = searchString.split('/');
 
 
 	for(var i=0;i<params.length;i++)
