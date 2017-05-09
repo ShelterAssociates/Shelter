@@ -7,7 +7,7 @@
 	        <h2>{{i.sponsor_project_name}} </h2>
 	        <ul>
  	  		{% for k in i.slumnames %}
- 	           <li> <font size="4"> <a href="http://127.0.0.1:8000?slum={{k.slumname}}&city={{k.cityname}}">{{k.slumname}}[{{k.count}}] </a> </font></li>
+ 	           <li> <font size="4"> <a href="http://127.0.0.1:8000?slum={{k.slumname}}/city={{k.cityname}}">{{k.slumname}}[{{k.count}}] </a> </font></li>
  	 		{% endfor%}
  	 		</ul>  
  		{% endfor%}
