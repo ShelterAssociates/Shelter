@@ -116,7 +116,7 @@ function loadslum() {
 				obj[city_name]["content"] = json["content"];
         //getcordinates(obj);
         setTimeout(function(){animateMapZoomTo(map,12);},50);
-        createMap("Pune", false, true);
+        createMap(city_name, false, true);
         $(".overlay").hide();
 			}
 		});

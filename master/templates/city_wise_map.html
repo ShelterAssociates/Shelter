@@ -46,11 +46,21 @@ async defer></script>
 
 		padding: 6px !important;
 	}
-
+.container .jumbotron, .container-fluid .jumbotron{
+	padding-left: 0px;
+	padding-right:0px;
+}
 </style>
+<nav class="navbar navbar-default navbar-fixed-top">
+  <div class="container">
+    <div class="navbar-header"><img src="/static/images/shelter_footer.png" height="60"/></div>
+		<div class="navbar-collapse collapse"></div>
+  </div>
+</nav>
 <input type="text" class="hide" id="city_id" value="{{city_id}}"/>
 <input type="text" class="hide" id="city_name" value="{{city_name}}"/>
-<div style="padding-left: 10px">
+<div class="container">
+	<div class="jumbotron" style="background-color:white;">
 	<h3>Spatial Slum Information</h3>
 	<div class="overlay">
 		<div id="loading-img"></div>
@@ -95,6 +105,6 @@ async defer></script>
 
 			</div>
 		</div>
-
+	</div>
 	</div>
 	{% endblock %}
