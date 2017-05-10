@@ -511,3 +511,17 @@ def familyrportgenerate(request):
 	else:
 		data = {'error':'Not authorized'}
 	return HttpResponse(json.dumps(data),content_type='application/json')
+
+def city_wise_map(request, key):
+	cipher = AESCipher()
+	city = cipher.decrypt(key.split('::')[1])
+	city = City.objects.get(pk=int(city))
+	template = loader.get_template('city_wise_map.html')
+	data = {}
+	if city:
+		data['city_id'] = city.id
+		data['city_name'] = city.name.city_name
+	else:
+		data['error'] = "URL incorrect"
+	context = RequestContext(request, data)
+	return HttpResponse(template.render(context))
