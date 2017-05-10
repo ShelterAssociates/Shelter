@@ -46,8 +46,10 @@ def kml_upload(request):
 def get_component(request, slum_id):
     slum = get_object_or_404(Slum, pk=slum_id)
     sponsors=[]
+    sponsor_slum_count = 0
     if not request.user.is_anonymous():
        sponsors = request.user.sponsor_set.all().values_list('id',flat=True)
+       sponsor_slum_count = SponsorProjectDetails.objects.filter(slum = slum).count()
     metadata = Metadata.objects.filter(visible=True).order_by('section__order','order')
     rhs_analysis = {}
     try:
@@ -77,7 +79,7 @@ def get_component(request, slum_id):
             field = metad.code.split(':')
             if field[0] in rhs_analysis and field[1] in rhs_analysis[field[0]]:
                 component['child'] = rhs_analysis[field[0]][field[1]]
-        elif metad.type == 'S' and not request.user.is_anonymous():
+        elif metad.type == 'S' and not request.user.is_anonymous() and sponsor_slum_count > 0:
             if  metad.code!= "":
                 sponsor_households = []
                 sponsor_households = SponsorProjectDetails.objects.filter(slum = slum, sponsor__id = int(metad.code)).values_list('household_code', flat=True)
