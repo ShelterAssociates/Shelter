@@ -17,11 +17,13 @@ from django.contrib import admin
 from django.conf.urls.static import static
 from django.conf import settings
 from settings import *
-from master.views import slummap
+from master.views import slummap, city_wise_map
 admin.autodiscover()
 
+base64_pattern = r'^city::(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$'
 urlpatterns = [
     url(r'^$',slummap, name='slummap'),
+    url(r'^(?P<key>{})$'.format(base64_pattern), city_wise_map, name="city_map"),
     url(r'^admin/', include('master.urls')),
     url(r'^component/', include('component.urls')),
 ] + static(settings.STATIC_URL, document_root=settings.STATIC_ROOT) + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
