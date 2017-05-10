@@ -675,7 +675,7 @@ row_count =1;]]></method>
 	row["development_plan_reservation"] = jsonObject["development_plan_reservation"];
 	row["development_plan_reservation_type"] = jsonObject["development_plan_reservation_t"];
 	row["approximate_area"] = jsonObject["approximate_area_of_the_settle"];
-	row["approximate_no_of_huts"] = jsonObject["Date_of_declaration"];
+	row["approximate_no_of_huts"] = jsonObject["number_of_huts_in_settlement"];
 	row["approximate_population"] = jsonObject["approximate_population"];	
 	row["location"] = jsonObject["location"];
 	row["topography"] = jsonObject["topography"];
@@ -690,7 +690,7 @@ row_count =1;]]></method>
 	row["facility_in_the_toilet_block_for_5_yr_age"] = jsonObject["facility_in_the_toilet_block_f"];
 	row["status_of_defecation"] = jsonObject["status_of_defecation"];
 	row["location_of_open_defecation_site"] = jsonObject["location_of_defecation"];
-	row["approximate_huts_with_individual_toilet"] = jsonObject["number_of_huts_in_settlement"];
+	row["approximate_huts_with_individual_toilet"] = jsonObject["percentage_with_individual_toilet"]==null ? '' : jsonObject["percentage_with_individual_toilet"];
 	
 	//Waste Management Information
 	row["total_number_of_waste_container"] = jsonObject["total_number_of_waste_containe"];
@@ -833,6 +833,7 @@ return false;]]></method>
         <simple-master-page name="Shelter Drainage Report Master Page" id="2">
             <property name="type">a4</property>
             <property name="orientation">portrait</property>
+            <property name="headerHeight">0.4in</property>
             <property name="footerHeight">0.6in</property>
             <page-footer>
                 <grid id="4">
@@ -1398,7 +1399,7 @@ return false;]]></method>
                     <property name="style">SectionlabelContainer</property>
                     <label id="334">
                         <property name="style">SectionLabel</property>
-                        <text-property name="text">Approximate Area</text-property>
+                        <text-property name="text">Approximate Area (sq. m.)</text-property>
                     </label>
                 </cell>
                 <cell id="208">
@@ -1885,7 +1886,7 @@ return false;]]></method>
                     <property name="style">SectionDataContainer</property>
                     <text-data id="399">
                         <property name="style">SectionData</property>
-                        <expression name="valueExpr">row["quality_of_water_in_the_system"]</expression>
+                        <expression name="valueExpr">row["pressure_of_water_in_the_system"]</expression>
                         <property name="contentType">html</property>
                     </text-data>
                 </cell>
@@ -1971,6 +1972,7 @@ return false;]]></method>
                 <property name="borderLeftStyle">none</property>
                 <property name="borderRightStyle">none</property>
                 <property name="borderTopStyle">none</property>
+                <property name="pageBreakAfter">always</property>
                 <cell id="294">
                     <property name="style">SectionlabelContainer</property>
                     <label id="344">
@@ -1988,6 +1990,7 @@ return false;]]></method>
                 </cell>
             </row>
             <row id="296">
+                <property name="pageBreakBefore">always</property>
                 <cell id="297">
                     <property name="colSpan">1</property>
                     <property name="rowSpan">1</property>
