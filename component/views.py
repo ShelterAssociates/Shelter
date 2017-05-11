@@ -49,10 +49,10 @@ def get_component(request, slum_id):
     '''
     slum = get_object_or_404(Slum, pk=slum_id)
     sponsors=[]
+    sponsor_slum_count = 0
     if not request.user.is_anonymous():
        sponsors = request.user.sponsor_set.all().values_list('id',flat=True)
        sponsor_slum_count = SponsorProjectDetails.objects.filter(slum = slum).count()
-
     #Fetch filter and sponsor metadata
     metadata = Metadata.objects.filter(visible=True).order_by('section__order','order')
     rhs_analysis = {}
