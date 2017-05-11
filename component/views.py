@@ -44,10 +44,16 @@ def kml_upload(request):
 
 #@user_passes_test(lambda u: u.is_superuser)
 def get_component(request, slum_id):
+    '''Get component/filter/sponsor data for the selected slum.
+       Here sponsor data is fetch according to user role access rights
+    '''
     slum = get_object_or_404(Slum, pk=slum_id)
     sponsors=[]
     if not request.user.is_anonymous():
        sponsors = request.user.sponsor_set.all().values_list('id',flat=True)
+       sponsor_slum_count = SponsorProjectDetails.objects.filter(slum = slum).count()
+
+    #Fetch filter and sponsor metadata
     metadata = Metadata.objects.filter(visible=True).order_by('section__order','order')
     rhs_analysis = {}
     try:
@@ -60,6 +66,7 @@ def get_component(request, slum_id):
 
     lstcomponent = []
     sponsor_houses = [00]
+    #Iterate through each filter and assign answers to child if available
     for metad in metadata:
         component = {}
         component['name'] = metad.name
@@ -70,14 +77,20 @@ def get_component(request, slum_id):
         component['order'] = metad.order
         component['blob'] = metad.blob
         component['child'] = []
+        #Component
         if metad.type == 'C':
+            #Fetch component for selected filter and slum , assign it finally to child
             for comp in metad.component_set.filter(slum=slum):
                 component['child'].append({'housenumber':comp.housenumber, 'shape':json.loads(comp.shape.json)})
+        #Filter
         elif metad.type == 'F' and metad.code != "":
             field = metad.code.split(':')
-            if field[0] in rhs_analysis and field[1] in rhs_analysis[field[0]]:
-                component['child'] = rhs_analysis[field[0]][field[1]]
-        elif metad.type == 'S' and not request.user.is_anonymous():
+            if field[0] in rhs_analysis:
+                options = []
+                options = [rhs_analysis[field[0]][option] for option in field[1].split(',') if option in rhs_analysis[field[0]]]
+                component['child'] = list(set(sum(options,[])))
+        #Sponsor : Depending on superuser or sponsor render the data accordingly
+        elif metad.type == 'S' and not request.user.is_anonymous() and sponsor_slum_count > 0:
             if  metad.code!= "":
                 sponsor_households = []
                 sponsor_households = SponsorProjectDetails.objects.filter(slum = slum, sponsor__id = int(metad.code)).values_list('household_code', flat=True)
@@ -94,6 +107,7 @@ def get_component(request, slum_id):
     sponsor_houses = sponsor_houses.pop(0)
     #lstcomponent = sorted(lstcomponent, key=lambda x:x['section_order'])
     dtcomponent = OrderedDict()
+    #Ordering the filter/components/sponsors according to the section they below to.
     for key, comp in  groupby(lstcomponent, key=lambda x:x['section']):
         if key not in dtcomponent:
             dtcomponent[key] = OrderedDict()
