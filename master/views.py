@@ -540,4 +540,27 @@ def user_login(request):
 	return render(request, 'login.html', {'form': form})
 
 
+
+
+
+@csrf_exempt
+def user_login2(request):
+	if request.method == 'POST':
+		form = LoginForm(request.POST)
+		if form.is_valid():
+			cd = form.cleaned_data
+			user = authenticate(username=cd['username'],password=cd['password'])
+			print request.user.groups.filter(name__in=['sponsor']).exists()
+			if user is not None:
+				if user.is_active:
+					login(request, user)
+					return HttpResponseRedirect('/')
+				else:
+					return HttpResponse('Disabled account')
+			else:
+				return HttpResponse('Invalid login')
+	else:
+		form = LoginForm()
+	return render(request, 'login.html', {'form': form})
+
 	
