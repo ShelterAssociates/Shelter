@@ -45,15 +45,17 @@ function sponsor(){
 		if(param[0]=='slum')			
 		{
 			slumname = param[1];
+			console.log(slumname);
 		}
 		if(param[0]=='city')
 		{
 			polygonname = param[1];
+			console.log(polygonname);
+
 		}
 	}
 	
-	
-	
+		
 	if(slumname=='')
 	{
 		//google.maps.event.trigger(dummypollyarray[polygonnumber-1], "click", {});
@@ -65,7 +67,12 @@ function sponsor(){
 	{
 	//	google.maps.event.trigger(dummypollyarray[polygonnumber-1], "click", {});
 
+
 		google.maps.event.trigger(shapepoly[polygonname], "click", {});
+
+	//	alert("I am here");
+		
+		setTimeout(function(){  }, 400);
 
 
 		$("#datatable_filter").find("input").val(slumname).click();
