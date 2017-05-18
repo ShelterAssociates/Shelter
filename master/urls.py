@@ -25,7 +25,7 @@ from master.views import index, SurveyListView, SurveyCreateView, \
     vulnerabilityreport,formList,slummapdisplay,slummap,citymapdisplay, \
     modelmapdisplay, drainageinsert, sluminformation, drainagedisplay , \
     drainageedit, cityList, drainagereportgenerate, modelList, \
-    familyrportgenerate, user_login, user_login2
+    familyrportgenerate, user_login, iframeuser, user_login2
 
 from django.conf import settings
 from django.conf.urls.static import static
@@ -66,8 +66,9 @@ urlpatterns = [
     url(r'^familyrportgenerate/$', familyrportgenerate, name='familyrportgenerate'),
    # url(r'^slummap/component/fetchcomponents', include('component.urls')),
     url(r'^user_login/$',user_login, name='user_login'),
-    url(r'^user_login/$',user_login2, name='user_login2'),
-
+    url(r'^iframeuser/$',iframeuser, name='iframeuser'),
+    url(r'^user_login2/$',user_login2, name='user_login2'),
+  
     #url(r'^sponsors/$',sponsors, name='sponsors'),
     #url(r'^password_reset/$', auth_views.password_reset, name='password_reset'),
     #url(r'^password_reset/done/$', auth_views.password_reset_done, name='password_reset_done'),

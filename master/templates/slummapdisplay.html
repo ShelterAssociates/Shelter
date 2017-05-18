@@ -1,10 +1,9 @@
-{% block content %}
+{% extends 'header.html' %}
 {% load staticfiles %}
 
-<link rel="stylesheet"  type="text/css" href="{% static "css/bootstrap.min.css" %}"/>
+{% block styleblock %}
 <link rel="stylesheet"  type="text/css" href="{% static "css/jquery.dataTables.min.css" %}" />
 
-<script src="{% static "js/jquery.min.js" %}"></script>
 <!-- <script type="text/javascript" src="http://www.google.com/jsapi" ></script> -->
 <script src="{% static "js/maplabel.js" %}"></script>
 <script src="{% static "js/slumMapping.js" %}"></script>
@@ -12,7 +11,6 @@
 <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDFB9r6IMOAAxW7JTj6MDlMElt5WOd7R5U&callback=initMap12"
 async defer></script>
 
-<script src="{% static "js/bootstrap.min.js" %}"></script>
 <script src="{% static "js/jquery.dataTables.min.js" %}"></script>
 
 <style>
@@ -56,53 +54,50 @@ async defer></script>
 	}
 
 </style>
-
-<nav class="navbar navbar-default navbar-fixed-top" id="navbar">
- 
-  <div class="container" >
-    <div class="navbar-header">
-    	<img src="/static/images/shelter_footer.png" height="60"/>
-    </div>
-	<div class="navbar-collapse collapse"></div>
-  </div>
-
-   <div class="fr">
-	<ul>
-		{% if user.is_authenticated %}
-			<a href="{% url 'logout' %}?next={% url 'user_login' %}"<button type="button" class="btn btn-lg btn-default" style = "position: fixed; top: 8px;right: 16px;";>logout</button> </a>
-
-		{% else %}
-			<button id="loggedin" type="button" class="btn btn-lg btn-default" style = "position: fixed; top: 8px;right: 16px;"; data-toggle="popover">login</button>
-		{% endif %}	
-
-
-	</ul>
-</div>
-</nav>
-
+{% endblock %}
+{%block mainblock %}
 <div class="loginlogout" id="loginlogout">
 <ul>
 		{% if user.is_authenticated %}
 <a href="{% url 'logout' %}?next={% url 'slummap' %}"	<button type="button" class="btn btn-lg btn-default" style = "position: fixed; top: 8px;right: 16px;";>logout</button> </a>
 
 		{% else %}
-			<button id="loggedin" type="button" class="btn btn-lg btn-default" style = "position: fixed; top: 8px;right: 16px;"; data-toggle="popover">Login</button>
+			<button id="loggedin2" type="button" class="btn btn-lg btn-default" style = "position: fixed; top: 8px;right: 80px;"; data-toggle="popover">Login</button>
 		{% endif %}
 </ul>
 </div>
 
 
-<div id="popover-form" class="hide">
+<div id="popover-form" class="hide container">
 	<form method="post" action="{% url 'user_login' %}" >{% csrf_token %}
-		<input type="username" placeholder="username" name="username">
+		<input type="username" placeholder="username" name="username" style ="margin: 7;">
 		<br>
-		<input type="password" placeholder="password" name="password">
-		<button type="submit" class="btn btn-primary btn-block">login</button>   	
+		<input type="password" placeholder="password" name="password" style ="margin: 7;">
+		<button type="submit"  class="btn btn-primary btn-block" >login</button> 
+    </form>
+</div>
+
+<div id="popover-form2" class="hide container">
+	<form method="post" action="{% url 'user_login2' %}" >{% csrf_token %}
+		<input type="username" placeholder="username" name="username" style ="margin: 7;">
+		<br>
+		<input type="password" placeholder="password" name="password" style ="margin: 7;">
+		<button type="submit"  class="btn btn-primary btn-block" >login</button> 
     </form>
 </div>
 
 
 <script type="text/javascript">
+$("#loggedin2").popover({
+    container: 'body',
+    placement: 'bottom',
+    html: true, 
+    content: function(){
+          return $('#popover-form2').html();
+    }
+});
+
+
 $("#loggedin").popover({
     container: 'body',
     placement: 'bottom',
@@ -129,7 +124,7 @@ $("#loggedin").popover({
 	}	
 	else
 	{
-		$('#loginlogout').show();
+		$('#loginlogout').hide();
 		$('#navbar').show();
 	}	
 });
@@ -196,5 +191,4 @@ $("#loggedin").popover({
 	</div>
 	</div>
 
-
-	{% endblock %}
+{% endblock %}
