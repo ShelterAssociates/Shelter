@@ -544,6 +544,11 @@ def user_login(request):
 
 
 @csrf_exempt
+def iframeuser(request):
+	return render(request, 'iframe.html', {})
+
+
+@csrf_exempt
 def user_login2(request):
 	if request.method == 'POST':
 		form = LoginForm(request.POST)
@@ -562,5 +567,4 @@ def user_login2(request):
 	else:
 		form = LoginForm()
 	return render(request, 'login.html', {'form': form})
-
 	
