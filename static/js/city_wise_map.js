@@ -612,7 +612,7 @@ function viewcompo(dvalue) {
 		 * */
 		counter = counter + 1;
 		//chkdata[k]={}
-		str += '<div name="div_group" class=" panel  panel-default panel-heading"> ' + '<a name="chk_group" data-toggle="collapse" href="#' + counter + '">' + k + '</a>' + '</br>'
+		str += '<div name="div_group" class=" panel  panel-default panel-heading"> ' + '<a name="chk_group" data-toggle="collapse" data-parent="#compochk" href="#' + counter + '">' + k + '</a>' + '</br>'
 
 		str += '<div id="' + counter + '" class="panel-collapse collapse">'
 
