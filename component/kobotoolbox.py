@@ -42,11 +42,11 @@ def get_household_analysis_data(city, slum_code, fields, kobo_survey=''):
         #Read json data from kobotoolbox API
         html = res.read()
         records = json.loads(html)
-        grouped_records = itertools.groupby(sorted(records, key=lambda x:int(x['group_ce0hf58/house_no'])), key=lambda x:x["group_ce0hf58/house_no"])
+        grouped_records = itertools.groupby(sorted(records, key=lambda x:int(x['group_ce0hf58/house_no'])), key=lambda x:int(x["group_ce0hf58/house_no"]))
 
         for household, list_record in grouped_records:
             record_sorted = sorted(list(list_record), key=lambda x:x['end'], reverse=True)
-            household_no = household
+            household_no = int(household)
             if len(record_sorted)>0:
                 record = record_sorted[0]
             for field in fields:
@@ -68,10 +68,10 @@ def get_kobo_RHS_list(city, slum_code,house_number, kobo_survey=''):
     output=OrderedDict()
     if kobo_survey:
         try:
-            url = settings.KOBOCAT_FORM_URL+'data/'+kobo_survey+'?query={"group_ce0hf58/slum_name":"'+slum_code+'","group_ce0hf58/house_no":"'+house_number+'"}'
+            url = settings.KOBOCAT_FORM_URL+'data/'+kobo_survey+'?query={"group_ce0hf58/slum_name":"'+slum_code+'","group_ce0hf58/house_no":{ "$in":["'+str(house_number)+'","'+('000'.join(str(house_number)))[-4:]+'"]}}'
         except Exception as e:
             print e
-
+ 	print url	
         req = urllib2.Request(url)
         req.add_header('Authorization', settings.KOBOCAT_TOKEN)
         resp = urllib2.urlopen(req)
@@ -248,7 +248,7 @@ def get_kobo_FF_report_detail(city, slum_code,house_number, kobo_survey=''):
     output=OrderedDict()
     if kobo_survey:
         try:
-            url = settings.KOBOCAT_FORM_URL+'data/'+kobo_survey+'?query={"group_vq77l17/slum_name":"'+slum_code+'","group_vq77l17/Household_number":"'+house_number+'"}'
+            url = settings.KOBOCAT_FORM_URL+'data/'+kobo_survey+'?query={"group_vq77l17/slum_name":"'+slum_code+'","group_vq77l17/Household_number":{"$in":["'+house_number+'","'+'000'.join(house_number)[-4:]+'"]}}'
         except Exception as e:
             print e
 
