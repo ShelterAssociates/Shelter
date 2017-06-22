@@ -59,7 +59,7 @@ def get_household_analysis_data(city, slum_code, fields, kobo_survey=''):
                         if data not in output[field]:
                             output[field][data]=[]
                         if household_no not in output[field][data]:
-                            output[field][data].append(household_no)
+                            output[field][data].append(str(household_no))
     return output
 
 @survey_mapping(SURVEYTYPE_CHOICES[1][0])
