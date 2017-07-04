@@ -16,7 +16,16 @@ class SectionAdmin(admin.ModelAdmin):
     search_fields = ['name']
 
 admin.site.register(Section, SectionAdmin)
-admin.site.register(Metadata)
+
+class MetadataAdmin(admin.ModelAdmin):
+    list_display = ('name', 'section_name', 'type', 'visible')
+    search_fields = ['name']
+    ordering = ['name', 'section__name', 'type', 'visible']
+
+    def section_name(self, obj):
+        return obj.section.name
+
+admin.site.register(Metadata, MetadataAdmin)
 admin.site.register(Fact)
 
 class ComponentAdmin(admin.ModelAdmin):

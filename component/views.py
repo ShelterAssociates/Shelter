@@ -76,6 +76,7 @@ def get_component(request, slum_id):
         component['type'] = metad.type
         component['order'] = metad.order
         component['blob'] = metad.blob
+        component['icon'] = str(metad.icon.url) if metad.icon else ""
         component['child'] = []
         #Component
         if metad.type == 'C':
