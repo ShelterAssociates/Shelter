@@ -37,7 +37,10 @@ async defer></script>
 		opacity: 0.5;
 		z-index: 1;
 	}
-
+	input.chk[type='checkbox']{
+		-webkit-appearance: none;-moz-appearance: none;
+		border: 1px solid black; height: 1.2em; width: 1.2em;
+	}
 	input[type='checkbox']:checked:before {
 		content: "\2713";
 		position: relative;
@@ -80,7 +83,7 @@ async defer></script>
 		<div style="width: 700px;" id="datatablecontainer">
 			<table id="datatable" class="display" style="width:100% !important;"></table>
 		</div>
-
+		<div id="rim"></div>
 		<div class="modal fade" id="myModal" role="dialog">
 			<div class="modal-dialog">
 

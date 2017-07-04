@@ -2,6 +2,7 @@ from django.contrib.gis.db import models
 from master.models import Slum
 #from picklefield.fields import PickledObjectField
 from jsonfield import JSONField
+from django.core.exceptions import ValidationError
 
 DISPLAY_TYPE_CHOICES = (
         ('M', 'Map'),
@@ -16,6 +17,7 @@ META_TYPE_CHOICES = (
         ('F', 'Filter'),
         ('S', 'Sponsor'),
     )
+COMPONENT_ICON = "componentIcons/"
 class Section(models.Model):
     """Section data"""
     name  = models.CharField(max_length=2048)
@@ -32,6 +34,11 @@ class Section(models.Model):
 
 class Metadata(models.Model):
     """Metadata of component and analysis"""
+    # def validate_image(fieldfile_obj):
+    #     filesize = fieldfile_obj.file.size
+    #     megabyte_limit = 1.0
+    #     if filesize > megabyte_limit*1024*1024:
+    #         raise ValidationError("Max file size is %sMB" % str(megabyte_limit))
     name = models.CharField(max_length=2048)
     section = models.ForeignKey(Section)
     level  = models.CharField(max_length=1, choices=LEVEL_CHOICES) # slum/household
@@ -40,8 +47,8 @@ class Metadata(models.Model):
     visible  = models.BooleanField() # BooleanField
     order  = models.FloatField()
     blob  = JSONField()
+    icon = models.ImageField(upload_to=COMPONENT_ICON ,blank=True, null=True)
     code = models.CharField(max_length=512,blank=True,null=True)
-
 
     def __unicode__(self):
         """Returns string representation of object"""
