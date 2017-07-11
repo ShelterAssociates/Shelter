@@ -747,18 +747,20 @@ def get_ff_photo(xml_key, fact_dict, download_folder_path):
 				
 				download_photo_path = os.path.join(download_folder_path, photo_name)
 				#print('download_photo_path => ', download_photo_path)
-				
+				#answer = photo_name
 				try:
 					if not os.path.exists(download_folder_path):
 						os.makedirs(download_folder_path)
-				
-					# Download the file from `url` and save it locally under `file_name`:
-					response = requests.get(photo_url, stream=True, verify=False)
-					with open(download_photo_path, 'wb') as out_file:
-						shutil.copyfileobj(response.raw, out_file) # copy from temp location to final location
-					del response
-					
-					# check if file is downloaded or not 
+
+					## Download the file from `url` and save it locally under `file_name`:
+					# response = requests.get(photo_url, stream=True, verify=False)
+					# with open(download_photo_path, 'wb') as out_file:
+					# 	shutil.copyfileobj(response.raw, out_file) # copy from temp location to final location
+					# del response
+
+					shutil.copy(os.path.join(root_folder_path,'../../backup/shelter_survey/shelter_survey/static',photo_path), download_photo_path);
+
+					# check if file is downloaded or not
 					if os.path.isfile(download_photo_path):
 						answer = photo_name
 
