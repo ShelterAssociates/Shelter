@@ -540,7 +540,7 @@ function viewIndiaBorder() {
 		query : {
 			select : "kml_4326",
 			from : tableid,
-			where : "name_0 = 'India'"
+			where : "name_0 = 'India' and name_1= 'Maharashtra'"
 		},
 		styles : [{
 			polygonOptions : {
