@@ -16,6 +16,8 @@ from kobotoolbox_upload import *
 city_option = {
 	'1': 'Pune',
 	'2': 'PCMC',
+	'3': 'Kolhapur',
+	'4' : 'NMMC'
 }
 
 survey_type_option = {
@@ -29,12 +31,15 @@ select_option = {
 	'survey_type': None,
 	'action': None,
 }
-
+#Project id as per old DB
 city_mapping = {
 	'1' : 4, # Pune
 	'2' : 5, # PCMC
+	'3' : 7, # Kolhapur
+	'4' : 8, #NMMC
 }
 
+#Survey id as per old DB
 city_survey_mapping = {
 	# Pune
 	'1': {
@@ -48,8 +53,20 @@ city_survey_mapping = {
 		'2': [36], # RHS
 		'3': 35, # FF
 	},
+	#Kolhapur
+	'3' : {
+		'1':41,
+		'2' : ['40'],
+		'3' : 42,
+	},
+	#NMMC
+	'4' : {
+		'1' : 47, #RA    - invalid
+		'2' : [47], #RHS - invalid
+		'3' : 47, #FF    - valid
+	},
 }
-
+#Folders where excel sheet mappings are kept
 mapped_excel_path_mapping = {
 	# Pune
 	'1': {
@@ -63,6 +80,18 @@ mapped_excel_path_mapping = {
 		'2': os.path.join(root_folder_path, 'FilesToRead', 'MappedExcel_PCMC', 'RHS_Old_New_QuestionMapping_Parag.xlsx'), # RHS
 		'3': os.path.join(root_folder_path, 'FilesToRead', 'MappedExcel_PCMC', 'FF_Old_New_QuestionMapping_Parag.xlsx'), # FF
 	},
+	#Kolhapur
+	'3': {
+		'1': os.path.join(root_folder_path, 'FilesToRead', 'MappedExcel_KMC', 'RA_Old_New_QuestionMapping_Parag.xlsx'), # RA
+		'2': os.path.join(root_folder_path, 'FilesToRead', 'MappedExcel_KMC', 'RHS_Old_New_QuestionMapping.xlsx'), # RHS
+		'3': os.path.join(root_folder_path, 'FilesToRead', 'MappedExcel_KMC', 'FF_Old_New_QuestionMapping_Parag.xlsx'), # FF
+	},
+	#NMMC
+	'4': {
+		'1': os.path.join(root_folder_path, 'FilesToRead', 'MappedExcel_NMMC', 'RA_Old_New_QuestionMapping.xlsx'), # RA
+		'2': os.path.join(root_folder_path, 'FilesToRead', 'MappedExcel_NMMC', 'RHS_Old_New_QuestionMapping.xlsx'), # RHS
+		'3': os.path.join(root_folder_path, 'FilesToRead', 'MappedExcel_NMMC', 'FF_Old_New_QuestionMapping.xlsx'), # FF
+	},
 }
 
 survey_xml_value_mapping = {
@@ -75,17 +104,21 @@ survey_xml_value_mapping = {
 	},
 	# RHS
 	'2': { 
-		'xml_root': 'a4K9qAQYGwsKxrpwvHuViw',
-		'xml_root_attr_id': 'a4K9qAQYGwsKxrpwvHuViw',
-		'xml_root_attr_version': 'vXS3hfQDM2CGiAZiFkupZQ',
-		'formhub_uuid': 'd00bbe550e6f463dbb66730ed8b0b663',
+		'xml_root': 'aJWGCEUXe4DcsJzETwMptL',
+		'xml_root_attr_id': 'aJWGCEUXe4DcsJzETwMptL',
+		'xml_root_attr_version': 'vcsF9qpeD5gsrFXsRVkbws',
+		'formhub_uuid': 'b12051466e154c5396876c33b634bd0b',
 	},
 	# FF
-	'3': { 
-		'xml_root': 'arYdwNvdtxSQACTGudh8CH',
-		'xml_root_attr_id': 'arYdwNvdtxSQACTGudh8CH',
-		'xml_root_attr_version': 'v6eYZVeo6V3vqy6jhcDueQ',
-		'formhub_uuid': '53d6a92a6af14094b24b25a3bc7d3861',
+	'3': {
+		'xml_root': 'abfdvNf9EaZBJgzehbUMdt',
+		'xml_root_attr_id': 'abfdvNf9EaZBJgzehbUMdt',
+		'xml_root_attr_version': 'vbAo9r8ss5FfYK6odv74ZL',
+		'formhub_uuid': 'e6b36c0f8955436c8c7310e8c6639fe9',
+		# 'xml_root': 'agwoHCvSkxLrR3MnMsdpzJ',
+		# 'xml_root_attr_id': 'agwoHCvSkxLrR3MnMsdpzJ',
+		# 'xml_root_attr_version': 'vvpjs6JozyurWDtjR3EePL',
+		# 'formhub_uuid': '74fb7be83af348c7b870920829b13dc1',
 	},
 }
 
