@@ -52,7 +52,7 @@ def get_component(request, slum_id):
     sponsor_slum_count = 0
     if not request.user.is_anonymous():
        sponsors = request.user.sponsor_set.all().values_list('id',flat=True)
-       sponsor_slum_count = SponsorProjectDetails.objects.filter(slum = slum).count()
+       #sponsor_slum_count = SponsorProjectDetails.objects.filter(slum = slum).count()
     #Fetch filter and sponsor metadata
     metadata = Metadata.objects.filter(visible=True).order_by('section__order','order')
     rhs_analysis = {}
@@ -65,10 +65,11 @@ def get_component(request, slum_id):
         pass
 
     lstcomponent = []
-    sponsor_houses = [00]
+    sponsor_houses = []
     #Iterate through each filter and assign answers to child if available
     for metad in metadata:
         component = {}
+        print metad.name
         component['name'] = metad.name
         component['level'] = metad.level
         component['section'] = metad.section.name
@@ -91,21 +92,25 @@ def get_component(request, slum_id):
                 options = [rhs_analysis[field[0]][option] for option in field[1].split(',') if option in rhs_analysis[field[0]]]
                 component['child'] = list(set(sum(options,[])))
         #Sponsor : Depending on superuser or sponsor render the data accordingly
-        elif metad.type == 'S' and not request.user.is_anonymous() and sponsor_slum_count > 0:
+        elif metad.type == 'S' and (metad.authenticate == False or not request.user.is_anonymous()) :
             if  metad.code!= "":
                 sponsor_households = []
                 sponsor_households = SponsorProjectDetails.objects.filter(slum = slum, sponsor__id = int(metad.code)).values_list('household_code', flat=True)
                 if len(sponsor_households)>0:
-                   sponsor_households = sum(list(sponsor_households), [])
-                sponsor_houses.extend(sponsor_households)
-                if request.user.is_superuser or int(metad.code) in sponsors:
+                    try:
+                        sponsor_households = sum(list(sponsor_households), [])
+                    except Exception as e:
+                        sponsor_households = sum(map(lambda x : json.loads(x),sponsor_households),[])
+                if metad.section.name=="Sponsor":
+                    sponsor_houses.extend(sponsor_households)
+                if request.user.is_superuser or int(metad.code) in sponsors or metad.authenticate == False :
                     component['child'] = sponsor_households
             else:
                 component['child'] = sponsor_houses
         if len(component['child']) > 0:
             component['count']=len(component['child'])
             lstcomponent.append(component)
-    sponsor_houses = sponsor_houses.pop(0)
+    #sponsor_houses = sponsor_houses.pop(0)
     #lstcomponent = sorted(lstcomponent, key=lambda x:x['section_order'])
     dtcomponent = OrderedDict()
     #Ordering the filter/components/sponsors according to the section they below to.

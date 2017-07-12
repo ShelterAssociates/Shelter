@@ -45,6 +45,7 @@ class Metadata(models.Model):
     type  = models.CharField(max_length=1, choices=META_TYPE_CHOICES) # component/filter
     display_type  = models.CharField(max_length=1, choices=DISPLAY_TYPE_CHOICES) #map/table
     visible  = models.BooleanField() # BooleanField
+    authenticate = models.BooleanField(default=False)
     order  = models.FloatField()
     blob  = JSONField()
     icon = models.ImageField(upload_to=COMPONENT_ICON ,blank=True, null=True)
