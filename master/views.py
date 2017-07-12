@@ -263,11 +263,12 @@ def slummap(request):
 def citymapdisplay(request):
 	city_dict={}
 	city_main={}
+	cipher = AESCipher()
 
 	for c in City.objects.all():
 		city_dict={}
 		city_dict["name"]= c.name.city_name
-		city_dict["id"]= c.id
+		city_dict["id"]= "city::"+cipher.encrypt(str(c.id))
 		city_dict["lat"]= str(c.shape)
 		city_dict["bgColor"]= c.background_color
 		city_dict["borderColor"]= c.border_color
