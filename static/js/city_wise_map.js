@@ -714,7 +714,7 @@ var Shape =(function(){
                     spstr += '<table class="table table-striped" style="font-size: 10px;"><tbody>';
                     if(json['FFReport']){
                         flag = false;
-                        $("a[name=chk_group]:contains('Sponsor')").parent().find('input[type=checkbox]').slice(1).each(function(ind, chk){
+                        $("a[name=chk_group]:contains('Sponsor')").parent().find('input[type=checkbox]').each(function(ind, chk){
                                 if($(chk).is(":checked")){
                                         flag=true;
                                     }
