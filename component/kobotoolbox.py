@@ -71,7 +71,6 @@ def get_kobo_RHS_list(city, slum_code,house_number, kobo_survey=''):
             url = settings.KOBOCAT_FORM_URL+'data/'+kobo_survey+'?query={"group_ce0hf58/slum_name":"'+slum_code+'","group_ce0hf58/house_no":{ "$in":["'+str(house_number)+'","'+('000'.join(str(house_number)))[-4:]+'"]}}'
         except Exception as e:
             print e
- 	print url	
         req = urllib2.Request(url)
         req.add_header('Authorization', settings.KOBOCAT_TOKEN)
         resp = urllib2.urlopen(req)

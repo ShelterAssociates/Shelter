@@ -69,7 +69,6 @@ def get_component(request, slum_id):
     #Iterate through each filter and assign answers to child if available
     for metad in metadata:
         component = {}
-        print metad.name
         component['name'] = metad.name
         component['level'] = metad.level
         component['section'] = metad.section.name
