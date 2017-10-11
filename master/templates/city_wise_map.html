@@ -8,7 +8,7 @@
 <!-- <script type="text/javascript" src="http://www.google.com/jsapi" ></script> -->
 <script src="{% static "js/maplabel.js" %}"></script>
 <script src="{% static "js/city_wise_map.js" %}"></script>
-<script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCuQTQr4BdUZEpca7kQIt673JF_Yah3C4A&callback=initMap12"
+<script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCs114b6ZNpVH5BGnrfgy0f1K49vfBK4gs&callback=initMap12"
 async defer></script>
 <script src="{% static "js/bootstrap.min.js" %}"></script>
 <script src="{% static "js/jquery.dataTables.min.js" %}"></script>
@@ -62,6 +62,8 @@ async defer></script>
 </nav>
 <input type="text" class="hide" id="city_id" value="{{city_id}}"/>
 <input type="text" class="hide" id="city_name" value="{{city_name}}"/>
+<input type="text" class="hide" id="slum_name" value="{{slum_name}}"/>
+
 <div class="container">
 	<div class="jumbotron" style="background-color:white;">
 	<h3>Spatial Slum Information</h3>
