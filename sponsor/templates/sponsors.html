@@ -18,7 +18,9 @@
     		{% for i in city.list %}
 				<h4> {{i.slumname}} : </h4>
 						<h4>
-								<a  href="http://127.0.0.1:8000?slum={{i.slumname}}/city={{i.cityname}}">{{i.project_type}} </a> </font></li>
+								<a  href="/{{i.city_id_encrypted}}/{{i.slumname}}">{{i.project_type}} </a> 
+								<a href = "/sponsor/{{i.slumname}}" >click me for households zip  </a></font></li>
+
 						</h4>
 			{%endfor%}
 		{% endfor %}
