@@ -26,6 +26,7 @@ urlpatterns = [
     url(r'^(?P<key>{})$'.format(base64_pattern), city_wise_map, name="city_map"),
     url(r'^admin/', include('master.urls')),
     url(r'^component/', include('component.urls')),
+    url(r'^sponsor/', include('sponsor.urls')),
 ] + static(settings.STATIC_URL, document_root=settings.STATIC_ROOT) + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 
 
