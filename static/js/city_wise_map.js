@@ -832,8 +832,9 @@ var BaseShape = (function(){
     BaseShape.prototype.show = function(){
         zindex++;
         $.each(this.child, function(k,v){
-            v.setMap(map);
+            //v.setMap(map);
             v.set("zIndex", zindex);
+	    v.setMap(map);
         });
     }
     //Hide all the component unselected
@@ -1005,10 +1006,16 @@ function checkAllGroup(grpchk){
 }
 //Event handler for checkbox selection for the filter ON / OFF
 function checkSingleGroup(singlechk){
-    if(arr_poly_disp.length > 0){
+    /*if(arr_poly_disp.length > 0){
         arr_poly_disp[0].setMap(null);
         arr_poly_disp = [];
-    }
+    } */
+    $.each(arr_poly_disp, function(k,v){
+        v.setMap(null);
+      });
+    var l = map.getZoom();
+    map.setZoom(l+1);
+    map.setZoom(l);
     var chkchild = $(singlechk).val();
 	var section = $(singlechk).attr('selection');
 	var component_type = $(singlechk).attr('component_type');
@@ -1022,4 +1029,6 @@ function checkSingleGroup(singlechk){
 	if($(singlechk).parent().parent().parent().find('[name=chk1]:checked').length >0)
 	    flag=true;
 	$(singlechk).parent().parent().parent().find('[name=grpchk]')[0].checked =flag;
+//    map.setZoom(l+1);
+    var s = map.setZoom(l);
 }
