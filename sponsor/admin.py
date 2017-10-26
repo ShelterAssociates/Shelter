@@ -7,24 +7,29 @@ admin.site.register(Sponsor)
 admin.site.register(SponsorContact)
 
 class SponsorProjectDetailsAdmin(admin.ModelAdmin):
-	list_display = ('sponsor', 'slum', 'project_name', 'household_code')
+	list_display = ('sponsor', 'slum', 'sponsor_project', 'household_code')
 	raw_id_fields = ['slum']
+	search_fields = ['slum__name', 'sponsor__organization_name', 'sponsor_project__name']
+	ordering = ['sponsor', 'slum', 'sponsor_project']
+
 	def slum(self, obj):
 		return obj.slum.name
 
-	def project_name(self, obj):
+	def sponsor_project(self, obj):
 		return obj.sponsor_project.name
 
 admin.site.register(SponsorProjectDetails, SponsorProjectDetailsAdmin)
 
 class SponsorProjectAdmin(admin.ModelAdmin):
-	list_display = ("get_project_type","name", "get_status")
+	list_display = ("name","sponsor", "project_type", "funds_sponsored", "start_date", "status")
 	exclude = ('created_by','created_on')
+	search_fields = ['name', 'sponsor__organization_name', 'funds_sponsored', 'start_date']
+	ordering = ['name', 'sponsor', 'project_type']
 
-	def get_project_type(self, obj):
+	def project_type(self, obj):
 		return obj.get_project_type_display()
 
-	def get_status(self, obj):
+	def status(self, obj):
 		return obj.get_status_display()
 
 	def save_model(self, request, obj, form, change):
