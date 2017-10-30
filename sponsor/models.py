@@ -6,6 +6,7 @@ from master.models import Slum
 from jsonfield import JSONField
 
 LOGO_PATH = 'sponsor_logo/'
+PROJECT_PATH = 'sponsor_project/'
 class Sponsor(models.Model):
 	organization_name = models.CharField(max_length=1024)
 	address = models.CharField(max_length=2048)
@@ -42,7 +43,11 @@ class SponsorProject(models.Model):
 	status = models.CharField(choices = PROJECTSTATUS_CHOICES, max_length=2)
 	created_by = models.ForeignKey(User)
 	created_on= models.DateTimeField(default= datetime.now())
-	project_details = models.ManyToManyField(Sponsor, through='SponsorProjectDetails')
+
+	#project_details = models.ManyToManyField(Sponsor, through='SponsorProjectDetails')
+	sponsor = models.ForeignKey(Sponsor, null=True, blank=True)
+	document = models.FileField(upload_to=PROJECT_PATH, null=True, blank=True)
+	image = models.ImageField(upload_to=PROJECT_PATH, null=True, blank=True)
 
 	def __unicode__(self):
 		return self.name
@@ -51,12 +56,23 @@ class SponsorProject(models.Model):
 	 	verbose_name = 'Sponsor Project'
 	 	verbose_name_plural = 'Sponsor Projects'
 
+QUARTER_CHOICES = (('1', 'First'),
+				   ('2', 'Second'),
+				   ('3', 'Third'),
+				   ('4','Fourth'))
+
+SPONSORSTATUS_CHOICES = (('1','Initiated'),
+				  		 ('2', 'In-progress'),
+				  		 ('3', 'Completed'))
 
 class SponsorProjectDetails(models.Model):
 	sponsor = models.ForeignKey(Sponsor)
 	sponsor_project = models.ForeignKey(SponsorProject)
 	slum = models.ForeignKey(Slum)
 	household_code = JSONField(null=True, blank=True)
+	quarter = models.CharField(choices=QUARTER_CHOICES, max_length=2, null=True, blank=True)
+	status = models.CharField(choices=SPONSORSTATUS_CHOICES, max_length=2, null=True, blank=True)
+	count = models.IntegerField(null=True, blank=True)
 
 	class Meta:
 		unique_together = ('sponsor', 'sponsor_project', 'slum',)
@@ -66,6 +82,19 @@ class SponsorProjectDetails(models.Model):
 	def __unicode__(self):
 		"""Returns string representation of object"""
 		return self.slum.name
+
+class SponsorProjectMOU(models.Model):
+	sponsor_project = models.ForeignKey(SponsorProject)
+	quarter = models.CharField(choices=QUARTER_CHOICES, max_length=2)
+	fund_released = models.DecimalField(max_digits=10, decimal_places=2)
+	release_date = models.DateTimeField(default=datetime.now())
+
+	class Meta:
+		verbose_name = "Sponsor project MOU"
+		verbose_name_plural = "Sponsor project MOU"
+
+	def __unicode__(self):
+		return self.sponsor.organization_name + ' ' + self.sponsor_project.name + ' ' + self.quarter
 
 STATUS_CHOICES = (('0','InActive'),
 	              ('1','Active'))
