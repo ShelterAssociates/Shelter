@@ -140,7 +140,10 @@ def get_kobo_RHS_data(request, slum_id,house_num):
 def get_kobo_RIM_data(request, slum_id):
 
     slum = get_object_or_404(Slum, pk=slum_id)
-    output = get_kobo_RIM_detail(slum.electoral_ward.administrative_ward.city.id, slum.shelter_slum_code)
+    try:
+        output = get_kobo_RIM_detail(slum.electoral_ward.administrative_ward.city.id, slum.shelter_slum_code)
+    except:
+        output = {}
     return HttpResponse(json.dumps(output),content_type='application/json')
 
 def get_kobo_RIM_report_data(request, slum_id):
@@ -178,7 +181,7 @@ def get_kobo_FF_report_data(request, key):
      except:
          user = None
      if user and (user.is_superuser or user.groups.filter(name="sponsor").exists()) and slum and len(slum)>0:
-         filter_data ={"slum":slum[0], "household_code__contains":int(house_num)}
+         filter_data ={"slum":slum[0], "household_code__contains":str(house_num)}
          if user.groups.filter(name="sponsor").exists():
              filter_data["sponsor__user"] = user
          project_details = SponsorProjectDetails.objects.filter(**filter_data)
