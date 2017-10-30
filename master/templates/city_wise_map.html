@@ -1,6 +1,8 @@
 {% block content %}
 {% load staticfiles %}
 
+
+
 <link rel="stylesheet"  type="text/css" href="{% static "css/bootstrap.min.css" %}"/>
 <link rel="stylesheet"  type="text/css" href="{% static "css/jquery.dataTables.min.css" %}" />
 
@@ -56,13 +58,60 @@ async defer></script>
 </style>
 <nav class="navbar navbar-default navbar-fixed-top">
   <div class="container">
-    <div class="navbar-header"><img src="/static/images/shelter_footer.png" height="60"/></div>
-		<div class="navbar-collapse collapse"></div>
+    <div class="navbar-header"><img src="/static/images/shelter_footer.png" height="60"/>
+	</div>
+		<div class="navbar-collapse collapse">
+
+		<div style="padding-top: 10px;">
+			<div class="navbar-collapse collapse">
+
+
+		<div style="padding-top: 10px;">
+
+			<!-- Button trigger modal -->
+			<button type="button" class="btn btn-lg btn-default pull-right" data-toggle="modal" data-target="#myModal">
+				login
+			</button>
+
+		</div>
+
+	</div>
+		</div>
   </div>
+
+	 </div>
 </nav>
+
+<!-- Modal -->
+<div class="modal fade" id="myModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" style="top: 56px; centre: 1054px; display: block;">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content"  style="top: 157px; left: 187px;height: 207px; width:220px; centre:">
+      <div class="modal-header">
+
+		  <h4 class="modal-title" id="myModalLabel">Login</h4>
+	  </div>
+
+		  <form method="post" action="/admin/user_login/"><input name="csrfmiddlewaretoken" value="iGuJDNUtYlXDeXBMxtbmMSF8ZFPBD1u5" type="hidden">
+		<input placeholder="username" name="username" style="margin: 7;" type="username">
+		<br>
+		<input placeholder="password" name="password" style="margin: 7;" type="password"><br>
+		<button type="submit" class="btn btn-primary"  style="margin: 7;">login</button>
+			   <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+    </form>
+
+      </div>
+
+
+    </div>
+  </div>
+</div>
+
+
 <input type="text" class="hide" id="city_id" value="{{city_id}}"/>
 <input type="text" class="hide" id="city_name" value="{{city_name}}"/>
 <input type="text" class="hide" id="slum_name" value="{{slum_name}}"/>
+
+
 
 <div class="container">
 	<div class="jumbotron" style="background-color:white;">
