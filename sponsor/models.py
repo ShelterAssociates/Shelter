@@ -59,7 +59,7 @@ class ProjectDocuments(models.Model):
 	document = models.FileField(upload_to=PROJECT_PATH)
 
 	def __unicode__(self):
-		return self.document
+		return self.document.url
 
 	class Meta:
 		verbose_name = 'Project Document'
@@ -70,7 +70,7 @@ class ProjectImages(models.Model):
 	image = models.ImageField(upload_to=PROJECT_PATH)
 
 	def __unicode__(self):
-		return self.image
+		return self.image.url
 
 	class Meta:
 		verbose_name = 'Project Image'
