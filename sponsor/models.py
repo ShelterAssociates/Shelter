@@ -43,11 +43,8 @@ class SponsorProject(models.Model):
 	status = models.CharField(choices = PROJECTSTATUS_CHOICES, max_length=2)
 	created_by = models.ForeignKey(User)
 	created_on= models.DateTimeField(default= datetime.now())
-
-	#project_details = models.ManyToManyField(Sponsor, through='SponsorProjectDetails')
 	sponsor = models.ForeignKey(Sponsor, null=True, blank=True)
-	document = models.FileField(upload_to=PROJECT_PATH, null=True, blank=True)
-	image = models.ImageField(upload_to=PROJECT_PATH, null=True, blank=True)
+	#project_details = models.ManyToManyField(Sponsor, through='SponsorProjectDetails')
 
 	def __unicode__(self):
 		return self.name
@@ -55,6 +52,30 @@ class SponsorProject(models.Model):
 	class Meta:
 	 	verbose_name = 'Sponsor Project'
 	 	verbose_name_plural = 'Sponsor Projects'
+
+
+class ProjectDocuments(models.Model):
+	sponsor_project = models.ForeignKey(SponsorProject)
+	document = models.FileField(upload_to=PROJECT_PATH)
+
+	def __unicode__(self):
+		return self.document
+
+	class Meta:
+		verbose_name = 'Project Document'
+		verbose_name_plural = 'Project Documents'
+
+class ProjectImages(models.Model):
+	sponsor_project = models.ForeignKey(SponsorProject)
+	image = models.ImageField(upload_to=PROJECT_PATH)
+
+	def __unicode__(self):
+		return self.image
+
+	class Meta:
+		verbose_name = 'Project Image'
+		verbose_name_plural = 'Project Images'
+
 
 QUARTER_CHOICES = (('1', 'First'),
 				   ('2', 'Second'),
@@ -75,7 +96,6 @@ class SponsorProjectDetails(models.Model):
 	count = models.IntegerField(null=True, blank=True)
 
 	class Meta:
-		unique_together = ('sponsor', 'sponsor_project', 'slum',)
 	 	verbose_name = 'Sponsor Project Detail'
 	 	verbose_name_plural = 'Sponsor Project Details'
 
