@@ -27,7 +27,7 @@ class SponsorProjectDetailsAdmin(admin.ModelAdmin):
 		return obj.sponsor_project.name
 
 	def quarter(self, obj):
-		return obj.get_quarter_display()
+	 	return obj.get_quarter_display()
 
 	def status(self, obj):
 		return obj.get_status_display()
@@ -53,11 +53,18 @@ class SponsorProjectDetailsAdmin(admin.ModelAdmin):
 
 admin.site.register(SponsorProjectDetails, SponsorProjectDetailsAdmin)
 
+class ProjectDocumentsInline(admin.TabularInline):
+	model = ProjectDocuments
+
+class ProjectImagesInline(admin.TabularInline):
+	model = ProjectImages
+
 class SponsorProjectAdmin(admin.ModelAdmin):
 	list_display = ("name","sponsor", "project_type", "funds_sponsored", "start_date", "status")
 	exclude = ('created_by','created_on')
 	search_fields = ['name', 'sponsor__organization_name', 'funds_sponsored', 'start_date']
 	ordering = ['name', 'sponsor', 'project_type']
+	inlines = [ProjectDocumentsInline, ProjectImagesInline]
 
 	def project_type(self, obj):
 		return obj.get_project_type_display()
