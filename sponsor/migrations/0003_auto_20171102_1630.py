@@ -45,17 +45,17 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='sponsor',
             name='intro_date',
-            field=models.DateTimeField(default=datetime.datetime(2017, 11, 2, 16, 30, 11, 309851)),
+            field=models.DateTimeField(default=datetime.datetime.now),
         ),
         migrations.AlterField(
             model_name='sponsorproject',
             name='created_on',
-            field=models.DateTimeField(default=datetime.datetime(2017, 11, 2, 16, 30, 11, 310974)),
+            field=models.DateTimeField(default=datetime.datetime.now),
         ),
         migrations.AlterField(
             model_name='sponsorprojectmou',
             name='release_date',
-            field=models.DateTimeField(default=datetime.datetime(2017, 11, 2, 16, 30, 11, 316778)),
+            field=models.DateTimeField(default=datetime.datetime.now),
         ),
         migrations.AlterUniqueTogether(
             name='sponsorprojectdetails',
