@@ -11,7 +11,7 @@ class Sponsor(models.Model):
 	organization_name = models.CharField(max_length=1024)
 	address = models.CharField(max_length=2048)
 	website_link = models.CharField(max_length = 2048, null=True, blank=True)
-	intro_date = models.DateTimeField(default=datetime.now())
+	intro_date = models.DateTimeField(default=datetime.now)
 	other_info = models.TextField(null=True, blank=True)
 	logo = models.ImageField(upload_to=LOGO_PATH, null=True, blank=True)
 	user = models.ForeignKey(User, limit_choices_to={'groups__name': "sponsor"})
@@ -42,7 +42,7 @@ class SponsorProject(models.Model):
 	funds_utilised = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
 	status = models.CharField(choices = PROJECTSTATUS_CHOICES, max_length=2)
 	created_by = models.ForeignKey(User)
-	created_on= models.DateTimeField(default= datetime.now())
+	created_on= models.DateTimeField(default= datetime.now)
 	sponsor = models.ForeignKey(Sponsor, null=True, blank=True)
 	#project_details = models.ManyToManyField(Sponsor, through='SponsorProjectDetails')
 
@@ -107,7 +107,7 @@ class SponsorProjectMOU(models.Model):
 	sponsor_project = models.ForeignKey(SponsorProject)
 	quarter = models.CharField(choices=QUARTER_CHOICES, max_length=2)
 	fund_released = models.DecimalField(max_digits=10, decimal_places=2)
-	release_date = models.DateTimeField(default=datetime.now())
+	release_date = models.DateTimeField(default=datetime.now)
 
 	class Meta:
 		verbose_name = "Sponsor project MOU"
