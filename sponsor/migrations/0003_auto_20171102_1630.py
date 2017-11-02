@@ -8,7 +8,7 @@ import datetime
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('sponsor', '0003_auto_20171030_1302'),
+        ('sponsor', '0002_auto_20171027_1637'),
     ]
 
     operations = [
@@ -45,17 +45,17 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='sponsor',
             name='intro_date',
-            field=models.DateTimeField(default=datetime.datetime(2017, 11, 2, 15, 43, 43, 90881)),
+            field=models.DateTimeField(default=datetime.datetime(2017, 11, 2, 16, 30, 11, 309851)),
         ),
         migrations.AlterField(
             model_name='sponsorproject',
             name='created_on',
-            field=models.DateTimeField(default=datetime.datetime(2017, 11, 2, 15, 43, 43, 93472)),
+            field=models.DateTimeField(default=datetime.datetime(2017, 11, 2, 16, 30, 11, 310974)),
         ),
         migrations.AlterField(
             model_name='sponsorprojectmou',
             name='release_date',
-            field=models.DateTimeField(default=datetime.datetime(2017, 11, 2, 15, 43, 43, 99378)),
+            field=models.DateTimeField(default=datetime.datetime(2017, 11, 2, 16, 30, 11, 316778)),
         ),
         migrations.AlterUniqueTogether(
             name='sponsorprojectdetails',
