@@ -67,7 +67,7 @@ class SponsorProjectAdmin(admin.ModelAdmin):
 	exclude = ('created_by','created_on')
 	search_fields = ['name', 'sponsor__organization_name', 'funds_sponsored', 'start_date']
 	ordering = ['name', 'sponsor', 'project_type']
-	inlines = [ProjectDocumentsInline, ProjectImagesInline, ProjectDetailsInline]
+	inlines = [ProjectDocumentsInline, ProjectImagesInline]
 
 	def project_type(self, obj):
 		return obj.get_project_type_display()
