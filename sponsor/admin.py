@@ -53,6 +53,9 @@ class SponsorProjectDetailsAdmin(admin.ModelAdmin):
 
 admin.site.register(SponsorProjectDetails, SponsorProjectDetailsAdmin)
 
+class ProjectDetailsInline(admin.TabularInline):
+	model = SponsorProjectDetails
+
 class ProjectDocumentsInline(admin.TabularInline):
 	model = ProjectDocuments
 
