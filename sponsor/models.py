@@ -99,13 +99,9 @@ class SponsorProjectDetails(models.Model):
 	sponsor_project = models.ForeignKey(SponsorProject)
 	slum = models.ForeignKey(Slum)
 	household_code = JSONField(null=True, blank=True)
-	quarter = models.CharField(choices=QUARTER_CHOICES, max_length=2, null=True, blank=True)
-	status = models.CharField(choices=SPONSORSTATUS_CHOICES, max_length=2, null=True, blank=True)
-	count = models.IntegerField(null=True, blank=True)
-	zip_file = models.FileField(upload_to=zip_path, null=True, blank=True)
-	zip_created_on = models.DateTimeField(null=True, blank=True)
 
 	class Meta:
+		unique_together = ("sponsor_project", "slum")
 	 	verbose_name = 'Sponsor Project Detail'
 	 	verbose_name_plural = 'Sponsor Project Details'
 
@@ -113,31 +109,48 @@ class SponsorProjectDetails(models.Model):
 		"""Returns string representation of object"""
 		return self.slum.name
 
+class SponsorProjectDetailsSubFields(models.Model):
+	sponsor_project_details = models.ForeignKey(SponsorProjectDetails)
+	household_code = JSONField(null=True, blank=True)
+	quarter = models.CharField(choices=QUARTER_CHOICES, max_length=2)
+	status = models.CharField(choices=SPONSORSTATUS_CHOICES, max_length=2)
+	count = models.IntegerField(null=True, blank=True)
+	zip_file = models.FileField(upload_to=zip_path, null=True, blank=True)
+	zip_created_on = models.DateField(null=True, blank=True)
+
+	class Meta:
+	 	verbose_name = 'Sponsor Project Detail Sub Field'
+	 	verbose_name_plural = 'Sponsor Project Detail Sub Fields'
+
+	def __unicode__(self):
+		"""Returns string representation of object"""
+		return self.sponsor_project_details.slum.name
+
 	def save(self):
 		"""Override the save method. When the status of the project details changes
 			to completed, it will give a call to create the family factsheet report zip file"""
 		flag = False
 		if self.status == SPONSORSTATUS_CHOICES[2][0]:
 			flag = True
-			if self.pk and self.status == SponsorProjectDetails.objects.get(pk = self.pk).status:
-				flag = True
+			if self.pk and self.status == SponsorProjectDetailsSubFields.objects.get(pk = self.pk).status:
+				flag = False
 
-		super(SponsorProjectDetails, self).save()
+		super(SponsorProjectDetailsSubFields, self).save()
 		if flag:
 			obj_FFReport = FFReport(self)
 			obj_FFReport.generate()
 
-@receiver(pre_save, sender=SponsorProjectDetails)
+@receiver(pre_save, sender=SponsorProjectDetailsSubFields)
 def update_zipfile(sender, instance, **kwargs):
 	""" Delete zip file on pre_save. This is needed in case of updation of 
 	    zip file, where the older file should be deleted from the location"""
 	if instance.pk:
-		details = SponsorProjectDetails.objects.get(pk=instance.pk)
+		details = SponsorProjectDetailsSubFields.objects.get(pk=instance.pk)
 		if details.zip_file and details.zip_file.url != instance.zip_file.url:
 			storage, path = details.zip_file.storage, details.zip_file.path
 			storage.delete(path)
 
-@receiver(pre_delete, sender=SponsorProjectDetails)
+@receiver(pre_delete, sender=SponsorProjectDetailsSubFields)
 def delete_file(sender, instance, *args, **kwargs):
 	""" Deletes thumbnail files on `pre_delete` """
 	if instance.zip_file:
