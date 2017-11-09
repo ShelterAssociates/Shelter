@@ -10,12 +10,19 @@ class SponsorAdmin(admin.ModelAdmin):
 
 admin.site.register(Sponsor, SponsorAdmin)
 #admin.site.register(SponsorContact)
+class SponsorProjectDetailsSubFieldsInline(admin.TabularInline):
+	model = SponsorProjectDetailsSubFields
+	min_num = 1
+	extra = 0
 
 class SponsorProjectDetailsAdmin(admin.ModelAdmin):
-	list_display = ('sponsor', 'slum', 'sponsor_project', 'quarter', 'status', 'household_code')
+	list_display = ('sponsor', 'slum', 'sponsor_project', 'household_code')
+	#readonly_fields = ['household_code']
 	raw_id_fields = ['slum', 'sponsor_project']
 	search_fields = ['slum__name', 'sponsor__organization_name', 'sponsor_project__name']
 	ordering = ['sponsor', 'slum', 'sponsor_project']
+	list_filter = ['sponsor_project__sponsor']
+	inlines = [ SponsorProjectDetailsSubFieldsInline ]
 
 	class Media:
 		js = ['js/collapse_household_code.js']
@@ -26,30 +33,30 @@ class SponsorProjectDetailsAdmin(admin.ModelAdmin):
 	def sponsor_project(self, obj):
 		return obj.sponsor_project.name
 
-	def quarter(self, obj):
-	 	return obj.get_quarter_display()
-
-	def status(self, obj):
-		return obj.get_status_display()
-
-	def get_search_results(self, request, queryset, search_term):
-		'''
-		:param request: 
-		:param queryset: 
-		:param search_term: 
-		:return: queryset 
-		 
-		 Function for adding custom filters for choice field options
-		'''
-		queryset, use_distinct = super(SponsorProjectDetailsAdmin, self).get_search_results(request, queryset, search_term)
-
-		quarter_options = filter(lambda x: search_term.lower() in x[1].lower(), QUARTER_CHOICES)
-		quarter_options = map(lambda x: x[0], quarter_options)
-		status_options = filter(lambda x: search_term.lower() in x[1].lower(), SPONSORSTATUS_CHOICES)
-		status_options = map(lambda x: x[0], status_options)
-		queryset |= self.model.objects.filter(quarter__in=quarter_options)
-		queryset |= self.model.objects.filter(status__in=status_options)
-		return queryset, use_distinct
+	# def quarter(self, obj):
+	#  	return obj.get_quarter_display()
+    #
+	# def status(self, obj):
+	# 	return obj.get_status_display()
+    #
+	# def get_search_results(self, request, queryset, search_term):
+	# 	'''
+	# 	:param request:
+	# 	:param queryset:
+	# 	:param search_term:
+	# 	:return: queryset
+	#
+	# 	 Function for adding custom filters for choice field options
+	# 	'''
+	# 	queryset, use_distinct = super(SponsorProjectDetailsAdmin, self).get_search_results(request, queryset, search_term)
+    #
+	# 	quarter_options = filter(lambda x: search_term.lower() in x[1].lower(), QUARTER_CHOICES)
+	# 	quarter_options = map(lambda x: x[0], quarter_options)
+	# 	status_options = filter(lambda x: search_term.lower() in x[1].lower(), SPONSORSTATUS_CHOICES)
+	# 	status_options = map(lambda x: x[0], status_options)
+	# 	queryset |= self.model.objects.filter(quarter__in=quarter_options)
+	# 	queryset |= self.model.objects.filter(status__in=status_options)
+	# 	return queryset, use_distinct
 
 admin.site.register(SponsorProjectDetails, SponsorProjectDetailsAdmin)
 
