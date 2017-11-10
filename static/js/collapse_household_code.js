@@ -35,7 +35,7 @@ $(document).ready(function(){
                var d = $(element).find('textArea').val();
                if (d != "")
                {
-                    data += d.slice(d.indexOf('[')+1, d.indexOf(']')-1) + ',';
+                    data += d.slice(d.indexOf('[')+1, d.indexOf(']')) + ',';
                }
         });
         $("textArea[name=household_code]").val("["+data.slice(0,data.length-1)+"]");
