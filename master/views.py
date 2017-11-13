@@ -27,6 +27,7 @@ from master.models import Survey, CityReference, Rapid_Slum_Appraisal, \
 from master.forms import SurveyCreateForm, ReportForm, Rapid_Slum_AppraisalForm, DrainageForm, LoginForm
 from sponsor.models import SponsorProjectDetails
 from django.contrib.auth import authenticate, login
+from django.contrib.auth import *
 from django.contrib.auth.models import User, Group
 from component.cipher import *
 import urllib
@@ -533,15 +534,20 @@ def city_wise_map(request, key, slumname = None):
 
 @csrf_exempt
 def user_login(request):
+
 	if request.method == 'POST':
+
+		if request.session.get('username'):
+			user_logout(request)
 		form = LoginForm(request.POST)
 		if form.is_valid():
 			cd = form.cleaned_data
 			user = authenticate(username=cd['username'],password=cd['password'])
-			print request.user.groups.filter(name__in=['sponsor']).exists()
 			if user is not None:
 				if user.is_active:
+					request.session.set_expiry(0)
 					login(request, user)
+					print "session key in POST =" + str(request.session.session_key)
 					if (request.user.groups.filter(name__in=['sponsor']).exists()):
 						return HttpResponseRedirect('/sponsor/')
 					else:
@@ -551,7 +557,19 @@ def user_login(request):
 			else:
 				return HttpResponse('Invalid login')
 	else:
-		form = LoginForm()
+		if request.user.groups.filter(name__in=['sponsor']).exists():
+			return HttpResponseRedirect('/sponsor/')
+
+		else:
+			form = LoginForm()
+			return render(request, 'login.html', {'form': form})
+from django.core.cache import cache
+@csrf_exempt
+def user_logout(request):
+	#del request.session.get('username')
+	cache.clear()
+	logout(request)
+	form = LoginForm(request.POST)
 	return render(request, 'login.html', {'form': form})
 
 @csrf_exempt
