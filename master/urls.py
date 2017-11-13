@@ -66,6 +66,7 @@ urlpatterns = [
     url(r'^familyrportgenerate/$', familyrportgenerate, name='familyrportgenerate'),
    # url(r'^slummap/component/fetchcomponents', include('component.urls')),
     url(r'^user_login/$',user_login, name='user_login'),
+    #url(r'^user_logout/$',user_logout, name='user_logout'),
     url(r'^iframeuser/$',iframeuser, name='iframeuser'),
     url(r'^user_login2/$',user_login2, name='user_login2'),
   

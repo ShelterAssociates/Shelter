@@ -65,6 +65,9 @@ class ProjectDocuments(models.Model):
 	def __unicode__(self):
 		return self.document.url
 
+	def givename(self):
+		return os.path.basename(self.document.name)
+
 	class Meta:
 		verbose_name = 'Project Document'
 		verbose_name_plural = 'Project Documents'
