@@ -42,6 +42,8 @@ def getFiles(xml_root_path, above_size, quality, compress_flag):
 	count = 0
 	for dirpath, dirs, files in os.walk(xml_root_path):
 		for filename in files:
+			m = re.search(r'(png|jpg|gif)$', filename)
+			if m:
 				filepath = os.path.join(dirpath, filename)
 				original_size = os.stat(filepath).st_size / 1024
 				if original_size > above_size:
