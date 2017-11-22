@@ -534,7 +534,11 @@ def city_wise_map(request, key, slumname = None):
 
 @csrf_exempt
 def user_login(request):
-
+	return_to = ""
+	if 'next' in request.GET:
+		return_to =  request.GET['next']
+	#previous_url = request.META.get('HTTP_REFERER')
+	#print "previous_url = " + previous_url
 	if request.method == 'POST':
 
 		if request.session.get('username'):
@@ -547,7 +551,13 @@ def user_login(request):
 				if user.is_active:
 					request.session.set_expiry(0)
 					login(request, user)
-					print "session key in POST =" + str(request.session.session_key)
+					print return_to
+					if return_to:
+
+						print "...going back"
+						return HttpResponseRedirect(return_to.strip().replace(" ", "+"))
+
+
 					if (request.user.groups.filter(name__in=['sponsor']).exists()):
 						return HttpResponseRedirect('/sponsor/')
 					else:
