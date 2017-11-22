@@ -130,7 +130,7 @@ body {
 
   <div class="login-card">
     <h1><img src="/static/images/shelter_footer.png" height="60"/></h1>
-  <form  method="post" action="." >{% csrf_token %}
+  <form  method="post" >{% csrf_token %}
     <input type="text" name="username" placeholder="username">
     <input type="password" name="password" placeholder="password">
     <input type="submit" name="login" class="login login-submit" value="login">
