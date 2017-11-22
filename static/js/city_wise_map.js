@@ -595,9 +595,9 @@ function initMap12() {
                 var slumname = $('#slum_name').val();
                 if (slumname != "")
                 {
-                    $("input").val(slumname);
-                    $("input").keyup();
-                    $("#datatable span").get(0).click();
+                    $("#datatable_filter").find("input").val(slumname)
+                        $("#datatable_filter").find("input").val(slumname)
+                        $("#datatable span").get(0).click();
                 }   
             });
              
