@@ -69,6 +69,7 @@ urlpatterns = [
     #url(r'^user_logout/$',user_logout, name='user_logout'),
     url(r'^iframeuser/$',iframeuser, name='iframeuser'),
     url(r'^user_login2/$',user_login2, name='user_login2'),
+
   
     #url(r'^sponsors/$',sponsors, name='sponsors'),
     #url(r'^password_reset/$', auth_views.password_reset, name='password_reset'),
@@ -78,5 +79,6 @@ urlpatterns = [
     #url(r'^reset/done/$', auth_views.password_reset_complete, name='password_reset_complete'),     
     url('^', include('django.contrib.auth.urls')),
     url(r'^logout/$', 'django.contrib.auth.views.logout'),
+
 ]
     
