@@ -25,11 +25,12 @@ from master.views import index, SurveyListView, SurveyCreateView, \
     vulnerabilityreport,formList,slummapdisplay,slummap,citymapdisplay, \
     modelmapdisplay, drainageinsert, sluminformation, drainagedisplay , \
     drainageedit, cityList, drainagereportgenerate, modelList, \
-    familyrportgenerate
+    familyrportgenerate, user_login, iframeuser, user_login2
 
 from django.conf import settings
 from django.conf.urls.static import static
-
+from django.contrib.auth.views import login, logout, password_reset, password_reset_done, password_reset_confirm
+from django.contrib.auth import views as auth_views
 admin.autodiscover()
 
 urlpatterns = [
@@ -55,7 +56,7 @@ urlpatterns = [
     url(r'^slummapdisplay/(?P<id>[0-9]+)/$',slummapdisplay, name='slummapdisplay'),
     url(r'^citymapdisplay/$',citymapdisplay, name='citymapdisplay'),
     url(r'^modelmapdisplay/$',modelmapdisplay, name='modelmapdisplay'),
-    url(r'^sluminformation/$',sluminformation, name='sluminformation'),
+     url(r'^sluminformation/$',sluminformation, name='sluminformation'),
     url(r'^sluminformation/drainage/display/$',drainagedisplay, name='drainagedisplay'),
     url(r'^sluminformation/drainage/insert/$',drainageinsert, name='drainageinsert'),
     url(r'^sluminformation/drainage/edit/(?P<drainage_id>\d+)$', drainageedit, name='drainageedit'),
@@ -64,4 +65,20 @@ urlpatterns = [
     url(r'^modelList/$', modelList, name='modelList'),
     url(r'^familyrportgenerate/$', familyrportgenerate, name='familyrportgenerate'),
    # url(r'^slummap/component/fetchcomponents', include('component.urls')),
+    url(r'^user_login/$',user_login, name='user_login'),
+    #url(r'^user_logout/$',user_logout, name='user_logout'),
+    url(r'^iframeuser/$',iframeuser, name='iframeuser'),
+    url(r'^user_login2/$',user_login2, name='user_login2'),
+
+  
+    #url(r'^sponsors/$',sponsors, name='sponsors'),
+    #url(r'^password_reset/$', auth_views.password_reset, name='password_reset'),
+    #url(r'^password_reset/done/$', auth_views.password_reset_done, name='password_reset_done'),
+    #url(r'^reset-password/confirm/(?P<uidb64>[0-9A-Za-z]+)-(?P<token>.+)/$',
+    #    auth_views.password_reset_confirm, name='password_reset_confirm'),
+    #url(r'^reset/done/$', auth_views.password_reset_complete, name='password_reset_complete'),     
+    url('^', include('django.contrib.auth.urls')),
+    url(r'^logout/$', 'django.contrib.auth.views.logout'),
+
 ]
+    

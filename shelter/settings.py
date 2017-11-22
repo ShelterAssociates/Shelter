@@ -117,3 +117,6 @@ MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media/')
 
 ADMIN_SITE_HEADER = "shelter Administration"
+
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend' 
+
