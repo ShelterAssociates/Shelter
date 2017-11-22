@@ -221,7 +221,7 @@ var Slum = (function (_super) {
         var Fid = "154";
 		$.ajax({
 			url : url,
-			data : { Sid : Sid,Fid : Fid},
+			data : { Sid : Sid, Fid : Fid},
 			type: "POST",
 			contenttype : "json",
 			success : function(json){
@@ -589,6 +589,18 @@ function initMap12() {
             map.setCenter(bounds.getCenter());
             map.fitBounds(bounds);
             map.setZoom(12);
+
+            //slum name is put in the search box and enter is fired, the irt search result is loaded
+           $(document).ready(function() {
+                var slumname = $('#slum_name').val();
+                if (slumname != "")
+                {
+                    $("#datatable_filter").find("input").val(slumname)
+                        $("#datatable_filter").find("input").val(slumname)
+                        $("#datatable span").get(0).click();
+                }   
+            });
+             
             $(".overlay").hide();
         }
     });

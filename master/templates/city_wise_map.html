@@ -1,5 +1,10 @@
-{% block content %}
+
+{% extends 'header.html' %}
+
+
 {% load staticfiles %}
+
+{% block scriptblock %}
 
 <link rel="stylesheet"  type="text/css" href="{% static "css/bootstrap.min.css" %}"/>
 <link rel="stylesheet"  type="text/css" href="{% static "css/jquery.dataTables.min.css" %}" />
@@ -8,11 +13,14 @@
 <!-- <script type="text/javascript" src="http://www.google.com/jsapi" ></script> -->
 <script src="{% static "js/maplabel.js" %}"></script>
 <script src="{% static "js/city_wise_map.js" %}"></script>
-<script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDBbW857iVnZP7t1MlqDUwvIha9UVTnzt0&callback=initMap12"
+<script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCs114b6ZNpVH5BGnrfgy0f1K49vfBK4gs&callback=initMap12"
 async defer></script>
 <script src="{% static "js/bootstrap.min.js" %}"></script>
 <script src="{% static "js/jquery.dataTables.min.js" %}"></script>
 
+{% endblock %}
+
+{% block styleblock%}
 <style>
 	#map12 {
 		height: 500px;
@@ -54,14 +62,18 @@ async defer></script>
 	padding-right:0px;
 }
 </style>
-<nav class="navbar navbar-default navbar-fixed-top">
-  <div class="container">
-    <div class="navbar-header"><img src="/static/images/shelter_footer.png" height="60"/></div>
-		<div class="navbar-collapse collapse"></div>
-  </div>
-</nav>
+
+{% endblock %}
+
+
+{% block content %}
+
 <input type="text" class="hide" id="city_id" value="{{city_id}}"/>
 <input type="text" class="hide" id="city_name" value="{{city_name}}"/>
+<input type="text" class="hide" id="slum_name" value="{{slum_name}}"/>
+
+
+
 <div class="container">
 	<div class="jumbotron" style="background-color:white;">
 	<h3>Spatial Slum Information</h3>
@@ -91,13 +103,10 @@ async defer></script>
 				<div  class="modal-content">
 					<div id="modelheader" class="modal-header">
 						<h4 class="modal-title" ><label id="modelhdtext"></label>
-						<button type="button" class="close" data-dismiss="modal">
-							&times;
-						</button></h4>
-
+						<button type="button" class="close" data-dismiss="modal"></button>
+						</h4>
 					</div>
 					<div id="modelbody" class="modal-body" style="padding-top:0px;padding-bottom:0px;height:70%;overflow:auto;">
-
 					</div>
 					<div class="modal-footer">
 						<button type="button" class="btn btn-default" data-dismiss="modal">
@@ -105,9 +114,9 @@ async defer></script>
 						</button>
 					</div>
 				</div>
-
 			</div>
 		</div>
 	</div>
 	</div>
-	{% endblock %}
+</div>
+{% endblock %}

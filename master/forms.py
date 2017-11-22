@@ -14,6 +14,7 @@ from django.template.loader import render_to_string
 from django.forms import widgets
 from django.core.exceptions import ValidationError
 
+from django.contrib.auth.forms import AuthenticationForm 
 
 SURVEY_LIST = []
 
@@ -166,3 +167,9 @@ class DrainageForm(forms.ModelForm):
     class Meta:
         model = drainage
         fields = '__all__'
+
+
+
+class LoginForm(forms.Form):
+    username = forms.CharField()
+    password = forms.CharField(widget=forms.PasswordInput)
