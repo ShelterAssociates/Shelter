@@ -24,12 +24,12 @@ def compressMe(filepath, quality):
 	"""
 	original_size = os.stat(filepath).st_size / 1024
 	picture = Image.open(filepath)
-	picture.save(filepath,  optimize=True, quality=quality)
+	picture.save(filepath,  'JPEG', optimize=True, quality=quality)
 	new_size = os.stat(filepath).st_size/1024
-	print "original size -" + str(original_size) +" : new size -" + str(new_size) + " filepath::" + filepath
+	print "original size : " + str(original_size) +" new size : " + str(new_size) + " filepath::" + filepath
 
 
-def getFiles(xml_root_path, above_size, quality, compress_flag):
+def getFiles(xml_root_path, above_size, below_size, quality, compress_flag):
 	"""
 	Fetch all the image file from the root folder and sub-folders.
 	
@@ -44,12 +44,16 @@ def getFiles(xml_root_path, above_size, quality, compress_flag):
 		for filename in files:
 			m = re.search(r'(png|jpg|gif)$', filename)
 			if m:
-				filepath = os.path.join(dirpath, filename)
-				original_size = os.stat(filepath).st_size / 1024
-				if original_size > above_size:
-					if compress_flag:
-						compressMe(filepath, quality)
-					count += 1
+				try:
+					filepath = os.path.join(dirpath, filename)
+					original_size = os.stat(filepath).st_size / 1024
+					flag = original_size > above_size if below_size <= 0 else original_size > above_size and original_size <= below_size
+					if flag:
+						if compress_flag:
+							compressMe(filepath, quality)
+						count += 1
+				except:
+					print "Error - " + dirpath +filename
 	print "Total number of files greater that "+str(above_size)+"MB - " + str(count)
 
 if __name__ == "__main__":
@@ -57,16 +61,18 @@ if __name__ == "__main__":
 	parser = argparse.ArgumentParser(prog='compress_image', conflict_handler='resolve',
 									description = "Script to compress all the image files in the specified folder")
 	parser.add_argument('-f', '--folder', help='Folder path',required=True)
-	parser.add_argument('-s', '--size', type=int, default=500, help='compress files above size(in MBs)')
+	parser.add_argument('-sa', '--size_above', type=int, default=500, help='compress files above size(in MBs)')
+	parser.add_argument('-sb', '--size_below', type=int, default=0, help='compress files below size(in MBs)')
 	parser.add_argument('-q', '--quality', type=int, default=65, help='Quality to which the image needs to be compressed')
 	parser.add_argument('-c', '--compress', action='store_true', help='Compress the files. If not supplied it will just print the count')
 	args = parser.parse_args()
 
 	folder_path = args.folder
-	above_size = args.size
+	above_size = args.size_above
+	below_size = args.size_below
 	quality = args.quality
 	compress_flag = args.compress
-	getFiles(folder_path, above_size, quality, compress_flag)
+	getFiles(folder_path, above_size, below_size, quality, compress_flag)
 
 
 
