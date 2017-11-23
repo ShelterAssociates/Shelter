@@ -14,7 +14,10 @@ import os, sys, re
 from PIL import Image
 import argparse
 
-def compressMe(filepath, quality):
+fp_success = open("/var/log/compress_success.log",'rw+')
+fp_error = open("/var/log/compress_error.log",'rw+')
+
+def compressMe(filepath, quality, count):
 	"""
 	Compress file specified.
 	
@@ -26,7 +29,9 @@ def compressMe(filepath, quality):
 	picture = Image.open(filepath)
 	picture.save(filepath,  'JPEG', optimize=True, quality=quality)
 	new_size = os.stat(filepath).st_size/1024
-	print "original size : " + str(original_size) +" new size : " + str(new_size) + " filepath::" + filepath
+	log_str = str(count)+". original size : " + str(original_size) +" new size : " + str(new_size) + " filepath::" + filepath
+	fp_success.write(log_str)
+	print str(count)
 
 
 def getFiles(xml_root_path, above_size, below_size, quality, compress_flag):
@@ -50,10 +55,11 @@ def getFiles(xml_root_path, above_size, below_size, quality, compress_flag):
 					flag = original_size > above_size if below_size <= 0 else original_size > above_size and original_size <= below_size
 					if flag:
 						if compress_flag:
-							compressMe(filepath, quality)
+							compressMe(filepath, quality, count)
 						count += 1
 				except:
-					print "Error - " + dirpath +filename
+					str_error =  "Error - " + dirpath +filename
+					fp_error.write(str_error)
 	print "Total number of files greater that "+str(above_size)+"MB - " + str(count)
 
 if __name__ == "__main__":
@@ -73,6 +79,8 @@ if __name__ == "__main__":
 	quality = args.quality
 	compress_flag = args.compress
 	getFiles(folder_path, above_size, below_size, quality, compress_flag)
+	fp_success.close()
+	fp_error.close()
 
 
 
