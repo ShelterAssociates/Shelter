@@ -26,19 +26,19 @@ $(document).ready(function(){
 
     update_view();
 
-    $("textArea[name=household_code], div.field-household_code p.help").addClass('hide');
-    var household = $("textArea[name=household_code]").val();
-    $("textArea[name=household_code]").parent().append('<p class="householdcode">'+household+'</p>');
-    $("input[name=_save]").click(function(){
-        var data = "";
-        $.each($("td.field-household_code"), function(index, element){
-               var d = $(element).find('textArea').val();
-               if (d != "")
-               {
-                    data += d.slice(d.indexOf('[')+1, d.indexOf(']')) + ',';
-               }
-        });
-        $("textArea[name=household_code]").val("["+data.slice(0,data.length-1)+"]");
-    });
+    //$("textArea[name=household_code], div.field-household_code p.help").addClass('hide');
+    //var household = $("textArea[name=household_code]").val();
+    //$("textArea[name=household_code]").parent().append('<p class="householdcode">'+household+'</p>');
+    //$("input[name=_save]").click(function(){
+    //    var data = "";
+    //    $.each($("td.field-household_code"), function(index, element){
+    //           var d = $(element).find('textArea').val();
+    //           if (d != "")
+    //           {
+    //                data += d.slice(d.indexOf('[')+1, d.indexOf(']')) + ',';
+    //           }
+    //   });
+    //    $("textArea[name=household_code]").val("["+data.slice(0,data.length-1)+"]");
+    //});
 
 });
