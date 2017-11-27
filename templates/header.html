@@ -23,10 +23,10 @@
 	<div class="navbar-collapse collapse">
 		<a style="padding-top: 10px;">
 		{% if user.is_authenticated %}
-			<a href="{% url 'logout' %}?next={% url 'user_login' %}"<button type="button" class="btn btn-lg btn-default pull-right" >logout</button> </a>
+			<a style="margin-top:5px;" href="{% url 'logout' %}?next={% url 'user_login' %}"<button type="button" class="btn btn-lg btn-default pull-right" >logout</button> </a>
 			<div class="pull-right" style="padding:10px;"> <h5>Welcome {{user}} </h5> </div>
 		{% else %}
-			<a href = "/admin/user_login/?next={{ request.path }}"<button id="loggedin" type="button" class="btn btn-lg btn-default pull-right"  data-toggle="popover">login</button></a>
+			<a style="margin-top:5px;" href = "/admin/user_login/?next={{ request.path }}"<button id="loggedin" type="button" class="btn btn-lg btn-default pull-right"  data-toggle="popover">login</button></a>
 		{% endif %}	
 		</div >	
 	</div>
