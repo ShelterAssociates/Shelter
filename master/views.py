@@ -502,7 +502,7 @@ def familyrportgenerate(request):
 
 	project_details = False
 	if not request.user.is_superuser:
-		project_details = SponsorProjectDetails.objects.filter(slum=SlumObj, sponsor__user=request.user, household_code__contains=[int(houseno)]).exists()
+		project_details = SponsorProjectDetails.objects.filter(slum=SlumObj, sponsor__user=request.user, household_code__contains=int(houseno)).exists()
 	else:
 		project_details = True
 	#rp_xform_title = Fid
