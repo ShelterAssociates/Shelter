@@ -122,6 +122,7 @@ def get_component(request, slum_id):
 
 @user_passes_test(lambda u: u.is_superuser or u.groups.filter(name='sponsor').exists(), login_url='/admin/')
 def get_kobo_RHS_data(request, slum_id,house_num):
+     output = {}
      slum = get_object_or_404(Slum, pk=slum_id)
      project_details = False
      if request.user.is_superuser:
@@ -130,9 +131,11 @@ def get_kobo_RHS_data(request, slum_id,house_num):
      elif request.user.groups.filter(name='sponsor').exists():
          project_details = SponsorProjectDetails.objects.filter(slum=slum, sponsor__user=request.user, household_code__contains=int(house_num)).exists()
 
-     if 'admin_ward' in output:
-         output['admin_ward'] = slum.electoral_ward.administrative_ward.name
-         output['slum_name'] = slum.name
+     #if 'admin_ward' in output:
+     output['admin_ward'] = slum.electoral_ward.administrative_ward.name
+     output['slum_name'] = slum.name
+     output['house_no'] = house_num
+
      output['FFReport'] = project_details
      return HttpResponse(json.dumps(output),content_type='application/json')
 

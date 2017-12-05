@@ -25,8 +25,8 @@ SECRET_KEY = 'd75_awn2qsnk!z*m)gdx(7^u1b4rqnn+pjoofg(4qa%^#bp&3w'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
-
+#ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['.shelter-associates.org']
 
 # Application definition
 
@@ -104,13 +104,14 @@ from local_settings import *
 
 STATIC_URL = '/static/'
 
-#STATIC_ROOT = os.path.join( BASE_DIR, 'static')
+
+STATIC_ROOT = os.path.join( BASE_DIR, 'static')
 
 STATICFILES_DIRS = (
    # Put strings here, like "/home/html/static" or "C:/www/django/static".
    # Always use forward slashes, even on Windows.
    # Don't forget to use absolute paths, not relative paths.
-   os.path.join( BASE_DIR, 'static'),
+   #os.path.join( BASE_DIR, 'static'),
 )
 
 MEDIA_URL = '/media/'
