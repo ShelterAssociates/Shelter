@@ -595,7 +595,7 @@ function initMap12() {
                 var slumname = $('#slum_name').val();
                 if (slumname != "")
                 {
-		    var slum_input = $("#datatable_filter").find("input");
+		            var slum_input = $("#datatable_filter").find("input");
                     slum_input.val(slumname);
                     slum_input.keyup();
                     $("#datatable span").get(0).click();
@@ -740,9 +740,9 @@ var Shape =(function(){
                     var flag = false;
                     $.each(json, function(k, v) {
                         flag = true;
-			if(k != 'FFReport'){
+			            if(k != 'FFReport'){
                         	spstr += '<tr><td>' + k + '</td><td>' + v + '</td></tr>';
-			}
+			            }
                     });
                     spstr += '</tbody></table>';
                     if (flag){

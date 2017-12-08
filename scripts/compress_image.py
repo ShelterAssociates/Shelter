@@ -26,6 +26,7 @@ def compressMe(filepath, quality, count):
 	:return: None
 	"""
 	global fp_success
+
 	original_size = os.stat(filepath).st_size / 1024
 	picture = Image.open(filepath)
 	picture.save(filepath,  'JPEG', optimize=True, quality=quality)
@@ -59,10 +60,12 @@ def getFiles(xml_root_path, above_size, below_size, quality, compress_flag):
 						if compress_flag:
 							compressMe(filepath, quality, count)
 						count += 1
+
 				except Exception as e:
 					str_error =  "Error - "+str(e) + dirpath +filename +'\n'
 					fp_error.write(str_error)
 	print "Total number of files greater that "+str(above_size)+"KB - " + str(count)
+
 
 if __name__ == "__main__":
 	#Argument parser
@@ -81,8 +84,9 @@ if __name__ == "__main__":
 	quality = args.quality
 	compress_flag = args.compress
 	getFiles(folder_path, above_size, below_size, quality, compress_flag)
-	#fp_success.close()
-	#fp_error.close()
+
+	fp_success.close()
+	fp_error.close()
 
 
 

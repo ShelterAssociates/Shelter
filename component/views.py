@@ -135,6 +135,7 @@ def get_kobo_RHS_data(request, slum_id,house_num):
      output['admin_ward'] = slum.electoral_ward.administrative_ward.name
      output['slum_name'] = slum.name
      output['house_no'] = house_num
+
      output['FFReport'] = project_details
      return HttpResponse(json.dumps(output),content_type='application/json')
 

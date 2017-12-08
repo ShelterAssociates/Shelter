@@ -101,6 +101,7 @@
 			</style>
 
 			<button class="accordion"><h4>{{entry.project_Name}}</h4></button>
+
 			<div class = "panel" style="display: block;">
 				<table id ="SponsorTable"style="width:100%">
 					<tr >
@@ -120,6 +121,7 @@
 
 												No of households :{{zipfile.household_code|length}}
 												{% if zipfile.zip_file %}
+
 													(Click <a href = "{{zipfile.zip_file.url}}">here </a>  to download)<br>
 												{%else%}
 													(In Progress...)<br>
@@ -142,6 +144,7 @@
 								{% for doc in entry.documents %}
 								{{doc.url}}
 									<a target='blank' href = "{{doc}}"> {{doc.givename}}</a><br/>
+
 								{%endfor%}
 							</div>
 						</td>
