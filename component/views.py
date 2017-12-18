@@ -120,17 +120,18 @@ def get_component(request, slum_id):
             dtcomponent[key][c['name']] = c
     return HttpResponse(json.dumps(dtcomponent),content_type='application/json')
 
-@user_passes_test(lambda u: u.is_superuser or u.groups.filter(name='sponsor').exists(), login_url='/admin/')
+@user_passes_test(lambda u: u.is_superuser or u.groups.filter(name='sponsor').exists() or u.groups.filter(name='ulb').exists(), login_url='/admin/')
 def get_kobo_RHS_data(request, slum_id,house_num):
      output = {}
      slum = get_object_or_404(Slum, pk=slum_id)
      project_details = False
-     if request.user.is_superuser and request.user.groups.filter(name='ulb').exists():
+     if request.user.is_superuser or request.user.groups.filter(name='ulb').exists():
          project_details = True
          output = get_kobo_RHS_list(slum.electoral_ward.administrative_ward.city.id, slum.shelter_slum_code, house_num)
      elif request.user.groups.filter(name='sponsor').exists():
          project_details = SponsorProjectDetails.objects.filter(slum=slum, sponsor__user=request.user, household_code__contains=int(house_num)).exists()
-
+     if request.user.groups.filter(name='ulb').exists():
+         project_details = False
      #if 'admin_ward' in output:
      output['admin_ward'] = slum.electoral_ward.administrative_ward.name
      output['slum_name'] = slum.name
