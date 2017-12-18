@@ -561,7 +561,10 @@ def user_login(request):
 					if (request.user.groups.filter(name__in=['sponsor']).exists()):
 						return HttpResponseRedirect('/sponsor/')
 					else:
-						return HttpResponseRedirect('/admin/')
+						if (request.user.groups.filter(name__in=['ulb']).exists()):
+							return HttpResponseRedirect('/city::B5+A2nt050dP4nC55nmuYx9/MPi6RFp2cgBUKxRkedE=')
+						else:
+							return HttpResponseRedirect('/admin/')
 				else:
 					return HttpResponse('Disabled account')
 			else:
