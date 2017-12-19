@@ -31,6 +31,15 @@ from django.contrib.auth import *
 from django.contrib.auth.models import User, Group
 from component.cipher import *
 import urllib
+from django.http import Http404
+from django.core.exceptions import PermissionDenied
+
+def access_right(func):
+    def wrapper(request, *args, **kwargs):
+        if request.META.get('HTTP_REFERER')==None or "app.shelter-associates.org" not in request.META.get('HTTP_REFERER'):
+            raise PermissionDenied("Access to URL blocked")
+        return func(request, *args, **kwargs)
+    return wrapper
 
 @staff_member_required
 def index(request):
@@ -263,6 +272,7 @@ def slummap(request):
 	return HttpResponse(template.render(context))
 
 @csrf_exempt
+@access_right
 def citymapdisplay(request):
 	city_dict={}
 	city_main={}
@@ -283,6 +293,7 @@ def citymapdisplay(request):
 
 
 @csrf_exempt
+@access_right
 def slummapdisplay(request,id):
 	slum_list=[]
 	city_dict={}
@@ -521,7 +532,7 @@ def city_wise_map(request, key, slumname = None):
 	city = cipher.decrypt(key.split('::')[1])
  	city = City.objects.get(pk=int(city))
 	template = loader.get_template('city_wise_map.html')
-	data = {}
+        data={}
 	if slumname :
 		data['slum_name' ] = slumname
 	if city:

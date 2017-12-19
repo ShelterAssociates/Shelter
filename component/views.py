@@ -18,6 +18,14 @@ from .models import Metadata, Component
 from .cipher import *
 from master.models import Slum, Rapid_Slum_Appraisal, drainage
 from sponsor.models import SponsorProjectDetails
+from django.core.exceptions import PermissionDenied
+
+def access_right(func):
+	def wrapper(request, *args, **kwargs):
+		if request.META.get('HTTP_REFERER')==None or "app.shelter-associates.org" not in request.META.get('HTTP_REFERER'):
+			raise PermissionDenied()
+		return func(request, *args, **kwargs)
+	return wrapper
 
 #@staff_member_required
 @user_passes_test(lambda u: u.is_superuser)
@@ -43,6 +51,7 @@ def kml_upload(request):
     return render(request, 'kml_upload.html', context_data)
 
 #@user_passes_test(lambda u: u.is_superuser)
+@access_right
 def get_component(request, slum_id):
     '''Get component/filter/sponsor data for the selected slum.
        Here sponsor data is fetch according to user role access rights
@@ -141,6 +150,7 @@ def get_kobo_RHS_data(request, slum_id,house_num):
      return HttpResponse(json.dumps(output),content_type='application/json')
 
 #@user_passes_test(lambda u: u.is_superuser)
+@access_right
 def get_kobo_RIM_data(request, slum_id):
 
     slum = get_object_or_404(Slum, pk=slum_id)
