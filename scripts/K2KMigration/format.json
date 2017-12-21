@@ -1,0 +1,65 @@
+//Format of json that needs to be created
+{
+	"__version__": null,
+	"end": null,
+    "start": null,
+    "admin_ward": null,
+    "slum_name": null,
+    "Date_of_survey":null,
+    "Name_s_of_the_surveyor_s": null,
+    "Household_number": null,
+    "Type_of_structure_occupancy": null,
+    "Type_of_unoccupied_house": null,
+    "Parent_household_number": null,
+    "group_og5bx85": {
+      "Full_name_of_the_head_of_the_household":null,
+      "Type_of_survey": null
+    },
+    "group_el9cl08": {
+      "Enter_the_10_digit_mobile_number": null,
+      "Aadhar_number": null,
+      "Number_of_household_members": null,
+      "Do_you_have_any_girl_child_chi": null,
+      "How_many": null,
+      "Type_of_structure_of_the_house": null,
+      "Ownership_status_of_the_house": null,
+      "House_area_in_sq_ft": null,
+      "Type_of_water_connection": null,
+      "Facility_of_solid_waste_collection": null,
+      "Does_any_household_m_n_skills_given_below": null
+    },
+    "group_oi8ts04": {
+      "Have_you_applied_for_individua": null,
+      "Type_of_SBM_toilets": null,
+      "How_many_installments_have_you": null,
+      "When_did_you_receive_ur_first_installment": null,
+      "When_did_you_receive_r_second_installment": null,
+      "When_did_you_receive_ur_third_installment": null,
+      "If_built_by_contract_ow_satisfied_are_you": null,
+      "Status_of_toilet_under_SBM": null,
+      "What_was_the_cost_in_to_build_the_toilet": null,
+      "C1": null,
+      "C2": null,
+      "C3": null,
+      "C4": null,
+      "C5": null,
+      "Current_place_of_defecation": null,
+      "Is_there_availabilit_onnect_to_the_toilet": null,
+      "Are_you_interested_in_an_indiv": null,
+      "What_kind_of_toilet_would_you_like": null,
+      "Under_what_scheme_wo_r_toilet_to_be_built": null,
+      "If_yes_why": null,
+      "If_no_why": null,
+      "What_is_the_toilet_connected_to": null,
+      "Who_all_use_toilets_in_the_hou": null,
+      "Reason_for_not_using_toilet": null,
+      "OD1": null
+    },
+    "Enter_household_number_again": null,
+	"meta": {
+		"instanceID": null
+	},
+	"formhub": {
+		"uuid": null
+	}
+}

@@ -1,0 +1,19 @@
+// old fileds mapped directly to new fields
+{
+  "house_no": "Enter_household_number_again",
+  "admin_ward": "admin_ward",
+  "slum_name": "slum_name",
+  "date_of_rhs": "Date_of_survey",
+  "name_of_surveyor_who_collected_rhs_data": "Name_s_of_the_surveyor_s",
+  "house_no": "Household_number",
+  "what_is_the_full_name_of_the_family_head_": "Full_name_of_the_head_of_the_household",
+  "mobile_number": "Enter_the_10_digit_mobile_number",
+  "adhar_card_number": "Aadhar_number",
+  "number_of_family_members": "Number_of_household_members",
+  "Do_you_have_a_girl_child_under": "Do_you_have_any_girl_child_chi",
+  "if_yes_how_many_": "How_many",
+  "what_is_the_structure_of_the_house": "Type_of_structure_of_the_house",
+  "what_is_the_ownership_status_of_the_house": "Ownership_status_of_the_house",
+  "type_of_water_connection": "Type_of_water_connection",
+  "Does_any_family_members_has_co": "Does_any_household_m_n_skills_given_below"
+}
