@@ -32,7 +32,7 @@ def rhs_form():
 def queryToFetchRecords(kobo_survey, slum_code):
     print "Start fetching the details"
     rec=[]
-    folder_path = os.path.join(output_folder_path, "slum_" + str(slum_code.replace('/', '')))
+    slum_code = ''
     url = settings.KOBOCAT_FORM_URL + 'data/' + kobo_survey + '?format=json&query={"group_ce0hf58/slum_name":"' + slum_code + '"}'
     kobotoolbox_request = urllib2.Request(url)
     kobotoolbox_request.add_header('User-agent', 'Mozilla 5.10')
@@ -40,17 +40,27 @@ def queryToFetchRecords(kobo_survey, slum_code):
     res = urllib2.urlopen(kobotoolbox_request)
     html = res.read()
     json_records = json.loads(html)
-    grouped_records = itertools.groupby(sorted(json_records, key=lambda x: int(x['group_ce0hf58/house_no'])),
-                                        key=lambda x: int(x["group_ce0hf58/house_no"]))
+    grouped_records = itertools.groupby(sorted(json_records, key=lambda x: x['group_ce0hf58/slum_name']),
+                                        key=lambda x: x["group_ce0hf58/slum_name"])
     records = {}
     for list_record in grouped_records:
-        records[list_record[0]] = list(list_record[1])
-    for key,val in records.iteritems():
+        slum_house = list(list_record[1])
+        grouped_house_records = itertools.groupby(sorted(slum_house, key=lambda x: int(x['group_ce0hf58/house_no'])),
+                                            key=lambda x: int(x["group_ce0hf58/house_no"]))
+        house = {}
+        for list_house in grouped_house_records:
+            house[list_house[0]] = list(list_house[1])
+
+        records[list_record[0]] = house
+    for k,v in records.iteritems():
+      slum_code = k
+      folder_path = os.path.join(output_folder_path, "slum_" + str(slum_code.replace('/', '')))
+      for key,val in v.iteritems():
         record_sorted = sorted(val, key=lambda x: x['end'], reverse=True)
         record = record_sorted[0]
         create_data = rhs_xml_create(record)
         print create_data
-        status, replace_data = kmc_rhs_xml_replace(create_data)
+        status, replace_data = kmc_rhs_xml_replace(create_data, record)
 
         if status:
             xml_string = create_xml_string(replace_data, [], record['_xform_id_string'], record['_xform_id_string'],
@@ -65,7 +75,7 @@ def rhs_xml_create(xml_record):
     mapping =  json.loads(direct_mapping.read())
     for key, val in xml_record.iteritems():
         key = str(key)
-        if not key.startswith( '_' ):
+        if not key.startswith('_'):
             split_ky = key.split('/')
             if split_ky[len(split_ky)-1] in mapping.keys():
                 split_key = mapping[split_ky[len(split_ky)-1]].split('/')
@@ -80,12 +90,37 @@ def rhs_xml_create(xml_record):
 
     return gl_rhs_xml_dict
 
-def kmc_rhs_xml_replace(rhs_record):
+UNOCCUPIED_HOUSE = {'03' : '021', '04':'022', '05':'023', '06':'024', '07':'025'}
+FACILITY_OF_SOLID_WASTE = {'01':'04', '02':'01', '03':'02', '04':'03', '05':'04', '06':'05', '07':'06'}
+def kmc_rhs_xml_replace(rhs_record, record):
     flag=False
     '''Replacement for the records
     '''
     #rhs_record['meta']['deprecatedID'] = rhs_record['meta']['instanceID']
     rhs_record['meta']['instanceID'] = 'uuid:' + str(uuid.uuid4())
+    if record['group_ce0hf58/Type_of_structure_occupancy'] in ['03','04','05','06','07']:
+        rhs_record['Type_of_structure_occupancy'] = '02'
+        rhs_record['Type_of_unoccupied_house'] = UNOCCUPIED_HOUSE[record['group_ce0hf58/Type_of_structure_occupancy']]
+    else:
+        rhs_record['Type_of_structure_occupancy'] = '03' if record['group_ce0hf58/Type_of_structure_occupancy']=='02' else '01'
+
+    if rhs_record['Type_of_unoccupied_house'] and rhs_record['Type_of_unoccupied_house'] == '021':
+        rhs_record['Parent_household_number'] = record['group_ye18c77/group_ud4em45/what_is_the_full_name_of_the_family_head_']
+
+    if record['group_ye18c77/group_yw8pj39/house_area_in_sq_ft'] < 100:
+        rhs_record['group_el9cl08']['House_area_in_sq_ft'] = '01'
+    elif 100 >= record['group_ye18c77/group_yw8pj39/house_area_in_sq_ft'] < 200 :
+        rhs_record['group_el9cl08']['House_area_in_sq_ft'] = '02'
+    elif 200 >= record['group_ye18c77/group_yw8pj39/house_area_in_sq_ft'] < 300:
+        rhs_record['group_el9cl08']['House_area_in_sq_ft'] = '03'
+    elif 300 >= record['group_ye18c77/group_yw8pj39/house_area_in_sq_ft'] < 400:
+        rhs_record['group_el9cl08']['House_area_in_sq_ft'] = '04'
+    elif record['group_ye18c77/group_yw8pj39/house_area_in_sq_ft'] >= 400:
+        rhs_record['group_el9cl08']['House_area_in_sq_ft'] = '05'
+
+    rhs_record['group_el9cl08']['Facility_of_solid_waste_collection'] = FACILITY_OF_SOLID_WASTE[record['group_ye18c77/group_yw8pj39/facility_of_waste_collection']]
+    rhs_record['group_og5bx85']['Type_of_survey'] = '01'
+
     flag=True
     return flag, rhs_record
 
