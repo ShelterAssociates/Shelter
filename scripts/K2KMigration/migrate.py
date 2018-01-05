@@ -17,22 +17,25 @@ import itertools
 import os
 import dicttoxml
 import xml.etree.ElementTree as ET
+import commentjson
 
-kobo_survey = '87'
+kobo_survey = '73'
 root_folder_path = os.path.dirname(os.path.abspath(__file__))
 root_output_folder = os.path.join(root_folder_path, 'xml_output')
 output_folder_path = os.path.join(root_output_folder, 'KMC', 'RHS')
 
-format = open(os.path.join(root_folder_path, 'format.json'),'r')
-direct_mapping = open(os.path.join(root_folder_path, 'direct_mapping.json'), 'r')
-
 def rhs_form():
-    return json.loads(format.read())
+    format = open(os.path.join(root_folder_path, 'format.json'), 'rw')
+    return commentjson.loads(format.read())
 
-def queryToFetchRecords(kobo_survey, slum_code):
+def mapping_form():
+    direct_mapping = open(os.path.join(root_folder_path, 'direct_mapping.json'), 'rw')
+    return commentjson.loads(direct_mapping.read())
+
+def queryToFetchRecords(kobo_survey):
     print "Start fetching the details"
     rec=[]
-    slum_code = ''
+    slum_code = '273425262402'
     url = settings.KOBOCAT_FORM_URL + 'data/' + kobo_survey + '?format=json&query={"group_ce0hf58/slum_name":"' + slum_code + '"}'
     kobotoolbox_request = urllib2.Request(url)
     kobotoolbox_request.add_header('User-agent', 'Mozilla 5.10')
@@ -40,6 +43,8 @@ def queryToFetchRecords(kobo_survey, slum_code):
     res = urllib2.urlopen(kobotoolbox_request)
     html = res.read()
     json_records = json.loads(html)
+    print (url)
+    print (str(len(json_records)))
     grouped_records = itertools.groupby(sorted(json_records, key=lambda x: x['group_ce0hf58/slum_name']),
                                         key=lambda x: x["group_ce0hf58/slum_name"])
     records = {}
@@ -54,12 +59,14 @@ def queryToFetchRecords(kobo_survey, slum_code):
         records[list_record[0]] = house
     for k,v in records.iteritems():
       slum_code = k
+      print (str(k))
       folder_path = os.path.join(output_folder_path, "slum_" + str(slum_code.replace('/', '')))
       for key,val in v.iteritems():
+        print ("\t" + str(key))
         record_sorted = sorted(val, key=lambda x: x['end'], reverse=True)
         record = record_sorted[0]
         create_data = rhs_xml_create(record)
-        print create_data
+
         status, replace_data = kmc_rhs_xml_replace(create_data, record)
 
         if status:
@@ -72,7 +79,7 @@ def queryToFetchRecords(kobo_survey, slum_code):
 
 def rhs_xml_create(xml_record):
     gl_rhs_xml_dict = rhs_form()
-    mapping =  json.loads(direct_mapping.read())
+    mapping =  mapping_form()
     for key, val in xml_record.iteritems():
         key = str(key)
         if not key.startswith('_'):
@@ -117,8 +124,10 @@ def kmc_rhs_xml_replace(rhs_record, record):
         rhs_record['group_el9cl08']['House_area_in_sq_ft'] = '04'
     elif record['group_ye18c77/group_yw8pj39/house_area_in_sq_ft'] >= 400:
         rhs_record['group_el9cl08']['House_area_in_sq_ft'] = '05'
-
-    rhs_record['group_el9cl08']['Facility_of_solid_waste_collection'] = FACILITY_OF_SOLID_WASTE[record['group_ye18c77/group_yw8pj39/facility_of_waste_collection']]
+    waste_facility =''
+    for waste_collection in record['group_ye18c77/group_yw8pj39/facility_of_waste_collection'].split(' '):
+        waste_facility += FACILITY_OF_SOLID_WASTE[waste_collection]
+    rhs_record['group_el9cl08']['Facility_of_solid_waste_collection'] = waste_facility
     rhs_record['group_og5bx85']['Type_of_survey'] = '01'
 
     flag=True
