@@ -1,0 +1,136 @@
+[{
+	"fields": {
+		"name": "FGD with women",
+		"key":1,
+		"display_order": 1.0,
+		"display_flag":true
+	},
+	"model": "mastersheet.ActivityType",
+	"pk": 1
+}, {
+	"fields": {
+		"name": "FGD with men",
+		"key":2,
+		"display_order": 2.0,
+		"display_flag":true
+	},
+	"model": "mastersheet.ActivityType",
+	"pk": 2
+}, {
+	"fields": {
+		"name": "FGD with girls",
+		"key":3,
+		"display_order": 3.0,
+		"display_flag":true
+	},
+	"model": "mastersheet.ActivityType",
+	"pk": 3
+}, {
+	"fields": {
+		"name": "FGD with boys",
+		"key":4,
+		"display_order": 4.0,
+		"display_flag":true
+	},
+	"model": "mastersheet.ActivityType",
+	"pk": 4
+}, {
+	"fields": {
+		"name": "Workshop with women",
+		"key":5,
+		"display_order": 5.0,
+		"display_flag":true
+	},
+	"model": "mastersheet.ActivityType",
+	"pk": 5
+}, {
+	"fields": {
+		"name": "Workshop with men",
+		"key":6,
+		"display_order": 6.0,
+		"display_flag":true
+	},
+	"model": "mastersheet.ActivityType",
+	"pk": 6
+}, {
+	"fields": {
+		"name": "Workshop with girls",
+		"key":7,
+		"display_order": 7.0,
+		"display_flag":true
+	},
+	"model": "mastersheet.ActivityType",
+	"pk": 7
+}, {
+	"fields": {
+		"name": "Workshop with boys",
+		"key":8,
+		"display_order": 8.0,
+		"display_flag":true
+	},
+	"model": "mastersheet.ActivityType",
+	"pk": 8
+},{
+	"fields": {
+		"name": "Workshop for childrens",
+		"key":9,
+		"display_order": 9.0,
+		"display_flag":true
+	},
+	"model": "mastersheet.ActivityType",
+	"pk": 9
+},{
+	"fields": {
+		"name": "Toilet use workshop",
+		"key":10,
+		"display_order": 10.0,
+		"display_flag":true
+	},
+	"model": "mastersheet.ActivityType",
+	"pk": 10
+},{
+	"fields": {
+		"name": "Samitee meeting 1",
+		"key":11,
+		"display_order": 11.0,
+		"display_flag":true
+	},
+	"model": "mastersheet.ActivityType",
+	"pk": 11
+},{
+	"fields": {
+		"name": "Samitee meeting 2",
+		"key":12,
+		"display_order": 12.0,
+		"display_flag":true
+	},
+	"model": "mastersheet.ActivityType",
+	"pk": 12
+},{
+	"fields": {
+		"name": "Samitee meeting 3",
+		"key":13,
+		"display_order": 13.0,
+		"display_flag":true
+	},
+	"model": "mastersheet.ActivityType",
+	"pk": 13
+},{
+	"fields": {
+		"name": "Samitee meeting 4",
+		"key":14,
+		"display_order": 14.0,
+		"display_flag":true
+	},
+	"model": "mastersheet.ActivityType",
+	"pk": 14
+},{
+	"fields": {
+		"name": "Samitee meeting 5",
+		"key":15,
+		"display_order": 15.0,
+		"display_flag":true
+	},
+	"model": "mastersheet.ActivityType",
+	"pk": 15
+}]

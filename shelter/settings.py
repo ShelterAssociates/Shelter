@@ -44,6 +44,7 @@ INSTALLED_APPS = (
    #'Filter',
    'sponsor',
    'colorfield',
+    'mastersheet',
 )
 
 
