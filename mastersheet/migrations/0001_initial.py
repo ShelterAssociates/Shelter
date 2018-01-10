@@ -8,12 +8,12 @@ from django.core.management import call_command
 
 def loadfixture(apps, schema_editor):
     call_command('loaddata', 'activity_type.json')
-    call_command('loaddata', 'filter_data.json')
+    call_command('loaddata', 'vendor_type.json')
 
 class Migration(migrations.Migration):
 
     dependencies = [
-       
+
     ]
 
     operations = [
