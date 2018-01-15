@@ -3,7 +3,6 @@ from master.models import City, Slum
 from jsonfield import JSONField
 import datetime
 
-SBM_PATH = 'SBM_upload/'
 class VendorType(models.Model):
     name = models.CharField(max_length=512)
     description = models.TextField(null=True, blank=True)
@@ -35,7 +34,7 @@ class Vendor(models.Model):
 
     def __unicode__(self):
         """Returns string representation of object"""
-        return self.name
+        return self.name + '(' + self.vendor_type.name + ')'
 
 class VendorHouseholdInvoiceDetail(models.Model):
     vendor = models.ForeignKey(Vendor)
@@ -58,7 +57,7 @@ class SBMUpload(models.Model):
     household_number = models.CharField(max_length=5)
     name = models.CharField(max_length=512)
     application_id = models.CharField(max_length=512)
-    photo_uploaded = models.ImageField(upload_to=SBM_PATH, null=True, blank=True)
+    photo_uploaded = models.BooleanField(default=False)
     created_date = models.DateTimeField(default=datetime.datetime.now())
 
     class Meta:
@@ -80,15 +79,15 @@ class ToiletConstruction(models.Model):
     slum = models.ForeignKey(Slum)
     household_number = models.CharField(max_length=5)
     agreement_date = models.DateField()
-    agreement_cancelled = models.BooleanField()
-    septic_tank_date = models.DateField()
-    phase_one_material_date = models.DateField()
-    phase_two_material_date = models.DateField()
-    phase_three_material_date = models.DateField()
-    completion_date =  models.DateField()
+    agreement_cancelled = models.BooleanField(default=False)
+    septic_tank_date = models.DateField(null=True, blank=True)
+    phase_one_material_date = models.DateField(null=True, blank=True)
+    phase_two_material_date = models.DateField(null=True, blank=True)
+    phase_three_material_date = models.DateField(null=True, blank=True)
+    completion_date =  models.DateField(null=True, blank=True)
     status = models.CharField(choices=STATUS_CHOICES, max_length=2)
-    comment = models.TextField()
-    material_shifted_to = models.CharField(max_length=5)
+    comment = models.TextField(null=True, blank=True)
+    material_shifted_to = models.CharField(max_length=5, null=True, blank=True)
 
     class Meta:
         unique_together = ("slum", "household_number")
@@ -98,7 +97,7 @@ class ToiletConstruction(models.Model):
 class ActivityType(models.Model):
     name = models.CharField(max_length=512)
     key = models.CharField(max_length=2)
-    display_flag = models.BooleanField()
+    display_flag = models.BooleanField(default=False)
     display_order = models.FloatField()
 
     class Meta:
