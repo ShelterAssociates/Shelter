@@ -8,7 +8,7 @@ class VendorType(models.Model):
     description = models.TextField(null=True, blank=True)
     display_flag = models.BooleanField()
     display_order = models.FloatField()
-    created_date = models.DateTimeField(default=datetime.datetime.now())
+    created_date = models.DateTimeField(default=datetime.datetime.now)
 
     class Meta:
         verbose_name = 'Vendor type'
@@ -26,7 +26,7 @@ class Vendor(models.Model):
     vendor_type = models.ForeignKey(VendorType)
     gst_number = models.CharField(max_length=100)
     city = models.ForeignKey(City)
-    created_date = models.DateTimeField(default=datetime.datetime.now())
+    created_date = models.DateTimeField(default=datetime.datetime.now)
 
     class Meta:
         verbose_name = 'Vendor'
@@ -42,7 +42,7 @@ class VendorHouseholdInvoiceDetail(models.Model):
     invoice_number = models.CharField(max_length=100)
     invoice_date = models.DateField()
     household_number = JSONField(null=True, blank=True)
-    created_date = models.DateTimeField(default=datetime.datetime.now())
+    created_date = models.DateTimeField(default=datetime.datetime.now)
 
     class Meta:
         unique_together = ("slum", "invoice_number")
@@ -58,7 +58,7 @@ class SBMUpload(models.Model):
     name = models.CharField(max_length=512)
     application_id = models.CharField(max_length=512)
     photo_uploaded = models.BooleanField(default=False)
-    created_date = models.DateTimeField(default=datetime.datetime.now())
+    created_date = models.DateTimeField(default=datetime.datetime.now)
 
     class Meta:
         unique_together = ("slum", "household_number")
@@ -78,7 +78,7 @@ STATUS_CHOICES=(('1', 'Agreement done'),
 class ToiletConstruction(models.Model):
     slum = models.ForeignKey(Slum)
     household_number = models.CharField(max_length=5)
-    agreement_date = models.DateField()
+    agreement_date = models.DateField(default=datetime.datetime.now)
     agreement_cancelled = models.BooleanField(default=False)
     septic_tank_date = models.DateField(null=True, blank=True)
     phase_one_material_date = models.DateField(null=True, blank=True)
@@ -111,7 +111,7 @@ class CommunityMobilization(models.Model):
     slum = models.ForeignKey(Slum)
     household_number = JSONField(null=True, blank=True)
     activity_type = models.ForeignKey(ActivityType)
-    activity_date = models.DateField()
+    activity_date = models.DateField(default=datetime.datetime.now)
 
     class Meta:
         unique_together = ("slum", "activity_type")

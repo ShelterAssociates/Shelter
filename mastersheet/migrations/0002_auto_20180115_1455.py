@@ -20,7 +20,7 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='sbmupload',
             name='created_date',
-            field=models.DateTimeField(default=datetime.datetime(2018, 1, 15, 14, 55, 28, 745879)),
+            field=models.DateTimeField(default=datetime.datetime.now),
         ),
         migrations.RemoveField(
             model_name='sbmupload',
@@ -79,16 +79,16 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='vendor',
             name='created_date',
-            field=models.DateTimeField(default=datetime.datetime(2018, 1, 15, 14, 55, 28, 743611)),
+            field=models.DateTimeField(default=datetime.datetime.now),
         ),
         migrations.AlterField(
             model_name='vendorhouseholdinvoicedetail',
             name='created_date',
-            field=models.DateTimeField(default=datetime.datetime(2018, 1, 15, 14, 55, 28, 744830)),
+            field=models.DateTimeField(default=datetime.datetime.now),
         ),
         migrations.AlterField(
             model_name='vendortype',
             name='created_date',
-            field=models.DateTimeField(default=datetime.datetime(2018, 1, 15, 14, 55, 28, 741094)),
+            field=models.DateTimeField(default=datetime.datetime.now),
         ),
     ]
