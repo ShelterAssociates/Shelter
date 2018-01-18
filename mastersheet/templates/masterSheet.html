@@ -4,40 +4,144 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    <script src = "//code.jquery.com/jquery-1.12.4.js" > </script>
     <link rel="stylesheet"  type="text/css" href="https://cdn.datatables.net/1.10.16/css/jquery.dataTables.min.css"/>
     <link rel = "stylesheet" type="text/css" href = "{% static "admin/css/forms.css" %}">
-    <script src = "//code.jquery.com/jquery-1.12.4.js" > </script>
     <script src = "https://cdn.datatables.net/1.10.16/js/jquery.dataTables.min.js"> </script>
-    <script> src = "//cdn.datatables.net/plug-ins/1.10.16/api/column().title().js" </script>
-    <script src = "datatable_design.js"></script>
+    <script src = "https://cdn.datatables.net/buttons/1.5.1/js/dataTables.buttons.min.js"></script>
+    <script src = "//cdn.datatables.net/buttons/1.5.1/js/buttons.colVis.min.js"></script>
     <script>
 
         $(document).ready(function() {
             $('#example').DataTable( {
             "columnDefs": [ { "defaultContent": "-", "targets": "_all" } , {"footer":true}],
-            "ajax" :  {url:"http://127.0.0.1:8000/mastersheet/list/show/", dataSrc:"", contentType : "application/json" },
+            "ajax" :  {
+                            url:"http://127.0.0.1:8000/mastersheet/list/show/",
+                            dataSrc:"",
+                             contentType : "application/json"
+                      },
+            "dom":"Bfrtip",
+            "buttons":[
+                            {
+                                extend: 'colvisGroup',
+                                text: 'RHS',
+                                show: [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18],
+                                hide: [19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,41,42,43,44,45,46,47,48,49,50,51,52,53,54,55,56,57,58,59,60,61,62,63,64,65,66,67,68,69,70]
+                            },
+                            {
+                                extend: 'colvisGroup',
+                                text: 'Follow-up Survey',
+                                show: [19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40],
+                                hide: [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,41,41,42,43,44,45,46,47,48,49,50,51,52,53,54,55,56,57,58,59,60,61,62,63,64,65,66,67,68,69,70]
+                            },
+                            {
+                                extend: 'colvisGroup',
+                                text: 'Family Factsheet',
+                                show: [41,41,42,43,44,45],
+                                hide: [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,46,47,48,49,50,51,52,53,54,55,56,57,58,59,60,61,62,63,64,65,66,67,68,69,70]
+                            },
+                            {
+                                extend: 'colvisGroup',
+                                text: 'Daily Reporting and Community Mobilization',
+                                show: [46,47,48,49,50,51,52,53,54,55,56,57,58,59,60,61,62,63,64,65,66,67],
+                                hide: [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,41,42,43,44,45,68,69,70]
+                            },
+                            {
+                                extend: 'colvisGroup',
+                                text: 'SBM',
+                                show: [68,69,70],
+                                hide: [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,41,42,43,44,45,46,47,48,49,50,51,52,53,54,55,56,57,58,59,60,61,62,63,64,65,66,67]
+                            },
+                            {
+
+                                extend: 'colvisGroup',
+                                text: 'Show all',
+                                show: ':hidden'
+
+                            }
+
+                      ],
+
             "columns": [
-                            {"data": "group_ce0hf58/date_of_rhs", "title": "Date of RHS"},
-                            {"data": "group_ce0hf58/house_no" , "title": "House Number"},
-                            {"data": "group_ye18c77/group_ud4em45/what_is_the_full_name_of_the_family_head_", "title":"Full name of the family head"},
-                            {"data": "group_ye18c77/group_yw8pj39/number_of_family_members", "title": "Number of family members"},
-                            {"data": "group_ye18c77/group_ud4em45/mobile_number", "title":"Mobile Number"},
-                            {"data": "group_ye18c77/group_ud4em45/adhar_card_number", "title": "Aadhar card number"},
-                            {"data": "group_ye18c77/group_yw8pj39/what_is_the_ownership_status_of_the_house", "title":"Ownership status of the house"},
-                            {"data": "group_ye18c77/group_yw8pj39/house_area_in_sq_ft", "title": "House area in sq ft"},
-                            {"data": "group_ce0hf58/Type_of_structure_occupancy", "title": "Type of structure occupancy"},
-                            {"data": "group_ye18c77/group_yw8pj39/what_is_the_structure_of_the_house", "title":"Structure of the house"},
-                            {"data": "group_ye18c77/group_yw8pj39/when_did_you_receive_the_first_installment_date","title":"Date of first installment"},
-                            {"data": "group_ye18c77/group_yw8pj39/when_did_you_receive_the_second_installment_date", "title":"Date of second installment"},
-                            {"data": "group_ce0hf58/name_of_surveyor_who_collected_rhs_data","title":"Name of the surveyor"},
-                            {"data": "group_ye18c77/group_yw8pj39/Do_you_have_a_girl_child_under", "title":"Do you have a girl children under 18 yearsof age"},
-                            {"data": "group_ye18c77/group_yw8pj39/facility_of_waste_collection", "title": "Facility of waste collection"},
-                            {"data": "group_ye18c77/group_yw8pj39/does_any_member_of_your_family_go_for_open_defecation_", "title": "Does any member of the family goes for open defecation?"},
-                            {"data": "group_ye18c77/group_yw8pj39/Current_place_of_defecation_toilet", "title": "Current place of defecation"},
-                            {"data": "group_ye18c77/group_yw8pj39/type_of_water_connection", "title": "Type of water connection"},
-                            {"data": "group_ye18c77/group_yw8pj39/Does_any_family_members_has_co", "title": "Does any family member has construction skills?"}
+                            {"data": "Household_number", "title":"Household Number"},
+                            {"data": "Date_of_survey", "title": "Date of Survey"},
+                            {"data": "Name_s_of_the_surveyor_s" , "title": "Name of the Surveyor"},
+                            {"data": "Type_of_structure_occupancy", "title": "Type of structure occupancy"},
+                            {"data": "Type_of_unoccupied_house", "title":"Type of unoccupied house"},
+                            {"data": "Parent_household_number", "title": "Parent household number"},
+                            {"data": "group_og5bx85/Full_name_of_the_head_of_the_household", "title":"Full name of the head of the household"},
+                            {"data": "group_og5bx85/Type_of_survey", "title": "Type of the survey"},
+                            {"data": "group_el9cl08/Enter_the_10_digit_mobile_number", "title": "Mobile number"},
+                            {"data": "group_el9cl08/Aadhar_number", "title":"Aadhar card number"},
+                            {"data": "group_el9cl08/Number_of_household_members","title":"Number of household members"},
+                            {"data": "group_el9cl08/Do_you_have_any_girl_child_chi", "title":"Do you have any girl child/children under the age of 18?"},
+                            {"data": "group_el9cl08/How_many","title":"How many?"},
+                            {"data": "group_el9cl08/Type_of_structure_of_the_house", "title":"Type of structure of the house"},
+                            {"data": "group_el9cl08/Ownership_status_of_the_house", "title": "Ownership status of the house"},
+                            {"data": "group_el9cl08/House_area_in_sq_ft", "title": "House area in sq. ft."},
+                            {"data": "group_el9cl08/Type_of_water_connection", "title": "Type of water connection"},
+                            {"data": "group_el9cl08/Facility_of_solid_waste_collection", "title": "Facility of solid waste management"},
+                            {"data": "group_el9cl08/Does_any_household_m_n_skills_given_below", "title": "Does any household member have any of the construction skills give below?"},
+
+                            {"data": "group_oi8ts04/Have_you_applied_for_individua", "title": "Have you applied for an individual toilet under SBM?"},
+                            {"data": "group_oi8ts04/How_many_installments_have_you", "title": "How many installments have you received?"},
+                            {"data": "group_oi8ts04/When_did_you_receive_ur_first_installment", "title": "When did you receive your first installment?"},
+                            {"data": "group_oi8ts04/When_did_you_receive_r_second_installment", "title": "When did you receive your second installment?"},
+                            {"data": "group_oi8ts04/When_did_you_receive_ur_third_installment", "title": "When did you receive your third installment?"},
+                            {"data": "group_oi8ts04/If_built_by_contract_ow_satisfied_are_you", "title": "If built by a contractor, how satisfied are you?"},
+                            {"data": "group_oi8ts04/Status_of_toilet_under_SBM", "title": "Status of toilet under SBM?"},
+                            {"data": "group_oi8ts04/What_was_the_cost_in_to_build_the_toilet", "title": "What was the cost incurred to build the toilet?"},
+                            {"data": "group_oi8ts04/C1", "title": "Current place of defecation1"},
+                            {"data": "group_oi8ts04/C2", "title": "Current place of defecation2"},
+                            {"data": "group_oi8ts04/C3", "title": "Current place of defecation_no SBM"},
+                            {"data": "group_oi8ts04/C4", "title": "Current place of defecation_3 status of SBM"},
+                            {"data": "group_oi8ts04/C5", "title": "Current place of defecation_yet to start SBM"},
+                            {"data": "group_oi8ts04/Is_there_availabilit_onnect_to_the_toilets", "title": "Is there availability of drainage to connect to the toilet?"},
+                            {"data": "group_oi8ts04/Are_you_interested_in_an_indiv", "title": "Are you interested in an individual toilet?"},
+                            {"data": "group_oi8ts04/What_kind_of_toilet_would_you_likes", "title": "What kind of toilet would you like?"},
+                            {"data": "group_oi8ts04/Under_what_scheme_wo_r_toilet_to_be_built", "title": "Under what scheme would you like your toilet to be built?"},
+                            {"data": "group_oi8ts04/If_yes_why", "title": "If yes, why?"},
+                            {"data": "group_oi8ts04/If_no_why", "title": "If no, why?"},
+                            {"data": "group_oi8ts04/What_is_the_toilet_connected_to", "title": "What is the toilet connected to?"},
+                            {"data": "group_oi8ts04/Who_all_use_toilets_in_the_hou", "title": "Who all use toilets in the household?"},
+                            {"data": "group_oi8ts04/Reason_for_not_using_toilet", "title": "Reason for not using toilet"},
+
+                            {"data": "OnfieldFactsheet", "title": "Factsheet onfield"},
+                            {"data": "group_ne3ao98/Have_you_upgraded_yo_ng_individual_toilet", "title": "Have you upgraded your toilet/bathroom/house while constructing individual toilet?"},
+                            {"data": "group_ne3ao98/Cost_of_upgradation_in_Rs", "title": "House renovation cost"},
+                            {"data": "group_ne3ao98/Where_the_individual_ilet_is_connected_to", "title": "Where the individual toilet is connected to?"},
+                            {"data": "group_ne3ao98/Use_of_toilet", "title": "Use of toilet"},
+
+                            {"data": "agreement_date_str", "title": "Date of Agreement"},
+                            {"data": "agreement_cancelled", "title": "Agreement Cancelled?"},
+                            {"data": "septic_tank_date_str", "title": "Date of septic tank supplied"},
+                            {"data": "phase_one_material_date_str", "title": "Date of first phase material"},
+                            {"data": "phase_two_material_date_str", "title": "Date of second phase material"},
+                            {"data": "phase_three_material_date_str", "title": "Date of third phase material"},
+                            {"data": "completion_date_str", "title": "Construction Completion Date"},
+                            {"data": "material_shifted_to", "title": "Material sifted to"},
+                            {"data": "activity_type_1", "title": "FGD with women"},
+                            {"data": "activity_type_2", "title": "FGD with men"},
+                            {"data": "activity_type_3", "title": "FGD with girls"},
+                            {"data": "activity_type_4", "title": "FGD with boys"},
+                            {"data": "activity_type_5", "title": "Workshop with women"},
+                            {"data": "activity_type_6", "title": "Workshop with men"},
+                            {"data": "activity_type_8", "title": "Workshop with boys"},
+                            {"data": "activity_type_7", "title": "Workshop with girls"},
+                            {"data": "activity_type_9", "title": "Children workshop"},
+                            {"data": "activity_type_11", "title": "Samitee Meeting 1"},
+                            {"data": "activity_type_12", "title": "Samitee Meeting 2"},
+                            {"data": "activity_type_13", "title": "Samitee Meeting 3"},
+                            {"data": "activity_type_14", "title": "Samitee Meeting 4"},
+                            {"data": "activity_type_15", "title": "Samitee Meeting 5"},
+
+
+                            {"data": "name", "title": "SBM Applicant Name"},
+                            {"data": "application_id", "title": "Application ID"},
+                            {"data": "photo_uploaded", "title": "Is toilet photo uploaded on site?"},
                        ]
                 });
+
         } );
     </script>
 
@@ -46,7 +150,7 @@
         $(document).ready(function(){
 
             $('#example').each(function(){
-                    $(this).append('<tfoot><tr><th></th><th></th><th></th><th></th><th></th><th></th><th></th><th></th><th></th><th></th><th></th><th></th><th></th><th></th><th></th><th></th><th></th><th></th><th></th></tr></tfoot>');
+                    $(this).append('<tfoot><tr><th></th><th></th><th></th><th></th><th></th><th></th><th></th><th></th><th></th><th></th><th></th><th></th><th></th><th></th><th></th><th></th><th></th><th></th><th></th><th></th><th></th><th></th><th></th><th></th><th></th><th></th><th></th><th></th><th></th><th></th><th></th><th></th><th></th><th></th><th></th><th></th><th></th><th></th><th></th><th></th><th></th><th></th><th></th><th></th><th></th><th></th><th></th><th></th><th></th><th></th><th></th><th></th><th></th><th></th><th></th><th></th><th></th><th></th><th></th><th></th><th></th><th></th><th></th><th></th><th></th><th></th><th></th><th></th><th></th><th></th><th></th></tr></tfoot>');
                 });
         });
     </script>
@@ -92,7 +196,7 @@
     </table>
 
 
-</head>
+
 <body>
 
 </body>
