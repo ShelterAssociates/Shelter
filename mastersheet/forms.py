@@ -1,5 +1,5 @@
 from django import forms
-from django.contrib.admin.widgets import ForeignKeyRawIdWidget
+from django.contrib.admin.widgets import ForeignKeyRawIdWidget, ManyToManyRawIdWidget
 from master.models import *
 from django.contrib import admin
 
@@ -16,3 +16,4 @@ class find_slum(forms.Form):
 
     class Meta:
         raw_id_fields = ('slumname',)
+        model = 'Slum'
