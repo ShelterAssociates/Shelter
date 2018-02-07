@@ -154,7 +154,7 @@ def kmc_rhs_xml_replace(rhs_record, record):
 
         if rhs_record['group_el9cl08']['Number_of_household_members'] and int(
                 rhs_record['group_el9cl08']['Number_of_household_members']) > 20:
-            print "Number of members" + rhs_record['group_el9cl08']['Number_of_household_members']
+            #print "Number of members" + rhs_record['group_el9cl08']['Number_of_household_members']
             rhs_record['group_el9cl08']['Number_of_household_members'] = 5
 
         if 'group_ye18c77/group_yw8pj39/house_area_in_sq_ft' in record:
@@ -177,23 +177,10 @@ def kmc_rhs_xml_replace(rhs_record, record):
 
 
         # RHS and follow up survey data
-        if 'group_ye18c77/group_yw8pj39/Current_place_of_defecation_toilet' in record:
-            # if record['group_ye18c77/group_yw8pj39/Current_place_of_defecation_toilet'] == "01":
-            #     if 'group_ye18c77/group_yw8pj39/Have_you_applied_for_indiviual' in record and record[
-            #         'group_ye18c77/group_yw8pj39/Have_you_applied_for_indiviual'] == "01":
-            #         if 'group_ye18c77/group_yw8pj39/what_is_the_status_of_toilet_under_sbm_' in record and record[
-            #             'group_ye18c77/group_yw8pj39/what_is_the_status_of_toilet_under_sbm_'] == "01":
-            #             rhs_record['group_oi8ts04']['C1'] = "01"
-            #     elif 'group_ye18c77/group_yw8pj39/Have_you_applied_for_indiviual' in record and record[
-            #         'group_ye18c77/group_yw8pj39/Have_you_applied_for_indiviual'] == "02":
-            #         rhs_record['group_oi8ts04']['C2'] = "01"
-            # elif record['group_ye18c77/group_yw8pj39/Current_place_of_defecation_toilet'] != "01":
-            DEFECATION = {"01":"01","03": "09", "04": "10", "05": "11", "07": "12"}
-            if record['group_ye18c77/group_yw8pj39/Current_place_of_defecation_toilet'] in DEFECATION.keys():
-                rhs_record['group_oi8ts04']['C3'] = DEFECATION[
-                    record['group_ye18c77/group_yw8pj39/Current_place_of_defecation_toilet']]
-            else:
-                print "ERRORRRRR :  "+record['group_ye18c77/group_yw8pj39/Current_place_of_defecation_toilet']
+        if not rhs_record['group_oi8ts04']['Have_you_applied_for_individua']:
+            rhs_record['group_oi8ts04']['Have_you_applied_for_individua'] = "02"
+            if rhs_record['group_oi8ts04']['Are_you_interested_in_an_indiv'] == "02" and record['group_ye18c77/group_yw8pj39/Current_place_of_defecation_toilet'] == "01":
+                rhs_record['group_oi8ts04']['Are_you_interested_in_an_indiv'] = ''
 
         if 'group_ye18c77/group_yw8pj39/If_Own_household_Toilet_type_' in record and record[
             'group_ye18c77/group_yw8pj39/If_Own_household_Toilet_type_'] == "01":
@@ -219,6 +206,28 @@ def kmc_rhs_xml_replace(rhs_record, record):
         if 'group_ye18c77/group_yw8pj39/does_any_member_of_your_family_go_for_open_defecation_' in record:
             rhs_record['group_oi8ts04']['OD1'] = OPEN_DEFECATION[
                 record['group_ye18c77/group_yw8pj39/does_any_member_of_your_family_go_for_open_defecation_']]
+
+        if 'group_ye18c77/group_yw8pj39/Current_place_of_defecation_toilet' in record:
+            DEFECATION = {"01":"01","03": "09", "04": "10", "05": "11", "07": "12"}
+            if record['group_ye18c77/group_yw8pj39/Current_place_of_defecation_toilet'].split()[0] in DEFECATION.keys():
+                if rhs_record['group_oi8ts04']['Have_you_applied_for_individua'] == "02":
+                    rhs_record['group_oi8ts04']['C2'] = "08"
+                    if record['group_ye18c77/group_yw8pj39/Current_place_of_defecation_toilet'].split()[0] == "01":
+                        rhs_record['group_oi8ts04']['C2'] = "05"
+                    else:
+                        rhs_record['group_oi8ts04']['C3'] = DEFECATION[record['group_ye18c77/group_yw8pj39/Current_place_of_defecation_toilet'].split()[0]]
+                elif rhs_record['group_oi8ts04']['Have_you_applied_for_individua'] == "01":
+                    current = ''
+                    DEFECATION_SBM_YES = {"01": "09", "03": "09", "04": "10", "05": "11", "07": "12"}
+                    if rhs_record['group_oi8ts04']['Status_of_toilet_under_SBM'] == "01":
+                        rhs_record['group_oi8ts04']['C1'] = "01"
+                    elif rhs_record['group_oi8ts04']['Status_of_toilet_under_SBM'] in  ["02", "03", "04"]:
+                        rhs_record['group_oi8ts04']['C4'] = DEFECATION_SBM_YES[record['group_ye18c77/group_yw8pj39/Current_place_of_defecation_toilet'].split()[0]]
+                    elif rhs_record['group_oi8ts04']['Status_of_toilet_under_SBM'] == "05":
+                        rhs_record['group_oi8ts04']['C5'] = DEFECATION_SBM_YES[
+                            record['group_ye18c77/group_yw8pj39/Current_place_of_defecation_toilet'].split()[0]]
+                else:
+                    print "ERROR"
 
     flag=True
     return flag, rhs_record
