@@ -45,6 +45,7 @@ INSTALLED_APPS = (
    'sponsor',
    'colorfield',
     'mastersheet',
+
 )
 
 
