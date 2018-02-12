@@ -98,6 +98,20 @@
    	 					display: none;
     					background-color: white;
 					}
+					.ulslum{
+						padding-top: 5px;
+					}
+
+					.ulhousehold{
+						padding-top: 5px;
+					}
+					.ulslum>li{
+						padding-bottom: 5px;
+					}
+
+					.ulhousehold>li{
+						padding-bottom: 5px;
+					}
 			</style>
 
 			<button class="accordion"><h4>Toilet supported by {% firstof user.get_short_name user.get_username %}</h4></button>
@@ -108,33 +122,37 @@
 						<td align = "left">
 							<div  style = "width : 100%; overflow-y:scroll; height:150px;">
 							{% block content %}
+								<ul class="ulslum">
+								<h5>
 							{%for slum in entry.slums_in_project%}
 
-								<ul>
-								<h5>
+
 									<li>
 										<b>{{slum.name}},{{slum.cityname}}</b><br>
 										<div style="font-style:italic;">(Click <a  href="/{{slum.city_id_encrypted}}/{{slum.name}}">here</a> to see factsheet online)</div>
+										<ul class="ulhousehold">
 									{% for  zipfile in slum.subfields %}
-										<ul>
+
 											<li>
 												<!--Do add Documents' link-->
 
 												No of households :{{zipfile.household_code|length}}
 												{% if zipfile.zip_file %}
 
-												<font style="font-style:italic;">(Click <a href = "{{zipfile.zip_file.url}}">here</a>  to download all factsheet)</font><br>
+												<font style="font-style:italic;">(Click <a href = "{{zipfile.zip_file.url}}">here</a>  to download all factsheet)</font>
 												{%else%}
-													(In Progress...)<br>
-												{%endif%}<br>
+													(In Progress...)
+												{%endif%}
 											</li>
-										</ul>
+
 									{% endfor %}
+											</ul>
 									</li>
-								</h5>
-								</ul>
+
 
 							{% endfor%}
+									</h5>
+								</ul>
 							{% endblock%}
 							</div>
 						</td>
