@@ -41,14 +41,14 @@
     						border-radius: 4px;
 				}
 				.item active > img{
- 					height: 220px;
- 	 				width:1100px;
+ 					height: 400px;
  	 				object-fit: contain;
+ 	 				margin: 0 auto;
 				}
 				.item > img{
-					height: 220px;
- 	 				width: 1100px;
+					height: 400px;
  	 				object-fit: contain;
+ 	 				margin: 0 auto;
 				}
 				</style>
 				<div class="carousel-inner">
@@ -100,7 +100,7 @@
 					}
 			</style>
 
-			<button class="accordion"><h4>{{entry.project_Name}}</h4></button>
+			<button class="accordion"><h4>Toilet supported by {% firstof user.get_short_name user.get_username %}</h4></button>
 
 			<div class = "panel" style="display: block;">
 				<table id ="SponsorTable"style="width:100%">
@@ -113,7 +113,8 @@
 								<ul>
 								<h5>
 									<li>
-									<a  href="/{{slum.city_id_encrypted}}/{{slum.name}}">{{slum.name}},{{slum.cityname}} </a><br><br>
+										<b>{{slum.name}},{{slum.cityname}}</b><br>
+										<div style="font-style:italic;">(Click <a  href="/{{slum.city_id_encrypted}}/{{slum.name}}">here</a> to see factsheet online)</div>
 									{% for  zipfile in slum.subfields %}
 										<ul>
 											<li>
@@ -122,7 +123,7 @@
 												No of households :{{zipfile.household_code|length}}
 												{% if zipfile.zip_file %}
 
-													(Click <a href = "{{zipfile.zip_file.url}}">here </a>  to download)<br>
+												<font style="font-style:italic;">(Click <a href = "{{zipfile.zip_file.url}}">here</a>  to download all factsheet)</font><br>
 												{%else%}
 													(In Progress...)<br>
 												{%endif%}<br>
