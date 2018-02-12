@@ -100,6 +100,7 @@
 					}
 					.ulslum{
 						padding-top: 5px;
+						padding-bottom:5px;
 					}
 
 					.ulhousehold{
@@ -123,7 +124,7 @@
 							<div  style = "width : 100%; overflow-y:scroll; height:150px;">
 							{% block content %}
 								<ul class="ulslum">
-								<h5>
+
 							{%for slum in entry.slums_in_project%}
 
 
@@ -151,7 +152,7 @@
 
 
 							{% endfor%}
-									</h5>
+
 								</ul>
 							{% endblock%}
 							</div>
