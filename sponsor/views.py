@@ -67,7 +67,7 @@ def sponsors(request):
             'subfields':i.sponsorprojectdetailssubfields_set.all()
         })
         slums_under_sponsor_array.append(slums_under_sponsor_dict)
-
+    slums_under_sponsor_array = sorted(slums_under_sponsor_array, key=lambda k: k['cityname'])
     # print slums_under_sponsor_array
     for l in sponsor_loggedin:
         no_of_households = 0
