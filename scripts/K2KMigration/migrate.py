@@ -152,22 +152,40 @@ def kmc_rhs_xml_replace(rhs_record, record):
     if rhs_record['Type_of_structure_occupancy'] == "01":
         rhs_record['group_og5bx85']['Type_of_survey'] = "01"
 
+        if not rhs_record['group_el9cl08']['Do_you_have_any_girl_child_chi']:
+            rhs_record['group_el9cl08']['Do_you_have_any_girl_child_chi'] = '02'
+
+        if not rhs_record['group_el9cl08']['Type_of_structure_of_the_house']:
+            rhs_record['group_el9cl08']['Type_of_structure_of_the_house'] = '02'
+
+        if not rhs_record['group_el9cl08']['Ownership_status_of_the_house']:
+            rhs_record['group_el9cl08']['Ownership_status_of_the_house'] = '02'
+
+        if not rhs_record['group_el9cl08']['Does_any_household_m_n_skills_given_below']:
+            rhs_record['group_el9cl08']['Does_any_household_m_n_skills_given_below'] ='05'
+
         if rhs_record['group_el9cl08']['Number_of_household_members'] and int(
                 rhs_record['group_el9cl08']['Number_of_household_members']) > 20:
             #print "Number of members" + rhs_record['group_el9cl08']['Number_of_household_members']
             rhs_record['group_el9cl08']['Number_of_household_members'] = 5
 
         if 'group_ye18c77/group_yw8pj39/house_area_in_sq_ft' in record:
-            if record['group_ye18c77/group_yw8pj39/house_area_in_sq_ft'] < 100:
+            val = int(record['group_ye18c77/group_yw8pj39/house_area_in_sq_ft'])
+            if val < 100:
                 rhs_record['group_el9cl08']['House_area_in_sq_ft'] = "01"
-            elif 100 <= record['group_ye18c77/group_yw8pj39/house_area_in_sq_ft'] < 200 :
+                #print "01"
+            elif 100 <= val < 200 :
                 rhs_record['group_el9cl08']['House_area_in_sq_ft'] = "02"
-            elif 200 <= record['group_ye18c77/group_yw8pj39/house_area_in_sq_ft'] < 300:
+                #print "02"
+            elif 200 <= val < 300:
                 rhs_record['group_el9cl08']['House_area_in_sq_ft'] = "03"
-            elif 300 <= record['group_ye18c77/group_yw8pj39/house_area_in_sq_ft'] < 400:
+                #print "03"
+            elif 300 <= val < 400:
                 rhs_record['group_el9cl08']['House_area_in_sq_ft'] = "04"
-            elif record['group_ye18c77/group_yw8pj39/house_area_in_sq_ft'] >= 400:
+                #print "04"
+            elif val >= 400:
                 rhs_record['group_el9cl08']['House_area_in_sq_ft'] = "05"
+                #print "05"
         waste_facility =[]
 
         if 'group_ye18c77/group_yw8pj39/facility_of_waste_collection' in record and len(record['group_ye18c77/group_yw8pj39/facility_of_waste_collection'].split(' ')) > 0:
@@ -207,10 +225,20 @@ def kmc_rhs_xml_replace(rhs_record, record):
             rhs_record['group_oi8ts04']['OD1'] = OPEN_DEFECATION[
                 record['group_ye18c77/group_yw8pj39/does_any_member_of_your_family_go_for_open_defecation_']]
 
+        if not rhs_record['group_oi8ts04']['OD1']:
+            rhs_record['group_oi8ts04']['OD1'] = "01"
+
         if 'group_ye18c77/group_yw8pj39/Current_place_of_defecation_toilet' in record:
             DEFECATION = {"01":"01","03": "09", "04": "10", "05": "11", "07": "12"}
             if record['group_ye18c77/group_yw8pj39/Current_place_of_defecation_toilet'].split()[0] in DEFECATION.keys():
                 if rhs_record['group_oi8ts04']['Have_you_applied_for_individua'] == "02":
+                    if rhs_record['group_oi8ts04']['Type_of_SBM_toilets']:
+                        rhs_record['group_oi8ts04']['Type_of_SBM_toilets'] = None
+
+                    if rhs_record['group_oi8ts04']['Are_you_interested_in_an_indiv'] == "02":
+                        if not rhs_record['group_oi8ts04']['If_no_why']:
+                            rhs_record['group_oi8ts04']['If_no_why'] = "04"
+
                     rhs_record['group_oi8ts04']['C2'] = "08"
                     if record['group_ye18c77/group_yw8pj39/Current_place_of_defecation_toilet'].split()[0] == "01":
                         rhs_record['group_oi8ts04']['C2'] = "05"
@@ -218,16 +246,78 @@ def kmc_rhs_xml_replace(rhs_record, record):
                         rhs_record['group_oi8ts04']['C3'] = DEFECATION[record['group_ye18c77/group_yw8pj39/Current_place_of_defecation_toilet'].split()[0]]
                 elif rhs_record['group_oi8ts04']['Have_you_applied_for_individua'] == "01":
                     current = ''
+                    if not rhs_record['group_oi8ts04']['Type_of_SBM_toilets']:
+                        rhs_record['group_oi8ts04']['Type_of_SBM_toilets'] = "01"
                     DEFECATION_SBM_YES = {"01": "09", "03": "09", "04": "10", "05": "11", "07": "12"}
                     if rhs_record['group_oi8ts04']['Status_of_toilet_under_SBM'] == "01":
                         rhs_record['group_oi8ts04']['C1'] = "01"
+                        rhs_record['group_oi8ts04']['Are_you_interested_in_an_indiv'] = None
+                        rhs_record['group_oi8ts04']['What_kind_of_toilet_would_you_like'] = None
+                        rhs_record['group_oi8ts04']['If_yes_why'] = None
+                        if not rhs_record['group_oi8ts04']['What_is_the_toilet_connected_to']:
+                            rhs_record['group_oi8ts04']['What_is_the_toilet_connected_to'] = "08"
                     elif rhs_record['group_oi8ts04']['Status_of_toilet_under_SBM'] in  ["02", "03", "04"]:
                         rhs_record['group_oi8ts04']['C4'] = DEFECATION_SBM_YES[record['group_ye18c77/group_yw8pj39/Current_place_of_defecation_toilet'].split()[0]]
                     elif rhs_record['group_oi8ts04']['Status_of_toilet_under_SBM'] == "05":
                         rhs_record['group_oi8ts04']['C5'] = DEFECATION_SBM_YES[
                             record['group_ye18c77/group_yw8pj39/Current_place_of_defecation_toilet'].split()[0]]
+
+                    if rhs_record['group_oi8ts04']['Status_of_toilet_under_SBM'] == "03":
+                        if rhs_record['group_oi8ts04']['What_is_the_toilet_connected_to']:
+                            rhs_record['group_oi8ts04']['What_is_the_toilet_connected_to'] = None
+
+                    if rhs_record['group_oi8ts04']['Status_of_toilet_under_SBM'] == "02":
+                        if rhs_record['group_oi8ts04']['What_is_the_toilet_connected_to']:
+                            rhs_record['group_oi8ts04']['What_is_the_toilet_connected_to'] = None
+
+                    if rhs_record['group_oi8ts04']['Status_of_toilet_under_SBM'] == "05":
+                        rhs_record['group_oi8ts04']['What_is_the_toilet_connected_to'] = None
+                        if not rhs_record['group_oi8ts04']['Are_you_interested_in_an_indiv']:
+                            rhs_record['group_oi8ts04']['Are_you_interested_in_an_indiv'] = "02"
+                        if rhs_record['group_oi8ts04']['Are_you_interested_in_an_indiv'] == "01":
+                            if not rhs_record['group_oi8ts04']['What_kind_of_toilet_would_you_like']:
+                                rhs_record['group_oi8ts04']['What_kind_of_toilet_would_you_like'] = "02"
+                        if rhs_record['group_oi8ts04']['Are_you_interested_in_an_indiv'] == "02":
+                            rhs_record['group_oi8ts04']['What_kind_of_toilet_would_you_like'] = None
+                            if not rhs_record['group_oi8ts04']['If_no_why']:
+                                rhs_record['group_oi8ts04']['If_no_why'] = '08'
+
+                    if rhs_record['group_oi8ts04']['Status_of_toilet_under_SBM'] == "04":
+                        if rhs_record['group_oi8ts04']['Are_you_interested_in_an_indiv']:
+                            rhs_record['group_oi8ts04']['Are_you_interested_in_an_indiv'] = None
+                        if rhs_record['group_oi8ts04']['What_is_the_toilet_connected_to']:
+                            rhs_record['group_oi8ts04']['What_is_the_toilet_connected_to'] = None
+                        if rhs_record['group_oi8ts04']['If_yes_why']:
+                            rhs_record['group_oi8ts04']['If_yes_why'] = None
+                        if rhs_record['group_oi8ts04']['What_kind_of_toilet_would_you_like']:
+                            rhs_record['group_oi8ts04']['What_kind_of_toilet_would_you_like'] = None
                 else:
                     print "ERROR"
+
+        if rhs_record['group_oi8ts04']['Are_you_interested_in_an_indiv'] == "01":
+            if not rhs_record['group_oi8ts04']['What_kind_of_toilet_would_you_like']:
+                rhs_record['group_oi8ts04']['What_kind_of_toilet_would_you_like'] = "02"
+
+        if rhs_record['group_oi8ts04']['Have_you_applied_for_individua'] == "02" and rhs_record['group_oi8ts04']['C2']=="05":
+            if rhs_record['group_oi8ts04']['If_no_why']:
+                rhs_record['group_oi8ts04']['If_no_why'] = None
+            if not rhs_record['group_oi8ts04']['What_is_the_toilet_connected_to']:
+                rhs_record['group_oi8ts04']['What_is_the_toilet_connected_to'] == "08"
+
+        if rhs_record['group_el9cl08']['Do_you_have_any_girl_child_chi'] == "01" and int(rhs_record['group_el9cl08']['How_many'])==0:
+            rhs_record['group_el9cl08']['Do_you_have_any_girl_child_chi'] = "02"
+            rhs_record['group_el9cl08']['How_many'] = None
+
+        if rhs_record['group_oi8ts04']['Have_you_applied_for_individua'] == "02":
+            if rhs_record['group_oi8ts04']['C2'] == "05":
+                if not rhs_record['group_oi8ts04']['What_is_the_toilet_connected_to']:
+                    rhs_record['group_oi8ts04']['What_is_the_toilet_connected_to'] = "08"
+
+        if rhs_record['slum_name'] == "273425263301" and rhs_record['Household_number'] == "27":
+            if not rhs_record['group_el9cl08']['House_area_in_sq_ft']:
+                print "---------------- House  area"
+                rhs_record['group_el9cl08']['House_area_in_sq_ft'] = "03"
+
 
     flag=True
     return flag, rhs_record
