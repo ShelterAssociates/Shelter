@@ -27,6 +27,6 @@ Installing on Ubuntu
   
 6. Run the server
 
-  `python manage.py runserver`
+  `python manage.py runserver` 
   
   
