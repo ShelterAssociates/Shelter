@@ -1,17 +1,16 @@
 
 from django.shortcuts import render
 from django.http import HttpResponse
-from mastersheet.forms import find_slum
+from mastersheet.forms import find_slum, file_form
 from mastersheet.models import *
-
 from itertools import chain
-
 from master.models import *
 from django.views.decorators.csrf import csrf_exempt
-
 import json
-
 import urllib2
+
+
+
 
 #The views in this file correspond to the mastersheet functionality of shelter app.
 
@@ -22,30 +21,23 @@ import urllib2
 # to be displayed to the front end.
 @csrf_exempt
 def masterSheet(request, slum_code = 0 ):
-    print "$$$$$$ In masterSheet view.... $$$$$$$$$$$"
-
-
     if "slumname" in str(request.POST.get('form')):
         delimiter = 'slumname='
         slum_code = Slum.objects.filter(pk = int(request.POST.get('form').partition(delimiter)[2]) ).values_list("shelter_slum_code", flat = True)
-        print slum_code
-
-    # Hitting Kobo urls to fetch data of RHS, family factsheet and data of RHS form
 
     urlv = 'http://kc.shelter-associates.org/api/v1/data/130?query={"slum_name":"273425265502"}'
-    url_family_factsheet = 'https://kc.shelter-associates.org/api/v1/data/68?format=json&query={"group_vq77l17/slum_name":"273425267703"}&fields=["OnfieldFactsheet","group_ne3ao98/Have_you_upgraded_yo_ng_individual_toilet","group_ne3ao98/Cost_of_upgradation_in_Rs","group_ne3ao98/Where_the_individual_ilet_is_connected_to","group_ne3ao98/Use_of_toilet","group_vq77l17/Household_number"]'
+    url_family_factsheet = 'https://kc.shelter-associates.org/api/v1/data/68?format=json&query={"group_vq77l17/slum_name":"273425265502"}&fields=["OnfieldFactsheet","group_ne3ao98/Have_you_upgraded_yo_ng_individual_toilet","group_ne3ao98/Cost_of_upgradation_in_Rs","group_ne3ao98/Where_the_individual_ilet_is_connected_to","group_ne3ao98/Use_of_toilet","group_vq77l17/Household_number"]'
     url_RHS_form = "https://kc.shelter-associates.org/api/v1/forms/130/form.json"
 
 
-    #print ("Sending Request to", url_family_factsheet)
     kobotoolbox_request = urllib2.Request(urlv)
     kobotoolbox_request_family_factsheet = urllib2.Request(url_family_factsheet)
     kobotoolbox_request_RHS_form = urllib2.Request(url_RHS_form)
 
 
-    kobotoolbox_request.add_header('Authorization', "OAuth2 c213f2e7a3221171e8dd501f0fd8153ad95ecd93 ")
-    kobotoolbox_request_family_factsheet.add_header('Authorization', "OAuth2 c213f2e7a3221171e8dd501f0fd8153ad95ecd93 ")
-    kobotoolbox_request_RHS_form.add_header('Authorization', "OAuth2 c213f2e7a3221171e8dd501f0fd8153ad95ecd93 ")
+    kobotoolbox_request.add_header('Authorization', "")
+    kobotoolbox_request_family_factsheet.add_header('Authorization', "")
+    kobotoolbox_request_RHS_form.add_header('Authorization', "")
 
 
     res = urllib2.urlopen(kobotoolbox_request)
@@ -92,6 +84,7 @@ def masterSheet(request, slum_code = 0 ):
         for x in formdict:
             if x['Household_number'] in temp_DR_keys:
                 x.update(temp_daily_reporting[x['Household_number']])
+
     except Exception as err:
         print err
 
@@ -139,7 +132,6 @@ def masterSheet(request, slum_code = 0 ):
     name_label_data_dict={obj_name_label_data['name'] : {child['name']:child['label'] for child in obj_name_label_data['children']} for obj_name_label_data in name_label_data}
 
     for y in vendor:
-        print y.vendor.vendor_type.name
         for z in y.household_number:
             for x in formdict:
                 if int(x['Household_number']) == int(z):
@@ -160,14 +152,26 @@ def masterSheet(request, slum_code = 0 ):
                                 for num in string:
                                     string[string.index(num)] = name_label_data_dict[key_nl][num]
                                 x[key_f] = ", ".join(string)
-                except Exception as e:
-                    print e
+                    # Handling current place of defecation column
+                    for keys in x:
+                        if 'group_oi8ts04/C1' in keys:
+                            x.update({'current place of defecation': x['group_oi8ts04/C1']})
+                        elif 'group_oi8ts04/C2' in keys:
+                            x.update({'current place of defecation': x['group_oi8ts04/C2']})
+                        elif 'group_oi8ts04/C3' in keys:
+                            x.update({'current place of defecation': x['group_oi8ts04/C3']})
+                        elif 'group_oi8ts04/C4' in keys:
+                            x.update({'current place of defecation': x['group_oi8ts04/C4']})
+                        elif 'group_oi8ts04/C5' in keys:
+                            x.update({'current place of defecation': x['group_oi8ts04/C5']})
+                except:
+                    pass
     return HttpResponse(json.dumps(formdict),  content_type = "application/json")
 
 
 
 def trav(node):
-    #Traverse uptill the child node and add to list
+    #Traverse up till the child node and add to list
     if 'type' in node and node['type'] == "group":
         return list(chain.from_iterable([trav(child) for child in node['children']]))
     elif (node['type'] == "select one" or node['type'] == "select all that apply") and 'children' in node.keys():
@@ -216,11 +220,8 @@ def define_columns(request):
         {"data": "group_oi8ts04/Status_of_toilet_under_SBM", "title": "Status of toilet under SBM?"},
         {"data": "group_oi8ts04/What_was_the_cost_in_to_build_the_toilet",
          "title": "What was the cost incurred to build the toilet?"},
-        {"data": "group_oi8ts04/C1", "title": "Current place of defecation1"},
-        {"data": "group_oi8ts04/C2", "title": "Current place of defecation2"},
-        {"data": "group_oi8ts04/C3", "title": "Current place of defecation_no SBM"},
-        {"data": "group_oi8ts04/C4", "title": "Current place of defecation_3 status of SBM"},
-        {"data": "group_oi8ts04/C5", "title": "Current place of defecation_yet to start SBM"},
+        {"data": "current place of defecation", "title": "Current place of defecation"},
+
         {"data": "group_oi8ts04/Is_there_availabilit_onnect_to_the_toilets",
          "title": "Is there availability of drainage to connect to the toilet?"},
         {"data": "group_oi8ts04/Are_you_interested_in_an_indiv",
@@ -298,11 +299,177 @@ def define_buttons(request):
 
 
 def renderMastersheet(request):
-    print "########### In renderMastersheet ###########"
     slum_search_field = find_slum()
-    return render(request, 'masterSheet.html', {'form': slum_search_field})
+    file_form1 = file_form()
+    return render(request, 'masterSheet.html', {'form': slum_search_field, 'file_form':file_form1})
 
 
+
+@csrf_exempt
+def file_ops(request):
+    slum_search_field = find_slum()
+    file_form1 = file_form()
+    if request.method == "POST":
+        try:
+            handle_uploaded_file(request.FILES.get('file'))
+        except Exception as e:
+            print "exception is " + str(e)
+    return render(request, 'masterSheet.html', {'form': slum_search_field, 'file_form':file_form1})
+
+
+import pandas
+import numpy as np
+# Pandas libraries help us in handling DataFrames with convenience
+# In the sheet that is being uploaded, the 'Agreement Cancelled' field should be blank if the agreement
+# is not cancelled. If it has any entry, the agreement_cancelled field in the database will be set to
+#  True
+def handle_uploaded_file(f):
+    df = pandas.read_excel(f)
+    df1=df.set_index("House Number")
+    # We divide the dataframe into subframes for vendors, their invoices and community mobilization
+
+    df_vendors = df1.filter(like='Vendor Name')
+    df_invoice = df1.filter(like = 'Invoice')
+    df_ComMob = df1.loc[:,'FGD with women':'Community Mobilization Ends']
+    # IMPORTANT!!!!
+    # In the excel sheet that has been uploaded, it is imperative to have a column with
+    # a header 'Community Mobilization Ends' right after the last mobilization activity's
+    # column.This column will be blank. It will be used to slice a sub frame which will have
+    # all the community mobilization activities.
+
+    for i in df1.index.values:
+        this_slum = Slum.objects.get(name=df1.loc[int(i), 'Select Slum'])
+
+
+        try:
+            SBM_instance = SBMUpload.objects.get(slum = this_slum, household_number = int(i))
+            if check_null(SBM_instance.application_id) is False:
+                SBM_instance.update(
+                    name=df1.loc[int(i), 'SBM Name'],
+                    application_id=df1.loc[int(i), 'Application ID'],
+                    photo_uploaded=check_bool(df1.loc[int(i), 'Toilet photo uploaded on SBM site'])
+                )
+                SBM_instance.save()
+        except Exception as e:
+            if check_null(df1.loc[int(i), 'Application ID']) is not None:
+                SBM_instance_1 = SBMUpload(
+                 slum = this_slum,
+                 household_number = int(i),
+                 name = df1.loc[int(i), 'SBM Name'],
+                 application_id = df1.loc[int(i),'Application ID'],
+                 photo_uploaded = check_bool(df1.loc[int(i),'Toilet photo uploaded on SBM site'])
+                )
+                SBM_instance_1.save()
+
+        for p,q in df_ComMob.loc[int(i)].items():
+
+            if check_null(q) is not None:
+                household_nums = []
+                try:
+                    activityType_instance = ActivityType.objects.get(name = p)
+                    if activityType_instance:
+                        try:
+
+
+                            ComMob_instance = CommunityMobilization.objects.get(slum = this_slum,activity_type=activityType_instance)
+
+                            temp = ComMob_instance.household_number
+                            if int(i) not in temp:
+                                temp.append(int(i))
+                            ComMob_instance.household_number = temp
+                            ComMob_instance.save()
+                        except Exception as e:
+                            household_nums.append(int(i))
+                            CM_instance = CommunityMobilization(
+                                slum = this_slum,
+                                household_number = household_nums,
+                                activity_type = activityType_instance,
+                                activity_date = df_ComMob.loc[int(i), p]
+                            )
+                            CM_instance.save()
+                except Exception as e:
+                    print e
+
+
+
+
+
+
+        for j,m in df_vendors.loc[int(i)].items():
+            if check_null(m) is not None:
+                household_nums = []
+                k = df_vendors.columns.get_loc(j)
+                string = unicode(df_invoice.loc[int(i)][k])
+
+                try:
+                    Vendor_instance = Vendor.objects.get(name=str(m))
+                    if Vendor_instance:
+                        try:
+                            VHID_instance_1 = VendorHouseholdInvoiceDetail.objects.get(vendor=Vendor_instance,
+                                                                                   invoice_number=string.split('/')[0],
+                                                                                   slum=this_slum)
+                            temp = VHID_instance_1.household_number
+                            if int(i) not in temp:
+                                temp.append(int(i))
+                            VHID_instance_1.household_number = temp
+                            VHID_instance_1.save()
+                        except Exception as e:
+                            print e
+                            household_nums.append(int(i))
+                            VHID_instance = VendorHouseholdInvoiceDetail(
+                                vendor = Vendor.objects.get(name=str(m)),
+                                slum = this_slum,
+                                invoice_number = string.split('/')[0],
+                                invoice_date =datetime.datetime.strptime(string.split('/')[1], '%d.%m.%Y') ,
+                                household_number = household_nums
+
+                            )
+                            VHID_instance.save()
+
+                except Exception as e:
+                    print e
+
+        try:
+            TC_instance = ToiletConstruction.objects.select_related().filter(household_number = int(i), slum__name = this_slum)
+
+            if TC_instance:
+                TC_instance[0].update_model( df1.loc[int(i), : ])
+
+            else:
+                this_status = " "
+                stat = df1.loc[int(i), 'Final Status']
+                for j in range(len(STATUS_CHOICES)):
+                    if str(STATUS_CHOICES[j][1]).lower() == str(stat).lower():  # STATUS_CHOICE is imported from mastersheet/models.py
+                        this_status=STATUS_CHOICES[j][0]
+
+                TC_instance = ToiletConstruction(
+                                                    slum = this_slum,
+                                                    agreement_cancelled = check_bool(df1.loc[int(i), 'Agreement Cancelled']),
+                                                    household_number = int(i),
+                                                    septic_tank_date = check_null(df1.loc[int(i), 'Date of Septic Tank supplied']),
+                                                    phase_one_material_date = check_null(df1.loc[int(i), 'Material Supply Date 1st']),
+                                                    phase_two_material_date = check_null(df1.loc[int(i), 'Material Supply Date-2nd']),
+                                                    phase_three_material_date = check_null(df1.loc[int(i), 'Material Supply Date-3rd']),
+                                                    completion_date = check_null(df1.loc[int(i), 'Construction Completion Date']),
+                                                    comment = check_null(df1.loc[int(i), 'Comment']),
+                                                    status = this_status
+                                                )
+                TC_instance.save()
+        except Exception as e:
+            print e
+
+
+
+def check_null(s):
+    if pandas.isnull(s):
+        return None
+    else:
+        return s
+def check_bool(s):
+    if str(s).lower() == 'yes':
+        return True
+    else:
+        return False
 
 
 
