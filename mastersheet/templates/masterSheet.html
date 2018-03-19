@@ -5,12 +5,14 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <script src = "{% static "js/jquery-1.12.4.js" %}"></script>
     <link rel = "stylesheet" type="text/css" href = "{% static "css/jquery.dataTables.min.css" %}">
     <link rel = "stylesheet" type="text/css" href = "{% static "admin/css/forms.css" %}">
+    <link rel = "stylesheet" type="text/css" href = "{% static "css/highlight_buttons.css" %}">
+    <link rel = "stylesheet" type="text/css" href = "{% static "css/scolling.css" %}">
+
+    <script src = "{% static "js/jquery-1.12.4.js" %}"></script>
     <script src = "{% static "js/jquery.dataTables.min.js" %}"></script>
     <script src = "{% static "js/dataTables.buttons.min.js" %}"></script>
-    <script src = "{% static "js/buttons.flash.min.js" %}"></script>
     <script src = "{% static "js/jszip.min.js" %}"></script>
     <script src = "{% static "js/buttons.html5.min.js" %}"></script>
     <script src = "{% static "admin/js/admin/RelatedObjectLookups.js" %}"></script>
@@ -19,20 +21,31 @@
     <script src = "{% static "js/load_datatable.js" %}"></script>
     <script src = "{% static "js/obtain_slum.js" %}"></script>
     <script src = "{% static "js/add_searchBox.js" %}"></script>
+    <script src = "{% static "js/file_input.js" %}"></script>
+    <script src = "{% static "js/dataTables.fixedColumns.min.js" %}"></script>
+    <script src = "{% static "js/highlight_buttons.js" %}"></script>
+
+
 </head>
 <div class="customized-form">
-    <form id = "slum_form"  method="post">{% csrf_token %}
 
-        {{ form.as_ul }}
+    <form id = "slum_form"  method="POST">{% csrf_token %}
+        {{ form.as_p }}
         <input type="button" id="btnFetch" value="Submit" />
         <input type="hidden" class="hide" id="slum_code" value="{{slum_code}}"/>
     </form>
-</div>
-    <table id="example" class="display" width="100%" cellspacing="0">
-    </table>
 
+   <form method = "POST" enctype="multipart/form-data" action="http://127.0.0.1:8000/mastersheet/files/">{% csrf_token %}
+        {{ file_form.as_p}}
+        <input value = "Submit" type="submit" id = "file_input"/>
+    </form>
+
+
+</div>
 <body>
 
+    <table id="example" class="display" width="100%" cellspacing="0">
+    </table>
 </body>
 </html>
 {%endblock%}
