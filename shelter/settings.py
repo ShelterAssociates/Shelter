@@ -41,6 +41,7 @@ INSTALLED_APPS = (
    # 'south',
    'master',
    'component',
+
    #'Filter',
    'sponsor',
    'colorfield',
@@ -50,6 +51,7 @@ INSTALLED_APPS = (
 
 
 MIDDLEWARE_CLASSES = (
+
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
