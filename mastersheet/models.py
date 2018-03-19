@@ -2,6 +2,7 @@ from django.db import models
 from master.models import City, Slum
 from jsonfield import JSONField
 import datetime
+import pandas
 
 class VendorType(models.Model):
     name = models.CharField(max_length=512)
@@ -45,7 +46,7 @@ class VendorHouseholdInvoiceDetail(models.Model):
     created_date = models.DateTimeField(default=datetime.datetime.now)
 
     class Meta:
-        unique_together = ("slum", "invoice_number")
+        unique_together = ("vendor","slum", "invoice_number")
         verbose_name = 'Vendor to household invoice detail'
         verbose_name_plural = 'Vendor to household invoice details'
 
@@ -67,6 +68,9 @@ class SBMUpload(models.Model):
 
     def __unicode__(self):
         return self.name
+
+    def __str__(self):
+        return self.household_number
 
 STATUS_CHOICES=(('1', 'Agreement done'),
                 ('2', 'Agreement cancel'),
@@ -94,6 +98,47 @@ class ToiletConstruction(models.Model):
         verbose_name = 'Toilet construction progress'
         verbose_name_plural = 'Toilet construction progress'
 
+    def __str__(self):
+        return self.household_number
+
+
+    def update_model(self, df1):
+        if pandas.isnull(df1.loc['Agreement Cancelled']) is False:
+            self.agreement_cancelled = True
+        else:
+            self.agreement_cancelled = False
+
+        if not self.septic_tank_date:
+            self.septic_tank_date = df1.loc['Date of Septic Tank supplied'] if pandas.isnull(df1.loc['Date of Septic Tank supplied']) is False else None
+
+        if not self.phase_one_material_date:
+            self.phase_one_material_date = df1.loc['Material Supply Date 1st'] if pandas.isnull(df1.loc['Material Supply Date 1st']) is False else None
+
+        if not self.phase_two_material_date:
+            self.phase_two_material_date = df1.loc['Material Supply Date-2nd'] if pandas.isnull(df1.loc['Material Supply Date-2nd']) is False else None
+
+        if not self.phase_three_material_date:
+            self.phase_three_material_date = df1.loc['Material Supply Date-3rd'] if pandas.isnull(df1.loc['Material Supply Date-3rd']) is False else None
+
+        if not self.completion_date:
+            self.completion_date = df1.loc['Construction Completion Date'] if pandas.isnull(df1.loc['Construction Completion Date']) is False else None
+
+        if not self.comment:
+            self.comment = df1.loc['Comment']
+
+        stat = df1.loc['Final Status']
+        for j in range(len(STATUS_CHOICES)):
+            if str(STATUS_CHOICES[j][1]).lower() == str(stat).lower():
+                self.status = STATUS_CHOICES[j][0]
+
+        self.save()
+
+    def check_n(self, s):
+        if pandas.isnull(s):
+            return None
+        else:
+            return s
+
 class ActivityType(models.Model):
     name = models.CharField(max_length=512)
     key = models.CharField(max_length=2)
@@ -119,4 +164,4 @@ class CommunityMobilization(models.Model):
         verbose_name_plural = 'Community mobilization'
 
     def __unicode__(self):
-        return self.slum.name
+        return self.slum.name + '-' + self.activity_type.name
