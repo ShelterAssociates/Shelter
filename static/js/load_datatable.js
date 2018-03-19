@@ -13,8 +13,17 @@ $(document).ready(function() {
                     success : function (data) {
 
                                     var table = $("#example").DataTable( {
-                                    "columnDefs": [ { "defaultContent": "-", "targets": "_all" } , {"footer":true}],
-                                    "paging": false,
+                                    "columnDefs": [
+                                                    { "defaultContent": "-", "targets": "_all" } ,
+                                                    {"footer":true},
+                                                    {
+                                                        "targets": [ 1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36 ],
+                                                        "visible": false,
+                                                    },
+                                                  ],
+
+
+
 
                                     "dom":"Bfrtip",
                                     "ajax" :  {
@@ -30,6 +39,8 @@ $(document).ready(function() {
 
                                                      {
                                                         extend: 'excelHtml5',
+                                                        className : 'btn',
+
                                                         text: 'Save current page',
                                                         exportOptions: {
                                                              columns: ':visible'
@@ -38,6 +49,8 @@ $(document).ready(function() {
                                                     {
 
                                                         text: 'RHS',
+                                                        className : 'btn',
+
                                                         action:function(){
 
                                                                 var table = $('#example').DataTable();
@@ -52,24 +65,27 @@ $(document).ready(function() {
                                                     },
                                                     {
                                                         text: 'Follow-up Survey',
+                                                        className : 'btn',
                                                         action:function(){
 
                                                                 var table = $('#example').DataTable();
                                                                 table.columns().visible(true);
-                                                                var show_them = [19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40];
+                                                                var show_them = [19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36];
                                                                 table.columns().visible(false);
                                                                 table.columns(show_them).visible(true);
                                                                 table.columns(0).visible(true);
+
                                                                 add_search_box();
                                                         }
                                                     },
                                                     {
                                                         text: 'Family Factsheet',
+                                                        className : 'btn',
                                                         action:function(){
 
                                                                 var table = $('#example').DataTable();
                                                                 table.columns().visible(true);
-                                                                var show_them = [41,42,43,44,45];
+                                                                var show_them = [37,38,39,40,41];
                                                                 table.columns().visible(false);
                                                                 table.columns(show_them).visible(true);
                                                                 table.columns(0).visible(true);
@@ -78,6 +94,7 @@ $(document).ready(function() {
                                                     },
                                                     {
                                                         text: 'Daily Reporting',
+                                                        className : 'btn',
                                                         action:function(){
                                                                             $.ajax({
                                                                                     url: "http://127.0.0.1:8000/mastersheet/buttons",
@@ -88,7 +105,7 @@ $(document).ready(function() {
                                                                                     success : function(data){
                                                                                                     var show_them = [];
                                                                                                     console.log(data['accounts']);
-                                                                                                    for ( i = 57; i < (57 + data['daily_reporting']); i++){
+                                                                                                    for ( i = 53; i < (53 + data['daily_reporting']); i++){
                                                                                                         show_them.push(i);
                                                                                                     }
                                                                                                     var table = $('#example').DataTable();
@@ -102,6 +119,7 @@ $(document).ready(function() {
                                                     },
                                                     {
                                                         text: 'Accounts',
+                                                        className : 'btn',
                                                         action:function(){
                                                                             $.ajax({
                                                                                     url: "http://127.0.0.1:8000/mastersheet/buttons",
@@ -112,7 +130,7 @@ $(document).ready(function() {
                                                                                     success : function(data){
                                                                                                     var show_them = [];
                                                                                                     console.log(data['accounts']);
-                                                                                                    for ( i = (57 + data['daily_reporting']); i < (57 + data['daily_reporting'] + data['accounts']); i++){
+                                                                                                    for ( i = (53 + data['daily_reporting']); i < (53 + data['daily_reporting'] + data['accounts']); i++){
                                                                                                         show_them.push(i);
                                                                                                     }
                                                                                                     var table = $('#example').DataTable();
@@ -126,11 +144,12 @@ $(document).ready(function() {
                                                     },
                                                     {
                                                         text: 'SBM',
+                                                        className : 'btn',
                                                         action:function(){
 
                                                                 var table = $('#example').DataTable();
                                                                 table.columns().visible(true);
-                                                                var show_them = [46,47,48];
+                                                                var show_them = [42,43,44];
                                                                 table.columns().visible(false);
                                                                 table.columns(show_them).visible(true);
                                                                 table.columns(0).visible(true);
@@ -139,9 +158,15 @@ $(document).ready(function() {
                                                     },
                                                     {
                                                         text: 'Show all',
+                                                        className : 'btn active',
                                                         action:function(){
                                                                 var table = $('#example').DataTable();
+                                                                var hide_them = [ 1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36 ];
+
+
                                                                 table.columns().visible(true);
+                                                                table.columns(hide_them).visible(false);
+
                                                                 add_search_box();
                                                         }
 
@@ -152,7 +177,7 @@ $(document).ready(function() {
                                     "columns": data
                                     });
 
-
+                                    highlight_buttons();
                                     add_search_box();
                                     $( table.table().container() ).on( 'keyup', 'tfoot tr th input', function (index,element) {
 
