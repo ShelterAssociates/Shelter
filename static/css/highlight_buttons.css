@@ -1,4 +1,4 @@
-.btn {
+.btn , .refresh{
     border: none;
     outline: none;
     padding: 10px 16px;
@@ -8,7 +8,7 @@
 }
 
 /* Style the active class, and buttons on mouse-over */
-.active, .btn:hover {
+.active, .refresh, .btn:hover {
     background-color: #666;
     color: white;
 }
