@@ -8,6 +8,9 @@ from master.models import *
 from django.views.decorators.csrf import csrf_exempt
 import json
 import urllib2
+from django.conf import settings
+
+
 
 
 
@@ -21,151 +24,167 @@ import urllib2
 # to be displayed to the front end.
 @csrf_exempt
 def masterSheet(request, slum_code = 0 ):
-    if "slumname" in str(request.POST.get('form')):
+    print settings.KOBOCAT_DATABASES
+    print str(request.GET.get('form'))
+    if "slumname" in str(request.GET.get('form')):
+
         delimiter = 'slumname='
-        slum_code = Slum.objects.filter(pk = int(request.POST.get('form').partition(delimiter)[2]) ).values_list("shelter_slum_code", flat = True)
-
-    urlv = 'http://kc.shelter-associates.org/api/v1/data/130?query={"slum_name":"273425265502"}'
-    url_family_factsheet = 'https://kc.shelter-associates.org/api/v1/data/68?format=json&query={"group_vq77l17/slum_name":"273425265502"}&fields=["OnfieldFactsheet","group_ne3ao98/Have_you_upgraded_yo_ng_individual_toilet","group_ne3ao98/Cost_of_upgradation_in_Rs","group_ne3ao98/Where_the_individual_ilet_is_connected_to","group_ne3ao98/Use_of_toilet","group_vq77l17/Household_number"]'
-    url_RHS_form = "https://kc.shelter-associates.org/api/v1/forms/130/form.json"
+        slum_code = Slum.objects.filter(pk = int(request.GET.get('form').partition(delimiter)[2]) ).values_list("shelter_slum_code", flat = True)[0]
 
 
-    kobotoolbox_request = urllib2.Request(urlv)
-    kobotoolbox_request_family_factsheet = urllib2.Request(url_family_factsheet)
-    kobotoolbox_request_RHS_form = urllib2.Request(url_RHS_form)
 
+    formdict = []
+    if slum_code is not 0:
+        urlv = str(settings.KOBOCAT_FORM_URL)+str('data/130?query={"slum_name":"') + str(slum_code) + '"}'  # '+str(slum_code)+'
 
-    kobotoolbox_request.add_header('Authorization', "")
-    kobotoolbox_request_family_factsheet.add_header('Authorization', "")
-    kobotoolbox_request_RHS_form.add_header('Authorization', "")
+        url_family_factsheet = str(settings.KOBOCAT_FORM_URL)+str('data/68?format=json&query={"group_vq77l17/slum_name":"')+ str(slum_code) + str('"}&fields=["OnfieldFactsheet","group_ne3ao98/Have_you_upgraded_yo_ng_individual_toilet","group_ne3ao98/Cost_of_upgradation_in_Rs","group_ne3ao98/Where_the_individual_ilet_is_connected_to","group_ne3ao98/Use_of_toilet","group_vq77l17/Household_number"]')
+        url_RHS_form = str(settings.KOBOCAT_FORM_URL)+str('forms/130/form.json"')
 
+        kobotoolbox_request = urllib2.Request(urlv)
+        kobotoolbox_request_family_factsheet = urllib2.Request(url_family_factsheet)
+        kobotoolbox_request_RHS_form = urllib2.Request(url_RHS_form)
 
-    res = urllib2.urlopen(kobotoolbox_request)
-    res_family_factsheet = urllib2.urlopen(kobotoolbox_request_family_factsheet)
-    res_RHS_form = urllib2.urlopen(kobotoolbox_request_RHS_form)
+        kobotoolbox_request.add_header('Authorization', settings.KOBOCAT_TOKEN)
+        kobotoolbox_request_family_factsheet.add_header('Authorization',
+                                                        settings.KOBOCAT_TOKEN)
+        kobotoolbox_request_RHS_form.add_header('Authorization', settings.KOBOCAT_TOKEN)
 
-    html = res.read()
-    html_family_factsheet = res_family_factsheet.read()
-    html_RHS_form = res_RHS_form.read()
+        res = urllib2.urlopen(kobotoolbox_request)
+        res_family_factsheet = urllib2.urlopen(kobotoolbox_request_family_factsheet)
+        res_RHS_form = urllib2.urlopen(kobotoolbox_request_RHS_form)
 
-    formdict = json.loads(html)
-    formdict_family_factsheet =json.loads(html_family_factsheet)
-    formdict_RHS_form = json.loads(html_RHS_form)
-    name_label_data = []
-    try:
-        for i in formdict_RHS_form['children']:
-            temp_data = trav(i) # trav() function traverses the dictionary to find last hanging child
-            name_label_data.extend(temp_data)
-    except Exception as e:
-        print e
-    # arranging data with respect to household numbers
-    temp_FF={obj_FF['group_vq77l17/Household_number'] : obj_FF for obj_FF in formdict_family_factsheet}
+        html = res.read()
+        html_family_factsheet = res_family_factsheet.read()
+        html_RHS_form = res_RHS_form.read()
 
-    temp_FF_keys = temp_FF.keys()
-    for x in formdict:
-        if x['Household_number'] in temp_FF_keys:
-            x.update(temp_FF[x['Household_number']])
-            x['OnfieldFactsheet'] = 'Yes'
+        formdict = json.loads(html)
+        formdict_family_factsheet = json.loads(html_family_factsheet)
+        formdict_RHS_form = json.loads(html_RHS_form)
+        name_label_data = []
 
-    toilet_reconstruction_fields = ['slum', 'household_number','agreement_date_str','agreement_cancelled','septic_tank_date_str','phase_one_material_date_str','phase_two_material_date_str','phase_three_material_date_str','completion_date_str','status','comment','material_shifted_to']
-    daily_reporting_data = ToiletConstruction.objects.extra(select={'phase_one_material_date_str':"to_char(phase_one_material_date, 'YYYY-MM-DD HH24:MI:SS')",
-                                                                    'phase_two_material_date_str': "to_char(phase_two_material_date, 'YYYY-MM-DD HH24:MI:SS')",
-                                                                    'phase_three_material_date_str': "to_char(phase_three_material_date, 'YYYY-MM-DD HH24:MI:SS')",
-                                                                    'septic_tank_date_str': "to_char(septic_tank_date, 'YYYY-MM-DD HH24:MI:SS')",
-                                                                    'agreement_date_str': "to_char(agreement_date, 'YYYY-MM-DD HH24:MI:SS')",
-                                                                    'completion_date_str': "to_char(completion_date, 'YYYY-MM-DD HH24:MI:SS')"}).filter(slum__shelter_slum_code=273425265502)
-    daily_reporting_data = daily_reporting_data.values(*toilet_reconstruction_fields)
+        try:
+            for i in formdict_RHS_form['children']:
+                temp_data = trav(i)  # trav() function traverses the dictionary to find last hanging child
+                name_label_data.extend(temp_data)
+        except Exception as e:
+            print e
+        # arranging data with respect to household numbers
+        temp_FF = {obj_FF['group_vq77l17/Household_number']: obj_FF for obj_FF in formdict_family_factsheet}
 
-    temp_daily_reporting = {obj_DR['household_number']: obj_DR for obj_DR in daily_reporting_data}
-    temp_DR_keys = temp_daily_reporting.keys()
-
-
-    try:
+        temp_FF_keys = temp_FF.keys()
         for x in formdict:
-            if x['Household_number'] in temp_DR_keys:
-                x.update(temp_daily_reporting[x['Household_number']])
+            if x['Household_number'] in temp_FF_keys:
+                x.update(temp_FF[x['Household_number']])
+                x['OnfieldFactsheet'] = 'Yes'
 
-    except Exception as err:
-        print err
+        toilet_reconstruction_fields = ['slum', 'household_number', 'agreement_date_str', 'agreement_cancelled',
+                                        'septic_tank_date_str', 'phase_one_material_date_str',
+                                        'phase_two_material_date_str', 'phase_three_material_date_str',
+                                        'completion_date_str', 'status', 'comment', 'material_shifted_to']
+        daily_reporting_data = ToiletConstruction.objects.extra(
+            select={'phase_one_material_date_str': "to_char(phase_one_material_date, 'YYYY-MM-DD HH24:MI:SS')",
+                    'phase_two_material_date_str': "to_char(phase_two_material_date, 'YYYY-MM-DD HH24:MI:SS')",
+                    'phase_three_material_date_str': "to_char(phase_three_material_date, 'YYYY-MM-DD HH24:MI:SS')",
+                    'septic_tank_date_str': "to_char(septic_tank_date, 'YYYY-MM-DD HH24:MI:SS')",
+                    'agreement_date_str': "to_char(agreement_date, 'YYYY-MM-DD HH24:MI:SS')",
+                    'completion_date_str': "to_char(completion_date, 'YYYY-MM-DD HH24:MI:SS')"}).filter(
+            slum__shelter_slum_code=slum_code)
+        daily_reporting_data = daily_reporting_data.values(*toilet_reconstruction_fields)
 
-    sbm_fields = ['slum', 'household_number', 'name', 'application_id', 'photo_uploaded', 'created_date_str']
-    sbm_data = SBMUpload.objects.extra(select={'created_date_str': "to_char(created_date, 'YYYY-MM-DD HH24:MI:SS')"}).filter(slum__shelter_slum_code=273425265502)
-    sbm_data = sbm_data.values(*sbm_fields)
+        temp_daily_reporting = {obj_DR['household_number']: obj_DR for obj_DR in daily_reporting_data}
+        temp_DR_keys = temp_daily_reporting.keys()
 
-    temp_sbm = {obj_DR['household_number']: obj_DR for obj_DR in sbm_data}
-    temp_sbm_keys = temp_sbm.keys()
-    try:
-        for x in formdict:
-            if x['Household_number'] in temp_sbm_keys:
-                x.update(temp_sbm[x['Household_number']])
-    except Exception as err:
-        print err
+        try:
+            for x in formdict:
+                if x['Household_number'] in temp_DR_keys:
+                    x.update(temp_daily_reporting[x['Household_number']])
 
-    community_mobilization_fields = ['slum', 'household_number','activity_type','activity_date_str']
-    community_mobilization_data = CommunityMobilization.objects.extra(select={'activity_date_str': "to_char(activity_date, 'YYYY-MM-DD HH24:MI:SS')"}).filter(slum__shelter_slum_code=273425265502)
-    community_mobilization_data1 = community_mobilization_data.values(*community_mobilization_fields)
-    community_mobilization_data_list = list(community_mobilization_data1)
+        except Exception as err:
+            print err
 
-    # The json field of 'household_numbers' will have a list of household numbers.
-    # We need to sort the data with respect to each household number in order to
-    # append it in formdict.
+        sbm_fields = ['slum', 'household_number', 'name', 'application_id', 'photo_uploaded', 'created_date_str']
+        sbm_data = SBMUpload.objects.extra(
+            select={'created_date_str': "to_char(created_date, 'YYYY-MM-DD HH24:MI:SS')"}).filter(
+            slum__shelter_slum_code=slum_code)
+        sbm_data = sbm_data.values(*sbm_fields)
 
-    for x in community_mobilization_data_list:
-        HH_list_flat=[]
-        HH_list_flat.append(json.loads(x['household_number']))
-        x['household_number'] = HH_list_flat[0]
+        temp_sbm = {obj_DR['household_number']: obj_DR for obj_DR in sbm_data}
+        temp_sbm_keys = temp_sbm.keys()
+        try:
+            for x in formdict:
+                if x['Household_number'] in temp_sbm_keys:
+                    x.update(temp_sbm[x['Household_number']])
+        except Exception as err:
+            print err
 
-    try:
-        for i in range(len(community_mobilization_data)):
-            y = community_mobilization_data[i]
+        community_mobilization_fields = ['slum', 'household_number', 'activity_type', 'activity_date_str']
+        community_mobilization_data = CommunityMobilization.objects.extra(
+            select={'activity_date_str': "to_char(activity_date, 'YYYY-MM-DD HH24:MI:SS')"}).filter(
+            slum__shelter_slum_code=slum_code)
+        community_mobilization_data1 = community_mobilization_data.values(*community_mobilization_fields)
+        community_mobilization_data_list = list(community_mobilization_data1)
+
+        # The json field of 'household_numbers' will have a list of household numbers.
+        # We need to sort the data with respect to each household number in order to
+        # append it in formdict.
+
+        for x in community_mobilization_data_list:
+            HH_list_flat = []
+            HH_list_flat.append(json.loads(x['household_number']))
+            x['household_number'] = HH_list_flat[0]
+
+        try:
+            for i in range(len(community_mobilization_data)):
+                y = community_mobilization_data[i]
+                for z in y.household_number:
+                    for x in formdict:
+                        if int(x['Household_number']) == int(z):
+                            new_activity_type = community_mobilization_data[i].activity_type.name
+                            x.update({new_activity_type: y.activity_date_str})
+        except Exception as e:
+            print e
+
+        vendor = VendorHouseholdInvoiceDetail.objects.filter(slum__shelter_slum_code=slum_code)
+        # Arranging name_label_data with respect to label and corresponding codes('names' is the key used for them in the json) and labels
+        name_label_data_dict = {
+        obj_name_label_data['name']: {child['name']: child['label'] for child in obj_name_label_data['children']} for
+        obj_name_label_data in name_label_data}
+
+        for y in vendor:
             for z in y.household_number:
                 for x in formdict:
                     if int(x['Household_number']) == int(z):
-                        new_activity_type = community_mobilization_data[i].activity_type.name
-                        x.update({new_activity_type : y.activity_date_str})
-    except Exception as e:
-        print e
+                        vendor_name = "vendor_type" + y.vendor.vendor_type.name
+                        invoice_number = "invoice_number" + y.vendor.vendor_type.name
+                        x.update({
+                            vendor_name: y.vendor.name,
+                            invoice_number: y.invoice_number
+                        })
 
-
-    vendor = VendorHouseholdInvoiceDetail.objects.filter(slum__shelter_slum_code = 273425265502)
-    # Arranging name_label_data with respect to label and corresponding codes('names' is the key used for them in the json) and labels
-    name_label_data_dict={obj_name_label_data['name'] : {child['name']:child['label'] for child in obj_name_label_data['children']} for obj_name_label_data in name_label_data}
-
-    for y in vendor:
-        for z in y.household_number:
-            for x in formdict:
-                if int(x['Household_number']) == int(z):
-
-                    vendor_name = "vendor_type"+y.vendor.vendor_type.name
-                    invoice_number =  "invoice_number"+y.vendor.vendor_type.name
-                    x.update({
-                        vendor_name : y.vendor.name,
-                        invoice_number : y.invoice_number
-                    })
-
-                # Changing the codes to actual labels
-                try:
-                    for key_f in x:
-                        for key_nl in name_label_data_dict.keys():
-                            if str(key_nl) in str(key_f):
-                                string = x[key_f].split(" ")
-                                for num in string:
-                                    string[string.index(num)] = name_label_data_dict[key_nl][num]
-                                x[key_f] = ", ".join(string)
-                    # Handling current place of defecation column
-                    for keys in x:
-                        if 'group_oi8ts04/C1' in keys:
-                            x.update({'current place of defecation': x['group_oi8ts04/C1']})
-                        elif 'group_oi8ts04/C2' in keys:
-                            x.update({'current place of defecation': x['group_oi8ts04/C2']})
-                        elif 'group_oi8ts04/C3' in keys:
-                            x.update({'current place of defecation': x['group_oi8ts04/C3']})
-                        elif 'group_oi8ts04/C4' in keys:
-                            x.update({'current place of defecation': x['group_oi8ts04/C4']})
-                        elif 'group_oi8ts04/C5' in keys:
-                            x.update({'current place of defecation': x['group_oi8ts04/C5']})
-                except:
-                    pass
+                    # Changing the codes to actual labels
+                    try:
+                        for key_f in x:
+                            for key_nl in name_label_data_dict.keys():
+                                if str(key_nl) in str(key_f):
+                                    string = x[key_f].split(" ")
+                                    for num in string:
+                                        string[string.index(num)] = name_label_data_dict[key_nl][num]
+                                    x[key_f] = ", ".join(string)
+                        # Handling current place of defecation column
+                        for keys in x:
+                            if 'group_oi8ts04/C1' in keys:
+                                x.update({'current place of defecation': x['group_oi8ts04/C1']})
+                            elif 'group_oi8ts04/C2' in keys:
+                                x.update({'current place of defecation': x['group_oi8ts04/C2']})
+                            elif 'group_oi8ts04/C3' in keys:
+                                x.update({'current place of defecation': x['group_oi8ts04/C3']})
+                            elif 'group_oi8ts04/C4' in keys:
+                                x.update({'current place of defecation': x['group_oi8ts04/C4']})
+                            elif 'group_oi8ts04/C5' in keys:
+                                x.update({'current place of defecation': x['group_oi8ts04/C5']})
+                    except:
+                        pass
+    #print formdict
     return HttpResponse(json.dumps(formdict),  content_type = "application/json")
 
 
