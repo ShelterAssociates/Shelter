@@ -9,8 +9,6 @@ from django.conf import settings
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('master', '0008_auto_20180323_1206'),
-        migrations.swappable_dependency(settings.AUTH_USER_MODEL),
         ('mastersheet', '0002_auto_20180115_1455'),
     ]
 
