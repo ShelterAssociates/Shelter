@@ -3,6 +3,8 @@ from master.models import City, Slum
 from jsonfield import JSONField
 import datetime
 import pandas
+import django.dispatch
+
 
 class VendorType(models.Model):
     name = models.CharField(max_length=512)
@@ -78,6 +80,7 @@ STATUS_CHOICES=(('1', 'Agreement done'),
                 ('4', 'Construction not started'),
                 ('5', 'Under construction'),
                 ('6', 'completed'))
+Toilet_construction_save = django.dispatch.Signal()
 
 class ToiletConstruction(models.Model):
     slum = models.ForeignKey(Slum)
@@ -100,6 +103,8 @@ class ToiletConstruction(models.Model):
 
     def __str__(self):
         return self.household_number
+
+
 
 
     def update_model(self, df1):
@@ -138,6 +143,12 @@ class ToiletConstruction(models.Model):
             return None
         else:
             return s
+
+    def update_the_status(self):
+        Toilet_construction_save.send(sender=self.__class__)
+
+
+
 
 class ActivityType(models.Model):
     name = models.CharField(max_length=512)
