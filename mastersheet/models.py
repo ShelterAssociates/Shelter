@@ -1,4 +1,5 @@
 from django.db import models
+from django.contrib.auth.models import User
 from master.models import City, Slum
 from jsonfield import JSONField
 import datetime
@@ -7,6 +8,9 @@ import django.dispatch
 
 
 class VendorType(models.Model):
+    """
+    All the type of vendors.
+    """
     name = models.CharField(max_length=512)
     description = models.TextField(null=True, blank=True)
     display_flag = models.BooleanField()
@@ -22,6 +26,9 @@ class VendorType(models.Model):
         return self.name
 
 class Vendor(models.Model):
+    """
+    Vendor name accordingly to the vendor types.
+    """
     name = models.CharField(max_length=512)
     phone_number = models.CharField(max_length=15, null=True, blank=True)
     email_address = models.CharField(max_length=512, null=True, blank=True)
@@ -40,6 +47,9 @@ class Vendor(models.Model):
         return self.name + '(' + self.vendor_type.name + ')'
 
 class VendorHouseholdInvoiceDetail(models.Model):
+    """
+    Account invoice details with respective household numbers.
+    """
     vendor = models.ForeignKey(Vendor)
     slum = models.ForeignKey(Slum)
     invoice_number = models.CharField(max_length=100)
@@ -56,6 +66,9 @@ class VendorHouseholdInvoiceDetail(models.Model):
         return self.vendor.name + ' - '+ self.slum.name + '(' + self.invoice_number + ')'
 
 class SBMUpload(models.Model):
+    """
+    SBM upload detials
+    """
     slum = models.ForeignKey(Slum)
     household_number = models.CharField(max_length=5)
     name = models.CharField(max_length=512)
@@ -83,6 +96,9 @@ STATUS_CHOICES=(('1', 'Agreement done'),
 Toilet_construction_save = django.dispatch.Signal()
 
 class ToiletConstruction(models.Model):
+    """
+    Toilet construction track of dates at each level of construction.
+    """
     slum = models.ForeignKey(Slum)
     household_number = models.CharField(max_length=5)
     agreement_date = models.DateField(default=datetime.datetime.now)
@@ -151,6 +167,9 @@ class ToiletConstruction(models.Model):
 
 
 class ActivityType(models.Model):
+    """
+    Types of Community mobilization activities
+    """
     name = models.CharField(max_length=512)
     key = models.CharField(max_length=2)
     display_flag = models.BooleanField(default=False)
@@ -164,6 +183,9 @@ class ActivityType(models.Model):
         return self.name
 
 class CommunityMobilization(models.Model):
+    """
+    Track of household that were present for that particular mobilization activity.
+    """
     slum = models.ForeignKey(Slum)
     household_number = JSONField(null=True, blank=True)
     activity_type = models.ForeignKey(ActivityType)
@@ -176,3 +198,15 @@ class CommunityMobilization(models.Model):
 
     def __unicode__(self):
         return self.slum.name + '-' + self.activity_type.name
+
+class KoboDDSyncTrack(models.Model):
+    """
+    Sync date track for each slum. The data will be pulled from kobotoolbox and accordingly date will be updated.
+    """
+    slum = models.ForeignKey(Slum)
+    sync_date = models.DateTimeField()
+    created_on = models.DateTimeField(default=datetime.datetime.now)
+    created_by = models.ForeignKey(User)
+
+    def __unicode__(self):
+        return self.slum.name + '-' + self.sync_date
