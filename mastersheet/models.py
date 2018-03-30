@@ -197,5 +197,10 @@ class KoboDDSyncTrack(models.Model):
     created_on = models.DateTimeField(default=datetime.datetime.now)
     created_by = models.ForeignKey(User)
 
+    class Meta:
+        unique_together = ("slum", "sync_date")
+        verbose_name = 'KoBo daily reporting sync'
+        verbose_name_plural = 'KoBo daily reporting sync'
+
     def __unicode__(self):
-        return self.slum.name + '-' + self.sync_date
+        return self.slum.name + '-' + str(self.sync_date)
