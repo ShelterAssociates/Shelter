@@ -23,6 +23,7 @@
     <script src = "{% static "js/file_input.js" %}"></script>
     <script src = "{% static "js/dataTables.fixedColumns.min.js" %}"></script>
     <script src = "{% static "js/highlight_buttons.js" %}"></script>
+    <script src = "{% static "js/flag_dates.js" %}"></script>
 
 
 </head>
@@ -41,10 +42,13 @@
 
 
 </div>
+
 <body>
 
     <table id="example" class="display" width="100%" cellspacing="0">
     </table>
 </body>
+
+<button id = "delete_selected" type="button"  >Delete Selected</button>
 </html>
 {%endblock%}
