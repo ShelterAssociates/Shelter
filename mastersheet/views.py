@@ -9,6 +9,9 @@ from django.views.decorators.csrf import csrf_exempt
 import json
 import urllib2
 from django.conf import settings
+from django.db.models.signals import pre_save,post_save
+from django.dispatch import receiver
+from django.http import JsonResponse
 
 
 
@@ -24,8 +27,6 @@ from django.conf import settings
 # to be displayed to the front end.
 @csrf_exempt
 def masterSheet(request, slum_code = 0 ):
-    print settings.KOBOCAT_DATABASES
-    print str(request.GET.get('form'))
     if "slumname" in str(request.GET.get('form')):
 
         delimiter = 'slumname='
@@ -35,10 +36,14 @@ def masterSheet(request, slum_code = 0 ):
 
     formdict = []
     if slum_code is not 0:
-        urlv = str(settings.KOBOCAT_FORM_URL)+str('data/130?query={"slum_name":"') + str(slum_code) + '"}'  # '+str(slum_code)+'
+        #urlv = str(settings.KOBOCAT_FORM_URL)+str('data/130?query={"slum_name":"') + str(slum_code) + '"}'  # '+str(slum_code)+'
+        urlv = str(settings.KOBOCAT_FORM_URL)+str('data/98?query={"slum_name":"') + str(slum_code) + '"}'  # '+str(slum_code)+'
 
-        url_family_factsheet = str(settings.KOBOCAT_FORM_URL)+str('data/68?format=json&query={"group_vq77l17/slum_name":"')+ str(slum_code) + str('"}&fields=["OnfieldFactsheet","group_ne3ao98/Have_you_upgraded_yo_ng_individual_toilet","group_ne3ao98/Cost_of_upgradation_in_Rs","group_ne3ao98/Where_the_individual_ilet_is_connected_to","group_ne3ao98/Use_of_toilet","group_vq77l17/Household_number"]')
-        url_RHS_form = str(settings.KOBOCAT_FORM_URL)+str('forms/130/form.json"')
+        #url_family_factsheet = str(settings.KOBOCAT_FORM_URL)+str('data/68?format=json&query={"group_vq77l17/slum_name":"')+ str(slum_code) + str('"}&fields=["OnfieldFactsheet","group_ne3ao98/Have_you_upgraded_yo_ng_individual_toilet","group_ne3ao98/Cost_of_upgradation_in_Rs","group_ne3ao98/Where_the_individual_ilet_is_connected_to","group_ne3ao98/Use_of_toilet","group_vq77l17/Household_number"]')
+        url_family_factsheet = str(settings.KOBOCAT_FORM_URL)+str('data/97?format=json&query={"group_vq77l17/slum_name":"')+ str(slum_code) + str('"}&fields=["OnfieldFactsheet","group_ne3ao98/Have_you_upgraded_yo_ng_individual_toilet","group_ne3ao98/Cost_of_upgradation_in_Rs","group_ne3ao98/Where_the_individual_ilet_is_connected_to","group_ne3ao98/Use_of_toilet","group_vq77l17/Household_number"]')
+
+        #url_RHS_form = str(settings.KOBOCAT_FORM_URL)+str('forms/130/form.json"')
+        url_RHS_form = str(settings.KOBOCAT_FORM_URL) + str('forms/98/form.json"')
 
         kobotoolbox_request = urllib2.Request(urlv)
         kobotoolbox_request_family_factsheet = urllib2.Request(url_family_factsheet)
@@ -170,6 +175,7 @@ def masterSheet(request, slum_code = 0 ):
                                     for num in string:
                                         string[string.index(num)] = name_label_data_dict[key_nl][num]
                                     x[key_f] = ", ".join(string)
+                                    print x[key_f]
                         # Handling current place of defecation column
                         for keys in x:
                             if 'group_oi8ts04/C1' in keys:
@@ -184,7 +190,7 @@ def masterSheet(request, slum_code = 0 ):
                                 x.update({'current place of defecation': x['group_oi8ts04/C5']})
                     except:
                         pass
-    #print formdict
+
     return HttpResponse(json.dumps(formdict),  content_type = "application/json")
 
 
@@ -202,7 +208,7 @@ def trav(node):
 
 def define_columns(request):
     formdict_new = [
-        {"data": "Household_number", "title": "Household Number"},
+        {"data": "Household_number", "title": "Household Number" },
         {"data": "Date_of_survey", "title": "Date of Survey"},
         {"data": "Name_s_of_the_surveyor_s", "title": "Name of the Surveyor"},
         {"data": "Type_of_structure_occupancy", "title": "Type of structure occupancy"},
@@ -337,7 +343,7 @@ def file_ops(request):
 
 
 import pandas
-import numpy as np
+
 # Pandas libraries help us in handling DataFrames with convenience
 # In the sheet that is being uploaded, the 'Agreement Cancelled' field should be blank if the agreement
 # is not cancelled. If it has any entry, the agreement_cancelled field in the database will be set to
@@ -350,7 +356,8 @@ def handle_uploaded_file(f):
     df_vendors = df1.filter(like='Vendor Name')
     df_invoice = df1.filter(like = 'Invoice')
     df_ComMob = df1.loc[:,'FGD with women':'Community Mobilization Ends']
-    # IMPORTANT!!!!
+
+    # *******************************IMPORTANT!!!!*************************************
     # In the excel sheet that has been uploaded, it is imperative to have a column with
     # a header 'Community Mobilization Ends' right after the last mobilization activity's
     # column.This column will be blank. It will be used to slice a sub frame which will have
@@ -489,6 +496,55 @@ def check_bool(s):
         return True
     else:
         return False
+
+@csrf_exempt
+def delete_selected(request):
+    slum_search_field = find_slum()
+    file_form1 = file_form()
+    response = {}
+    response['response'] = "Records deleted successfully"
+
+    records = json.loads(request.body)
+    delete_selected_records(records)
+    print records['records'][0]
+
+    return HttpResponse(json.dumps(response), content_type="application/json")
+kobo_form = 98 # *****IMPORTANT***** This form number is for local setting. Do change it to 130 before going live
+headers={}
+headers["Authorization"] = settings.KOBOCAT_TOKEN
+import requests
+def delete_selected_records(records):
+
+    for r in records['records']:
+        try:
+            if r:
+                deleteURL = '/'.join([settings.KOBOCAT_FORM_URL[:-1], 'data', str(kobo_form), str(r)])
+                objresponseDeleted = requests.delete(deleteURL, headers=headers)
+                print(' deleted for ' + str(r) + ' with response ' + str(objresponseDeleted))
+        except Exception as e:
+            print "No record selected to delete."
+
+
+
+
+@receiver(pre_save, sender=ToiletConstruction)
+def update_status(sender ,instance, **kwargs):
+    instance.status = STATUS_CHOICES[5][0]
+
+    if (instance.phase_one_material_date is None) and (datetime.date.today() - instance.agreement_date > datetime.timedelta(days=8)):
+        instance.status = STATUS_CHOICES[2][0]#material not given
+
+    if instance.completion_date:
+        instance.status = STATUS_CHOICES[5][0]#completed
+
+    if instance.agreement_cancelled:
+        instance.status = STATUS_CHOICES[1][0]#agreement cancelled
+
+    #instance.save()
+
+
+
+
 
 
 

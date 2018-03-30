@@ -4,6 +4,8 @@ from master.models import City, Slum
 from jsonfield import JSONField
 import datetime
 import pandas
+import django.dispatch
+
 
 class VendorType(models.Model):
     """
@@ -91,6 +93,7 @@ STATUS_CHOICES=(('1', 'Agreement done'),
                 ('4', 'Construction not started'),
                 ('5', 'Under construction'),
                 ('6', 'completed'))
+Toilet_construction_save = django.dispatch.Signal()
 
 class ToiletConstruction(models.Model):
     """
@@ -116,7 +119,6 @@ class ToiletConstruction(models.Model):
 
     def __str__(self):
         return self.household_number
-
 
     def update_model(self, df1):
         if pandas.isnull(df1.loc['Agreement Cancelled']) is False:
@@ -154,6 +156,10 @@ class ToiletConstruction(models.Model):
             return None
         else:
             return s
+
+    def update_the_status(self):
+        Toilet_construction_save.send(sender=self.__class__)
+
 
 class ActivityType(models.Model):
     """
