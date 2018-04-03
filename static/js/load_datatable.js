@@ -357,5 +357,23 @@ $(document).ready(function() {
 
     }
 
+    $("#btnSync").click(function(){
+        let slum = $("#slum_form").find('input[type=text]').val();
+        if (slum!=""){
+        $.ajax({
+            type : "get",
+            url : "/mastersheet/sync/slum/"+slum,
+            contentType : "json",
+            success: function(response){
+                alert(response.msg);
+            }
+
+        });
+        }
+        else{
+            alert("Please select slum to sync.")
+        }
+    });
+
 });
 
