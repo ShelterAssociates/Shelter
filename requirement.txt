@@ -20,3 +20,4 @@ jsonfield==1.0.3
 pykml==0.1.3
 pycrypto==2.6.1
 pandas==0.21.0
+requests==2.18.4
