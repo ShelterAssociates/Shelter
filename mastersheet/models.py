@@ -5,6 +5,8 @@ from jsonfield import JSONField
 import datetime
 import pandas
 import django.dispatch
+from django.db.models.signals import pre_save,post_save
+from django.dispatch import receiver
 
 
 class VendorType(models.Model):
@@ -157,8 +159,6 @@ class ToiletConstruction(models.Model):
         else:
             return s
 
-    def update_the_status(self):
-        Toilet_construction_save.send(sender=self.__class__)
 
 
 class ActivityType(models.Model):
@@ -210,3 +210,19 @@ class KoboDDSyncTrack(models.Model):
 
     def __unicode__(self):
         return self.slum.name + '-' + str(self.sync_date)
+
+@receiver(pre_save, sender=ToiletConstruction)
+def update_status(sender ,instance, **kwargs):
+    instance.status = STATUS_CHOICES[4][0]
+
+    if (instance.phase_one_material_date is None) and (datetime.date.today() - instance.agreement_date > datetime.timedelta(days=8)):
+        instance.status = STATUS_CHOICES[2][0]#material not given
+
+
+    if instance.completion_date:
+        instance.status = STATUS_CHOICES[5][0]#completed
+        print "completion date updated for"
+        print instance.household_number
+
+    if instance.agreement_cancelled:
+        instance.status = STATUS_CHOICES[1][0]#agreement cancelled
