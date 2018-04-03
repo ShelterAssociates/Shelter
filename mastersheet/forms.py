@@ -19,5 +19,4 @@ class find_slum(forms.Form):
         model = 'Slum'
 
 class file_form(forms.Form):
-    title = forms.CharField(max_length=50)
     file = forms.FileField()
