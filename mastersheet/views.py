@@ -553,10 +553,12 @@ def sync_kobo_data(request,slum_id):
             toilet_const.update_sync_info(t_data[2])
         elif not any(t_data) and any(c_data):
             com_mobilization.update_sync_info(c_data[2])
-
         data['flag'] = True
-        data['msg'] = "Data successfully synced for slum:"+slum.name
-        data['msg'] += "\n Total records updated" + str(t_data+c_data)
+        if not any(t_data) and not any(c_data):
+            data['msg'] = "Nothing to sync for slum - " + slum.name
+        else:
+            data['msg'] = "Data successfully synced for slum - "+slum.name
+            data['msg'] += "\nTotal records updated : " + str(t_data[0]+c_data[0])
     except Exception as e:
         data['flag']=False
         data['msg'] = "Error occurred while sync from kobo. Please contact administrator." +str(e)

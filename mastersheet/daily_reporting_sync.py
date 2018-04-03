@@ -14,7 +14,8 @@ import datetime
 import urllib2
 import json
 from dateutil.parser import parse
-
+from django.utils.dateparse import parse_datetime
+from django.utils import timezone
 from master.models import Survey, Slum, SURVEYTYPE_CHOICES
 from models import *
 
@@ -35,8 +36,9 @@ class DDSync(object):
         self.survey_date = self.convert_datetime("2017-01-21T01:02:03")
         self.survey_record = None
 
-    def convert_datetime(self, date):
-        return parse(date)
+    def convert_datetime(self, date_str):
+        ret = parse_datetime(date_str)
+        return ret
 
     def fetch_url(self, community_mobilization_flag):
         kobo_url = settings.KOBOCAT_FORM_URL + 'data/'+str(self.survey_id)
@@ -48,8 +50,8 @@ class DDSync(object):
     def fetch_kobo_data(self, community_mobilization_flag=False):
         sync_info = KoboDDSyncTrack.objects.filter(slum=self.slum).order_by('-sync_date').first()
         if sync_info:
-            self.survey_date = self.convert_datetime(str(sync_info.sync_date))
-        url = self.fetch_url(community_mobilization_flag) % str(self.survey_date)
+            self.survey_date = self.convert_datetime(str(timezone.localtime(sync_info.sync_date)))
+        url = self.fetch_url(community_mobilization_flag) % (str(self.survey_date).replace(' ','T'))
         kobotoolbox_request = urllib2.Request(url)
         kobotoolbox_request.add_header('User-agent', 'Mozilla 5.10')
         kobotoolbox_request.add_header('Authorization', settings.KOBOCAT_TOKEN)
@@ -64,8 +66,8 @@ class DDSync(object):
     def update_sync_info(self, sync_date):
         try:
             KoboDDSyncTrack.objects.create(slum=self.slum,sync_date=sync_date,created_by=self.user)
-        except:
-            print "Error creating record"
+        except Exception as e:
+            print "Error creating record" + str(e)
 
 class ToiletConstructionSync(DDSync):
 
