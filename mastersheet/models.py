@@ -95,7 +95,6 @@ STATUS_CHOICES=(('1', 'Agreement done'),
                 ('4', 'Construction not started'),
                 ('5', 'Under construction'),
                 ('6', 'completed'))
-Toilet_construction_save = django.dispatch.Signal()
 
 class ToiletConstruction(models.Model):
     """
