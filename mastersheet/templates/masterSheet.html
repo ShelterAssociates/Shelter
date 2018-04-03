@@ -11,6 +11,7 @@
     <link rel = "stylesheet" type="text/css" href = "{% static "css/scolling.css" %}">
 
     <script src = "{% static "js/jquery-1.12.4.js" %}"></script>
+    <script src = "{% static "js/bootstrap.min.js" %}"></script>
     <script src = "{% static "js/jquery.dataTables.min.js" %}"></script>
     <script src = "{% static "js/dataTables.buttons.min.js" %}"></script>
     <script src = "{% static "js/jszip.min.js" %}"></script>
@@ -27,6 +28,16 @@
 
 
 </head>
+<style>
+
+    #upload_file {
+            text-align: center;
+            height:100px;
+            witdh:1360px;
+            background-color: blue;
+
+        }
+</style>
 <div class="customized-form">
 
     <form id = "slum_form"  method="POST">{% csrf_token %}
@@ -35,7 +46,7 @@
         <input type="hidden" class="hide" id="slum_code" value="{{slum_code}}"/>
     </form>
 
-   <form method = "POST" enctype="multipart/form-data" action="http://127.0.0.1:8000/mastersheet/files/">{% csrf_token %}
+   <form id=" upload_file" method = "POST" enctype="multipart/form-data" action="http://127.0.0.1:8000/mastersheet/files/">{% csrf_token %}
         {{ file_form.as_p}}
         <input value = "Submit" type="submit" id = "file_input"/>
     </form>
