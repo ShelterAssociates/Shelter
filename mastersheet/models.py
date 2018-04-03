@@ -187,7 +187,7 @@ class CommunityMobilization(models.Model):
     activity_date = models.DateField(default=datetime.datetime.now)
 
     class Meta:
-        unique_together = ("slum", "activity_type")
+        unique_together = ("slum", "activity_type","activity_date")
         verbose_name = 'Community mobilization'
         verbose_name_plural = 'Community mobilization'
 
