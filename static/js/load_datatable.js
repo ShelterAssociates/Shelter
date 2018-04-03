@@ -31,7 +31,7 @@ $(document).ready(function() {
 
         if (table != null){
         table.ajax.reload();
-        flag_dates();
+        //flag_dates();
 
         }
         else{
@@ -49,7 +49,7 @@ $(document).ready(function() {
                             contentType : "application/json",
                             complete: function(){
                                 if(table.page.info().recordsDisplay != 0){
-                                    flag_dates();
+                                    //flag_dates();
                                 }
                             }
 
@@ -59,6 +59,25 @@ $(document).ready(function() {
                                 "targets": "_all",
 
                             } ,
+                            {
+                                "targets": [42,43,44],
+                                "render": function ( data, type, row, meta ) {
+                                                var url_1 = String("127.0.0.1:8000/admin/master/mastersheet/sbmupload/1/");
+                                                if (parseInt(row.Household_number) > 830){
+                                                console.log("household number");
+                                                console.log(row.Household_number);
+                                                console.log(row.id);
+
+                                                if(type === 'display'){
+                                                    data = '<a href = "#" onclick=window.open("/admin/master/mastersheet/sbmupload/1/")>' + data + '</a>';
+                                                }
+                                                }
+                                                //$('[data-toggle="popover"]').popover(); ' + url_1 + '
+
+                                                return data;
+                                            }
+
+                            },
                             {"footer":true},
                             {
                                 "targets": [ 1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36 ],
@@ -231,6 +250,19 @@ $(document).ready(function() {
 
             } );
             table.draw();
+            $('#example').on("draw.dt", function(){
+                console.log("flag dates is called");
+                for(i=0; i<10; i++)
+                {
+                    $('tr:eq('+i+')').css('background-color', '#ffffff');
+                    console.log('white wash');
+                }
+                flag_dates();
+            });
+            $('#example').on("draw.dt",function(){
+                $('[data-toggle="popover"]').popover();// script for popover
+            });
+            $('[data-toggle="popover"]').popover();// script for popover
 
             $('#example').on( 'click', 'tbody td', function () {
                 var data = table.cell( this ).render( 'sort' );
@@ -269,9 +301,7 @@ $(document).ready(function() {
                             contentType : "json",
                             success: function(response){
                                 alert(response.response);
-                                //console.log(response);
-                                //console.log(som);
-                                //alert(response['response']);
+
 
                             }
 
@@ -300,11 +330,14 @@ $(document).ready(function() {
     });
     function flag_dates(){
 
+
         if( table != null){
 
-            var data = table.rows().data();
+            var data = table.rows({ page: 'current' }).data();
+            console.log(data.length);
+            var counter = 0;
             data.each(function (value, index) {
-
+                counter = counter + 1;
 
 
                 var p1 = new Date(Date.parse(value['phase_one_material_date_str'], "yyyy-mm-dd HH:mm:ss"));
@@ -314,40 +347,44 @@ $(document).ready(function() {
                 var s_t_d = new Date(Date.parse(value['septic_tank_date_str'], "yyyy-mm-dd HH:mm:ss"))
                 var c_d = new Date(Date.parse(value['completion_date_str'], "yyyy-mm-dd HH:mm:ss"));
 
-
+                //if (value['Household_number'] > 840){
                 var ind = value['Household_number'] % 10;
-                if (a_d != null){
+                if(ind == 0){ind = 10;}
+
+                if (value['agreement_date_str'] != null){
 
                     if ( value['phase_one_material_date_str'] == null && Math.floor((today - a_d) / divider) > 8 ){
-                        table.on("draw.dt", function(){
-                            $('tr:eq('+ind+')').css('background-color', '#f9a4a4');
-                        });
+                        //table.on("draw.dt", function(){
+                            $('tr:eq('+ind+')').css('background-color', '#f9a4a4');//red
+                       // });
                     }
-                    if ( value['phase_two_material_date_str'] == null && Math.floor((today - p1) / divider) > 8 ){
-                        table.on("draw.dt", function(){
-                            $('tr:eq('+ind+')').css('background-color', '#f2f29f');
-                        });
+                    else if ( value['phase_two_material_date_str'] == null && Math.floor((today - p1) / divider) > 8 ){
+                        //table.on("draw.dt", function(){
+                            $('tr:eq('+ind+')').css('background-color', '#f2f29f');//yellow
+                        //});
                     }
-                    if (value['phase_three_material_date_str'] == null && Math.floor((today - p2) / divider) > 8 ){
-                        table.on("draw.dt", function(){
-                            $('tr:eq('+ind+')').css('background-color', '#aaf9a4');
-                        });
+                    else if (value['phase_three_material_date_str'] == null && Math.floor((today - p2) / divider) > 8 ){
+                        //table.on("draw.dt", function(){
+                            $('tr:eq('+ind+')').css('background-color', '#aaf9a4');//green
+                       // });
                     }
-                    if (value['completion_date_str'] == null && Math.floor((today - p3) / divider) > 8 ){
-                        table.on("draw.dt", function(){
-                            $('tr:eq('+ind+')').css('background-color', '#aaa4f4');
-                        });
+                    else if (value['completion_date_str'] == null && Math.floor((today - p3) / divider) > 8 ){
+                       // table.on("draw.dt", function(){
+                            $('tr:eq('+ind+')').css('background-color', '#aaa4f4');//blue
+                       //    });
                     }
                     /*if (value['phase_one_material_date_str'] - value['agreement_date_str'] > 8){
 
                     }*/
                 }
                 else{
-                   console.log("agreement not done");
+                   $('tr:eq('+ind+')').css('background-color', '#adabab');//grey
                 }
 
 
+
             });
+            //console.log(counter);
 
         }
         else{
