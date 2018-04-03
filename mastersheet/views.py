@@ -9,8 +9,7 @@ from django.views.decorators.csrf import csrf_exempt
 import json
 import urllib2
 from django.conf import settings
-from django.db.models.signals import pre_save,post_save
-from django.dispatch import receiver
+
 from django.http import JsonResponse
 
 
@@ -42,7 +41,7 @@ def masterSheet(request, slum_code = 0 ):
         #url_family_factsheet = str(settings.KOBOCAT_FORM_URL)+str('data/68?format=json&query={"group_vq77l17/slum_name":"')+ str(slum_code) + str('"}&fields=["OnfieldFactsheet","group_ne3ao98/Have_you_upgraded_yo_ng_individual_toilet","group_ne3ao98/Cost_of_upgradation_in_Rs","group_ne3ao98/Where_the_individual_ilet_is_connected_to","group_ne3ao98/Use_of_toilet","group_vq77l17/Household_number"]')
         url_family_factsheet = str(settings.KOBOCAT_FORM_URL)+str('data/97?format=json&query={"group_vq77l17/slum_name":"')+ str(slum_code) + str('"}&fields=["OnfieldFactsheet","group_ne3ao98/Have_you_upgraded_yo_ng_individual_toilet","group_ne3ao98/Cost_of_upgradation_in_Rs","group_ne3ao98/Where_the_individual_ilet_is_connected_to","group_ne3ao98/Use_of_toilet","group_vq77l17/Household_number"]')
 
-        #url_RHS_form = str(settings.KOBOCAT_FORM_URL)+str('forms/130/form.json"')
+        #url_RHS_form = str(settings.KOBOCAT_FORM_URL)+str('forms/130/form.json')
         url_RHS_form = str(settings.KOBOCAT_FORM_URL) + str('forms/98/form.json"')
 
         kobotoolbox_request = urllib2.Request(urlv)
@@ -107,7 +106,7 @@ def masterSheet(request, slum_code = 0 ):
         except Exception as err:
             print err
 
-        sbm_fields = ['slum', 'household_number', 'name', 'application_id', 'photo_uploaded', 'created_date_str']
+        sbm_fields = ['slum', 'household_number', 'name', 'application_id', 'photo_uploaded', 'created_date_str', 'id']
         sbm_data = SBMUpload.objects.extra(
             select={'created_date_str': "to_char(created_date, 'YYYY-MM-DD HH24:MI:SS')"}).filter(
             slum__shelter_slum_code=slum_code)
@@ -122,7 +121,7 @@ def masterSheet(request, slum_code = 0 ):
         except Exception as err:
             print err
 
-        community_mobilization_fields = ['slum', 'household_number', 'activity_type', 'activity_date_str']
+        community_mobilization_fields = ['slum', 'household_number', 'activity_type', 'activity_date_str','id']
         community_mobilization_data = CommunityMobilization.objects.extra(
             select={'activity_date_str': "to_char(activity_date, 'YYYY-MM-DD HH24:MI:SS')"}).filter(
             slum__shelter_slum_code=slum_code)
@@ -146,6 +145,7 @@ def masterSheet(request, slum_code = 0 ):
                         if int(x['Household_number']) == int(z):
                             new_activity_type = community_mobilization_data[i].activity_type.name
                             x.update({new_activity_type: y.activity_date_str})
+                            x.update({"com_mob_id" : y.id})
         except Exception as e:
             print e
 
@@ -175,7 +175,6 @@ def masterSheet(request, slum_code = 0 ):
                                     for num in string:
                                         string[string.index(num)] = name_label_data_dict[key_nl][num]
                                     x[key_f] = ", ".join(string)
-                                    print x[key_f]
                         # Handling current place of defecation column
                         for keys in x:
                             if 'group_oi8ts04/C1' in keys:
@@ -190,6 +189,9 @@ def masterSheet(request, slum_code = 0 ):
                                 x.update({'current place of defecation': x['group_oi8ts04/C5']})
                     except:
                         pass
+    for x in formdict:
+        if int(x['Household_number']) > 840:
+            print x
 
     return HttpResponse(json.dumps(formdict),  content_type = "application/json")
 
@@ -396,7 +398,7 @@ def handle_uploaded_file(f):
                     if activityType_instance:
                         try:
 
-
+                            ### IMPORTANT!!!!! Date should also be considered!!! INCOMPLETE!!!!!
                             ComMob_instance = CommunityMobilization.objects.get(slum = this_slum,activity_type=activityType_instance)
 
                             temp = ComMob_instance.household_number
@@ -509,7 +511,7 @@ def delete_selected(request):
     print records['records'][0]
 
     return HttpResponse(json.dumps(response), content_type="application/json")
-kobo_form = 98 # *****IMPORTANT***** This form number is for local setting. Do change it to 130 before going live
+kobo_form = 98 # *****IMPORTANT***** This form number (98) is for local setting. Do change it to 130 before going live.
 headers={}
 headers["Authorization"] = settings.KOBOCAT_TOKEN
 import requests
@@ -527,18 +529,6 @@ def delete_selected_records(records):
 
 
 
-@receiver(pre_save, sender=ToiletConstruction)
-def update_status(sender ,instance, **kwargs):
-    instance.status = STATUS_CHOICES[5][0]
-
-    if (instance.phase_one_material_date is None) and (datetime.date.today() - instance.agreement_date > datetime.timedelta(days=8)):
-        instance.status = STATUS_CHOICES[2][0]#material not given
-
-    if instance.completion_date:
-        instance.status = STATUS_CHOICES[5][0]#completed
-
-    if instance.agreement_cancelled:
-        instance.status = STATUS_CHOICES[1][0]#agreement cancelled
 
     #instance.save()
 
