@@ -43,6 +43,7 @@
     <form id = "slum_form"  method="POST">{% csrf_token %}
         {{ form.as_p }}
         <input type="button" id="btnFetch" value="Submit" />
+        <input type="button" id="btnSync" value="Sync" />
         <input type="hidden" class="hide" id="slum_code" value="{{slum_code}}"/>
     </form>
 

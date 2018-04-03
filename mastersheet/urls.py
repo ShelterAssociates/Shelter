@@ -13,5 +13,6 @@ urlpatterns = [
     url(r'^show/mastersheet/$', renderMastersheet, name="renderMastersheet"),
     url(r'^list/show/$', masterSheet, name="masterSheet"),
     #url(r'^$', masterSheet, name='masterSheet'),
+    url(r'^sync/slum/(?P<slum_id>\d+)$', sync_kobo_data, name='sync_kobo_data')
 
 ]
