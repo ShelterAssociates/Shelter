@@ -1,43 +1,34 @@
 {%extends "admin/base_site.html"%}
-{%block content%}
 {% load static %}
 
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <link rel = "stylesheet" type="text/css" href = "{% static "css/jquery.dataTables.min.css" %}">
-    <link rel = "stylesheet" type="text/css" href = "{% static "admin/css/forms.css" %}">
-    <link rel = "stylesheet" type="text/css" href = "{% static "css/highlight_buttons.css" %}">
-    <link rel = "stylesheet" type="text/css" href = "{% static "css/scolling.css" %}">
-
-    <script src = "{% static "js/jquery-1.12.4.js" %}"></script>
-    <script src = "{% static "js/bootstrap.min.js" %}"></script>
-    <script src = "{% static "js/jquery.dataTables.min.js" %}"></script>
-    <script src = "{% static "js/dataTables.buttons.min.js" %}"></script>
-    <script src = "{% static "js/jszip.min.js" %}"></script>
-    <script src = "{% static "js/buttons.html5.min.js" %}"></script>
-    <script src = "{% static "admin/js/admin/RelatedObjectLookups.js" %}"></script>
-    <script src = "{% static "admin/js/core.js" %}"></script>
-    <script src = "{% static "admin/js/change_list.js" %}"></script>
-    <script src = "{% static "js/load_datatable.js" %}"></script>
-    <script src = "{% static "js/add_searchBox.js" %}"></script>
-    <script src = "{% static "js/file_input.js" %}"></script>
-    <script src = "{% static "js/dataTables.fixedColumns.min.js" %}"></script>
-    <script src = "{% static "js/highlight_buttons.js" %}"></script>
-    <script src = "{% static "js/flag_dates.js" %}"></script>
-
-
-</head>
+{% block extrastyle %}
+<link rel = "stylesheet" type="text/css" href = "{% static "css/jquery.dataTables.min.css" %}">
+<link rel = "stylesheet" type="text/css" href = "{% static "admin/css/forms.css" %}">
+<link rel = "stylesheet" type="text/css" href = "{% static "css/highlight_buttons.css" %}">
+<link rel = "stylesheet" type="text/css" href = "{% static "css/scolling.css" %}">
 <style>
+#upload_file {
+    text-align: center;
+    height:100px;
+    witdh:1360px;
+    background-color: blue;
 
-    #upload_file {
-            text-align: center;
-            height:100px;
-            witdh:1360px;
-            background-color: blue;
-
-        }
+}
 </style>
+{%endblock%}
+{% block extrahead %}
+<script src = "{% static "js/jquery.dataTables.min.js" %}"></script>
+<script src = "{% static "js/dataTables.buttons.min.js" %}"></script>
+<script src = "{% static "js/jszip.min.js" %}"></script>
+<script src = "{% static "js/buttons.html5.min.js" %}"></script>
+<script src = "{% static "admin/js/admin/RelatedObjectLookups.js" %}"></script>
+<script src = "{% static "js/load_datatable.js" %}"></script>
+<script src = "{% static "js/add_searchBox.js" %}"></script>
+<script src = "{% static "js/dataTables.fixedColumns.min.js" %}"></script>
+<script src = "{% static "js/highlight_buttons.js" %}"></script>
+{%endblock%}
+
+{% block content %}
 <div class="customized-form">
 
     <form id = "slum_form"  method="POST">{% csrf_token %}
@@ -47,20 +38,16 @@
         <input type="hidden" class="hide" id="slum_code" value="{{slum_code}}"/>
     </form>
 
-   <form id=" upload_file" method = "POST" enctype="multipart/form-data" action="http://127.0.0.1:8000/mastersheet/files/">{% csrf_token %}
+   <form id=" upload_file" method = "POST" enctype="multipart/form-data" action="/mastersheet/files/">{% csrf_token %}
         {{ file_form.as_p}}
         <input value = "Submit" type="submit" id = "file_input"/>
     </form>
 
-
 </div>
 
-<body>
-
-    <table id="example" class="display" width="100%" cellspacing="0">
-    </table>
-</body>
+<table id="example" class="display" width="100%" cellspacing="0">
+</table>
 
 <button id = "delete_selected" type="button"  >Delete Selected</button>
-</html>
+
 {%endblock%}
