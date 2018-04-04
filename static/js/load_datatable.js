@@ -9,6 +9,9 @@ var today = Date.now();
 
 
 
+
+
+
 $(document).ready(function() {
 
 
@@ -22,8 +25,10 @@ $(document).ready(function() {
             dataType : "json",
             data : "",
             contentType : "application/json",
-            success : function (data) {
+            success : function (data,type,row,meta) {
                             columns_defs = data;
+
+
                      }
     });
 
@@ -62,17 +67,35 @@ $(document).ready(function() {
                             {
                                 "targets": [42,43,44],
                                 "render": function ( data, type, row, meta ) {
-                                                var url_1 = String("127.0.0.1:8000/admin/master/mastersheet/sbmupload/1/");
                                                 if (parseInt(row.Household_number) > 830){
-                                                console.log("household number");
-                                                console.log(row.Household_number);
-                                                console.log(row.id);
+                                                url_SBM = String("/admin/master/mastersheet/sbmupload/") + row.id + String("/");
 
                                                 if(type === 'display'){
-                                                    data = '<a href = "#" onclick=window.open("/admin/master/mastersheet/sbmupload/1/")>' + data + '</a>';
+                                                    data = '<a href = "#" onclick=window.open("'+url_SBM+'")>' + data + '</a>';
                                                 }
                                                 }
                                                 //$('[data-toggle="popover"]').popover(); ' + url_1 + '
+
+                                                return data;
+                                            }
+
+                            },
+                            {
+                                "targets": add_hyperlink,
+                                "render": function ( data, type, row, meta ) {
+                                                console.log("rendering daily reporting..");
+                                                //console.log(row.0);
+                                                /*if (parseInt(row.Household_number) > 830){
+                                                console.log("com_mob_id");
+                                                console.log(row.com_mob_id);
+                                                console.log("daily_reporting_columns");
+                                                console.log(daily_reporting_columns);
+                                                url_DR = String("/admin/master/mastersheet/sbmupload/") + row.com_mob_id + String("/");
+
+                                                if(type === 'display'){
+                                                    data = '<a href = "#" onclick=window.open("'+url_DR+'")>' + data + '</a>';
+                                                }
+                                                }*/
 
                                                 return data;
                                             }
@@ -161,6 +184,7 @@ $(document).ready(function() {
                                                                             for ( i = 53; i < (53 + data['daily_reporting']); i++){
                                                                                 show_them.push(i);
                                                                             }
+                                                                            daily_reporting_columns = show_them;
                                                                             var table = $('#example').DataTable();
                                                                             table.columns().visible(false);
                                                                             table.columns(show_them).visible(true);
@@ -242,6 +266,7 @@ $(document).ready(function() {
 
 
             //flag_dates();
+            add_hyperlink();
             highlight_buttons();
             add_search_box();
             $( table.table().container() ).on( 'keyup', 'tfoot tr th input', function (index,element) {
@@ -251,11 +276,9 @@ $(document).ready(function() {
             } );
             table.draw();
             $('#example').on("draw.dt", function(){
-                console.log("flag dates is called");
                 for(i=0; i<10; i++)
                 {
                     $('tr:eq('+i+')').css('background-color', '#ffffff');
-                    console.log('white wash');
                 }
                 flag_dates();
             });
@@ -314,7 +337,28 @@ $(document).ready(function() {
     }
 
     function add_hyperlink(){
-        //console.log("in add_hyperlink...");
+        $.ajax({
+                    url: "/mastersheet/buttons",
+                    type: "GET",
+                    dataType : "json",
+                    data : "",
+                    contentType : "application/json",
+                    success : function(data){
+                                    var daily_reporting_columns = [];
+                                    for ( i = 53; i < (53 + data['daily_reporting']); i++){
+                                        daily_reporting_columns.push(i);
+                                    }
+                                    var all_rows = table.rows().data();
+                                    console.log("All rows -");
+                                    console.log(table);
+                                    all_rows.each(function(value,index){
+                                        console.log('Data in index: ' + index + ' is: ' + value);
+                                    })
+                              }
+                });
+
+
+
     }
 
     function select_rows(){
