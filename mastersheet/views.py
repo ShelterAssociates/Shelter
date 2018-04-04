@@ -210,7 +210,7 @@ def trav(node):
 
 def define_columns(request):
     formdict_new = [
-        {"data": "Household_number", "title": "Household Number" },
+        {"data": "Household_number", "title": "Household Number" ,"className": "add_hyperlink"},
         {"data": "Date_of_survey", "title": "Date of Survey"},
         {"data": "Name_s_of_the_surveyor_s", "title": "Name of the Surveyor"},
         {"data": "Type_of_structure_occupancy", "title": "Type of structure occupancy"},
