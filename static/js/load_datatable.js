@@ -27,7 +27,8 @@ $(document).ready(function() {
             contentType : "application/json",
             success : function (data,type,row,meta) {
                             columns_defs = data;
-                            var tmp = [];
+                            var tmp_daily_reporting_columns = [];
+                            var tmp_account = [];
                             $.ajax({
                                 url: "/mastersheet/buttons",
                                 type: "GET",
@@ -35,35 +36,49 @@ $(document).ready(function() {
                                 contentType : "application/json",
                                 async:false,
                                 success : function(data){
-                                    var show_them = [];
+                                    var DR = [];
                                     for(i = 53; i < (53 + data['daily_reporting']); i ++){
-                                        show_them.push(i);
+                                        DR.push(i);
                                     }
-                                    tmp = show_them;
+                                    tmp_daily_reporting_columns = DR;
+                                    var ACC = [];
+                                    for ( i = (53 + data['daily_reporting']); i < (53 + data['daily_reporting'] + data['accounts']); i++)
+                                    {
+                                        ACC.push(i);
+                                    }
+                                    tmp_accounts = ACC;
 
                                 }
                             });
-
-                            console.log(tmp);
-                            for (i = 0 ; i < tmp.length ; i ++ ){
-                                var ID = String(columns_defs[tmp[i]]['title']) + "_id";
-                                columns_defs[tmp[i]]['render']= function ( data, type, row,meta ) {
-                                    if(parseInt(row.Household_number) > 840){
-                                        console.log(columns_defs[meta.col]['title']);
-
-                                        console.log(row.Household_number);
-                                        url_daily_reporting = url_SBM = String("/admin/master/mastersheet/communitymobilization/") + row.com_mob_id + String("/");
+                            // Adding hyperlinks to community mobilization data
+                            for (i = 0 ; i < tmp_daily_reporting_columns.length ; i ++ ){
+                                columns_defs[tmp_daily_reporting_columns[i]]['render']= function ( data, type, row,meta ) {
+                                    if(typeof data != 'undefined') {
+                                        url_daily_reporting = url_SBM = String("/admin/master/mastersheet/communitymobilization/") + row[columns_defs[meta.col]['title']+"_id"] + String("/");
                                         if(type === 'display'){
-                                                    data = '<a href = "#" onclick=window.open("'+url_daily_reporting+'")>' + data + '</a>';
+                                                    data = '<a href = "#" onclick="window.open(\''+url_daily_reporting+'\', \'_blank\', \'width=650,height=550\');">' + data + "</a>";
                                         }
                                         return data;
                                     }
-                                    else
-                                    {
-                                        return null;
+                                }
+                            }
+                            // Adding hyperlinks to accounts data
+                            for (i = 0 ; i < tmp_accounts.length ; i ++ ){
+                                columns_defs[tmp_accounts[i]]['render']= function ( data, type, row,meta ) {
+                                    if(typeof data != 'undefined'){
+                                        url_accounts = String("/admin/master/mastersheet/vendorhouseholdinvoicedetail/") + row[columns_defs[meta.col]['title']+"_id"] + String("/");
+                                        if(type === 'display'){
+                                                    data = '<a href = "#" onclick="window.open(\''+url_accounts+'\', \'_blank\', \'width=650,height=550\');">' + data + "</a>";
+
+                                        }
+                                        return data;
                                     }
                                 }
                             }
+
+
+
+
 
                       }
     });
@@ -104,37 +119,28 @@ $(document).ready(function() {
                             {
                                 "targets": [42,43,44],
                                 "render": function ( data, type, row, meta ) {
-                                                if (parseInt(row.Household_number) > 830){
                                                 url_SBM = String("/admin/master/mastersheet/sbmupload/") + row.id + String("/");
+                                                if(typeof data != 'undefined'){
+                                                    if(type === 'display'){
+                                                        data = '<a href = "#" onclick="window.open(\''+url_SBM+'\', \'_blank\', \'width=650,height=550\');">' + data + "</a>";
+                                                    }
 
-                                                if(type === 'display'){
-                                                    data = '<a href = "#" onclick=window.open("'+url_SBM+'")>' + data + '</a>';
+                                                    return data;
                                                 }
-                                                }
-                                                //$('[data-toggle="popover"]').popover(); ' + url_1 + '
-
-                                                return data;
                                             }
 
                             },
                             {
-                                "targets": add_hyperlink,
+                                "targets": [45,46,47,48,49,50,51,52],
                                 "render": function ( data, type, row, meta ) {
-                                                console.log("rendering daily reporting..");
-                                                //console.log(row.0);
-                                                /*if (parseInt(row.Household_number) > 830){
-                                                console.log("com_mob_id");
-                                                console.log(row.com_mob_id);
-                                                console.log("daily_reporting_columns");
-                                                console.log(daily_reporting_columns);
-                                                url_DR = String("/admin/master/mastersheet/sbmupload/") + row.com_mob_id + String("/");
+                                                url_TC = String("/admin/master/mastersheet/toiletconstruction/") + row['tc_id_'+String(row.Household_number)] + String("/");
+                                                if(typeof data != 'undefined'){
+                                                    if(type === 'display'){
+                                                        '<a href = "#" onclick="window.open(\''+url_TC+'\', \'_blank\', \'width=650,height=550\');">' + data + "</a>";
+                                                    }
 
-                                                if(type === 'display'){
-                                                    data = '<a href = "#" onclick=window.open("'+url_DR+'")>' + data + '</a>';
+                                                    return data;
                                                 }
-                                                }*/
-
-                                                return data;
                                             }
 
                             },
