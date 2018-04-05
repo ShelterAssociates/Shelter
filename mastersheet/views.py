@@ -9,7 +9,7 @@ from django.views.decorators.csrf import csrf_exempt
 import json
 import urllib2
 from django.conf import settings
-
+import collections
 from django.http import JsonResponse
 from mastersheet.daily_reporting_sync import ToiletConstructionSync, CommunityMobilizaitonSync
 
@@ -287,10 +287,17 @@ def define_columns(request):
 
         # Append vendor type here #
     ]
+    final_data = {}
+    final_data['buttons'] = collections.OrderedDict()
+    final_data['buttons']['RHS'] = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18]
+    final_data['buttons']['Follow-up'] = [19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36]
+    final_data['buttons']['Family factsheet'] = [37, 38, 39, 40, 41]
+    final_data['buttons']['SBM'] = [42, 43, 44]
+    final_data['buttons']['Construction status'] = [45, 46, 47, 48, 49, 50, 51, 52]
 
     # We define the columns for community mobilization and vendor details in a dynamic way. The
     # reason being these columns are prone to updates and additions.
-
+    activity_pre_len = len(formdict_new)
     activity_type_model = ActivityType.objects.all()
 
     try:
@@ -298,18 +305,19 @@ def define_columns(request):
             formdict_new.append({"data":activity_type_model[i].name, "title":activity_type_model[i].name})
     except Exception as e:
         print e
+    final_data['buttons']['Community Mobilization'] = range(activity_pre_len, len(formdict_new))
 
     vendor_type_model = VendorType.objects.all()
-
+    vendor_pre_len = len(formdict_new)
     try:
         for i in vendor_type_model:
             formdict_new.append({"data":"vendor_type"+str(i.name), "title":"Name of "+str(i.name)+" vendor"})
             formdict_new.append({"data":"invoice_number"+str(i.name), "title":str(i.name) + " Invoice Number"})
     except Exception as e:
         print e
-
-
-    return HttpResponse(json.dumps(formdict_new),  content_type = "application/json")
+    final_data['buttons']['Accounts'] = range(vendor_pre_len, len(formdict_new))
+    final_data['data'] = formdict_new
+    return HttpResponse(json.dumps(final_data),  content_type = "application/json")
 
 
 

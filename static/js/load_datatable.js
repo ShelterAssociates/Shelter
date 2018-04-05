@@ -26,7 +26,18 @@ $(document).ready(function() {
                             columns_defs = data;
                      }
     });
+    $("#buttons").on("click","button",function(){
 
+        $(this).toggleClass("active");
+        flag = false;
+        if ($(this).hasClass("active"))
+        {
+            flag = true;
+        }
+        section = $(this).attr('value');
+        col = columns_defs['buttons'][section];
+        table.columns(col).visible( flag );
+    });
     function load_data_datatable(){
 
         if (table != null){
@@ -35,8 +46,12 @@ $(document).ready(function() {
 
         }
         else{
-
-
+            buttons = '<div class="btn-group">';
+            $.each(columns_defs['buttons'],function(index, button){
+                buttons += '<button type="button" class="active btn btn-default" value="'+index+'">'+index+'</button>';
+            });
+            buttons += '</div>';
+            $("#buttons").append(buttons);
             table = $("#example").DataTable( {
 
 
@@ -79,170 +94,18 @@ $(document).ready(function() {
 
                             },
                             {"footer":true},
-                            {
-                                "targets": [ 1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36 ],
-                                "visible": false,
-                            },
+
 
                           ],
 
-            "buttons":
+            "buttons":['excel'],
 
-                      [
-
-                             {
-                                extend: 'excelHtml5',
-                                className : 'btn',
-
-                                text: 'Save current page',
-                                exportOptions: {
-                                     columns: ':visible'
-                                }
-                            },
-                            {
-
-                                text: 'RHS',
-                                className : 'btn',
-
-                                action:function(){
-
-                                        var table = $('#example').DataTable();
-                                        table.columns().visible(true);
-                                        var show_them = [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18]
-                                        table.columns().visible(false);
-                                        table.columns(show_them).visible(true);
-                                        table.columns(0).visible(true);
-
-                                        add_search_box();
-                                }
-                            },
-                            {
-                                text: 'Follow-up Survey',
-                                className : 'btn',
-                                action:function(){
-
-                                        var table = $('#example').DataTable();
-                                        table.columns().visible(true);
-                                        var show_them = [19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36];
-                                        table.columns().visible(false);
-                                        table.columns(show_them).visible(true);
-                                        table.columns(0).visible(true);
-
-                                        add_search_box();
-                                }
-                            },
-                            {
-                                text: 'Family Factsheet',
-                                className : 'btn',
-                                action:function(){
-
-                                        var table = $('#example').DataTable();
-                                        table.columns().visible(true);
-                                        var show_them = [37,38,39,40,41];
-                                        table.columns().visible(false);
-                                        table.columns(show_them).visible(true);
-                                        table.columns(0).visible(true);
-                                        add_search_box();
-                                }
-                            },
-                            {
-                                text: 'Daily Reporting',
-                                className : 'btn',
-                                action:function(){
-                                                    $.ajax({
-                                                            url: "/mastersheet/buttons",
-                                                            type: "GET",
-                                                            dataType : "json",
-                                                            data : "",
-                                                            contentType : "application/json",
-                                                            success : function(data){
-                                                                            var show_them = [];
-                                                                            //console.log(data['accounts']);
-                                                                            for ( i = 53; i < (53 + data['daily_reporting']); i++){
-                                                                                show_them.push(i);
-                                                                            }
-                                                                            var table = $('#example').DataTable();
-                                                                            table.columns().visible(false);
-                                                                            table.columns(show_them).visible(true);
-                                                                            table.columns(0).visible(true);
-                                                                            add_search_box();
-                                                                 }
-                                                          });
-                                                    }
-                            },
-                            {
-                                text: 'Accounts',
-                                className : 'btn',
-                                action:function(){
-                                                    $.ajax({
-                                                            url: "/mastersheet/buttons",
-                                                            type: "GET",
-                                                            dataType : "json",
-                                                            data : "",
-                                                            contentType : "application/json",
-                                                            success : function(data){
-                                                                            var show_them = [];
-                                                                            //console.log(data['accounts']);
-                                                                            for ( i = (53 + data['daily_reporting']); i < (53 + data['daily_reporting'] + data['accounts']); i++){
-                                                                                show_them.push(i);
-                                                                            }
-                                                                            var table = $('#example').DataTable();
-                                                                            table.columns().visible(false);
-                                                                            table.columns(show_them).visible(true);
-                                                                            table.columns(0).visible(true);
-                                                                            add_search_box();
-                                                                 }
-                                                          });
-                                                    }
-                            },
-                            {
-                                text: 'SBM',
-                                className : 'btn',
-                                action:function(){
-
-                                        var table = $('#example').DataTable();
-                                        table.columns().visible(true);
-                                        var show_them = [42,43,44];
-                                        table.columns().visible(false);
-                                        table.columns(show_them).visible(true);
-                                        table.columns(0).visible(true);
-                                        add_search_box();
-                                }
-                            },
-                            {
-                                text: 'Show all',
-                                className : 'btn active',
-                                action:function(){
-                                        var table = $('#example').DataTable();
-                                        var hide_them = [ 1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36 ];
-
-
-                                        table.columns().visible(true);
-                                        table.columns(hide_them).visible(false);
-
-                                        add_search_box();
-                                }
-
-                            },
-                            {
-                                text: 'Refresh',
-                                className : 'refresh',
-                                action:function(){
-                                        var is_table_init = $.fn.dataTable.isDataTable("#example");
-                                        load_data_datatable();
-
-                                }
-
-                            }
-
-                      ],
-
-            "columns": columns_defs,
+            "columns": columns_defs['data'],
             });
 
 
             //flag_dates();
-            highlight_buttons();
+            //highlight_buttons();
             add_search_box();
             $( table.table().container() ).on( 'keyup', 'tfoot tr th input', function (index,element) {
 
@@ -309,6 +172,11 @@ $(document).ready(function() {
                     }
                 }
             });
+
+            $("#buttons button")[0].click();
+            $("#buttons button")[1].click();
+            $("#buttons button")[2].click();
+
         }
 
     }

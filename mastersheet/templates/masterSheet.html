@@ -4,7 +4,7 @@
 {% block extrastyle %}
 <link rel = "stylesheet" type="text/css" href = "{% static "css/jquery.dataTables.min.css" %}">
 <link rel = "stylesheet" type="text/css" href = "{% static "admin/css/forms.css" %}">
-<link rel = "stylesheet" type="text/css" href = "{% static "css/highlight_buttons.css" %}">
+
 <link rel = "stylesheet" type="text/css" href = "{% static "css/scolling.css" %}">
 <style>
 #upload_file {
@@ -30,6 +30,9 @@
     left: 0;
     opacity: 0.5;
     z-index: 1;
+}
+div.dt-buttons{
+
 }
 </style>
 {%endblock%}
@@ -73,6 +76,7 @@
 
 </div>
 
+<div id="buttons"></div>
 <table id="example" class="display" width="100%" cellspacing="0">
 </table>
 
