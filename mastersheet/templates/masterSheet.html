@@ -14,6 +14,23 @@
     background-color: blue;
 
 }
+#loading-img {
+    background: url(/static/images/spinner.gif) center center no-repeat;
+    height: 100%;
+    width: 100%;
+    z-index: 20;
+}
+.overlay {
+    background: #e9e9e9;
+    display: none;
+    position: fixed;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    opacity: 0.5;
+    z-index: 1;
+}
 </style>
 {%endblock%}
 {% block extrahead %}
@@ -37,6 +54,9 @@
 {%endblock%}
 
 {% block content %}
+<div class="overlay">
+    <div id="loading-img"></div>
+</div>
 <div class="customized-form">
 
     <form id = "slum_form"  method="POST">{% csrf_token %}

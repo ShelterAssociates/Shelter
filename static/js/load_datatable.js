@@ -487,12 +487,17 @@ $(document).ready(function() {
     $("#btnSync").click(function(){
         let slum = $("#slum_form").find('input[type=text]').val();
         if (slum!=""){
+        $(".overlay").show();
         $.ajax({
             type : "get",
             url : "/mastersheet/sync/slum/"+slum,
             contentType : "json",
             success: function(response){
+                $(".overlay").hide();
                 alert(response.msg);
+            },
+            error : function(){
+                $(".overlay").hide();
             }
 
         });
