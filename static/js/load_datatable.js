@@ -52,9 +52,9 @@ $(document).ready(function() {
                             });
                             // Adding hyperlinks to community mobilization data
                             for (i = 0 ; i < tmp_daily_reporting_columns.length ; i ++ ){
-                                columns_defs[tmp_daily_reporting_columns[i]]['render']= function ( data, type, row,meta ) {
+                                columns_defs['data'][tmp_daily_reporting_columns[i]]['render']= function ( data, type, row,meta ) {
                                     if(typeof data != 'undefined') {
-                                        url_daily_reporting = url_SBM = String("/admin/master/mastersheet/communitymobilization/") + row[columns_defs[meta.col]['title']+"_id"] + String("/");
+                                        url_daily_reporting = url_SBM = String("/admin/master/mastersheet/communitymobilization/") + row[columns_defs['data'][meta.col]['title']+"_id"] + String("/");
                                         if(type === 'display'){
                                                     data = '<a href = "#" onclick="window.open(\''+url_daily_reporting+'\', \'_blank\', \'width=650,height=550\');">' + data + "</a>";
                                         }
@@ -64,9 +64,9 @@ $(document).ready(function() {
                             }
                             // Adding hyperlinks to accounts data
                             for (i = 0 ; i < tmp_accounts.length ; i ++ ){
-                                columns_defs[tmp_accounts[i]]['render']= function ( data, type, row,meta ) {
+                                columns_defs['data'][tmp_accounts[i]]['render']= function ( data, type, row,meta ) {
                                     if(typeof data != 'undefined'){
-                                        url_accounts = String("/admin/master/mastersheet/vendorhouseholdinvoicedetail/") + row[columns_defs[meta.col]['title']+"_id"] + String("/");
+                                        url_accounts = String("/admin/master/mastersheet/vendorhouseholdinvoicedetail/") + row[columns_defs['data'][meta.col]['title']+"_id"] + String("/");
                                         if(type === 'display'){
                                                     data = '<a href = "#" onclick="window.open(\''+url_accounts+'\', \'_blank\', \'width=650,height=550\');">' + data + "</a>";
 
