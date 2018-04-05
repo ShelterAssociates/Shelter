@@ -5,7 +5,7 @@ var divider = 1000 * 60 * 60 * 24;
 var window = 8 * 1000 * 60 * 60 * 24;
 
 var today = Date.now();
-
+var daily_reporting_columns = [];
 
 
 
@@ -27,10 +27,47 @@ $(document).ready(function() {
             contentType : "application/json",
             success : function (data,type,row,meta) {
                             columns_defs = data;
+                            var tmp = [];
+                            $.ajax({
+                                url: "/mastersheet/buttons",
+                                type: "GET",
+                                dataType : "json",
+                                contentType : "application/json",
+                                async:false,
+                                success : function(data){
+                                    var show_them = [];
+                                    for(i = 53; i < (53 + data['daily_reporting']); i ++){
+                                        show_them.push(i);
+                                    }
+                                    tmp = show_them;
 
+                                }
+                            });
 
-                     }
+                            console.log(tmp);
+                            for (i = 0 ; i < tmp.length ; i ++ ){
+                                var ID = String(columns_defs[tmp[i]]['title']) + "_id";
+                                columns_defs[tmp[i]]['render']= function ( data, type, row,meta ) {
+                                    if(parseInt(row.Household_number) > 840){
+                                        console.log(columns_defs[meta.col]['title']);
+
+                                        console.log(row.Household_number);
+                                        url_daily_reporting = url_SBM = String("/admin/master/mastersheet/communitymobilization/") + row.com_mob_id + String("/");
+                                        if(type === 'display'){
+                                                    data = '<a href = "#" onclick=window.open("'+url_daily_reporting+'")>' + data + '</a>';
+                                        }
+                                        return data;
+                                    }
+                                    else
+                                    {
+                                        return null;
+                                    }
+                                }
+                            }
+
+                      }
     });
+
 
     function load_data_datatable(){
 
@@ -285,7 +322,6 @@ $(document).ready(function() {
             $('#example').on("draw.dt",function(){
                 $('[data-toggle="popover"]').popover();// script for popover
             });
-            $('[data-toggle="popover"]').popover();// script for popover
 
             $('#example').on( 'click', 'tbody td', function () {
                 var data = table.cell( this ).render( 'sort' );
@@ -337,7 +373,7 @@ $(document).ready(function() {
     }
 
     function add_hyperlink(){
-        $.ajax({
+        /*$.ajax({
                     url: "/mastersheet/buttons",
                     type: "GET",
                     dataType : "json",
@@ -348,14 +384,25 @@ $(document).ready(function() {
                                     for ( i = 53; i < (53 + data['daily_reporting']); i++){
                                         daily_reporting_columns.push(i);
                                     }
-                                    var all_rows = table.rows().data();
-                                    console.log("All rows -");
-                                    console.log(table);
-                                    all_rows.each(function(value,index){
-                                        console.log('Data in index: ' + index + ' is: ' + value);
-                                    })
+                                    //var node_row = table.row().node();
+                                    //console.log(node_row);
+
+                                    $('#example').on("draw.dt",function(){
+                                        $("#example tr").each(function(index, value){
+                                        console.log("in here...");
+                                        console.log(index);
+                                        console.log(typeof(this ));
+                                        console.log($(this).text()[0]);
+
+                                    });
+                                    });
+                                    table.rows().each( function ( rowIdx, tableLoop, rowLoop ) {
+                                        console.log('printing data1');
+                                        var data1 = this.data();
+                                        console.log(rowIdx, tableLoop, rowLoop);
+                                    } );
                               }
-                });
+                });*/
 
 
 
@@ -378,7 +425,6 @@ $(document).ready(function() {
         if( table != null){
 
             var data = table.rows({ page: 'current' }).data();
-            console.log(data.length);
             var counter = 0;
             data.each(function (value, index) {
                 counter = counter + 1;
