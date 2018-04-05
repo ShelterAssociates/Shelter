@@ -12,7 +12,7 @@ class find_slum(forms.Form):
         super(find_slum,self).__init__( *args, **kwargs)
         self.fields['slumname'] = forms.ModelChoiceField(queryset=Slum.objects.all(), widget=ForeignKeyRawIdWidget(rel=ManyToOneRel(Slum._meta.get_field('id'),Slum, 'id' ), admin_site=admin.site))
         self.fields['slumname'].widget.attrs.update({'class':'customized-form'})
-
+        self.fields['slumname'].label = "Select slum"
 
     class Meta:
         raw_id_fields = ('slumname',)
