@@ -145,7 +145,7 @@ def masterSheet(request, slum_code = 0 ):
                         if int(x['Household_number']) == int(z):
                             new_activity_type = community_mobilization_data[i].activity_type.name
                             x.update({new_activity_type: y.activity_date_str})
-                            x.update({"com_mob_id" : y.id})
+                            x.update({str(new_activity_type) + "_id" : y.id})
         except Exception as e:
             print e
 
