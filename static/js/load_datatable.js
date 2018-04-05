@@ -103,6 +103,7 @@ $(document).ready(function() {
 
         }
         else{
+            $(".overlay").show();
             buttons = '<div class="btn-group">';
             $.each(columns_defs['buttons'],function(index, button){
                 buttons += '<button type="button" class="active btn btn-default" value="'+index+'">'+index+'</button>';
@@ -120,6 +121,7 @@ $(document).ready(function() {
                             data:{'form':$("#slum_form").serialize() , 'csrfmiddlewaretoken':csrf_token},
                             contentType : "application/json",
                             complete: function(){
+                                $(".overlay").hide();
                                 if(table.page.info().recordsDisplay != 0){
                                     //flag_dates();
                                 }
