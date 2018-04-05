@@ -84,7 +84,7 @@ def masterSheet(request, slum_code = 0 ):
         toilet_reconstruction_fields = ['slum', 'household_number', 'agreement_date_str', 'agreement_cancelled',
                                         'septic_tank_date_str', 'phase_one_material_date_str',
                                         'phase_two_material_date_str', 'phase_three_material_date_str',
-                                        'completion_date_str', 'status', 'comment', 'material_shifted_to']
+                                        'completion_date_str', 'status', 'comment', 'material_shifted_to','id']
         daily_reporting_data = ToiletConstruction.objects.extra(
             select={'phase_one_material_date_str': "to_char(phase_one_material_date, 'YYYY-MM-DD HH24:MI:SS')",
                     'phase_two_material_date_str': "to_char(phase_two_material_date, 'YYYY-MM-DD HH24:MI:SS')",
@@ -102,6 +102,7 @@ def masterSheet(request, slum_code = 0 ):
             for x in formdict:
                 if x['Household_number'] in temp_DR_keys:
                     x.update(temp_daily_reporting[x['Household_number']])
+                    x.update({'tc_id_'+str(x['Household_number']): temp_daily_reporting[x['Household_number']]['id']})
 
         except Exception as err:
             print err
@@ -145,7 +146,7 @@ def masterSheet(request, slum_code = 0 ):
                         if int(x['Household_number']) == int(z):
                             new_activity_type = community_mobilization_data[i].activity_type.name
                             x.update({new_activity_type: y.activity_date_str})
-                            x.update({"com_mob_id" : y.id})
+                            x.update({str(new_activity_type) + "_id" : y.id})
         except Exception as e:
             print e
 
@@ -165,6 +166,8 @@ def masterSheet(request, slum_code = 0 ):
                             vendor_name: y.vendor.name,
                             invoice_number: y.invoice_number
                         })
+                        x.update({str(y.vendor.vendor_type.name) + " Invoice Number"+"_id" : y.id})
+                        x.update({"Name of "+str(y.vendor.vendor_type.name)+" vendor""_id" : y.id})
 
                     # Changing the codes to actual labels
                     try:
@@ -189,9 +192,7 @@ def masterSheet(request, slum_code = 0 ):
                                 x.update({'current place of defecation': x['group_oi8ts04/C5']})
                     except:
                         pass
-    for x in formdict:
-        if int(x['Household_number']) > 840:
-            print x
+    
 
     return HttpResponse(json.dumps(formdict),  content_type = "application/json")
 
@@ -210,23 +211,23 @@ def trav(node):
 
 def define_columns(request):
     formdict_new = [
-        {"data": "Household_number", "title": "Household Number" },
+        {"data": "Household_number", "title": "Household Number" ,"className": "add_hyperlink"},#1
         {"data": "Date_of_survey", "title": "Date of Survey"},
         {"data": "Name_s_of_the_surveyor_s", "title": "Name of the Surveyor"},
         {"data": "Type_of_structure_occupancy", "title": "Type of structure occupancy"},
-        {"data": "Type_of_unoccupied_house", "title": "Type of unoccupied house"},
+        {"data": "Type_of_unoccupied_house", "title": "Type of unoccupied house"},#5
         {"data": "Parent_household_number", "title": "Parent household number"},
         {"data": "group_og5bx85/Full_name_of_the_head_of_the_household",
          "title": "Full name of the head of the household"},
         {"data": "group_og5bx85/Type_of_survey", "title": "Type of the survey"},
         {"data": "group_el9cl08/Enter_the_10_digit_mobile_number", "title": "Mobile number"},
-        {"data": "group_el9cl08/Aadhar_number", "title": "Aadhar card number"},
+        {"data": "group_el9cl08/Aadhar_number", "title": "Aadhar card number"},#10
         {"data": "group_el9cl08/Number_of_household_members", "title": "Number of household members"},
         {"data": "group_el9cl08/Do_you_have_any_girl_child_chi",
          "title": "Do you have any girl child/children under the age of 18?"},
         {"data": "group_el9cl08/How_many", "title": "How many?"},
         {"data": "group_el9cl08/Type_of_structure_of_the_house", "title": "Type of structure of the house"},
-        {"data": "group_el9cl08/Ownership_status_of_the_house", "title": "Ownership status of the house"},
+        {"data": "group_el9cl08/Ownership_status_of_the_house", "title": "Ownership status of the house"},#15
         {"data": "group_el9cl08/House_area_in_sq_ft", "title": "House area in sq. ft."},
         {"data": "group_el9cl08/Type_of_water_connection", "title": "Type of water connection"},
         {"data": "group_el9cl08/Facility_of_solid_waste_collection", "title": "Facility of solid waste management"},
@@ -234,7 +235,7 @@ def define_columns(request):
          "title": "Does any household member have any of the construction skills give below?"},
 
         {"data": "group_oi8ts04/Have_you_applied_for_individua",
-         "title": "Have you applied for an individual toilet under SBM?"},
+         "title": "Have you applied for an individual toilet under SBM?"},#20
         {"data": "group_oi8ts04/How_many_installments_have_you", "title": "How many installments have you received?"},
         {"data": "group_oi8ts04/When_did_you_receive_ur_first_installment",
          "title": "When did you receive your first installment?"},
@@ -243,7 +244,7 @@ def define_columns(request):
         {"data": "group_oi8ts04/When_did_you_receive_ur_third_installment",
          "title": "When did you receive your third installment?"},
         {"data": "group_oi8ts04/If_built_by_contract_ow_satisfied_are_you",
-         "title": "If built by a contractor, how satisfied are you?"},
+         "title": "If built by a contractor, how satisfied are you?"},#25
         {"data": "group_oi8ts04/Status_of_toilet_under_SBM", "title": "Status of toilet under SBM?"},
         {"data": "group_oi8ts04/What_was_the_cost_in_to_build_the_toilet",
          "title": "What was the cost incurred to build the toilet?"},
@@ -252,36 +253,36 @@ def define_columns(request):
         {"data": "group_oi8ts04/Is_there_availabilit_onnect_to_the_toilets",
          "title": "Is there availability of drainage to connect to the toilet?"},
         {"data": "group_oi8ts04/Are_you_interested_in_an_indiv",
-         "title": "Are you interested in an individual toilet?"},
+         "title": "Are you interested in an individual toilet?"},#30
         {"data": "group_oi8ts04/What_kind_of_toilet_would_you_likes", "title": "What kind of toilet would you like?"},
         {"data": "group_oi8ts04/Under_what_scheme_wo_r_toilet_to_be_built",
          "title": "Under what scheme would you like your toilet to be built?"},
         {"data": "group_oi8ts04/If_yes_why", "title": "If yes, why?"},
         {"data": "group_oi8ts04/If_no_why", "title": "If no, why?"},
-        {"data": "group_oi8ts04/What_is_the_toilet_connected_to", "title": "What is the toilet connected to?"},
+        {"data": "group_oi8ts04/What_is_the_toilet_connected_to", "title": "What is the toilet connected to?"},#35
         {"data": "group_oi8ts04/Who_all_use_toilets_in_the_hou", "title": "Who all use toilets in the household?"},
         {"data": "group_oi8ts04/Reason_for_not_using_toilet", "title": "Reason for not using toilet"},
 
         {"data": "OnfieldFactsheet", "title": "Factsheet onfield"},
         {"data": "group_ne3ao98/Have_you_upgraded_yo_ng_individual_toilet",
          "title": "Have you upgraded your toilet/bathroom/house while constructing individual toilet?"},
-        {"data": "group_ne3ao98/Cost_of_upgradation_in_Rs", "title": "House renovation cost"},
+        {"data": "group_ne3ao98/Cost_of_upgradation_in_Rs", "title": "House renovation cost"},#40
         {"data": "group_ne3ao98/Where_the_individual_ilet_is_connected_to",
          "title": "Where the individual toilet is connected to?"},
         {"data": "group_ne3ao98/Use_of_toilet", "title": "Use of toilet"},
 
         {"data": "name", "title": "SBM Applicant Name"},
         {"data": "application_id", "title": "Application ID"},
-        {"data": "photo_uploaded", "title": "Is toilet photo uploaded on site?"},
+        {"data": "photo_uploaded", "title": "Is toilet photo uploaded on site?"},#45
 
         {"data": "agreement_date_str", "title": "Date of Agreement"},
         {"data": "agreement_cancelled", "title": "Agreement Cancelled?"},
         {"data": "septic_tank_date_str", "title": "Date of septic tank supplied"},
         {"data": "phase_one_material_date_str", "title": "Date of first phase material"},
-        {"data": "phase_two_material_date_str", "title": "Date of second phase material"},
+        {"data": "phase_two_material_date_str", "title": "Date of second phase material"},#50
         {"data": "phase_three_material_date_str", "title": "Date of third phase material"},
         {"data": "completion_date_str", "title": "Construction Completion Date"},
-        {"data": "material_shifted_to", "title": "Material sifted to"},
+        {"data": "material_shifted_to", "title": "Material sifted to"},#53
 
         # Append community mobilization here #
 

@@ -5,6 +5,9 @@ var divider = 1000 * 60 * 60 * 24;
 var window = 8 * 1000 * 60 * 60 * 24;
 
 var today = Date.now();
+var daily_reporting_columns = [];
+
+
 
 
 
@@ -22,9 +25,62 @@ $(document).ready(function() {
             dataType : "json",
             data : "",
             contentType : "application/json",
-            success : function (data) {
+            success : function (data,type,row,meta) {
                             columns_defs = data;
-                     }
+                            var tmp_daily_reporting_columns = [];
+                            var tmp_account = [];
+                            $.ajax({
+                                url: "/mastersheet/buttons",
+                                type: "GET",
+                                dataType : "json",
+                                contentType : "application/json",
+                                async:false,
+                                success : function(data){
+                                    var DR = [];
+                                    for(i = 53; i < (53 + data['daily_reporting']); i ++){
+                                        DR.push(i);
+                                    }
+                                    tmp_daily_reporting_columns = DR;
+                                    var ACC = [];
+                                    for ( i = (53 + data['daily_reporting']); i < (53 + data['daily_reporting'] + data['accounts']); i++)
+                                    {
+                                        ACC.push(i);
+                                    }
+                                    tmp_accounts = ACC;
+
+                                }
+                            });
+                            // Adding hyperlinks to community mobilization data
+                            for (i = 0 ; i < tmp_daily_reporting_columns.length ; i ++ ){
+                                columns_defs[tmp_daily_reporting_columns[i]]['render']= function ( data, type, row,meta ) {
+                                    if(typeof data != 'undefined') {
+                                        url_daily_reporting = url_SBM = String("/admin/master/mastersheet/communitymobilization/") + row[columns_defs[meta.col]['title']+"_id"] + String("/");
+                                        if(type === 'display'){
+                                                    data = '<a href = "#" onclick="window.open(\''+url_daily_reporting+'\', \'_blank\', \'width=650,height=550\');">' + data + "</a>";
+                                        }
+                                        return data;
+                                    }
+                                }
+                            }
+                            // Adding hyperlinks to accounts data
+                            for (i = 0 ; i < tmp_accounts.length ; i ++ ){
+                                columns_defs[tmp_accounts[i]]['render']= function ( data, type, row,meta ) {
+                                    if(typeof data != 'undefined'){
+                                        url_accounts = String("/admin/master/mastersheet/vendorhouseholdinvoicedetail/") + row[columns_defs[meta.col]['title']+"_id"] + String("/");
+                                        if(type === 'display'){
+                                                    data = '<a href = "#" onclick="window.open(\''+url_accounts+'\', \'_blank\', \'width=650,height=550\');">' + data + "</a>";
+
+                                        }
+                                        return data;
+                                    }
+                                }
+                            }
+
+
+
+
+
+                      }
     });
     $("#buttons").on("click","button",function(){
 
@@ -38,6 +94,7 @@ $(document).ready(function() {
         col = columns_defs['buttons'][section];
         table.columns(col).visible( flag );
     });
+
     function load_data_datatable(){
 
         if (table != null){
@@ -77,24 +134,32 @@ $(document).ready(function() {
                             {
                                 "targets": [42,43,44],
                                 "render": function ( data, type, row, meta ) {
-                                                var url_1 = String("127.0.0.1:8000/admin/master/mastersheet/sbmupload/1/");
-                                                if (parseInt(row.Household_number) > 830){
-                                                console.log("household number");
-                                                console.log(row.Household_number);
-                                                console.log(row.id);
+                                                url_SBM = String("/admin/master/mastersheet/sbmupload/") + row.id + String("/");
+                                                if(typeof data != 'undefined'){
+                                                    if(type === 'display'){
+                                                        data = '<a href = "#" onclick="window.open(\''+url_SBM+'\', \'_blank\', \'width=650,height=550\');">' + data + "</a>";
+                                                    }
 
-                                                if(type === 'display'){
-                                                    data = '<a href = "#" onclick=window.open("/admin/master/mastersheet/sbmupload/1/")>' + data + '</a>';
+                                                    return data;
                                                 }
-                                                }
-                                                //$('[data-toggle="popover"]').popover(); ' + url_1 + '
+                                            }
 
-                                                return data;
+                            },
+                            {
+                                "targets": [45,46,47,48,49,50,51,52],
+                                "render": function ( data, type, row, meta ) {
+                                                url_TC = String("/admin/master/mastersheet/toiletconstruction/") + row['tc_id_'+String(row.Household_number)] + String("/");
+                                                if(typeof data != 'undefined'){
+                                                    if(type === 'display'){
+                                                        '<a href = "#" onclick="window.open(\''+url_TC+'\', \'_blank\', \'width=650,height=550\');">' + data + "</a>";
+                                                    }
+
+                                                    return data;
+                                                }
                                             }
 
                             },
                             {"footer":true},
-
 
                           ],
 
@@ -114,18 +179,15 @@ $(document).ready(function() {
             } );
             table.draw();
             $('#example').on("draw.dt", function(){
-                console.log("flag dates is called");
                 for(i=0; i<10; i++)
                 {
                     $('tr:eq('+i+')').css('background-color', '#ffffff');
-                    console.log('white wash');
                 }
                 flag_dates();
             });
             $('#example').on("draw.dt",function(){
                 $('[data-toggle="popover"]').popover();// script for popover
             });
-            $('[data-toggle="popover"]').popover();// script for popover
 
             $('#example').on( 'click', 'tbody td', function () {
                 var data = table.cell( this ).render( 'sort' );
@@ -181,10 +243,6 @@ $(document).ready(function() {
 
     }
 
-    function add_hyperlink(){
-        //console.log("in add_hyperlink...");
-    }
-
     function select_rows(){
         //console.log("we are called...");
         $('#example tbody').on( 'click', 'tr', function () {
@@ -202,7 +260,6 @@ $(document).ready(function() {
         if( table != null){
 
             var data = table.rows({ page: 'current' }).data();
-            console.log(data.length);
             var counter = 0;
             data.each(function (value, index) {
                 counter = counter + 1;
