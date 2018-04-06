@@ -14,7 +14,7 @@ var daily_reporting_columns = [];
 
 $(document).ready(function() {
 
-
+    $("#delete_selected").hide();
 
    console.log("loading table...");
     var csrf_token = document.getElementsByName("csrfmiddlewaretoken")[0].value;
@@ -224,6 +224,7 @@ $(document).ready(function() {
 
             $.each(columns_defs['buttons'], function(key,val){
                 html_table = $("#example");
+                html_table.find("thead>tr>th:eq(0)").addClass("trFirst");
                 html_table.find("thead>tr>th:eq("+val.slice(0,1)[0]+")").addClass("trFirst");
                 $.each(val.slice(1,val.length-1),function(k,v){
                     html_table.find("thead>tr>th:eq("+v+")").addClass("trMiddle");
@@ -234,6 +235,7 @@ $(document).ready(function() {
             $("#buttons button")[0].click();
             $("#buttons button")[1].click();
             $("#buttons button")[2].click();
+            $("#delete_selected").show();
         }
 
     }
