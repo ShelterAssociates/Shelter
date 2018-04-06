@@ -257,7 +257,7 @@ th {
     font-weight: bold;
 }
 
-thead th,
+#result_list thead th,
 tfoot td {
     color: #666;
     padding: 2px 5px;
@@ -267,17 +267,17 @@ tfoot td {
     border-bottom: 1px solid #ddd;
 }
 
-tfoot td {
+#result_list tfoot td {
     border-bottom: none;
     border-top: 1px solid #ddd;
 }
 
-thead th:first-child,
+#result_list thead th:first-child,
 tfoot td:first-child {
     border-left: none !important;
 }
 
-thead th.optional {
+#result_list thead th.optional {
     font-weight: normal !important;
 }
 
@@ -285,7 +285,7 @@ fieldset table {
     border-right: 1px solid #eee;
 }
 
-tr.row-label td {
+#result_list tr.row-label td {
     font-size: 9px;
     padding-top: 2px;
     padding-bottom: 0;
@@ -294,101 +294,101 @@ tr.row-label td {
     margin-top: -1px;
 }
 
-tr.alt {
+#result_list tr.alt {
     background: #f6f6f6;
 }
 
-.row1 {
+#result_list .row1 {
     background: #EDF3FE;
 }
 
-.row2 {
+#result_list .row2 {
     background: #fff;
 }
 
 /* SORTABLE TABLES */
 
-thead th {
+#result_list thead th {
     padding: 2px 5px;
     line-height: normal;
 }
 
-thead th a:link, thead th a:visited {
+#result_list thead th a:link, thead th a:visited {
     color: #666;
 }
 
-thead th.sorted {
+#result_list thead th.sorted {
     background: #c5c5c5 url(../img/nav-bg-selected.gif) top left repeat-x;
 }
 
-thead th.sorted .text {
+#result_list thead th.sorted .text {
     padding-right: 42px;
 }
 
-table thead th .text span {
+#result_list thead th .text span {
     padding: 2px 5px;
     display:block;
 }
 
-table thead th .text a {
+#result_list thead th .text a {
     display: block;
     cursor: pointer;
     padding: 2px 5px;
 }
 
-table thead th.sortable:hover {
+#result_list thead th.sortable:hover {
     background: #fff url(../img/nav-bg-reverse.gif) 0 -5px repeat-x;
 }
 
-thead th.sorted a.sortremove {
+#result_list thead th.sorted a.sortremove {
     visibility: hidden;
 }
 
-table thead th.sorted:hover a.sortremove {
+#result_list thead th.sorted:hover a.sortremove {
     visibility: visible;
 }
 
-table thead th.sorted .sortoptions {
+#result_list thead th.sorted .sortoptions {
     display: block;
     padding: 4px 5px 0 5px;
     float: right;
     text-align: right;
 }
 
-table thead th.sorted .sortpriority {
+#result_list thead th.sorted .sortpriority {
     font-size: .8em;
     min-width: 12px;
     text-align: center;
     vertical-align: top;
 }
 
-table thead th.sorted .sortoptions a {
+#result_list thead th.sorted .sortoptions a {
     width: 14px;
     height: 12px;
     display: inline-block;
 }
 
-table thead th.sorted .sortoptions a.sortremove {
+#result_list thead th.sorted .sortoptions a.sortremove {
     background: url(../img/sorting-icons.gif) -4px -5px no-repeat;
 }
 
-table thead th.sorted .sortoptions a.sortremove:hover {
+#result_list thead th.sorted .sortoptions a.sortremove:hover {
     background: url(../img/sorting-icons.gif) -4px -27px no-repeat;
 }
 
-table thead th.sorted .sortoptions a.ascending {
+#result_list thead th.sorted .sortoptions a.ascending {
     background: url(../img/sorting-icons.gif) -5px -50px no-repeat;
 }
 
-table thead th.sorted .sortoptions a.ascending:hover {
+#result_list thead th.sorted .sortoptions a.ascending:hover {
     background: url(../img/sorting-icons.gif) -5px -72px no-repeat;
 }
 
-table thead th.sorted .sortoptions a.descending {
+#result_list thead th.sorted .sortoptions a.descending {
     background: url(../img/sorting-icons.gif) -5px -94px no-repeat;
 }
 
-table thead th.sorted .sortoptions a.descending:hover {
+#result_list thead th.sorted .sortoptions a.descending:hover {
     background: url(../img/sorting-icons.gif) -5px -115px no-repeat;
 }
 
@@ -407,71 +407,6 @@ table.orderable tbody tr td:first-child {
 table.orderable-initalized .order-cell, body>tr>td.order-cell {
     display: none;
 }
-
-/* FORM DEFAULTS */
-
-input, textarea, select, .form-row p, form .button {
-    margin: 2px 0;
-    padding: 2px 3px;
-    vertical-align: middle;
-    font-family: "Lucida Grande", Verdana, Arial, sans-serif;
-    font-weight: normal;
-    font-size: 11px;
-}
-
-textarea {
-    vertical-align: top !important;
-}
-
-input[type=text], input[type=password], input[type=email], input[type=url], input[type=number],
-textarea, select, .vTextField {
-    border: 1px solid #ccc;
-}
-
-/* FORM BUTTONS */
-
-.button, input[type=submit], input[type=button], .submit-row input, a.button {
-    background: #fff url(../img/nav-bg.gif) bottom repeat-x;
-    padding: 3px 5px;
-    color: black;
-    border: 1px solid #bbb;
-    border-color: #ddd #aaa #aaa #ddd;
-}
-
-a.button {
-    padding: 4px 5px;
-}
-
-.button:active, input[type=submit]:active, input[type=button]:active {
-    background-image: url(../img/nav-bg-reverse.gif);
-    background-position: top;
-}
-
-.button[disabled], input[type=submit][disabled], input[type=button][disabled] {
-    background-image: url(../img/nav-bg.gif);
-    background-position: bottom;
-    opacity: 0.4;
-}
-
-.button.default, input[type=submit].default, .submit-row input.default {
-    border: 2px solid #5b80b2;
-    background: #7CA0C7 url(../img/default-bg.gif) bottom repeat-x;
-    font-weight: bold;
-    color: #fff;
-    float: right;
-}
-
-.button.default:active, input[type=submit].default:active {
-    background-image: url(../img/default-bg-reverse.gif);
-    background-position: top;
-}
-
-.button[disabled].default, input[type=submit][disabled].default, input[type=button][disabled].default {
-    background-image: url(../img/default-bg.gif);
-    background-position: bottom;
-    opacity: 0.4;
-}
-
 
 /* MODULES */
 
