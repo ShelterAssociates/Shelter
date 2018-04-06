@@ -84,29 +84,27 @@ div.dt-buttons{
             <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
             <h4 class="modal-title" id="myModalLabel">Upload Excel file</h4>
           </div>
-            <form id=" upload_file" method = "POST" enctype="multipart/form-data" action="/mastersheet/files/">{% csrf_token %}
+          <form id=" upload_file" method = "POST" enctype="multipart/form-data" action="/mastersheet/files/">{% csrf_token %}
           <div class="modal-body">
-
                 {{ file_form.as_p}}
-
-
           </div>
           <div class="modal-footer">
             <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
             <button type="submit" class="btn btn-primary">Upload</button>
           </div>
-                 </form>
+          </form>
         </div>
       </div>
     </div>
 
+    <div class="row-fluid" style="padding-top:20px;">
+        <div id="buttons"></div>
+        <table id="example" class="display" width="100%" cellspacing="0">
+        </table>
+
+        <button id = "delete_selected" type="button" class="btn btn-danger"><span class="glyphicon glyphicon-trash"></span> Delete</button>
+    </div>
 
 </div>
-
-<div id="buttons"></div>
-<table id="example" class="display" width="100%" cellspacing="0">
-</table>
-
-<button id = "delete_selected" type="button"  >Delete Selected</button>
 
 {%endblock%}

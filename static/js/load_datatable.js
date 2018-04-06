@@ -14,7 +14,7 @@ var daily_reporting_columns = [];
 
 $(document).ready(function() {
 
-
+    $("#delete_selected").hide();
 
    console.log("loading table...");
     var csrf_token = document.getElementsByName("csrfmiddlewaretoken")[0].value;
@@ -249,6 +249,7 @@ $(document).ready(function() {
             $("#buttons button")[0].click();
             $("#buttons button")[1].click();
             $("#buttons button")[2].click();
+            $("#delete_selected").show();
         }
 
     }
