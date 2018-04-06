@@ -1,21 +1,19 @@
-
 from django.shortcuts import render
 from django.http import HttpResponse
+from django.contrib.auth.decorators import user_passes_test
 from mastersheet.forms import find_slum, file_form
 from mastersheet.models import *
 from itertools import chain
 from master.models import *
 from django.views.decorators.csrf import csrf_exempt
 import json
+import requests
+import pandas
 import urllib2
 from django.conf import settings
 import collections
 from django.http import JsonResponse
 from mastersheet.daily_reporting_sync import ToiletConstructionSync, CommunityMobilizaitonSync
-
-
-
-
 
 #The views in this file correspond to the mastersheet functionality of shelter app.
 
@@ -25,6 +23,7 @@ from mastersheet.daily_reporting_sync import ToiletConstructionSync, CommunityMo
 # Also, it retrieves the data of accounts and SBM. This view bundles them in a single object
 # to be displayed to the front end.
 @csrf_exempt
+@user_passes_test(lambda u: u.is_superuser, login_url='/admin/')
 def masterSheet(request, slum_code = 0 ):
     if "slumname" in str(request.GET.get('form')):
 
@@ -210,10 +209,13 @@ def trav(node):
         return [node]
     return []
 
-
-
-
+@user_passes_test(lambda u: u.is_superuser, login_url='/admin/')
 def define_columns(request):
+    """
+    Method to send datatable columns.
+    :param request: 
+    :return: 
+    """
     formdict_new = [
         {"data": "Household_number", "title": "Household Number" ,"className": "add_hyperlink"},#1
         {"data": "Date_of_survey", "title": "Date of Survey"},
@@ -324,28 +326,14 @@ def define_columns(request):
     final_data['data'] = formdict_new
     return HttpResponse(json.dumps(final_data),  content_type = "application/json")
 
-
-
-# As the columns are defined dynamically, the buttons for hiding and showing the coluns should
-# also be defined dynamically. The columns fetched for displaying data from Kobo toolbox
-# are static. Hence we use their column numbers for adding columns dynamically.
-def define_buttons(request):
-    activity_type_model = ActivityType.objects.all()
-    vendor_type_model = VendorType.objects.all()
-    buttons = {}
-    buttons['daily_reporting'] = len(activity_type_model)
-    buttons['accounts'] = 2 * len(vendor_type_model)
-    return HttpResponse(json.dumps(buttons), content_type = "application/json")
-
-
+@user_passes_test(lambda u: u.is_superuser, login_url='/admin/')
 def renderMastersheet(request):
     slum_search_field = find_slum()
     file_form1 = file_form()
     return render(request, 'masterSheet.html', {'form': slum_search_field, 'file_form':file_form1})
 
-
-
 @csrf_exempt
+@user_passes_test(lambda u: u.is_superuser, login_url='/admin/')
 def file_ops(request):
     slum_search_field = find_slum()
     file_form1 = file_form()
@@ -355,9 +343,6 @@ def file_ops(request):
         except Exception as e:
             print "exception is " + str(e)
     return render(request, 'masterSheet.html', {'form': slum_search_field, 'file_form':file_form1})
-
-
-import pandas
 
 # Pandas libraries help us in handling DataFrames with convenience
 # In the sheet that is being uploaded, the 'Agreement Cancelled' field should be blank if the agreement
@@ -513,7 +498,13 @@ def check_bool(s):
         return False
 
 @csrf_exempt
+@user_passes_test(lambda u: u.is_superuser, login_url='/admin/')
 def delete_selected(request):
+    """
+     Method to delete selected records.
+    :param request: 
+    :return: 
+    """
     slum_search_field = find_slum()
     file_form1 = file_form()
     response = {}
@@ -524,12 +515,16 @@ def delete_selected(request):
     print records['records'][0]
 
     return HttpResponse(json.dumps(response), content_type="application/json")
-kobo_form = 98 # *****IMPORTANT***** This form number (98) is for local setting. Do change it to 130 before going live.
-headers={}
-headers["Authorization"] = settings.KOBOCAT_TOKEN
-import requests
-def delete_selected_records(records):
 
+def delete_selected_records(records):
+    """
+    Method to delete selected records. CALLED from delete_selected
+    :param records: 
+    :return: 
+    """
+    kobo_form = 98  # *****IMPORTANT***** This form number (98) is for local setting. Do change it to 130 before going live.
+    headers = {}
+    headers["Authorization"] = settings.KOBOCAT_TOKEN
     for r in records['records']:
         try:
             if r:
@@ -539,15 +534,14 @@ def delete_selected_records(records):
         except Exception as e:
             print "No record selected to delete."
 
-
-
-
-
-    #instance.save()
-
-
-
+@user_passes_test(lambda u: u.is_superuser, login_url='/admin/')
 def sync_kobo_data(request,slum_id):
+    """
+    Method to sync data from kobotoolbox for community mobilization and toilet construction status(Daily reporting)
+    :param request: 
+    :param slum_id: 
+    :return: success/error msg
+    """
     data={}
     try:
         slum = Slum.objects.get(id=slum_id)
