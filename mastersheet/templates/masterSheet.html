@@ -71,14 +71,14 @@ div.dt-buttons{
 
     <form id = "slum_form"  method="POST">{% csrf_token %}
         {{ form.as_p }}
-        <input type="button" id="btnFetch" value="Submit" />
+        <input type="button" id="btnFetch" value="Search" />
         <input type="button" id="btnSync" value="Sync" />
         <input type="hidden" class="hide" id="slum_code" value="{{slum_code}}"/>
     </form>
 
    <form id=" upload_file" method = "POST" enctype="multipart/form-data" action="/mastersheet/files/">{% csrf_token %}
         {{ file_form.as_p}}
-        <input value = "Submit" type="submit" id = "file_input"/>
+        <input value = "Upload" type="submit" id = "file_input"/>
     </form>
 
 </div>
