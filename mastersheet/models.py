@@ -103,7 +103,7 @@ class ToiletConstruction(models.Model):
     slum = models.ForeignKey(Slum)
     household_number = models.CharField(max_length=5)
     agreement_date = models.DateField(default=datetime.datetime.now)
-    agreement_cancelled = models.BooleanField(default=False)
+    agreement_cancelled = models.NullBooleanField(null=True, blank=True)
     septic_tank_date = models.DateField(null=True, blank=True)
     phase_one_material_date = models.DateField(null=True, blank=True)
     phase_two_material_date = models.DateField(null=True, blank=True)
