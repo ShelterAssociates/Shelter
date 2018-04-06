@@ -27,34 +27,13 @@ $(document).ready(function() {
             contentType : "application/json",
             success : function (data,type,row,meta) {
                             columns_defs = data;
-                            var tmp_daily_reporting_columns = [];
-                            var tmp_account = [];
-                            $.ajax({
-                                url: "/mastersheet/buttons",
-                                type: "GET",
-                                dataType : "json",
-                                contentType : "application/json",
-                                async:false,
-                                success : function(data){
-                                    var DR = [];
-                                    for(i = 53; i < (53 + data['daily_reporting']); i ++){
-                                        DR.push(i);
-                                    }
-                                    tmp_daily_reporting_columns = DR;
-                                    var ACC = [];
-                                    for ( i = (53 + data['daily_reporting']); i < (53 + data['daily_reporting'] + data['accounts']); i++)
-                                    {
-                                        ACC.push(i);
-                                    }
-                                    tmp_accounts = ACC;
 
-                                }
-                            });
                             // Adding hyperlinks to community mobilization data
-                            for (i = 0 ; i < tmp_daily_reporting_columns.length ; i ++ ){
-                                columns_defs['data'][tmp_daily_reporting_columns[i]]['render']= function ( data, type, row,meta ) {
+                            var tmp_DR = columns_defs['buttons']['Community Mobilization'];
+                            for (i = 0 ; i < tmp_DR.length ; i ++ ){
+                                columns_defs['data'][tmp_DR[i]]['render']= function ( data, type, row,meta ) {
                                     if(typeof data != 'undefined') {
-                                        url_daily_reporting = url_SBM = String("/admin/master/mastersheet/communitymobilization/") + row[columns_defs['data'][meta.col]['title']+"_id"] + String("/");
+                                        url_daily_reporting = String("/admin/master/mastersheet/communitymobilization/") + row[columns_defs['data'][meta.col]['title']+"_id"] + String("/");
                                         if(type === 'display'){
                                                     data = '<a href = "#" onclick="window.open(\''+url_daily_reporting+'\', \'_blank\', \'width=650,height=550\');">' + data + "</a>";
                                         }
@@ -62,9 +41,11 @@ $(document).ready(function() {
                                     }
                                 }
                             }
+
                             // Adding hyperlinks to accounts data
-                            for (i = 0 ; i < tmp_accounts.length ; i ++ ){
-                                columns_defs['data'][tmp_accounts[i]]['render']= function ( data, type, row,meta ) {
+                            var tmp_ACC = columns_defs['buttons']['Accounts'];
+                            for (i = 0 ; i < tmp_ACC.length ; i ++ ){
+                                columns_defs['data'][tmp_ACC[i]]['render']= function ( data, type, row,meta ) {
                                     if(typeof data != 'undefined'){
                                         url_accounts = String("/admin/master/mastersheet/vendorhouseholdinvoicedetail/") + row[columns_defs['data'][meta.col]['title']+"_id"] + String("/");
                                         if(type === 'display'){
@@ -76,10 +57,35 @@ $(document).ready(function() {
                                 }
                             }
 
+                            // Adding hyperlinks to SBM data
+                            var tmp_SBM = columns_defs['buttons']['SBM']
+                            for (i = 0 ; i < tmp_SBM.length ; i ++ ){
+                                columns_defs['data'][tmp_SBM[i]]['render']= function ( data, type, row,meta ) {
+                                    if(typeof data != 'undefined'){
+                                        url_SBM = String("/admin/master/mastersheet/sbmupload/") + row.id + String("/");
+                                        if(type === 'display'){
+                                                    data = '<a href = "#" onclick="window.open(\''+url_SBM+'\', \'_blank\', \'width=650,height=550\');">' + data + "</a>";
 
+                                        }
+                                        return data;
+                                    }
+                                }
+                            }
 
+                            // Adding hyperlinks to Toilet Construction data
+                            var tmp_TC = columns_defs['buttons']['Construction status']
+                            for (i = 0 ; i < tmp_TC.length ; i ++ ){
+                                columns_defs['data'][tmp_TC[i]]['render']= function ( data, type, row,meta ) {
+                                    if(typeof data != 'undefined'){
+                                        url_TC = String("/admin/master/mastersheet/toiletconstruction/") + row['tc_id_'+String(row.Household_number)] + String("/");
+                                        if(type === 'display'){
+                                                    data = '<a href = "#" onclick="window.open(\''+url_TC+'\', \'_blank\', \'width=650,height=550\');">' + data + "</a>";
 
-
+                                        }
+                                        return data;
+                                    }
+                                }
+                            }
                       }
     });
     $("#buttons").on("click","button",function(){
@@ -99,10 +105,19 @@ $(document).ready(function() {
 
         if (table != null){
         table.ajax.reload();
-        //flag_dates();
 
         }
         else{
+
+            add_buttons = '<div class="btn-group">';
+            add_buttons += '<button id = "add_sbm" type="button" class=" btn btn-default" onclick = "window.open(\'/admin/master/mastersheet/sbmupload/add/\', \'_blank\', \'width=650,height=550\')" >+ SBM</button>';
+            add_buttons += '<button id = "add_tc" type="button" class=" btn btn-default" onclick = "window.open(\'/admin/master/mastersheet/toiletconstruction/add/\', \'_blank\', \'width=650,height=550\')" >+ Toilet Construction</button>';
+            add_buttons += '<button id = "add_accounts" type="button" class=" btn btn-default" onclick = "window.open(\'/admin/master/mastersheet/vendorhouseholdinvoicedetail/add/\', \'_blank\', \'width=650,height=550\')">+ Accounts</button>';
+            add_buttons += '<button id = "add_com_mob" type="button" class=" btn btn-default" onclick = "window.open(\'/admin/master/mastersheet/communitymobilization/add/\', \'_blank\', \'width=650,height=550\')">+ Community Mobilization</button>';
+            add_buttons += '</div>'
+            $("#add_buttons").append(add_buttons);
+
+
             $(".overlay").show();
             buttons = '<div class="btn-group">';
             $.each(columns_defs['buttons'],function(index, button){
@@ -110,6 +125,7 @@ $(document).ready(function() {
             });
             buttons += '</div>';
             $("#buttons").append(buttons);
+
             table = $("#example").DataTable( {
 
 
@@ -123,7 +139,6 @@ $(document).ready(function() {
                             complete: function(){
                                 $(".overlay").hide();
                                 if(table.page.info().recordsDisplay != 0){
-                                    //flag_dates();
                                 }
                             }
 
@@ -133,34 +148,6 @@ $(document).ready(function() {
                                 "targets": "_all",
 
                             } ,
-                            {
-                                "targets": [42,43,44],
-                                "render": function ( data, type, row, meta ) {
-                                                url_SBM = String("/admin/master/mastersheet/sbmupload/") + row.id + String("/");
-                                                if(typeof data != 'undefined'){
-                                                    if(type === 'display'){
-                                                        data = '<a href = "#" onclick="window.open(\''+url_SBM+'\', \'_blank\', \'width=650,height=550\');">' + data + "</a>";
-                                                    }
-
-                                                    return data;
-                                                }
-                                            }
-
-                            },
-                            {
-                                "targets": [45,46,47,48,49,50,51,52],
-                                "render": function ( data, type, row, meta ) {
-                                                url_TC = String("/admin/master/mastersheet/toiletconstruction/") + row['tc_id_'+String(row.Household_number)] + String("/");
-                                                if(typeof data != 'undefined'){
-                                                    if(type === 'display'){
-                                                        '<a href = "#" onclick="window.open(\''+url_TC+'\', \'_blank\', \'width=650,height=550\');">' + data + "</a>";
-                                                    }
-
-                                                    return data;
-                                                }
-                                            }
-
-                            },
                             {"footer":true},
 
                           ],
