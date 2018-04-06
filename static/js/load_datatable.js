@@ -237,10 +237,18 @@ $(document).ready(function() {
                 }
             });
 
+            $.each(columns_defs['buttons'], function(key,val){
+                html_table = $("#example");
+                html_table.find("thead>tr>th:eq("+val.slice(0,1)[0]+")").addClass("trFirst");
+                $.each(val.slice(1,val.length-1),function(k,v){
+                    html_table.find("thead>tr>th:eq("+v+")").addClass("trMiddle");
+                });
+
+                html_table.find("thead>tr>th:eq("+val.slice(val.length-1)[0]+")").addClass("trLast");
+            });
             $("#buttons button")[0].click();
             $("#buttons button")[1].click();
             $("#buttons button")[2].click();
-
         }
 
     }
