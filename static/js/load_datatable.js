@@ -1,4 +1,3 @@
-
 var columns_defs;
 var table = null;
 var divider = 1000 * 60 * 60 * 24;
@@ -6,11 +5,6 @@ var window = 8 * 1000 * 60 * 60 * 24;
 
 var today = Date.now();
 var daily_reporting_columns = [];
-
-
-
-
-
 
 $(document).ready(function() {
 
@@ -26,67 +20,67 @@ $(document).ready(function() {
             data : "",
             contentType : "application/json",
             success : function (data,type,row,meta) {
-                            columns_defs = data;
+                columns_defs = data;
 
-                            // Adding hyperlinks to community mobilization data
-                            var tmp_DR = columns_defs['buttons']['Community Mobilization'];
-                            for (i = 0 ; i < tmp_DR.length ; i ++ ){
-                                columns_defs['data'][tmp_DR[i]]['render']= function ( data, type, row,meta ) {
-                                    if(typeof data != 'undefined') {
-                                        url_daily_reporting = String("/admin/master/mastersheet/communitymobilization/") + row[columns_defs['data'][meta.col]['title']+"_id"] + String("/");
-                                        if(type === 'display'){
-                                                    data = '<a href = "#" onclick="window.open(\''+url_daily_reporting+'\', \'_blank\', \'width=650,height=550\');">' + data + "</a>";
-                                        }
-                                        return data;
-                                    }
-                                }
+                // Adding hyperlinks to community mobilization data
+                var tmp_DR = columns_defs['buttons']['Community Mobilization'];
+                for (i = 0 ; i < tmp_DR.length ; i ++ ){
+                    columns_defs['data'][tmp_DR[i]]['render']= function ( data, type, row,meta ) {
+                        if(typeof data != 'undefined') {
+                            url_daily_reporting = String("/admin/master/mastersheet/communitymobilization/") + row[columns_defs['data'][meta.col]['title']+"_id"] + String("/");
+                            if(type === 'display'){
+                                        data = '<a href = "#" onclick="window.open(\''+url_daily_reporting+'\', \'_blank\', \'width=650,height=550\');">' + data + "</a>";
                             }
+                            return data;
+                        }
+                    }
+                }
 
-                            // Adding hyperlinks to accounts data
-                            var tmp_ACC = columns_defs['buttons']['Accounts'];
-                            for (i = 0 ; i < tmp_ACC.length ; i ++ ){
-                                columns_defs['data'][tmp_ACC[i]]['render']= function ( data, type, row,meta ) {
-                                    if(typeof data != 'undefined'){
-                                        url_accounts = String("/admin/master/mastersheet/vendorhouseholdinvoicedetail/") + row[columns_defs['data'][meta.col]['title']+"_id"] + String("/");
-                                        if(type === 'display'){
-                                                    data = '<a href = "#" onclick="window.open(\''+url_accounts+'\', \'_blank\', \'width=650,height=550\');">' + data + "</a>";
+                // Adding hyperlinks to accounts data
+                var tmp_ACC = columns_defs['buttons']['Accounts'];
+                for (i = 0 ; i < tmp_ACC.length ; i ++ ){
+                    columns_defs['data'][tmp_ACC[i]]['render']= function ( data, type, row,meta ) {
+                        if(typeof data != 'undefined'){
+                            url_accounts = String("/admin/master/mastersheet/vendorhouseholdinvoicedetail/") + row[columns_defs['data'][meta.col]['title']+"_id"] + String("/");
+                            if(type === 'display'){
+                                        data = '<a href = "#" onclick="window.open(\''+url_accounts+'\', \'_blank\', \'width=650,height=550\');">' + data + "</a>";
 
-                                        }
-                                        return data;
-                                    }
-                                }
                             }
+                            return data;
+                        }
+                    }
+                }
 
-                            // Adding hyperlinks to SBM data
-                            var tmp_SBM = columns_defs['buttons']['SBM']
-                            for (i = 0 ; i < tmp_SBM.length ; i ++ ){
-                                columns_defs['data'][tmp_SBM[i]]['render']= function ( data, type, row,meta ) {
-                                    if(typeof data != 'undefined'){
-                                        url_SBM = String("/admin/master/mastersheet/sbmupload/") + row.id + String("/");
-                                        if(type === 'display'){
-                                                    data = '<a href = "#" onclick="window.open(\''+url_SBM+'\', \'_blank\', \'width=650,height=550\');">' + data + "</a>";
+                // Adding hyperlinks to SBM data
+                var tmp_SBM = columns_defs['buttons']['SBM']
+                for (i = 0 ; i < tmp_SBM.length ; i ++ ){
+                    columns_defs['data'][tmp_SBM[i]]['render']= function ( data, type, row,meta ) {
+                        if(typeof data != 'undefined'){
+                            url_SBM = String("/admin/master/mastersheet/sbmupload/") + row.id + String("/");
+                            if(type === 'display'){
+                                        data = '<a href = "#" onclick="window.open(\''+url_SBM+'\', \'_blank\', \'width=650,height=550\');">' + data + "</a>";
 
-                                        }
-                                        return data;
-                                    }
-                                }
                             }
+                            return data;
+                        }
+                    }
+                }
 
-                            // Adding hyperlinks to Toilet Construction data
-                            var tmp_TC = columns_defs['buttons']['Construction status']
-                            for (i = 0 ; i < tmp_TC.length ; i ++ ){
-                                columns_defs['data'][tmp_TC[i]]['render']= function ( data, type, row,meta ) {
-                                    if(typeof data != 'undefined'){
-                                        url_TC = String("/admin/master/mastersheet/toiletconstruction/") + row['tc_id_'+String(row.Household_number)] + String("/");
-                                        if(type === 'display'){
-                                                    data = '<a href = "#" onclick="window.open(\''+url_TC+'\', \'_blank\', \'width=650,height=550\');">' + data + "</a>";
+                // Adding hyperlinks to Toilet Construction data
+                var tmp_TC = columns_defs['buttons']['Construction status']
+                for (i = 0 ; i < tmp_TC.length ; i ++ ){
+                    columns_defs['data'][tmp_TC[i]]['render']= function ( data, type, row,meta ) {
+                        if(typeof data != 'undefined'){
+                            url_TC = String("/admin/master/mastersheet/toiletconstruction/") + row['tc_id_'+String(row.Household_number)] + String("/");
+                            if(type === 'display'){
+                                        data = '<a href = "#" onclick="window.open(\''+url_TC+'\', \'_blank\', \'width=650,height=550\');">' + data + "</a>";
 
-                                        }
-                                        return data;
-                                    }
-                                }
                             }
-                      }
+                            return data;
+                        }
+                    }
+                }
+          }
     });
     $("#buttons").on("click","button",function(){
 
@@ -102,129 +96,134 @@ $(document).ready(function() {
     });
 
     function load_data_datatable(){
-
+        if(document.forms[0].slumname.value == ""){
+            alert("Please select a slum");
+        }
+        else
+        {
         if (table != null){
         table.ajax.reload();
 
         }
         else{
 
-            $(".overlay").show();
-            buttons = '<div class="btn-group">';
-            $.each(columns_defs['buttons'],function(index, button){
-                buttons += '<button type="button" class="active btn btn-default" value="'+index+'">'+index+'</button>';
-            });
-            buttons += '</div>';
-            $("#buttons").append(buttons);
+                $(".overlay").show();
+                buttons = '<div class="btn-group">';
+                $.each(columns_defs['buttons'],function(index, button){
+                    buttons += '<button type="button" class="active btn btn-default" value="'+index+'">'+index+'</button>';
+                });
+                buttons += '</div>';
+                $("#buttons").append(buttons);
 
-            table = $("#example").DataTable( {
-            "sDom": '<"top"fl>rt<"bottom"ip><"clear">',
-            "ajax" :  {
 
-                            url : "/mastersheet/list/show/",
-                            dataSrc:"",
-                            data:{'form':$("#slum_form").serialize() , 'csrfmiddlewaretoken':csrf_token},
-                            contentType : "application/json",
-                            complete: function(){
-                                $(".overlay").hide();
-                                if(table.page.info().recordsDisplay != 0){
+                table = $("#example").DataTable( {
+                "sDom": '<"top"fl>rt<"bottom"ip><"clear">',
+                "ajax" :  {
+                                url : "/mastersheet/list/show/",
+                                dataSrc:"",
+                                data:{'form':$("#slum_form").serialize() , 'csrfmiddlewaretoken':csrf_token},
+                                contentType : "application/json",
+                                complete: function(){
+                                    $(".overlay").hide();
+                                    if(table.page.info().recordsDisplay != 0){
+                                    }
                                 }
-                            }
 
-                      },
-            "columnDefs": [
-                            {   "defaultContent": "-",
-                                "targets": "_all",
+                          },
+                "columnDefs": [
+                                {   "defaultContent": "-",
+                                    "targets": "_all",
 
-                            } ,
-                            {"footer":true},
+                                } ,
+                                {"footer":true},
 
-                          ],
+                              ],
 
-            "buttons":['excel'],
+                "buttons":['excel'],
 
-            "columns": columns_defs['data'],
-            });
-
-            //add_search_box();
-
-            $( table.table().container() ).on( 'keyup change', 'tfoot tr th input', function (index,element) {
-                console.log(this.value);
-                table.column($(this).parent().index()).search( this.value ).draw();
-
-            } );
-            //table.draw();
-            $('#example').on("draw.dt", function(){
-                for(i=0; i<10; i++)
-                {
-                    $('tr:eq('+i+')').css('background-color', '#ffffff');
-                }
-                flag_dates();
-            });
-            $('#example').on("draw.dt",function(){
-                //add_search_box();
-            });
-
-            $('#example').on( 'click', 'tbody td', function () {
-                var data = table.cell( this ).render( 'sort' );
-            } );
-
-
-            $('#example tbody').on( 'click', 'tr', function () {
-                $(this).toggleClass('selected');
-            });
-            $('#delete_selected').click( function () {
-
-
-                var count = table.rows('.selected').data().length;
-                if (count == 0){
-                    alert("You have not selected any record. Please select a record to delete.");
-                }
-                else{
-                    var records = [];
-                    for( i = 0; i < count; i++){
-                        records[i] = (table.rows('.selected').data()[i]['_id']);
-                    }
-
-                   //console.log(records.length);
-                    if(records.length == 1){
-                        var result = confirm("Are you sure? You have selected " + records.length + " record to delete.");
-                    }
-                    else{
-                        var result = confirm("Are you sure? You have selected " + records.length + " records to delete.");
-                    }
-                    if(result){
-                        $.ajax({
-                            type : "post",
-                            url : "/mastersheet/delete_selected/",
-
-                            data : JSON.stringify({"records": records}),
-                            contentType : "json",
-                            success: function(response){
-                                alert(response.response);
-
-
-                            }
-
-                        });
-                    }
-                }
-            });
-
-            $.each(columns_defs['buttons'], function(key,val){
-                html_table = $("#example");
-                html_table.find("thead>tr>th:eq(0)").addClass("trFirst");
-                html_table.find("thead>tr>th:eq("+val.slice(0,1)[0]+")").addClass("trFirst");
-                $.each(val.slice(1,val.length-1),function(k,v){
-                    html_table.find("thead>tr>th:eq("+v+")").addClass("trMiddle");
+                "columns": columns_defs['data'],
                 });
 
-                html_table.find("thead>tr>th:eq("+val.slice(val.length-1)[0]+")").addClass("trLast");
-            });
-            $("#buttons button")[0].click();
-            $("#buttons button")[1].click();
-            $("#buttons button")[2].click();
-            $("#add_table_btn").show();
+                //add_search_box();
+
+                $( table.table().container() ).on( 'keyup change', 'tfoot tr th input', function (index,element) {
+                    console.log(this.value);
+                    table.column($(this).parent().index()).search( this.value ).draw();
+
+                } );
+                //table.draw();
+                $('#example').on("draw.dt", function(){
+                    for(i=0; i<10; i++)
+                    {
+                        $('tr:eq('+i+')').css('background-color', '#ffffff');
+                    }
+                    flag_dates();
+                });
+                $('#example').on("draw.dt",function(){
+                    //add_search_box();
+                });
+
+                $('#example').on( 'click', 'tbody td', function () {
+                    var data = table.cell( this ).render( 'sort' );
+                } );
+
+
+                $('#example tbody').on( 'click', 'tr', function () {
+                    $(this).toggleClass('selected');
+                });
+                $('#delete_selected').click( function () {
+
+
+                    var count = table.rows('.selected').data().length;
+                    if (count == 0){
+                        alert("You have not selected any record. Please select a record to delete.");
+                    }
+                    else{
+                        var records = [];
+                        for( i = 0; i < count; i++){
+                            records[i] = (table.rows('.selected').data()[i]['_id']);
+                        }
+
+                       //console.log(records.length);
+                        if(records.length == 1){
+                            var result = confirm("Are you sure? You have selected " + records.length + " record to delete.");
+                        }
+                        else{
+                            var result = confirm("Are you sure? You have selected " + records.length + " records to delete.");
+                        }
+                        if(result){
+                            $.ajax({
+                                type : "post",
+                                url : "/mastersheet/delete_selected/",
+
+                                data : JSON.stringify({"records": records}),
+                                contentType : "json",
+                                success: function(response){
+                                    alert(response.response);
+
+
+                                }
+
+                            });
+                        }
+                    }
+                });
+
+                $.each(columns_defs['buttons'], function(key,val){
+                    html_table = $("#example");
+                    html_table.find("thead>tr>th:eq(0)").addClass("trFirst");
+                    html_table.find("thead>tr>th:eq("+val.slice(0,1)[0]+")").addClass("trFirst");
+                    $.each(val.slice(1,val.length-1),function(k,v){
+                        html_table.find("thead>tr>th:eq("+v+")").addClass("trMiddle");
+                    });
+
+                    html_table.find("thead>tr>th:eq("+val.slice(val.length-1)[0]+")").addClass("trLast");
+                });
+                $("#buttons button")[0].click();
+                $("#buttons button")[1].click();
+                $("#buttons button")[2].click();
+                $("#add_table_btn").show();
+            }
         }
 
     }
