@@ -71,8 +71,8 @@ div.dt-buttons{
 
     <form id = "slum_form"  method="POST">{% csrf_token %}
         {{ form.as_p }}
-        <input type="button" id="btnFetch" value="Search" />
-        <input type="button" id="btnSync" value="Sync" />
+        <button type="button" id="btnFetch" class="btn btn-primary" ><span class="glyphicon glyphicon-search"></span> Search</button>
+        <button type="button" id="btnSync" class="btn btn-success"><span class="glyphicon glyphicon-cloud"></span> Sync</button>
         <input type="hidden" class="hide" id="slum_code" value="{{slum_code}}"/>
     </form>
 
