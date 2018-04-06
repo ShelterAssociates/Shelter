@@ -86,12 +86,12 @@ def masterSheet(request, slum_code = 0 ):
                                         'phase_two_material_date_str', 'phase_three_material_date_str',
                                         'completion_date_str', 'status', 'comment', 'material_shifted_to','id']
         daily_reporting_data = ToiletConstruction.objects.extra(
-            select={'phase_one_material_date_str': "to_char(phase_one_material_date, 'YYYY-MM-DD HH24:MI:SS')",
-                    'phase_two_material_date_str': "to_char(phase_two_material_date, 'YYYY-MM-DD HH24:MI:SS')",
-                    'phase_three_material_date_str': "to_char(phase_three_material_date, 'YYYY-MM-DD HH24:MI:SS')",
-                    'septic_tank_date_str': "to_char(septic_tank_date, 'YYYY-MM-DD HH24:MI:SS')",
-                    'agreement_date_str': "to_char(agreement_date, 'YYYY-MM-DD HH24:MI:SS')",
-                    'completion_date_str': "to_char(completion_date, 'YYYY-MM-DD HH24:MI:SS')"}).filter(
+            select={'phase_one_material_date_str': "to_char(phase_one_material_date, 'YYYY-MM-DD ')",
+                    'phase_two_material_date_str': "to_char(phase_two_material_date, 'YYYY-MM-DD ')",
+                    'phase_three_material_date_str': "to_char(phase_three_material_date, 'YYYY-MM-DD ')",
+                    'septic_tank_date_str': "to_char(septic_tank_date, 'YYYY-MM-DD ')",
+                    'agreement_date_str': "to_char(agreement_date, 'YYYY-MM-DD ')",
+                    'completion_date_str': "to_char(completion_date, 'YYYY-MM-DD ')"}).filter(
             slum__shelter_slum_code=slum_code)
         daily_reporting_data = daily_reporting_data.values(*toilet_reconstruction_fields)
 
@@ -109,7 +109,7 @@ def masterSheet(request, slum_code = 0 ):
 
         sbm_fields = ['slum', 'household_number', 'name', 'application_id', 'photo_uploaded', 'created_date_str', 'id']
         sbm_data = SBMUpload.objects.extra(
-            select={'created_date_str': "to_char(created_date, 'YYYY-MM-DD HH24:MI:SS')"}).filter(
+            select={'created_date_str': "to_char(created_date, 'YYYY-MM-DD ')"}).filter(
             slum__shelter_slum_code=slum_code)
         sbm_data = sbm_data.values(*sbm_fields)
 
@@ -124,7 +124,7 @@ def masterSheet(request, slum_code = 0 ):
 
         community_mobilization_fields = ['slum', 'household_number', 'activity_type', 'activity_date_str','id']
         community_mobilization_data = CommunityMobilization.objects.extra(
-            select={'activity_date_str': "to_char(activity_date, 'YYYY-MM-DD HH24:MI:SS')"}).filter(
+            select={'activity_date_str': "to_char(activity_date, 'YYYY-MM-DD ')"}).filter(
             slum__shelter_slum_code=slum_code)
         community_mobilization_data1 = community_mobilization_data.values(*community_mobilization_fields)
         community_mobilization_data_list = list(community_mobilization_data1)
@@ -192,6 +192,10 @@ def masterSheet(request, slum_code = 0 ):
                                 x.update({'current place of defecation': x['group_oi8ts04/C5']})
                     except:
                         pass
+
+    for x in formdict:
+        if int(x['Household_number']) > 840:
+            print x
     
 
     return HttpResponse(json.dumps(formdict),  content_type = "application/json")
