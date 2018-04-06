@@ -118,9 +118,7 @@ $(document).ready(function() {
             $("#buttons").append(buttons);
 
             table = $("#example").DataTable( {
-
-
-            "dom":"Bfrtip",
+            "sDom": '<"top"fl>rt<"bottom"ip><"clear">',
             "ajax" :  {
 
                             url : "/mastersheet/list/show/",
