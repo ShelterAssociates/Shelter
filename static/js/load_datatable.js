@@ -14,7 +14,7 @@ var daily_reporting_columns = [];
 
 $(document).ready(function() {
 
-    $("#delete_selected").hide();
+    $("#add_table_btn").hide();
 
    console.log("loading table...");
     var csrf_token = document.getElementsByName("csrfmiddlewaretoken")[0].value;
@@ -108,15 +108,6 @@ $(document).ready(function() {
 
         }
         else{
-
-            add_buttons = '<div class="btn-group">';
-            add_buttons += '<button id = "add_sbm" type="button" class=" btn btn-default" onclick = "window.open(\'/admin/master/mastersheet/sbmupload/add/\', \'_blank\', \'width=650,height=550\')" >+ SBM</button>';
-            add_buttons += '<button id = "add_tc" type="button" class=" btn btn-default" onclick = "window.open(\'/admin/master/mastersheet/toiletconstruction/add/\', \'_blank\', \'width=650,height=550\')" >+ Toilet Construction</button>';
-            add_buttons += '<button id = "add_accounts" type="button" class=" btn btn-default" onclick = "window.open(\'/admin/master/mastersheet/vendorhouseholdinvoicedetail/add/\', \'_blank\', \'width=650,height=550\')">+ Accounts</button>';
-            add_buttons += '<button id = "add_com_mob" type="button" class=" btn btn-default" onclick = "window.open(\'/admin/master/mastersheet/communitymobilization/add/\', \'_blank\', \'width=650,height=550\')">+ Community Mobilization</button>';
-            add_buttons += '</div>'
-            $("#add_buttons").append(add_buttons);
-
 
             $(".overlay").show();
             buttons = '<div class="btn-group">';
@@ -235,7 +226,7 @@ $(document).ready(function() {
             $("#buttons button")[0].click();
             $("#buttons button")[1].click();
             $("#buttons button")[2].click();
-            $("#delete_selected").show();
+            $("#add_table_btn").show();
         }
 
     }

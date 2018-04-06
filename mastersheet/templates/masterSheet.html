@@ -98,13 +98,22 @@ div.dt-buttons{
     </div>
 
     <div class="row-fluid" style="padding-top:20px;">
-        <div id = "add_buttons"></div>
+
         <div id="buttons"></div>
         <table id="example" class="display" width="100%" cellspacing="0">
         </table>
 
-
-        <button id = "delete_selected" type="button" class="btn btn-danger"><span class="glyphicon glyphicon-trash"></span> Delete</button>
+        <div class="row" id="add_table_btn">
+            <div class="col-md-2">
+                <button id = "delete_selected" type="button" class="btn btn-danger"><span class="glyphicon glyphicon-trash"></span> Delete</button>
+            </div>
+            <div class="col-md-10" id = "add_buttons">
+                <button id = "add_com_mob" type="button" class="btn btn-default btn-success pull-right" style="margin-left:10px;" onclick = "window.open('/admin/master/mastersheet/communitymobilization/add/', '_blank', 'width=650,height=550')"><span class="glyphicon glyphicon-plus"></span> Community Mobilization</button>
+                <button id = "add_accounts" type="button" class="btn btn-default btn-success pull-right" style="margin-left:10px;" onclick = "window.open('/admin/master/mastersheet/vendorhouseholdinvoicedetail/add/', '_blank', 'width=650,height=550')"><span class="glyphicon glyphicon-plus"></span> Accounts</button>
+                <button id = "add_tc" type="button" class="btn btn-default btn-success pull-right" style="margin-left:10px;" onclick = "window.open('/admin/master/mastersheet/toiletconstruction/add/', '_blank', 'width=650,height=550')" ><span class="glyphicon glyphicon-plus"></span> Toilet Construction</button>
+                <button id = "add_sbm" type="button" class="btn btn-default btn-success pull-right" style="margin-left:10px;" onclick = "window.open('/admin/master/mastersheet/sbmupload/add/', '_blank', 'width=650,height=550')" ><span class="glyphicon glyphicon-plus"></span> SBM</button>
+            </div>
+        </div>
     </div>
 
 </div>
