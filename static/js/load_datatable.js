@@ -99,7 +99,6 @@ $(document).ready(function() {
         section = $(this).attr('value');
         col = columns_defs['buttons'][section];
         table.columns(col).visible( flag );
-        add_search_box();
     });
 
     function load_data_datatable(){
@@ -158,23 +157,13 @@ $(document).ready(function() {
             "columns": columns_defs['data'],
             });
 
-            add_search_box();
-            table.columns().every( function () {
-                var that = this;
+            //add_search_box();
 
-                $( 'input', this.footer() ).on( 'keyup change', function () {
-                    if ( that.search() !== this.value ) {
-                        that
-                            .search( this.value )
-                            .draw();
-                    }
-                } );
-            } );
-            /*$( table.table().container() ).on( 'keyup', 'tfoot tr th input', function (index,element) {
-
+            $( table.table().container() ).on( 'keyup change', 'tfoot tr th input', function (index,element) {
+                console.log(this.value);
                 table.column($(this).parent().index()).search( this.value ).draw();
 
-            } );*/
+            } );
             //table.draw();
             $('#example').on("draw.dt", function(){
                 for(i=0; i<10; i++)
@@ -184,7 +173,7 @@ $(document).ready(function() {
                 flag_dates();
             });
             $('#example').on("draw.dt",function(){
-                add_search_box();
+                //add_search_box();
             });
 
             $('#example').on( 'click', 'tbody td', function () {
@@ -315,8 +304,6 @@ $(document).ready(function() {
 
 
             });
-            //console.log(counter);
-
         }
         else{
            console.log("table is null");
@@ -350,30 +337,26 @@ $(document).ready(function() {
 
 
     function add_search_box(){
+        $('#example tfoot tr').empty();
+        var numCols = $('#example thead th').length;
+        var append_this = '<tfoot><tr>';
+        for(i = 0; i < numCols; i++){
+            append_this = append_this + '<th></th>';
+        }
+        append_this = append_this + '</tr></tfoot>';
+        $('#example').each(function(){
+            $(this).append(append_this);
+        });
+
+        $('#example tfoot th').each( function (index,element) {
+            var title = $(this).text()  ;
+            something = $(this).parent().parent().parent();
+            title=(something.find('thead tr th:eq('+index+')')[0].innerText);
+            $(this).html( '<input id = "search_box" type="text" placeholder="Search '+title+'" />' );
+        } );
 
 
-                    console.log("in search box...");
-                    $('#example tfoot tr').empty();
-                    var numCols = $('#example thead th').length;
-                    console.log(numCols);
-                    var append_this = '<tfoot><tr>';
-                    for(i = 0; i < numCols; i++){
-                        append_this = append_this + '<th></th>';
-                    }
-                    append_this = append_this + '</tr></tfoot>';
-                    $('#example').each(function(){
-                        $(this).append(append_this);
-                    });
-
-                    $('#example tfoot th').each( function (index,element) {
-                        var title = $(this).text()  ;
-                        something = $(this).parent().parent().parent();
-                        title=(something.find('thead tr th:eq('+index+')')[0].innerText);
-                        $(this).html( '<input type="text" placeholder="Search '+title+'" />' );
-                    } );
-
-
-            }
+    }
 
 });
 
