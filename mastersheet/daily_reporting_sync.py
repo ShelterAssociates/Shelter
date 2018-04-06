@@ -13,6 +13,7 @@ from django.conf import settings
 import datetime
 import urllib2
 import json
+import re
 from dateutil.parser import parse
 from django.utils.dateparse import parse_datetime
 from django.utils import timezone
@@ -77,8 +78,10 @@ class ToiletConstructionSync(DDSync):
                         "House_numbers_of_hou_and_cement_is_given":"phase_one_material_date", "House_numbers_of_hou_al_Hardware_is_given":"phase_two_material_date",
                         "House_numbers_of_hou_HASE_3_Door_is_given":"phase_three_material_date", "House_numbers_of_hou_truction_is_complete": "completion_date",
                         #"House_numbers_where_tion_has_not_started":"", "House_numbers_where_ted_to_drainage_line":"",
-                        #"House_numbers_where_reement_is_cancelled":"agreement_cancelled", "House_numbers_where_ifted_from_HH_to_HH":"material_shifted_to"
+                        "House_numbers_where_reement_is_cancelled":"agreement_cancelled"
                         }
+        self.REGX_CHECK = {"House_numbers_where_ifted_from_HH_to_HH":"material_shifted_to"}
+        self.BOOL_CHECK = ["House_numbers_where_reement_is_cancelled"]
 
     def fetch_data(self):
         self.fetch_kobo_data()
@@ -88,6 +91,20 @@ class ToiletConstructionSync(DDSync):
             submission_date = self.convert_datetime(record['_submission_time'])
             if not flag and '_submission_time' in record:
                 sync_date = submission_date
+
+            for kobofield,modelfield in self.REGX_CHECK.items():
+                if kobofield in record:
+                    houses = record[kobofield].split(',')
+                    for house in houses:
+                        house_data = re.findall('from([0-9]{1,4})to([0-9]{1,4})', house)
+                        if len(house_data[0][0]) < 5:
+                            check_list = {'slum':self.slum, 'household_number':house_data[0][0]}
+                            tc, created = ToiletConstruction.objects.get_or_create(**check_list)
+                            update_data ={}
+                            update_data[modelfield] = house_data[0][1]
+                            ToiletConstruction.objects.filter(**check_list).update(**update_data)
+                        flag=True
+
             for kobofield, modelfield in self.MAPPING.items():
                 if kobofield in record:
                     houses = record[kobofield].split(',')
@@ -98,7 +115,10 @@ class ToiletConstructionSync(DDSync):
                     flag = True
                     query_filter = { "slum": self.slum, "household_number__in": houses, modelfield+"__isnull":True}
                     update_data={}
-                    update_data[modelfield] = self.convert_datetime(record['Date_of_reporting']).date()
+                    if kobofield in self.BOOL_CHECK:
+                        update_data[modelfield] = True
+                    else:
+                        update_data[modelfield] = self.convert_datetime(record['Date_of_reporting']).date()
                     ToiletConstruction.objects.filter(**query_filter).update(**update_data)
 
             if '_submission_time' in record and submission_date > sync_date :
