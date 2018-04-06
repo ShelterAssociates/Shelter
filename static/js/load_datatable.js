@@ -99,6 +99,7 @@ $(document).ready(function() {
         section = $(this).attr('value');
         col = columns_defs['buttons'][section];
         table.columns(col).visible( flag );
+        add_search_box();
     });
 
     function load_data_datatable(){
@@ -157,16 +158,24 @@ $(document).ready(function() {
             "columns": columns_defs['data'],
             });
 
-
-            //flag_dates();
-            //highlight_buttons();
             add_search_box();
-            $( table.table().container() ).on( 'keyup', 'tfoot tr th input', function (index,element) {
+            table.columns().every( function () {
+                var that = this;
 
-            table.column($(this).parent().index()).search( this.value ).draw();
-
+                $( 'input', this.footer() ).on( 'keyup change', function () {
+                    if ( that.search() !== this.value ) {
+                        that
+                            .search( this.value )
+                            .draw();
+                    }
+                } );
             } );
-            table.draw();
+            /*$( table.table().container() ).on( 'keyup', 'tfoot tr th input', function (index,element) {
+
+                table.column($(this).parent().index()).search( this.value ).draw();
+
+            } );*/
+            //table.draw();
             $('#example').on("draw.dt", function(){
                 for(i=0; i<10; i++)
                 {
@@ -175,7 +184,7 @@ $(document).ready(function() {
                 flag_dates();
             });
             $('#example').on("draw.dt",function(){
-                $('[data-toggle="popover"]').popover();// script for popover
+                add_search_box();
             });
 
             $('#example').on( 'click', 'tbody td', function () {
@@ -338,6 +347,33 @@ $(document).ready(function() {
             alert("Please select slum to sync.")
         }
     });
+
+
+    function add_search_box(){
+
+
+                    console.log("in search box...");
+                    $('#example tfoot tr').empty();
+                    var numCols = $('#example thead th').length;
+                    console.log(numCols);
+                    var append_this = '<tfoot><tr>';
+                    for(i = 0; i < numCols; i++){
+                        append_this = append_this + '<th></th>';
+                    }
+                    append_this = append_this + '</tr></tfoot>';
+                    $('#example').each(function(){
+                        $(this).append(append_this);
+                    });
+
+                    $('#example tfoot th').each( function (index,element) {
+                        var title = $(this).text()  ;
+                        something = $(this).parent().parent().parent();
+                        title=(something.find('thead tr th:eq('+index+')')[0].innerText);
+                        $(this).html( '<input type="text" placeholder="Search '+title+'" />' );
+                    } );
+
+
+            }
 
 });
 
