@@ -118,7 +118,7 @@ $(document).ready(function() {
 
                 table = $("#example").DataTable( {
                 //dom: 'Bfrtip',
-                "sDom": '<"top"Bfl>rt<"bottom"ip><"clear">',
+                "sDom": '<"top"Bfl>r<"mid"t><"bottom"ip><"clear">',
                 "ajax" :  {
                                 url : "/mastersheet/list/show/",
                                 dataSrc:"",
