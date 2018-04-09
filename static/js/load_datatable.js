@@ -157,6 +157,7 @@ $(document).ready(function() {
                 });
                 $('#example').on("draw.dt",function(){
                     add_search_box();
+
                 });
 
                 $('#example').on( 'click', 'tbody td', function () {
@@ -180,7 +181,6 @@ $(document).ready(function() {
                             records[i] = (table.rows('.selected').data()[i]['_id']);
                         }
 
-                       //console.log(records.length);
                         if(records.length == 1){
                             var result = confirm("Are you sure? You have selected " + records.length + " record to delete.");
                         }
@@ -228,10 +228,8 @@ $(document).ready(function() {
     }
 
     function select_rows(){
-        //console.log("we are called...");
         $('#example tbody').on( 'click', 'tr', function () {
             $(this).toggleClass('selected');
-            //console.log(this);
         });
     }
 
@@ -244,6 +242,16 @@ $(document).ready(function() {
         }
 
     });
+    function trim_space(str){
+        if(str != null)
+        {
+            return str.trim();
+        }
+        else{
+            return str;
+
+        }
+    }
     function flag_dates(){
 
 
@@ -253,50 +261,31 @@ $(document).ready(function() {
             var counter = 0;
             data.each(function (value, index) {
                 counter = counter + 1;
+                index = index+1;
 
 
-                var p1 = new Date(Date.parse(value['phase_one_material_date_str'], "yyyy-mm-dd HH:mm:ss"));
-                var p2 = new Date(Date.parse(value['phase_two_material_date_str'], "yyyy-mm-dd HH:mm:ss"));
-                var p3 = new Date(Date.parse(value['phase_three_material_date_str'], "yyyy-mm-dd HH:mm:ss"));
-                var a_d =  new Date(Date.parse(value['agreement_date_str'], "yyyy-mm-dd HH:mm:ss"));
-                var s_t_d = new Date(Date.parse(value['septic_tank_date_str'], "yyyy-mm-dd HH:mm:ss"))
-                var c_d = new Date(Date.parse(value['completion_date_str'], "yyyy-mm-dd HH:mm:ss"));
 
-                //if (value['Household_number'] > 840){
                 var ind = value['Household_number'] % 10;
                 if(ind == 0){ind = 10;}
-                console.log(value['agreement_date_str'])
-
-                if ( value['agreement_date_str'] ){
-                    console.log(value['Household_number']);
-                    console.log(p2, today);
-                                    console.log( Math.floor((today - p2) / divider) );
 
 
-                    if ( value['phase_one_material_date_str'] == null && Math.floor((today - a_d) / divider) > 8 ){
-                        //table.on("draw.dt", function(){
-                            $('tr:eq('+ind+')').css('background-color', '#f9a4a4');//red
-                            console.log("red");
-                       // });
+                if ( value['agreement_date_str'] != null ){
+
+                    if ( value['phase_one_material_date_str'] == null && Math.floor((today - Date.parse(trim_space(value['agreement_date_str']))) / divider) > 8 ){
+                            $('tr:eq('+index+')').css('background-color', '#f9a4a4');//red
+
                     }
-                    else if ( value['phase_two_material_date_str'] == null && Math.floor((today - p1) / divider) > 8 ){
-                        //table.on("draw.dt", function(){
-                            $('tr:eq('+ind+')').css('background-color', '#f2f29f');//yellow
-                            console.log("yellow");
-                        //});
+                    else if ( value['phase_two_material_date_str'] == null && Math.floor((today - Date.parse(trim_space(value['phase_one_material_date_str']))) / divider) > 8 ){
+                            $('tr:eq('+index+')').css('background-color', '#f2f29f');//yellow
+
                     }
-                    else if (value['phase_three_material_date_str'] == null && Math.floor((today - p2) / divider) > 8 ){
-                        //table.on("draw.dt", function(){
-                        console.log("3 is null");
-                            $('tr:eq('+ind+')').css('background-color', '#aaf9a4');//green
-                            console.log("green");
-                       // });
+                    else if (value['phase_three_material_date_str'] == null && Math.floor((today - Date.parse(trim_space(value['phase_two_material_date_str']))) / divider) > 8 ){
+                            $('tr:eq('+index+')').css('background-color', '#aaf9a4');//green
+
                     }
-                    else if (value['completion_date_str'] == null && Math.floor((today - p3) / divider) > 8 ){
-                       // table.on("draw.dt", function(){
-                            $('tr:eq('+ind+')').css('background-color', '#aaa4f4');//blue
-                            console.log("blue");
-                       //    });
+                    else if (value['completion_date_str'] == null && Math.floor((today - Date.parse(trim_space(value['phase_three_material_date_str']))) / divider) > 8 ){
+                            $('tr:eq('+index+')').css('background-color', '#aaa4f4');//blue
+
                     }
                     /*if (value['phase_one_material_date_str'] - value['agreement_date_str'] > 8){
 
@@ -305,9 +294,6 @@ $(document).ready(function() {
                 else{
                    //$('tr:eq('+ind+')').css('background-color', '#adabab');//grey
                 }
-
-
-
             });
         }
         else{
@@ -343,7 +329,9 @@ $(document).ready(function() {
 
     function add_search_box(){
         $('#example tfoot tr').empty();
-        var numCols = $('#example thead th').length;
+
+        var visible_indices = $('#example').DataTable().columns(':visible')[0];//indices of visible columns
+        var numCols = $('#example').DataTable().columns(':visible').nodes().length;
         var append_this = '<tfoot><tr>';
         for(i = 0; i < numCols; i++){
             append_this = append_this + '<th></th>';
@@ -352,6 +340,10 @@ $(document).ready(function() {
         $('#example').each(function(){
             $(this).append(append_this);
         });
+
+        //console.log($('#example tfoot th'));
+        //console.log($('#example tfoot th').DataTable().columns(':visible'));
+
 
         $('#example tfoot th').each( function (index,element) {
             var title = $(this).text()  ;
