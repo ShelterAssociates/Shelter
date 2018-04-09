@@ -34,14 +34,14 @@ def masterSheet(request, slum_code = 0 ):
 
     formdict = []
     if slum_code is not 0:
-        #urlv = str(settings.KOBOCAT_FORM_URL)+str('data/130?query={"slum_name":"') + str(slum_code) + '"}'  # '+str(slum_code)+'
-        urlv = str(settings.KOBOCAT_FORM_URL)+str('data/98?query={"slum_name":"') + str(slum_code) + '"}'  # '+str(slum_code)+'
+        urlv = str(settings.KOBOCAT_FORM_URL)+str('data/130?query={"slum_name":"') + str(slum_code) + '"}'  # '+str(slum_code)+'
+        #urlv = str(settings.KOBOCAT_FORM_URL)+str('data/98?query={"slum_name":"') + str(slum_code) + '"}'  # '+str(slum_code)+'
 
-        #url_family_factsheet = str(settings.KOBOCAT_FORM_URL)+str('data/68?format=json&query={"group_vq77l17/slum_name":"')+ str(slum_code) + str('"}&fields=["OnfieldFactsheet","group_ne3ao98/Have_you_upgraded_yo_ng_individual_toilet","group_ne3ao98/Cost_of_upgradation_in_Rs","group_ne3ao98/Where_the_individual_ilet_is_connected_to","group_ne3ao98/Use_of_toilet","group_vq77l17/Household_number"]')
-        url_family_factsheet = str(settings.KOBOCAT_FORM_URL)+str('data/97?format=json&query={"group_vq77l17/slum_name":"')+ str(slum_code) + str('"}&fields=["OnfieldFactsheet","group_ne3ao98/Have_you_upgraded_yo_ng_individual_toilet","group_ne3ao98/Cost_of_upgradation_in_Rs","group_ne3ao98/Where_the_individual_ilet_is_connected_to","group_ne3ao98/Use_of_toilet","group_vq77l17/Household_number"]')
+        url_family_factsheet = str(settings.KOBOCAT_FORM_URL)+str('data/68?format=json&query={"group_vq77l17/slum_name":"')+ str(slum_code) + str('"}&fields=["OnfieldFactsheet","group_ne3ao98/Have_you_upgraded_yo_ng_individual_toilet","group_ne3ao98/Cost_of_upgradation_in_Rs","group_ne3ao98/Where_the_individual_ilet_is_connected_to","group_ne3ao98/Use_of_toilet","group_vq77l17/Household_number"]')
+        #url_family_factsheet = str(settings.KOBOCAT_FORM_URL)+str('data/97?format=json&query={"group_vq77l17/slum_name":"')+ str(slum_code) + str('"}&fields=["OnfieldFactsheet","group_ne3ao98/Have_you_upgraded_yo_ng_individual_toilet","group_ne3ao98/Cost_of_upgradation_in_Rs","group_ne3ao98/Where_the_individual_ilet_is_connected_to","group_ne3ao98/Use_of_toilet","group_vq77l17/Household_number"]')
 
-        #url_RHS_form = str(settings.KOBOCAT_FORM_URL)+str('forms/130/form.json')
-        url_RHS_form = str(settings.KOBOCAT_FORM_URL) + str('forms/98/form.json"')
+        url_RHS_form = str(settings.KOBOCAT_FORM_URL)+str('forms/130/form.json')
+        #url_RHS_form = str(settings.KOBOCAT_FORM_URL) + str('forms/98/form.json"')
 
         kobotoolbox_request = urllib2.Request(urlv)
         kobotoolbox_request_family_factsheet = urllib2.Request(url_family_factsheet)
@@ -192,9 +192,6 @@ def masterSheet(request, slum_code = 0 ):
                     except:
                         pass
 
-    for x in formdict:
-        if int(x['Household_number']) > 840:
-            print x
     
 
     return HttpResponse(json.dumps(formdict),  content_type = "application/json")
@@ -522,7 +519,7 @@ def delete_selected_records(records):
     :param records: 
     :return: 
     """
-    kobo_form = 98  # *****IMPORTANT***** This form number (98) is for local setting. Do change it to 130 before going live.
+    kobo_form = 130  # *****IMPORTANT***** This form number (98) is for local setting. Do change it to 130 before going live.
     headers = {}
     headers["Authorization"] = settings.KOBOCAT_TOKEN
     for r in records['records']:
