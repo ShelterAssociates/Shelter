@@ -112,7 +112,8 @@ $(document).ready(function() {
 
 
                 table = $("#example").DataTable( {
-                "sDom": '<"top"fl>rt<"bottom"ip><"clear">',
+                //dom: 'Bfrtip',
+                "sDom": '<"top"Bfl>r<"mid"t><"bottom"ip><"clear">',
                 "ajax" :  {
                                 url : "/mastersheet/list/show/",
                                 dataSrc:"",
@@ -134,7 +135,7 @@ $(document).ready(function() {
 
                               ],
 
-                "buttons":['excel'],
+                "buttons":["excel"],
 
                 "columns": columns_defs['data'],
                 });
@@ -214,10 +215,13 @@ $(document).ready(function() {
 
                     html_table.find("thead>tr>th:eq("+val.slice(val.length-1)[0]+")").addClass("trLast");
                 });
+
                 $("#buttons button")[0].click();
                 $("#buttons button")[1].click();
                 $("#buttons button")[2].click();
                 $("#add_table_btn").show();
+                //For excel button alignment.
+                $("div.dt-buttons>button").addClass("pull-left");
             }
 
 
