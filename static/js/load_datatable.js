@@ -96,11 +96,6 @@ $(document).ready(function() {
     });
 
     function load_data_datatable(){
-        if(document.forms[0].slumname.value == ""){
-            alert("Please select a slum");
-        }
-        else
-        {
         if (table != null){
         table.ajax.reload();
 
@@ -160,7 +155,7 @@ $(document).ready(function() {
                     flag_dates();
                 });
                 $('#example').on("draw.dt",function(){
-                    //add_search_box();
+                    add_search_box();
                 });
 
                 $('#example').on( 'click', 'tbody td', function () {
@@ -224,7 +219,7 @@ $(document).ready(function() {
                 $("#buttons button")[2].click();
                 $("#add_table_btn").show();
             }
-        }
+
 
     }
 
@@ -237,7 +232,13 @@ $(document).ready(function() {
     }
 
     $("#btnFetch").click(function(){
-        load_data_datatable();
+        if(document.forms[0].slumname.value == ""){
+            alert("Please select a slum");
+        }
+        else{
+            load_data_datatable();
+        }
+
     });
     function flag_dates(){
 
@@ -260,27 +261,37 @@ $(document).ready(function() {
                 //if (value['Household_number'] > 840){
                 var ind = value['Household_number'] % 10;
                 if(ind == 0){ind = 10;}
+                console.log(value['agreement_date_str'])
 
-                if (value['agreement_date_str'] != null){
+                if ( value['agreement_date_str'] ){
+                    console.log(value['Household_number']);
+                    console.log(p2, today);
+                                    console.log( Math.floor((today - p2) / divider) );
+
 
                     if ( value['phase_one_material_date_str'] == null && Math.floor((today - a_d) / divider) > 8 ){
                         //table.on("draw.dt", function(){
                             $('tr:eq('+ind+')').css('background-color', '#f9a4a4');//red
+                            console.log("red");
                        // });
                     }
                     else if ( value['phase_two_material_date_str'] == null && Math.floor((today - p1) / divider) > 8 ){
                         //table.on("draw.dt", function(){
                             $('tr:eq('+ind+')').css('background-color', '#f2f29f');//yellow
+                            console.log("yellow");
                         //});
                     }
                     else if (value['phase_three_material_date_str'] == null && Math.floor((today - p2) / divider) > 8 ){
                         //table.on("draw.dt", function(){
+                        console.log("3 is null");
                             $('tr:eq('+ind+')').css('background-color', '#aaf9a4');//green
+                            console.log("green");
                        // });
                     }
                     else if (value['completion_date_str'] == null && Math.floor((today - p3) / divider) > 8 ){
                        // table.on("draw.dt", function(){
                             $('tr:eq('+ind+')').css('background-color', '#aaa4f4');//blue
+                            console.log("blue");
                        //    });
                     }
                     /*if (value['phase_one_material_date_str'] - value['agreement_date_str'] > 8){
@@ -288,7 +299,7 @@ $(document).ready(function() {
                     }*/
                 }
                 else{
-                   $('tr:eq('+ind+')').css('background-color', '#adabab');//grey
+                   //$('tr:eq('+ind+')').css('background-color', '#adabab');//grey
                 }
 
 
