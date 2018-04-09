@@ -1,0 +1,33 @@
+[{
+	"fields": {
+		"name": "Septic tank",
+		"display_order": 1.0,
+        "display_flag":true
+	},
+	"model": "mastersheet.VendorType",
+	"pk": 1
+}, {
+	"fields": {
+		"name": "Building material",
+		"display_order": 2.0,
+        "display_flag":true
+	},
+	"model": "mastersheet.VendorType",
+	"pk": 2
+}, {
+	"fields": {
+		"name": "Hardware material",
+		"display_order": 3.0,
+        "display_flag":true
+	},
+	"model": "mastersheet.VendorType",
+	"pk": 3
+}, {
+	"fields": {
+		"name": "Doors",
+		"display_order": 4.0,
+        "display_flag":true
+	},
+	"model": "mastersheet.VendorType",
+	"pk": 4
+}]
