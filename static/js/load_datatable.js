@@ -203,9 +203,9 @@ $(document).ready(function() {
 
                 });
 
-                $('#example').on( 'click', 'tbody td', function () {
+               /* $('#example').on( 'click', 'tbody td', function () {
                     var data = table.cell( this ).render( 'sort' );
-                } );
+                } );*/
 
 
                 $('#example tbody').on( 'click', 'tr', function () {
