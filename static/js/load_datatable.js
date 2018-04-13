@@ -2,6 +2,7 @@ var columns_defs;
 var table = null;
 var divider = 1000 * 60 * 60 * 24;
 var window = 8 * 1000 * 60 * 60 * 24;
+var current_slum;
 
 var today = Date.now();
 var daily_reporting_columns = [];
@@ -94,13 +95,50 @@ $(document).ready(function() {
         col = columns_defs['buttons'][section];
         table.columns(col).visible( flag );
     });
+    $("#upload_file_1").on("click", function(){
 
-    function load_data_datatable(){
-        if (table != null){
-        table.ajax.reload();
+        var input = $("#upload_file")[0];
+        var formData = new FormData(input);
 
+        if(typeof input[1].files[0] == 'undefined' ){
+            alert("No file selected. Please select a file.");
         }
         else{
+            var fname = input[1].files[0].name;
+            var re = /(\.xls|\.xlsx)$/i;
+            if(!re.exec(fname)){
+                alert("File extension not supported!");
+            }
+            else{
+                $.ajax({
+                            type : "post",
+                            url : "/mastersheet/files/",
+                            data :formData ,
+                            contentType : false,
+                            processData: false,
+                            success: function(response){
+                                alert(response.response);
+                            }
+
+                });
+            }
+        }
+
+
+    });
+
+    function load_data_datatable(){
+        if (table != null ){
+            console.log("reloading datatable");
+            //table.ajax.reload();
+            table.clear();
+            table.ajax.reload();
+            table.draw();
+
+        }
+        else
+        {
+                //table.destroy()
 
                 $(".overlay").show();
                 buttons = '<div class="btn-group">';
@@ -119,10 +157,14 @@ $(document).ready(function() {
                                 dataSrc:"",
                                 data:{'form':$("#slum_form").serialize() , 'csrfmiddlewaretoken':csrf_token},
                                 contentType : "application/json",
-                                complete: function(){
+                                complete: function(data){
                                     $(".overlay").hide();
+                                    
                                     if(table.page.info().recordsDisplay != 0){
                                     }
+                                },
+                                success: function(){
+                                    console.log("ajax successful");
                                 }
 
                           },
@@ -157,6 +199,7 @@ $(document).ready(function() {
                 });
                 $('#example').on("draw.dt",function(){
                     add_search_box();
+                    console.log("draw is called");
 
                 });
 
