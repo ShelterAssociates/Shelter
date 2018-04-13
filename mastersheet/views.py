@@ -302,7 +302,7 @@ def define_columns(request):
     # We define the columns for community mobilization and vendor details in a dynamic way. The
     # reason being these columns are prone to updates and additions.
     activity_pre_len = len(formdict_new)
-    activity_type_model = ActivityType.objects.all()
+    activity_type_model = ActivityType.objects.filter(display_flag=True).order_by('display_order')
 
     try:
         for i in range(len(activity_type_model)):
@@ -311,7 +311,7 @@ def define_columns(request):
         print e
     final_data['buttons']['Community Mobilization'] = range(activity_pre_len, len(formdict_new))
 
-    vendor_type_model = VendorType.objects.all()
+    vendor_type_model = VendorType.objects.filter(display_flag=True).order_by('display_order')
     vendor_pre_len = len(formdict_new)
     try:
         for i in vendor_type_model:

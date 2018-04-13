@@ -151,6 +151,7 @@ $(document).ready(function() {
 
                 table = $("#example").DataTable( {
                 //dom: 'Bfrtip',
+                "processing": true,
                 "sDom": '<"top"Bfl>r<"mid"t><"bottom"ip><"clear">',
                 "ajax" :  {
                                 url : "/mastersheet/list/show/",
