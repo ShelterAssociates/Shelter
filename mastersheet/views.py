@@ -132,10 +132,10 @@ def masterSheet(request, slum_code = 0 ):
         # We need to sort the data with respect to each household number in order to
         # append it in formdict.
 
-        for x in community_mobilization_data_list:
-            HH_list_flat = []
-            HH_list_flat.append(json.loads(x['household_number']))
-            x['household_number'] = HH_list_flat[0]
+        #for x in community_mobilization_data_list:
+        #    HH_list_flat = []
+        #    HH_list_flat.append(json.loads(x['household_number']))
+        #    x['household_number'] = HH_list_flat[0]
 
         try:
             for i in range(len(community_mobilization_data)):
