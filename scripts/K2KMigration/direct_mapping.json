@@ -1,4 +1,4 @@
-// old fileds mapped directly to new fields
+// old fields mapped directly to new fields
 {
   "house_no": "Enter_household_number_again",
   "admin_ward": "admin_ward",
@@ -15,5 +15,19 @@
   "what_is_the_structure_of_the_house": "group_el9cl08/Type_of_structure_of_the_house",
   "what_is_the_ownership_status_of_the_house": "group_el9cl08/Ownership_status_of_the_house",
   "type_of_water_connection": "group_el9cl08/Type_of_water_connection",
-  "Does_any_family_members_has_co": "group_el9cl08/Does_any_household_m_n_skills_given_below"
+  "Does_any_family_members_has_co": "group_el9cl08/Does_any_household_m_n_skills_given_below",
+  "_submission_time": "_submission_time",
+  "_status": "_status",
+  "_submitted_by": "_submitted_by",
+  "start":"start",
+  "end":"end",
+
+   "Have_you_applied_for_indiviual":"group_oi8ts04/Have_you_applied_for_individua",
+   "How_many_installements_have_yo":"group_oi8ts04/How_many_installments_have_you",
+   "when_did_you_receive_the_first_installment_date":"group_oi8ts04/When_did_you_receive_ur_first_installment",
+   "when_did_you_receive_the_second_installment_date":"group_oi8ts04/When_did_you_receive_r_second_installment",
+   "Are_you_interested_in_individu":"group_oi8ts04/Are_you_interested_in_an_indiv",
+   "if_yes_why_":"group_oi8ts04/If_yes_why",
+   "if_no_why_":"group_oi8ts04/If_no_why"
+
 }
