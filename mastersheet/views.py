@@ -14,6 +14,7 @@ from django.conf import settings
 import collections
 from django.http import JsonResponse
 from mastersheet.daily_reporting_sync import ToiletConstructionSync, CommunityMobilizaitonSync
+from collections import defaultdict
 
 #The views in this file correspond to the mastersheet functionality of shelter app.
 
@@ -334,18 +335,29 @@ def renderMastersheet(request):
 def file_ops(request):
     slum_search_field = find_slum()
     file_form1 = file_form()
+    response = []
+    resp = {}
     if request.method == "POST":
         try:
-            handle_uploaded_file(request.FILES.get('file'))
+            print request.FILES.get('file')
+            resp = handle_uploaded_file(request.FILES.get('file'),response)
+            response = resp
+            #print 'resp is '+str(resp)
         except Exception as e:
-            print "exception is " + str(e)
-    return render(request, 'masterSheet.html', {'form': slum_search_field, 'file_form':file_form1})
+            #print "this is exception in file_ops " +str(e)
+            #response['msg'] =  str(e) 
+            response.append(('msg', str(e)))
+    
+    
+    #return render(request, 'masterSheet.html', {'form': slum_search_field, 'file_form':file_form1, 'response':response})
+    return HttpResponse(json.dumps(response), content_type="application/json")
 
 # Pandas libraries help us in handling DataFrames with convenience
 # In the sheet that is being uploaded, the 'Agreement Cancelled' field should be blank if the agreement
 # is not cancelled. If it has any entry, the agreement_cancelled field in the database will be set to
 #  True
-def handle_uploaded_file(f):
+def handle_uploaded_file(f,response):
+
     df = pandas.read_excel(f)
     df1=df.set_index("House Number")
     # We divide the dataframe into subframes for vendors, their invoices and community mobilization
@@ -373,6 +385,7 @@ def handle_uploaded_file(f):
                     photo_uploaded=check_bool(df1.loc[int(i), 'Toilet photo uploaded on SBM site'])
                 )
                 SBM_instance.save()
+                response.append(("updated sbm", i))
         except Exception as e:
             if check_null(df1.loc[int(i), 'Application ID']) is not None:
                 SBM_instance_1 = SBMUpload(
@@ -383,7 +396,7 @@ def handle_uploaded_file(f):
                  photo_uploaded = check_bool(df1.loc[int(i),'Toilet photo uploaded on SBM site'])
                 )
                 SBM_instance_1.save()
-
+                response.append(("newly created sbm", i))
         for p,q in df_ComMob.loc[int(i)].items():
 
             if check_null(q) is not None:
@@ -399,8 +412,11 @@ def handle_uploaded_file(f):
                             temp = ComMob_instance.household_number
                             if int(i) not in temp:
                                 temp.append(int(i))
+                                response.append(("updated ComMob", i))
                             ComMob_instance.household_number = temp
                             ComMob_instance.save()
+                            
+
                         except Exception as e:
                             household_nums.append(int(i))
                             CM_instance = CommunityMobilization(
@@ -410,7 +426,10 @@ def handle_uploaded_file(f):
                                 activity_date = df_ComMob.loc[int(i), p]
                             )
                             CM_instance.save()
+                            response.append(("newly created ComMob",i))
                 except Exception as e:
+                    response.append(("The error says: " +str(e)+ ". This error is with Comminity Mobilization columns for following household numbers", i))
+                    #response.update({'com_mob_exception_'+str(i)+'':"The error says: " +str(e)+ ". This error is with Community Mobilization columns of household number " +str(i)}) 
                     print e
 
 
@@ -434,10 +453,14 @@ def handle_uploaded_file(f):
                             temp = VHID_instance_1.household_number
                             if int(i) not in temp:
                                 temp.append(int(i))
+                                response.append(("updated VHID",i))
                             VHID_instance_1.household_number = temp
                             VHID_instance_1.save()
+                            
+
                         except Exception as e:
                             print e
+                            print "VHID is not found"
                             household_nums.append(int(i))
                             VHID_instance = VendorHouseholdInvoiceDetail(
                                 vendor = Vendor.objects.get(name=str(m)),
@@ -445,18 +468,20 @@ def handle_uploaded_file(f):
                                 invoice_number = string.split('/')[0],
                                 invoice_date =datetime.datetime.strptime(string.split('/')[1], '%d.%m.%Y') ,
                                 household_number = household_nums
-
                             )
                             VHID_instance.save()
+                            response.append(("newly created VHID",i))
 
                 except Exception as e:
-                    print e
+                    response.append(("The error says: " +str(e)+ ". This error is with Vendor Invoice Details Columns for following household numbers", i))
+                    
 
         try:
             TC_instance = ToiletConstruction.objects.select_related().filter(household_number = int(i), slum__name = this_slum)
-
+            print TC_instance
             if TC_instance:
                 TC_instance[0].update_model( df1.loc[int(i), : ])
+                response.append(("updated TC",i))
 
             else:
                 this_status = " "
@@ -464,7 +489,7 @@ def handle_uploaded_file(f):
                 for j in range(len(STATUS_CHOICES)):
                     if str(STATUS_CHOICES[j][1]).lower() == str(stat).lower():  # STATUS_CHOICE is imported from mastersheet/models.py
                         this_status=STATUS_CHOICES[j][0]
-
+               
                 TC_instance = ToiletConstruction(
                                                     slum = this_slum,
                                                     agreement_cancelled = check_bool(df1.loc[int(i), 'Agreement Cancelled']),
@@ -477,11 +502,22 @@ def handle_uploaded_file(f):
                                                     comment = check_null(df1.loc[int(i), 'Comment']),
                                                     status = this_status
                                                 )
+
                 TC_instance.save()
+                response.append(("newly created TC",i))
         except Exception as e:
+            
+            response.append(("The error says: " +str(e)+ ". This error is with Toilet Construction Columns for following household numbers", i))
+            #response.update({'toi_const_exception_'+str(i)+'':"The error says: " +str(e)+ ". This error is with Toilet Constructioncolumns of household number " +str(i)}) 
+            #response.udate({"The error says: " +str(e)+ ". This error is with Toilet Construction Columns": i})
             print e
 
-
+    d = defaultdict(list)
+    for k,v in response:
+        d[k].append(v)
+    print d
+    return d
+ 
 
 def check_null(s):
     if pandas.isnull(s):
@@ -509,7 +545,6 @@ def delete_selected(request):
 
     records = json.loads(request.body)
     delete_selected_records(records)
-    print records['records'][0]
 
     return HttpResponse(json.dumps(response), content_type="application/json")
 
