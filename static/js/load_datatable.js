@@ -106,26 +106,46 @@ $(document).ready(function() {
         else{
             var fname = input[1].files[0].name;
             var re = /(\.xls|\.xlsx)$/i;
+
             if(!re.exec(fname)){
                 alert("File extension not supported!");
             }
             else{
                 $.ajax({
-                            type : "post",
-                            url : "/mastersheet/files/",
-                            data :formData ,
-                            contentType : false,
-                            processData: false,
-                            success: function(response){
-                                alert(response.response);
-                            }
+                        type : "post",
+                        url : "/mastersheet/files/",
+                        data :formData ,
+                        dataType: 'json',
+                        contentType : false,//false
+                        processData: false,
+                        success: function(response){
 
+                            jQuery.each(response, function (index, value) {
+                                $("#error_log").innerHTML += this;
+                                var newNode = document.createElement('div');      
+                                newNode.innerHTML = "<p>" +index+": "+String(value)+"</p>";
+                                $("#error_log").append(newNode);
+                            })
+                            $('#error_log').addClass('error_display');
+                            $('#error_log').addClass('alert alert-danger');
+                            
+                        }
                 });
             }
         }
-
-
     });
+    
+    $("#btnUpload").on("click", function(){
+        
+        $('#myModal').on('hidden.bs.modal', function() {
+            console.log("cleaning modal");
+            $(this).find("#error_log").html("");
+            $(this).find("#error_log").remove();
+            $("#upload_file")[0].reset();
+        });
+     });
+    
+
 
     function load_data_datatable(){
         if (table != null ){
@@ -240,8 +260,6 @@ $(document).ready(function() {
                                 contentType : "json",
                                 success: function(response){
                                     alert(response.response);
-
-
                                 }
 
                             });
