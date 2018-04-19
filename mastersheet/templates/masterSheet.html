@@ -5,18 +5,16 @@
 <link rel = "stylesheet" type="text/css" href = "{% static "css/jquery.dataTables.min.css" %}">
 <link rel = "stylesheet" type="text/css" href = "{% static "admin/css/forms.css" %}">
 <style>
-#upload_file {
-    text-align: center;
-    height:100px;
-    witdh:1360px;
-    background-color: blue;
 
-}
 #loading-img {
     background: url(/static/images/spinner.gif) center center no-repeat;
     height: 100%;
     width: 100%;
     z-index: 20;
+}
+.error_display{
+    
+    overflow-y:scroll;height:150px;
 }
 .overlay {
     background: #e9e9e9;
@@ -89,13 +87,19 @@ div.dt-buttons>button{
             <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
             <h4 class="modal-title" id="myModalLabel">Upload Excel file</h4>
           </div>
-          <form id="upload_file" method = "POST" enctype="multipart/form-data" action="">{% csrf_token %}<!-- /mastersheet/files/ -->
-          <div class="modal-body">
+          <form id="upload_file" method = "POST" enctype="multipart/form-data" action="">{% csrf_token %}
+          <div id = "upload_file_field" class="modal-body">
                 {{ file_form.as_p}}
+          </div>
+          <div id = 'error_log' >
+            <!--
+                The error msg for the file upload modal is to be displayed in the modal
+                instead of alert
+            -->
           </div>
           <div class="modal-footer">
             <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
-            <button id = "upload_file_1" type="submit" class="btn btn-primary">Upload</button>
+            <button id = "upload_file_1" type="button" class="btn btn-primary">Upload</button>
           </div>
           </form>
         </div>
