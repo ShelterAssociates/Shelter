@@ -214,7 +214,7 @@ class KoboDDSyncTrack(models.Model):
 def update_status(sender ,instance, **kwargs):
     instance.status = STATUS_CHOICES[4][0]
 
-    if (instance.phase_one_material_date is None) and (datetime.date.today() - instance.agreement_date > datetime.timedelta(days=8)):
+    if (instance.phase_one_material_date is None) and instance.agreement_date and (datetime.date.today() - instance.agreement_date > datetime.timedelta(days=8)):
         instance.status = STATUS_CHOICES[2][0]#material not given
 
 
