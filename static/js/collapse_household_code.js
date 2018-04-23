@@ -31,46 +31,55 @@ $(document).ready(function(){
         var household = $("textArea[name=household_code]").val();
         $("textArea[name=household_code]").parent().append('<p class="householdcode">'+household+'</p>');
         $("input[name=_save]").click(function(){
-            var data = "";
-            var flag = false;
+            var data = [];
             $.each($("td.field-household_code"), function(index, element){
-                   var element_text = $(element).find('textArea')
-                   var d = element_text.val();
-                   var duplicate = check_for_duplicate(element_text);
-                   if (duplicate.length > 0){
-                    flag=true;
-                   }
-                   if (d != "")
-                   {
-                        data += d.slice(d.indexOf('[')+1, d.indexOf(']')) + ',';
-                   }
+                var element_text = $(element).find('textArea')
+                var d = eval(element_text.val());
+                //var dup = check_for_duplicate(element_text);
+                if (d!= undefined && d!="" && d.length>0){
+                    data = data.concat(d);
+                }
            });
-            $("textArea[name=household_code]").val("["+data.slice(0,data.length-1)+"]");
-            if (flag){
-             return false;
-            }
+           data.sort();
+            $("textArea[name=household_code]").val("["+data.join(', ')+"]");
+            $("textArea[name=household_code]").parent().find('p.householdcode').html('['+data.join(', ')+']');
+            return false;
         });
     }
 //Checking for duplicate values within the list.
-//    function check_for_duplicate(element){
-//       var d = $(element).val();
-//       var data = null;
-//       var duplicate = []
-//       if (d != "")
-//       {
-//         data = d.slice(d.indexOf('[')+1, d.indexOf(']'));
-//         data = data.split(',')
-//         house = household.slice(household.indexOf('[')+1, household.indexOf(']'));
-//         house = house.replace(' ','').split(',')
-//         $.each(data, function(index, val){
-//            val = val.replace('\n','').replace(' ', '');
-//            if (val in house){
-//                duplicate.append(val);
-//            }
-//         });
-//       }
-//       return duplicate;
-//    }
+    function check_for_duplicate(element){
+       var check_houses = eval($(element).val());
+       var duplicate = []
+       if (check_houses.length > 0)
+       {
+
+         $.each($("td.field-household_code").find("textArea.vLargeTextField"), function(index, elem){
+            var houses = eval($(elem).val());
+            if(houses!=undefined && houses!="" && houses.length>0){
+                duplicate[index]=[]
+                if($(elem).attr('id')!=$(element).attr('id')){
+                    $.each(check_houses, function(ind,val){
+
+                        if (houses.indexOf(val)>-1){
+                            duplicate[index].push(val);
+                        }
+                    });
+                }
+                else{
+                    $.each(check_houses, function(ind,val){
+                        var occurance =  houses.filter(function(elem){
+                                return elem == val;
+                              }).length;
+                        if (occurance > 1){
+                            duplicate[index].push(val);
+                        }
+                    });
+                }
+            }
+         });
+       }
+       return duplicate;
+    }
 //    $("td.field-household_code").on('blur','textArea',function(element){
 //       var duplicate = check_for_duplicate($($(element)[0].target));
 //       if (duplicate.length > 0)
@@ -79,5 +88,20 @@ $(document).ready(function(){
 //       }
 //
 //    });
-
+//$(document).on('blur','textArea.vLargeTextField',function(element){
+//   var d = check_for_duplicate($(this));
+//   var disp_msg = "";
+//   $.each(d, function(i,v){
+//       if(v.join(',') != ""){
+//           v = $.grep(v, function(el, index) {
+//                return index == $.inArray(el, v);
+//            });
+//            disp_msg += v.join(',')+" already present in record -";
+//            disp_msg +=  (i+1) + '\n';
+//        }
+//   });
+//   if(disp_msg){
+//   alert("Below are the duplicate numbers :\n"+disp_msg);
+//    }
+// });
 });
