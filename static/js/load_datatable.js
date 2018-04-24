@@ -119,16 +119,39 @@ $(document).ready(function() {
                         contentType : false,//false
                         processData: false,
                         success: function(response){
-
-                            jQuery.each(response, function (index, value) {
-                                $("#error_log").innerHTML += this;
-                                var newNode = document.createElement('div');      
-                                newNode.innerHTML = "<p>" +index+": "+String(value)+"</p>";
-                                $("#error_log").append(newNode);
-                            })
-                            $('#error_log').addClass('error_display');
-                            $('#error_log').addClass('alert alert-danger');
+                            var total_updates = 0;
+                            var total_new = 0;
                             
+                            
+                            jQuery.each(response, function (index, value) {
+                                
+                                console.log(index);
+                                if( index.indexOf("updated") != -1)
+                                {
+                                    total_updates = total_updates + value.length;
+                                }
+                                if( index.indexOf("newly") != -1)
+                                {
+                                    total_new = total_new + value.length;
+                                } 
+                                
+                                if(index.indexOf("erro") != -1)   
+                                {
+                                    var error_log = document.createElement('div');      
+                                    error_log.innerHTML = "<p>" +index+": "+String(value)+"[ total:"+value.length+" ]</p>";
+                                    $("#error_log").append(error_log);
+                                    $('#error_log').addClass('error_display');
+                                    $('#error_log').addClass('alert alert-danger');
+                                    console.log("Adding error log");
+                                }
+
+                                
+                            })
+                            var success_log = document.createElement('div');
+                            success_log.innerHTML = "<p>Number of records in the uploaded sheet: "+response.total_records+ "<br>Total records updated: " + total_updates +"<br>Number of new records added: " +total_new+ "</p>";
+                            $("#success_log").append(success_log);
+                            
+                            $('#success_log').addClass('alert alert-success');
                         }
                 });
             }
@@ -141,6 +164,8 @@ $(document).ready(function() {
             console.log("cleaning modal");
             $(this).find("#error_log").html("");
             $(this).find("#error_log").remove();
+            $(this).find("#success_log").html("");
+            $(this).find("#success_log").remove();
             $("#upload_file")[0].reset();
         });
      });
