@@ -91,12 +91,16 @@ div.dt-buttons>button{
           <div id = "upload_file_field" class="modal-body">
                 {{ file_form.as_p}}
           </div>
+          <div id = 'success_log'>
+              
+          </div>
           <div id = 'error_log' >
             <!--
                 The error msg for the file upload modal is to be displayed in the modal
                 instead of alert
             -->
           </div>
+
           <div class="modal-footer">
             <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
             <button id = "upload_file_1" type="button" class="btn btn-primary">Upload</button>
