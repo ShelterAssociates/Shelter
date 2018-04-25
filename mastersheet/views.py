@@ -44,6 +44,8 @@ def masterSheet(request, slum_code = 0 ):
         url_RHS_form = str(settings.KOBOCAT_FORM_URL)+str('forms/130/form.json')
         #url_RHS_form = str(settings.KOBOCAT_FORM_URL) + str('forms/98/form.json"')
 
+        url_FF_form = str(settings.KOBOCAT_FORM_URL)+str('forms/142/form.json')
+
         kobotoolbox_request = urllib2.Request(urlv)
         kobotoolbox_request_family_factsheet = urllib2.Request(url_family_factsheet)
         kobotoolbox_request_RHS_form = urllib2.Request(url_RHS_form)
@@ -93,7 +95,14 @@ def masterSheet(request, slum_code = 0 ):
                     'agreement_date_str': "to_char(agreement_date, 'YYYY-MM-DD ')",
                     'completion_date_str': "to_char(completion_date, 'YYYY-MM-DD ')"}).filter(
             slum__shelter_slum_code=slum_code)
+
         daily_reporting_data = daily_reporting_data.values(*toilet_reconstruction_fields)
+
+        for i in daily_reporting_data:
+            i['status'] = ToiletConstruction.get_status_display(i['status'])
+
+
+
 
         temp_daily_reporting = {obj_DR['household_number']: obj_DR for obj_DR in daily_reporting_data}
         temp_DR_keys = temp_daily_reporting.keys()
@@ -193,7 +202,7 @@ def masterSheet(request, slum_code = 0 ):
                     except:
                         pass
 
-    
+
 
 
     return HttpResponse(json.dumps(formdict),  content_type = "application/json")
@@ -281,7 +290,7 @@ def define_columns(request):
         {"data": "photo_uploaded", "title": "Is toilet photo uploaded on site?"},#45
         {"data": "photo_verified", "title": "Photo Verified"},
         {"data": "photo_approved", "title": "Photo Approved"},
-        {"data": "application_verified", "title": "application Verified"},
+        {"data": "application_verified", "title": "Application Verified"},
         {"data": "application_approved", "title": "Application Approved"},
 
         {"data": "agreement_date_str", "title": "Date of Agreement"},#50
