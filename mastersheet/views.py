@@ -195,6 +195,7 @@ def masterSheet(request, slum_code = 0 ):
 
     
 
+
     return HttpResponse(json.dumps(formdict),  content_type = "application/json")
 
 
@@ -278,15 +279,20 @@ def define_columns(request):
         {"data": "name", "title": "SBM Applicant Name"},
         {"data": "application_id", "title": "Application ID"},
         {"data": "photo_uploaded", "title": "Is toilet photo uploaded on site?"},#45
+        {"data": "photo_verified", "title": "Photo Verified"},
+        {"data": "photo_approved", "title": "Photo Approved"},
+        {"data": "application_verified", "title": "application Verified"},
+        {"data": "application_approved", "title": "Application Approved"},
 
-        {"data": "agreement_date_str", "title": "Date of Agreement"},
+        {"data": "agreement_date_str", "title": "Date of Agreement"},#50
         {"data": "agreement_cancelled", "title": "Agreement Cancelled?"},
         {"data": "septic_tank_date_str", "title": "Date of septic tank supplied"},
         {"data": "phase_one_material_date_str", "title": "Date of first phase material"},
-        {"data": "phase_two_material_date_str", "title": "Date of second phase material"},#50
-        {"data": "phase_three_material_date_str", "title": "Date of third phase material"},
+        {"data": "phase_two_material_date_str", "title": "Date of second phase material"},
+        {"data": "phase_three_material_date_str", "title": "Date of third phase material"},#55
         {"data": "completion_date_str", "title": "Construction Completion Date"},
-        {"data": "material_shifted_to", "title": "Material sifted to"},#53
+        {"data": "material_shifted_to", "title": "Material sifted to"},
+        {"data": "status", "title": "Final Status"}#58
 
         # Append community mobilization here #
 
@@ -297,8 +303,8 @@ def define_columns(request):
     final_data['buttons']['RHS'] = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18]
     final_data['buttons']['Follow-up'] = [19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36]
     final_data['buttons']['Family factsheet'] = [37, 38, 39, 40, 41]
-    final_data['buttons']['SBM'] = [42, 43, 44]
-    final_data['buttons']['Construction status'] = [45, 46, 47, 48, 49, 50, 51, 52]
+    final_data['buttons']['SBM'] = [42, 43, 44, 45, 46, 47, 48]
+    final_data['buttons']['Construction status'] = [49, 50, 51, 52, 53, 54, 55, 56, 57]
 
     # We define the columns for community mobilization and vendor details in a dynamic way. The
     # reason being these columns are prone to updates and additions.
