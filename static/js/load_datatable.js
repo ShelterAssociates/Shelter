@@ -22,7 +22,7 @@ $(document).ready(function() {
             contentType : "application/json",
             success : function (data,type,row,meta) {
                 columns_defs = data;
-                console.log(columns_defs);
+
                 // Adding hyperlinks to community mobilization data
                 var tmp_DR = columns_defs['buttons']['Community Mobilization'];
                 for (i = 0 ; i < tmp_DR.length ; i ++ ){
@@ -56,7 +56,6 @@ $(document).ready(function() {
                 var tmp_SBM = columns_defs['buttons']['SBM'];
                 
                 for (i = 0 ; i < tmp_SBM.length ; i ++ ){
-                    console.log(columns_defs['data'][0]);
                     columns_defs['data'][tmp_SBM[i]]['render']= function ( data, type, row,meta ) {
                         if(typeof data != 'undefined'){
                             url_SBM = String("/admin/master/mastersheet/sbmupload/") + row.id + String("/");
@@ -79,11 +78,7 @@ $(document).ready(function() {
                     }
                 }
 
-                //Adding hyperlink to household number in order to update SBM records
-
-                for (i = 0 ; i < tmp_SBM.length ; i ++ ){
-                    
-                }
+                
 
                 // Adding hyperlinks to Toilet Construction data
                 var tmp_TC = columns_defs['buttons']['Construction status'];
@@ -134,7 +129,7 @@ $(document).ready(function() {
                         url : "/mastersheet/files/",
                         data :formData ,
                         dataType: 'json',
-                        contentType : false,//false
+                        contentType : false,
                         processData: false,
                         success: function(response){
                             var total_updates = 0;
@@ -143,7 +138,6 @@ $(document).ready(function() {
                             
                             jQuery.each(response, function (index, value) {
                                 
-                                console.log(index);
                                 if( index.indexOf("updated") != -1)
                                 {
                                     total_updates = total_updates + value.length;
@@ -160,7 +154,6 @@ $(document).ready(function() {
                                     $("#error_log").append(error_log);
                                     $('#error_log').addClass('error_display');
                                     $('#error_log').addClass('alert alert-danger');
-                                    console.log("Adding error log");
                                 }
 
                                 
@@ -179,7 +172,6 @@ $(document).ready(function() {
     $("#btnUpload").on("click", function(){
         
         $('#myModal').on('hidden.bs.modal', function() {
-            console.log("cleaning modal");
             $(this).find("#error_log").html("");
             $(this).find("#error_log").remove();
             $(this).find("#success_log").html("");
@@ -192,7 +184,6 @@ $(document).ready(function() {
 
     function load_data_datatable(){
         if (table != null ){
-            console.log("reloading datatable");
             //table.ajax.reload();
             table.clear();
             table.ajax.reload();
@@ -214,42 +205,39 @@ $(document).ready(function() {
 
                 table = $("#example").DataTable( {
                 //dom: 'Bfrtip',
-                "processing": true,
-                "sDom": '<"top"Bfl>r<"mid"t><"bottom"ip><"clear">',
-                "ajax" :  {
-                                url : "/mastersheet/list/show/",
-                                dataSrc:"",
-                                data:{'form':$("#slum_form").serialize() , 'csrfmiddlewaretoken':csrf_token},
-                                contentType : "application/json",
-                                complete: function(data){
-                                    $(".overlay").hide();
-                                    
-                                    if(table.page.info().recordsDisplay != 0){
-                                    }
-                                },
-                                success: function(){
-                                    console.log("ajax successful");
-                                }
+                    "processing": true,
+                    "sDom": '<"top"Bfl>r<"mid"t><"bottom"ip><"clear">',
+                    "ajax" :  {
+                                    url : "/mastersheet/list/show/",
+                                    dataSrc:"",
+                                    data:{'form':$("#slum_form").serialize() , 'csrfmiddlewaretoken':csrf_token},
+                                    contentType : "application/json",
+                                    complete: function(data){
+                                        $(".overlay").hide();
+                                        
+                                        // if(table.page.info().recordsDisplay != 0){
+                                        // }
+                                    },
+                                   
 
-                          },
-                "columnDefs": [
-                                {   "defaultContent": "-",
-                                    "targets": "_all",
+                              },
+                    "columnDefs": [
+                                    {   "defaultContent": "-",
+                                        "targets": "_all",
 
-                                } ,
-                                {"footer":true},
+                                    } ,
+                                    {"footer":true},
 
-                              ],
+                                  ],
 
-                "buttons":["excel"],
+                    "buttons":["excel"],
 
-                "columns": columns_defs['data'],
+                    "columns": columns_defs['data'],
                 });
 
                 //add_search_box();
 
                 $( table.table().container() ).on( 'keyup change', 'tfoot tr th input', function (index,element) {
-                    console.log(this.value);
                     table.column($(this).parent().index()).search( this.value ).draw();
 
                 } );
@@ -377,19 +365,19 @@ $(document).ready(function() {
                 if ( value['agreement_date_str'] != null ){
 
                     if ( value['phase_one_material_date_str'] == null && Math.floor((today - Date.parse(trim_space(value['agreement_date_str']))) / divider) > 8 ){
-                            $('tr:eq('+index+')').css('background-color', '#f9a4a4');//red
+                            $('tr:eq('+index+')').find('td:eq(16)').css('background-color', '#f9a4a4');//red
 
                     }
                     else if ( value['phase_two_material_date_str'] == null && Math.floor((today - Date.parse(trim_space(value['phase_one_material_date_str']))) / divider) > 8 ){
-                            $('tr:eq('+index+')').css('background-color', '#f2f29f');//yellow
+                            $('tr:eq('+index+')').find('td:eq(16)').css('background-color', '#f2f29f');//yellow
 
                     }
                     else if (value['phase_three_material_date_str'] == null && Math.floor((today - Date.parse(trim_space(value['phase_two_material_date_str']))) / divider) > 8 ){
-                            $('tr:eq('+index+')').css('background-color', '#aaf9a4');//green
+                            $('tr:eq('+index+')').find('td:eq(16)').css('background-color', '#aaf9a4');//green
 
                     }
                     else if (value['completion_date_str'] == null && Math.floor((today - Date.parse(trim_space(value['phase_three_material_date_str']))) / divider) > 8 ){
-                            $('tr:eq('+index+')').css('background-color', '#aaa4f4');//blue
+                            $('tr:eq('+index+')').find('td:eq(16)').css('background-color', '#aaa4f4');//blue
 
                     }
                     /*if (value['phase_one_material_date_str'] - value['agreement_date_str'] > 8){
