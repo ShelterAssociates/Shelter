@@ -22,7 +22,7 @@ $(document).ready(function() {
             contentType : "application/json",
             success : function (data,type,row,meta) {
                 columns_defs = data;
-
+                console.log(columns_defs);
                 // Adding hyperlinks to community mobilization data
                 var tmp_DR = columns_defs['buttons']['Community Mobilization'];
                 for (i = 0 ; i < tmp_DR.length ; i ++ ){
@@ -53,9 +53,21 @@ $(document).ready(function() {
                 }
 
                 // Adding hyperlinks to SBM data
-                var tmp_SBM = columns_defs['buttons']['SBM']
+                var tmp_SBM = columns_defs['buttons']['SBM'];
+                
                 for (i = 0 ; i < tmp_SBM.length ; i ++ ){
+                    console.log(columns_defs['data'][0]);
                     columns_defs['data'][tmp_SBM[i]]['render']= function ( data, type, row,meta ) {
+                        if(typeof data != 'undefined'){
+                            url_SBM = String("/admin/master/mastersheet/sbmupload/") + row.id + String("/");
+                            if(type === 'display'){
+                                        data = '<a href = "#" onclick="window.open(\''+url_SBM+'\', \'_blank\', \'width=650,height=550\');">' + data + "</a>";
+
+                            }
+                            return data;
+                        }
+                    }
+                    columns_defs['data'][0]['render']= function ( data, type, row,meta ) {
                         if(typeof data != 'undefined'){
                             url_SBM = String("/admin/master/mastersheet/sbmupload/") + row.id + String("/");
                             if(type === 'display'){
@@ -67,8 +79,14 @@ $(document).ready(function() {
                     }
                 }
 
+                //Adding hyperlink to household number in order to update SBM records
+
+                for (i = 0 ; i < tmp_SBM.length ; i ++ ){
+                    
+                }
+
                 // Adding hyperlinks to Toilet Construction data
-                var tmp_TC = columns_defs['buttons']['Construction status']
+                var tmp_TC = columns_defs['buttons']['Construction status'];
                 for (i = 0 ; i < tmp_TC.length ; i ++ ){
                     columns_defs['data'][tmp_TC[i]]['render']= function ( data, type, row,meta ) {
                         if(typeof data != 'undefined'){
