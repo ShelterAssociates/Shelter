@@ -2,6 +2,7 @@ var columns_defs;
 var table = null;
 var divider = 1000 * 60 * 60 * 24;
 var window = 8 * 1000 * 60 * 60 * 24;
+var current_slum;
 
 var today = Date.now();
 var daily_reporting_columns = [];
@@ -52,7 +53,8 @@ $(document).ready(function() {
                 }
 
                 // Adding hyperlinks to SBM data
-                var tmp_SBM = columns_defs['buttons']['SBM']
+                var tmp_SBM = columns_defs['buttons']['SBM'];
+                
                 for (i = 0 ; i < tmp_SBM.length ; i ++ ){
                     columns_defs['data'][tmp_SBM[i]]['render']= function ( data, type, row,meta ) {
                         if(typeof data != 'undefined'){
@@ -64,10 +66,22 @@ $(document).ready(function() {
                             return data;
                         }
                     }
+                    columns_defs['data'][0]['render']= function ( data, type, row,meta ) {
+                        if(typeof data != 'undefined'){
+                            url_SBM = String("/admin/master/mastersheet/sbmupload/") + row.id + String("/");
+                            if(type === 'display'){
+                                        data = '<a href = "#" onclick="window.open(\''+url_SBM+'\', \'_blank\', \'width=650,height=550\');">' + data + "</a>";
+
+                            }
+                            return data;
+                        }
+                    }
                 }
 
+                
+
                 // Adding hyperlinks to Toilet Construction data
-                var tmp_TC = columns_defs['buttons']['Construction status']
+                var tmp_TC = columns_defs['buttons']['Construction status'];
                 for (i = 0 ; i < tmp_TC.length ; i ++ ){
                     columns_defs['data'][tmp_TC[i]]['render']= function ( data, type, row,meta ) {
                         if(typeof data != 'undefined'){
@@ -94,13 +108,91 @@ $(document).ready(function() {
         col = columns_defs['buttons'][section];
         table.columns(col).visible( flag );
     });
+    $("#upload_file_1").on("click", function(){
 
-    function load_data_datatable(){
-        if (table != null){
-        table.ajax.reload();
+        var input = $("#upload_file")[0];
+        var formData = new FormData(input);
 
+        if(typeof input[1].files[0] == 'undefined' ){
+            alert("No file selected. Please select a file.");
         }
         else{
+            var fname = input[1].files[0].name;
+            var re = /(\.xls|\.xlsx)$/i;
+
+            if(!re.exec(fname)){
+                alert("File extension not supported!");
+            }
+            else{
+                $.ajax({
+                        type : "post",
+                        url : "/mastersheet/files/",
+                        data :formData ,
+                        dataType: 'json',
+                        contentType : false,
+                        processData: false,
+                        success: function(response){
+                            var total_updates = 0;
+                            var total_new = 0;
+                            
+                            
+                            jQuery.each(response, function (index, value) {
+                                
+                                if( index.indexOf("updated") != -1)
+                                {
+                                    total_updates = total_updates + value.length;
+                                }
+                                if( index.indexOf("newly") != -1)
+                                {
+                                    total_new = total_new + value.length;
+                                } 
+                                
+                                if(index.indexOf("erro") != -1)   
+                                {
+                                    var error_log = document.createElement('div');      
+                                    error_log.innerHTML = "<p>" +index+": "+String(value)+"[ total:"+value.length+" ]</p>";
+                                    $("#error_log").append(error_log);
+                                    $('#error_log').addClass('error_display');
+                                    $('#error_log').addClass('alert alert-danger');
+                                }
+
+                                
+                            })
+                            var success_log = document.createElement('div');
+                            success_log.innerHTML = "<p>Number of records in the uploaded sheet: "+response.total_records+ "<br>Total records updated: " + total_updates +"<br>Number of new records added: " +total_new+ "</p>";
+                            $("#success_log").append(success_log);
+                            
+                            $('#success_log').addClass('alert alert-success');
+                        }
+                });
+            }
+        }
+    });
+    
+    $("#btnUpload").on("click", function(){
+        
+        $('#myModal').on('hidden.bs.modal', function() {
+            $(this).find("#error_log").html("");
+            $(this).find("#error_log").remove();
+            $(this).find("#success_log").html("");
+            $(this).find("#success_log").remove();
+            $("#upload_file")[0].reset();
+        });
+     });
+    
+
+
+    function load_data_datatable(){
+        if (table != null ){
+            //table.ajax.reload();
+            table.clear();
+            table.ajax.reload();
+            table.draw();
+
+        }
+        else
+        {
+                //table.destroy()
 
                 $(".overlay").show();
                 buttons = '<div class="btn-group">';
@@ -113,37 +205,39 @@ $(document).ready(function() {
 
                 table = $("#example").DataTable( {
                 //dom: 'Bfrtip',
-                "sDom": '<"top"Bfl>r<"mid"t><"bottom"ip><"clear">',
-                "ajax" :  {
-                                url : "/mastersheet/list/show/",
-                                dataSrc:"",
-                                data:{'form':$("#slum_form").serialize() , 'csrfmiddlewaretoken':csrf_token},
-                                contentType : "application/json",
-                                complete: function(){
-                                    $(".overlay").hide();
-                                    if(table.page.info().recordsDisplay != 0){
-                                    }
-                                }
+                    "processing": true,
+                    "sDom": '<"top"Bfl>r<"mid"t><"bottom"ip><"clear">',
+                    "ajax" :  {
+                                    url : "/mastersheet/list/show/",
+                                    dataSrc:"",
+                                    data:{'form':$("#slum_form").serialize() , 'csrfmiddlewaretoken':csrf_token},
+                                    contentType : "application/json",
+                                    complete: function(data){
+                                        $(".overlay").hide();
+                                        
+                                        // if(table.page.info().recordsDisplay != 0){
+                                        // }
+                                    },
+                                   
 
-                          },
-                "columnDefs": [
-                                {   "defaultContent": "-",
-                                    "targets": "_all",
+                              },
+                    "columnDefs": [
+                                    {   "defaultContent": "-",
+                                        "targets": "_all",
 
-                                } ,
-                                {"footer":true},
+                                    } ,
+                                    {"footer":true},
 
-                              ],
+                                  ],
 
-                "buttons":["excel"],
+                    "buttons":["excel"],
 
-                "columns": columns_defs['data'],
+                    "columns": columns_defs['data'],
                 });
 
                 //add_search_box();
 
                 $( table.table().container() ).on( 'keyup change', 'tfoot tr th input', function (index,element) {
-                    console.log(this.value);
                     table.column($(this).parent().index()).search( this.value ).draw();
 
                 } );
@@ -157,12 +251,13 @@ $(document).ready(function() {
                 });
                 $('#example').on("draw.dt",function(){
                     add_search_box();
+                    console.log("draw is called");
 
                 });
 
-                $('#example').on( 'click', 'tbody td', function () {
+               /* $('#example').on( 'click', 'tbody td', function () {
                     var data = table.cell( this ).render( 'sort' );
-                } );
+                } );*/
 
 
                 $('#example tbody').on( 'click', 'tr', function () {
@@ -196,8 +291,6 @@ $(document).ready(function() {
                                 contentType : "json",
                                 success: function(response){
                                     alert(response.response);
-
-
                                 }
 
                             });
@@ -272,19 +365,19 @@ $(document).ready(function() {
                 if ( value['agreement_date_str'] != null ){
 
                     if ( value['phase_one_material_date_str'] == null && Math.floor((today - Date.parse(trim_space(value['agreement_date_str']))) / divider) > 8 ){
-                            $('tr:eq('+index+')').css('background-color', '#f9a4a4');//red
+                            $('tr:eq('+index+')').find('td:eq(16)').css('background-color', '#f9a4a4');//red
 
                     }
                     else if ( value['phase_two_material_date_str'] == null && Math.floor((today - Date.parse(trim_space(value['phase_one_material_date_str']))) / divider) > 8 ){
-                            $('tr:eq('+index+')').css('background-color', '#f2f29f');//yellow
+                            $('tr:eq('+index+')').find('td:eq(16)').css('background-color', '#f2f29f');//yellow
 
                     }
                     else if (value['phase_three_material_date_str'] == null && Math.floor((today - Date.parse(trim_space(value['phase_two_material_date_str']))) / divider) > 8 ){
-                            $('tr:eq('+index+')').css('background-color', '#aaf9a4');//green
+                            $('tr:eq('+index+')').find('td:eq(16)').css('background-color', '#aaf9a4');//green
 
                     }
                     else if (value['completion_date_str'] == null && Math.floor((today - Date.parse(trim_space(value['phase_three_material_date_str']))) / divider) > 8 ){
-                            $('tr:eq('+index+')').css('background-color', '#aaa4f4');//blue
+                            $('tr:eq('+index+')').find('td:eq(16)').css('background-color', '#aaa4f4');//blue
 
                     }
                     /*if (value['phase_one_material_date_str'] - value['agreement_date_str'] > 8){
