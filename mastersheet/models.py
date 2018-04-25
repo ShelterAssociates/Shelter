@@ -76,6 +76,10 @@ class SBMUpload(models.Model):
     name = models.CharField(max_length=512)
     application_id = models.CharField(max_length=512)
     photo_uploaded = models.BooleanField(default=False)
+    photo_verified = models.BooleanField(default=False)
+    photo_approved = models.BooleanField(default=False)
+    application_verified = models.BooleanField(default=False)
+    application_approved = models.BooleanField(default=False)
     created_date = models.DateTimeField(default=datetime.datetime.now)
 
     class Meta:
