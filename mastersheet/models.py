@@ -220,7 +220,10 @@ class KoboDDSyncTrack(models.Model):
 
 @receiver(pre_save, sender=ToiletConstruction)
 def update_status(sender ,instance, **kwargs):
-    instance.status = STATUS_CHOICES[4][0]
+    instance.status = STATUS_CHOICES[4][0]#Under Construction
+
+    if instance.agreement_date:
+        instance.status = STATUS_CHOICES[2][0]#material not given
 
     if (instance.phase_one_material_date is None) and instance.agreement_date and (datetime.date.today() - instance.agreement_date > datetime.timedelta(days=8)):
         instance.status = STATUS_CHOICES[2][0]#material not given
@@ -228,8 +231,7 @@ def update_status(sender ,instance, **kwargs):
 
     if instance.completion_date:
         instance.status = STATUS_CHOICES[5][0]#completed
-        print "completion date updated for"
-        print instance.household_number
+        
 
     if instance.agreement_cancelled:
         instance.status = STATUS_CHOICES[1][0]#agreement cancelled
