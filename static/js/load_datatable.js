@@ -11,7 +11,7 @@ $(document).ready(function() {
 
     $("#add_table_btn").hide();
 
-   console.log("loading table...");
+    console.log("loading table...");
     var csrf_token = document.getElementsByName("csrfmiddlewaretoken")[0].value;
 
     $.ajax({
@@ -94,7 +94,7 @@ $(document).ready(function() {
                         }
                     }
                 }
-          }
+            }
     });
     $("#buttons").on("click","button",function(){
 
@@ -110,6 +110,7 @@ $(document).ready(function() {
     });
     $("#upload_file_1").on("click", function(){
 
+        $(".overlay").show();
         var input = $("#upload_file")[0];
         var formData = new FormData(input);
 
@@ -137,32 +138,56 @@ $(document).ready(function() {
                             
                             
                             jQuery.each(response, function (index, value) {
-                                
-                                if( index.indexOf("updated") != -1)
-                                {
-                                    total_updates = total_updates + value.length;
+
+                                try{
+                                    if( index.indexOf("updated") != -1)
+                                    {
+                                        total_updates = total_updates + value.length;
+                                        
+                                    }
                                 }
-                                if( index.indexOf("newly") != -1)
+                                catch(error)
                                 {
-                                    total_new = total_new + value.length;
-                                } 
-                                
-                                if(index.indexOf("erro") != -1)   
+                                    total_updates = 0;
+                                }
+                                try
                                 {
-                                    var error_log = document.createElement('div');      
-                                    error_log.innerHTML = "<p>" +index+": "+String(value)+"[ total:"+value.length+" ]</p>";
-                                    $("#error_log").append(error_log);
-                                    $('#error_log').addClass('error_display');
-                                    $('#error_log').addClass('alert alert-danger');
+                                    if( index.indexOf("newly") != -1)
+                                    {
+                                        total_new = total_new + value.length;
+                                    }
+                                 
+                                }
+                                catch(error)
+                                {
+                                    total_new = 0;
+                                }
+                                try
+                                { 
+                                    if(index.indexOf("error") != -1)   
+                                    {
+                                        var error_log = document.createElement('div');      
+                                        error_log.innerHTML = "<p>" +index+": "+String(value)+"[ total:"+value.length+" ]</p>";
+                                        $("#error_log").append(error_log);
+                                        $('#error_log').addClass('error_display');
+                                        $('#error_log').addClass('alert alert-danger');
+                                    }
+                                }
+                                catch(error)
+                                {
+
                                 }
 
                                 
-                            })
+                            });
                             var success_log = document.createElement('div');
                             success_log.innerHTML = "<p>Number of records in the uploaded sheet: "+response.total_records+ "<br>Total records updated: " + total_updates +"<br>Number of new records added: " +total_new+ "</p>";
                             $("#success_log").append(success_log);
                             
                             $('#success_log').addClass('alert alert-success');
+                        },
+                        complete:function(){
+                            $(".overlay").hide();
                         }
                 });
             }
@@ -184,7 +209,6 @@ $(document).ready(function() {
 
     function load_data_datatable(){
         if (table != null ){
-            //table.ajax.reload();
             table.clear();
             table.ajax.reload();
             table.draw();
@@ -192,7 +216,6 @@ $(document).ready(function() {
         }
         else
         {
-                //table.destroy()
 
                 $(".overlay").show();
                 buttons = '<div class="btn-group">';
@@ -215,8 +238,7 @@ $(document).ready(function() {
                                     complete: function(data){
                                         $(".overlay").hide();
                                         
-                                        // if(table.page.info().recordsDisplay != 0){
-                                        // }
+                                        
                                     },
                                    
 
@@ -243,10 +265,6 @@ $(document).ready(function() {
                 } );
                 //table.draw();
                 $('#example').on("draw.dt", function(){
-                    for(i=0; i<10; i++)
-                    {
-                        $('tr:eq('+i+')').css('background-color', '#ffffff');
-                    }
                     flag_dates();
                 });
                 $('#example').on("draw.dt",function(){
@@ -433,11 +451,6 @@ $(document).ready(function() {
         $('#example').each(function(){
             $(this).append(append_this);
         });
-
-        //console.log($('#example tfoot th'));
-        //console.log($('#example tfoot th').DataTable().columns(':visible'));
-
-
         $('#example tfoot th').each( function (index,element) {
             var title = $(this).text()  ;
             something = $(this).parent().parent().parent();
