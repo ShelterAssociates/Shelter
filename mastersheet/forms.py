@@ -19,4 +19,4 @@ class find_slum(forms.Form):
         model = 'Slum'
 
 class file_form(forms.Form):
-    file = forms.FileField()
+    file = forms.FileField(help_text="Files with xls and xlsx are accepted")

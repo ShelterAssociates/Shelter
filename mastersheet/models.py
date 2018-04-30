@@ -76,6 +76,10 @@ class SBMUpload(models.Model):
     name = models.CharField(max_length=512)
     application_id = models.CharField(max_length=512)
     photo_uploaded = models.BooleanField(default=False)
+    photo_verified = models.BooleanField(default=False)
+    photo_approved = models.BooleanField(default=False)
+    application_verified = models.BooleanField(default=False)
+    application_approved = models.BooleanField(default=False)
     created_date = models.DateTimeField(default=datetime.datetime.now)
 
     class Meta:
@@ -94,7 +98,8 @@ STATUS_CHOICES=(('1', 'Agreement done'),
                 ('3', 'Material not given'),
                 ('4', 'Construction not started'),
                 ('5', 'Under construction'),
-                ('6', 'completed'))
+                ('6', 'completed'),
+                ('7', 'Written-off'))
 
 class ToiletConstruction(models.Model):
     """
@@ -120,6 +125,9 @@ class ToiletConstruction(models.Model):
 
     def __str__(self):
         return self.household_number
+    @staticmethod
+    def get_status_display(z):
+        return STATUS_CHOICES[int(z)-1][1]
 
     def update_model(self, df1):
         if pandas.isnull(df1.loc['Agreement Cancelled']) is False:
@@ -212,7 +220,10 @@ class KoboDDSyncTrack(models.Model):
 
 @receiver(pre_save, sender=ToiletConstruction)
 def update_status(sender ,instance, **kwargs):
-    instance.status = STATUS_CHOICES[4][0]
+    instance.status = STATUS_CHOICES[4][0]#Under Construction
+
+    if instance.agreement_date:
+        instance.status = STATUS_CHOICES[2][0]#material not given
 
     if (instance.phase_one_material_date is None) and instance.agreement_date and (datetime.date.today() - instance.agreement_date > datetime.timedelta(days=8)):
         instance.status = STATUS_CHOICES[2][0]#material not given
@@ -220,8 +231,7 @@ def update_status(sender ,instance, **kwargs):
 
     if instance.completion_date:
         instance.status = STATUS_CHOICES[5][0]#completed
-        print "completion date updated for"
-        print instance.household_number
+        
 
     if instance.agreement_cancelled:
         instance.status = STATUS_CHOICES[1][0]#agreement cancelled

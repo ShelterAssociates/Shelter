@@ -14,6 +14,7 @@ from django.conf import settings
 import collections
 from django.http import JsonResponse
 from mastersheet.daily_reporting_sync import ToiletConstructionSync, CommunityMobilizaitonSync
+from collections import defaultdict
 
 #The views in this file correspond to the mastersheet functionality of shelter app.
 
@@ -42,6 +43,8 @@ def masterSheet(request, slum_code = 0 ):
 
         url_RHS_form = str(settings.KOBOCAT_FORM_URL)+str('forms/130/form.json')
         #url_RHS_form = str(settings.KOBOCAT_FORM_URL) + str('forms/98/form.json"')
+
+        url_FF_form = str(settings.KOBOCAT_FORM_URL)+str('forms/142/form.json')
 
         kobotoolbox_request = urllib2.Request(urlv)
         kobotoolbox_request_family_factsheet = urllib2.Request(url_family_factsheet)
@@ -92,7 +95,14 @@ def masterSheet(request, slum_code = 0 ):
                     'agreement_date_str': "to_char(agreement_date, 'YYYY-MM-DD ')",
                     'completion_date_str': "to_char(completion_date, 'YYYY-MM-DD ')"}).filter(
             slum__shelter_slum_code=slum_code)
+
         daily_reporting_data = daily_reporting_data.values(*toilet_reconstruction_fields)
+
+        for i in daily_reporting_data:
+            i['status'] = ToiletConstruction.get_status_display(i['status'])
+
+
+
 
         temp_daily_reporting = {obj_DR['household_number']: obj_DR for obj_DR in daily_reporting_data}
         temp_DR_keys = temp_daily_reporting.keys()
@@ -192,7 +202,8 @@ def masterSheet(request, slum_code = 0 ):
                     except:
                         pass
 
-    
+
+
 
     return HttpResponse(json.dumps(formdict),  content_type = "application/json")
 
@@ -277,15 +288,20 @@ def define_columns(request):
         {"data": "name", "title": "SBM Applicant Name"},
         {"data": "application_id", "title": "Application ID"},
         {"data": "photo_uploaded", "title": "Is toilet photo uploaded on site?"},#45
+        {"data": "photo_verified", "title": "Photo Verified"},
+        {"data": "photo_approved", "title": "Photo Approved"},
+        {"data": "application_verified", "title": "Application Verified"},
+        {"data": "application_approved", "title": "Application Approved"},
 
-        {"data": "agreement_date_str", "title": "Date of Agreement"},
+        {"data": "agreement_date_str", "title": "Date of Agreement"},#50
         {"data": "agreement_cancelled", "title": "Agreement Cancelled?"},
         {"data": "septic_tank_date_str", "title": "Date of septic tank supplied"},
         {"data": "phase_one_material_date_str", "title": "Date of first phase material"},
-        {"data": "phase_two_material_date_str", "title": "Date of second phase material"},#50
-        {"data": "phase_three_material_date_str", "title": "Date of third phase material"},
+        {"data": "phase_two_material_date_str", "title": "Date of second phase material"},
+        {"data": "phase_three_material_date_str", "title": "Date of third phase material"},#55
         {"data": "completion_date_str", "title": "Construction Completion Date"},
-        {"data": "material_shifted_to", "title": "Material sifted to"},#53
+        {"data": "material_shifted_to", "title": "Material sifted to"},
+        {"data": "status", "title": "Final Status"}#58
 
         # Append community mobilization here #
 
@@ -296,13 +312,13 @@ def define_columns(request):
     final_data['buttons']['RHS'] = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18]
     final_data['buttons']['Follow-up'] = [19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36]
     final_data['buttons']['Family factsheet'] = [37, 38, 39, 40, 41]
-    final_data['buttons']['SBM'] = [42, 43, 44]
-    final_data['buttons']['Construction status'] = [45, 46, 47, 48, 49, 50, 51, 52]
+    final_data['buttons']['SBM'] = [42, 43, 44, 45, 46, 47, 48]
+    final_data['buttons']['Construction status'] = [49, 50, 51, 52, 53, 54, 55, 56, 57]
 
     # We define the columns for community mobilization and vendor details in a dynamic way. The
     # reason being these columns are prone to updates and additions.
     activity_pre_len = len(formdict_new)
-    activity_type_model = ActivityType.objects.all()
+    activity_type_model = ActivityType.objects.filter(display_flag=True).order_by('display_order')
 
     try:
         for i in range(len(activity_type_model)):
@@ -311,7 +327,7 @@ def define_columns(request):
         print e
     final_data['buttons']['Community Mobilization'] = range(activity_pre_len, len(formdict_new))
 
-    vendor_type_model = VendorType.objects.all()
+    vendor_type_model = VendorType.objects.filter(display_flag=True).order_by('display_order')
     vendor_pre_len = len(formdict_new)
     try:
         for i in vendor_type_model:
@@ -334,154 +350,231 @@ def renderMastersheet(request):
 def file_ops(request):
     slum_search_field = find_slum()
     file_form1 = file_form()
+    response = []
+    resp = {}
     if request.method == "POST":
         try:
-            handle_uploaded_file(request.FILES.get('file'))
-        except Exception as e:
-            print "exception is " + str(e)
-    return render(request, 'masterSheet.html', {'form': slum_search_field, 'file_form':file_form1})
+            resp = handle_uploaded_file(request.FILES.get('file'),response)
+            response = resp
+        except Exception as e: 
+            response.append(('msg', str(e)))
+    
+    
+    return HttpResponse(json.dumps(response), content_type="application/json")
 
 # Pandas libraries help us in handling DataFrames with convenience
 # In the sheet that is being uploaded, the 'Agreement Cancelled' field should be blank if the agreement
 # is not cancelled. If it has any entry, the agreement_cancelled field in the database will be set to
 #  True
-def handle_uploaded_file(f):
+def handle_uploaded_file(f,response):
+
     df = pandas.read_excel(f)
+    
+
     df1=df.set_index("House Number")
     # We divide the dataframe into subframes for vendors, their invoices and community mobilization
 
-    df_vendors = df1.filter(like='Vendor Name')
-    df_invoice = df1.filter(like = 'Invoice')
-    df_ComMob = df1.loc[:,'FGD with women':'Community Mobilization Ends']
+    flag_accounts = 0
+    flag_SBM = 0
+    flag_ComMob = 0
+    flag_TC = 0
+    try:
+        df_vendors = df1.filter(like='Vendor Name')
+        df_invoice = df1.filter(like = 'Invoice')
+    except:
+        flag_accounts = 1
+
+
+    try:
+        df_ComMob = df1.loc[:,'FGD with women':'Community Mobilization Ends']
+    except:
+        flag_ComMob = 1
+
+    try:
+        df_sbm = df1.loc[:,'SBM Name':'SBM Comment']
+    except:
+        flag_SBM = 1
+
+    try:
+        df_TC = df1.loc[:,'Date of Agreement':'Comment']
+    except:
+        flag_TC = 1
+
+
+
 
     # *******************************IMPORTANT!!!!*************************************
     # In the excel sheet that has been uploaded, it is imperative to have a column with
     # a header 'Community Mobilization Ends' right after the last mobilization activity's
     # column.This column will be blank. It will be used to slice a sub frame which will have
     # all the community mobilization activities.
+    response.append(("total_records",len(df1.index.values)))
+    try:
 
-    for i in df1.index.values:
-        this_slum = Slum.objects.get(name=df1.loc[int(i), 'Select Slum'])
+        for i in df1.index.values:
+            
+            this_slum = Slum.objects.get(name=df1.loc[int(i), 'Select Slum'])
+           
 
-
-        try:
-            SBM_instance = SBMUpload.objects.get(slum = this_slum, household_number = int(i))
-            if check_null(SBM_instance.application_id) is False:
-                SBM_instance.update(
-                    name=df1.loc[int(i), 'SBM Name'],
-                    application_id=df1.loc[int(i), 'Application ID'],
-                    photo_uploaded=check_bool(df1.loc[int(i), 'Toilet photo uploaded on SBM site'])
-                )
-                SBM_instance.save()
-        except Exception as e:
-            if check_null(df1.loc[int(i), 'Application ID']) is not None:
-                SBM_instance_1 = SBMUpload(
-                 slum = this_slum,
-                 household_number = int(i),
-                 name = df1.loc[int(i), 'SBM Name'],
-                 application_id = df1.loc[int(i),'Application ID'],
-                 photo_uploaded = check_bool(df1.loc[int(i),'Toilet photo uploaded on SBM site'])
-                )
-                SBM_instance_1.save()
-
-        for p,q in df_ComMob.loc[int(i)].items():
-
-            if check_null(q) is not None:
-                household_nums = []
+            if flag_SBM != 1:
                 try:
-                    activityType_instance = ActivityType.objects.get(name = p)
-                    if activityType_instance:
-                        try:
-
-                            ### IMPORTANT!!!!! Date should also be considered!!! INCOMPLETE!!!!!
-                            ComMob_instance = CommunityMobilization.objects.get(slum = this_slum,activity_type=activityType_instance)
-
-                            temp = ComMob_instance.household_number
-                            if int(i) not in temp:
-                                temp.append(int(i))
-                            ComMob_instance.household_number = temp
-                            ComMob_instance.save()
-                        except Exception as e:
-                            household_nums.append(int(i))
-                            CM_instance = CommunityMobilization(
-                                slum = this_slum,
-                                household_number = household_nums,
-                                activity_type = activityType_instance,
-                                activity_date = df_ComMob.loc[int(i), p]
+                    try:
+                        
+                        SBM_instance = SBMUpload.objects.get(slum = this_slum, household_number = int(i))
+                        if check_null(SBM_instance.application_id) is False:
+                            SBM_instance.update(
+                                name = df_sbm.loc[int(i), 'SBM Name'],
+                                application_id = df_sbm.loc[int(i), 'Application ID'],
+                                photo_uploaded = check_bool(df_sbm.loc[int(i), 'Toilet photo uploaded on SBM site']),
+                                photo_verified = check_bool(df_sbm.loc[int(i), 'Toilet Photo verified']),
+                                photo_approved = check_bool(df_sbm.loc[int(i), 'Toilet Photo Approved']),
+                                application_verified = check_bool(df_sbm.loc[int(i), 'Application Verified']),
+                                application_approved = check_bool(df_sbm.loc[int(i), 'Application Approved'])
                             )
-                            CM_instance.save()
+                            SBM_instance.save()
+                            response.append(("updated sbm", i))
+                    except Exception as e:
+                        if check_null(df1.loc[int(i), 'Application ID']) is not None:
+                            SBM_instance_1 = SBMUpload(
+                             slum = this_slum,
+                             household_number = int(i),
+                             name = df1.loc[int(i), 'SBM Name'],
+                             application_id = df_sbm.loc[int(i),'Application ID'],
+                             photo_uploaded = check_bool(df_sbm.loc[int(i),'Toilet photo uploaded on SBM site']),
+                             photo_verified = check_bool(df_sbm.loc[int(i), 'Toilet Photo Verified']),
+                             photo_approved = check_bool(df_sbm.loc[int(i), 'Toilet Photo Approved']),
+                             application_verified = check_bool(df_sbm.loc[int(i), 'Application Verified']),
+                             application_approved = check_bool(df_sbm.loc[int(i), 'Application Approved'])
+                            )
+                            SBM_instance_1.save()
+                            response.append(("newly created sbm", i))
                 except Exception as e:
-                    print e
+                    response.append(("The error says: " +str(e)+ ". This error is with SBM columns for following household numbers", i))
+                    
 
 
+            
+
+            if flag_ComMob != 1:
+
+                for p,q in df_ComMob.loc[int(i)].items():
+
+                    if check_null(q) is not None:
+                        household_nums = []
+                        try:
+                            activityType_instance = ActivityType.objects.get(name = p)
+                            if activityType_instance:
+                                try:
+
+                                    ### IMPORTANT!!!!! Date should also be considered!!! INCOMPLETE!!!!!
+                                    ComMob_instance = CommunityMobilization.objects.get(slum = this_slum,activity_type=activityType_instance)
+
+                                    temp = ComMob_instance.household_number
+                                    if int(i) not in temp:
+                                        temp.append(int(i))
+                                        response.append(("updated ComMob", i))
+                                    ComMob_instance.household_number = temp
+                                    ComMob_instance.save()
+                                    
+
+                                except Exception as e:
+                                    household_nums.append(int(i))
+                                    CM_instance = CommunityMobilization(
+                                        slum = this_slum,
+                                        household_number = household_nums,
+                                        activity_type = activityType_instance,
+                                        activity_date = df_ComMob.loc[int(i), p]
+                                    )
+                                    CM_instance.save()
+                                    response.append(("newly created ComMob",i))
+                        except Exception as e:
+                            response.append(("The error says: " +str(e)+ ". This error is in Commuinity Mobilization columns for "+p+", for the following household numbers", i))
+                            
+
+            if flag_accounts != 1:
 
 
+                for j,m in df_vendors.loc[int(i)].items():
+                    if check_null(m) is not None:
+                        household_nums = []
+                        k = df_vendors.columns.get_loc(j)
+                        string = unicode(df_invoice.loc[int(i)][k])
 
+                        try:
+                            Vendor_instance = Vendor.objects.get(name=str(m))
+                            if Vendor_instance:
+                                try:
+                                    VHID_instance_1 = VendorHouseholdInvoiceDetail.objects.get(vendor=Vendor_instance,
+                                                                                           invoice_number=string.split('/')[0],
+                                                                                           slum=this_slum)
+                                    temp = VHID_instance_1.household_number
+                                    if int(i) not in temp:
+                                        temp.append(int(i))
+                                        response.append(("updated VHID",i))
+                                    VHID_instance_1.household_number = temp
+                                    VHID_instance_1.save()
+                                    
 
-        for j,m in df_vendors.loc[int(i)].items():
-            if check_null(m) is not None:
-                household_nums = []
-                k = df_vendors.columns.get_loc(j)
-                string = unicode(df_invoice.loc[int(i)][k])
+                                except Exception as e:
+                                    print e
+                                    print "VHID is not found"
+                                    household_nums.append(int(i))
+                                    VHID_instance = VendorHouseholdInvoiceDetail(
+                                        vendor = Vendor.objects.get(name=str(m)),
+                                        slum = this_slum,
+                                        invoice_number = string.split('/')[0],
+                                        invoice_date     =datetime.datetime.strptime(string.split('/')[1], '%d.%m.%Y') ,
+                                        household_number = household_nums
+                                    )
+                                    VHID_instance.save()
+                                    response.append(("newly created VHID",i))
 
+                        except Exception as e:
+                            response.append(("The error says: " +str(e)+ ". This error is in Vendor Invoice Details Columns for "+m+", for the following household numbers", i))
+                            
+
+            if flag_TC != 1:
                 try:
-                    Vendor_instance = Vendor.objects.get(name=str(m))
-                    if Vendor_instance:
-                        try:
-                            VHID_instance_1 = VendorHouseholdInvoiceDetail.objects.get(vendor=Vendor_instance,
-                                                                                   invoice_number=string.split('/')[0],
-                                                                                   slum=this_slum)
-                            temp = VHID_instance_1.household_number
-                            if int(i) not in temp:
-                                temp.append(int(i))
-                            VHID_instance_1.household_number = temp
-                            VHID_instance_1.save()
-                        except Exception as e:
-                            print e
-                            household_nums.append(int(i))
-                            VHID_instance = VendorHouseholdInvoiceDetail(
-                                vendor = Vendor.objects.get(name=str(m)),
-                                slum = this_slum,
-                                invoice_number = string.split('/')[0],
-                                invoice_date =datetime.datetime.strptime(string.split('/')[1], '%d.%m.%Y') ,
-                                household_number = household_nums
+                    TC_instance = ToiletConstruction.objects.select_related().filter(household_number = int(i), slum__name = this_slum)
+                    if TC_instance:
+                        TC_instance[0].update_model( df_TC.loc[int(i), : ])
+                        response.append(("updated TC",i))
 
-                            )
-                            VHID_instance.save()
+                    else:
+                        this_status = " "
+                        stat = df_TC.loc[int(i), 'Final Status']
+                        for j in range(len(STATUS_CHOICES)):
+                            if str(STATUS_CHOICES[j][1]).lower() == str(stat).lower():  # STATUS_CHOICE is imported from mastersheet/models.py
+                                this_status=STATUS_CHOICES[j][0]
+                       
+                        TC_instance = ToiletConstruction(
+                                                            slum = this_slum,
+                                                            agreement_cancelled = check_bool(df_TC.loc[int(i), 'Agreement Cancelled']),
+                                                            household_number = int(i),
+                                                            septic_tank_date = check_null(df_TC.loc[int(i), 'Date of Septic Tank supplied']),
+                                                            phase_one_material_date = check_null(df_TC.loc[int(i), 'Material Supply Date 1st']),
+                                                            phase_two_material_date = check_null(df_TC.loc[int(i), 'Material Supply Date-2nd']),
+                                                            phase_three_material_date = check_null(df_TC.loc[int(i), 'Material Supply Date-3rd']),
+                                                            completion_date = check_null(df_TC.loc[int(i), 'Construction Completion Date']),
+                                                            comment = check_null(df_TC.loc[int(i), 'Comment']),
+                                                            status = this_status
+                                                        )
 
+                        TC_instance.save()
+                        response.append(("newly created TC",i))
                 except Exception as e:
-                    print e
+                    response.append(("The error says: " +str(e)+ ". This error is with Toilet Construction Columns for following household numbers", i))
+                    
 
-        try:
-            TC_instance = ToiletConstruction.objects.select_related().filter(household_number = int(i), slum__name = this_slum)
+    except Exception as e:
+        response.append(("The error says: "+str(e), "This is an overall error. Please check the uploaded Excle sheet for column names, slum names etc."))
 
-            if TC_instance:
-                TC_instance[0].update_model( df1.loc[int(i), : ])
+    d = defaultdict(list)
+    for k,v in response:
+        d[k].append(v)
 
-            else:
-                this_status = " "
-                stat = df1.loc[int(i), 'Final Status']
-                for j in range(len(STATUS_CHOICES)):
-                    if str(STATUS_CHOICES[j][1]).lower() == str(stat).lower():  # STATUS_CHOICE is imported from mastersheet/models.py
-                        this_status=STATUS_CHOICES[j][0]
-
-                TC_instance = ToiletConstruction(
-                                                    slum = this_slum,
-                                                    agreement_cancelled = check_bool(df1.loc[int(i), 'Agreement Cancelled']),
-                                                    household_number = int(i),
-                                                    septic_tank_date = check_null(df1.loc[int(i), 'Date of Septic Tank supplied']),
-                                                    phase_one_material_date = check_null(df1.loc[int(i), 'Material Supply Date 1st']),
-                                                    phase_two_material_date = check_null(df1.loc[int(i), 'Material Supply Date-2nd']),
-                                                    phase_three_material_date = check_null(df1.loc[int(i), 'Material Supply Date-3rd']),
-                                                    completion_date = check_null(df1.loc[int(i), 'Construction Completion Date']),
-                                                    comment = check_null(df1.loc[int(i), 'Comment']),
-                                                    status = this_status
-                                                )
-                TC_instance.save()
-        except Exception as e:
-            print e
-
-
+    return d
+ 
 
 def check_null(s):
     if pandas.isnull(s):
@@ -509,7 +602,6 @@ def delete_selected(request):
 
     records = json.loads(request.body)
     delete_selected_records(records)
-    print records['records'][0]
 
     return HttpResponse(json.dumps(response), content_type="application/json")
 
