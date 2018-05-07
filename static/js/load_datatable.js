@@ -7,6 +7,7 @@ var current_slum;
 var today = Date.now();
 var daily_reporting_columns = [];
 
+
 $(document).ready(function() {
 
     $("#add_table_btn").hide();
@@ -107,6 +108,7 @@ $(document).ready(function() {
         section = $(this).attr('value');
         col = columns_defs['buttons'][section];
         table.columns(col).visible( flag );
+        add_search_box();
     });
     $("#upload_file_1").on("click", function(){
 
@@ -194,6 +196,8 @@ $(document).ready(function() {
         }
     });
     
+
+    // Clearing modal after it is closed
     $("#btnUpload").on("click", function(){
         
         $('#myModal').on('hidden.bs.modal', function() {
@@ -208,11 +212,12 @@ $(document).ready(function() {
 
 
     function load_data_datatable(){
-        if (table != null ){
-            table.clear();
+        if (table != null )
+        {
+            $("#slum_form p").find("#slum_info").html("");
+            $("#slum_form p").find("#slum_info").remove();
+            $(".overlay").show();
             table.ajax.reload();
-            table.draw();
-
         }
         else
         {
@@ -233,16 +238,22 @@ $(document).ready(function() {
                     "ajax" :  {
                                     url : "/mastersheet/list/show/",
                                     dataSrc:"",
-                                    data:{'form':$("#slum_form").serialize() , 'csrfmiddlewaretoken':csrf_token},
+                                    data: function(){
+                                        return {'form':$("#slum_form").serialize() , 'csrfmiddlewaretoken':csrf_token}
+                                    },
                                     contentType : "application/json",
                                     complete: function(data){
-                                        $(".overlay").hide();
                                         
-                                        
+                                        // Displaying the electoral ward and name of the slum besides the look-up box
+                                        var slum_info = document.createElement('div');
+                                        slum_info.classList.add("display_line");
+                                        slum_info.setAttribute("id" , "slum_info");
+                                        slum_info.innerHTML = "<p>"+data.responseJSON[data.responseJSON.length-1][1]+", "+data.responseJSON[data.responseJSON.length-1][0] +"</p>";
+                                        $("#slum_form p").append(slum_info);
+                                        $(".overlay").hide();   
                                     },
-                                   
-
                               },
+                   
                     "columnDefs": [
                                     {   "defaultContent": "-",
                                         "targets": "_all",
@@ -255,23 +266,25 @@ $(document).ready(function() {
                     "buttons":["excel"],
 
                     "columns": columns_defs['data'],
+                    "fixedColumns":{
+                                    leftColumns: 1,
+                                    
+                                },
+                    "scrollCollapse": true,
                 });
 
-                //add_search_box();
 
-                $( table.table().container() ).on( 'keyup change', 'tfoot tr th input', function (index,element) {
+
+                $( table.table().container() ).on( 'keyup ','tfoot tr th input',function (index, element){
                     table.column($(this).parent().index()).search( this.value ).draw();
-
+                    console.log(this.value);
+                    
                 } );
-                //table.draw();
+                
                 $('#example').on("draw.dt", function(){
                     flag_dates();
                 });
-                $('#example').on("draw.dt",function(){
-                    add_search_box();
-                    console.log("draw is called");
-
-                });
+                
 
                /* $('#example').on( 'click', 'tbody td', function () {
                     var data = table.cell( this ).render( 'sort' );
@@ -353,6 +366,9 @@ $(document).ready(function() {
         }
 
     });
+
+   
+
     function trim_space(str){
         if(str != null)
         {
@@ -363,8 +379,8 @@ $(document).ready(function() {
 
         }
     }
-    function flag_dates(){
 
+    function flag_dates(){
 
         if( table != null){
 
@@ -451,7 +467,7 @@ $(document).ready(function() {
         $('#example').each(function(){
             $(this).append(append_this);
         });
-        $('#example tfoot th').each( function (index,element) {
+        $('#example tfoot th').each( function (index,element, visible_indices) {
             var title = $(this).text()  ;
             something = $(this).parent().parent().parent();
             title=(something.find('thead tr th:eq('+index+')')[0].innerText);
