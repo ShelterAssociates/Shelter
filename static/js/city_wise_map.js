@@ -24,9 +24,9 @@ let lst_sponsor =[];
 let parse_component = {};
 let modelsection = {
 		"General" : "General information" ,
-		"Toilet" : "Toilet information",
-		"Water" : "Water information",
-		"Waste" : "Waste management information",
+		"Toilet" : "Current place of defecation",
+		"Water" : "Type of water connection",
+		"Waste" : " Facility of solid waste collection",
 		"Drainage" : "Drainage information",
 		"Road" : "Road & access information",
 		"Gutter" : "Gutter information"
