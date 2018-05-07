@@ -359,7 +359,7 @@ def file_ops(request):
             resp = handle_uploaded_file(request.FILES.get('file'),response)
             response = resp
         except Exception as e: 
-            response.append(('msg', str(e)))
+            response.append(('error msg', str(e)))
     
     
     return HttpResponse(json.dumps(response), content_type="application/json")
