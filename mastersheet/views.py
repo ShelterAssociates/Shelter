@@ -32,7 +32,7 @@ def masterSheet(request, slum_code = 0 ):
         delimiter = 'slumname='
         slum_code = Slum.objects.filter(pk = int(request.GET.get('form').partition(delimiter)[2]) ).values_list("shelter_slum_code", flat = True)[0]
         slum_info = Slum.objects.filter(shelter_slum_code = slum_code).values_list("electoral_ward__name", "name")
-        slum_funder = SponsorProjectDetails.objects.filter(slum__name= str(slum_info[0][1]))
+        slum_funder = SponsorProjectDetails.objects.filter(slum__name= str(slum_info[0][1])).exclude(sponsor__id= 10)
         
         
         
