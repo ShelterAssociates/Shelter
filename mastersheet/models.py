@@ -222,13 +222,19 @@ class KoboDDSyncTrack(models.Model):
 
     def __unicode__(self):
         return self.slum.name + '-' + str(self.sync_date)
-
 @receiver(pre_save, sender=ToiletConstruction)
 def update_status(sender ,instance, **kwargs):
     instance.status = STATUS_CHOICES[4][0]#Under Construction
 
+   
+
     if instance.agreement_date:
         instance.status = STATUS_CHOICES[2][0]#material not given
+
+    if type(instance.agreement_date) != datetime.date and instance.agreement_date:
+        instance.agreement_date = instance.agreement_date.to_datetime()
+        instance.agreement_date = instance.agreement_date.date()
+
 
     if (instance.phase_one_material_date is None) and instance.agreement_date and (datetime.date.today() - instance.agreement_date > datetime.timedelta(days=8)):
         instance.status = STATUS_CHOICES[2][0]#material not given
@@ -240,3 +246,7 @@ def update_status(sender ,instance, **kwargs):
 
     if instance.agreement_cancelled:
         instance.status = STATUS_CHOICES[1][0]#agreement cancelled
+
+    
+
+    
