@@ -249,6 +249,8 @@ $(document).ready(function() {
                                         slum_info.classList.add("display_line");
                                         slum_info.setAttribute("id" , "slum_info");
                                         slum_info.innerHTML = "<p>"+data.responseJSON[data.responseJSON.length-1][1]+", "+data.responseJSON[data.responseJSON.length-1][0] +"</p>";
+                                        //slum_info.innerHTML = "<p>"+data.responseJSON[data.responseJSON.length-1]["Name of the slum"]+", "+data.responseJSON[data.responseJSON.length-1]["Electoral Ward"] +"</p>"; 
+                                        //console.log(data.responseJSON[data.responseJSON.length-1]);
                                         $("#slum_form p").append(slum_info);
                                         $(".overlay").hide();   
                                     },
