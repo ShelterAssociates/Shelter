@@ -3,6 +3,7 @@ from django.http import HttpResponse
 from django.contrib.auth.decorators import user_passes_test
 from mastersheet.forms import find_slum, file_form
 from mastersheet.models import *
+from sponsor.models import *
 from itertools import chain
 from master.models import *
 from django.views.decorators.csrf import csrf_exempt
@@ -31,10 +32,10 @@ def masterSheet(request, slum_code = 0 ):
         delimiter = 'slumname='
         slum_code = Slum.objects.filter(pk = int(request.GET.get('form').partition(delimiter)[2]) ).values_list("shelter_slum_code", flat = True)[0]
         slum_info = Slum.objects.filter(shelter_slum_code = slum_code).values_list("electoral_ward__name", "name")
+        slum_funder = SponsorProjectDetails.objects.filter(slum__name= str(slum_info[0][1])).exclude(sponsor__id= 10)
         
-
-
-
+        
+        
     formdict = []
     if slum_code is not 0:
         urlv = str(settings.KOBOCAT_FORM_URL)+str('data/130?query={"slum_name":"') + str(slum_code) + '"}'  # '+str(slum_code)+'
@@ -108,15 +109,23 @@ def masterSheet(request, slum_code = 0 ):
 
         temp_daily_reporting = {obj_DR['household_number']: obj_DR for obj_DR in daily_reporting_data}
         temp_DR_keys = temp_daily_reporting.keys()
-
         try:
             for x in formdict:
                 if x['Household_number'] in temp_DR_keys:
                     x.update(temp_daily_reporting[x['Household_number']])
                     x.update({'tc_id_'+str(x['Household_number']): temp_daily_reporting[x['Household_number']]['id']})
+                    
+                    #for funder in slum_funder:
+                        #print x['Household_number'], funder.household_code, funder
+                        #if x['Household_number'] in funder.household_code:
+                           # x.update({'Funder': funder.sponsor.organization_name})
+                            #print x['Household_number'], funder.household_code, funder
+        
+
 
         except Exception as err:
             print err
+
 
         sbm_fields = ['slum', 'household_number', 'name', 'application_id', 'photo_uploaded', 'created_date_str', 'id']
         sbm_data = SBMUpload.objects.extra(
@@ -170,6 +179,7 @@ def masterSheet(request, slum_code = 0 ):
         for y in vendor:
             for z in y.household_number:
                 for x in formdict:
+                
                     if int(x['Household_number']) == int(z):
                         vendor_name = "vendor_type" + y.vendor.vendor_type.name
                         invoice_number = "invoice_number" + y.vendor.vendor_type.name
@@ -203,10 +213,20 @@ def masterSheet(request, slum_code = 0 ):
                                 x.update({'current place of defecation': x['group_oi8ts04/C5']})
                     except:
                         pass
+    try:
+        for x in formdict:
+            for funder in slum_funder:
+                print funder.sponsor.organization_name
+                if int(x['Household_number']) in funder.household_code:
+                    x.update({'Funder': funder.sponsor.organization_name})
+    except Exception as e:
+        print e
 
-
-
+    #slum_info_dict = {}
+    #slum_info_dict.update({"Name of the slum":slum_info[0][1], "Electoral Ward":slum_info[0][0], "Funder": slum_funder.sponsor.organization_name})
+    #print type(slum_info)
     formdict.append(slum_info[0])
+    #formdict.append(slum_info_dict)
     return HttpResponse(json.dumps(formdict),  content_type = "application/json")
 
 
@@ -303,7 +323,8 @@ def define_columns(request):
         {"data": "phase_three_material_date_str", "title": "Date of third phase material"},#55
         {"data": "completion_date_str", "title": "Construction Completion Date"},
         {"data": "material_shifted_to", "title": "Material sifted to"},
-        {"data": "status", "title": "Final Status"}#58
+        {"data": "Funder", "title": "Funder"},
+        {"data": "status", "title": "Final Status"}#59
 
         # Append community mobilization here #
 
@@ -315,7 +336,7 @@ def define_columns(request):
     final_data['buttons']['Follow-up'] = [19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36]
     final_data['buttons']['Family factsheet'] = [37, 38, 39, 40, 41]
     final_data['buttons']['SBM'] = [42, 43, 44, 45, 46, 47, 48]
-    final_data['buttons']['Construction status'] = [49, 50, 51, 52, 53, 54, 55, 56, 57]
+    final_data['buttons']['Construction status'] = [49, 50, 51, 52, 53, 54, 55, 56, 57, 58]
 
     # We define the columns for community mobilization and vendor details in a dynamic way. The
     # reason being these columns are prone to updates and additions.
@@ -359,7 +380,7 @@ def file_ops(request):
             resp = handle_uploaded_file(request.FILES.get('file'),response)
             response = resp
         except Exception as e: 
-            response.append(('msg', str(e)))
+            response.append(('error msg', str(e)))
     
     
     return HttpResponse(json.dumps(response), content_type="application/json")
@@ -373,7 +394,6 @@ def handle_uploaded_file(f,response):
     df = pandas.read_excel(f)
 
     flag_overall = 0
-    print list(df.columns.values)[0]
     
     try:
 
@@ -415,10 +435,6 @@ def handle_uploaded_file(f,response):
     except:
         flag_TC = 1
     
-    
-
-
-
 
     # *******************************IMPORTANT!!!!*************************************
     # In the excel sheet that has been uploaded, it is imperative to have a column with
@@ -430,11 +446,11 @@ def handle_uploaded_file(f,response):
         if flag_overall != 1:
 
             for i in df1.index.values:
-                
-                this_slum = Slum.objects.get(name=df1.loc[int(i), 'Select Slum'])
-               
+                this_slum = Slum.objects.get(name=str(df1.loc[int(i), 'Select Slum']))
 
+               
                 if flag_SBM != 1:
+                    #print "in sbm"
                     try:
                         try:
                             
@@ -474,6 +490,7 @@ def handle_uploaded_file(f,response):
                 
 
                 if flag_ComMob != 1:
+                    #print "in commob"
 
                     for p,q in df_ComMob.loc[int(i)].items():
 
@@ -510,6 +527,7 @@ def handle_uploaded_file(f,response):
                                 
 
                 if flag_accounts != 1:
+                    #print "in accounts"
 
 
                     for j,m in df_vendors.loc[int(i)].items():
@@ -535,7 +553,6 @@ def handle_uploaded_file(f,response):
 
                                     except Exception as e:
                                         print e
-                                        print "VHID is not found"
                                         household_nums.append(int(i))
                                         VHID_instance = VendorHouseholdInvoiceDetail(
                                             vendor = Vendor.objects.get(name=str(m)),
@@ -552,6 +569,7 @@ def handle_uploaded_file(f,response):
                                 
 
                 if flag_TC != 1:
+                    #print "in TC"
                     try:
                         TC_instance = ToiletConstruction.objects.select_related().filter(household_number = int(i), slum__name = this_slum)
                         if TC_instance:
@@ -564,9 +582,10 @@ def handle_uploaded_file(f,response):
                             for j in range(len(STATUS_CHOICES)):
                                 if str(STATUS_CHOICES[j][1]).lower() == str(stat).lower():  # STATUS_CHOICE is imported from mastersheet/models.py
                                     this_status=STATUS_CHOICES[j][0]
-                           
+                            
                             TC_instance = ToiletConstruction(
                                                                 slum = this_slum,
+                                                                agreement_date = check_null(df_TC.loc[int(i), 'Date of Agreement']),
                                                                 agreement_cancelled = check_bool(df_TC.loc[int(i), 'Agreement Cancelled']),
                                                                 household_number = int(i),
                                                                 septic_tank_date = check_null(df_TC.loc[int(i), 'Date of Septic Tank supplied']),
