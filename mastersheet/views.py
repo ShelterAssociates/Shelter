@@ -102,7 +102,9 @@ def masterSheet(request, slum_code = 0 ):
         daily_reporting_data = daily_reporting_data.values(*toilet_reconstruction_fields)
 
         for i in daily_reporting_data:
-            i['status'] = ToiletConstruction.get_status_display(i['status'])
+            print i['status']
+            if(i['status']) !=  " ":
+                i['status'] = ToiletConstruction.get_status_display(i['status'])
 
 
 
@@ -176,6 +178,7 @@ def masterSheet(request, slum_code = 0 ):
         obj_name_label_data['name']: {child['name']: child['label'] for child in obj_name_label_data['children']} for
         obj_name_label_data in name_label_data}
 
+        
         for y in vendor:
             for z in y.household_number:
                 for x in formdict:

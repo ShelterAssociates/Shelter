@@ -12,7 +12,6 @@ $(document).ready(function() {
 
     $("#add_table_btn").hide();
 
-    console.log("loading table...");
     var csrf_token = document.getElementsByName("csrfmiddlewaretoken")[0].value;
 
     $.ajax({
@@ -243,13 +242,11 @@ $(document).ready(function() {
                                     },
                                     contentType : "application/json",
                                     complete: function(data){
-                                        
                                         // Displaying the electoral ward and name of the slum besides the look-up box
                                         var slum_info = document.createElement('div');
                                         slum_info.classList.add("display_line");
                                         slum_info.setAttribute("id" , "slum_info");
-                                        slum_info.innerHTML = "<p>"+data.responseJSON[data.responseJSON.length-1][1]+", "+data.responseJSON[data.responseJSON.length-1][0] +"</p>";
-                                        //slum_info.innerHTML = "<p>"+data.responseJSON[data.responseJSON.length-1]["Name of the slum"]+", "+data.responseJSON[data.responseJSON.length-1]["Electoral Ward"] +"</p>"; 
+                                        slum_info.innerHTML = "<p>"+data.responseJSON[data.responseJSON.length-1]["Name of the slum"]+", "+data.responseJSON[data.responseJSON.length-1]["Electoral Ward"] +"</p>"; 
                                         //console.log(data.responseJSON[data.responseJSON.length-1]);
                                         $("#slum_form p").append(slum_info);
                                         $(".overlay").hide();   
@@ -278,18 +275,24 @@ $(document).ready(function() {
 
 
                 $( table.table().container() ).on( 'keyup ','tfoot tr th input',function (index, element){
-                    table.column($(this).parent().index()).search( this.value ).draw();
-                    console.log(this.value);
-                    
+                    table.column($(this).attr('dt_index')).search( String(this.value) ).draw();
+    
                 } );
+
+                
+
                 
                 $('#example').on("draw.dt", function(){
                     flag_dates();
+                    color_group_columns();
                 });
-                
 
-               /* $('#example').on( 'click', 'tbody td', function () {
+
+                
+                //prints the data in the cell when we click it. USED FOR DEBUGGING!!
+                /*$('#example').on( 'click', 'tbody td', function () {
                     var data = table.cell( this ).render( 'sort' );
+                   
                 } );*/
 
 
@@ -382,6 +385,12 @@ $(document).ready(function() {
         }
     }
 
+    function color_group_columns(){
+        
+        //$('th:eq()').css('background-color', '#f2f29f')
+        
+    }
+
     function flag_dates(){
 
         if( table != null){
@@ -401,23 +410,31 @@ $(document).ready(function() {
                 if ( value['agreement_date_str'] != null ){
 
                     if ( value['phase_one_material_date_str'] == null && Math.floor((today - Date.parse(trim_space(value['agreement_date_str']))) / divider) > 8 ){
-                            $('tr:eq('+index+')').find('td:eq(16)').css('background-color', '#f9a4a4');//red
+                            $('tr:eq('+index+')').find('td:eq(17)').css('background-color', '#f9a4a4');//red
 
                     }
                     else if ( value['phase_two_material_date_str'] == null && Math.floor((today - Date.parse(trim_space(value['phase_one_material_date_str']))) / divider) > 8 ){
-                            $('tr:eq('+index+')').find('td:eq(16)').css('background-color', '#f2f29f');//yellow
+                            $('tr:eq('+index+')').find('td:eq(17)').css('background-color', '#f2f29f');//yellow
 
                     }
                     else if (value['phase_three_material_date_str'] == null && Math.floor((today - Date.parse(trim_space(value['phase_two_material_date_str']))) / divider) > 8 ){
-                            $('tr:eq('+index+')').find('td:eq(16)').css('background-color', '#aaf9a4');//green
+                            $('tr:eq('+index+')').find('td:eq(17)').css('background-color', '#aaf9a4');//green
 
                     }
-                    else if (value['completion_date_str'] == null && Math.floor((today - Date.parse(trim_space(value['phase_three_material_date_str']))) / divider) > 8 ){
-                            $('tr:eq('+index+')').find('td:eq(16)').css('background-color', '#aaa4f4');//blue
+                    else if (value['completion_date_str'] == null){
+                            if (Math.floor((Date.parse(trim_space(value['phase_one_material_date_str'])) - Date.parse(trim_space(value['phase_three_material_date_str']))) / divider) == 0){
+                                if (Math.floor((today - Date.parse(trim_space(value['phase_two_material_date_str']))) / divider) > 8 ){
+                                    $('tr:eq('+index+')').find('td:eq(17)').css('background-color', '#aaa4f4');//blue
+                                }
+                            }
+                            else if(Math.floor((today - Date.parse(trim_space(value['phase_three_material_date_str']))) / divider) > 8 ){
+                                $('tr:eq('+index+')').find('td:eq(17)').css('background-color', '#aaa4f4');//blue
+                            }
+                            
 
                     }
                     /*if (value['phase_one_material_date_str'] - value['agreement_date_str'] > 8){
-
+                        //Math.floor((today - Date.parse(trim_space(value['phase_three_material_date_str']))) / divider) > 8 
                     }*/
                 }
                 else{
@@ -469,11 +486,11 @@ $(document).ready(function() {
         $('#example').each(function(){
             $(this).append(append_this);
         });
-        $('#example tfoot th').each( function (index,element, visible_indices) {
+        $('#example tfoot th').each( function (index,element) {
             var title = $(this).text()  ;
             something = $(this).parent().parent().parent();
             title=(something.find('thead tr th:eq('+index+')')[0].innerText);
-            $(this).html( '<input id = "search_box" type="text" placeholder="Search '+title+'" />' );
+            $(this).html( '<input id = "search_box" dt_index = '+visible_indices[index]+'  type="text" placeholder="Search '+title+'" />' );
         } );
 
 

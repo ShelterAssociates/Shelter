@@ -1,5 +1,6 @@
 from django.db import models
 from django.contrib.auth.models import User
+from django.contrib import messages
 from master.models import City, Slum
 from jsonfield import JSONField
 import datetime
@@ -224,13 +225,17 @@ class KoboDDSyncTrack(models.Model):
         return self.slum.name + '-' + str(self.sync_date)
 @receiver(pre_save, sender=ToiletConstruction)
 def update_status(sender ,instance, **kwargs):
-    instance.status = STATUS_CHOICES[4][0]#Under Construction
+    #instance.status = STATUS_CHOICES[4][0]#Under Construction
 
    
 
     if instance.agreement_date:
         instance.status = STATUS_CHOICES[2][0]#material not given
-
+    '''
+        The method below is put in place because some unexpected data format ('Timestamp') was found with some
+        agreement_date. The method covers inconsistencies only for agreement date. Requirement may arise in furture 
+        to inculcate other date fields also.  
+    '''
     if type(instance.agreement_date) != datetime.date and instance.agreement_date:
         instance.agreement_date = instance.agreement_date.to_datetime()
         instance.agreement_date = instance.agreement_date.date()
@@ -239,6 +244,8 @@ def update_status(sender ,instance, **kwargs):
     if (instance.phase_one_material_date is None) and instance.agreement_date and (datetime.date.today() - instance.agreement_date > datetime.timedelta(days=8)):
         instance.status = STATUS_CHOICES[2][0]#material not given
 
+    if instance.phase_two_material_date or instance.phase_three_material_date:
+        instance.status = STATUS_CHOICES[4][0]#Under Construction
 
     if instance.completion_date:
         instance.status = STATUS_CHOICES[5][0]#completed
@@ -247,6 +254,18 @@ def update_status(sender ,instance, **kwargs):
     if instance.agreement_cancelled:
         instance.status = STATUS_CHOICES[1][0]#agreement cancelled
 
-    
 
-    
+@receiver(pre_save, sender = VendorHouseholdInvoiceDetail)
+def check_duplicate_house(sender, instance, **kwargs):
+    all_records = VendorHouseholdInvoiceDetail.objects.filter(slum = instance.slum)
+    invoice_numbers =  [int(x) for x in instance.invoice_number.split(',')]
+
+    for record in all_records:
+        if record.vendor.vendor_type == instance.vendor.vendor_type:
+            common_households = list(set(record.household_number).intersection(instance.household_number))
+            if len(common_households) != 0:
+                    raise Exception("household numbers "+str(common_households)+ " are repeated in " +str(record.vendor.name)+ " and "+instance.vendor.name)
+                    #messages.error(request, "household numbers "+str(common_households)+ " are repeated in " +str(record.vendor.name)+ " and "+instance.vendor.name)
+                    #return Exception("household numbers "+str(common_households)+ " are repeated in " +str(record.vendor.name)+ " and "+instance.vendor.name)
+
+  
