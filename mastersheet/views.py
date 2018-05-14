@@ -102,7 +102,9 @@ def masterSheet(request, slum_code = 0 ):
         daily_reporting_data = daily_reporting_data.values(*toilet_reconstruction_fields)
 
         for i in daily_reporting_data:
-            i['status'] = ToiletConstruction.get_status_display(i['status'])
+            print i['status']
+            if(i['status']) !=  " ":
+                i['status'] = ToiletConstruction.get_status_display(i['status'])
 
 
 
