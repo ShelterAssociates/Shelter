@@ -238,17 +238,24 @@ $(document).ready(function() {
                                     url : "/mastersheet/list/show/",
                                     dataSrc:"",
                                     data: function(){
+
                                         return {'form':$("#slum_form").serialize() , 'csrfmiddlewaretoken':csrf_token}
+                                        // NOTE : We could have assigned the variable itself to the 'data' attribute, instead
+                                        // of writing  function. That method promotes the errorneous behaviour. The code would have been
+                                        // unable to update the 'data' attribute on the call of 'table.ajax.reload()'. 
                                     },
                                     contentType : "application/json",
                                     complete: function(data){
                                         // Displaying the electoral ward and name of the slum besides the look-up box
-                                        var slum_info = document.createElement('div');
-                                        slum_info.classList.add("display_line");
-                                        slum_info.setAttribute("id" , "slum_info");
-                                        slum_info.innerHTML = "<p>"+data.responseJSON[data.responseJSON.length-1]["Name of the slum"]+", "+data.responseJSON[data.responseJSON.length-1]["Electoral Ward"] +"</p>"; 
-                                        //console.log(data.responseJSON[data.responseJSON.length-1]);
-                                        $("#slum_form p").append(slum_info);
+                                        console.log(data.responseJSON);
+                                        if (data.responseJSON != 'undefined'){
+                                            var slum_info = document.createElement('div');
+                                            slum_info.classList.add("display_line");
+                                            slum_info.setAttribute("id" , "slum_info");
+                                            slum_info.innerHTML = "<p>"+data.responseJSON[data.responseJSON.length-1]["Name of the slum"]+", "+data.responseJSON[data.responseJSON.length-1]["Electoral Ward"] +"</p>"; 
+                                            //console.log(data.responseJSON[data.responseJSON.length-1]);
+                                            $("#slum_form p").append(slum_info);
+                                        }
                                         $(".overlay").hide();   
                                     },
                               },
