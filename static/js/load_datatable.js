@@ -220,11 +220,11 @@ $(document).ready(function() {
         }
         else
         {
-
+                
                 $(".overlay").show();
                 buttons = '<div class="btn-group">';
                 $.each(columns_defs['buttons'],function(index, button){
-                    buttons += '<button type="button" class="active btn btn-default" value="'+index+'">'+index+'</button>';
+                    buttons += '<button type="button" class="active btn btn-default" value="'+index+'" id="'+index.replace(/ /g,'')+'">'+index+'</button>';
                 });
                 buttons += '</div>';
                 $("#buttons").append(buttons);
@@ -347,31 +347,40 @@ $(document).ready(function() {
                         html_table.find("thead>tr>th:eq("+v+")").addClass("trMiddle");
                         
                     });
-                    /*$.each(val.slice(0,val.length),function(k,v){
-                        console.log(key);
+                    $.each(val.slice(0,val.length),function(k,v){
                         if (String(key) === "RHS"){
-                                html_table.find("thead>tr>th:eq("+v+")").css('background-color', '#eaf1fc');//light blue
+                                html_table.find("thead>tr>th:eq("+v+")").css('background-color', '#ccc0d9');//
+                                //background-color: lightblue;
+                                //$("#" + key).css('background-color', '#ccc0d9');
+
                             }
                         if (String(key) === "Follow-up"){
-                                html_table.find("thead>tr>th:eq("+v+")").css('background-color', '#e7dbfc');//light pink
+                                html_table.find("thead>tr>th:eq("+v+")").css('background-color', '#ccc0d9');//
+                                //$("#" + key).css('background-color', '#ccc0d9');
                             }
                         if (String(key) === "Family factsheet"){
-                                html_table.find("thead>tr>th:eq("+v+")").css('background-color', '#eef2c9');//light yellow
+                                html_table.find("thead>tr>th:eq("+v+")").css('background-color', '#c4bd97');//
+                                //$("#" + key.replace(/ /g,'')).css('background-color', '#c4bd97');
+                                
                             }
                         if (String(key) === "SBM"){
-                                html_table.find("thead>tr>th:eq("+v+")").css('background-color', '#d1f9d9');//light green
+                                html_table.find("thead>tr>th:eq("+v+")").css('background-color', '#fbd4b4');//
+                                //$("#" + key).css('background-color', '#fbd4b4');
                             }
                         if (String(key) === "Construction status"){
-                                html_table.find("thead>tr>th:eq("+v+")").css('background-color', '#def7f4');//light cyan
+                                html_table.find("thead>tr>th:eq("+v+")").css('background-color', '#c4bd97');//
+                                //$("#" + key.replace(/ /g,'')).css('background-color', '#c4bd97');
                             } 
                         if (String(key) === "Community Mobilization"){
-                                html_table.find("thead>tr>th:eq("+v+")").css('background-color', '#d4d6f7');//light blue
+                                html_table.find("thead>tr>th:eq("+v+")").css('background-color', '#b8cce4');//
+                                //$("#" + key.replace(/ /g,'')).css('background-color', '#b8cce4');
                             }
                         if (String(key) === "Accounts"){
-                                html_table.find("thead>tr>th:eq("+v+")").css('background-color', '#ccc7c8');//light grey-red
+                                html_table.find("thead>tr>th:eq("+v+")").css('background-color', '#d8d8d8');//
+                                //$("#" + key).css('background-color', '#d8d8d8');
                             }
 
-                    });*/
+                    });
                     html_table.find("thead>tr>th:eq("+val.slice(val.length-1)[0]+")").addClass("trLast");
                 });
 
