@@ -238,17 +238,23 @@ $(document).ready(function() {
                                     url : "/mastersheet/list/show/",
                                     dataSrc:"",
                                     data: function(){
+
                                         return {'form':$("#slum_form").serialize() , 'csrfmiddlewaretoken':csrf_token}
+                                        // NOTE : We could have assigned the variable itself to the 'data' attribute, instead
+                                        // of writing  function. That method promotes the errorneous behaviour. The code would have been
+                                        // unable to update the 'data' attribute on the call of 'table.ajax.reload()'. 
                                     },
                                     contentType : "application/json",
                                     complete: function(data){
                                         // Displaying the electoral ward and name of the slum besides the look-up box
-                                        var slum_info = document.createElement('div');
-                                        slum_info.classList.add("display_line");
-                                        slum_info.setAttribute("id" , "slum_info");
-                                        slum_info.innerHTML = "<p>"+data.responseJSON[data.responseJSON.length-1]["Name of the slum"]+", "+data.responseJSON[data.responseJSON.length-1]["Electoral Ward"] +"</p>"; 
-                                        //console.log(data.responseJSON[data.responseJSON.length-1]);
-                                        $("#slum_form p").append(slum_info);
+                                        if (data.responseJSON != 'undefined'){
+                                            var slum_info = document.createElement('div');
+                                            slum_info.classList.add("display_line");
+                                            slum_info.setAttribute("id" , "slum_info");
+                                            slum_info.innerHTML = "<p>"+data.responseJSON[data.responseJSON.length-1]["Name of the slum"]+", "+data.responseJSON[data.responseJSON.length-1]["Electoral Ward"] +"</p>"; 
+                                            //console.log(data.responseJSON[data.responseJSON.length-1]);
+                                            $("#slum_form p").append(slum_info);
+                                        }
                                         $(".overlay").hide();   
                                     },
                               },
@@ -284,7 +290,6 @@ $(document).ready(function() {
                 
                 $('#example').on("draw.dt", function(){
                     flag_dates();
-                    color_group_columns();
                 });
 
 
@@ -340,8 +345,33 @@ $(document).ready(function() {
                     html_table.find("thead>tr>th:eq("+val.slice(0,1)[0]+")").addClass("trFirst");
                     $.each(val.slice(1,val.length-1),function(k,v){
                         html_table.find("thead>tr>th:eq("+v+")").addClass("trMiddle");
+                        
                     });
+                    /*$.each(val.slice(0,val.length),function(k,v){
+                        console.log(key);
+                        if (String(key) === "RHS"){
+                                html_table.find("thead>tr>th:eq("+v+")").css('background-color', '#eaf1fc');//light blue
+                            }
+                        if (String(key) === "Follow-up"){
+                                html_table.find("thead>tr>th:eq("+v+")").css('background-color', '#e7dbfc');//light pink
+                            }
+                        if (String(key) === "Family factsheet"){
+                                html_table.find("thead>tr>th:eq("+v+")").css('background-color', '#eef2c9');//light yellow
+                            }
+                        if (String(key) === "SBM"){
+                                html_table.find("thead>tr>th:eq("+v+")").css('background-color', '#d1f9d9');//light green
+                            }
+                        if (String(key) === "Construction status"){
+                                html_table.find("thead>tr>th:eq("+v+")").css('background-color', '#def7f4');//light cyan
+                            } 
+                        if (String(key) === "Community Mobilization"){
+                                html_table.find("thead>tr>th:eq("+v+")").css('background-color', '#d4d6f7');//light blue
+                            }
+                        if (String(key) === "Accounts"){
+                                html_table.find("thead>tr>th:eq("+v+")").css('background-color', '#ccc7c8');//light grey-red
+                            }
 
+                    });*/
                     html_table.find("thead>tr>th:eq("+val.slice(val.length-1)[0]+")").addClass("trLast");
                 });
 
@@ -385,11 +415,6 @@ $(document).ready(function() {
         }
     }
 
-    function color_group_columns(){
-        
-        //$('th:eq()').css('background-color', '#f2f29f')
-        
-    }
 
     function flag_dates(){
 
