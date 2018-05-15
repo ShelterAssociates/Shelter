@@ -33,7 +33,7 @@ def masterSheet(request, slum_code = 0 ):
         slum_code = Slum.objects.filter(pk = int(request.GET.get('form').partition(delimiter)[2]) ).values_list("shelter_slum_code", flat = True)[0]
         slum_info = Slum.objects.filter(shelter_slum_code = slum_code).values_list("electoral_ward__name", "name")
         slum_funder = SponsorProjectDetails.objects.filter(slum__name= str(slum_info[0][1])).exclude(sponsor__id= 10)
-        
+
         
         
     formdict = []
@@ -47,29 +47,40 @@ def masterSheet(request, slum_code = 0 ):
         url_RHS_form = str(settings.KOBOCAT_FORM_URL)+str('forms/130/form.json')
         #url_RHS_form = str(settings.KOBOCAT_FORM_URL) + str('forms/98/form.json"')
 
-        url_FF_form = str(settings.KOBOCAT_FORM_URL)+str('forms/142/form.json')
+        url_FF_form = str(settings.KOBOCAT_FORM_URL)+str('forms/68/form.json')
 
         kobotoolbox_request = urllib2.Request(urlv)
         kobotoolbox_request_family_factsheet = urllib2.Request(url_family_factsheet)
         kobotoolbox_request_RHS_form = urllib2.Request(url_RHS_form)
+        kobotoolbox_request_FF_form = urllib2.Request(url_FF_form)
+
 
         kobotoolbox_request.add_header('Authorization', settings.KOBOCAT_TOKEN)
         kobotoolbox_request_family_factsheet.add_header('Authorization',
                                                         settings.KOBOCAT_TOKEN)
         kobotoolbox_request_RHS_form.add_header('Authorization', settings.KOBOCAT_TOKEN)
+        kobotoolbox_request_FF_form.add_header('Authorization', settings.KOBOCAT_TOKEN)
+        
 
         res = urllib2.urlopen(kobotoolbox_request)
         res_family_factsheet = urllib2.urlopen(kobotoolbox_request_family_factsheet)
         res_RHS_form = urllib2.urlopen(kobotoolbox_request_RHS_form)
+        res_FF_form = urllib2.urlopen(kobotoolbox_request_FF_form)
+
 
         html = res.read()
         html_family_factsheet = res_family_factsheet.read()
         html_RHS_form = res_RHS_form.read()
+        html_FF_form = res_FF_form.read()
 
         formdict = json.loads(html)
         formdict_family_factsheet = json.loads(html_family_factsheet)
         formdict_RHS_form = json.loads(html_RHS_form)
+        formdict_FF_form = json.loads(html_FF_form)
         name_label_data = []
+
+        
+        formdict_RHS_form.update(formdict_FF_form)
 
         try:
             for i in formdict_RHS_form['children']:
@@ -77,6 +88,13 @@ def masterSheet(request, slum_code = 0 ):
                 name_label_data.extend(temp_data)
         except Exception as e:
             print e
+
+        '''try:
+            for i in formdict_FF_form['children']:
+                temp_data_FF = trav(i)  # trav() function traverses the dictionary to find last hanging child
+                name_label_data.extend(temp_data_FF)
+        except Exception as e:
+            print e'''
         # arranging data with respect to household numbers
         temp_FF = {obj_FF['group_vq77l17/Household_number']: obj_FF for obj_FF in formdict_family_factsheet}
 
@@ -102,7 +120,6 @@ def masterSheet(request, slum_code = 0 ):
         daily_reporting_data = daily_reporting_data.values(*toilet_reconstruction_fields)
 
         for i in daily_reporting_data:
-            print i['status']
             if(i['status']) !=  " ":
                 i['status'] = ToiletConstruction.get_status_display(i['status'])
 
@@ -217,19 +234,21 @@ def masterSheet(request, slum_code = 0 ):
                     except:
                         pass
     try:
-        for x in formdict:
-            for funder in slum_funder:
-                print funder.sponsor.organization_name
-                if int(x['Household_number']) in funder.household_code:
-                    x.update({'Funder': funder.sponsor.organization_name})
+        if len(slum_funder)!=0:
+            for x in formdict:
+                for funder in slum_funder:
+                    if int(x['Household_number']) in funder.household_code:
+                        x.update({'Funder': funder.sponsor.organization_name})
+        slum_info_dict = {}
+        slum_info_dict.update({"Name of the slum":slum_info[0][1], "Electoral Ward":slum_info[0][0]})
+        formdict.append(slum_info_dict)
+
     except Exception as e:
         print e
 
-    #slum_info_dict = {}
-    #slum_info_dict.update({"Name of the slum":slum_info[0][1], "Electoral Ward":slum_info[0][0], "Funder": slum_funder.sponsor.organization_name})
+    
     #print type(slum_info)
-    formdict.append(slum_info[0])
-    #formdict.append(slum_info_dict)
+    #formdict.append(slum_info[0])
     return HttpResponse(json.dumps(formdict),  content_type = "application/json")
 
 
@@ -618,12 +637,13 @@ def handle_uploaded_file(f,response):
 
     return d
  
-
+@staticmethod
 def check_null(s):
     if pandas.isnull(s):
         return None
     else:
         return s
+@staticmethod
 def check_bool(s):
     if str(s).lower() == 'yes':
         return True
