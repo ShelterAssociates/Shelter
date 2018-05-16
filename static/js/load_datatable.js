@@ -349,34 +349,34 @@ $(document).ready(function() {
                     });
                     $.each(val.slice(0,val.length),function(k,v){
                         if (String(key) === "RHS"){
-                                html_table.find("thead>tr>th:eq("+v+")").css('background-color', '#ccc0d9');//
+                                html_table.find("thead>tr>th:eq("+v+")").css('background-color', '#d6d0dd');//
                                 //background-color: lightblue;
                                 //$("#" + key).css('background-color', '#ccc0d9');
 
                             }
                         if (String(key) === "Follow-up"){
-                                html_table.find("thead>tr>th:eq("+v+")").css('background-color', '#ccc0d9');//
+                                html_table.find("thead>tr>th:eq("+v+")").css('background-color', '#ffe0f5');//
                                 //$("#" + key).css('background-color', '#ccc0d9');
                             }
                         if (String(key) === "Family factsheet"){
-                                html_table.find("thead>tr>th:eq("+v+")").css('background-color', '#c4bd97');//
+                                html_table.find("thead>tr>th:eq("+v+")").css('background-color', '#e0f6ff');//
                                 //$("#" + key.replace(/ /g,'')).css('background-color', '#c4bd97');
                                 
                             }
                         if (String(key) === "SBM"){
-                                html_table.find("thead>tr>th:eq("+v+")").css('background-color', '#fbd4b4');//
+                                html_table.find("thead>tr>th:eq("+v+")").css('background-color', '#fed9a6');//
                                 //$("#" + key).css('background-color', '#fbd4b4');
                             }
                         if (String(key) === "Construction status"){
-                                html_table.find("thead>tr>th:eq("+v+")").css('background-color', '#c4bd97');//
+                                html_table.find("thead>tr>th:eq("+v+")").css('background-color', '#d2e2ce');//
                                 //$("#" + key.replace(/ /g,'')).css('background-color', '#c4bd97');
                             } 
                         if (String(key) === "Community Mobilization"){
-                                html_table.find("thead>tr>th:eq("+v+")").css('background-color', '#b8cce4');//
+                                html_table.find("thead>tr>th:eq("+v+")").css('background-color', '#e5d8bd');//
                                 //$("#" + key.replace(/ /g,'')).css('background-color', '#b8cce4');
                             }
                         if (String(key) === "Accounts"){
-                                html_table.find("thead>tr>th:eq("+v+")").css('background-color', '#d8d8d8');//
+                                html_table.find("thead>tr>th:eq("+v+")").css('background-color', '#ffffb3');//
                                 //$("#" + key).css('background-color', '#d8d8d8');
                             }
 
