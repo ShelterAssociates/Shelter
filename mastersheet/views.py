@@ -26,28 +26,36 @@ from collections import defaultdict
 # to be displayed to the front end.
 @csrf_exempt
 @user_passes_test(lambda u: u.is_superuser, login_url='/admin/')
-def masterSheet(request, slum_code = 0 ):
-    if "slumname" in str(request.GET.get('form')):
-
+def masterSheet(request, slum_code = 0, FF_code = 0, RHS_code = 0 ):
+    try:
         delimiter = 'slumname='
-        slum_code = Slum.objects.filter(pk = int(request.GET.get('form').partition(delimiter)[2]) ).values_list("shelter_slum_code", flat = True)[0]
-        slum_info = Slum.objects.filter(shelter_slum_code = slum_code).values_list("electoral_ward__name", "name")
-        slum_funder = SponsorProjectDetails.objects.filter(slum__name= str(slum_info[0][1])).exclude(sponsor__id= 10)
+        slum_code = Slum.objects.filter(pk = int(request.GET.get('form').partition(delimiter)[2]) ).values_list("shelter_slum_code","electoral_ward__administrative_ward__city__city_code","electoral_ward__name", "name")    
+        slum_funder = SponsorProjectDetails.objects.filter(slum__name= str(slum_code[0][2])).exclude(sponsor__id= 10)
+        form_ids = Survey.objects.filter(city__city_code = int(slum_code[0][1]))
+        print form_ids
+        
+        for i in form_ids:
+            if str(i.description) == 'FF':
+                FF_code = i.kobotool_survey_id
+            if str(i.description) == 'RHS':
+                RHS_code = i.kobotool_survey_id
+    except Exception as e:
+        print str(e)+"here"
 
         
         
     formdict = []
     if slum_code is not 0:
-        urlv = str(settings.KOBOCAT_FORM_URL)+str('data/130?query={"slum_name":"') + str(slum_code) + '"}'  # '+str(slum_code)+'
+        urlv = str(settings.KOBOCAT_FORM_URL)+str('data/'+str(RHS_code)+'?query={"slum_name":"') + str(slum_code[0][0])+'"}'  # '+str(slum_code)+'
         #urlv = str(settings.KOBOCAT_FORM_URL)+str('data/98?query={"slum_name":"') + str(slum_code) + '"}'  # '+str(slum_code)+'
 
-        url_family_factsheet = str(settings.KOBOCAT_FORM_URL)+str('data/68?format=json&query={"group_vq77l17/slum_name":"')+ str(slum_code) + str('"}&fields=["OnfieldFactsheet","group_ne3ao98/Have_you_upgraded_yo_ng_individual_toilet","group_ne3ao98/Cost_of_upgradation_in_Rs","group_ne3ao98/Where_the_individual_ilet_is_connected_to","group_ne3ao98/Use_of_toilet","group_vq77l17/Household_number"]')
+        url_family_factsheet = str(settings.KOBOCAT_FORM_URL)+str('data/'+str(FF_code)+'?format=json&query={"group_vq77l17/slum_name":"')+ str(slum_code[0][0]) + str('"}&fields=["OnfieldFactsheet","group_ne3ao98/Have_you_upgraded_yo_ng_individual_toilet","group_ne3ao98/Cost_of_upgradation_in_Rs","group_ne3ao98/Where_the_individual_ilet_is_connected_to","group_ne3ao98/Use_of_toilet","group_vq77l17/Household_number"]')
         #url_family_factsheet = str(settings.KOBOCAT_FORM_URL)+str('data/97?format=json&query={"group_vq77l17/slum_name":"')+ str(slum_code) + str('"}&fields=["OnfieldFactsheet","group_ne3ao98/Have_you_upgraded_yo_ng_individual_toilet","group_ne3ao98/Cost_of_upgradation_in_Rs","group_ne3ao98/Where_the_individual_ilet_is_connected_to","group_ne3ao98/Use_of_toilet","group_vq77l17/Household_number"]')
 
-        url_RHS_form = str(settings.KOBOCAT_FORM_URL)+str('forms/130/form.json')
+        url_RHS_form = str(settings.KOBOCAT_FORM_URL)+str('forms/'+str(RHS_code)+'/form.json')
         #url_RHS_form = str(settings.KOBOCAT_FORM_URL) + str('forms/98/form.json"')
 
-        url_FF_form = str(settings.KOBOCAT_FORM_URL)+str('forms/68/form.json')
+        url_FF_form = str(settings.KOBOCAT_FORM_URL)+str('forms/'+str(FF_code)+'/form.json')
 
         kobotoolbox_request = urllib2.Request(urlv)
         kobotoolbox_request_family_factsheet = urllib2.Request(url_family_factsheet)
@@ -115,7 +123,7 @@ def masterSheet(request, slum_code = 0 ):
                     'septic_tank_date_str': "to_char(septic_tank_date, 'YYYY-MM-DD ')",
                     'agreement_date_str': "to_char(agreement_date, 'YYYY-MM-DD ')",
                     'completion_date_str': "to_char(completion_date, 'YYYY-MM-DD ')"}).filter(
-            slum__shelter_slum_code=slum_code)
+            slum__shelter_slum_code=slum_code[0][0])
 
         daily_reporting_data = daily_reporting_data.values(*toilet_reconstruction_fields)
 
@@ -149,7 +157,7 @@ def masterSheet(request, slum_code = 0 ):
         sbm_fields = ['slum', 'household_number', 'name', 'application_id', 'photo_uploaded', 'created_date_str', 'id']
         sbm_data = SBMUpload.objects.extra(
             select={'created_date_str': "to_char(created_date, 'YYYY-MM-DD ')"}).filter(
-            slum__shelter_slum_code=slum_code)
+            slum__shelter_slum_code=slum_code[0][0])
         sbm_data = sbm_data.values(*sbm_fields)
 
         temp_sbm = {obj_DR['household_number']: obj_DR for obj_DR in sbm_data}
@@ -164,7 +172,7 @@ def masterSheet(request, slum_code = 0 ):
         community_mobilization_fields = ['slum', 'household_number', 'activity_type', 'activity_date_str','id']
         community_mobilization_data = CommunityMobilization.objects.extra(
             select={'activity_date_str': "to_char(activity_date, 'YYYY-MM-DD ')"}).filter(
-            slum__shelter_slum_code=slum_code)
+            slum__shelter_slum_code=slum_code[0][0])
         community_mobilization_data1 = community_mobilization_data.values(*community_mobilization_fields)
         community_mobilization_data_list = list(community_mobilization_data1)
 
@@ -189,7 +197,7 @@ def masterSheet(request, slum_code = 0 ):
         except Exception as e:
             print e
 
-        vendor = VendorHouseholdInvoiceDetail.objects.filter(slum__shelter_slum_code=slum_code)
+        vendor = VendorHouseholdInvoiceDetail.objects.filter(slum__shelter_slum_code=slum_code[0][0])
         # Arranging name_label_data with respect to label and corresponding codes('names' is the key used for them in the json) and labels
         name_label_data_dict = {
         obj_name_label_data['name']: {child['name']: child['label'] for child in obj_name_label_data['children']} for
@@ -240,7 +248,7 @@ def masterSheet(request, slum_code = 0 ):
                     if int(x['Household_number']) in funder.household_code:
                         x.update({'Funder': funder.sponsor.organization_name})
         slum_info_dict = {}
-        slum_info_dict.update({"Name of the slum":slum_info[0][1], "Electoral Ward":slum_info[0][0]})
+        slum_info_dict.update({"Name of the slum":slum_code[0][2], "Electoral Ward":slum_code[0][3]})
         formdict.append(slum_info_dict)
 
     except Exception as e:
