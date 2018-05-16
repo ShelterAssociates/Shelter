@@ -637,13 +637,11 @@ def handle_uploaded_file(f,response):
 
     return d
  
-@staticmethod
 def check_null(s):
     if pandas.isnull(s):
         return None
     else:
         return s
-@staticmethod
 def check_bool(s):
     if str(s).lower() == 'yes':
         return True
