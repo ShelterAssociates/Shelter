@@ -230,7 +230,6 @@ def update_status(sender ,instance, **kwargs):
     #instance.status = STATUS_CHOICES[4][0]#Under Construction
 
    
-
     if instance.agreement_date:
         instance.status = STATUS_CHOICES[2][0]#material not given
     '''
@@ -253,28 +252,37 @@ def update_status(sender ,instance, **kwargs):
         instance.status = STATUS_CHOICES[5][0]#completed
         
 
-    if instance.agreement_cancelled or len(instance.material_shifted_to) != 0 :
+    if instance.agreement_cancelled :
         instance.status = STATUS_CHOICES[1][0]#agreement cancelled
+
+    if instance.material_shifted_to is not None:
+        if len(instance.material_shifted_to) != 0:
+            instance.status = STATUS_CHOICES[1][0]#agreement cancelled
+
+
 
 @receiver(pre_save, sender=ToiletConstruction)
 def handle_shifted_material(sender ,instance, **kwargs):
-    print instance.household_number, len(instance.material_shifted_to)
-    if len(instance.material_shifted_to) != 0:
-        print "in handle shifted material"
-        TC_instance, is_created = ToiletConstruction.objects.update_or_create(
-                            household_number = int(instance.material_shifted_to),
-                            defaults = { 'agreement_date' : (instance.agreement_date),
-                            
-                            'septic_tank_date' : (instance.septic_tank_date),
-                            'phase_one_material_date' : (instance.phase_one_material_date),
-                            'phase_two_material_date' : (instance.phase_two_material_date),
-                            'phase_three_material_date' : (instance.phase_three_material_date),
-                            'completion_date' : (instance.completion_date),
-                            'comment' : (instance.comment) }  
-                        )
+    if instance.material_shifted_to is not None:
+        if len(instance.material_shifted_to)!=0:
+            TC_instance, is_created = ToiletConstruction.objects.update_or_create(
+                                household_number = int(instance.material_shifted_to),
+                                slum = instance.slum,
 
-        TC_instance.save()
-        instance.agreement_cancelled = STATUS_CHOICES[1][1]
+                                defaults = { 
+                                    'agreement_date' : (instance.agreement_date), 
+                                    'agreement_cancelled': False,
+                                    'septic_tank_date' : (instance.septic_tank_date),
+                                    'phase_one_material_date' : (instance.phase_one_material_date),
+                                    'phase_two_material_date' : (instance.phase_two_material_date),
+                                    'phase_three_material_date' : (instance.phase_three_material_date),
+                                    'completion_date' : (instance.completion_date),
+                                    'comment' : (instance.comment) 
+                                    }  
+                            )
+
+            TC_instance.save()
+            instance.agreement_cancelled = STATUS_CHOICES[1][0]
 
     
 
