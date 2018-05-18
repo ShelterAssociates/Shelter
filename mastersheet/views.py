@@ -29,20 +29,18 @@ from collections import defaultdict
 def masterSheet(request, slum_code = 0, FF_code = 0, RHS_code = 0 ):
     try:
         delimiter = 'slumname='
-        slum_code = Slum.objects.filter(pk = int(request.GET.get('form').partition(delimiter)[2]) ).values_list("shelter_slum_code","electoral_ward__administrative_ward__city__city_code","electoral_ward__name", "name")    
+        slum_code = Slum.objects.filter(pk = int(request.GET.get('form').partition(delimiter)[2]) ).values_list("shelter_slum_code","electoral_ward__administrative_ward__city__id","electoral_ward__name", "name")    
+        print slum_code
         slum_funder = SponsorProjectDetails.objects.filter(slum__name= str(slum_code[0][2])).exclude(sponsor__id= 10)
-        form_ids = Survey.objects.filter(city__city_code = int(slum_code[0][1]))
-        print form_ids
+        form_ids = Survey.objects.filter(city__id = int(slum_code[0][1]))
         
         for i in form_ids:
-            if str(i.description) == 'FF':
+            if i.survey_type == SURVEYTYPE_CHOICES[3][0]:
                 FF_code = i.kobotool_survey_id
-            if str(i.description) == 'RHS':
+            if i.survey_type == SURVEYTYPE_CHOICES[1][0]:
                 RHS_code = i.kobotool_survey_id
     except Exception as e:
-        print str(e)+"here"
-
-        
+        print str(e)
         
     formdict = []
     if slum_code is not 0:
@@ -86,32 +84,27 @@ def masterSheet(request, slum_code = 0, FF_code = 0, RHS_code = 0 ):
         formdict_RHS_form = json.loads(html_RHS_form)
         formdict_FF_form = json.loads(html_FF_form)
         name_label_data = []
-
-        
-        formdict_RHS_form.update(formdict_FF_form)
-
+        # Rearranging form data in order to arrange them by group names
         try:
             for i in formdict_RHS_form['children']:
                 temp_data = trav(i)  # trav() function traverses the dictionary to find last hanging child
                 name_label_data.extend(temp_data)
         except Exception as e:
             print e
+        
 
-        '''try:
+        try:
             for i in formdict_FF_form['children']:
                 temp_data_FF = trav(i)  # trav() function traverses the dictionary to find last hanging child
                 name_label_data.extend(temp_data_FF)
         except Exception as e:
-            print e'''
+            print e
+
+        # Family Factsheet - fetching data
         # arranging data with respect to household numbers
         temp_FF = {obj_FF['group_vq77l17/Household_number']: obj_FF for obj_FF in formdict_family_factsheet}
-
         temp_FF_keys = temp_FF.keys()
-        for x in formdict:
-            if x['Household_number'] in temp_FF_keys:
-                x.update(temp_FF[x['Household_number']])
-                x['OnfieldFactsheet'] = 'Yes'
-
+        # Daily Reporting - fetching data
         toilet_reconstruction_fields = ['slum', 'household_number', 'agreement_date_str', 'agreement_cancelled',
                                         'septic_tank_date_str', 'phase_one_material_date_str',
                                         'phase_two_material_date_str', 'phase_three_material_date_str',
@@ -124,36 +117,13 @@ def masterSheet(request, slum_code = 0, FF_code = 0, RHS_code = 0 ):
                     'agreement_date_str': "to_char(agreement_date, 'YYYY-MM-DD ')",
                     'completion_date_str': "to_char(completion_date, 'YYYY-MM-DD ')"}).filter(
             slum__shelter_slum_code=slum_code[0][0])
-
         daily_reporting_data = daily_reporting_data.values(*toilet_reconstruction_fields)
-
         for i in daily_reporting_data:
-            if(i['status']) !=  " ":
+            if i['status'].strip() !=  "":
                 i['status'] = ToiletConstruction.get_status_display(i['status'])
-
-
-
-
         temp_daily_reporting = {obj_DR['household_number']: obj_DR for obj_DR in daily_reporting_data}
         temp_DR_keys = temp_daily_reporting.keys()
-        try:
-            for x in formdict:
-                if x['Household_number'] in temp_DR_keys:
-                    x.update(temp_daily_reporting[x['Household_number']])
-                    x.update({'tc_id_'+str(x['Household_number']): temp_daily_reporting[x['Household_number']]['id']})
-                    
-                    #for funder in slum_funder:
-                        #print x['Household_number'], funder.household_code, funder
-                        #if x['Household_number'] in funder.household_code:
-                           # x.update({'Funder': funder.sponsor.organization_name})
-                            #print x['Household_number'], funder.household_code, funder
-        
-
-
-        except Exception as err:
-            print err
-
-
+        # SBM - fetching data
         sbm_fields = ['slum', 'household_number', 'name', 'application_id', 'photo_uploaded', 'created_date_str', 'id']
         sbm_data = SBMUpload.objects.extra(
             select={'created_date_str': "to_char(created_date, 'YYYY-MM-DD ')"}).filter(
@@ -162,13 +132,7 @@ def masterSheet(request, slum_code = 0, FF_code = 0, RHS_code = 0 ):
 
         temp_sbm = {obj_DR['household_number']: obj_DR for obj_DR in sbm_data}
         temp_sbm_keys = temp_sbm.keys()
-        try:
-            for x in formdict:
-                if x['Household_number'] in temp_sbm_keys:
-                    x.update(temp_sbm[x['Household_number']])
-        except Exception as err:
-            print err
-
+        # Community Mobilization - fetching data
         community_mobilization_fields = ['slum', 'household_number', 'activity_type', 'activity_date_str','id']
         community_mobilization_data = CommunityMobilization.objects.extra(
             select={'activity_date_str': "to_char(activity_date, 'YYYY-MM-DD ')"}).filter(
@@ -180,34 +144,16 @@ def masterSheet(request, slum_code = 0, FF_code = 0, RHS_code = 0 ):
         # We need to sort the data with respect to each household number in order to
         # append it in formdict.
 
-        #for x in community_mobilization_data_list:
-        #    HH_list_flat = []
-        #    HH_list_flat.append(json.loads(x['household_number']))
-        #    x['household_number'] = HH_list_flat[0]
-
-        try:
-            for i in range(len(community_mobilization_data)):
-                y = community_mobilization_data[i]
-                for z in y.household_number:
-                    for x in formdict:
-                        if int(x['Household_number']) == int(z):
-                            new_activity_type = community_mobilization_data[i].activity_type.name
-                            x.update({new_activity_type: y.activity_date_str})
-                            x.update({str(new_activity_type) + "_id" : y.id})
-        except Exception as e:
-            print e
-
+        # Vendor and Accounts - fetching data
         vendor = VendorHouseholdInvoiceDetail.objects.filter(slum__shelter_slum_code=slum_code[0][0])
         # Arranging name_label_data with respect to label and corresponding codes('names' is the key used for them in the json) and labels
         name_label_data_dict = {
         obj_name_label_data['name']: {child['name']: child['label'] for child in obj_name_label_data['children']} for
         obj_name_label_data in name_label_data}
 
-        
-        for y in vendor:
-            for z in y.household_number:
-                for x in formdict:
-                
+        for x in formdict:
+            for y in vendor:
+                for z in y.household_number:
                     if int(x['Household_number']) == int(z):
                         vendor_name = "vendor_type" + y.vendor.vendor_type.name
                         invoice_number = "invoice_number" + y.vendor.vendor_type.name
@@ -216,31 +162,53 @@ def masterSheet(request, slum_code = 0, FF_code = 0, RHS_code = 0 ):
                             invoice_number: y.invoice_number
                         })
                         x.update({str(y.vendor.vendor_type.name) + " Invoice Number"+"_id" : y.id})
-                        x.update({"Name of "+str(y.vendor.vendor_type.name)+" vendor""_id" : y.id})
+                        x.update({"Name of "+str(y.vendor.vendor_type.name)+" vendor"+"_id" : y.id})
 
-                    # Changing the codes to actual labels
-                    try:
-                        for key_f in x:
-                            for key_nl in name_label_data_dict.keys():
-                                if str(key_nl) in str(key_f):
-                                    string = x[key_f].split(" ")
-                                    for num in string:
-                                        string[string.index(num)] = name_label_data_dict[key_nl][num]
-                                    x[key_f] = ", ".join(string)
-                        # Handling current place of defecation column
-                        for keys in x:
-                            if 'group_oi8ts04/C1' in keys:
-                                x.update({'current place of defecation': x['group_oi8ts04/C1']})
-                            elif 'group_oi8ts04/C2' in keys:
-                                x.update({'current place of defecation': x['group_oi8ts04/C2']})
-                            elif 'group_oi8ts04/C3' in keys:
-                                x.update({'current place of defecation': x['group_oi8ts04/C3']})
-                            elif 'group_oi8ts04/C4' in keys:
-                                x.update({'current place of defecation': x['group_oi8ts04/C4']})
-                            elif 'group_oi8ts04/C5' in keys:
-                                x.update({'current place of defecation': x['group_oi8ts04/C5']})
-                    except:
-                        pass
+                        # Changing the codes to actual labels
+                        
+            for i in range(len(community_mobilization_data)):
+                y = community_mobilization_data[i]
+                for z in y.household_number:
+                    if int(x['Household_number']) == int(z):
+                        new_activity_type = community_mobilization_data[i].activity_type.name
+                        x.update({new_activity_type: y.activity_date_str})
+                        x.update({str(new_activity_type) + "_id" : y.id})
+
+            if x['Household_number'] in temp_sbm_keys:
+                x.update(temp_sbm[x['Household_number']])
+
+                ####################
+            if x['Household_number'] in temp_DR_keys:
+                x.update(temp_daily_reporting[x['Household_number']])
+                x.update({'tc_id_'+str(x['Household_number']): temp_daily_reporting[x['Household_number']]['id']})
+                         
+            if x['Household_number'] in temp_FF_keys:
+                x.update(temp_FF[x['Household_number']])
+                x['OnfieldFactsheet'] = 'Yes'
+            try:
+                for key_f,value_f in x.items():
+                    key = key_f.split("/")[-1]
+
+                    if key in name_label_data_dict.keys():
+                        string = value_f.split(" ")
+                        for num in string:
+                            string[string.index(num)] = name_label_data_dict[key][num]
+                        x[key_f] = ", ".join(string)
+            except:
+                pass
+
+            # Handling current place of defecation column    
+            if 'group_oi8ts04/C1' in x.keys():
+                x.update({'current place of defecation': x['group_oi8ts04/C1']})
+            elif 'group_oi8ts04/C2' in x.keys():
+                x.update({'current place of defecation': x['group_oi8ts04/C2']})
+            elif 'group_oi8ts04/C3' in x.keys():
+                x.update({'current place of defecation': x['group_oi8ts04/C3']})
+            elif 'group_oi8ts04/C4' in x.keys():
+                x.update({'current place of defecation': x['group_oi8ts04/C4']})
+            elif 'group_oi8ts04/C5' in x.keys():
+                x.update({'current place of defecation': x['group_oi8ts04/C5']})
+            
     try:
         if len(slum_funder)!=0:
             for x in formdict:
@@ -250,13 +218,9 @@ def masterSheet(request, slum_code = 0, FF_code = 0, RHS_code = 0 ):
         slum_info_dict = {}
         slum_info_dict.update({"Name of the slum":slum_code[0][2], "Electoral Ward":slum_code[0][3]})
         formdict.append(slum_info_dict)
-
     except Exception as e:
         print e
 
-    
-    #print type(slum_info)
-    #formdict.append(slum_info[0])
     return HttpResponse(json.dumps(formdict),  content_type = "application/json")
 
 
