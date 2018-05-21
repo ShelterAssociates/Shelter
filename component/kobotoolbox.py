@@ -27,12 +27,12 @@ def survey_mapping(survey_type):
 def get_household_analysis_data(city, slum_code, fields, kobo_survey=''):
     '''Gets the kobotoolbox RHS data for selected questions
     '''
-    household_field = 'group_ce0hf58/house_no'
+    household_field = 'Household_number'
     output = {}
 
     if kobo_survey:
         #Setting up API call and header data
-        url = settings.KOBOCAT_FORM_URL + 'data/'+ kobo_survey +'?query={"group_ce0hf58/slum_name":"'+slum_code+'"}&fields=["'+ '","'.join(fields + [household_field, 'end'] ) + '"]'
+        url = settings.KOBOCAT_FORM_URL + 'data/'+ kobo_survey +'?query={"slum_name":"'+slum_code+'"}&fields=["'+ '","'.join(fields + [household_field, '_submission_time'] ) + '"]'
 
         kobotoolbox_request = urllib2.Request(url)
         kobotoolbox_request.add_header('User-agent', 'Mozilla 5.10')
@@ -42,10 +42,10 @@ def get_household_analysis_data(city, slum_code, fields, kobo_survey=''):
         #Read json data from kobotoolbox API
         html = res.read()
         records = json.loads(html)
-        grouped_records = itertools.groupby(sorted(records, key=lambda x:int(x['group_ce0hf58/house_no'])), key=lambda x:int(x["group_ce0hf58/house_no"]))
+        grouped_records = itertools.groupby(sorted(records, key=lambda x:int(x['Household_number'])), key=lambda x:int(x["Household_number"]))
 
         for household, list_record in grouped_records:
-            record_sorted = sorted(list(list_record), key=lambda x:x['end'], reverse=True)
+            record_sorted = sorted(list(list_record), key=lambda x:x['_submission_time'], reverse=True)
             household_no = int(household)
             if len(record_sorted)>0:
                 record = record_sorted[0]
@@ -68,7 +68,7 @@ def get_kobo_RHS_list(city, slum_code,house_number, kobo_survey=''):
     output=OrderedDict()
     if kobo_survey:
         try:
-            url = settings.KOBOCAT_FORM_URL+'data/'+kobo_survey+'?query={"group_ce0hf58/slum_name":"'+slum_code+'","group_ce0hf58/house_no":{ "$in":["'+str(house_number)+'","'+('000'.join(str(house_number)))[-4:]+'"]}}'
+            url = settings.KOBOCAT_FORM_URL+'data/'+kobo_survey+'?query={"slum_name":"'+slum_code+'","Household_number":{ "$in":["'+str(house_number)+'","'+('000'.join(str(house_number)))[-4:]+'"]}}'
         except Exception as e:
             print e
         req = urllib2.Request(url)

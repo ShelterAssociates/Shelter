@@ -80,7 +80,7 @@ class KMLParser(object):
         for folder in folders:
           try:
 	    kml_name = str(folder.name).split('(')[0]
-            kml_name = kml_name.replace(' ','').lower()
+            kml_name = kml_name.replace(' ','')
             kml_folder[kml_name] = False
     	    if kml_name in metadata_component:
             	self.component_data = []
