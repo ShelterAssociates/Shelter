@@ -26,29 +26,36 @@ class KMLParser(object):
 
         #Get lat long coordinates as per the type of shape(polygon, point and linestring)
         key = LINESTRING
+        geometry_data= []
         if hasattr(placemark, POLYGON):
-            coordinates=str(placemark[POLYGON].outerBoundaryIs.LinearRing.coordinates)
+            geometry_data.append(str(placemark[POLYGON].outerBoundaryIs.LinearRing.coordinates))
             key = POLYGON
         elif hasattr(placemark, POINT):
-            coordinates=str(placemark[POINT].coordinates)
+            geometry_data.append(str(placemark[POINT].coordinates))
             key = POINT
         else:
-            coordinates=str(placemark[LINESTRING].coordinates)
+            if hasattr(placemark, "MultiGeometry"):
+                for coord in placemark['MultiGeometry'][LINESTRING]:
+                    geometry_data.append(str(coord.coordinates))
+            else:
+                geometry_data.append(str(placemark[LINESTRING].coordinates))
+        pnt=[]
 
-        coordinates = coordinates.strip()
-        coordinates = coordinates.split(',0')
-        lst_coordinates = []
+        for geometry in geometry_data:
+            coordinates = geometry.strip()
+            coordinates = coordinates.split(',0')
+            lst_coordinates = []
 
-        for coordinate in coordinates[:-1]:
-            lst_coordinates.append(list(map(float, coordinate.split(','))))
+            for coordinate in coordinates[:-1]:
+                lst_coordinates.append(list(map(float, coordinate.split(','))))
 
-        if key == POLYGON:
-            lst_coordinates = [lst_coordinates]
-        elif key == POINT:
-            lst_coordinates = lst_coordinates[0]
+            if key == POLYGON:
+                lst_coordinates = [lst_coordinates]
+            elif key == POINT:
+                lst_coordinates = lst_coordinates[0]
 
-        #Create geometry object as per type
-        pnt = GEOSGeometry('{ "type": "'+ key +'" , "coordinates": '+ str(lst_coordinates)+'  }')
+            #Create geometry object as per type
+            pnt.append(GEOSGeometry('{ "type": "'+ key +'" , "coordinates": '+ str(lst_coordinates)+'  }'))
 
         return household_no, pnt
 
@@ -56,12 +63,14 @@ class KMLParser(object):
         '''update or create records in the table accordingly
         '''
         for component in self.component_data:
-            pnt = component['coordinates']
-
+            coordinates = component['coordinates']
             metadata = Metadata.objects.get(code = metadata_code, type='C')
-            val = {'shape':pnt}
-            #Create or update in component
-            obj, created = Component.objects.update_or_create(housenumber=component['house_no'], slum=self.slum, metadata = metadata, defaults=val)
+            key = key_no =component['house_no']
+            for index, pnt in enumerate(coordinates):
+                val = {'shape':pnt}
+                #Create or update in component
+                obj, created = Component.objects.update_or_create(housenumber=key_no, slum=self.slum, metadata = metadata, defaults=val)
+                key_no = str(key) + '.'+str(index+1)
 
     def other_components(self):
         ''' Iterate through each document folder and process the data
