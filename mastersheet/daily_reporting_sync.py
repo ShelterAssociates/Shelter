@@ -120,6 +120,9 @@ class ToiletConstructionSync(DDSync):
                     else:
                         update_data[modelfield] = self.convert_datetime(record['Date_of_reporting']).date()
                     ToiletConstruction.objects.filter(**query_filter).update(**update_data)
+                    tc = ToiletConstruction.objects.filter(**query_filter)
+                    for toilet_const in tc:
+                        toilet_const.save()
 
             if '_submission_time' in record and submission_date > sync_date :
                 sync_date = submission_date
