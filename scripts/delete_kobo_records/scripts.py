@@ -1,16 +1,18 @@
 ''''
-    Script to delete records from kobotoolbox. 
-    To run include the folder in sys path
+Script to delete records from kobotoolbox. 
+To run include the folder in sys path
 
-    import sys
-    sys.path.insert(0, 'scripts/delete_kobo_records/')
+import sys
+sys.path.insert(0, 'scripts/delete_kobo_records/')
+from scripts import *
 '''
 
 from django.conf import settings
 import json
 import requests
+import urllib2
 from multiprocessing import Pool
-kobo_form = 41
+kobo_form = 103
 headers={}
 headers["Authorization"] = settings.KOBOCAT_TOKEN
 
@@ -19,8 +21,16 @@ def fetch_records(formID):
     if formID:
         kobo_form = formID
     fetchURL = '/'.join([settings.KOBOCAT_FORM_URL[:-1], 'data', str(kobo_form)])
-    objresponse = requests.get(fetchURL + '?format=json&fields=["_id"]', headers=headers)
-    records = objresponse.json()
+    print fetchURL
+    # objresponse = requests.get(fetchURL + '?format=json&fields=["_id"]', headers=headers)
+    # records = objresponse.json()
+    kobotoolbox_request = urllib2.Request(fetchURL + '?format=json&fields=["_id"]')
+    kobotoolbox_request.add_header('User-agent', 'Mozilla 5.10')
+    kobotoolbox_request.add_header('Authorization', settings.KOBOCAT_TOKEN)
+    res = urllib2.urlopen(kobotoolbox_request)
+    html = res.read()
+    records = json.loads(html)
+
     print (records)
     print ("Total number of records to be deleted : " + str(len(records)))
 
