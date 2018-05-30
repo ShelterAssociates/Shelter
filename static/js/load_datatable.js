@@ -83,6 +83,7 @@ $(document).ready(function() {
                 // Adding hyperlinks to Toilet Construction data
                 var tmp_TC = columns_defs['buttons']['Construction status'];
                 for (i = 0 ; i < tmp_TC.length ; i ++ ){
+		if (columns_defs['data'][tmp_TC[i]]['data']!= "Funder"){
                     columns_defs['data'][tmp_TC[i]]['render']= function ( data, type, row,meta ) {
                         if(typeof data != 'undefined'){
                             url_TC = String("/admin/master/mastersheet/toiletconstruction/") + row['tc_id_'+String(row.Household_number)] + String("/");
@@ -93,6 +94,7 @@ $(document).ready(function() {
                             return data;
                         }
                     }
+	         }
                 }
             }
     });
