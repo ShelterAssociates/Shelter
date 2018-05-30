@@ -211,10 +211,9 @@ def masterSheet(request, slum_code = 0, FF_code = 0, RHS_code = 0 ):
             
     try:
         if len(slum_funder)!=0:
-            for x in formdict:
-                for funder in slum_funder:
-                    if int(x['Household_number']) in funder.household_code:
-                        x.update({'Funder': funder.sponsor.organization_name})
+            for funder in slum_funder:
+                if int(x['Household_number']) in funder.household_code:
+                    x.update({'Funder': funder.sponsor.organization_name})
         slum_info_dict = {}
         slum_info_dict.update({"Name of the slum":slum_code[0][2], "Electoral Ward":slum_code[0][3]})
         formdict.append(slum_info_dict)
