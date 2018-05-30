@@ -31,7 +31,7 @@ def masterSheet(request, slum_code = 0, FF_code = 0, RHS_code = 0 ):
         delimiter = 'slumname='
         slum_code = Slum.objects.filter(pk = int(request.GET.get('form').partition(delimiter)[2]) ).values_list("shelter_slum_code","electoral_ward__administrative_ward__city__id","electoral_ward__name", "name")    
         print slum_code
-        slum_funder = SponsorProjectDetails.objects.filter(slum__name= str(slum_code[0][2])).exclude(sponsor__id= 10)
+        slum_funder = SponsorProjectDetails.objects.filter(slum__name= str(slum_code[0][3])).exclude(sponsor__id= 10)
         form_ids = Survey.objects.filter(city__id = int(slum_code[0][1]))
         
         for i in form_ids:
@@ -209,11 +209,12 @@ def masterSheet(request, slum_code = 0, FF_code = 0, RHS_code = 0 ):
             elif 'group_oi8ts04/C5' in x.keys():
                 x.update({'current place of defecation': x['group_oi8ts04/C5']})
             
+   # try:
+            if len(slum_funder)!=0:
+                for funder in slum_funder:
+                    if int(x['Household_number']) in funder.household_code:
+                        x.update({'Funder': funder.sponsor.organization_name})
     try:
-        if len(slum_funder)!=0:
-            for funder in slum_funder:
-                if int(x['Household_number']) in funder.household_code:
-                    x.update({'Funder': funder.sponsor.organization_name})
         slum_info_dict = {}
         slum_info_dict.update({"Name of the slum":slum_code[0][2], "Electoral Ward":slum_code[0][3]})
         formdict.append(slum_info_dict)
