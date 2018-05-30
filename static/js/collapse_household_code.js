@@ -43,7 +43,7 @@ $(document).ready(function(){
            data.sort();
             $("textArea[name=household_code]").val("["+data.join(', ')+"]");
             $("textArea[name=household_code]").parent().find('p.householdcode').html('['+data.join(', ')+']');
-            return false;
+            return true;
         });
     }
 //Checking for duplicate values within the list.
