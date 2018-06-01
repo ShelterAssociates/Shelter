@@ -77,3 +77,5 @@ class CommunityMobilizationAdmin(admin.ModelAdmin):
         js = ['js/mastersheet_collapse_household_code.js']
 
 admin.site.register(CommunityMobilization, CommunityMobilizationAdmin)
+
+admin.site.register(KoboDDSyncTrack)
