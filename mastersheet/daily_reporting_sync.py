@@ -102,7 +102,10 @@ class ToiletConstructionSync(DDSync):
                             tc, created = ToiletConstruction.objects.get_or_create(**check_list)
                             update_data ={}
                             update_data[modelfield] = house_data[0][1]
+                            tc = ToiletConstruction.objects.filter(**check_list)
                             ToiletConstruction.objects.filter(**check_list).update(**update_data)
+                            for toilet_const in tc:
+                                toilet_const.save()
                         flag=True
 
             for kobofield, modelfield in self.MAPPING.items():
@@ -113,14 +116,15 @@ class ToiletConstructionSync(DDSync):
                         if len(house) < 5:
                             tc = ToiletConstruction.objects.get_or_create(slum = self.slum, household_number = house)
                     flag = True
-                    query_filter = { "slum": self.slum, "household_number__in": houses, modelfield+"__isnull":True}
+                    query_filter = { "slum": self.slum, "household_number__in": houses}
                     update_data={}
                     if kobofield in self.BOOL_CHECK:
                         update_data[modelfield] = True
                     else:
                         update_data[modelfield] = self.convert_datetime(record['Date_of_reporting']).date()
-                    ToiletConstruction.objects.filter(**query_filter).update(**update_data)
                     tc = ToiletConstruction.objects.filter(**query_filter)
+                    query_filter[modelfield+"__isnull"]=True
+                    ToiletConstruction.objects.filter(**query_filter).update(**update_data)
                     for toilet_const in tc:
                         toilet_const.save()
 
