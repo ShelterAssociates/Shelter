@@ -245,7 +245,7 @@ def update_status(sender ,instance, **kwargs):
     if (instance.phase_one_material_date is None) and instance.agreement_date and (datetime.date.today() - instance.agreement_date > datetime.timedelta(days=8)):
         instance.status = STATUS_CHOICES[2][0]#material not given
 
-    if instance.phase_two_material_date or instance.phase_three_material_date:
+    if instance.phase_one_material_date or instance.phase_two_material_date or instance.phase_three_material_date:
         instance.status = STATUS_CHOICES[4][0]#Under Construction
 
     if instance.completion_date:
@@ -263,7 +263,7 @@ def update_status(sender ,instance, **kwargs):
 
 @receiver(pre_save, sender=ToiletConstruction)
 def handle_shifted_material(sender ,instance, **kwargs):
-    if instance.material_shifted_to is not None and instance.agreement_cancelled is False:
+    if instance.material_shifted_to is not None:
         if len(instance.material_shifted_to)!=0:
             TC_instance, is_created = ToiletConstruction.objects.update_or_create(
                                 household_number = int(instance.material_shifted_to),
