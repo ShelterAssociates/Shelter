@@ -30,7 +30,7 @@ $(document).ready(function() {
                         if(typeof data != 'undefined') {
                             url_daily_reporting = String("/admin/master/mastersheet/communitymobilization/") + row[columns_defs['data'][meta.col]['title']+"_id"] + String("/");
                             if(type === 'display'){
-                                        data = '<a href = "#" onclick="window.open(\''+url_daily_reporting+'\', \'_blank\', \'width=650,height=550\');">' + data + "</a>";
+                                        data = '<a href = "#" onclick="window.open(\''+url_daily_reporting+'\', \'_blank\', \'width=850,height=750\');">' + data + "</a>";
                             }
                             return data;
                         }
@@ -44,7 +44,7 @@ $(document).ready(function() {
                         if(typeof data != 'undefined'){
                             url_accounts = String("/admin/master/mastersheet/vendorhouseholdinvoicedetail/") + row[columns_defs['data'][meta.col]['title']+"_id"] + String("/");
                             if(type === 'display'){
-                                        data = '<a href = "#" onclick="window.open(\''+url_accounts+'\', \'_blank\', \'width=650,height=550\');">' + data + "</a>";
+                                        data = '<a href = "#" onclick="window.open(\''+url_accounts+'\', \'_blank\', \'width=850,height=750\');">' + data + "</a>";
 
                             }
                             return data;
@@ -60,7 +60,7 @@ $(document).ready(function() {
                         if(typeof data != 'undefined'){
                             url_SBM = String("/admin/master/mastersheet/sbmupload/") + row.id + String("/");
                             if(type === 'display'){
-                                        data = '<a href = "#" onclick="window.open(\''+url_SBM+'\', \'_blank\', \'width=650,height=550\');">' + data + "</a>";
+                                        data = '<a href = "#" onclick="window.open(\''+url_SBM+'\', \'_blank\', \'width=850,height=750\');">' + data + "</a>";
 
                             }
                             return data;
@@ -70,7 +70,7 @@ $(document).ready(function() {
                         if(typeof data != 'undefined'){
                             url_SBM = String("/admin/master/mastersheet/sbmupload/") + row.id + String("/");
                             if(type === 'display'){
-                                        data = '<a href = "#" onclick="window.open(\''+url_SBM+'\', \'_blank\', \'width=650,height=550\');">' + data + "</a>";
+                                        data = '<a href = "#" onclick="window.open(\''+url_SBM+'\', \'_blank\', \'width=850,height=750\');">' + data + "</a>";
 
                             }
                             return data;
@@ -87,7 +87,7 @@ $(document).ready(function() {
                         if(typeof data != 'undefined'){
                             url_TC = String("/admin/master/mastersheet/toiletconstruction/") + row['tc_id_'+String(row.Household_number)] + String("/");
                             if(type === 'display'){
-                                        data = '<a href = "#" onclick="window.open(\''+url_TC+'\', \'_blank\', \'width=650,height=550\');">' + data + "</a>";
+                                        data = '<a href = "#" onclick="window.open(\''+url_TC+'\', \'_blank\', \'width=850,height=750\');">' + data + "</a>";
 
                             }
                             return data;
