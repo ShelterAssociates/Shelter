@@ -77,6 +77,8 @@ class SBMUpload(models.Model):
     household_number = models.CharField(max_length=5)
     name = models.CharField(max_length=512)
     application_id = models.CharField(max_length=512)
+    phone_number = models.CharField(max_length=15, null=True, blank=True)
+    aadhar_number = models.CharField(max_length=15, null=True, blank=True)
     photo_uploaded = models.BooleanField(default=False)
     photo_verified = models.BooleanField(default=False)
     photo_approved = models.BooleanField(default=False)
@@ -245,7 +247,7 @@ def update_status(sender ,instance, **kwargs):
     if (instance.phase_one_material_date is None) and instance.agreement_date and (datetime.date.today() - instance.agreement_date > datetime.timedelta(days=8)):
         instance.status = STATUS_CHOICES[2][0]#material not given
 
-    if instance.phase_two_material_date or instance.phase_three_material_date:
+    if instance.phase_one_material_date or instance.phase_two_material_date or instance.phase_three_material_date:
         instance.status = STATUS_CHOICES[4][0]#Under Construction
 
     if instance.completion_date:
