@@ -83,6 +83,7 @@ $(document).ready(function() {
                 // Adding hyperlinks to Toilet Construction data
                 var tmp_TC = columns_defs['buttons']['Construction status'];
                 for (i = 0 ; i < tmp_TC.length ; i ++ ){
+		if (columns_defs['data'][tmp_TC[i]]['data']!= "Funder"){
                     columns_defs['data'][tmp_TC[i]]['render']= function ( data, type, row,meta ) {
                         if(typeof data != 'undefined'){
                             url_TC = String("/admin/master/mastersheet/toiletconstruction/") + row['tc_id_'+String(row.Household_number)] + String("/");
@@ -93,6 +94,7 @@ $(document).ready(function() {
                             return data;
                         }
                     }
+	         }
                 }
             }
     });
@@ -324,14 +326,20 @@ $(document).ready(function() {
                             var result = confirm("Are you sure? You have selected " + records.length + " records to delete.");
                         }
                         if(result){
+                            $(".overlay").show();
                             $.ajax({
                                 type : "post",
                                 url : "/mastersheet/delete_selected/",
 
-                                data : JSON.stringify({"records": records}),
+                                data : JSON.stringify({"records": records, "slum":document.forms[0].slumname.value}),
                                 contentType : "json",
                                 success: function(response){
+                                    $(".overlay").hide();
                                     alert(response.response);
+                                    $("#btnFetch").click();
+                                },
+                                error: function(resp){
+                                    $(".overlay").hide();
                                 }
 
                             });

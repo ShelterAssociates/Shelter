@@ -265,7 +265,7 @@ def update_status(sender ,instance, **kwargs):
 
 @receiver(pre_save, sender=ToiletConstruction)
 def handle_shifted_material(sender ,instance, **kwargs):
-    if instance.material_shifted_to is not None and instance.agreement_cancelled is False:
+    if instance.material_shifted_to is not None:
         if len(instance.material_shifted_to)!=0:
             TC_instance, is_created = ToiletConstruction.objects.update_or_create(
                                 household_number = int(instance.material_shifted_to),
