@@ -326,14 +326,20 @@ $(document).ready(function() {
                             var result = confirm("Are you sure? You have selected " + records.length + " records to delete.");
                         }
                         if(result){
+                            $(".overlay").show();
                             $.ajax({
                                 type : "post",
                                 url : "/mastersheet/delete_selected/",
 
-                                data : JSON.stringify({"records": records}),
+                                data : JSON.stringify({"records": records, "slum":document.forms[0].slumname.value}),
                                 contentType : "json",
                                 success: function(response){
+                                    $(".overlay").hide();
                                     alert(response.response);
+                                    $("#btnFetch").click();
+                                },
+                                error: function(resp){
+                                    $(".overlay").hide();
                                 }
 
                             });

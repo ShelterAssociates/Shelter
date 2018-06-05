@@ -29,7 +29,7 @@ from collections import defaultdict
 def masterSheet(request, slum_code = 0, FF_code = 0, RHS_code = 0 ):
     try:
         delimiter = 'slumname='
-        slum_code = Slum.objects.filter(pk = int(request.GET.get('form').partition(delimiter)[2]) ).values_list("shelter_slum_code","electoral_ward__administrative_ward__city__id","electoral_ward__name", "name")    
+        slum_code = Slum.objects.filter(pk = int(request.GET.get('form').partition(delimiter)[2]) ).values_list("shelter_slum_code","electoral_ward__administrative_ward__city__id","electoral_ward__name", "name")
         print slum_code
         slum_funder = SponsorProjectDetails.objects.filter(slum__name= str(slum_code[0][3])).exclude(sponsor__id= 10)
         form_ids = Survey.objects.filter(city__id = int(slum_code[0][1]))
@@ -645,6 +645,11 @@ def delete_selected_records(records):
     :return: 
     """
     kobo_form = 130  # *****IMPORTANT***** This form number (98) is for local setting. Do change it to 130 before going live.
+    delimiter = 'slumname='
+    slum_code = Slum.objects.get(pk=records['slum'])
+    form_ids = Survey.objects.filter(city=slum_code.electoral_ward.administrative_ward.city, survey_type=SURVEYTYPE_CHOICES[1][0])
+    if len(form_ids)>0:
+        kobo_form = form_ids[0].kobotool_survey_id
     headers = {}
     headers["Authorization"] = settings.KOBOCAT_TOKEN
     for r in records['records']:
