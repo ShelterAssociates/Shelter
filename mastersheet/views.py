@@ -183,6 +183,8 @@ def masterSheet(request, slum_code = 0, FF_code = 0, RHS_code = 0 ):
                 x.update({'tc_id_'+str(x['Household_number']): temp_daily_reporting[x['Household_number']]['id']})
                          
             if x['Household_number'] in temp_FF_keys:
+                if '_id' in temp_FF[x['Household_number']].keys():
+                    del(temp_FF[x['Household_number']]['_id'])
                 x.update(temp_FF[x['Household_number']])
                 x['OnfieldFactsheet'] = 'Yes'
             try:
