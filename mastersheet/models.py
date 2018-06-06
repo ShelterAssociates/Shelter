@@ -77,6 +77,8 @@ class SBMUpload(models.Model):
     household_number = models.CharField(max_length=5)
     name = models.CharField(max_length=512)
     application_id = models.CharField(max_length=512)
+    phone_number = models.CharField(max_length=15, null=True, blank=True)
+    aadhar_number = models.CharField(max_length=15, null=True, blank=True)
     photo_uploaded = models.BooleanField(default=False)
     photo_verified = models.BooleanField(default=False)
     photo_approved = models.BooleanField(default=False)

@@ -304,23 +304,27 @@ def define_columns(request):
         {"data": "group_ne3ao98/Use_of_toilet", "title": "Use of toilet"},
 
         {"data": "name", "title": "SBM Applicant Name"},
-        {"data": "application_id", "title": "Application ID"},
-        {"data": "photo_uploaded", "title": "Is toilet photo uploaded on site?"},#45
+        {"data": "application_id", "title": "Application ID"},#45
+        {"data": "phone_number", "title": "Phone Number"},
+        {"data": "aadhar_number", "title": "Aadhar Number"},
+        {"data": "photo_uploaded", "title": "Is toilet photo uploaded on site?"},
         {"data": "photo_verified", "title": "Photo Verified"},
-        {"data": "photo_approved", "title": "Photo Approved"},
+        {"data": "photo_approved", "title": "Photo Approved"},#50
         {"data": "application_verified", "title": "Application Verified"},
         {"data": "application_approved", "title": "Application Approved"},
 
-        {"data": "agreement_date_str", "title": "Date of Agreement"},#50
+
+        {"data": "agreement_date_str", "title": "Date of Agreement"},
         {"data": "agreement_cancelled", "title": "Agreement Cancelled?"},
-        {"data": "septic_tank_date_str", "title": "Date of septic tank supplied"},
+        {"data": "septic_tank_date_str", "title": "Date of septic tank supplied"},#55
         {"data": "phase_one_material_date_str", "title": "Date of first phase material"},
         {"data": "phase_two_material_date_str", "title": "Date of second phase material"},
-        {"data": "phase_three_material_date_str", "title": "Date of third phase material"},#55
+        {"data": "phase_three_material_date_str", "title": "Date of third phase material"},#58
         {"data": "completion_date_str", "title": "Construction Completion Date"},
-        {"data": "material_shifted_to", "title": "Material sifted to"},
+        {"data": "material_shifted_to", "title": "Material sifted to"},#60
         {"data": "Funder", "title": "Funder"},
-        {"data": "status", "title": "Final Status"}#59
+        {"data": "status", "title": "Final Status"},
+        {"data": "comment", "title": "Comment"}#63
 
         # Append community mobilization here #
 
@@ -331,8 +335,8 @@ def define_columns(request):
     final_data['buttons']['RHS'] = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18]
     final_data['buttons']['Follow-up'] = [19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36]
     final_data['buttons']['Family factsheet'] = [37, 38, 39, 40, 41]
-    final_data['buttons']['SBM'] = [42, 43, 44, 45, 46, 47, 48]
-    final_data['buttons']['Construction status'] = [49, 50, 51, 52, 53, 54, 55, 56, 57, 58]
+    final_data['buttons']['SBM'] = [42, 43, 44, 45, 46, 47, 48, 49, 50]
+    final_data['buttons']['Construction status'] = [51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61]
 
     # We define the columns for community mobilization and vendor details in a dynamic way. The
     # reason being these columns are prone to updates and additions.
