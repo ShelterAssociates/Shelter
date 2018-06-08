@@ -283,8 +283,8 @@ def handle_shifted_material(sender ,instance, **kwargs):
                             )
 
             TC_instance.save()
-            instance.agreement_cancelled = STATUS_CHOICES[1][0]
-            instance.agreement_date = None
+            #instance.agreement_cancelled = STATUS_CHOICES[1][0]
+            #instance.agreement_date = None
             instance.septic_tank_date = None
             instance.phase_one_material_date = None
             instance.phase_two_material_date = None
