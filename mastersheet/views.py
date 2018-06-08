@@ -459,6 +459,8 @@ def handle_uploaded_file(f,response):
                                 SBM_instance.update(
                                     name = df_sbm.loc[int(i), 'SBM Name'],
                                     application_id = df_sbm.loc[int(i), 'Application ID'],
+                                    phone_number = df_sbm.loc[int(i), 'Phone Number'],
+                                    aadhar_number = df_sbm.loc[int(i), 'Aadhar Number'],
                                     photo_uploaded = check_bool(df_sbm.loc[int(i), 'Toilet photo uploaded on SBM site']),
                                     photo_verified = check_bool(df_sbm.loc[int(i), 'Toilet Photo verified']),
                                     photo_approved = check_bool(df_sbm.loc[int(i), 'Toilet Photo Approved']),
@@ -474,6 +476,8 @@ def handle_uploaded_file(f,response):
                                  household_number = int(i),
                                  name = df1.loc[int(i), 'SBM Name'],
                                  application_id = df_sbm.loc[int(i),'Application ID'],
+                                 phone_number = df_sbm.loc[int(i), 'Phone Number'],
+                                 aadhar_number = df_sbm.loc[int(i), 'Aadhar Number'],
                                  photo_uploaded = check_bool(df_sbm.loc[int(i),'Toilet photo uploaded on SBM site']),
                                  photo_verified = check_bool(df_sbm.loc[int(i), 'Toilet Photo Verified']),
                                  photo_approved = check_bool(df_sbm.loc[int(i), 'Toilet Photo Approved']),
