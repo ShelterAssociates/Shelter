@@ -108,7 +108,7 @@ def masterSheet(request, slum_code = 0, FF_code = 0, RHS_code = 0 ):
         toilet_reconstruction_fields = ['slum', 'household_number', 'agreement_date_str', 'agreement_cancelled',
                                         'septic_tank_date_str', 'phase_one_material_date_str',
                                         'phase_two_material_date_str', 'phase_three_material_date_str',
-                                        'completion_date_str', 'status', 'comment', 'material_shifted_to','id']
+                                        'completion_date_str', 'status', 'comment', 'p1_material_shifted_to','p2_material_shifted_to','p3_material_shifted_to','st_material_shifted_to','id']
         daily_reporting_data = ToiletConstruction.objects.extra(
             select={'phase_one_material_date_str': "to_char(phase_one_material_date, 'YYYY-MM-DD ')",
                     'phase_two_material_date_str': "to_char(phase_two_material_date, 'YYYY-MM-DD ')",
@@ -319,10 +319,14 @@ def define_columns(request):
         {"data": "phase_two_material_date_str", "title": "Date of second phase material"},
         {"data": "phase_three_material_date_str", "title": "Date of third phase material"},#58
         {"data": "completion_date_str", "title": "Construction Completion Date"},
-        {"data": "material_shifted_to", "title": "Material sifted to"},#60
-        {"data": "Funder", "title": "Funder"},
-        {"data": "status", "title": "Final Status"},
-        {"data": "comment", "title": "Comment"}#63
+        
+        {"data": "p1_material_shifted_to", "title": "Phase one material shifted to"},##60
+        {"data": "p2_material_shifted_to", "title": "Phase two material shifted to"},##61
+        {"data": "p3_material_shifted_to", "title": "Phase three material shifted to"},##62
+        {"data": "st_material_shifted_to", "title": "Septick tank shifted to"},##63
+        {"data": "Funder", "title": "Funder"},#65#64
+        {"data": "status", "title": "Final Status"},##65
+        {"data": "comment", "title": "Comment"}#67#66
 
         # Append community mobilization here #
 
@@ -334,7 +338,7 @@ def define_columns(request):
     final_data['buttons']['Follow-up'] = [19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36]
     final_data['buttons']['Family factsheet'] = [37, 38, 39, 40, 41]
     final_data['buttons']['SBM'] = [42, 43, 44, 45, 46, 47, 48, 49, 50]
-    final_data['buttons']['Construction status'] = [51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61]
+    final_data['buttons']['Construction status'] = [51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65]
 
     # We define the columns for community mobilization and vendor details in a dynamic way. The
     # reason being these columns are prone to updates and additions.
