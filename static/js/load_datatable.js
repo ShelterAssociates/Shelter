@@ -452,25 +452,25 @@ $(document).ready(function() {
                 if ( value['agreement_date_str'] != null ){
 
                     if ( value['phase_one_material_date_str'] == null && Math.floor((today - Date.parse(trim_space(value['agreement_date_str']))) / divider) > 8 ){
-                            $('tr:eq('+index+')').find('td:eq(19)').css('background-color', '#f9a4a4');//red
+                            $('tr:eq('+index+')').find('td:eq(22)').css('background-color', '#f9a4a4');//red
 
                     }
                     else if ( value['phase_two_material_date_str'] == null && Math.floor((today - Date.parse(trim_space(value['phase_one_material_date_str']))) / divider) > 8 ){
-                            $('tr:eq('+index+')').find('td:eq(19)').css('background-color', '#f2f29f');//yellow
+                            $('tr:eq('+index+')').find('td:eq(22)').css('background-color', '#f2f29f');//yellow
 
                     }
                     else if (value['phase_three_material_date_str'] == null && Math.floor((today - Date.parse(trim_space(value['phase_two_material_date_str']))) / divider) > 8 ){
-                            $('tr:eq('+index+')').find('td:eq(19)').css('background-color', '#aaf9a4');//green
+                            $('tr:eq('+index+')').find('td:eq(22)').css('background-color', '#aaf9a4');//green
 
                     }
                     else if (value['completion_date_str'] == null){
                             if (Math.floor((Date.parse(trim_space(value['phase_one_material_date_str'])) - Date.parse(trim_space(value['phase_three_material_date_str']))) / divider) == 0){
                                 if (Math.floor((today - Date.parse(trim_space(value['phase_two_material_date_str']))) / divider) > 8 ){
-                                    $('tr:eq('+index+')').find('td:eq(19)').css('background-color', '#aaa4f4');//blue
+                                    $('tr:eq('+index+')').find('td:eq(22)').css('background-color', '#aaa4f4');//blue
                                 }
                             }
                             else if(Math.floor((today - Date.parse(trim_space(value['phase_three_material_date_str']))) / divider) > 8 ){
-                                $('tr:eq('+index+')').find('td:eq(19)').css('background-color', '#aaa4f4');//blue
+                                $('tr:eq('+index+')').find('td:eq(22)').css('background-color', '#aaa4f4');//blue
                             }
                             
 
