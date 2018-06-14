@@ -458,7 +458,7 @@ def handle_uploaded_file(f,response):
                     try:
                         try:
                             
-                            SBM_instance = SBMUpload.objects.get(slum = this_slum, household_number = int(i))
+                            SBM_instance = SBMUpload.objects.filter(slum = this_slum, household_number = int(i))
                             if check_null(SBM_instance.application_id) is False:
                                 SBM_instance.update(
                                     name = df_sbm.loc[int(i), 'SBM Name'],
