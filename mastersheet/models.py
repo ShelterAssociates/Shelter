@@ -76,7 +76,7 @@ class SBMUpload(models.Model):
     slum = models.ForeignKey(Slum)
     household_number = models.CharField(max_length=5)
     name = models.CharField(max_length=512)
-    application_id = models.CharField(max_length=512)
+    application_id = models.CharField(max_length=512,null=True, blank=True)
     phone_number = models.CharField(max_length=15, null=True, blank=True)
     aadhar_number = models.CharField(max_length=15, null=True, blank=True)
     photo_uploaded = models.BooleanField(default=False)
@@ -111,6 +111,7 @@ class ToiletConstruction(models.Model):
     """
     slum = models.ForeignKey(Slum)
     household_number = models.CharField(max_length=5)
+    pocket = models.IntegerField(null=True, blank=True)
     agreement_date = models.DateField(null=True, blank=True)
     agreement_cancelled = models.NullBooleanField(null=True, blank=True)
     septic_tank_date = models.DateField(null=True, blank=True)
@@ -138,6 +139,8 @@ class ToiletConstruction(models.Model):
         return STATUS_CHOICES[int(z)-1][1]
 
     def update_model(self, df1):
+        print self.household_number
+        print "here we are in update_model"
         if pandas.isnull(df1.loc['Agreement Cancelled']) is False:
             self.agreement_cancelled = True
         else:
@@ -161,6 +164,9 @@ class ToiletConstruction(models.Model):
 
         if not self.completion_date:
             self.completion_date = df1.loc['Construction Completion Date'] if pandas.isnull(df1.loc['Construction Completion Date']) is False else None
+
+        if not self.pocket:
+            self.pocket = df1.loc['Pocket'] if pandas.isnull(df1.loc['Pocket']) is False else None
 
         if not self.comment:
             self.comment = df1.loc['Comment']
