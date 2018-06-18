@@ -314,7 +314,10 @@ def handle_shifted_material(sender ,instance, **kwargs):
 
 @receiver(pre_save, sender = VendorHouseholdInvoiceDetail)
 def check_duplicate_house(sender, instance, **kwargs):
-    all_records = VendorHouseholdInvoiceDetail.objects.filter(slum = instance.slum)
+    if instance.id is not None:
+        all_records = VendorHouseholdInvoiceDetail.objects.filter(slum = instance.slum).exclude(id = instance.id)
+    else:
+        all_records = VendorHouseholdInvoiceDetail.objects.filter(slum = instance.slum)
     invoice_numbers =  [int(x) for x in instance.invoice_number.split(',')]
 
     for record in all_records:
