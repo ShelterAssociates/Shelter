@@ -459,19 +459,19 @@ def handle_uploaded_file(f,response):
                         try:
                             
                             SBM_instance = SBMUpload.objects.filter(slum = this_slum, household_number = int(i))
-                            if check_null(SBM_instance.application_id) is False:
+                            if check_null(SBM_instance[0].application_id) is not None:
                                 SBM_instance.update(
                                     name = df_sbm.loc[int(i), 'SBM Name'],
                                     application_id = df_sbm.loc[int(i), 'Application ID'],
                                     phone_number = df_sbm.loc[int(i), 'Phone Number'],
                                     aadhar_number = df_sbm.loc[int(i), 'Aadhar Number'],
                                     photo_uploaded = check_bool(df_sbm.loc[int(i), 'Toilet photo uploaded on SBM site']),
-                                    photo_verified = check_bool(df_sbm.loc[int(i), 'Toilet Photo verified']),
+                                    photo_verified = check_bool(df_sbm.loc[int(i), 'Toilet Photo Verified']),
                                     photo_approved = check_bool(df_sbm.loc[int(i), 'Toilet Photo Approved']),
                                     application_verified = check_bool(df_sbm.loc[int(i), 'Application Verified']),
                                     application_approved = check_bool(df_sbm.loc[int(i), 'Application Approved'])
                                 )
-                                SBM_instance.save()
+                                
                                 response.append(("updated sbm", i))
                         except Exception as e:
                             if check_null(df1.loc[int(i), 'Application ID']) is not None:
