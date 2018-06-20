@@ -36,7 +36,7 @@ admin.site.register(VendorHouseholdInvoiceDetail, VendorHouseholdInvoiceDetailAd
 class SBMUploadAdmin(admin.ModelAdmin):
     list_display = ('slum_name', 'household_number', 'name','application_id','photo_uploaded','photo_verified','photo_approved',
                     'application_verified','application_approved')
-    search_fields = ['slum_name','household_number', 'name','application_id','photo_uploaded','photo_verified','photo_approved',
+    search_fields = ['slum__name','household_number', 'name','application_id','photo_uploaded','photo_verified','photo_approved',
                     'application_verified','application_approved']
     ordering = ['slum__name', 'household_number']
     raw_id_fields = ['slum']
