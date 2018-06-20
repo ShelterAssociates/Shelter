@@ -119,13 +119,13 @@ def masterSheet(request, slum_code = 0, FF_code = 0, RHS_code = 0 ):
             slum__shelter_slum_code=slum_code[0][0])
         daily_reporting_data = daily_reporting_data.values(*toilet_reconstruction_fields)
         for i in daily_reporting_data:
-	    if i['status'] is not None:
+            if i['status'] is not None:
                 if i['status'].strip() !=  "":
                     i['status'] = ToiletConstruction.get_status_display(i['status'])
         temp_daily_reporting = {obj_DR['household_number']: obj_DR for obj_DR in daily_reporting_data}
         temp_DR_keys = temp_daily_reporting.keys()
         # SBM - fetching data
-        sbm_fields = ['slum', 'household_number', 'name', 'application_id', 'photo_uploaded', 'created_date_str', 'id']
+        sbm_fields = ['slum', 'household_number', 'name', 'application_id', 'photo_uploaded', 'created_date_str', 'id', 'phone_number', 'aadhar_number', 'photo_verified', 'photo_approved', 'application_verified', 'application_approved']
         sbm_data = SBMUpload.objects.extra(
             select={'created_date_str': "to_char(created_date, 'YYYY-MM-DD ')"}).filter(
             slum__shelter_slum_code=slum_code[0][0])
