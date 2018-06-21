@@ -177,6 +177,7 @@ def masterSheet(request, slum_code = 0, FF_code = 0, RHS_code = 0 ):
 
             if x['Household_number'] in temp_sbm_keys:
                 x.update(temp_sbm[x['Household_number']])
+                x.update({'sbm_id_'+str(x['Household_number']): temp_sbm[x['Household_number']]['id']})
 
                 ####################
             if x['Household_number'] in temp_DR_keys:
@@ -342,7 +343,7 @@ def define_columns(request):
     final_data['buttons']['Follow-up'] = [19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36]
     final_data['buttons']['Family factsheet'] = [37, 38, 39, 40, 41]
     final_data['buttons']['SBM'] = [42, 43, 44, 45, 46, 47, 48, 49, 50]
-    final_data['buttons']['Construction status'] = [51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66]
+    final_data['buttons']['Construction status'] = [51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65]
 
     # We define the columns for community mobilization and vendor details in a dynamic way. The
     # reason being these columns are prone to updates and additions.

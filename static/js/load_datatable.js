@@ -58,7 +58,7 @@ $(document).ready(function() {
                 for (i = 0 ; i < tmp_SBM.length ; i ++ ){
                     columns_defs['data'][tmp_SBM[i]]['render']= function ( data, type, row,meta ) {
                         if(typeof data != 'undefined'){
-                            url_SBM = String("/admin/master/mastersheet/sbmupload/") + row.id + String("/");
+                            url_SBM = String("/admin/master/mastersheet/sbmupload/") + row['sbm_id_'+String(row.Household_number)] + String("/");
                             if(type === 'display'){
                                         data = '<a href = "#" onclick="window.open(\''+url_SBM+'\', \'_blank\', \'width=850,height=750\');">' + data + "</a>";
 
@@ -68,7 +68,7 @@ $(document).ready(function() {
                     }
                     columns_defs['data'][0]['render']= function ( data, type, row,meta ) {
                         if(typeof data != 'undefined'){
-                            url_SBM = String("/admin/master/mastersheet/sbmupload/") + row.id + String("/");
+                            url_SBM = String("/admin/master/mastersheet/sbmupload/") + row['sbm_id_'+String(row.Household_number)] + String("/");
                             if(type === 'display'){
                                         data = '<a href = "#" onclick="window.open(\''+url_SBM+'\', \'_blank\', \'width=850,height=750\');">' + data + "</a>";
 
