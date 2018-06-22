@@ -1,4 +1,4 @@
-/*
+    /*
  *  Library to parse and display below elements,
  *   1. Admin ward
  *   2. Electoral ward
@@ -24,7 +24,7 @@ let lst_sponsor =[];
 let parse_component = {};
 let modelsection = {
 		"General" : "General information" ,
-		"Toilet" : "Current place of defecation",
+		"Toilet" : "Current place of defecation (2015-16)",
 		"Water" : "Type of water connection",
 		"Waste" : "Facility of solid waste collection",
 		"Drainage" : "Drainage information",
