@@ -23,6 +23,21 @@ $(document).ready(function() {
             success : function (data,type,row,meta) {
                 columns_defs = data;
 
+                // Adding hyperlinks to RHS data
+                var tmp_RHS = columns_defs['buttons']['RHS'];
+                for (i = 0 ; i < tmp_RHS.length ; i ++ ){
+                    columns_defs['data'][tmp_RHS[i]]['render']= function ( data, type, row,meta ) {
+                        if(typeof data != 'undefined') {
+                            url_RHS = row['rhs_url']
+                            if(type === 'display'){
+                                        data = '<a href = "#" onclick="window.open(\''+url_RHS+'\', \'_blank\', \'width=850,height=750\');">' + data + "</a>";
+                            }
+                            return data;
+                        }
+                    }
+                }
+                
+
                 // Adding hyperlinks to community mobilization data
                 var tmp_DR = columns_defs['buttons']['Community Mobilization'];
                 for (i = 0 ; i < tmp_DR.length ; i ++ ){
