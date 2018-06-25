@@ -640,7 +640,7 @@ def check_null(s):
     else:
         return s
 def check_bool(s):
-    if str(s).lower() == 'yes':
+    if str(s).lower() == 'yes' or str(s).lower() == "true":
         return True
     else:
         return False
