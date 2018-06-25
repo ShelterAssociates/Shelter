@@ -15,7 +15,9 @@ from multiprocessing import Pool
 kobo_form = 103
 headers={}
 headers["Authorization"] = settings.KOBOCAT_TOKEN
-
+# SBM PCMC v1 = 103 local
+# SBM_KMC_v1 = 107 local
+# PMC_SBM_FOLLOWUP_abhijit = 108 local
 def fetch_records(formID):
     global kobo_form
     if formID:

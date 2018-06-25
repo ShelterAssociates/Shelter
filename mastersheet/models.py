@@ -76,7 +76,7 @@ class SBMUpload(models.Model):
     slum = models.ForeignKey(Slum)
     household_number = models.CharField(max_length=5)
     name = models.CharField(max_length=512)
-    application_id = models.CharField(max_length=512)
+    application_id = models.CharField(max_length=512,null=True, blank=True)
     phone_number = models.CharField(max_length=15, null=True, blank=True)
     aadhar_number = models.CharField(max_length=15, null=True, blank=True)
     photo_uploaded = models.BooleanField(default=False)
@@ -111,6 +111,7 @@ class ToiletConstruction(models.Model):
     """
     slum = models.ForeignKey(Slum)
     household_number = models.CharField(max_length=5)
+    pocket = models.IntegerField(null=True, blank=True)
     agreement_date = models.DateField(null=True, blank=True)
     agreement_cancelled = models.NullBooleanField(null=True, blank=True)
     septic_tank_date = models.DateField(null=True, blank=True)
@@ -118,9 +119,13 @@ class ToiletConstruction(models.Model):
     phase_two_material_date = models.DateField(null=True, blank=True)
     phase_three_material_date = models.DateField(null=True, blank=True)
     completion_date =  models.DateField(null=True, blank=True)
-    status = models.CharField(choices=STATUS_CHOICES, max_length=2)
+    status = models.CharField(choices=STATUS_CHOICES, max_length=2,null=True, blank=True)
     comment = models.TextField(null=True, blank=True)
-    material_shifted_to = models.CharField(max_length=5, null=True, blank=True)
+    p1_material_shifted_to = models.CharField(max_length=5, null=True, blank=True)
+    p2_material_shifted_to = models.CharField(max_length=5, null=True, blank=True)
+    p3_material_shifted_to = models.CharField(max_length=5, null=True, blank=True)
+    st_material_shifted_to = models.CharField(max_length=5, null=True, blank=True)
+
 
     class Meta:
         unique_together = ("slum", "household_number")
@@ -134,6 +139,8 @@ class ToiletConstruction(models.Model):
         return STATUS_CHOICES[int(z)-1][1]
 
     def update_model(self, df1):
+        print self.household_number
+        print "here we are in update_model"
         if pandas.isnull(df1.loc['Agreement Cancelled']) is False:
             self.agreement_cancelled = True
         else:
@@ -157,6 +164,9 @@ class ToiletConstruction(models.Model):
 
         if not self.completion_date:
             self.completion_date = df1.loc['Construction Completion Date'] if pandas.isnull(df1.loc['Construction Completion Date']) is False else None
+
+        if not self.pocket:
+            self.pocket = df1.loc['Pocket'] if pandas.isnull(df1.loc['Pocket']) is False else None
 
         if not self.comment:
             self.comment = df1.loc['Comment']
@@ -257,47 +267,63 @@ def update_status(sender ,instance, **kwargs):
     if instance.agreement_cancelled :
         instance.status = STATUS_CHOICES[1][0]#agreement cancelled
 
-    if instance.material_shifted_to is not None:
-        if len(instance.material_shifted_to) != 0:
-            instance.status = STATUS_CHOICES[1][0]#agreement cancelled
+    #if instance.p1_material_shifted_to is not None and instance.p2_material_shifted_to is not None instance.p3_material_shifted_to is not None instance.st_material_shifted_to is not None:
+        #if len(instance.p1material_shifted_to) != 0 and len(instance.p2material_shifted_to) != 0 and len(instance.p3material_shifted_to) != 0 and len(instance.st_material_shifted_to) != 0:
+            #instance.status = STATUS_CHOICES[1][0]#agreement cancelled
 
 
 
 @receiver(pre_save, sender=ToiletConstruction)
 def handle_shifted_material(sender ,instance, **kwargs):
-    if instance.material_shifted_to is not None:
-        if len(instance.material_shifted_to)!=0:
-            TC_instance, is_created = ToiletConstruction.objects.update_or_create(
-                                household_number = int(instance.material_shifted_to),
-                                slum = instance.slum,
+    temp = {}
+    temp['slum'] = instance.slum
+    temp['defaults'] = {'agreement_cancelled' : False}
+    temp['flag'] = False
 
-                                defaults = { 
-                                    'agreement_cancelled': False,
-                                    'septic_tank_date' : (instance.septic_tank_date),
-                                    'phase_one_material_date' : (instance.phase_one_material_date),
-                                    'phase_two_material_date' : (instance.phase_two_material_date),
-                                    'phase_three_material_date' : (instance.phase_three_material_date),
-                                    'completion_date' : (instance.completion_date),
-                                    'comment' : (instance.comment) 
-                                    }  
-                            )
 
-            TC_instance.save()
-            #instance.agreement_cancelled = STATUS_CHOICES[1][0]
-            #instance.agreement_date = None
-            instance.septic_tank_date = None
+    if instance.p1_material_shifted_to is not None:
+        if len(instance.p1_material_shifted_to)!=0 and instance.phase_one_material_date is not None:
+            temp['flag'] = True
+            temp['household_number'] = int(instance.p1_material_shifted_to)
+            temp['defaults']['phase_one_material_date'] = instance.phase_one_material_date
             instance.phase_one_material_date = None
+
+    if instance.p2_material_shifted_to is not None:
+        if len(instance.p2_material_shifted_to)!=0 and instance.phase_two_material_date is not None:
+            temp['flag'] = True
+            temp['household_number'] = int(instance.p2_material_shifted_to)
+            temp['defaults']['phase_two_material_date'] = instance.phase_two_material_date
             instance.phase_two_material_date = None
+            
+    if instance.p3_material_shifted_to is not None:
+        if len(instance.p3_material_shifted_to)!=0 and instance.phase_three_material_date is not None:
+            temp['flag'] = True
+            temp['household_number'] = int(instance.p3_material_shifted_to)
+            temp['defaults']['phase_three_material_date'] = instance.phase_three_material_date
             instance.phase_three_material_date = None
-            instance.completion_date = None
-            instance.comment = None
+            
+    if instance.st_material_shifted_to is not None:
+        if len(instance.st_material_shifted_to)!=0 and instance.septic_tank_date is not None:
+            temp['flag'] = True
+            temp['household_number'] = int(instance.st_material_shifted_to)
+            temp['defaults']['phase_three_material_date'] = instance.septic_tank_date
+            instance.septic_tank_date = None
+            
+    if temp['flag']:
+        del(temp['flag'])
+        TC_instance, is_created = ToiletConstruction.objects.update_or_create(**temp)
+        TC_instance.save()
+        print is_created
 
     
 
 
 @receiver(pre_save, sender = VendorHouseholdInvoiceDetail)
 def check_duplicate_house(sender, instance, **kwargs):
-    all_records = VendorHouseholdInvoiceDetail.objects.filter(slum = instance.slum)
+    if instance.id is not None:
+        all_records = VendorHouseholdInvoiceDetail.objects.filter(slum = instance.slum).exclude(id = instance.id)
+    else:
+        all_records = VendorHouseholdInvoiceDetail.objects.filter(slum = instance.slum)
     invoice_numbers =  [int(x) for x in instance.invoice_number.split(',')]
 
     for record in all_records:

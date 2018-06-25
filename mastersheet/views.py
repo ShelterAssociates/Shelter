@@ -108,7 +108,7 @@ def masterSheet(request, slum_code = 0, FF_code = 0, RHS_code = 0 ):
         toilet_reconstruction_fields = ['slum', 'household_number', 'agreement_date_str', 'agreement_cancelled',
                                         'septic_tank_date_str', 'phase_one_material_date_str',
                                         'phase_two_material_date_str', 'phase_three_material_date_str',
-                                        'completion_date_str', 'status', 'comment', 'material_shifted_to','id']
+                                        'completion_date_str', 'status', 'comment','pocket', 'p1_material_shifted_to','p2_material_shifted_to','p3_material_shifted_to','st_material_shifted_to','id']
         daily_reporting_data = ToiletConstruction.objects.extra(
             select={'phase_one_material_date_str': "to_char(phase_one_material_date, 'YYYY-MM-DD ')",
                     'phase_two_material_date_str': "to_char(phase_two_material_date, 'YYYY-MM-DD ')",
@@ -119,12 +119,13 @@ def masterSheet(request, slum_code = 0, FF_code = 0, RHS_code = 0 ):
             slum__shelter_slum_code=slum_code[0][0])
         daily_reporting_data = daily_reporting_data.values(*toilet_reconstruction_fields)
         for i in daily_reporting_data:
-            if i['status'].strip() !=  "":
-                i['status'] = ToiletConstruction.get_status_display(i['status'])
+            if i['status'] is not None:
+                if i['status'].strip() !=  "":
+                    i['status'] = ToiletConstruction.get_status_display(i['status'])
         temp_daily_reporting = {obj_DR['household_number']: obj_DR for obj_DR in daily_reporting_data}
         temp_DR_keys = temp_daily_reporting.keys()
         # SBM - fetching data
-        sbm_fields = ['slum', 'household_number', 'name', 'application_id', 'photo_uploaded', 'created_date_str', 'id']
+        sbm_fields = ['slum', 'household_number', 'name', 'application_id', 'photo_uploaded', 'created_date_str', 'id', 'phone_number', 'aadhar_number', 'photo_verified', 'photo_approved', 'application_verified', 'application_approved']
         sbm_data = SBMUpload.objects.extra(
             select={'created_date_str': "to_char(created_date, 'YYYY-MM-DD ')"}).filter(
             slum__shelter_slum_code=slum_code[0][0])
@@ -176,6 +177,7 @@ def masterSheet(request, slum_code = 0, FF_code = 0, RHS_code = 0 ):
 
             if x['Household_number'] in temp_sbm_keys:
                 x.update(temp_sbm[x['Household_number']])
+                x.update({'sbm_id_'+str(x['Household_number']): temp_sbm[x['Household_number']]['id']})
 
                 ####################
             if x['Household_number'] in temp_DR_keys:
@@ -321,10 +323,15 @@ def define_columns(request):
         {"data": "phase_two_material_date_str", "title": "Date of second phase material"},
         {"data": "phase_three_material_date_str", "title": "Date of third phase material"},#58
         {"data": "completion_date_str", "title": "Construction Completion Date"},
-        {"data": "material_shifted_to", "title": "Material sifted to"},#60
-        {"data": "Funder", "title": "Funder"},
-        {"data": "status", "title": "Final Status"},
-        {"data": "comment", "title": "Comment"}#63
+        
+        {"data": "p1_material_shifted_to", "title": "Phase one material shifted to"},##60
+        {"data": "p2_material_shifted_to", "title": "Phase two material shifted to"},##61
+        {"data": "p3_material_shifted_to", "title": "Phase three material shifted to"},##62
+        {"data": "st_material_shifted_to", "title": "Septick tank shifted to"},##63
+        {"data": "Funder", "title": "Funder"},#65#64
+        {"data": "status", "title": "Final Status"},##65
+        {"data": "pocket", "title": "Pocket"},
+        {"data": "comment", "title": "Comment"}#68#67
 
         # Append community mobilization here #
 
@@ -336,7 +343,7 @@ def define_columns(request):
     final_data['buttons']['Follow-up'] = [19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36]
     final_data['buttons']['Family factsheet'] = [37, 38, 39, 40, 41]
     final_data['buttons']['SBM'] = [42, 43, 44, 45, 46, 47, 48, 49, 50]
-    final_data['buttons']['Construction status'] = [51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61]
+    final_data['buttons']['Construction status'] = [51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65]
 
     # We define the columns for community mobilization and vendor details in a dynamic way. The
     # reason being these columns are prone to updates and additions.
@@ -434,7 +441,7 @@ def handle_uploaded_file(f,response):
         df_TC = df1.loc[:,'Date of Agreement':'Comment']
     except:
         flag_TC = 1
-    
+
 
     # *******************************IMPORTANT!!!!*************************************
     # In the excel sheet that has been uploaded, it is imperative to have a column with
@@ -454,20 +461,21 @@ def handle_uploaded_file(f,response):
                     try:
                         try:
                             
-                            SBM_instance = SBMUpload.objects.get(slum = this_slum, household_number = int(i))
-                            if check_null(SBM_instance.application_id) is False:
+                            SBM_instance = SBMUpload.objects.filter(slum = this_slum, household_number = int(i))
+                            if check_null(SBM_instance[0].application_id) is not None:
                                 SBM_instance.update(
                                     name = df_sbm.loc[int(i), 'SBM Name'],
                                     application_id = df_sbm.loc[int(i), 'Application ID'],
                                     phone_number = df_sbm.loc[int(i), 'Phone Number'],
                                     aadhar_number = df_sbm.loc[int(i), 'Aadhar Number'],
                                     photo_uploaded = check_bool(df_sbm.loc[int(i), 'Toilet photo uploaded on SBM site']),
-                                    photo_verified = check_bool(df_sbm.loc[int(i), 'Toilet Photo verified']),
+                                    photo_verified = check_bool(df_sbm.loc[int(i), 'Toilet Photo Verified']),
                                     photo_approved = check_bool(df_sbm.loc[int(i), 'Toilet Photo Approved']),
                                     application_verified = check_bool(df_sbm.loc[int(i), 'Application Verified']),
                                     application_approved = check_bool(df_sbm.loc[int(i), 'Application Approved'])
                                 )
-                                SBM_instance.save()
+                                
+
                                 response.append(("updated sbm", i))
                         except Exception as e:
                             if check_null(df1.loc[int(i), 'Application ID']) is not None:
@@ -573,11 +581,13 @@ def handle_uploaded_file(f,response):
                                 
 
                 if flag_TC != 1:
-                    #print "in TC"
                     try:
                         TC_instance = ToiletConstruction.objects.select_related().filter(household_number = int(i), slum__name = this_slum)
                         if TC_instance:
-                            TC_instance[0].update_model( df_TC.loc[int(i), : ])
+                            try:
+                                TC_instance[0].update_model( df_TC.loc[int(i), : ])
+                            except Exception as e:
+                                print e
                             response.append(("updated TC",i))
 
                         else:
@@ -598,6 +608,7 @@ def handle_uploaded_file(f,response):
                                                                 phase_three_material_date = check_null(df_TC.loc[int(i), 'Material Supply Date-3rd']),
                                                                 completion_date = check_null(df_TC.loc[int(i), 'Construction Completion Date']),
                                                                 comment = check_null(df_TC.loc[int(i), 'Comment']),
+                                                                pocket = check_null(df_TC.loc[int(i), 'Pocket']),
                                                                 status = this_status
                                                             )
 

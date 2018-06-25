@@ -80,7 +80,7 @@ class ToiletConstructionSync(DDSync):
                         #"House_numbers_where_tion_has_not_started":"", "House_numbers_where_ted_to_drainage_line":"",
                         "House_numbers_where_reement_is_cancelled":"agreement_cancelled"
                         }
-        self.REGX_CHECK = {"House_numbers_where_ifted_from_HH_to_HH":"material_shifted_to"}
+        self.REGX_CHECK = {"House_numbers_where_ifted_from_HH_to_HH":"p1_material_shifted_to", "House_numbers_where_ifted_from_002":"p2_material_shifted_to","House_numbers_where_ifted_from_001":"p3_material_shifted_to","House_numbers_where_ifted_from":"st_material_shifted_to"}
         self.BOOL_CHECK = ["House_numbers_where_reement_is_cancelled"]
 
     def fetch_data(self):
