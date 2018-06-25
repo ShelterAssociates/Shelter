@@ -52,9 +52,16 @@ admin.site.register(ElectoralWard, ElectedRepresentativeAdmin)
 
 class SlumDetailAdmin(admin.ModelAdmin):
     form = SlumForm
-    list_display = ('name', 'electoral_ward', 'administrative_ward', 'city')
+    list_display = ('name', 'electoral_ward', 'administrative_ward', 'city','associated_with_SA')
     search_fields = ['name']
     ordering = ['electoral_ward__name', 'name']
+
+    actions = ['associated_with_SA']
+
+    def associated_with_SA(self, request, queryset):
+        queryset.update(associated_with_SA=True)
+
+    associated_with_SA.short_description = "Associate the selected slum(s)"
 
     def electoral_ward(self, obj):
         return obj.electoral_ward.name
