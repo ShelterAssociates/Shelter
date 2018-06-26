@@ -23,6 +23,21 @@ $(document).ready(function() {
             success : function (data,type,row,meta) {
                 columns_defs = data;
 
+                // Adding hyperlinks to RHS data
+                var tmp_RHS = columns_defs['buttons']['RHS'];
+                for (i = 0 ; i < tmp_RHS.length ; i ++ ){
+                    columns_defs['data'][tmp_RHS[i]]['render']= function ( data, type, row,meta ) {
+                        if(typeof data != 'undefined') {
+                            url_RHS = row['rhs_url']
+                            if(type === 'display'){
+                                        data = '<a href = "#" onclick="window.open(\''+url_RHS+'\', \'_blank\', \'width=850,height=750\');">' + data + "</a>";
+                            }
+                            return data;
+                        }
+                    }
+                }
+                
+
                 // Adding hyperlinks to community mobilization data
                 var tmp_DR = columns_defs['buttons']['Community Mobilization'];
                 for (i = 0 ; i < tmp_DR.length ; i ++ ){
@@ -452,6 +467,7 @@ $(document).ready(function() {
 
             var data = table.rows({ page: 'current' }).data();
             var counter = 0;
+            var selected_col = $("#example thead tr th:contains('Final Status')").index();
             data.each(function (value, index) {
                 counter = counter + 1;
                 index = index+1;
@@ -465,29 +481,29 @@ $(document).ready(function() {
                 if ( value['agreement_date_str'] != null ){
 
                     if ( value['phase_one_material_date_str'] == null && Math.floor((today - Date.parse(trim_space(value['agreement_date_str']))) / divider) > 8 ){
-                            $('tr:eq('+index+')').find('td:eq(22)').css('background-color', '#f9a4a4');//red
+                            $('tr:eq('+index+')').find('td:eq('+selected_col+')').css('background-color', '#f9a4a4');//red
                             $('tr:eq('+index+')').addClass('redColor');
 
                     }
                     else if ( value['phase_two_material_date_str'] == null && Math.floor((today - Date.parse(trim_space(value['phase_one_material_date_str']))) / divider) > 8 ){
-                            $('tr:eq('+index+')').find('td:eq(22)').css('background-color', '#f2f29f');//yellow
+                            $('tr:eq('+index+')').find('td:eq('+selected_col+')').css('background-color', '#f2f29f');//yellow
                             $('tr:eq('+index+')').addClass('redColor');
 
                     }
                     else if (value['phase_three_material_date_str'] == null && Math.floor((today - Date.parse(trim_space(value['phase_two_material_date_str']))) / divider) > 8 ){
-                            $('tr:eq('+index+')').find('td:eq(22)').css('background-color', '#aaf9a4');//green
+                            $('tr:eq('+index+')').find('td:eq('+selected_col+')').css('background-color', '#aaf9a4');//green
                             $('tr:eq('+index+')').addClass('redColor');
 
                     }
                     else if (value['completion_date_str'] == null){
                             if (Math.floor((Date.parse(trim_space(value['phase_one_material_date_str'])) - Date.parse(trim_space(value['phase_three_material_date_str']))) / divider) == 0){
                                 if (Math.floor((today - Date.parse(trim_space(value['phase_two_material_date_str']))) / divider) > 8 ){
-                                    $('tr:eq('+index+')').find('td:eq(22)').css('background-color', '#aaa4f4');//blue
+                                    $('tr:eq('+index+')').find('td:eq('+selected_col+')').css('background-color', '#aaa4f4');//blue
                                     $('tr:eq('+index+')').addClass('redColor');
                                 }
                             }
                             else if(Math.floor((today - Date.parse(trim_space(value['phase_three_material_date_str']))) / divider) > 8 ){
-                                $('tr:eq('+index+')').find('td:eq(22)').css('background-color', '#aaa4f4');//blue
+                                $('tr:eq('+index+')').find('td:eq('+selected_col+')').css('background-color', '#aaa4f4');//blue
                                 $('tr:eq('+index+')').addClass('redColor');
                             }
                             

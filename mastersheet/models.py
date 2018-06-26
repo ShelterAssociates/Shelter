@@ -137,11 +137,18 @@ class ToiletConstruction(models.Model):
     @staticmethod
     def get_status_display(z):
         return STATUS_CHOICES[int(z)-1][1]
+    @staticmethod
+    def check_bool(s):
+        if str(s).lower() == 'yes' or str(s).lower() == "true":
+            return True
+        else:
+            return False
+
 
     def update_model(self, df1):
         print self.household_number
         print "here we are in update_model"
-        if pandas.isnull(df1.loc['Agreement Cancelled']) is False:
+        if check_bool(df1.loc['Agreement Cancelled']) is not False:
             self.agreement_cancelled = True
         else:
             self.agreement_cancelled = False
@@ -183,6 +190,7 @@ class ToiletConstruction(models.Model):
             return None
         else:
             return s
+    
 
 
 
@@ -266,6 +274,8 @@ def update_status(sender ,instance, **kwargs):
 
     if instance.agreement_cancelled :
         instance.status = STATUS_CHOICES[1][0]#agreement cancelled
+    else:
+        instance.status = ""
 
     #if instance.p1_material_shifted_to is not None and instance.p2_material_shifted_to is not None instance.p3_material_shifted_to is not None instance.st_material_shifted_to is not None:
         #if len(instance.p1material_shifted_to) != 0 and len(instance.p2material_shifted_to) != 0 and len(instance.p3material_shifted_to) != 0 and len(instance.st_material_shifted_to) != 0:
@@ -334,4 +344,8 @@ def check_duplicate_house(sender, instance, **kwargs):
                     #messages.error(request, "household numbers "+str(common_households)+ " are repeated in " +str(record.vendor.name)+ " and "+instance.vendor.name)
                     #return Exception("household numbers "+str(common_households)+ " are repeated in " +str(record.vendor.name)+ " and "+instance.vendor.name)
 
-
+def check_bool(s):
+        if str(s).lower() == 'yes' or str(s).lower() == "true":
+            return True
+        else:
+            return False

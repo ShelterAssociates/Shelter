@@ -84,6 +84,7 @@ def masterSheet(request, slum_code = 0, FF_code = 0, RHS_code = 0 ):
         formdict_RHS_form = json.loads(html_RHS_form)
         formdict_FF_form = json.loads(html_FF_form)
         name_label_data = []
+
         # Rearranging form data in order to arrange them by group names
         try:
             for i in formdict_RHS_form['children']:
@@ -153,6 +154,7 @@ def masterSheet(request, slum_code = 0, FF_code = 0, RHS_code = 0 ):
         obj_name_label_data in name_label_data}
 
         for x in formdict:
+            
             for y in vendor:
                 for z in y.household_number:
                     if int(x['Household_number']) == int(z):
@@ -183,12 +185,17 @@ def masterSheet(request, slum_code = 0, FF_code = 0, RHS_code = 0 ):
             if x['Household_number'] in temp_DR_keys:
                 x.update(temp_daily_reporting[x['Household_number']])
                 x.update({'tc_id_'+str(x['Household_number']): temp_daily_reporting[x['Household_number']]['id']})
-                         
+            
+            temp = x["_id"]
             if x['Household_number'] in temp_FF_keys:
                 if '_id' in temp_FF[x['Household_number']].keys():
                     del(temp_FF[x['Household_number']]['_id'])
                 x.update(temp_FF[x['Household_number']])
                 x['OnfieldFactsheet'] = 'Yes'
+                x['_id'] = temp
+            x.update({'rhs_url': settings.BASE_URL + str('shelter/forms/') + str(x['_xform_id_string']) + str('/instance#/')+str(x["_id"]) })
+
+
             try:
                 for key_f,value_f in x.items():
                     key = key_f.split("/")[-1]
@@ -636,7 +643,7 @@ def check_null(s):
     else:
         return s
 def check_bool(s):
-    if str(s).lower() == 'yes':
+    if str(s).lower() == 'yes' or str(s).lower() == "true":
         return True
     else:
         return False
