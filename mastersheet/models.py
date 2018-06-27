@@ -249,9 +249,13 @@ class KoboDDSyncTrack(models.Model):
 def update_status(sender ,instance, **kwargs):
     #instance.status = STATUS_CHOICES[4][0]#Under Construction
 
-   
+
+    if instance.agreement_cancelled is None:
+        instance.status = ""
     if instance.agreement_date:
         instance.status = STATUS_CHOICES[2][0]#material not given
+    
+    
     '''
         The method below is put in place because some unexpected data format ('Timestamp') was found with some
         agreement_date. The method covers inconsistencies only for agreement date. Requirement may arise in furture 
@@ -271,11 +275,10 @@ def update_status(sender ,instance, **kwargs):
     if instance.completion_date:
         instance.status = STATUS_CHOICES[5][0]#completed
         
-
     if instance.agreement_cancelled :
         instance.status = STATUS_CHOICES[1][0]#agreement cancelled
-    if instance.agreement_cancelled is None:
-        instance.status = ""
+
+    
 
     #if instance.p1_material_shifted_to is not None and instance.p2_material_shifted_to is not None instance.p3_material_shifted_to is not None instance.st_material_shifted_to is not None:
         #if len(instance.p1material_shifted_to) != 0 and len(instance.p2material_shifted_to) != 0 and len(instance.p3material_shifted_to) != 0 and len(instance.st_material_shifted_to) != 0:
