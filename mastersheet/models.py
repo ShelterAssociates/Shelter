@@ -274,7 +274,7 @@ def update_status(sender ,instance, **kwargs):
 
     if instance.agreement_cancelled :
         instance.status = STATUS_CHOICES[1][0]#agreement cancelled
-    else:
+    if instance.agreement_cancelled is None:
         instance.status = ""
 
     #if instance.p1_material_shifted_to is not None and instance.p2_material_shifted_to is not None instance.p3_material_shifted_to is not None instance.st_material_shifted_to is not None:
