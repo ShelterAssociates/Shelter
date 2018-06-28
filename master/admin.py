@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 """The Django Admin Page for master app"""
 from django.contrib import admin
-from django.contrib.gis import admin
+#from django.contrib.gis import admin
 from master.models import CityReference, City, \
     AdministrativeWard, ElectoralWard, Slum, WardOfficeContact, ElectedRepresentative, Rapid_Slum_Appraisal, Survey, drainage
 from master.forms import CityFrom, AdministrativeWardFrom, ElectoralWardForm, SlumForm
@@ -50,16 +50,34 @@ class ElectedRepresentativeAdmin(admin.ModelAdmin):
 
 admin.site.register(ElectoralWard, ElectedRepresentativeAdmin)
 
+class CityListFilter(admin.SimpleListFilter):
+    title = 'Cities'
+    parameter_name = 'cities'
+
+    def lookups(self, request, model_admin):
+        obj_city = City.objects.values_list('name__city_name','name__city_name')
+        print obj_city
+        return tuple(obj_city)
+
+    def queryset(self, request,queryset):
+        if self.value():
+            print self.value()
+            return queryset.filter(electoral_ward__administrative_ward__city__name__city_name=self.value())
+
+
 class SlumDetailAdmin(admin.ModelAdmin):
     form = SlumForm
-    list_display = ('name', 'electoral_ward', 'administrative_ward', 'city','associated_with_SA')
-    search_fields = ['name']
+    list_display = ('name', 'electoral_ward', 'administrative_ward', 'city_name','associated_with_SA')
+    search_fields = ['name','electoral_ward__name', 'electoral_ward__administrative_ward__name']
+    list_filter = [CityListFilter]
     ordering = ['electoral_ward__name', 'name']
 
     actions = ['associated_with_SA']
 
     def associated_with_SA(self, request, queryset):
-        queryset.update(associated_with_SA=True)
+        for query in queryset:
+            query.associated_with_SA = not query.associated_with_SA
+            query.save()
 
     associated_with_SA.short_description = "Associate the selected slum(s)"
 
@@ -69,16 +87,8 @@ class SlumDetailAdmin(admin.ModelAdmin):
     def administrative_ward(self, obj):
         return obj.electoral_ward.administrative_ward.name
 
-    def city(self, obj):
-        return obj.electoral_ward.administrative_ward.city.name
-
-    def get_search_results(self, request, queryset, search_term):
-        queryset, use_distinct = super(SlumDetailAdmin, self).get_search_results(request, queryset, search_term)
-
-        queryset |= self.model.objects.filter(electoral_ward__name__contains=search_term)
-        queryset |= self.model.objects.filter(electoral_ward__administrative_ward__name__contains=search_term)
-        queryset |= self.model.objects.filter(electoral_ward__administrative_ward__city__name__city_name__contains=search_term)
-        return queryset, use_distinct
+    def city_name(self, obj):
+        return obj.electoral_ward.administrative_ward.city.name.city_name
 
 admin.site.register(Slum, SlumDetailAdmin)
 
