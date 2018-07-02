@@ -64,7 +64,7 @@ class Metadata(models.Model):
 class Component(models.Model):
     """Drawable Component Database"""
     metadata = models.ForeignKey(Metadata)
-    housenumber = models.CharField(max_length=5)
+    housenumber = models.CharField(max_length=100)
     shape = models.GeometryField(srid=4326)
     slum  = models.ForeignKey(Slum)
     objects = models.GeoManager()
@@ -75,6 +75,9 @@ class Component(models.Model):
 
     class Meta:
         """Metadata for class Component"""
+        permissions = (
+            ("can_upload_KML", "Can upload KML file"),
+        )
         verbose_name = 'Component'
         verbose_name_plural = 'Components'
 

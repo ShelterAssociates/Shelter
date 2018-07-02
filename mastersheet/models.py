@@ -128,6 +128,12 @@ class ToiletConstruction(models.Model):
 
 
     class Meta:
+        permissions = (
+            ("can_view_mastersheet", "Can view the mastersheet"),
+            ("can_sync_toilet_status", "Can sync toilet status"),
+            ("can_upload_mastersheet", "Can upload mastersheet"),
+            ("can_delete_kobo_record", "Can delete kobo record")
+        )
         unique_together = ("slum", "household_number")
         verbose_name = 'Toilet construction progress'
         verbose_name_plural = 'Toilet construction progress'
