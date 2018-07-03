@@ -47,7 +47,7 @@ def masterSheet(request, slum_code = 0, FF_code = 0, RHS_code = 0 ):
         urlv = str(settings.KOBOCAT_FORM_URL)+str('data/'+str(RHS_code)+'?query={"slum_name":"') + str(slum_code[0][0])+'"}'  # '+str(slum_code)+'
         #urlv = str(settings.KOBOCAT_FORM_URL)+str('data/98?query={"slum_name":"') + str(slum_code) + '"}'  # '+str(slum_code)+'
 
-        url_family_factsheet = str(settings.KOBOCAT_FORM_URL)+str('data/'+str(FF_code)+'?format=json&query={"group_vq77l17/slum_name":"')+ str(slum_code[0][0]) + str('"}&fields=["OnfieldFactsheet","_attachments","group_ne3ao98/Have_you_upgraded_yo_ng_individual_toilet","group_ne3ao98/Cost_of_upgradation_in_Rs","group_ne3ao98/Where_the_individual_ilet_is_connected_to","group_ne3ao98/Use_of_toilet","group_vq77l17/Household_number"]')
+        url_family_factsheet = str(settings.KOBOCAT_FORM_URL)+str('data/'+str(FF_code)+'?format=json&query={"group_vq77l17/slum_name":"')+ str(slum_code[0][0]) + str('"}&fields=["OnfieldFactsheet","_attachments","Toilet_Photo","Family_Photo","group_ne3ao98/Have_you_upgraded_yo_ng_individual_toilet","group_ne3ao98/Cost_of_upgradation_in_Rs","group_ne3ao98/Where_the_individual_ilet_is_connected_to","group_ne3ao98/Use_of_toilet","group_vq77l17/Household_number"]')
         #url_family_factsheet = str(settings.KOBOCAT_FORM_URL)+str('data/97?format=json&query={"group_vq77l17/slum_name":"')+ str(slum_code) + str('"}&fields=["OnfieldFactsheet","group_ne3ao98/Have_you_upgraded_yo_ng_individual_toilet","group_ne3ao98/Cost_of_upgradation_in_Rs","group_ne3ao98/Where_the_individual_ilet_is_connected_to","group_ne3ao98/Use_of_toilet","group_vq77l17/Household_number"]')
 
         url_RHS_form = str(settings.KOBOCAT_FORM_URL)+str('forms/'+str(RHS_code)+'/form.json')
@@ -192,9 +192,15 @@ def masterSheet(request, slum_code = 0, FF_code = 0, RHS_code = 0 ):
                 x.update(temp_FF[x['Household_number']])
                 x['OnfieldFactsheet'] = 'Yes'
                 x['_id'] = temp
+            
             if len(x['_attachments']) != 0:
-                x.update({'toilet_photo_url': settings.BASE_URL + x['_attachments'][0]['download_url']})
-                x.update({'family_photo_url' : settings.BASE_URL + x['_attachments'][0]['download_url']})
+                for sample_attach in x['_attachments']:
+                    if 'Toilet_Photo' in x.keys():
+                        if str(x['Toilet_Photo']) in str(sample_attach['download_url']):
+                            x.update({'toilet_photo_url': settings.BASE_URL + sample_attach['download_url']})
+                    if 'Family_Photo' in x.keys():
+                        if str(x['Family_Photo']) in str(sample_attach['download_url']):
+                            x.update({'family_photo_url': settings.BASE_URL + sample_attach['download_url']})
             x.update({'rhs_url': settings.BASE_URL + str('shelter/forms/') + str(x['_xform_id_string']) + str('/instance#/')+str(x["_id"]) })
 
 
