@@ -47,7 +47,7 @@ def masterSheet(request, slum_code = 0, FF_code = 0, RHS_code = 0 ):
         urlv = str(settings.KOBOCAT_FORM_URL)+str('data/'+str(RHS_code)+'?query={"slum_name":"') + str(slum_code[0][0])+'"}'  # '+str(slum_code)+'
         #urlv = str(settings.KOBOCAT_FORM_URL)+str('data/98?query={"slum_name":"') + str(slum_code) + '"}'  # '+str(slum_code)+'
 
-        url_family_factsheet = str(settings.KOBOCAT_FORM_URL)+str('data/'+str(FF_code)+'?format=json&query={"group_vq77l17/slum_name":"')+ str(slum_code[0][0]) + str('"}&fields=["OnfieldFactsheet","group_ne3ao98/Have_you_upgraded_yo_ng_individual_toilet","group_ne3ao98/Cost_of_upgradation_in_Rs","group_ne3ao98/Where_the_individual_ilet_is_connected_to","group_ne3ao98/Use_of_toilet","group_vq77l17/Household_number"]')
+        url_family_factsheet = str(settings.KOBOCAT_FORM_URL)+str('data/'+str(FF_code)+'?format=json&query={"group_vq77l17/slum_name":"')+ str(slum_code[0][0]) + str('"}&fields=["OnfieldFactsheet","_attachments","group_ne3ao98/Have_you_upgraded_yo_ng_individual_toilet","group_ne3ao98/Cost_of_upgradation_in_Rs","group_ne3ao98/Where_the_individual_ilet_is_connected_to","group_ne3ao98/Use_of_toilet","group_vq77l17/Household_number"]')
         #url_family_factsheet = str(settings.KOBOCAT_FORM_URL)+str('data/97?format=json&query={"group_vq77l17/slum_name":"')+ str(slum_code) + str('"}&fields=["OnfieldFactsheet","group_ne3ao98/Have_you_upgraded_yo_ng_individual_toilet","group_ne3ao98/Cost_of_upgradation_in_Rs","group_ne3ao98/Where_the_individual_ilet_is_connected_to","group_ne3ao98/Use_of_toilet","group_vq77l17/Household_number"]')
 
         url_RHS_form = str(settings.KOBOCAT_FORM_URL)+str('forms/'+str(RHS_code)+'/form.json')
@@ -187,10 +187,14 @@ def masterSheet(request, slum_code = 0, FF_code = 0, RHS_code = 0 ):
                 x.update({'tc_id_'+str(x['Household_number']): temp_daily_reporting[x['Household_number']]['id']})
             
             temp = x["_id"]
+            
             if x['Household_number'] in temp_FF_keys:
                 x.update(temp_FF[x['Household_number']])
                 x['OnfieldFactsheet'] = 'Yes'
                 x['_id'] = temp
+            if len(x['_attachments']) != 0:
+                x.update({'toilet_photo_url': settings.BASE_URL + x['_attachments'][0]['download_url']})
+                x.update({'family_photo_url' : settings.BASE_URL + x['_attachments'][0]['download_url']})
             x.update({'rhs_url': settings.BASE_URL + str('shelter/forms/') + str(x['_xform_id_string']) + str('/instance#/')+str(x["_id"]) })
 
 
@@ -309,34 +313,36 @@ def define_columns(request):
         {"data": "group_ne3ao98/Where_the_individual_ilet_is_connected_to",
          "title": "Where the individual toilet is connected to?"},
         {"data": "group_ne3ao98/Use_of_toilet", "title": "Use of toilet"},
+        {"data": "family_photo_url", "title": "Family Photo"},
+        {"data": "toilet_photo_url", "title": "Toilet Photo"},
 
         {"data": "name", "title": "SBM Applicant Name"},
-        {"data": "application_id", "title": "Application ID"},#45
+        {"data": "application_id", "title": "Application ID"},#47
         {"data": "phone_number", "title": "Phone Number"},
         {"data": "aadhar_number", "title": "Aadhar Number"},
         {"data": "photo_uploaded", "title": "Is toilet photo uploaded on site?"},
         {"data": "photo_verified", "title": "Photo Verified"},
-        {"data": "photo_approved", "title": "Photo Approved"},#50
+        {"data": "photo_approved", "title": "Photo Approved"},#52
         {"data": "application_verified", "title": "Application Verified"},
         {"data": "application_approved", "title": "Application Approved"},
 
 
         {"data": "agreement_date_str", "title": "Date of Agreement"},
         {"data": "agreement_cancelled", "title": "Agreement Cancelled?"},
-        {"data": "septic_tank_date_str", "title": "Date of septic tank supplied"},#55
+        {"data": "septic_tank_date_str", "title": "Date of septic tank supplied"},#57
         {"data": "phase_one_material_date_str", "title": "Date of first phase material"},
         {"data": "phase_two_material_date_str", "title": "Date of second phase material"},
-        {"data": "phase_three_material_date_str", "title": "Date of third phase material"},#58
+        {"data": "phase_three_material_date_str", "title": "Date of third phase material"},#60
         {"data": "completion_date_str", "title": "Construction Completion Date"},
         
-        {"data": "p1_material_shifted_to", "title": "Phase one material shifted to"},##60
-        {"data": "p2_material_shifted_to", "title": "Phase two material shifted to"},##61
-        {"data": "p3_material_shifted_to", "title": "Phase three material shifted to"},##62
-        {"data": "st_material_shifted_to", "title": "Septick tank shifted to"},##63
-        {"data": "Funder", "title": "Funder"},#65#64
-        {"data": "status", "title": "Final Status"},##65
+        {"data": "p1_material_shifted_to", "title": "Phase one material shifted to"},##62
+        {"data": "p2_material_shifted_to", "title": "Phase two material shifted to"},##63
+        {"data": "p3_material_shifted_to", "title": "Phase three material shifted to"},##64
+        {"data": "st_material_shifted_to", "title": "Septick tank shifted to"},##65
+        {"data": "Funder", "title": "Funder"},#67#66
+        {"data": "status", "title": "Final Status"},##67
         {"data": "pocket", "title": "Pocket"},
-        {"data": "comment", "title": "Comment"}#68#67
+        {"data": "comment", "title": "Comment"}#70#69
 
         # Append community mobilization here #
 
@@ -346,9 +352,9 @@ def define_columns(request):
     final_data['buttons'] = collections.OrderedDict()
     final_data['buttons']['RHS'] = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18]
     final_data['buttons']['Follow-up'] = [19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36]
-    final_data['buttons']['Family factsheet'] = [37, 38, 39, 40, 41]
-    final_data['buttons']['SBM'] = [42, 43, 44, 45, 46, 47, 48, 49, 50]
-    final_data['buttons']['Construction status'] = [51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65]
+    final_data['buttons']['Family factsheet'] = [37, 38, 39, 40, 41, 42, 43]
+    final_data['buttons']['SBM'] = [44, 45, 46, 47, 48, 49, 50, 51, 52]
+    final_data['buttons']['Construction status'] = [53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67]
 
     # We define the columns for community mobilization and vendor details in a dynamic way. The
     # reason being these columns are prone to updates and additions.
