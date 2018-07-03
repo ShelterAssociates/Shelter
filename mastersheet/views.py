@@ -1,6 +1,6 @@
 from django.shortcuts import render
-from django.http import HttpResponse
-from django.contrib.auth.decorators import user_passes_test
+from django.http import HttpResponse, HttpResponseForbidden
+from django.contrib.auth.decorators import user_passes_test, permission_required
 from mastersheet.forms import find_slum, file_form
 from mastersheet.models import *
 from sponsor.models import *
@@ -19,13 +19,36 @@ from collections import defaultdict
 
 #The views in this file correspond to the mastersheet functionality of shelter app.
 
+def apply_permissions_ajax(perms):
+    """
+    Parameterised decorator for handling ajax permissions.
+    :param perms: permission to check
+    :return: Forbidden if does not have a permission else the function call.
+    """
+    def real_decorator(view_func):
+        def _wrapped_view(request, *args, **kwargs):
+            # it is possible to add some other checks, that return booleans
+            # or do it in a separate `if` statement
+            # for example, check for some user permissions or properties
+            print request.is_ajax()
+            print request.user.has_perms(perms)
+            print request.user
+            permissions = [
+                request.is_ajax(),
+                request.user.has_perm(perms)
+            ]
+            if not all(permissions):
+                return HttpResponseForbidden("Permission denied")
+            return view_func(request, *args, **kwargs)
+        return _wrapped_view
+    return real_decorator
 
 # 'masterSheet()' is the principal view.
 # It collects the data from newest version of RHS form and family factsheets
 # Also, it retrieves the data of accounts and SBM. This view bundles them in a single object
 # to be displayed to the front end.
 @csrf_exempt
-@user_passes_test(lambda u: u.is_superuser, login_url='/admin/')
+@apply_permissions_ajax('mastersheet.can_view_mastersheet')
 def masterSheet(request, slum_code = 0, FF_code = 0, RHS_code = 0 ):
     try:
         delimiter = 'slumname='
@@ -189,6 +212,8 @@ def masterSheet(request, slum_code = 0, FF_code = 0, RHS_code = 0 ):
             temp = x["_id"]
             
             if x['Household_number'] in temp_FF_keys:
+                if '_id' in temp_FF[x['Household_number']].keys():
+                    del(temp_FF[x['Household_number']]['_id'])
                 x.update(temp_FF[x['Household_number']])
                 x['OnfieldFactsheet'] = 'Yes'
                 x['_id'] = temp
@@ -252,7 +277,7 @@ def trav(node):
         return [node]
     return []
 
-@user_passes_test(lambda u: u.is_superuser, login_url='/admin/')
+@apply_permissions_ajax('mastersheet.can_view_mastersheet')
 def define_columns(request):
     """
     Method to send datatable columns.
@@ -386,14 +411,14 @@ def define_columns(request):
     final_data['data'] = formdict_new
     return HttpResponse(json.dumps(final_data),  content_type = "application/json")
 
-@user_passes_test(lambda u: u.is_superuser, login_url='/admin/')
+@permission_required('mastersheet.can_view_mastersheet', login_url='/admin/')
 def renderMastersheet(request):
     slum_search_field = find_slum()
     file_form1 = file_form()
     return render(request, 'masterSheet.html', {'form': slum_search_field, 'file_form':file_form1})
 
 @csrf_exempt
-@user_passes_test(lambda u: u.is_superuser, login_url='/admin/')
+@apply_permissions_ajax('mastersheet.can_upload_mastersheet')
 def file_ops(request):
     slum_search_field = find_slum()
     file_form1 = file_form()
@@ -491,6 +516,7 @@ def handle_uploaded_file(f,response):
                                     application_verified = check_bool(df_sbm.loc[int(i), 'Application Verified']),
                                     application_approved = check_bool(df_sbm.loc[int(i), 'Application Approved'])
                                 )
+                                
 
                                 response.append(("updated sbm", i))
                         except Exception as e:
@@ -658,7 +684,7 @@ def check_bool(s):
         return False
 
 @csrf_exempt
-@user_passes_test(lambda u: u.is_superuser, login_url='/admin/')
+@apply_permissions_ajax('mastersheet.can_delete_kobo_record')
 def delete_selected(request):
     """
      Method to delete selected records.
@@ -698,7 +724,7 @@ def delete_selected_records(records):
         except Exception as e:
             print "No record selected to delete."
 
-@user_passes_test(lambda u: u.is_superuser, login_url='/admin/')
+@apply_permissions_ajax('mastersheet.can_sync_toilet_status')
 def sync_kobo_data(request,slum_id):
     """
     Method to sync data from kobotoolbox for community mobilization and toilet construction status(Daily reporting)
@@ -734,13 +760,3 @@ def sync_kobo_data(request,slum_id):
         data['flag']=False
         data['msg'] = "Error occurred while sync from kobo. Please contact administrator." +str(e)
     return HttpResponse(json.dumps(data), content_type="application/json")
-
-
-
-
-
-
-
-
-
-

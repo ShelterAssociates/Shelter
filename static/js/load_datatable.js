@@ -238,6 +238,12 @@ $(document).ready(function() {
                         },
                         complete:function(){
                             $(".overlay").hide();
+                        },
+                        error:function(response){
+                            $(".overlay").hide();
+                            if (response.responseText!=""){
+                                alert(response.responseText);
+                            }
                         }
                 });
             }
@@ -393,13 +399,18 @@ $(document).ready(function() {
 
                                 data : JSON.stringify({"records": records, "slum":document.forms[0].slumname.value}),
                                 contentType : "json",
-                                success: function(response){
+                                success: function(data, textStatus, xhr){
                                     $(".overlay").hide();
-                                    alert(response.response);
-                                    $("#btnFetch").click();
+                                    if (response.response != ""){
+                                        alert(response.response);
+                                        $("#btnFetch").click();
+                                    }
                                 },
                                 error: function(resp){
                                     $(".overlay").hide();
+                                    if(resp.responseText!=""){
+                                        alert(resp.responseText);
+                                    }
                                 }
 
                             });
@@ -567,10 +578,15 @@ $(document).ready(function() {
             contentType : "json",
             success: function(response){
                 $(".overlay").hide();
+                if (response.msg!=""){
                 alert(response.msg);
+                }
             },
-            error : function(){
+            error : function(response){
                 $(".overlay").hide();
+                if (response.responseText!=""){
+                    alert(response.responseText);
+                }
             }
 
         });

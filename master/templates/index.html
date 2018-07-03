@@ -8,35 +8,45 @@
 <div style ="margin:auto;witdth:20%,margin-top:100px;">
 	<a href="master/"><h2>Database Adminstration </h2></a>
 </div>
+	{%if perms.master.can_view_survey_mapping%}
+	<div style ="margin:auto;witdth:20%,margin-top:100px;">
+		<a href="surveymapping/"><h2>Survey Mapping </h2></a>
+	</div>
+	{%endif%}
 
-<div style ="margin:auto;witdth:20%,margin-top:100px;">
-	<a href="surveymapping/"><h2>Survey Mapping </h2></a>
-</div>
+	{%if perms.master.can_view_slum_information%}
+	<div style ="margin:auto;witdth:20%,margin-top:100px;">
+		<a href="sluminformation/"><h2>Slum Information</h2></a>
+	</div>
+	{%endif%}
 
-<div style ="margin:auto;witdth:20%,margin-top:100px;">
-	<a href="sluminformation/"><h2>Slum Information</h2></a>
-</div>
+	{%if perms.master.can_generate_reports%}
+	<div style ="margin:auto;witdth:20%,margin-top:100px;">
+		<a href="report/"><h2>Factsheet Report</h2></a>
+	</div>
+	{%endif%}
 
+	{%if perms.master.can_generate_reports%}
+	<div style ="margin:auto;witdth:20%,margin-top:100px;">
+		<a href="VulnerabilityReport/" target="__blank"><h2>Vulnerability Report</h2></a>
+	</div>
+	{%endif%}
 
-<div style ="margin:auto;witdth:20%,margin-top:100px;">
-	<a href="report/"><h2>Factsheet Report</h2></a>
-</div>
+	<div style ="margin:auto;witdth:20%,margin-top:100px;">
+		<a href="slummap/" ><h2>Slum Map Display</h2></a>
+	</div>
 
-<div style ="margin:auto;witdth:20%,margin-top:100px;">
-	<a href="VulnerabilityReport/" target="__blank"><h2>Vulnerability Report</h2></a>
-</div>
+	{%if perms.component.can_upload_KML%}
+	<div style ="margin:auto;witdth:20%,margin-top:100px;">
+		<a href="/component/" ><h2>Upload KML</h2></a>
+	</div>
+	{%endif%}
 
-<div style ="margin:auto;witdth:20%,margin-top:100px;">
-	<a href="slummap/" ><h2>Slum Map Display</h2></a>
-</div>
-
-<div style ="margin:auto;witdth:20%,margin-top:100px;">
-	<a href="/component/" ><h2>Upload KML</h2></a> 
-</div>
-
-<div style ="margin:auto;witdth:20%,margin-top:100px;">
-	<a href="/mastersheet/show/mastersheet/" ><h2>Mastersheet status</h2></a>
-</div>
+	{% if perms.mastersheet.can_view_mastersheet%}
+	<div style ="margin:auto;witdth:20%,margin-top:100px;">
+		<a href="/mastersheet/show/mastersheet/" ><h2>Mastersheet status</h2></a>
+	</div>
+	{%endif%}
 {% endblock %}
 
 {% block content %}

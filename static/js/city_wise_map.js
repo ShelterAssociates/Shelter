@@ -24,7 +24,7 @@ let lst_sponsor =[];
 let parse_component = {};
 let modelsection = {
 		"General" : "General information" ,
-		"Toilet" : "Current place of defecation (2015-16)",
+		"Toilet" : "Status of sanitation (2015-16)",
 		"Water" : "Type of water connection",
 		"Waste" : "Facility of solid waste collection",
 		"Drainage" : "Drainage information",
@@ -50,8 +50,14 @@ var Polygon = (function () {
         this.type = obj_data.type;
         this.name = obj_data.name.trim();
         this.info = obj_data.info;
-        this.bgColor = obj_data.bgColor || "#FFA3A3";
-        this.borderColor = obj_data.borderColor || "#FF0000";
+        slum_bgColor = "#A3A3FF";
+        slum_borderColor = "#3232FF";
+        if(obj_data.associated){
+            slum_bgColor = "#FFA3A3";
+            slum_borderColor = "#FF0000";
+        }
+        this.bgColor = obj_data.bgColor || slum_bgColor;
+        this.borderColor = obj_data.borderColor || slum_borderColor;
         this.legend = obj_data.legend;
         this.id = obj_data.id;
         this.center = '';//bounds.getCenter();
@@ -523,9 +529,11 @@ var Breadcrumbs = (function(){
                     }]
                 });
                 $("#datatablecontainer").show();
+                $("#div_legend").show();
             }
             else{
                 $("#datatablecontainer").hide();
+                $("#div_legend").hide();
             }
         }
         //Data parser for datatable

@@ -38,7 +38,7 @@ class City(models.Model):
     border_color = ColorField(default='#94BBFF')
     background_color = ColorField(default='#94BBFF')
     created_by = models.ForeignKey(User)
-    created_on = models.DateTimeField(default=datetime.datetime.now())
+    created_on = models.DateTimeField(default=datetime.datetime.now)
 
     def __unicode__(self):
         """Returns string representation of object"""
@@ -71,6 +71,9 @@ class Survey(models.Model):
 
     class Meta:
         """Metadata for class Survey"""
+        permissions = (
+            ("can_view_survey_mapping", "Can view the Survey Mapping"),
+        )
         verbose_name = 'Survey'
         verbose_name_plural = 'Surveys'
 
@@ -126,6 +129,7 @@ class Slum(models.Model):
     shelter_slum_code = models.CharField(max_length=2048,blank=True,null=True)
     factsheet = models.FileField(upload_to=FACTSHEET_PHOTO ,blank=True,null=True)
     photo = models.ImageField(upload_to=FACTSHEET_PHOTO,blank=True, null=True)
+    associated_with_SA = models.BooleanField(default=False)
 
     def __unicode__(self):
         """Returns string representation of object"""
@@ -211,7 +215,7 @@ class PlottedShape(models.Model):
     lat_long = models.CharField(max_length=2048)
     drawable_component = models.ForeignKey(DrawableComponent)
     created_by = models.ForeignKey(User)
-    created_on = models.DateTimeField(default=datetime.datetime.now())
+    created_on = models.DateTimeField(default=datetime.datetime.now)
 
     def __unicode__(self):
         """Returns string representation of object"""
@@ -260,7 +264,7 @@ class UserRoleMaster(models.Model):
 class ProjectMaster(models.Model):
     """Project Master Database"""
     created_user = models.CharField(max_length=2048)
-    created_date = models.DateTimeField(default=datetime.datetime.now())
+    created_date = models.DateTimeField(default=datetime.datetime.now)
 
     class Meta:
         """Metadata for class ProjectMaster"""
@@ -311,6 +315,10 @@ class Rapid_Slum_Appraisal(models.Model):
     percentage_with_individual_toilet = models.CharField(max_length=2048,blank=True, null=True)
 
     class Meta:
+        permissions = (
+            ("can_view_slum_information", "Can view the slum information"),
+            ("can_generate_reports", "Can generate reports"),
+        )
         ordering = ['slum_name']
 
 
