@@ -152,8 +152,7 @@ class ToiletConstruction(models.Model):
 
 
     def update_model(self, df1):
-        print self.household_number
-        print "here we are in update_model"
+        
         if check_bool(df1.loc['Agreement Cancelled']) is not False:
             self.agreement_cancelled = True
         else:
