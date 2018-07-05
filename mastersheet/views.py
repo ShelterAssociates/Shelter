@@ -30,9 +30,7 @@ def apply_permissions_ajax(perms):
             # it is possible to add some other checks, that return booleans
             # or do it in a separate `if` statement
             # for example, check for some user permissions or properties
-            print request.is_ajax()
-            print request.user.has_perms(perms)
-            print request.user
+            
             permissions = [
                 request.is_ajax(),
                 request.user.has_perm(perms)
@@ -53,7 +51,6 @@ def masterSheet(request, slum_code = 0, FF_code = 0, RHS_code = 0 ):
     try:
         delimiter = 'slumname='
         slum_code = Slum.objects.filter(pk = int(request.GET.get('form').partition(delimiter)[2]) ).values_list("shelter_slum_code","electoral_ward__administrative_ward__city__id","electoral_ward__name", "name")
-        print slum_code
         slum_funder = SponsorProjectDetails.objects.filter(slum__name= str(slum_code[0][3])).exclude(sponsor__id= 10)
         form_ids = Survey.objects.filter(city__id = int(slum_code[0][1]))
         
@@ -219,13 +216,13 @@ def masterSheet(request, slum_code = 0, FF_code = 0, RHS_code = 0 ):
                 x['_id'] = temp
             
             if len(x['_attachments']) != 0:
-                for sample_attach in x['_attachments']:
-                    if 'Toilet_Photo' in x.keys():
-                        if str(x['Toilet_Photo']) in str(sample_attach['download_url']):
-                            x.update({'toilet_photo_url': settings.BASE_URL + sample_attach['download_url']})
-                    if 'Family_Photo' in x.keys():
-                        if str(x['Family_Photo']) in str(sample_attach['download_url']):
-                            x.update({'family_photo_url': settings.BASE_URL + sample_attach['download_url']})
+
+                PATH = settings.BASE_URL + '/'.join(x['_attachments'][0]['download_url'].split('/')[:-1])
+                if 'Toilet_Photo' in x.keys():
+                    x.update({'toilet_photo_url': PATH + '/' + x['Toilet_Photo']})
+                        
+                if 'Family_Photo' in x.keys():
+                    x.update({'family_photo_url': PATH + '/' + x['Family_Photo']})
             x.update({'rhs_url': settings.BASE_URL + str('shelter/forms/') + str(x['_xform_id_string']) + str('/instance#/')+str(x["_id"]) })
 
 
