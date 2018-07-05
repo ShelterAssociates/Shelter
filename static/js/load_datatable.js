@@ -36,6 +36,38 @@ $(document).ready(function() {
                         }
                     }
                 }
+
+                // Adding family factsheet photo download ulrs
+                var tmp_download_TF = columns_defs['buttons']['Family factsheet'];
+                for (i = 0 ; i < tmp_download_TF.length ; i ++ ){
+
+                        //Toilet photo
+                        columns_defs['data'][43]['render']= function ( data, type, row,meta ) {
+                            if(typeof data != 'undefined'){
+                                url_download_TF = row['toilet_photo_url'];
+                                console.log(url_download_TF);
+                                if(type === 'display'){
+                                            data = '<a target="_blank" href = " '+url_download_TF+'" >Download Photo</a>';
+
+                                }
+                                return data;
+                            }
+                        }
+                    
+                    //Family photo
+                        columns_defs['data'][42]['render']= function ( data, type, row,meta ) {
+                            if(typeof data != 'undefined'){
+                                url_download_FF = row['family_photo_url'];
+                                if(type === 'display'){
+                                            data = '<a target="_blank" href = "'+url_download_FF+'" >Download Photo</a>';
+
+                                }
+                                return data;
+                            }
+                        }
+                }
+
+                
                 
 
                 // Adding hyperlinks to community mobilization data
