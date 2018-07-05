@@ -37,7 +37,7 @@ $(document).ready(function() {
                     }
                 }
 
-                // Adding family factsheet photo download ulrs
+                // Adding family factsheet photo download URLs
                 var tmp_download_TF = columns_defs['buttons']['Family factsheet'];
                 for (i = 0 ; i < tmp_download_TF.length ; i ++ ){
 
