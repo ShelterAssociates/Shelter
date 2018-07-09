@@ -45,7 +45,6 @@ $(document).ready(function() {
                         columns_defs['data'][43]['render']= function ( data, type, row,meta ) {
                             if(typeof data != 'undefined'){
                                 url_download_TF = row['toilet_photo_url'];
-                                console.log(url_download_TF);
                                 if(type === 'display'){
                                             data = '<a target="_blank" href = " '+url_download_TF+'" >Download Photo</a>';
 
@@ -277,6 +276,7 @@ $(document).ready(function() {
         {
                 
                 $(".overlay").show();
+                $("#legend").show();
                 buttons = '<div class="btn-group">';
                 $.each(columns_defs['buttons'],function(index, button){
                     buttons += '<button type="button" class="active btn btn-default" value="'+index+'" id="'+index.replace(/ /g,'')+'">'+index+'</button>';
@@ -506,8 +506,10 @@ $(document).ready(function() {
 
     function flag_dates(){
 
-        if( table != null){
 
+
+        if( table != null){
+            
             var data = table.rows({ page: 'current' }).data();
             var counter = 0;
             var selected_col = $("#example thead tr th:contains('Final Status')").index();
