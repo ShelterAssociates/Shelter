@@ -152,8 +152,7 @@ class ToiletConstruction(models.Model):
 
 
     def update_model(self, df1):
-        print self.household_number
-        print "here we are in update_model"
+        
         if check_bool(df1.loc['Agreement Cancelled']) is not False:
             self.agreement_cancelled = True
         else:
@@ -255,8 +254,9 @@ class KoboDDSyncTrack(models.Model):
 def update_status(sender ,instance, **kwargs):
     #instance.status = STATUS_CHOICES[4][0]#Under Construction
 
-
     if instance.agreement_cancelled is None:
+        instance.status = ""
+    if instance.agreement_date is None:
         instance.status = ""
     if instance.agreement_date:
         instance.status = STATUS_CHOICES[2][0]#material not given
