@@ -399,7 +399,7 @@ def define_columns(request):
     final_data['data'] = formdict_new
     return HttpResponse(json.dumps(final_data),  content_type = "application/json")
 
-@permission_required('mastersheet.can_view_mastersheet', login_url='/admin/')
+@permission_required('mastersheet.can_view_mastersheet', raise_exception=True)
 def renderMastersheet(request):
     slum_search_field = find_slum()
     file_form1 = file_form()

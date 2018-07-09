@@ -8,13 +8,13 @@
 <div style ="margin:auto;witdth:20%,margin-top:100px;">
 	<a href="master/"><h2>Database Adminstration </h2></a>
 </div>
-	{%if perms.master.can_view_survey_mapping%}
+	{%if perms.master.view_survey%}
 	<div style ="margin:auto;witdth:20%,margin-top:100px;">
 		<a href="surveymapping/"><h2>Survey Mapping </h2></a>
 	</div>
 	{%endif%}
 
-	{%if perms.master.can_view_slum_information%}
+	{%if perms.master.view_rapid_slum_appraisal%}
 	<div style ="margin:auto;witdth:20%,margin-top:100px;">
 		<a href="sluminformation/"><h2>Slum Information</h2></a>
 	</div>
