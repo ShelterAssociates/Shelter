@@ -12,7 +12,7 @@ import json
 import requests
 import urllib2
 from multiprocessing import Pool
-kobo_form = 103
+kobo_form = 133
 headers={}
 headers["Authorization"] = settings.KOBOCAT_TOKEN
 # SBM PCMC v1 = 103 local
@@ -27,6 +27,7 @@ def fetch_records(formID):
     # objresponse = requests.get(fetchURL + '?format=json&fields=["_id"]', headers=headers)
     # records = objresponse.json()
     kobotoolbox_request = urllib2.Request(fetchURL + '?format=json&fields=["_id"]')
+    #kobotoolbox_request = urllib2.Request(fetchURL + '?format=json&query={"slum_name":"272538756304"}&fields=["_id"]')
     kobotoolbox_request.add_header('User-agent', 'Mozilla 5.10')
     kobotoolbox_request.add_header('Authorization', settings.KOBOCAT_TOKEN)
     res = urllib2.urlopen(kobotoolbox_request)
