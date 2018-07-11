@@ -513,6 +513,11 @@ $(document).ready(function() {
             var data = table.rows({ page: 'current' }).data();
             var counter = 0;
             var selected_col = $("#example thead tr th:contains('Final Status')").index();
+            var selected_col_agreement_date = $("#example thead tr th:contains('Date of Agreement')").index();
+            var selected_col_p1 = $("#example thead tr th:contains('Date of first phase material')").index();
+            var selected_col_p2 = $("#example thead tr th:contains('Date of second phase material')").index();
+            var selected_col_p3 = $("#example thead tr th:contains('Date of third phase material')").index();
+            var selected_col_c = $("#example thead tr th:contains('Construction Completion Date')").index();
             data.each(function (value, index) {
                 counter = counter + 1;
                 index = index+1;
@@ -523,7 +528,7 @@ $(document).ready(function() {
                 if(ind == 0){ind = 10;}
 
 
-                if ( value['agreement_date_str'] != null ){
+                if ( value['agreement_date_str'] != null && value['status'] != 'Agreement cancel'){
 
                     if ( value['phase_one_material_date_str'] == null && Math.floor((today - Date.parse(trim_space(value['agreement_date_str']))) / divider) > 8 ){
                             $('tr:eq('+index+')').find('td:eq('+selected_col+')').css('background-color', '#f9a4a4');//red
@@ -551,16 +556,67 @@ $(document).ready(function() {
                                 $('tr:eq('+index+')').find('td:eq('+selected_col+')').css('background-color', '#aaa4f4');//blue
                                 $('tr:eq('+index+')').addClass('redColor');
                             }
-                            
+                    }
+                    
+                }
+                //date ambiguity to be resolved
+                /*if ( (value['agreement_date_str'] == null && value['phase_one_material_date_str'] != null)
+                     || 
+                     (value['phase_two_material_date_str'] != null && (value['phase_one_material_date_str'] == null ||                                              value['agreement_date_str'] == null) 
+                     )
+                     ||
+                     (value['completion_date_str'] != null && (value['agreement_date_str'] == null ||
+                                                                value['phase_one_material_date_str'] == null ||
+                                                                value['phase_two_material_date_str'] == null ||
+                                                                value['phase_three_material_date_str'] == null
+
+                                                                    )
+                     )
+                   )
+                {
+                        $('tr:eq('+index+')').find('td:eq('+selected_col+')').css('background-color', '#c6c6c6')
+                }*/
+                if (value['status'] != 'Agreement cancel')
+                {
+                    
+                    if ( value['phase_one_material_date_str'] != null && value['agreement_date_str'] == null )
+                    {
+                        $('tr:eq('+index+')').find('td:eq('+selected_col_agreement_date+')').css('background-color', '#c6c6c6');
+                    }
+                    if (value['phase_two_material_date_str'] != null)
+                    {
+                        if(value['phase_one_material_date_str'] == null)
+                        {
+                           $('tr:eq('+index+')').find('td:eq('+selected_col_p1+')').css('background-color', '#c6c6c6'); 
+                        }
+                        if(value['agreement_date_str'] == null)
+                        {
+                            $('tr:eq('+index+')').find('td:eq('+selected_col_agreement_date+')').css('background-color', '#c6c6c6'); 
+                        }
+                    }
+                    if (value['completion_date_str'] != null)
+                    {
+                        if(value['phase_three_material_date_str'] == null)
+                        {
+                           $('tr:eq('+index+')').find('td:eq('+selected_col_p3+')').css('background-color', '#c6c6c6'); 
+                        }
+                        if(value['phase_two_material_date_str'] == null)
+                        {
+                           $('tr:eq('+index+')').find('td:eq('+selected_col_p2+')').css('background-color', '#c6c6c6'); 
+                        }
+                        if(value['phase_one_material_date_str'] == null)
+                        {
+                           $('tr:eq('+index+')').find('td:eq('+selected_col_p1+')').css('background-color', '#c6c6c6'); 
+                        }
+                        if(value['agreement_date_str'] == null)
+                        {
+                            $('tr:eq('+index+')').find('td:eq('+selected_col_agreement_date+')').css('background-color', '#c6c6c6'); 
+                        }
 
                     }
-                    /*if (value['phase_one_material_date_str'] - value['agreement_date_str'] > 8){
-                        //Math.floor((today - Date.parse(trim_space(value['phase_three_material_date_str']))) / divider) > 8 
-                    }*/
-                }
-                else{
-                   //$('tr:eq('+ind+')').css('background-color', '#adabab');//grey
-                }
+            }
+                
+                
             });
         }
         else{
