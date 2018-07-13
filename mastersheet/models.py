@@ -299,30 +299,58 @@ def handle_shifted_material(sender ,instance, **kwargs):
     temp['defaults'] = {'agreement_cancelled' : False}
     temp['flag'] = False
 
-
+    
     if instance.p1_material_shifted_to is not None:
-        if len(instance.p1_material_shifted_to)!=0 and instance.phase_one_material_date is not None:
+        flag = True
+        try:
+            hh_does_exist = ToiletConstruction.objects.get(slum = instance.slum, household_number = instance.p1_material_shifted_to)
+            if hh_does_exist.phase_one_material_date:
+                flag = False
+        except Exception as e:
+            pass
+        if flag and len(instance.p1_material_shifted_to)!=0 and instance.phase_one_material_date is not None:
             temp['flag'] = True
             temp['household_number'] = int(instance.p1_material_shifted_to)
             temp['defaults']['phase_one_material_date'] = instance.phase_one_material_date
             instance.phase_one_material_date = None
 
     if instance.p2_material_shifted_to is not None:
-        if len(instance.p2_material_shifted_to)!=0 and instance.phase_two_material_date is not None:
+        flag = True
+        try:
+            hh_does_exist = ToiletConstruction.objects.get(slum = instance.slum, household_number = instance.p2_material_shifted_to)
+            if hh_does_exist.phase_two_material_date:
+                flag = False
+        except Exception as e:
+            pass
+        if flag and len(instance.p2_material_shifted_to)!=0 and instance.phase_two_material_date is not None:
             temp['flag'] = True
             temp['household_number'] = int(instance.p2_material_shifted_to)
             temp['defaults']['phase_two_material_date'] = instance.phase_two_material_date
             instance.phase_two_material_date = None
             
     if instance.p3_material_shifted_to is not None:
-        if len(instance.p3_material_shifted_to)!=0 and instance.phase_three_material_date is not None:
+        flag = True
+        try:
+            hh_does_exist = ToiletConstruction.objects.get(slum = instance.slum, household_number = instance.p3_material_shifted_to)
+            if hh_does_exist.phase_three_material_date:
+                flag = False
+        except Exception as e:
+            pass
+        if flag and len(instance.p3_material_shifted_to)!=0 and instance.phase_three_material_date is not None:
             temp['flag'] = True
             temp['household_number'] = int(instance.p3_material_shifted_to)
             temp['defaults']['phase_three_material_date'] = instance.phase_three_material_date
             instance.phase_three_material_date = None
             
     if instance.st_material_shifted_to is not None:
-        if len(instance.st_material_shifted_to)!=0 and instance.septic_tank_date is not None:
+        flag = True
+        try:
+            hh_does_exist = ToiletConstruction.objects.get(slum = instance.slum, household_number = instance.st_material_shifted_to)
+            if hh_does_exist.phase_septic_tank_material_date:
+                flag = False
+        except Exception as e:
+            pass
+        if flag and len(instance.st_material_shifted_to)!=0 and instance.septic_tank_date is not None:
             temp['flag'] = True
             temp['household_number'] = int(instance.st_material_shifted_to)
             temp['defaults']['phase_three_material_date'] = instance.septic_tank_date
