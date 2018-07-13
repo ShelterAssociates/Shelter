@@ -64,7 +64,7 @@ def masterSheet(request, slum_code = 0, FF_code = 0, RHS_code = 0 ):
         
     formdict = []
     if slum_code is not 0:
-        urlv = str(settings.KOBOCAT_FORM_URL)+str('data/'+str(RHS_code)+'?query={"slum_name":"') + str(slum_code[0][0])+'"}'  # '+str(slum_code)+'
+        urlv = str(settings.KOBOCAT_FORM_URL)+str('data/'+str(RHS_code)+'?query={"group_og5bx85/Type_of_survey":"01","slum_name":"') + str(slum_code[0][0])+'"}'  # '+str(slum_code)+'
         #urlv = str(settings.KOBOCAT_FORM_URL)+str('data/98?query={"slum_name":"') + str(slum_code) + '"}'  # '+str(slum_code)+'
 
         url_family_factsheet = str(settings.KOBOCAT_FORM_URL)+str('data/'+str(FF_code)+'?format=json&query={"group_vq77l17/slum_name":"')+ str(slum_code[0][0]) + str('"}&fields=["OnfieldFactsheet","_attachments","Toilet_Photo","Family_Photo","group_ne3ao98/Have_you_upgraded_yo_ng_individual_toilet","group_ne3ao98/Cost_of_upgradation_in_Rs","group_ne3ao98/Where_the_individual_ilet_is_connected_to","group_ne3ao98/Use_of_toilet","group_vq77l17/Household_number"]')
