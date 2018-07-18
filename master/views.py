@@ -132,7 +132,7 @@ def rimdisplay(request):
 	"""Display Rapid Slum Appraisal Records"""
 	if request.method=='POST':
 		deleteList=[]
-		deleteList=request.POST.getlist('delete')
+		deleteList=request.POST.getlist('selectcheckbox')
 		if deleteList :
 			for i in deleteList:
 				R = Rapid_Slum_Appraisal.objects.get(pk=i)
