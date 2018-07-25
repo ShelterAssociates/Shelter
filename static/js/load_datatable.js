@@ -11,7 +11,23 @@ var daily_reporting_columns = [];
 $(document).ready(function() {
 
     $("#add_table_btn").hide();
+    var btn_default=[
+                        {
+                            extend: 'excel',
+                            text: 'Excel(Flagged records)',
+                            exportOptions: {
+                                rows:".redColor"
+                            }
+                        },
+                        {
+                            extend : 'excel',
+                            text : 'Excel(ALL)'
+                        }
 
+                    ];
+    if($("#export_mastersheet").val()=="False"){
+        btn_default=[];
+    }
     var csrf_token = document.getElementsByName("csrfmiddlewaretoken")[0].value;
 
     $.ajax({
@@ -323,20 +339,7 @@ $(document).ready(function() {
 
                                   ],
 
-                    "buttons":[
-                        {
-                            extend: 'excel',
-                            text: 'Excel(Flagged records)',
-                            exportOptions: {
-                                rows:".redColor"
-                            }
-                        },
-                        {
-                            extend : 'excel',
-                            text : 'Excel(ALL)'
-                        }
-                    
-                    ],
+                    "buttons":btn_default,
 
                     "columns": columns_defs['data'],
                     "fixedColumns":{
