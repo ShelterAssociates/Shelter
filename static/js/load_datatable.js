@@ -505,6 +505,36 @@ $(document).ready(function() {
 
         }
     }
+    function get_date(str){
+        if(str != null)
+        {
+            return Date.parse(trim_space(str));
+        }
+        else
+        {
+            return str;
+        }
+    }
+    function checkCorrect(str1,str2)
+    {
+        if (str1 != null && str2 != null)
+        {
+            if(get_date(str1) - get_date(str2) >= 0)
+            {
+                return true;
+            }
+            else
+            {
+                return false;
+            }
+
+        }
+        else
+        {
+            return true;
+        }
+        
+    }
 
 
     function flag_dates(){
@@ -536,16 +566,19 @@ $(document).ready(function() {
                     if ( value['phase_one_material_date_str'] == null && Math.floor((today - Date.parse(trim_space(value['agreement_date_str']))) / divider) > 8 ){
                             $('tr:eq('+index+')').find('td:eq('+selected_col+')').css('background-color', '#f9a4a4');//red
                             $('tr:eq('+index+')').addClass('redColor');
+                            $('tr:eq('+index+')').addClass('phase_one_delayed');
 
                     }
                     else if ( value['phase_two_material_date_str'] == null && Math.floor((today - Date.parse(trim_space(value['phase_one_material_date_str']))) / divider) > 8 ){
                             $('tr:eq('+index+')').find('td:eq('+selected_col+')').css('background-color', '#f2f29f');//yellow
                             $('tr:eq('+index+')').addClass('redColor');
+                            $('tr:eq('+index+')').addClass('phase_two_delayed');
 
                     }
                     else if (value['phase_three_material_date_str'] == null && Math.floor((today - Date.parse(trim_space(value['phase_two_material_date_str']))) / divider) > 8 ){
                             $('tr:eq('+index+')').find('td:eq('+selected_col+')').css('background-color', '#aaf9a4');//green
                             $('tr:eq('+index+')').addClass('redColor');
+                            $('tr:eq('+index+')').addClass('phase_three_delayed');
 
                     }
                     else if (value['completion_date_str'] == null){
@@ -553,71 +586,105 @@ $(document).ready(function() {
                                 if (Math.floor((today - Date.parse(trim_space(value['phase_two_material_date_str']))) / divider) > 8 ){
                                     $('tr:eq('+index+')').find('td:eq('+selected_col+')').css('background-color', '#aaa4f4');//blue
                                     $('tr:eq('+index+')').addClass('redColor');
+                                    $('tr:eq('+index+')').addClass('completion_delayed');
                                 }
                             }
                             else if(Math.floor((today - Date.parse(trim_space(value['phase_three_material_date_str']))) / divider) > 8 ){
                                 $('tr:eq('+index+')').find('td:eq('+selected_col+')').css('background-color', '#aaa4f4');//blue
                                 $('tr:eq('+index+')').addClass('redColor');
+                                $('tr:eq('+index+')').addClass('completion_delayed');
                             }
                     }
                     
                 }
-                //date ambiguity to be resolved
-                /*if ( (value['agreement_date_str'] == null && value['phase_one_material_date_str'] != null)
-                     || 
-                     (value['phase_two_material_date_str'] != null && (value['phase_one_material_date_str'] == null ||                                              value['agreement_date_str'] == null) 
-                     )
-                     ||
-                     (value['completion_date_str'] != null && (value['agreement_date_str'] == null ||
-                                                                value['phase_one_material_date_str'] == null ||
-                                                                value['phase_two_material_date_str'] == null ||
-                                                                value['phase_three_material_date_str'] == null
-
-                                                                    )
-                     )
-                   )
+                
+                if (value['status'] != 'Agreement cancel' && value['status']!='Written-off')
                 {
-                        $('tr:eq('+index+')').find('td:eq('+selected_col+')').css('background-color', '#c6c6c6')
-                }*/
-                if (value['status'] != 'Agreement cancel')
-                {
-                    
+                    //Highlighting Missing Dates
                     if ( value['phase_one_material_date_str'] != null && value['agreement_date_str'] == null )
                     {
-                        $('tr:eq('+index+')').find('td:eq('+selected_col_agreement_date+')').css('background-color', '#c6c6c6');
+                        $('tr:eq('+index+')').find('td:eq('+selected_col_agreement_date+')').css('background-color', '#a9d2fc');
                     }
                     if (value['phase_two_material_date_str'] != null)
                     {
                         if(value['phase_one_material_date_str'] == null)
                         {
-                           $('tr:eq('+index+')').find('td:eq('+selected_col_p1+')').css('background-color', '#c6c6c6'); 
+                           $('tr:eq('+index+')').find('td:eq('+selected_col_p1+')').css('background-color', '#a9d2fc'); 
                         }
                         if(value['agreement_date_str'] == null)
                         {
-                            $('tr:eq('+index+')').find('td:eq('+selected_col_agreement_date+')').css('background-color', '#c6c6c6'); 
+                            $('tr:eq('+index+')').find('td:eq('+selected_col_agreement_date+')').css('background-color', '#a9d2fc'); 
                         }
                     }
                     if (value['completion_date_str'] != null)
                     {
                         if(value['phase_three_material_date_str'] == null)
                         {
-                           $('tr:eq('+index+')').find('td:eq('+selected_col_p3+')').css('background-color', '#c6c6c6'); 
+                           $('tr:eq('+index+')').find('td:eq('+selected_col_p3+')').css('background-color', '#a9d2fc'); 
                         }
                         if(value['phase_two_material_date_str'] == null)
                         {
-                           $('tr:eq('+index+')').find('td:eq('+selected_col_p2+')').css('background-color', '#c6c6c6'); 
+                           $('tr:eq('+index+')').find('td:eq('+selected_col_p2+')').css('background-color', '#a9d2fc'); 
                         }
                         if(value['phase_one_material_date_str'] == null)
                         {
-                           $('tr:eq('+index+')').find('td:eq('+selected_col_p1+')').css('background-color', '#c6c6c6'); 
+                           $('tr:eq('+index+')').find('td:eq('+selected_col_p1+')').css('background-color', '#a9d2fc'); 
                         }
                         if(value['agreement_date_str'] == null)
                         {
-                            $('tr:eq('+index+')').find('td:eq('+selected_col_agreement_date+')').css('background-color', '#c6c6c6'); 
+                            $('tr:eq('+index+')').find('td:eq('+selected_col_agreement_date+')').css('background-color', '#a9d2fc'); 
                         }
 
                     }
-            }
+                    if (data[0]['City Code'] != 4)
+                    {
+                        if(checkCorrect(value['phase_one_material_date_str'], value['agreement_date_str']) == false)
+                        {
+                            $('tr:eq('+index+')').find('td:eq('+selected_col_p1+')').css('background-color', '#fc0707');
+                            $('tr:eq('+index+')').find('td:eq('+selected_col_agreement_date+')').css('background-color', '#fc0707');   
+                        }
+                        if(checkCorrect(value['phase_two_material_date_str'], value['phase_one_material_date_str']) == false)
+                        {
+                            $('tr:eq('+index+')').find('td:eq('+selected_col_p1+')').css('background-color', '#fc0707');
+                            $('tr:eq('+index+')').find('td:eq('+selected_col_p2+')').css('background-color', '#fc0707');   
+                        }
+                        if(checkCorrect(value['phase_three_material_date_str'], value['phase_two_material_date_str']) == false)
+                        {
+                            $('tr:eq('+index+')').find('td:eq('+selected_col_p2+')').css('background-color', '#fc0707');
+                            $('tr:eq('+index+')').find('td:eq('+selected_col_p3+')').css('background-color', '#fc0707');   
+                        }
+                        if(checkCorrect( value['completion_date_str'], value['phase_three_material_date_str']) == false)
+                        {
+                            $('tr:eq('+index+')').find('td:eq('+selected_col_p3+')').css('background-color', '#fc0707');
+                            $('tr:eq('+index+')').find('td:eq('+selected_col_c+')').css('background-color', '#fc0707');   
+                        }
+                    } 
+                    if (data[0]['City Code'] == 4)
+                    {
+                        if(checkCorrect(value['phase_one_material_date_str'], value['agreement_date_str']) == false)
+                        {
+                            $('tr:eq('+index+')').find('td:eq('+selected_col_p1+')').css('background-color', '#fc0707');
+                            $('tr:eq('+index+')').find('td:eq('+selected_col_agreement_date+')').css('background-color', '#fc0707');   
+                        }
+                        if(checkCorrect(value['phase_two_material_date_str'], value['phase_one_material_date_str']) == false)
+                        {
+                            $('tr:eq('+index+')').find('td:eq('+selected_col_p1+')').css('background-color', '#fc0707');
+                            $('tr:eq('+index+')').find('td:eq('+selected_col_p2+')').css('background-color', '#fc0707');   
+                        }
+                        if(checkCorrect( value['completion_date_str'], value['phase_two_material_date_str']) == false)
+                        {
+                            $('tr:eq('+index+')').find('td:eq('+selected_col_p2+')').css('background-color', '#fc0707');
+                            $('tr:eq('+index+')').find('td:eq('+selected_col_c+')').css('background-color', '#fc0707');   
+                        }
+                    }
+
+
+                }
+                if (value['status']=='Written-off')
+                {
+                    $('tr:eq('+index+')').css('background-color', '#c6c6c6'); 
+
+                }
                 
                 
             });

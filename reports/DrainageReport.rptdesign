@@ -682,7 +682,7 @@ row_count =1;]]></method>
 	
 	//Toilet Information
 	row["number_of_community_toilet_blocks"] = jsonObject["number_of_community_toilet_blo"];
-	row["number_of_seats_allotted_to_men_and_women"] = jsonObject["number_of_seats_allotted_to_me"] + jsonObject["total_number_of_mixed_seats_al"] +  jsonObject["number_of_seats_allotted_to_wo"];
+	row["number_of_seats_allotted_to_men_and_women"] = jsonObject["number_of_seats_allotted_to_me"]+ "/"+ jsonObject["number_of_seats_allotted_to_wo"]+"/"+jsonObject["total_number_of_mixed_seats_al"];
 	row["toilet_seat_to_persons_ratio"] = jsonObject["toilet_seat_to_persons_ratio"];
 	row["condition_of_toilet_block"] = jsonObject["condition_of_ctb_structure"];
 	row["cleanliness_of_toilet_block"] = jsonObject["cleanliness_of_the_ctb"];
@@ -1538,7 +1538,7 @@ return false;]]></method>
                     <property name="style">SectionlabelContainer</property>
                     <label id="356">
                         <property name="style">SectionLabel</property>
-                        <text-property name="text">Number of Seats (male/female)</text-property>
+                        <text-property name="text">Number of Seats (male/female/mix)</text-property>
                     </label>
                 </cell>
                 <cell id="229">
