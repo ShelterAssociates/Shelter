@@ -241,13 +241,13 @@ def masterSheet(request, slum_code = 0, FF_code = 0, RHS_code = 0 ):
             # Handling current place of defecation column    
             if 'group_oi8ts04/C1' in x.keys():
                 x.update({'current place of defecation': x['group_oi8ts04/C1']})
-            elif 'group_oi8ts04/C2' in x.keys():
+            if 'group_oi8ts04/C2' in x.keys():
                 x.update({'current place of defecation': x['group_oi8ts04/C2']})
-            elif 'group_oi8ts04/C3' in x.keys():
+            if 'group_oi8ts04/C3' in x.keys():
                 x.update({'current place of defecation': x['group_oi8ts04/C3']})
-            elif 'group_oi8ts04/C4' in x.keys():
+            if 'group_oi8ts04/C4' in x.keys():
                 x.update({'current place of defecation': x['group_oi8ts04/C4']})
-            elif 'group_oi8ts04/C5' in x.keys():
+            if 'group_oi8ts04/C5' in x.keys():
                 x.update({'current place of defecation': x['group_oi8ts04/C5']})
             
    # try:
