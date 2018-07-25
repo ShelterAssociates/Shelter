@@ -257,7 +257,7 @@ def masterSheet(request, slum_code = 0, FF_code = 0, RHS_code = 0 ):
                         x.update({'Funder': funder.sponsor.organization_name})
     try:
         slum_info_dict = {}
-        slum_info_dict.update({"Name of the slum":slum_code[0][2], "Electoral Ward":slum_code[0][3]})
+        slum_info_dict.update({"Name of the slum":slum_code[0][3], "Electoral Ward":slum_code[0][2], "City Code" : slum_code[0][1]})
         formdict.append(slum_info_dict)
     except Exception as e:
         print e
@@ -480,8 +480,7 @@ def handle_uploaded_file(f,response):
         df_TC = df1.loc[:,'Date of Agreement':'Comment']
     except:
         flag_TC = 1
-
-
+    
     # *******************************IMPORTANT!!!!*************************************
     # In the excel sheet that has been uploaded, it is imperative to have a column with
     # a header 'Community Mobilization Ends' right after the last mobilization activity's
@@ -757,3 +756,23 @@ def sync_kobo_data(request,slum_id):
         data['flag']=False
         data['msg'] = "Error occurred while sync from kobo. Please contact administrator." +str(e)
     return HttpResponse(json.dumps(data), content_type="application/json")
+from django.core import serializers
+
+def render_report(request):
+    return render(request, 'mastersheet_report.html')
+def create_report(request):
+    fancy_tree_data ={}
+    cities = CityReference.objects.all()
+    #slums = Slum.objects.all()
+    fancy_tree_data['cities'] =[]
+    for i in cities:
+        temp = {}
+        temp['name'] = i.city_name
+        temp['id'] = i.id
+        #temp[''] = []
+        
+        temp['slums']=list(Slum.objects.filter(electoral_ward__administrative_ward__city__name = i).values('id','name'))
+        fancy_tree_data['cities'].append(temp)
+    
+    return HttpResponse(json.dumps(fancy_tree_data), content_type="application/json")
+    
