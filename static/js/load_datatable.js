@@ -3,6 +3,7 @@ var table = null;
 var divider = 1000 * 60 * 60 * 24;
 var window = 8 * 1000 * 60 * 60 * 24;
 var current_slum;
+var city_code;
 
 var today = Date.now();
 var daily_reporting_columns = [];
@@ -301,15 +302,7 @@ $(document).ready(function() {
                                     },
                                     contentType : "application/json",
                                     complete: function(data){
-                                        // Displaying the electoral ward and name of the slum besides the look-up box
-                                        if (data.responseJSON != 'undefined'){
-                                            var slum_info = document.createElement('div');
-                                            slum_info.classList.add("display_line");
-                                            slum_info.setAttribute("id" , "slum_info");
-                                            slum_info.innerHTML = "<p>"+data.responseJSON[data.responseJSON.length-1]["Name of the slum"]+", "+data.responseJSON[data.responseJSON.length-1]["Electoral Ward"] +"</p>"; 
-                                            //console.log(data.responseJSON[data.responseJSON.length-1]);
-                                            $("#slum_form p").append(slum_info);
-                                        }
+                                        
                                         $(".overlay").hide();   
                                     },
                               },
@@ -485,6 +478,31 @@ $(document).ready(function() {
             alert("Please select a slum");
         }
         else{
+            $.ajax({
+                url : "/mastersheet/details/",
+                //dataSrc:"",
+                type : "GET",
+                data:  {'form':$("#slum_form").serialize() , 'csrfmiddlewaretoken':csrf_token}
+                    // NOTE : We could have assigned the variable itself to the 'data' attribute, instead
+                    // of writing  function. That method promotes the errorneous behaviour. The code would have been
+                    // unable to update the 'data' attribute on the call of 'table.ajax.reload()'. 
+                ,
+                contentType : "application/json",
+                success: function(data){
+                    // Displaying the electoral ward and name of the slum besides the look-up box
+                    if (data != 'undefined'){
+                        city_code = data["City Code"];
+                        var slum_info = document.createElement('div');
+                        slum_info.classList.add("display_line");
+                        slum_info.setAttribute("id" , "slum_info");
+                        slum_info.innerHTML = "<p>"+data["Name of the slum"]+", "+data["Electoral Ward"] +"</p>"; 
+                        //console.log(data.responseJSON[data.responseJSON.length-1]);
+                        $("#slum_form p").append(slum_info);
+                        
+                    }
+                     
+                },
+            });
             load_data_datatable();
         }
 
@@ -539,7 +557,6 @@ $(document).ready(function() {
 
 
         if( table != null){
-            
             var data = table.rows({ page: 'current' }).data();
             var counter = 0;
             var selected_col = $("#example thead tr th:contains('Final Status')").index();
@@ -633,8 +650,10 @@ $(document).ready(function() {
                         }
 
                     }
-                    if (data[0]['City Code'] != 4)
+                    if (city_code != 4)
+
                     {
+                        
                         if(checkCorrect(value['phase_one_material_date_str'], value['agreement_date_str']) == false)
                         {
                             $('tr:eq('+index+')').find('td:eq('+selected_col_p1+')').css('background-color', '#fc0707');
@@ -656,7 +675,7 @@ $(document).ready(function() {
                             $('tr:eq('+index+')').find('td:eq('+selected_col_c+')').css('background-color', '#fc0707');   
                         }
                     } 
-                    if (data[0]['City Code'] == 4)
+                    if (city_code == 4)
                     {
                         if(checkCorrect(value['phase_one_material_date_str'], value['agreement_date_str']) == false)
                         {
