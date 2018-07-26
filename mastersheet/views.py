@@ -40,7 +40,17 @@ def apply_permissions_ajax(perms):
             return view_func(request, *args, **kwargs)
         return _wrapped_view
     return real_decorator
-
+def give_details(request):
+    slum_info_dict = {}
+    try:
+        print request.GET.get('form')
+        delimiter = 'slumname='
+        slum_code = Slum.objects.filter(pk = int(request.GET.get('form').partition(delimiter)[2]) ).values_list("shelter_slum_code","electoral_ward__administrative_ward__city__id","electoral_ward__name", "name") 
+        slum_info_dict.update({"Name of the slum":slum_code[0][3], "Electoral Ward":slum_code[0][2], "City Code" : slum_code[0][1]})
+        
+    except Exception as e:
+        print e
+    return HttpResponse(json.dumps(slum_info_dict), content_type = 'application/json')
 # 'masterSheet()' is the principal view.
 # It collects the data from newest version of RHS form and family factsheets
 # Also, it retrieves the data of accounts and SBM. This view bundles them in a single object
@@ -255,13 +265,7 @@ def masterSheet(request, slum_code = 0, FF_code = 0, RHS_code = 0 ):
                 for funder in slum_funder:
                     if int(x['Household_number']) in funder.household_code:
                         x.update({'Funder': funder.sponsor.organization_name})
-    try:
-        slum_info_dict = {}
-        slum_info_dict.update({"Name of the slum":slum_code[0][3], "Electoral Ward":slum_code[0][2], "City Code" : slum_code[0][1]})
-        formdict.append(slum_info_dict)
-    except Exception as e:
-        print e
-
+    
     return HttpResponse(json.dumps(formdict),  content_type = "application/json")
 
 
