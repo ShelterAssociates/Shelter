@@ -13,7 +13,7 @@
 	});
 
 	$(document).ready(function() {
-		$("#delete").click(function() {
+		$("#delete").click(function(event) {
 
 			var boolcheck = false;
 			var inputArray = $('[name=selectcheckbox]');
@@ -24,10 +24,12 @@
 			}
 
 			if (boolcheck == true) {
-				alert("Are you sure you want to delete ? ");
+				if (!confirm("Are you sure you want to delete ?")){
+					event.preventDefault();
+				}
 			} else {
 				alert("Please select checkbox ... ");
-				return;
+				event.preventDefault();
 			}
 
 		});
@@ -54,26 +56,17 @@
 					&nbsp;&nbsp; &nbsp;&nbsp;
 					<button type='submit' value='Search' class="btn btn-primary" role="button">Search</button>
 
-					<div style="float: right; ">
-						<a href="{% url 'riminsert' %}" style="text-decoration: none; color: #FFF;" class="btn btn-primary" role="button">Add New</a>
-						&nbsp;&nbsp;
-						<button id ="delete" type="submit" class="btn btn-danger">Delete</button>	
-            &nbsp;&nbsp;
-            <a href="{% url 'sluminformation' %}" style="text-decoration: none; color: #FFF;" class="btn btn-primary" role="button">BacK</a>
-            
-            &nbsp;&nbsp;
-            					
-					</div>
 				</div>	
 					
 		</form>
 	</div>
-	</br>
-	
-	<div  class= "col-md-12" style = "height: 1px;background-color: blue;"></div>
-	
-	<form  enctype="multipart/form-data" method="post" >
 
+	<form  enctype="multipart/form-data" method="post" >
+		<div style="text-align:right;">
+			<a href="{% url 'riminsert' %}" style="text-decoration: none; color: #FFF;" class="btn btn-primary" role="button">Add New</a>&nbsp;
+			<button id ="delete" type="submit" class="btn btn-danger">Delete</button>&nbsp;
+            <a href="{% url 'sluminformation' %}" style="text-decoration: none; color: #FFF;" class="btn btn-primary" role="button">Back</a>&nbsp;&nbsp;
+		</div>
 		{% csrf_token %}
 		<br>
 		<div style=" overflow-x:scroll ; ">
@@ -120,10 +113,8 @@
 					</tr>
 
 				</thead>
-
-				{% for i in RA%}
-
 				<tbody bgcolor='lavender'>
+				{% for i in RA%}
 					<tr>
 						<td>
 						<input id={{i.id}} type="checkbox" name="selectcheckbox" value={{i.id}}>
@@ -165,10 +156,11 @@
 						<td > {{ i.waste_management_image_bottomdown2}} </td>
 
 					</tr>
-				</tbody>
 				{% endfor %}
+				</tbody>
 			</table>
 		</div>
+
 	</form>
 
 	<div class="pagination col-md-12"  align="center">

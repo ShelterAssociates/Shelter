@@ -29,8 +29,8 @@ DEBUG = True
 ALLOWED_HOSTS = ['.shelter-associates.org']
 
 # Application definition
-
 INSTALLED_APPS = (
+    'admin_view_permission',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -49,6 +49,12 @@ INSTALLED_APPS = (
 
 )
 
+ADMIN_VIEW_PERMISSION_MODELS = [
+    'auth.User',
+    'master.Survey',
+    'master.Slum',
+    'master.Rapid_Slum_Appraisal',
+]
 
 MIDDLEWARE_CLASSES = (
 

@@ -71,9 +71,6 @@ class Survey(models.Model):
 
     class Meta:
         """Metadata for class Survey"""
-        permissions = (
-            ("can_view_survey_mapping", "Can view the Survey Mapping"),
-        )
         verbose_name = 'Survey'
         verbose_name_plural = 'Surveys'
 
@@ -316,7 +313,6 @@ class Rapid_Slum_Appraisal(models.Model):
 
     class Meta:
         permissions = (
-            ("can_view_slum_information", "Can view the slum information"),
             ("can_generate_reports", "Can generate reports"),
         )
         ordering = ['slum_name']

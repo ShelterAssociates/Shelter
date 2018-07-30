@@ -1257,7 +1257,7 @@ row_count =1;]]></method>
 	
 	//Toilet Information
 	row["number_of_community_toilet_blocks"] = jsonObject["number_of_community_toilet_blo"];
-	row["number_of_seats_allotted_to_men_and_women"] = jsonObject["number_of_seats_allotted_to_me"] + jsonObject["number_of_seats_allotted_to_wo"];
+	row["number_of_seats_allotted_to_men_and_women"] = jsonObject["number_of_seats_allotted_to_me"] +"/"+ jsonObject["number_of_seats_allotted_to_wo"] +"/"+jsonObject["total_number_of_mixed_seats_al"];
 	row["toilet_cost"] = jsonObject["toilet_cost"];
 	row["toilet_maintenance_provided_by"] = jsonObject["ctb_maintenance_provided_by"];
 	row["condition_of_toilet_block"] = jsonObject["condition_of_ctb_structure"];
@@ -2484,7 +2484,7 @@ return false;]]></method>
                     <property name="style">DataImage</property>
                     <label id="525">
                         <property name="style">SectionLabel</property>
-                        <text-property name="text">Number of Seats (male+female)</text-property>
+                        <text-property name="text">Number of Seats (male/female/mix)</text-property>
                     </label>
                 </cell>
                 <cell id="950">

@@ -22,3 +22,4 @@ pycrypto==2.6.1
 pandas==0.21.0
 requests==2.18.4
 xlrd==0.9.3
+django-admin-view-permission==1.6
