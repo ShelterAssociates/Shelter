@@ -495,7 +495,7 @@ $(document).ready(function() {
                     function( settings, data, dataIndex ) {
                         //|| ($("#md:checked").length == 1 && )
 
-                        if (boxes.indexOf(data[68])> -1 || ($("#wo:checked").length == 1 && data[65] == "Written-off") || ($("#md:checked").length == 1 && (data[96] != '' || data[97] != ''||data[98] != ''||data[99] != '')) ){
+                        if (boxes.indexOf(data[68])> -1 || ($("#wo:checked").length == 1 && data[65] == "Written-off") || ($("#md:checked").length == 1 && (data[97] != '' || data[98] != ''||data[99] != ''||data[100] != '')) ){
                             return true;
                         }
                         if($(".checkmark").parent().find("input:checked").length == 0 )
