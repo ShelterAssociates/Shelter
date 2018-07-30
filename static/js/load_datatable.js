@@ -5,6 +5,8 @@ var window = 8 * 1000 * 60 * 60 * 24;
 var current_slum;
 var city_code;
 
+var boxes = [];
+
 var today = Date.now();
 var daily_reporting_columns = [];
 
@@ -146,18 +148,111 @@ $(document).ready(function() {
                 // Adding hyperlinks to Toilet Construction data
                 var tmp_TC = columns_defs['buttons']['Construction status'];
                 for (i = 0 ; i < tmp_TC.length ; i ++ ){
-		if (columns_defs['data'][tmp_TC[i]]['data']!= "Funder"){
-                    columns_defs['data'][tmp_TC[i]]['render']= function ( data, type, row,meta ) {
-                        if(typeof data != 'undefined'){
-                            url_TC = String("/admin/master/mastersheet/toiletconstruction/") + row['tc_id_'+String(row.Household_number)] + String("/");
-                            if(type === 'display'){
-                                        data = '<a href = "#" onclick="window.open(\''+url_TC+'\', \'_blank\', \'width=850,height=750\');">' + data + "</a>";
 
+            		if (columns_defs['data'][tmp_TC[i]]['data']!= "Funder"){
+                                columns_defs['data'][tmp_TC[i]]['render']= function ( data, type, row,meta ) {
+                                    if(typeof data != 'undefined'){
+                                        url_TC = String("/admin/master/mastersheet/toiletconstruction/") + row['tc_id_'+String(row.Household_number)] + String("/");
+                                        if(type === 'display'){
+                                                    data = '<a href = "#" onclick="window.open(\''+url_TC+'\', \'_blank\', \'width=850,height=750\');">' + data + "</a>";
+                                        }
+                                        return data;
+                                    }
+                                }
+            	       }
+                     if(columns_defs['data'][tmp_TC[i]]['data']== "status")
+                     {
+                        columns_defs['data'][tmp_TC[i]]['render']= function ( data, type, row,meta ) {
+                                if(typeof data != 'undefined'){
+                                    url_TC = String("/admin/master/mastersheet/toiletconstruction/") + row['tc_id_'+String(row.Household_number)] + String("/");
+                                    if(type === 'display'){
+                                                data = '<a href = "#" onclick="window.open(\''+url_TC+'\', \'_blank\', \'width=850,height=750\');">' + data + "</a>";
+                                    }
+                                    if(row['delay_flag'] != '' )
+                                    {
+                                        data = "<p class = 'highlight_p' style = 'background-color : "+row['delay_flag']+";'>"+data+"</p>";
+                                    }
+                                    return data;
+
+                                }
                             }
-                            return data;
-                        }
-                    }
-	         }
+                     }
+                      if(columns_defs['data'][tmp_TC[i]]['data']== "agreement_date_str")
+                     {
+                        columns_defs['data'][tmp_TC[i]]['render']= function ( data, type, row,meta ) {
+                                if(typeof data != 'undefined'){
+                                    url_TC = String("/admin/master/mastersheet/toiletconstruction/") + row['tc_id_'+String(row.Household_number)] + String("/");
+                                    if(type === 'display'){
+                                                data = '<a href = "#" onclick="window.open(\''+url_TC+'\', \'_blank\', \'width=850,height=750\');">' + data + "</a>";
+                                    }
+                                    if(row['a_missing'] != '' )
+
+                                    {
+
+                                        data = "<p class = 'highlight_p' style = 'background-color : "+row['a_missing']+";'>"+data+"</p>";
+                                    }
+                                    return data;
+
+                                }
+                            }
+                     }
+                      if(columns_defs['data'][tmp_TC[i]]['data']== "phase_one_material_date_str")
+                     {
+                        columns_defs['data'][tmp_TC[i]]['render']= function ( data, type, row,meta ) {
+                                if(typeof data != 'undefined'){
+                                    url_TC = String("/admin/master/mastersheet/toiletconstruction/") + row['tc_id_'+String(row.Household_number)] + String("/");
+                                    if(type === 'display'){
+                                                data = '<a href = "#" onclick="window.open(\''+url_TC+'\', \'_blank\', \'width=850,height=750\');">' + data + "</a>";
+                                    }
+                                    if(row['p1_missing'] != '' )
+                                    {
+                                        data = "<p class = 'highlight_p' style = 'background-color : "+row['p1_missing']+";'>"+data+"</p>";
+                                    }
+                                    return data;
+
+                                }
+                            }
+                     }
+                      if(columns_defs['data'][tmp_TC[i]]['data']== "phase_two_material_date_str")
+                     {
+                        columns_defs['data'][tmp_TC[i]]['render']= function ( data, type, row,meta ) {
+                                if(typeof data != 'undefined'){
+                                    url_TC = String("/admin/master/mastersheet/toiletconstruction/") + row['tc_id_'+String(row.Household_number)] + String("/");
+                                    if(type === 'display'){
+                                                data = '<a href = "#" onclick="window.open(\''+url_TC+'\', \'_blank\', \'width=850,height=750\');">' + data + "</a>";
+                                    }
+                                    if(row['p2_missing'] != '' )
+                                    {
+                                        data = "<p class = 'highlight_p' style = 'background-color : "+row['p2_missing']+";'>"+data+"</p>";
+                                    }
+                                    return data;
+
+                                }
+                            }
+                     }
+                      if(columns_defs['data'][tmp_TC[i]]['data']== "phase_three_material_date_str")
+                     {
+                        columns_defs['data'][tmp_TC[i]]['render']= function ( data, type, row,meta ) {
+                                if(typeof data != 'undefined'){
+                                    url_TC = String("/admin/master/mastersheet/toiletconstruction/") + row['tc_id_'+String(row.Household_number)] + String("/");
+                                    if(type === 'display'){
+                                                data = '<a href = "#" onclick="window.open(\''+url_TC+'\', \'_blank\', \'width=850,height=750\');">' + data + "</a>";
+                                    }
+                                    if(row['p3_missing'] != '' )
+                                    {
+                                        data = "<p class = 'highlight_p' style = 'background-color : "+row['p3_missing']+";'>"+data+"</p>";
+                                    }
+                                    return data;
+
+                                }
+                            }
+                     }
+                     columns_defs['data'].push({'data':'a_missing', 'bVisible':false});
+                        columns_defs['data'].push({'data':'p1_missing', 'bVisible':false});
+                       columns_defs['data'].push({'data':'p2_missing', 'bVisible':false});
+                        columns_defs['data'].push({'data':'p3_missing', 'bVisible':false});
+                     
+
                 }
             }
     });
@@ -317,10 +412,48 @@ $(document).ready(function() {
                                         // unable to update the 'data' attribute on the call of 'table.ajax.reload()'. 
                                     },
                                     contentType : "application/json",
-                                    complete: function(data){
+                                    
+                                    dataSrc: function(data){
+                                        for ( i = 0; i < data.length; i++){
+
+                                             data[i]['a_missing'] = '';
+                                                data[i]['p1_missing'] = '';
+                                                data[i]['p2_missing'] = '';
+                                                data[i]['p3_missing'] = '';
+                                            if(!data[i]['agreement_date_str'] && (data[i]['phase_one_material_date_str'] || data[i]['phase_two_material_date_str'] || data[i]['phase_three_material_date_str'] || data[i]['completion_date_str'])){
+                                                data[i]['a_missing'] = '#a9d2fc';      
+                                            }
+                                            if(!data[i]['phase_one_material_date_str'] && (data[i]['phase_two_material_date_str'] || data[i]['phase_three_material_date_str'] || data[i]['completion_date_str'])){
+                                                    data[i]['p1_missing'] = '#a9d2fc';
+                                                    
+                                            }
+                                            if (data[i]['phase_one_material_date_str'] != data[i]['phase_three_material_date_str']){
+                                                
+                                                if(!data[i]['phase_two_material_date_str'] && (data[i]['phase_three_material_date_str'] || data[i]['completion_date_str'])){
+                                                    data[i]['p2_missing'] = '#a9d2fc';
+                                                    
+                                                }
+                                                if(!data[i]['phase_three_material_date_str'] && (data[i]['completion_date_str'])){
+                                                    data[i]['p3_missing'] = '#a9d2fc';
+                                            }
+                                            else{
+                                                if(!data[i]['phase_two_material_date_str'] && (data[i]['completion_date_str'])){
+                                                    data[i]['p2_missing'] = '#a9d2fc';
+                                                }
+
+                                            }
+                                                
+                                           
+                                        }
+                                    }
+                                    return data;
                                         
-                                        $(".overlay").hide();   
                                     },
+                                    complete:function(){
+                                             $(".overlay").hide(); 
+                                    },
+
+                                    
                               },
                    
                     "columnDefs": [
@@ -328,6 +461,7 @@ $(document).ready(function() {
                                         "targets": "_all",
 
                                     } ,
+                                    
                                     {"footer":true},
 
                                   ],
@@ -350,10 +484,31 @@ $(document).ready(function() {
                 } );
 
                 
+                $('#p1, #p2, #p3, #cd #ad, #md, #wo').click( function() {
+                       var selected = [];
+                       boxes = [];
+                        $.each($("input[name='checkbox_filter']:checked"),function(k,v){boxes.push($(v).attr('value'))});
+                        table.draw();
+                } );
+                $.fn.dataTable.ext.search.push(
 
-                
+                    function( settings, data, dataIndex ) {
+                        //|| ($("#md:checked").length == 1 && )
+
+                        if (boxes.indexOf(data[68])> -1 || ($("#wo:checked").length == 1 && data[65] == "Written-off") || ($("#md:checked").length == 1 && (data[96] != '' || data[97] != ''||data[98] != ''||data[99] != '')) ){
+                            return true;
+                        }
+                        if($(".checkmark").parent().find("input:checked").length == 0 )
+                        {
+                            return true;
+                        }
+                        
+                         return false;   
+                            
+                        }
+                    );
                 $('#example').on("draw.dt", function(){
-                    flag_dates();
+                   flag_dates();
                 });
 
 
@@ -556,157 +711,12 @@ $(document).ready(function() {
 
 
     function flag_dates(){
-
-
-
         if( table != null){
-            var data = table.rows({ page: 'current' }).data();
-            var counter = 0;
-            var selected_col = $("#example thead tr th:contains('Final Status')").index();
-            var selected_col_agreement_date = $("#example thead tr th:contains('Date of Agreement')").index();
-            var selected_col_p1 = $("#example thead tr th:contains('Date of first phase material')").index();
-            var selected_col_p2 = $("#example thead tr th:contains('Date of second phase material')").index();
-            var selected_col_p3 = $("#example thead tr th:contains('Date of third phase material')").index();
-            var selected_col_c = $("#example thead tr th:contains('Construction Completion Date')").index();
-            data.each(function (value, index) {
-                counter = counter + 1;
-                index = index+1;
-
-
-
-                var ind = value['Household_number'] % 10;
-                if(ind == 0){ind = 10;}
-
-
-                if ( value['agreement_date_str'] != null && value['status'] != 'Agreement cancel'){
-
-                    if ( value['phase_one_material_date_str'] == null && Math.floor((today - Date.parse(trim_space(value['agreement_date_str']))) / divider) > 8 ){
-                            $('tr:eq('+index+')').find('td:eq('+selected_col+')').css('background-color', '#f9a4a4');//red
-                            $('tr:eq('+index+')').addClass('redColor');
-                            $('tr:eq('+index+')').addClass('phase_one_delayed');
-
-                    }
-                    else if ( value['phase_two_material_date_str'] == null && Math.floor((today - Date.parse(trim_space(value['phase_one_material_date_str']))) / divider) > 8 ){
-                            $('tr:eq('+index+')').find('td:eq('+selected_col+')').css('background-color', '#f2f29f');//yellow
-                            $('tr:eq('+index+')').addClass('redColor');
-                            $('tr:eq('+index+')').addClass('phase_two_delayed');
-
-                    }
-                    else if (value['phase_three_material_date_str'] == null && Math.floor((today - Date.parse(trim_space(value['phase_two_material_date_str']))) / divider) > 8 ){
-                            $('tr:eq('+index+')').find('td:eq('+selected_col+')').css('background-color', '#aaf9a4');//green
-                            $('tr:eq('+index+')').addClass('redColor');
-                            $('tr:eq('+index+')').addClass('phase_three_delayed');
-
-                    }
-                    else if (value['completion_date_str'] == null){
-                            if (Math.floor((Date.parse(trim_space(value['phase_one_material_date_str'])) - Date.parse(trim_space(value['phase_three_material_date_str']))) / divider) == 0){
-                                if (Math.floor((today - Date.parse(trim_space(value['phase_two_material_date_str']))) / divider) > 8 ){
-                                    $('tr:eq('+index+')').find('td:eq('+selected_col+')').css('background-color', '#aaa4f4');//blue
-                                    $('tr:eq('+index+')').addClass('redColor');
-                                    $('tr:eq('+index+')').addClass('completion_delayed');
-                                }
-                            }
-                            else if(Math.floor((today - Date.parse(trim_space(value['phase_three_material_date_str']))) / divider) > 8 ){
-                                $('tr:eq('+index+')').find('td:eq('+selected_col+')').css('background-color', '#aaa4f4');//blue
-                                $('tr:eq('+index+')').addClass('redColor');
-                                $('tr:eq('+index+')').addClass('completion_delayed');
-                            }
-                    }
-                    
-                }
-                
-                if (value['status'] != 'Agreement cancel' && value['status']!='Written-off')
-                {
-                    //Highlighting Missing Dates
-                    if ( value['phase_one_material_date_str'] != null && value['agreement_date_str'] == null )
-                    {
-                        $('tr:eq('+index+')').find('td:eq('+selected_col_agreement_date+')').css('background-color', '#a9d2fc');
-                    }
-                    if (value['phase_two_material_date_str'] != null)
-                    {
-                        if(value['phase_one_material_date_str'] == null)
-                        {
-                           $('tr:eq('+index+')').find('td:eq('+selected_col_p1+')').css('background-color', '#a9d2fc'); 
-                        }
-                        if(value['agreement_date_str'] == null)
-                        {
-                            $('tr:eq('+index+')').find('td:eq('+selected_col_agreement_date+')').css('background-color', '#a9d2fc'); 
-                        }
-                    }
-                    if (value['completion_date_str'] != null)
-                    {
-                        if(value['phase_three_material_date_str'] == null)
-                        {
-                           $('tr:eq('+index+')').find('td:eq('+selected_col_p3+')').css('background-color', '#a9d2fc'); 
-                        }
-                        if(value['phase_two_material_date_str'] == null)
-                        {
-                           $('tr:eq('+index+')').find('td:eq('+selected_col_p2+')').css('background-color', '#a9d2fc'); 
-                        }
-                        if(value['phase_one_material_date_str'] == null)
-                        {
-                           $('tr:eq('+index+')').find('td:eq('+selected_col_p1+')').css('background-color', '#a9d2fc'); 
-                        }
-                        if(value['agreement_date_str'] == null)
-                        {
-                            $('tr:eq('+index+')').find('td:eq('+selected_col_agreement_date+')').css('background-color', '#a9d2fc'); 
-                        }
-
-                    }
-                    if (city_code != 4)
-
-                    {
-                        
-                        if(checkCorrect(value['phase_one_material_date_str'], value['agreement_date_str']) == false)
-                        {
-                            $('tr:eq('+index+')').find('td:eq('+selected_col_p1+')').css('background-color', '#fc0707');
-                            $('tr:eq('+index+')').find('td:eq('+selected_col_agreement_date+')').css('background-color', '#fc0707');   
-                        }
-                        if(checkCorrect(value['phase_two_material_date_str'], value['phase_one_material_date_str']) == false)
-                        {
-                            $('tr:eq('+index+')').find('td:eq('+selected_col_p1+')').css('background-color', '#fc0707');
-                            $('tr:eq('+index+')').find('td:eq('+selected_col_p2+')').css('background-color', '#fc0707');   
-                        }
-                        if(checkCorrect(value['phase_three_material_date_str'], value['phase_two_material_date_str']) == false)
-                        {
-                            $('tr:eq('+index+')').find('td:eq('+selected_col_p2+')').css('background-color', '#fc0707');
-                            $('tr:eq('+index+')').find('td:eq('+selected_col_p3+')').css('background-color', '#fc0707');   
-                        }
-                        if(checkCorrect( value['completion_date_str'], value['phase_three_material_date_str']) == false)
-                        {
-                            $('tr:eq('+index+')').find('td:eq('+selected_col_p3+')').css('background-color', '#fc0707');
-                            $('tr:eq('+index+')').find('td:eq('+selected_col_c+')').css('background-color', '#fc0707');   
-                        }
-                    } 
-                    if (city_code == 4)
-                    {
-                        if(checkCorrect(value['phase_one_material_date_str'], value['agreement_date_str']) == false)
-                        {
-                            $('tr:eq('+index+')').find('td:eq('+selected_col_p1+')').css('background-color', '#fc0707');
-                            $('tr:eq('+index+')').find('td:eq('+selected_col_agreement_date+')').css('background-color', '#fc0707');   
-                        }
-                        if(checkCorrect(value['phase_two_material_date_str'], value['phase_one_material_date_str']) == false)
-                        {
-                            $('tr:eq('+index+')').find('td:eq('+selected_col_p1+')').css('background-color', '#fc0707');
-                            $('tr:eq('+index+')').find('td:eq('+selected_col_p2+')').css('background-color', '#fc0707');   
-                        }
-                        if(checkCorrect( value['completion_date_str'], value['phase_two_material_date_str']) == false)
-                        {
-                            $('tr:eq('+index+')').find('td:eq('+selected_col_p2+')').css('background-color', '#fc0707');
-                            $('tr:eq('+index+')').find('td:eq('+selected_col_c+')').css('background-color', '#fc0707');   
-                        }
-                    }
-
-
-                }
-                if (value['status']=='Written-off')
-                {
-                    $('tr:eq('+index+')').css('background-color', '#c6c6c6'); 
-
-                }
-                
-                
-            });
+           $("td:contains('Written-off')").parents('tr').css('background-color', '#c6c6c6');
+           $.each($('.highlight_p'), function(k,v){
+            $(v).parent().attr('style',$(v).attr('style'));
+           });
+           
         }
         else{
            console.log("table is null");

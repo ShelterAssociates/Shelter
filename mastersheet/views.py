@@ -16,6 +16,7 @@ import collections
 from django.http import JsonResponse
 from mastersheet.daily_reporting_sync import ToiletConstructionSync, CommunityMobilizaitonSync
 from collections import defaultdict
+import datetime
 
 #The views in this file correspond to the mastersheet functionality of shelter app.
 
@@ -43,7 +44,6 @@ def apply_permissions_ajax(perms):
 def give_details(request):
     slum_info_dict = {}
     try:
-        print request.GET.get('form')
         delimiter = 'slumname='
         slum_code = Slum.objects.filter(pk = int(request.GET.get('form').partition(delimiter)[2]) ).values_list("shelter_slum_code","electoral_ward__administrative_ward__city__id","electoral_ward__name", "name") 
         slum_info_dict.update({"Name of the slum":slum_code[0][3], "Electoral Ward":slum_code[0][2], "City Code" : slum_code[0][1]})
@@ -153,6 +153,20 @@ def masterSheet(request, slum_code = 0, FF_code = 0, RHS_code = 0 ):
             if i['status'] is not None:
                 if i['status'].strip() !=  "":
                     i['status'] = ToiletConstruction.get_status_display(i['status'])
+            i['delay_flag'] = ''
+            if i['agreement_date_str'] != None and i['status'] != 'Agreement cancel':      
+                if i['phase_one_material_date_str'] == None and is_delayed(i['agreement_date_str']) :
+                    i['delay_flag'] = '#f9a4a4' # phase one delayed
+                if i['phase_two_material_date_str'] == None and is_delayed(i['phase_one_material_date_str']) :
+                    i['delay_flag'] = '#f2f29f' # phase two delayed
+                if i['phase_two_material_date_str'] != i['phase_three_material_date_str']:
+                    if i['phase_three_material_date_str'] == None and is_delayed(i['phase_two_material_date_str']) :
+                        i['delay_flag'] = '#aaf9a4'
+                    if i['completion_date_str'] == None and is_delayed(i['phase_three_material_date_str']):
+                        i['delay_flag'] ='#aaa4f4'
+                else: 
+                    if i['completion_date_str'] == None and is_delayed(i['phase_two_material_date_str']):
+                        i['delay_flag'] = '#aaa4f4'
         temp_daily_reporting = {obj_DR['household_number']: obj_DR for obj_DR in daily_reporting_data}
         temp_DR_keys = temp_daily_reporting.keys()
         # SBM - fetching data
@@ -184,6 +198,7 @@ def masterSheet(request, slum_code = 0, FF_code = 0, RHS_code = 0 ):
         obj_name_label_data in name_label_data}
 
         for x in formdict:
+
             
             for y in vendor:
                 for z in y.household_number:
@@ -269,6 +284,19 @@ def masterSheet(request, slum_code = 0, FF_code = 0, RHS_code = 0 ):
     return HttpResponse(json.dumps(formdict),  content_type = "application/json")
 
 
+def to_date(s):
+    
+    if s!= None:
+        return datetime.datetime.strptime(s.strip(), "%Y-%m-%d").date()
+    else:
+        return None
+
+def is_delayed(s):
+    if ( s and len(s) != 0 ):
+        if  (datetime.date.today() - to_date(s)).days >8 :
+            return True
+    else:
+        return False
 
 def trav(node):
     #Traverse up till the child node and add to list
@@ -374,7 +402,9 @@ def define_columns(request):
         {"data": "Funder", "title": "Funder"},#67#66
         {"data": "status", "title": "Final Status"},##67
         {"data": "pocket", "title": "Pocket"},
-        {"data": "comment", "title": "Comment"}#70#69
+        {"data": "comment", "title": "Comment"},
+        {"data": "delay_flag", "title": "delay_flag" , "bVisible":False}#70#69
+
 
         # Append community mobilization here #
 
@@ -398,7 +428,7 @@ def define_columns(request):
             formdict_new.append({"data":activity_type_model[i].name, "title":activity_type_model[i].name})
     except Exception as e:
         print e
-    final_data['buttons']['Community Mobilization'] = range(activity_pre_len, len(formdict_new))
+    final_data['buttons']['Community Mobilization'] = range(activity_pre_len - 1, len(formdict_new))
 
     vendor_type_model = VendorType.objects.filter(display_flag=True).order_by('display_order')
     vendor_pre_len = len(formdict_new)
