@@ -6,6 +6,75 @@
 <link rel = "stylesheet" type="text/css" href = "{% static "admin/css/forms.css" %}">
 <style>
 
+
+
+/* The container */
+.custom_checkbox {
+    display: block;
+    position: relative;
+    /*padding-left: 35px;
+    margin-bottom: 12px;
+    cursor: pointer;
+    font-size: 22px;*/
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+}
+
+/* Hide the browser's default checkbox */
+.custom_checkbox input {
+    position: absolute;
+    opacity: 0;
+    
+}
+
+/* Create a custom checkbox */
+.checkmark {
+    position: relative;
+    float: left;
+    top: 0;
+    left: 0;
+    height: 15px;
+    width: 15px;
+   
+}
+
+
+
+/* When the checkbox is checked, add a blue background */
+.custom_checkbox   .checkmark {
+    background-color: #ea1943;
+}
+
+/* Create the checkmark/indicator (hidden when not checked) */
+.checkmark:after {
+    content: "";
+    position: relative;
+    display: none;
+}
+
+/* Show the checkmark when checked */
+.custom_checkbox input:checked ~ .checkmark:after {
+    display: block;
+    
+}
+
+/* Style the checkmark/indicator */
+.custom_checkbox .checkmark:after {
+    left: 5px;
+    top: 1px;
+    width: 5px;
+    height: 10px;
+    
+    border: solid black;
+    border-width: 0 2px 2px 0;
+    -webkit-transform: rotate(45deg);
+    -ms-transform: rotate(45deg);
+    transform: rotate(45deg);
+}
+
+
 #loading-img {
     background: url(/static/images/spinner.gif) center center no-repeat;
     height: 100%;
@@ -76,6 +145,8 @@ div.dt-buttons>button{
     <div id="loading-img"></div>
 </div>
 <div class="customized-form">
+    <div class="row">
+        <div class="col-md-8">
     <input id="export_mastersheet" type="hidden" value="{{perms.mastersheet.can_export_mastersheet}}"/>
     <form id = "slum_form" style="display: inline-block;" method="POST">{% csrf_token %}
         {{ form.as_p }}
@@ -119,10 +190,13 @@ div.dt-buttons>button{
       </div>
     </div>
     {%endif%}
-    <div class="row-fluid" style="padding-top:17px;">
-        <div style = "float: right; position : absolute; right : 20px; top : 80px; display: none;" id = "legend" >
-            <div style="float:left;width:15px;height:15px;border:1px solid #f9a4a4;background: #f9a4a4;"></div>
-            <div style="float:left;" class="">&nbsp;Phase 1 material is delayed&nbsp;</div><br>
+
+     <div id="buttons" style="padding-top:20px;"></div>
+</div>
+<div class="col-md-4">
+        <div class="" style = "float:right;display: none;" id = "legend" >
+           <!--  <div style="float:left;width:15px;height:15px;border:1px solid #f9a4a4;background: #f9a4a4;"></div>
+            <div style="float:left;" class="">&nbsp;Phase 1 material is delayed&nbsp;</div><br>       
             <div style="float:left;width:15px;height:15px;border:1px solid #f2f29f;background: #f2f29f;"></div>
             <div style="float:left;" class="">&nbsp;Phase 2 material is delayed&nbsp;</div><br>
             <div style="float:left;width:15px;height:15px;border:1px solid #aaf9a4;background: #aaf9a4;"></div>
@@ -134,10 +208,50 @@ div.dt-buttons>button{
             <div style="float:left;width:15px;height:15px;border:1px solid #c6c6c6;background: #c6c6c6;"></div>
             <div style="float:left;" class="">&nbsp;Written off&nbsp;</div><br>
             <div style="float:left;width:15px;height:15px;border:1px solid #fc0707;background: #fc0707;"></div>
-            <div style="float:left;" class="">&nbsp;Ambiguous Dates&nbsp;</div><br>
-        </div>
+            <div style="float:left;" class="">&nbsp;Ambiguous Dates&nbsp;</div><br> -->
+            
+            <label class="custom_checkbox">  
+                <input type="checkbox"  id ="p1" value = "#f9a4a4" name = "checkbox_filter">
+                <span style="background-color: #f9a4a4; " class="checkmark"></span>&nbsp;Phase 1 material is delayed
+            </label>
+         
+            
+            <label class="custom_checkbox">
+                <input type="checkbox"  id = "p2" value = "#f2f29f" name = "checkbox_filter">&nbsp;Phase 2 material is delayed
+                <span style="background-color: #f2f29f; " class="checkmark"></span>
+            </label>
+          
+            <label class="custom_checkbox">
+                <input type="checkbox"  id = p3 value = "#aaf9a4" name = "checkbox_filter">&nbsp;Phase 3 material is delayed
+                <span style="background-color: #aaf9a4; " class="checkmark"></span>
+            </label>
+            
+            <label class="custom_checkbox">
+                <input type="checkbox"  id = "cd" value = "#aaa4f4" name = "checkbox_filter">&nbsp;Completion is delayed
+                <span style="background-color: #aaa4f4; " class="checkmark"></span>
+            </label>
+            
+            <label class="custom_checkbox">
+                <input type="checkbox"  id = "md" value = "#f9a4a4">&nbsp;Missing dates
+                <span style="background-color: #a9d2fc; " class="checkmark"></span>
+            </label>
+            
+            <label class="custom_checkbox">
+                <input type="checkbox"  id = "wo" value = "#f9a4a4">&nbsp;Written off
+                <span style="background-color: #c6c6c6; " class="checkmark"></span>
+            </label>
+           
+            <label class="custom_checkbox">
+                <input type="checkbox"   id = "ad" value = "#f9a4a4">&nbsp;Ambigious dates
+                <span style="background-color: #fc0707; " class="checkmark"></span>
+            </label>
+        
+        </div> 
+        </div> 
+        
 
-        <div id="buttons" style="padding-bottom:10px;"></div>
+</div>
+       
 
         
         <table id="example" class="display" width="100%" cellspacing="0">
