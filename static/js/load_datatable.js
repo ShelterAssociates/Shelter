@@ -4,7 +4,7 @@ var divider = 1000 * 60 * 60 * 24;
 var window = 8 * 1000 * 60 * 60 * 24;
 var current_slum;
 var city_code;
-
+var btn_default = [];
 var boxes = [];
 
 var today = Date.now();
@@ -14,23 +14,7 @@ var daily_reporting_columns = [];
 $(document).ready(function() {
 
     $("#add_table_btn").hide();
-    var btn_default=[
-                        {
-                            extend: 'excel',
-                            text: 'Excel(Flagged records)',
-                            exportOptions: {
-                                rows:".redColor"
-                            }
-                        },
-                        {
-                            extend : 'excel',
-                            text : 'Excel(ALL)'
-                        }
-
-                    ];
-    if($("#export_mastersheet").val()=="False"){
-        btn_default=[];
-    }
+    
     var csrf_token = document.getElementsByName("csrfmiddlewaretoken")[0].value;
 
     $.ajax({
@@ -61,7 +45,7 @@ $(document).ready(function() {
                 for (i = 0 ; i < tmp_download_TF.length ; i ++ ){
 
                         //Toilet photo
-                        columns_defs['data'][43]['render']= function ( data, type, row,meta ) {
+                        columns_defs['data'][54]['render']= function ( data, type, row,meta ) {
                             if(typeof data != 'undefined'){
                                 url_download_TF = row['toilet_photo_url'];
                                 if(type === 'display'){
@@ -73,7 +57,7 @@ $(document).ready(function() {
                         }
                     
                     //Family photo
-                        columns_defs['data'][42]['render']= function ( data, type, row,meta ) {
+                        columns_defs['data'][53]['render']= function ( data, type, row,meta ) {
                             if(typeof data != 'undefined'){
                                 url_download_FF = row['family_photo_url'];
                                 if(type === 'display'){
@@ -191,6 +175,12 @@ $(document).ready(function() {
 
                                         data = "<p class = 'highlight_p' style = 'background-color : "+row['a_missing']+";'>"+data+"</p>";
                                     }
+                                    if(row['a_amb'] != '' )
+
+                                    {
+
+                                        data = "<p class = 'highlight_p' style = 'background-color : "+row['a_amb']+";'>"+data+"</p>";
+                                    }
                                     return data;
 
                                 }
@@ -207,6 +197,10 @@ $(document).ready(function() {
                                     if(row['p1_missing'] != '' )
                                     {
                                         data = "<p class = 'highlight_p' style = 'background-color : "+row['p1_missing']+";'>"+data+"</p>";
+                                    }
+                                    if(row['p1_amb'] != '' )
+                                    {
+                                        data = "<p class = 'highlight_p' style = 'background-color : "+row['p1_amb']+";'>"+data+"</p>";
                                     }
                                     return data;
 
@@ -225,6 +219,10 @@ $(document).ready(function() {
                                     {
                                         data = "<p class = 'highlight_p' style = 'background-color : "+row['p2_missing']+";'>"+data+"</p>";
                                     }
+                                    if(row['p2_amb'] != '' )
+                                    {
+                                        data = "<p class = 'highlight_p' style = 'background-color : "+row['p2_amb']+";'>"+data+"</p>";
+                                    }
                                     return data;
 
                                 }
@@ -242,17 +240,56 @@ $(document).ready(function() {
                                     {
                                         data = "<p class = 'highlight_p' style = 'background-color : "+row['p3_missing']+";'>"+data+"</p>";
                                     }
+                                    if(row['p3_amb'] != '' )
+                                    {
+                                        data = "<p class = 'highlight_p' style = 'background-color : "+row['p3_amb']+";'>"+data+"</p>";
+                                    }
                                     return data;
 
                                 }
                             }
                      }
-                     columns_defs['data'].push({'data':'a_missing', 'bVisible':false});
-                        columns_defs['data'].push({'data':'p1_missing', 'bVisible':false});
-                       columns_defs['data'].push({'data':'p2_missing', 'bVisible':false});
-                        columns_defs['data'].push({'data':'p3_missing', 'bVisible':false});
-                     
+                     if(columns_defs['data'][tmp_TC[i]]['data']== "completion_date_str")
+                     {
+                        columns_defs['data'][tmp_TC[i]]['render']= function ( data, type, row,meta ) {
+                                if(typeof data != 'undefined'){
+                                    url_TC = String("/admin/master/mastersheet/toiletconstruction/") + row['tc_id_'+String(row.Household_number)] + String("/");
+                                    if(type === 'display'){
+                                                data = '<a href = "#" onclick="window.open(\''+url_TC+'\', \'_blank\', \'width=850,height=750\');">' + data + "</a>";
+                                    }
+                                    
+                                    if(row['c_amb'] != '' )
+                                    {
+                                        data = "<p class = 'highlight_p' style = 'background-color : "+row['c_amb']+";'>"+data+"</p>";
+                                    }
+                                    return data;
 
+                                }
+                            }
+                     }
+                    
+                     var length_table = columns_defs['buttons']['Accounts'][columns_defs['buttons']['Accounts'].length -1]+1;
+                     btn_default=[
+                        {
+                            extend: 'excel',
+                            text: 'Excel(Flagged records)',
+                            exportOptions: {
+                                rows:'.highlight_p' ,
+                                columns: [...Array(length_table).keys()].slice(11,length_table)
+                            }
+                        },
+                        {
+                            extend : 'excel',
+                            text : 'Excel(ALL)',
+                            exportOptions:{
+                                columns:[...Array(length_table).keys()].slice(11,length_table)
+                            }
+                        }
+
+                    ];
+    if($("#export_mastersheet").val()=="False"){
+        btn_default=[];
+    }
                 }
             }
     });
@@ -416,7 +453,7 @@ $(document).ready(function() {
                                     dataSrc: function(data){
                                         for ( i = 0; i < data.length; i++){
 
-                                             data[i]['a_missing'] = '';
+                                                data[i]['a_missing'] = '';
                                                 data[i]['p1_missing'] = '';
                                                 data[i]['p2_missing'] = '';
                                                 data[i]['p3_missing'] = '';
@@ -437,14 +474,42 @@ $(document).ready(function() {
                                                     data[i]['p3_missing'] = '#a9d2fc';
                                             }
                                             else{
-                                                if(!data[i]['phase_two_material_date_str'] && (data[i]['completion_date_str'])){
-                                                    data[i]['p2_missing'] = '#a9d2fc';
+                                                    if(!data[i]['phase_two_material_date_str'] && (data[i]['completion_date_str'])){
+                                                        data[i]['p2_missing'] = '#a9d2fc';
+                                                    }
+                                                }  
+                                            }
+                                            data[i]['a_amb'] = '';
+                                            data[i]['p1_amb'] = '';
+                                            data[i]['p2_amb'] = '';
+                                            data[i]['p3_amb'] = '';
+                                            data[i]['c_amb'] = '';
+                                            if(checkCorrect(data[i]['phase_one_material_date_str'], data[i]['agreement_date_str']) == false){
+                                                data[i]['a_amb'] = '#fc0707';
+                                                data[i]['p1_amb'] = '#fc0707';
+                                            }
+                                            if(checkCorrect(data[i]['phase_two_material_date_str'], data[i]['phase_one_material_date_str']) == false){
+                                                data[i]['p1_amb'] = '#fc0707';
+                                                data[i]['p2_amb'] = '#fc0707';
+                                            }
+                                            if(data[i]['phase_one_material_date_str'] != data['phase_three_material_date_str']){
+                                                if(checkCorrect(data[i]['phase_three_material_date_str'], data[i]['phase_two_material_date_str']) == false){
+                                                    data[i]['p2_amb'] = '#fc0707';
+                                                    data[i]['p3_amb'] = '#fc0707';
+                                                }
+                                                if(checkCorrect(data[i]['completion_date_str'], data[i]['phase_three_material_date_str']) == false){
+                                                    data[i]['p3_amb'] = '#fc0707';
+                                                    data[i]['c_amb'] = '#fc0707';
+                                                }
+                                            }
+                                            else{
+                                                if(checkCorrect(data[i]['completion_date_str'], data[i]['phase_two_material_date_str']) == false){
+                                                    data[i]['p2_amb'] = '#fc0707';
+                                                    data[i]['c_amb'] = '#fc0707';
                                                 }
 
                                             }
-                                                
-                                           
-                                        }
+
                                     }
                                     return data;
                                         
@@ -484,7 +549,7 @@ $(document).ready(function() {
                 } );
 
                 
-                $('#p1, #p2, #p3, #cd #ad, #md, #wo').click( function() {
+                $('#p1, #p2, #p3, #cd, #ad, #md, #wo').click( function() {
                        var selected = [];
                        boxes = [];
                         $.each($("input[name='checkbox_filter']:checked"),function(k,v){boxes.push($(v).attr('value'))});
@@ -495,7 +560,8 @@ $(document).ready(function() {
                     function( settings, data, dataIndex ) {
                         //|| ($("#md:checked").length == 1 && )
 
-                        if (boxes.indexOf(data[68])> -1 || ($("#wo:checked").length == 1 && data[65] == "Written-off") || ($("#md:checked").length == 1 && (data[97] != '' || data[98] != ''||data[99] != ''||data[100] != '')) ){
+
+                        if (boxes.indexOf(data[9])> -1 || ($("#wo:checked").length == 1 && data[10] == "Written-off") || ($("#md:checked").length == 1 && (data[0] != '' || data[1] != ''||data[2] != ''||data[3] != '')) || ($("#ad:checked").length == 1 && (data[4] != '' || data[5] != ''||data[6] != ''||data[7] != '' || data[8] != ''))){
                             return true;
                         }
                         if($(".checkmark").parent().find("input:checked").length == 0 )
@@ -571,47 +637,48 @@ $(document).ready(function() {
 
                 $.each(columns_defs['buttons'], function(key,val){
                     html_table = $("#example");
-                    html_table.find("thead>tr>th:eq(0)").addClass("trFirst");
-                    html_table.find("thead>tr>th:eq("+val.slice(0,1)[0]+")").addClass("trFirst");
+                    //html_table.find("thead>tr>th:eq(0)").addClass("trFirst");
+                    html_table.find("thead>tr>th:eq("+(val[0]-11)+")").addClass("trFirst");
                     $.each(val.slice(1,val.length-1),function(k,v){
-                        html_table.find("thead>tr>th:eq("+v+")").addClass("trMiddle");
+                        html_table.find("thead>tr>th:eq("+(v-11)+")").addClass("trMiddle");
                         
                     });
-                    $.each(val.slice(0,val.length),function(k,v){
+                    $.each(val,function(k,v){
+                        var va = v-11;
                         if (String(key) === "RHS"){
-                                html_table.find("thead>tr>th:eq("+v+")").css('background-color', '#d6d0dd');//
+                                html_table.find("thead>tr>th:eq("+va+")").css('background-color', '#d6d0dd');//
                                 //background-color: lightblue;
                                 //$("#" + key).css('background-color', '#ccc0d9');
 
                             }
                         if (String(key) === "Follow-up"){
-                                html_table.find("thead>tr>th:eq("+v+")").css('background-color', '#ffe0f5');//
+                                html_table.find("thead>tr>th:eq("+va+")").css('background-color', '#ffe0f5');//
                                 //$("#" + key).css('background-color', '#ccc0d9');
                             }
                         if (String(key) === "Family factsheet"){
-                                html_table.find("thead>tr>th:eq("+v+")").css('background-color', '#e0f6ff');//
+                                html_table.find("thead>tr>th:eq("+va+")").css('background-color', '#e0f6ff');//
                                 //$("#" + key.replace(/ /g,'')).css('background-color', '#c4bd97');
                                 
                             }
                         if (String(key) === "SBM"){
-                                html_table.find("thead>tr>th:eq("+v+")").css('background-color', '#fed9a6');//
+                                html_table.find("thead>tr>th:eq("+va+")").css('background-color', '#fed9a6');//
                                 //$("#" + key).css('background-color', '#fbd4b4');
                             }
                         if (String(key) === "Construction status"){
-                                html_table.find("thead>tr>th:eq("+v+")").css('background-color', '#d2e2ce');//
+                                html_table.find("thead>tr>th:eq("+va+")").css('background-color', '#d2e2ce');//
                                 //$("#" + key.replace(/ /g,'')).css('background-color', '#c4bd97');
                             } 
                         if (String(key) === "Community Mobilization"){
-                                html_table.find("thead>tr>th:eq("+v+")").css('background-color', '#e5d8bd');//
+                                html_table.find("thead>tr>th:eq("+va+")").css('background-color', '#e5d8bd');//
                                 //$("#" + key.replace(/ /g,'')).css('background-color', '#b8cce4');
                             }
                         if (String(key) === "Accounts"){
-                                html_table.find("thead>tr>th:eq("+v+")").css('background-color', '#ffffb3');//
+                                html_table.find("thead>tr>th:eq("+va+")").css('background-color', '#ffffb3');//
                                 //$("#" + key).css('background-color', '#d8d8d8');
                             }
 
                     });
-                    html_table.find("thead>tr>th:eq("+val.slice(val.length-1)[0]+")").addClass("trLast");
+                    html_table.find("thead>tr>th:eq("+(val[val.length-1]-11)+")").addClass("trLast");
                 });
 
                 $("#buttons button")[0].click();
