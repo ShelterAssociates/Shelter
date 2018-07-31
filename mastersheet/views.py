@@ -314,6 +314,21 @@ def define_columns(request):
     :return: 
     """
     formdict_new = [
+        {'data':'a_missing', 'title':'a_missing', 'bVisible':False},
+        {'data':'p1_missing', 'title':'p1_missing' ,'bVisible':False},
+        {'data':'p2_missing', 'title':'p2_missing','bVisible':False},
+        {'data':'p3_missing', 'title':'p3_missing' ,'bVisible':False},
+
+        {'data':'a_amb', 'title':'a_amb', 'bVisible':False},
+        {'data':'p1_amb', 'title':'p1_amb' ,'bVisible':False},
+        {'data':'p2_amb', 'title':'p2_amb' ,'bVisible':False},
+        {'data':'p3_amb', 'title':'p3_amb' ,'bVisible':False},
+        {'data':'c_amb', 'title':'c_amb', 'bVisible':False},
+
+        {"data": "delay_flag", "title": "delay_flag" , "bVisible":False},
+        {"data": "status", "title": "Dummy Status", "bVisible":False},
+        
+        
         {"data": "Household_number", "title": "Household Number" ,"className": "add_hyperlink"},#1
         {"data": "Date_of_survey", "title": "Date of Survey"},
         {"data": "Name_s_of_the_surveyor_s", "title": "Name of the Surveyor"},
@@ -403,8 +418,7 @@ def define_columns(request):
         {"data": "status", "title": "Final Status"},##67
         {"data": "pocket", "title": "Pocket"},
         {"data": "comment", "title": "Comment"},
-        {"data": "delay_flag", "title": "delay_flag" , "bVisible":False}#70#69
-
+        
 
         # Append community mobilization here #
 
@@ -412,11 +426,11 @@ def define_columns(request):
     ]
     final_data = {}
     final_data['buttons'] = collections.OrderedDict()
-    final_data['buttons']['RHS'] = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18]
-    final_data['buttons']['Follow-up'] = [19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36]
-    final_data['buttons']['Family factsheet'] = [37, 38, 39, 40, 41, 42, 43]
-    final_data['buttons']['SBM'] = [44, 45, 46, 47, 48, 49, 50, 51, 52]
-    final_data['buttons']['Construction status'] = [53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67]
+    final_data['buttons']['RHS'] = range(12,30)
+    final_data['buttons']['Follow-up'] = range(30,49)
+    final_data['buttons']['Family factsheet'] = range(49,55)
+    final_data['buttons']['SBM'] = range(55,64)
+    final_data['buttons']['Construction status'] = range(64,79)
 
     # We define the columns for community mobilization and vendor details in a dynamic way. The
     # reason being these columns are prone to updates and additions.
@@ -428,7 +442,7 @@ def define_columns(request):
             formdict_new.append({"data":activity_type_model[i].name, "title":activity_type_model[i].name})
     except Exception as e:
         print e
-    final_data['buttons']['Community Mobilization'] = range(activity_pre_len - 1, len(formdict_new))
+    final_data['buttons']['Community Mobilization'] = range(activity_pre_len, len(formdict_new))
 
     vendor_type_model = VendorType.objects.filter(display_flag=True).order_by('display_order')
     vendor_pre_len = len(formdict_new)
