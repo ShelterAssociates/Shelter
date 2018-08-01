@@ -115,7 +115,7 @@ $(document).ready(function() {
                             return data;
                         }
                     }
-                    columns_defs['data'][0]['render']= function ( data, type, row,meta ) {
+                    columns_defs['data'][10]['render']= function ( data, type, row,meta ) {
                         if(typeof data != 'undefined'){
                             url_SBM = String("/admin/master/mastersheet/sbmupload/") + row['sbm_id_'+String(row.Household_number)] + String("/");
                             if(type === 'display'){
