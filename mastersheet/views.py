@@ -427,8 +427,8 @@ def define_columns(request):
     final_data = {}
     final_data['buttons'] = collections.OrderedDict()
     final_data['buttons']['RHS'] = range(12,30)
-    final_data['buttons']['Follow-up'] = range(30,49)
-    final_data['buttons']['Family factsheet'] = range(49,55)
+    final_data['buttons']['Follow-up'] = range(30,48) 
+    final_data['buttons']['Family factsheet'] = range(48,55) 
     final_data['buttons']['SBM'] = range(55,64)
     final_data['buttons']['Construction status'] = range(64,79)
 
