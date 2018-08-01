@@ -58,6 +58,7 @@ def give_details(request):
 @csrf_exempt
 @apply_permissions_ajax('mastersheet.can_view_mastersheet')
 def masterSheet(request, slum_code = 0, FF_code = 0, RHS_code = 0 ):
+    flag_perform =True
     try:
         delimiter = 'slumname='
         slum_code = Slum.objects.filter(pk = int(request.GET.get('form').partition(delimiter)[2]) ).values_list("shelter_slum_code","electoral_ward__administrative_ward__city__id","electoral_ward__name", "name")
@@ -79,57 +80,62 @@ def masterSheet(request, slum_code = 0, FF_code = 0, RHS_code = 0 ):
 
         url_family_factsheet = str(settings.KOBOCAT_FORM_URL)+str('data/'+str(FF_code)+'?format=json&query={"group_vq77l17/slum_name":"')+ str(slum_code[0][0]) + str('"}&fields=["OnfieldFactsheet","_attachments","Toilet_Photo","Family_Photo","group_ne3ao98/Have_you_upgraded_yo_ng_individual_toilet","group_ne3ao98/Cost_of_upgradation_in_Rs","group_ne3ao98/Where_the_individual_ilet_is_connected_to","group_ne3ao98/Use_of_toilet","group_vq77l17/Household_number"]')
         #url_family_factsheet = str(settings.KOBOCAT_FORM_URL)+str('data/97?format=json&query={"group_vq77l17/slum_name":"')+ str(slum_code) + str('"}&fields=["OnfieldFactsheet","group_ne3ao98/Have_you_upgraded_yo_ng_individual_toilet","group_ne3ao98/Cost_of_upgradation_in_Rs","group_ne3ao98/Where_the_individual_ilet_is_connected_to","group_ne3ao98/Use_of_toilet","group_vq77l17/Household_number"]')
+        if flag_perform:
+            url_RHS_form = str(settings.KOBOCAT_FORM_URL)+str('forms/'+str(RHS_code)+'/form.json')
+            #url_RHS_form = str(settings.KOBOCAT_FORM_URL) + str('forms/98/form.json"')
 
-        url_RHS_form = str(settings.KOBOCAT_FORM_URL)+str('forms/'+str(RHS_code)+'/form.json')
-        #url_RHS_form = str(settings.KOBOCAT_FORM_URL) + str('forms/98/form.json"')
+            url_FF_form = str(settings.KOBOCAT_FORM_URL)+str('forms/'+str(FF_code)+'/form.json')
+            kobotoolbox_request_RHS_form = urllib2.Request(url_RHS_form)
+            kobotoolbox_request_FF_form = urllib2.Request(url_FF_form)
+            kobotoolbox_request_RHS_form.add_header('Authorization', settings.KOBOCAT_TOKEN)
+            kobotoolbox_request_FF_form.add_header('Authorization', settings.KOBOCAT_TOKEN)
+            res_RHS_form = urllib2.urlopen(kobotoolbox_request_RHS_form)
+            res_FF_form = urllib2.urlopen(kobotoolbox_request_FF_form)
+            html_RHS_form = res_RHS_form.read()
+            html_FF_form = res_FF_form.read()
+            formdict_RHS_form = json.loads(html_RHS_form)
+            formdict_FF_form = json.loads(html_FF_form)
 
-        url_FF_form = str(settings.KOBOCAT_FORM_URL)+str('forms/'+str(FF_code)+'/form.json')
 
         kobotoolbox_request = urllib2.Request(urlv)
         kobotoolbox_request_family_factsheet = urllib2.Request(url_family_factsheet)
-        kobotoolbox_request_RHS_form = urllib2.Request(url_RHS_form)
-        kobotoolbox_request_FF_form = urllib2.Request(url_FF_form)
-
+       
 
         kobotoolbox_request.add_header('Authorization', settings.KOBOCAT_TOKEN)
         kobotoolbox_request_family_factsheet.add_header('Authorization',
                                                         settings.KOBOCAT_TOKEN)
-        kobotoolbox_request_RHS_form.add_header('Authorization', settings.KOBOCAT_TOKEN)
-        kobotoolbox_request_FF_form.add_header('Authorization', settings.KOBOCAT_TOKEN)
+       
         
 
         res = urllib2.urlopen(kobotoolbox_request)
         res_family_factsheet = urllib2.urlopen(kobotoolbox_request_family_factsheet)
-        res_RHS_form = urllib2.urlopen(kobotoolbox_request_RHS_form)
-        res_FF_form = urllib2.urlopen(kobotoolbox_request_FF_form)
+        
 
 
         html = res.read()
         html_family_factsheet = res_family_factsheet.read()
-        html_RHS_form = res_RHS_form.read()
-        html_FF_form = res_FF_form.read()
+        
 
         formdict = json.loads(html)
         formdict_family_factsheet = json.loads(html_family_factsheet)
-        formdict_RHS_form = json.loads(html_RHS_form)
-        formdict_FF_form = json.loads(html_FF_form)
-        name_label_data = []
+        if flag_perform:
+            name_label_data = []
 
-        # Rearranging form data in order to arrange them by group names
-        try:
-            for i in formdict_RHS_form['children']:
-                temp_data = trav(i)  # trav() function traverses the dictionary to find last hanging child
-                name_label_data.extend(temp_data)
-        except Exception as e:
-            print e
-        
+            # Rearranging form data in order to arrange them by group names
+            try:
+                for i in formdict_RHS_form['children']:
+                    temp_data = trav(i)  # trav() function traverses the dictionary to find last hanging child
+                    name_label_data.extend(temp_data)
+            except Exception as e:
+                print e
+            
 
-        try:
-            for i in formdict_FF_form['children']:
-                temp_data_FF = trav(i)  # trav() function traverses the dictionary to find last hanging child
-                name_label_data.extend(temp_data_FF)
-        except Exception as e:
-            print e
+            try:
+                for i in formdict_FF_form['children']:
+                    temp_data_FF = trav(i)  # trav() function traverses the dictionary to find last hanging child
+                    name_label_data.extend(temp_data_FF)
+            except Exception as e:
+                print e
 
         # Family Factsheet - fetching data
         # arranging data with respect to household numbers
@@ -193,9 +199,10 @@ def masterSheet(request, slum_code = 0, FF_code = 0, RHS_code = 0 ):
         # Vendor and Accounts - fetching data
         vendor = VendorHouseholdInvoiceDetail.objects.filter(slum__shelter_slum_code=slum_code[0][0])
         # Arranging name_label_data with respect to label and corresponding codes('names' is the key used for them in the json) and labels
-        name_label_data_dict = {
-        obj_name_label_data['name']: {child['name']: child['label'] for child in obj_name_label_data['children']} for
-        obj_name_label_data in name_label_data}
+        if flag_perform:
+            name_label_data_dict = {
+            obj_name_label_data['name']: {child['name']: child['label'] for child in obj_name_label_data['children']} for
+            obj_name_label_data in name_label_data}
 
         for x in formdict:
 
@@ -250,18 +257,18 @@ def masterSheet(request, slum_code = 0, FF_code = 0, RHS_code = 0 ):
                     x.update({'family_photo_url': PATH + '/' + x['Family_Photo']})
             x.update({'rhs_url': settings.BASE_URL + str('shelter/forms/') + str(x['_xform_id_string']) + str('/instance#/')+str(x["_id"]) })
 
+            if flag_perform:
+                try:
+                    for key_f,value_f in x.items():
+                        key = key_f.split("/")[-1]
 
-            try:
-                for key_f,value_f in x.items():
-                    key = key_f.split("/")[-1]
-
-                    if key in name_label_data_dict.keys():
-                        string = value_f.split(" ")
-                        for num in string:
-                            string[string.index(num)] = name_label_data_dict[key][num]
-                        x[key_f] = ", ".join(string)
-            except:
-                pass
+                        if key in name_label_data_dict.keys():
+                            string = value_f.split(" ")
+                            for num in string:
+                                string[string.index(num)] = name_label_data_dict[key][num]
+                            x[key_f] = ", ".join(string)
+                except:
+                    pass
 
             # Handling current place of defecation column    
             if 'group_oi8ts04/C1' in x.keys():
