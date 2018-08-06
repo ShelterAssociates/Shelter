@@ -2,7 +2,7 @@ from django.shortcuts import render
 from django.http import HttpResponse
 from django.contrib import messages
 from django.shortcuts import get_object_or_404
-from django.contrib.auth.decorators import user_passes_test
+from django.contrib.auth.decorators import user_passes_test, permission_required
 from django.contrib.admin.views.decorators import staff_member_required
 from django.conf import settings
 from django.contrib.auth.models import User
@@ -22,7 +22,7 @@ from utils.utils_permission import apply_permissions_ajax, access_right
 from django.core.exceptions import PermissionDenied
 
 #@staff_member_required
-@apply_permissions_ajax('component.can_upload_KML')
+@permission_required('component.can_upload_KML', raise_exception=True)
 def kml_upload(request):
     context_data = {}
     if request.method == 'POST':
