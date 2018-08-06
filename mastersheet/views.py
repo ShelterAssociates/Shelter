@@ -15,32 +15,11 @@ from django.conf import settings
 import collections
 from django.http import JsonResponse
 from mastersheet.daily_reporting_sync import ToiletConstructionSync, CommunityMobilizaitonSync
+from utils.utils_permission import apply_permissions_ajax
 from collections import defaultdict
 import datetime
 
 #The views in this file correspond to the mastersheet functionality of shelter app.
-
-def apply_permissions_ajax(perms):
-    """
-    Parameterised decorator for handling ajax permissions.
-    :param perms: permission to check
-    :return: Forbidden if does not have a permission else the function call.
-    """
-    def real_decorator(view_func):
-        def _wrapped_view(request, *args, **kwargs):
-            # it is possible to add some other checks, that return booleans
-            # or do it in a separate `if` statement
-            # for example, check for some user permissions or properties
-            
-            permissions = [
-                request.is_ajax(),
-                request.user.has_perm(perms)
-            ]
-            if not all(permissions):
-                return HttpResponseForbidden("Permission denied")
-            return view_func(request, *args, **kwargs)
-        return _wrapped_view
-    return real_decorator
 def give_details(request):
     slum_info_dict = {}
     try:

@@ -18,17 +18,11 @@ from .models import Metadata, Component
 from .cipher import *
 from master.models import Slum, Rapid_Slum_Appraisal, drainage
 from sponsor.models import SponsorProjectDetails
+from utils.utils_permission import apply_permissions_ajax, access_right
 from django.core.exceptions import PermissionDenied
 
-def access_right(func):
-	def wrapper(request, *args, **kwargs):
-		if request.META.get('HTTP_REFERER')==None or "app.shelter-associates.org" not in request.META.get('HTTP_REFERER'):
-			raise PermissionDenied()
-		return func(request, *args, **kwargs)
-	return wrapper
-
 #@staff_member_required
-@user_passes_test(lambda u: u.is_superuser)
+@apply_permissions_ajax('component.can_upload_KML')
 def kml_upload(request):
     context_data = {}
     if request.method == 'POST':
