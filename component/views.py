@@ -2,7 +2,7 @@ from django.shortcuts import render
 from django.http import HttpResponse
 from django.contrib import messages
 from django.shortcuts import get_object_or_404
-from django.contrib.auth.decorators import user_passes_test
+from django.contrib.auth.decorators import user_passes_test, permission_required
 from django.contrib.admin.views.decorators import staff_member_required
 from django.conf import settings
 from django.contrib.auth.models import User
@@ -18,17 +18,11 @@ from .models import Metadata, Component
 from .cipher import *
 from master.models import Slum, Rapid_Slum_Appraisal, drainage
 from sponsor.models import SponsorProjectDetails
+from utils.utils_permission import apply_permissions_ajax, access_right
 from django.core.exceptions import PermissionDenied
 
-def access_right(func):
-	def wrapper(request, *args, **kwargs):
-		if request.META.get('HTTP_REFERER')==None or "app.shelter-associates.org" not in request.META.get('HTTP_REFERER'):
-			raise PermissionDenied()
-		return func(request, *args, **kwargs)
-	return wrapper
-
 #@staff_member_required
-@user_passes_test(lambda u: u.is_superuser)
+@permission_required('component.can_upload_KML', raise_exception=True)
 def kml_upload(request):
     context_data = {}
     if request.method == 'POST':

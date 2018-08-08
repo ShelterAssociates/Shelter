@@ -15,32 +15,11 @@ from django.conf import settings
 import collections
 from django.http import JsonResponse
 from mastersheet.daily_reporting_sync import ToiletConstructionSync, CommunityMobilizaitonSync
+from utils.utils_permission import apply_permissions_ajax
 from collections import defaultdict
 import datetime
 
 #The views in this file correspond to the mastersheet functionality of shelter app.
-
-def apply_permissions_ajax(perms):
-    """
-    Parameterised decorator for handling ajax permissions.
-    :param perms: permission to check
-    :return: Forbidden if does not have a permission else the function call.
-    """
-    def real_decorator(view_func):
-        def _wrapped_view(request, *args, **kwargs):
-            # it is possible to add some other checks, that return booleans
-            # or do it in a separate `if` statement
-            # for example, check for some user permissions or properties
-            
-            permissions = [
-                request.is_ajax(),
-                request.user.has_perm(perms)
-            ]
-            if not all(permissions):
-                return HttpResponseForbidden("Permission denied")
-            return view_func(request, *args, **kwargs)
-        return _wrapped_view
-    return real_decorator
 def give_details(request):
     slum_info_dict = {}
     try:
@@ -75,7 +54,7 @@ def masterSheet(request, slum_code = 0, FF_code = 0, RHS_code = 0 ):
         
     formdict = []
     if slum_code is not 0:
-        urlv = str(settings.KOBOCAT_FORM_URL)+str('data/'+str(RHS_code)+'?query={"group_og5bx85/Type_of_survey":"01","slum_name":"') + str(slum_code[0][0])+'"}'  # '+str(slum_code)+'
+        urlv = str(settings.KOBOCAT_FORM_URL)+str('data/'+str(RHS_code)+'?query={"slum_name":"') + str(slum_code[0][0])+'"}'  # '+str(slum_code)+'
         #urlv = str(settings.KOBOCAT_FORM_URL)+str('data/98?query={"slum_name":"') + str(slum_code) + '"}'  # '+str(slum_code)+'
 
         url_family_factsheet = str(settings.KOBOCAT_FORM_URL)+str('data/'+str(FF_code)+'?format=json&query={"group_vq77l17/slum_name":"')+ str(slum_code[0][0]) + str('"}&fields=["OnfieldFactsheet","_attachments","Toilet_Photo","Family_Photo","group_ne3ao98/Have_you_upgraded_yo_ng_individual_toilet","group_ne3ao98/Cost_of_upgradation_in_Rs","group_ne3ao98/Where_the_individual_ilet_is_connected_to","group_ne3ao98/Use_of_toilet","group_vq77l17/Household_number"]')
@@ -834,6 +813,9 @@ def create_report(request):
         fancy_tree_data.append(temp) 
     return HttpResponse(json.dumps(fancy_tree_data), content_type="application/json")
     
+<<<<<<< HEAD
 
 
     
+=======
+>>>>>>> c407c22fa23b3de40941b68bc95842c5657bfeac

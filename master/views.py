@@ -30,16 +30,10 @@ from django.contrib.auth import authenticate, login
 from django.contrib.auth import *
 from django.contrib.auth.models import User, Group
 from component.cipher import *
+from utils.utils_permission import access_right
 import urllib
 from django.http import Http404
 from django.core.exceptions import PermissionDenied
-
-def access_right(func):
-    def wrapper(request, *args, **kwargs):
-        if request.META.get('HTTP_REFERER')==None or "app.shelter-associates.org" not in request.META.get('HTTP_REFERER'):
-            raise PermissionDenied("Access to URL blocked")
-        return func(request, *args, **kwargs)
-    return wrapper
 
 @staff_member_required
 def index(request):
