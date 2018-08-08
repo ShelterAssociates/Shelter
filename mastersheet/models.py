@@ -59,6 +59,8 @@ class VendorHouseholdInvoiceDetail(models.Model):
     invoice_number = models.CharField(max_length=100)
     invoice_date = models.DateField()
     household_number = JSONField(null=True, blank=True)
+    quantity = models.CharField(max_length=100, null=True, blank=True)
+    amount = models.CharField(max_length=100, null=True, blank=True)
     created_date = models.DateTimeField(default=datetime.datetime.now)
 
     class Meta:
@@ -102,7 +104,7 @@ STATUS_CHOICES=(('1', 'Agreement done'),
                 ('3', 'Material not given'),
                 ('4', 'Construction not started'),
                 ('5', 'Under construction'),
-                ('6', 'completed'),
+                ('6', 'Completed'),
                 ('7', 'Written-off'))
 
 class ToiletConstruction(models.Model):
@@ -372,7 +374,6 @@ def check_duplicate_house(sender, instance, **kwargs):
         all_records = VendorHouseholdInvoiceDetail.objects.filter(slum = instance.slum).exclude(id = instance.id)
     else:
         all_records = VendorHouseholdInvoiceDetail.objects.filter(slum = instance.slum)
-    invoice_numbers =  [int(x) for x in instance.invoice_number.split(',')]
 
     for record in all_records:
         if record.vendor.vendor_type == instance.vendor.vendor_type:
