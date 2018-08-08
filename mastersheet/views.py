@@ -266,7 +266,6 @@ def masterSheet(request, slum_code = 0, FF_code = 0, RHS_code = 0 ):
                 for funder in slum_funder:
                     if int(x['Household_number']) in funder.household_code:
                         x.update({'Funder': funder.sponsor.organization_name})
-    
     return HttpResponse(json.dumps(formdict),  content_type = "application/json")
 
 
@@ -795,18 +794,28 @@ from django.core import serializers
 def render_report(request):
     return render(request, 'mastersheet_report.html')
 def create_report(request):
-    fancy_tree_data ={}
-    cities = CityReference.objects.all()
-    #slums = Slum.objects.all()
-    fancy_tree_data['cities'] =[]
+    '''
+        This view generates source structure for the fancy tree used in the report.
+    '''
+    electoral_wards_dict = {}
+    admin_wards_dict = {}
+    fancy_tree_data = []
+    cities = CityReference.objects.all().values('id', 'city_name')
     for i in cities:
         temp = {}
-        temp['name'] = i.city_name
-        temp['id'] = i.id
-        #temp[''] = []
-        
-        temp['slums']=list(Slum.objects.filter(electoral_ward__administrative_ward__city__name = i).values('id','name'))
-        fancy_tree_data['cities'].append(temp)
-    
+        temp['name'] = i['city_name']
+        temp['id'] = i['id']
+        temp['children'] = list(AdministrativeWard.objects.filter(city=i['id']).values('id','name'))
+        for j in temp['children']:
+            j['children'] = list(ElectoralWard.objects.filter(administrative_ward = j['id']).values('id', 'name'))
+            for k in j['children']:
+                k['children'] = list(Slum.objects.filter(electoral_ward = k['id']).values('id', 'name'))
+        fancy_tree_data.append(temp) 
     return HttpResponse(json.dumps(fancy_tree_data), content_type="application/json")
     
+<<<<<<< HEAD
+
+
+    
+=======
+>>>>>>> c407c22fa23b3de40941b68bc95842c5657bfeac
