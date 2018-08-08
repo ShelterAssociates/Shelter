@@ -813,9 +813,3 @@ def create_report(request):
         fancy_tree_data.append(temp) 
     return HttpResponse(json.dumps(fancy_tree_data), content_type="application/json")
     
-<<<<<<< HEAD
-
-
-    
-=======
->>>>>>> c407c22fa23b3de40941b68bc95842c5657bfeac
