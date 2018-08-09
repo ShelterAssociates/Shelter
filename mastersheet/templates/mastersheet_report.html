@@ -5,29 +5,32 @@
 <script src = "{% static "js/jquery.fancytree-all-deps.js" %}"></script>
 <script src = "{% static "js/jquery.dataTables.min.js" %}"></script>
 <link rel = "stylesheet" type="text/css" href = "{% static "admin/css/ui.fancytree.min.css" %}">
+<link rel = "stylesheet" type="text/css" href = "{% static "css/jquery.dataTables.min.css" %}">
+<style>
+	.display_line{
+    display: inline-block;
+}
+</style>
 
 
 {% endblock %}
 {% block content %}
 <div id = "show_dropdown" class = "show_dropdown">
-	<button class="btn btn-default toggle-button" type="button" onclick="showDropdown()">
-       <span class="topic-dropdown-text" >Everything</span>
+	<button class="btn btn-default toggle-button btn btn-info" type="button" onclick="showDropdown()">
+       <span class="topic-dropdown-text " >Everything</span>
        <span class="caret"></span>
     </button> 
     <div id = "drop_tree" style = "display: none;" class="dropbtn dropdown1">
     	<div id = "city_list"></div>
-    	<p>Start Date :<input class = "interval" type = "date" id = "startDate" name="date" placeholder = "Start date"></p>
-    	<p>End Date :<input class = "interval" type = "date" id = "endDate" name="date" placeholder = "End date"></p>
-    	<button onclick = "applyFunction()">Apply</button>
-		<button onclick = "closeFunction()">Close</button>
-		
+		<button class="btn btn-primary"  onclick = "closeFunction()">Close</button>
     </div>
-	
+    <p>Start Date :<input class = "interval" type = "date" id = "startDate" name="date" placeholder = "Start date"></p>
+    <p>End Date :<input class = "interval" type = "date" id = "endDate" name="date" placeholder = "End date"></p>
+    <div class = "display_line" id = "applyButton">
+    	<button class="btn btn-primary display_line" onclick = "applyFunction()">Apply</button>
+	</div>
 </div>
 <div>
-	
-<!-- 	<input type = "text" id="startDate" placeholder="Start Date">    
- -->
 	<table id="report_table" class="display" width="100%" cellspacing="0">
         </table>
 </div>
