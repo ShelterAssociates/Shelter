@@ -790,9 +790,10 @@ def sync_kobo_data(request,slum_id):
         data['msg'] = "Error occurred while sync from kobo. Please contact administrator." +str(e)
     return HttpResponse(json.dumps(data), content_type="application/json")
 from django.core import serializers
-
+@user_passes_test(lambda u: u.is_superuser)
 def render_report(request):
     return render(request, 'mastersheet_report.html')
+@user_passes_test(lambda u: u.is_superuser)
 def create_report(request):
     '''
         This view generates source structure for the fancy tree used in the report.
@@ -806,10 +807,47 @@ def create_report(request):
         temp['name'] = i['city_name']
         temp['id'] = i['id']
         temp['children'] = list(AdministrativeWard.objects.filter(city=i['id']).values('id','name'))
+        temp['tag'] = 'city'
         for j in temp['children']:
+            j['tag'] = 'admin_ward'
             j['children'] = list(ElectoralWard.objects.filter(administrative_ward = j['id']).values('id', 'name'))
             for k in j['children']:
+                k['tag'] = 'electoral_ward'
                 k['children'] = list(Slum.objects.filter(electoral_ward = k['id']).values('id', 'name'))
         fancy_tree_data.append(temp) 
     return HttpResponse(json.dumps(fancy_tree_data), content_type="application/json")
+@user_passes_test(lambda u: u.is_superuser)
+def give_report_table_numbers(request):
+    tag =  request.GET.get('tag')
+    current_id = request.GET.get('id')
+    start_date = request.GET.get('startDate')
+    end_date = request.GET.get('endDate')
+    if len(start_date) == 0 or len(end_date) == 0:
+        start_date = datetime.datetime(2001, 1, 1) 
+        end_date = datetime.datetime.today()
+    report_table_data = {}
+    report_table_data['counter_ad'] = 0
+    report_table_data['counter_p1'] = 0
+    report_table_data['counter_p2'] = 0
+    report_table_data['counter_p3'] = 0
+    report_table_data['counter_c'] = 0
+    x = ToiletConstruction.objects.values('agreement_date', 'phase_one_material_date', 'phase_two_material_date', 'phase_three_material_date', 'completion_date')
     
+
+    if tag == 'city':
+        x = x.filter(slum__electoral_ward__administrative_ward__city__id = current_id)
+    elif tag == 'admin_ward':
+        x = x.filter(slum__electoral_ward__administrative_ward__id = current_id)
+    elif tag == 'electoral_ward':
+        x = x.filter(slum__electoral_ward__id = current_id)
+    elif tag == None:
+        x = x.filter(slum = current_id)
+
+    report_table_data['counter_ad'] = len(x.filter(agreement_date__range=[start_date,end_date]))
+    report_table_data['counter_p1'] = len(x.filter(phase_one_material_date__range=[start_date,end_date]))
+    report_table_data['counter_p2'] = len(x.filter(phase_two_material_date__range=[start_date,end_date]))
+    report_table_data['counter_p3'] = len(x.filter(phase_three_material_date__range=[start_date,end_date]))
+    report_table_data['counter_c'] = len(x.filter(completion_date__range=[start_date,end_date]))
+   
+    return HttpResponse(json.dumps([report_table_data]), content_type = "application/json")
+
