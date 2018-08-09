@@ -833,6 +833,7 @@ def give_report_table_numbers(request):
     report_table_data['counter_c'] = 0
     x = ToiletConstruction.objects.values('agreement_date', 'phase_one_material_date', 'phase_two_material_date', 'phase_three_material_date', 'completion_date')
     
+
     if tag == 'city':
         x = x.filter(slum__electoral_ward__administrative_ward__city__id = current_id)
     elif tag == 'admin_ward':
@@ -849,3 +850,4 @@ def give_report_table_numbers(request):
     report_table_data['counter_c'] = len(x.filter(completion_date__range=[start_date,end_date]))
    
     return HttpResponse(json.dumps([report_table_data]), content_type = "application/json")
+
