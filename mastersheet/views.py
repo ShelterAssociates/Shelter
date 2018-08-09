@@ -825,6 +825,7 @@ def give_report_table_numbers(request):
     if len(start_date) == 0 or len(end_date) == 0:
         start_date = datetime.datetime(2001, 1, 1) 
         end_date = datetime.datetime.today()
+    print tag, type(current_id)
     report_table_data = {}
     report_table_data['counter_ad'] = 0
     report_table_data['counter_p1'] = 0
@@ -840,7 +841,7 @@ def give_report_table_numbers(request):
         x = x.filter(slum__electoral_ward__administrative_ward__id = current_id)
     elif tag == 'electoral_ward':
         x = x.filter(slum__electoral_ward__id = current_id)
-    elif tag == None:
+    elif tag == None and int(current_id) != 0:
         x = x.filter(slum = current_id)
 
     report_table_data['counter_ad'] = len(x.filter(agreement_date__range=[start_date,end_date]))

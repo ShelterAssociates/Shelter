@@ -6,8 +6,24 @@ function showDropdown(){
     $(".dropdown1").toggle("show");	
 }
 function applyFunction(){
-	tag = $("#city_list").fancytree('getTree').getActiveNode()['data'].tag;
-	key = $("#city_list").fancytree('getTree').getActiveNode()['key'];
+	if ($("#applyButton").find("#current_item")){
+		
+		$("#applyButton").find("#current_item").html("");
+	    $("#applyButton ").find("#current_item").remove();
+	}
+	var current_item = document.createElement('div');
+    current_item.classList.add("display_line");
+    current_item.setAttribute("id" , "current_item");
+	if($("#city_list").fancytree('getTree').getActiveNode()!= null){
+		tag = $("#city_list").fancytree('getTree').getActiveNode()['data'].tag;
+		key = $("#city_list").fancytree('getTree').getActiveNode()['key'];
+		current_item.innerHTML = "<p>Currently displaying : "+$("#city_list").fancytree('getTree').getActiveNode()['title']+"</p>"; 
+	}
+    else{
+    	current_item.innerHTML = "<p>Currently displaying : All the records within the given date range</p>"; 
+    }
+   
+    $("#applyButton").append(current_item);
 	load_report_table();
 }
 function closeFunction(){
@@ -41,20 +57,21 @@ function set_root(data){
 	var data_inter = structureData(data);
 	content = [{
        title: 'Everything', 
-       key: '-1,-1', 
+       key: 0, 
        folder: true, 
        children: data_inter,
    }];
    return content;
 }
 function load_report_table(){
-	console.log("load_report_table called");
 	if (report_table != null){
+		
 		report_table.ajax.reload();
 	}
 	else{
 		report_table = $("#report_table").DataTable({
 			"sDom": '<"top"Bfl>r<"mid"t><"bottom"ip><"clear">',
+			"paging" : false,
 			"ajax":{
 				url: "/mastersheet/report_table/",
 				dataSrc:"",
