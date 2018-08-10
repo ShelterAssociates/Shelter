@@ -39,8 +39,7 @@ def give_details(request):
 def masterSheet(request, slum_code = 0, FF_code = 0, RHS_code = 0 ):
     flag_perform =True
     try:
-        delimiter = 'slumname='
-        slum_code = Slum.objects.filter(pk = int(request.GET.get('form').partition(delimiter)[2]) ).values_list("shelter_slum_code","electoral_ward__administrative_ward__city__id","electoral_ward__name", "name")
+        slum_code = Slum.objects.filter(pk = int(request.GET['slumname']) ).values_list("shelter_slum_code","electoral_ward__administrative_ward__city__id","electoral_ward__name", "name")
         slum_funder = SponsorProjectDetails.objects.filter(slum__name= str(slum_code[0][3])).exclude(sponsor__id= 10)
         form_ids = Survey.objects.filter(city__id = int(slum_code[0][1]))
         

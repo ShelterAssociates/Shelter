@@ -443,7 +443,7 @@ $(document).ready(function() {
                                     dataSrc:"",
                                     data: function(){
 
-                                        return {'form':$("#slum_form").serialize() , 'csrfmiddlewaretoken':csrf_token}
+                                        return $("#slum_form").serialize();// , 'csrfmiddlewaretoken':csrf_token}
                                         // NOTE : We could have assigned the variable itself to the 'data' attribute, instead
                                         // of writing  function. That method promotes the errorneous behaviour. The code would have been
                                         // unable to update the 'data' attribute on the call of 'table.ajax.reload()'. 
