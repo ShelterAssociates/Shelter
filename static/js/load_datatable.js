@@ -492,7 +492,7 @@ $(document).ready(function() {
                                                 data[i]['p1_amb'] = '#fc0707';
                                                 data[i]['p2_amb'] = '#fc0707';
                                             }
-                                            if(data[i]['phase_one_material_date_str'] != data['phase_three_material_date_str']){
+                                            if(data[i]['phase_one_material_date_str'] != data[i]['phase_three_material_date_str']){
                                                 if(checkCorrect(data[i]['phase_three_material_date_str'], data[i]['phase_two_material_date_str']) == false){
                                                     data[i]['p2_amb'] = '#fc0707';
                                                     data[i]['p3_amb'] = '#fc0707';

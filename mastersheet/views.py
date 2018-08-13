@@ -156,7 +156,7 @@ def masterSheet(request, slum_code = 0, FF_code = 0, RHS_code = 0 ):
         temp_daily_reporting = {obj_DR['household_number']: obj_DR for obj_DR in daily_reporting_data}
         temp_DR_keys = temp_daily_reporting.keys()
         # SBM - fetching data
-        sbm_fields = ['slum', 'household_number', 'name', 'application_id', 'photo_uploaded', 'created_date_str', 'id', 'phone_number', 'aadhar_number', 'photo_verified', 'photo_approved', 'application_verified', 'application_approved']
+        sbm_fields = ['slum', 'household_number', 'name', 'application_id', 'photo_uploaded', 'created_date_str', 'id', 'phone_number', 'aadhar_number', 'photo_verified', 'photo_approved', 'application_verified', 'application_approved', 'sbm_comment']
         sbm_data = SBMUpload.objects.extra(
             select={'created_date_str': "to_char(created_date, 'YYYY-MM-DD ')"}).filter(
             slum__shelter_slum_code=slum_code[0][0])
@@ -386,6 +386,7 @@ def define_columns(request):
         {"data": "photo_approved", "title": "Photo Approved"},#52
         {"data": "application_verified", "title": "Application Verified"},
         {"data": "application_approved", "title": "Application Approved"},
+        {"data": "sbm_comment", "title": "SBM Comment"},
 
 
         {"data": "agreement_date_str", "title": "Date of Agreement"},
@@ -415,8 +416,8 @@ def define_columns(request):
     final_data['buttons']['RHS'] = range(12,30)
     final_data['buttons']['Follow-up'] = range(30,48) 
     final_data['buttons']['Family factsheet'] = range(48,55) 
-    final_data['buttons']['SBM'] = range(55,64)
-    final_data['buttons']['Construction status'] = range(64,79)
+    final_data['buttons']['SBM'] = range(55,65)
+    final_data['buttons']['Construction status'] = range(65,80)
 
     # We define the columns for community mobilization and vendor details in a dynamic way. The
     # reason being these columns are prone to updates and additions.
