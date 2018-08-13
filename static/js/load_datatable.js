@@ -517,6 +517,12 @@ $(document).ready(function() {
                                     complete:function(){
                                              $(".overlay").hide(); 
                                     },
+                                    error:function(response){
+                                        $(".overlay").hide();
+                                        if (response.responseText!=""){
+                                            alert(response.responseText);
+                                        }
+                                    }
 
                                     
                               },
