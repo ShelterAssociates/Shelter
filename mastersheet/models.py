@@ -86,6 +86,7 @@ class SBMUpload(models.Model):
     photo_approved = models.BooleanField(default=False)
     application_verified = models.BooleanField(default=False)
     application_approved = models.BooleanField(default=False)
+    sbm_comment = models.TextField(null=True, blank=True)
     created_date = models.DateTimeField(default=datetime.datetime.now)
 
     class Meta:
