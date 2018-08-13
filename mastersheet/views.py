@@ -16,6 +16,7 @@ import collections
 from django.http import JsonResponse
 from mastersheet.daily_reporting_sync import ToiletConstructionSync, CommunityMobilizaitonSync
 from utils.utils_permission import apply_permissions_ajax
+from decorators import deco_city_permission
 from collections import defaultdict
 import datetime
 
@@ -36,6 +37,7 @@ def give_details(request):
 # to be displayed to the front end.
 @csrf_exempt
 @apply_permissions_ajax('mastersheet.can_view_mastersheet')
+@deco_city_permission
 def masterSheet(request, slum_code = 0, FF_code = 0, RHS_code = 0 ):
     flag_perform =True
     try:
