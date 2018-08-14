@@ -3,9 +3,48 @@ from django.contrib.admin.widgets import ForeignKeyRawIdWidget
 from master.models import *
 from django.contrib import admin
 from django.db.models.fields.related import ManyToOneRel
+from mastersheet.models import *
 
+class BaseForm(forms.Form):
+    '''
+        Base form class
+    '''
+    def clean_slum(self):
+        """
+        Check permissions of city level access
+        :return: 
+        """
+        original_slum = self.instance.slum
+        if not original_slum.has_permission(self.request.user):
+            raise ValidationError("You do not have access to change this slum")
+        slum = self.cleaned_data['slum']
+        if not slum.has_permission(self.request.user):
+            raise ValidationError("You do not have access to this slum")
+        return slum
 
+class VendorHouseholdInvoiceDetailForm(BaseForm, forms.ModelForm):
 
+    class Meta:
+        model = VendorHouseholdInvoiceDetail
+        fields = '__all__'
+
+class SBMUploadForm(BaseForm, forms.ModelForm):
+
+    class Meta:
+        model = SBMUpload
+        fields = '__all__'
+
+class ToiletConstructionForm(BaseForm, forms.ModelForm):
+
+    class Meta:
+        model = ToiletConstruction
+        fields = '__all__'
+
+class CommunityMobilizationForm(BaseForm, forms.ModelForm):
+
+    class Meta:
+        model = CommunityMobilization
+        fields = '__all__'
 
 class find_slum(forms.Form):
     def __init__(self, *args, **kwargs):

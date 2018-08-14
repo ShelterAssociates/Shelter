@@ -1,5 +1,18 @@
 from django.contrib import admin
 from .models import *
+from .forms import VendorHouseholdInvoiceDetailForm, SBMUploadForm, ToiletConstructionForm, CommunityMobilizationForm
+
+class BaseAdmin(admin.ModelAdmin):
+    '''
+        Base admin class
+    '''
+    def get_form(self, request, obj=None, **kwargs):
+        """
+        Adding request param to form. Need this to be accessed in form class for permission check 
+        """
+        form = super(BaseAdmin, self).get_form(request, obj=obj, **kwargs)
+        form.request = request
+        return form
 
 class VendorTypeAdmin(admin.ModelAdmin):
     list_display = ('name','description','display_flag','display_order')
@@ -16,11 +29,12 @@ class VendorAdmin(admin.ModelAdmin):
         return obj.vendor_type.name
 admin.site.register(Vendor, VendorAdmin)
 
-class VendorHouseholdInvoiceDetailAdmin(admin.ModelAdmin):
+class VendorHouseholdInvoiceDetailAdmin(BaseAdmin):
     list_display = ('vendor_name','slum_name','invoice_number','invoice_date','household_number')
     search_fields = ['invoice_number','vendor__name','slum__name', 'invoice_date', 'household_number']
     ordering = ['invoice_number']
     raw_id_fields = ['slum']
+    form = VendorHouseholdInvoiceDetailForm
 
     class Media:
         js = ['js/mastersheet_collapse_household_code.js']
@@ -33,23 +47,25 @@ class VendorHouseholdInvoiceDetailAdmin(admin.ModelAdmin):
 
 admin.site.register(VendorHouseholdInvoiceDetail, VendorHouseholdInvoiceDetailAdmin)
 
-class SBMUploadAdmin(admin.ModelAdmin):
+class SBMUploadAdmin(BaseAdmin):
     list_display = ('slum_name', 'household_number', 'name','application_id','photo_uploaded','photo_verified','photo_approved',
                     'application_verified','application_approved')
     search_fields = ['slum__name','household_number', 'name','application_id','photo_uploaded','photo_verified','photo_approved',
                     'application_verified','application_approved']
     ordering = ['slum__name', 'household_number']
     raw_id_fields = ['slum']
+    form = SBMUploadForm
 
     def slum_name(self, obj):
         return obj.slum.name
 admin.site.register(SBMUpload, SBMUploadAdmin)
 
-class ToiletConstructionAdmin(admin.ModelAdmin):
+class ToiletConstructionAdmin(BaseAdmin):
     list_display = ('slum_name', 'household_number','agreement_date','agreement_cancelled','status')
     search_fields = ['slum__name','household_number','agreement_date','agreement_cancelled','status']
     ordering = ['slum__name','household_number']
     raw_id_fields = ['slum']
+    form = ToiletConstructionForm
 
     def slum_name(self, obj):
         return obj.slum.name
@@ -62,10 +78,11 @@ class ActivityTypeAdmin(admin.ModelAdmin):
     ordering = ['name']
 admin.site.register(ActivityType, ActivityTypeAdmin)
 
-class CommunityMobilizationAdmin(admin.ModelAdmin):
+class CommunityMobilizationAdmin(BaseAdmin):
     list_display = ('slum_name','household_number', 'activity_type_name','activity_date')
     search_fields = ['slum__name','household_number', 'activity_type__name','activity_date']
     raw_id_fields = ['slum']
+    form = CommunityMobilizationForm
 
     def activity_type_name(self, obj):
         return obj.activity_type.name

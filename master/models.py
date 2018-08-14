@@ -128,6 +128,15 @@ class Slum(models.Model):
     photo = models.ImageField(upload_to=FACTSHEET_PHOTO,blank=True, null=True)
     associated_with_SA = models.BooleanField(default=False)
 
+    def has_permission(self, user):
+        if user.is_superuser:
+            return True
+        group_perm = user.groups.values_list('name', flat=True)
+        group_perm = map(lambda x:x.split(':')[-1], group_perm)
+        if self.electoral_ward.administrative_ward.city.name.city_name in group_perm:
+            return True
+        return False
+
     def __unicode__(self):
         """Returns string representation of object"""
         return str(self.name)
