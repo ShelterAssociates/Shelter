@@ -14,9 +14,10 @@ class BaseForm(forms.Form):
         Check permissions of city level access
         :return: 
         """
-        original_slum = self.instance.slum
-        if not original_slum.has_permission(self.request.user):
-            raise ValidationError("You do not have access to change this slum")
+        if 'instance' in self and 'slum' in self.instance:
+            original_slum = self.instance.slum
+            if not original_slum.has_permission(self.request.user):
+                raise ValidationError("You do not have access to change this slum")
         slum = self.cleaned_data['slum']
         if not slum.has_permission(self.request.user):
             raise ValidationError("You do not have access to this slum")
