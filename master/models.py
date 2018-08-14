@@ -132,8 +132,8 @@ class Slum(models.Model):
         if user.is_superuser:
             return True
         group_perm = user.groups.values_list('name', flat=True)
-        group_perm = map(lambda x:x.split(':')[-1], group_perm)
-        if self.electoral_ward.administrative_ward.city.name.city_name in group_perm:
+        group_perm = map(lambda x:x.split(':')[-1].strip(), group_perm)
+        if self.electoral_ward.administrative_ward.city.name.city_name.strip() in group_perm:
             return True
         return False
 
