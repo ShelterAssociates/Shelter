@@ -39,6 +39,18 @@ $(document).ready(function() {
                         }
                     }
                 }
+                var tmp_FF = columns_defs['buttons']['Family factsheet'];
+                for (i = 0 ; i < tmp_FF.length ; i ++ ){
+                    columns_defs['data'][tmp_FF[i]]['render']= function ( data, type, row,meta ) {
+                        if(typeof data != 'undefined') {
+                            url_FF = row['ff_url']
+                            if(type === 'display'){
+                                        data = '<a href = "#" onclick="window.open(\''+url_FF+'\', \'_blank\', \'width=850,height=750\');">' + data + "</a>";
+                            }
+                            return data;
+                        }
+                    }
+                }
 
                 // Adding family factsheet photo download URLs
                 var tmp_download_TF = columns_defs['buttons']['Family factsheet'];
