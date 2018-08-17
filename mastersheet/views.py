@@ -57,7 +57,7 @@ def masterSheet(request, slum_code = 0, FF_code = 0, RHS_code = 0 ):
         urlv = str(settings.KOBOCAT_FORM_URL)+str('data/'+str(RHS_code)+'?query={"slum_name":"') + str(slum_code[0][0])+'"}'  # '+str(slum_code)+'
         #urlv = str(settings.KOBOCAT_FORM_URL)+str('data/98?query={"slum_name":"') + str(slum_code) + '"}'  # '+str(slum_code)+'
 
-        url_family_factsheet = str(settings.KOBOCAT_FORM_URL)+str('data/'+str(FF_code)+'?format=json&query={"group_vq77l17/slum_name":"')+ str(slum_code[0][0]) + str('"}&fields=["OnfieldFactsheet","_attachments","Toilet_Photo","Family_Photo","group_ne3ao98/Have_you_upgraded_yo_ng_individual_toilet","group_ne3ao98/Cost_of_upgradation_in_Rs","group_ne3ao98/Where_the_individual_ilet_is_connected_to","group_ne3ao98/Use_of_toilet","group_vq77l17/Household_number"]')
+        url_family_factsheet = str(settings.KOBOCAT_FORM_URL)+str('data/'+str(FF_code)+'?format=json&query={"group_vq77l17/slum_name":"')+ str(slum_code[0][0]) + str('"}&fields=["OnfieldFactsheet","_attachments","Toilet_Photo","Family_Photo","group_ne3ao98/Have_you_upgraded_yo_ng_individual_toilet","group_ne3ao98/Cost_of_upgradation_in_Rs","group_ne3ao98/Where_the_individual_ilet_is_connected_to","group_ne3ao98/Use_of_toilet","group_vq77l17/Household_number","_xform_id_string","_id"]')
         #url_family_factsheet = str(settings.KOBOCAT_FORM_URL)+str('data/97?format=json&query={"group_vq77l17/slum_name":"')+ str(slum_code) + str('"}&fields=["OnfieldFactsheet","group_ne3ao98/Have_you_upgraded_yo_ng_individual_toilet","group_ne3ao98/Cost_of_upgradation_in_Rs","group_ne3ao98/Where_the_individual_ilet_is_connected_to","group_ne3ao98/Use_of_toilet","group_vq77l17/Household_number"]')
         if flag_perform:
             url_RHS_form = str(settings.KOBOCAT_FORM_URL)+str('forms/'+str(RHS_code)+'/form.json')
@@ -218,14 +218,23 @@ def masterSheet(request, slum_code = 0, FF_code = 0, RHS_code = 0 ):
                 x.update({'tc_id_'+str(x['Household_number']): temp_daily_reporting[x['Household_number']]['id']})
             
             temp = x["_id"]
+            x['ff_id'] = None
+            x['ff_xform_id_string'] = None
             
             if x['Household_number'] in temp_FF_keys:
                 if '_id' in temp_FF[x['Household_number']].keys():
+                    ff_id = temp_FF[x['Household_number']]['_id']
                     del(temp_FF[x['Household_number']]['_id'])
+                if '_xform_id_string' in temp_FF[x['Household_number']].keys():
+                    ff_xform_id_string = temp_FF[x['Household_number']]['_xform_id_string']
+                    del(temp_FF[x['Household_number']]['_xform_id_string'])
+
                 x.update(temp_FF[x['Household_number']])
                 x['OnfieldFactsheet'] = 'Yes'
                 x['_id'] = temp
-            
+                x['ff_id'] = ff_id
+                x['ff_xform_id_string'] = ff_xform_id_string
+
             if len(x['_attachments']) != 0:
 
                 PATH = settings.BASE_URL + '/'.join(x['_attachments'][0]['download_url'].split('/')[:-1])
@@ -235,6 +244,7 @@ def masterSheet(request, slum_code = 0, FF_code = 0, RHS_code = 0 ):
                 if 'Family_Photo' in x.keys():
                     x.update({'family_photo_url': PATH + '/' + x['Family_Photo']})
             x.update({'rhs_url': settings.BASE_URL + str('shelter/forms/') + str(x['_xform_id_string']) + str('/instance#/')+str(x["_id"]) })
+            x.update({'ff_url': settings.BASE_URL + str('shelter/forms/') + str(x['ff_xform_id_string']) + str('/instance#/')+str(x["ff_id"]) })
 
             if flag_perform:
                 try:
@@ -266,6 +276,7 @@ def masterSheet(request, slum_code = 0, FF_code = 0, RHS_code = 0 ):
                 for funder in slum_funder:
                     if int(x['Household_number']) in funder.household_code:
                         x.update({'Funder': funder.sponsor.organization_name})
+    
     return HttpResponse(json.dumps(formdict),  content_type = "application/json")
 
 
@@ -828,11 +839,7 @@ def give_report_table_numbers(request):
         end_date = datetime.datetime.today()
     print tag, type(current_id)
     report_table_data = {}
-    report_table_data['counter_ad'] = 0
-    report_table_data['counter_p1'] = 0
-    report_table_data['counter_p2'] = 0
-    report_table_data['counter_p3'] = 0
-    report_table_data['counter_c'] = 0
+    
     x = ToiletConstruction.objects.values('agreement_date', 'phase_one_material_date', 'phase_two_material_date', 'phase_three_material_date', 'completion_date')
     
 
@@ -845,11 +852,11 @@ def give_report_table_numbers(request):
     elif tag == None and int(current_id) != 0:
         x = x.filter(slum = current_id)
 
-    report_table_data['counter_ad'] = len(x.filter(agreement_date__range=[start_date,end_date]))
-    report_table_data['counter_p1'] = len(x.filter(phase_one_material_date__range=[start_date,end_date]))
-    report_table_data['counter_p2'] = len(x.filter(phase_two_material_date__range=[start_date,end_date]))
-    report_table_data['counter_p3'] = len(x.filter(phase_three_material_date__range=[start_date,end_date]))
-    report_table_data['counter_c'] = len(x.filter(completion_date__range=[start_date,end_date]))
+    report_table_data['counter_ad'] = x.filter(agreement_date__range=[start_date,end_date]).count()
+    report_table_data['counter_p1'] = x.filter(phase_one_material_date__range=[start_date,end_date]).count()
+    report_table_data['counter_p2'] = x.filter(phase_two_material_date__range=[start_date,end_date]).count()
+    report_table_data['counter_p3'] = x.filter(phase_three_material_date__range=[start_date,end_date]).count()
+    report_table_data['counter_c'] = x.filter(completion_date__range=[start_date,end_date]).count()
    
     return HttpResponse(json.dumps([report_table_data]), content_type = "application/json")
 
