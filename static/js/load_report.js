@@ -116,22 +116,17 @@ $(document).ready(function() {
         data : "",
         contentType : "application/json",
         success : function (data) {	
-        	var select_city = $("#city_list");
         	$('#city_list').fancytree({
        		   checkbox: true,
+		       source :set_root(data),
 		       selectMode: 3,
-		        source :set_root(data),
-		        extensions: ['filter'],
-		        quicksearch: true,
-		        filter: opts,
-		       	click: function(event, data) {
-  				},
+		       extensions: ['filter'],
+		       quicksearch: true,
+		       //filter: opts,
+		       
 			});
         }
 	});	
-	$("#city_list").change(function(){
-		console.log(this.options[this.selectedIndex].value);
-	});
-
+	
 	
 });
