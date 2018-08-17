@@ -2,9 +2,11 @@
 {% load static %}
 {% block extrahead%}
 <script src = "{% static "js/load_report.js" %}"></script>
-<script src = "{% static "js/jquery.fancytree-all-deps.js" %}"></script>
+<script src = "{% static "js/jquery.fancytree-all-deps.min.js" %}"></script>
 <script src = "{% static "js/jquery.dataTables.min.js" %}"></script>
-<link rel = "stylesheet" type="text/css" href = "{% static "admin/css/ui.fancytree.min.css" %}">
+
+
+<link rel = "stylesheet" type="text/css" href = "{% static "css/ui.fancytree.min.css" %}">
 <link rel = "stylesheet" type="text/css" href = "{% static "css/jquery.dataTables.min.css" %}">
 <style>
 	.display_line{
@@ -20,7 +22,7 @@
        <span class="topic-dropdown-text " >Everything</span>
        <span class="caret"></span>
     </button> 
-    <div id = "drop_tree" style = "display: none;" class="dropbtn dropdown1">
+    <div id = "drop_tree" style = "display: none; overflow:auto; max-width:300px; max-height: 400px" class="dropbtn dropdown1">
     	<div id = "city_list"></div>
 		<button class="btn btn-primary"  onclick = "closeFunction()">Close</button>
     </div>
