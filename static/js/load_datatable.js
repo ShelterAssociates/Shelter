@@ -323,7 +323,7 @@ $(document).ready(function() {
         $(".overlay").show();
         var input = $("#upload_file")[0];
         var formData = new FormData(input);
-
+        formData.append('slum_code', $("#slum_form")[0][1].value);
         if(typeof input[1].files[0] == 'undefined' ){
             alert("No file selected. Please select a file.");
         }
@@ -338,14 +338,13 @@ $(document).ready(function() {
                 $.ajax({
                         type : "post",
                         url : "/mastersheet/files/",
-                        data :formData ,
+                        data : formData,
                         dataType: 'json',
                         contentType : false,
                         processData: false,
                         success: function(response){
                             var total_updates = 0;
                             var total_new = 0;
-                            
                             
                             jQuery.each(response, function (index, value) {
 
@@ -395,10 +394,12 @@ $(document).ready(function() {
                             $("#success_log").append(success_log);
                             
                             $('#success_log').addClass('alert alert-success');
-                        },
-                        complete:function(){
                             $(".overlay").hide();
                         },
+                        // complete:function(){
+                        //     console.log("We are in complete");
+                        //     $(".overlay").hide();
+                        // },
                         error:function(response){
                             $(".overlay").hide();
                             if (response.responseText!=""){
@@ -413,14 +414,22 @@ $(document).ready(function() {
 
     // Clearing modal after it is closed
     $("#btnUpload").on("click", function(){
-        
+        var slum_code = $("#slum_form")[0][1].value;
+        if (slum_code.length == 0){
+            alert("Please select a slum");
+        }
+        else{
+            $("#myModal").modal('show');
+        }
         $('#myModal').on('hidden.bs.modal', function() {
-            $(this).find("#error_log").html("");
-            $(this).find("#error_log").remove();
-            $(this).find("#success_log").html("");
-            $(this).find("#success_log").remove();
-            $("#upload_file")[0].reset();
-        });
+                $(this).find("#error_log").html("");
+                $(this).find("#error_log").remove();
+                $(this).find("#success_log").html("");
+                $(this).find("#success_log").remove();
+                $("#upload_file")[0].reset();
+
+                
+            });
      });
     
 
