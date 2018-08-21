@@ -462,13 +462,14 @@ def renderMastersheet(request):
 @csrf_exempt
 @apply_permissions_ajax('mastersheet.can_upload_mastersheet')
 def file_ops(request):
+    slum_code = request.POST.get('slum_code')
     slum_search_field = find_slum()
     file_form1 = file_form()
     response = []
     resp = {}
     if request.method == "POST":
         try:
-            resp = handle_uploaded_file(request.FILES.get('file'),response)
+            resp = handle_uploaded_file(request.FILES.get('file'),response,slum_code)
             response = resp
         except Exception as e: 
             response.append(('error msg', str(e)))
@@ -480,7 +481,7 @@ def file_ops(request):
 # In the sheet that is being uploaded, the 'Agreement Cancelled' field should be blank if the agreement
 # is not cancelled. If it has any entry, the agreement_cancelled field in the database will be set to
 #  True
-def handle_uploaded_file(f,response):
+def handle_uploaded_file(f,response,slum_code):
 
     df = pandas.read_excel(f)
 
@@ -531,12 +532,13 @@ def handle_uploaded_file(f,response):
     # a header 'Community Mobilization Ends' right after the last mobilization activity's
     # column.This column will be blank. It will be used to slice a sub frame which will have
     # all the community mobilization activities.
+    this_slum = Slum.objects.get(pk = slum_code)
     try:
 
         if flag_overall != 1:
 
             for i in df1.index.values:
-                this_slum = Slum.objects.get(name=str(df1.loc[int(i), 'Select Slum']))
+                #this_slum = Slum.objects.get(name=str(df1.loc[int(i), 'Select Slum']))
 
                
                 if flag_SBM != 1:
