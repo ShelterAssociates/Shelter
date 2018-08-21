@@ -155,7 +155,7 @@ div.dt-buttons>button{
         <button type="button" id="btnSync" class="btn btn-success"><span class="glyphicon glyphicon-cloud"></span> Sync</button>
         {%endif%}
         {% if perms.mastersheet.can_upload_mastersheet%}
-        <button type="button" id="btnUpload" class="btn btn-success" data-toggle="modal" data-target="#myModal"><span class="glyphicon glyphicon-upload"></span> Upload</button>
+        <button type="button" id="btnUpload" class="btn btn-success"  data-target="#myModal"><span class="glyphicon glyphicon-upload"></span> Upload</button><!-- data-toggle="modal" -->
         {%endif%}
         <input type="hidden" class="hide" id="slum_code" value="{{slum_code}}"/>
     </form>
