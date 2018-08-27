@@ -983,6 +983,9 @@ function household_details(housenumber){
             spstr += '</tbody></table>';
             div_modal.find('#modelbody').html(spstr);
 
+        },
+        error : function(data){
+            div_modal.modal('hide');
         }
     });
 }
