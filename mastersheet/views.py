@@ -771,7 +771,8 @@ def delete_selected_records(records):
             print "No record selected to delete."
 
 @apply_permissions_ajax('mastersheet.can_sync_toilet_status')
-def sync_kobo_data(request,slum_id):
+@deco_city_permission
+def sync_kobo_data(request,slumname):
     """
     Method to sync data from kobotoolbox for community mobilization and toilet construction status(Daily reporting)
     :param request: 
@@ -780,7 +781,7 @@ def sync_kobo_data(request,slum_id):
     """
     data={}
     try:
-        slum = Slum.objects.get(id=slum_id)
+        slum = Slum.objects.get(id=slumname)
         user = request.user
         toilet_const = ToiletConstructionSync(slum, user)
         t_data = toilet_const.fetch_data()

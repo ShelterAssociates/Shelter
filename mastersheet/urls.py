@@ -15,5 +15,5 @@ urlpatterns = [
     url(r'^columns/$', define_columns, name="define_columns"),
     url(r'^show/mastersheet/$', renderMastersheet, name="renderMastersheet"),
     url(r'^list/show/$', masterSheet, name="masterSheet"),
-    url(r'^sync/slum/(?P<slum_id>\d+)$', sync_kobo_data, name='sync_kobo_data')
+    url(r'^sync/slum/(?P<slumname>\d+)$', sync_kobo_data, name='sync_kobo_data')
 ]

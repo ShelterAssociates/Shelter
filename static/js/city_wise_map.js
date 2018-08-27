@@ -16,7 +16,7 @@ let arr_poly_disp = [];
 let legends =[];
 let city = null;
 let objBreadcrumb = null;
-
+let houses= null;
 //Components/filter variables
 let zindex = 0;
 let global_slum_id=0;
@@ -36,7 +36,8 @@ let TYPE_COMPONENT = {
     'S' :'Sponsor',
     'F' :'Filter'
 };
-
+var myCustomColour = '#583470'
+var markerHtmlStyles = 'background-color: myCustomColour;width: 3rem;height: 3rem;display: block;left: -1.5rem;top: -1.5rem;position: relative;border-radius: 3rem 3rem 0;transform: rotate(45deg);border: 1px solid #FFFFFF';
 var __extends = (this && this.__extends) || function (d, b) {
     for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
     function __() { this.constructor = d; }
@@ -60,7 +61,6 @@ var Polygon = (function () {
         this.borderColor = obj_data.borderColor || slum_borderColor;
         this.legend = obj_data.legend;
         this.id = obj_data.id;
-        this.center = '';//bounds.getCenter();
         this.shape = obj_data.lat;
         this.officeAddress = obj_data.wardOfficeAddress || "";
         this.officerName = obj_data.wardOfficerName || "";
@@ -72,92 +72,73 @@ var Polygon = (function () {
             return this._shape;
         },
         set: function (shape) {
-            let par_shape = this.parse_shape(shape);
+            let par_shape = this.drawPolygon(shape);
             this._shape = par_shape;
         },
         enumerable: true,
         configurable: true
     })
-    //Parser to convert string of lat/longs to map latlng object
-    Polygon.prototype.parse_shape = function(shape){
-        let lat = shape.substring(20, shape.length-2);
-        let bounds = [];//new google.maps.LatLngBounds();
-        let latlong = new google.maps.LatLngBounds();
-        $.each(lat.split(','), function(key,val){
-            let result = val.trim().split(' ');
-            if(result.length > 1){
-                bounds.push(new google.maps.LatLng(result[1].trim(), result[0].trim()));
-                latlong.extend(new google.maps.LatLng(result[1].trim(), result[0].trim()));
-            }
-        });
-        this.center = latlong;//.getCenter();
-        return this.drawPolygon(bounds);
-    }
+
     //Draw polygon using other set of attributes like color, opacity..
     Polygon.prototype.drawPolygon = function(bounds){
         let opacity = 0.4;
         let strokeOpacity = 0.7;
         let poly_options ={
-          paths : bounds,
-          strokeColor : this.borderColor,
-          strokeOpacity : strokeOpacity,
-          strokeWeight : 2,
+          color : this.borderColor,
+          opacity : strokeOpacity,
+          weight : 2,
           fillColor : this.bgColor,
           fillOpacity : opacity,
           name : this.name
         }
-        let Poly = new google.maps.Polygon(poly_options);
-        return Poly;
+        var Poly = L.geoJson(bounds, {style:poly_options/*, onEachFeature:admin_onEachFeature*/});
+        var return_poly;
+        Poly.eachLayer(function(layer){
+            return_poly = layer;
+        });
+        //Poly.addTo(map);
+        return return_poly;
     }
     //Set up basic listeners for polygon which is displayed on map - say map hover
     Polygon.prototype.setListeners = function (){
-        var label_options = {
-              map: map,
-              position: this.center.getCenter(),
-              text: '',
-              minZoom: 7,
-              zIndex : 999
-            };
-        var slumLabel = new MapLabel(label_options);
-          //slumLabel.changed('text');
         let shapename = this.name
         if (this.type == "Slum")
         {
-            shapename = this.type + ': ' +shapename;
+            shapename = this.type + ' : ' + this.name;
+            //shapename = '<div id="content" >' + '<div id="bodyContent">' + '<p><b>' + this.name + '</b></p>' + '<div class="row">' + '<div class="col-md-12">' + '<p style="font-size: 13px;">' + this.info + '</p> ';
+            //shapename +='</div>' + '</div>';
         }
-        google.maps.event.addListener(this.shape, 'mouseover', function(event) {
-          slumLabel.text = shapename;
-          slumLabel.changed('text');
-        });
-        google.maps.event.addListener(this.shape, 'mouseout', function(event) {
-          slumLabel.text = '';
-          slumLabel.changed('text');
+        this.shape.bindPopup(shapename,{autoPan:true});
+        this.shape.on({
+        'mouseover': function (ev) {
+                        this.openPopup();
+                     },
+        'mouseout' : function(ev){
+                        this.closePopup();
+                    }
+
         });
     }
     //Show the polygon on map
     Polygon.prototype.show = function(){
-        zIndex = WARDLEVEL.indexOf(this.type) + 1;
-        this.shape.setOptions({ zIndex: zIndex });
-        this.shape.setMap(map);
-        arr_poly_disp.push(this.shape);
-        //map.fitBounds(bounds);
+            map.addLayer(this.shape);
+            if (this.type == "Slum"){
+            this.shape.bringToFront();}
+            arr_poly_disp.push(this);
     }
     //Hide the polygon on map
     Polygon.prototype.hide = function(){
-        this.shape.setMap(null);
+            map.removeLayer(this.shape);
     }
     //Hide all the polygon that are displayed on map
     Polygon.prototype.hideAll = function(){
         $.each(arr_poly_disp, function(k,v){
-             v.setMap(null);
+            map.removeLayer(v.shape)
         });
         arr_poly_disp = [];
         zIndex = 0;
     }
-    //Set zoom level
-    Polygon.prototype.setZoomLevel = function(zoom){
-            map.setZoom(zoom);
-    }
+
     //Set other UI details like info, ward details ...depending on the admin, elect, slum
     Polygon.prototype.event_onClick = function(){
         this.hideAll();
@@ -241,40 +222,28 @@ var Slum = (function (_super) {
     Slum.prototype.setListeners = function(){
         _super.prototype.setListeners.call(this);
         let _this = this;
-        google.maps.event.addListener(this.shape, 'click', function(event_shape) {
+        this.shape.on({
+            'click' : function(event) {
+
             let flag= false;
-            if(objBreadcrumb.val.length < 3){
+            if(objBreadcrumb.val.length < 2){
                 $("#datatable_filter").find("input").val(_this.name);
 		        $("#datatable_filter").find("input").trigger('keyup');
 		        $("#datatable").find('tbody>tr>td>div>span:contains('+_this.name+')').trigger('click');
 		        flag = true;
             }
             else{
-                if(event_shape!=undefined){
-                        var contentString = '<div id="content" >' + '<div id="bodyContent">' + '<p><b>' + _this.name + '</b></p>' + '<div class="row">' + '<div class="col-md-12">' + '<p style="font-size: 13px;">' + _this.info + '</p> ';
-                        //if (obj[arr[0]]["content"][arr[1]]["content"][arr[2]]["content"][arr[3]]['factsheet']) {
-                        //contentString += '<p><a href="javascript:factsheet_click(this)">Factsheet</a></p>';
-                        //}
-                        contentString +='</div>' + '</div>';
+                if(event!=undefined){
+                     slum_data_fetch(_this.id);
+                }
 
-                        var infoWindow = new google.maps.InfoWindow({
-                            maxWidth : 430
-                        });
-                        infoWindow.setContent(contentString);
-                        infoWindow.setPosition(event_shape.latLng);
-                        infoWindow.open(map);
-                }
-                else{
-                    flag=true;
-                }
             }
-            if(flag){
-                slum_data_fetch(_this.id);
-            }
+
             _super.prototype.event_onClick.call(_this);
             _super.prototype.show.call(_this);
-            map.fitBounds(_this.center);
-        });
+            map.fitBounds(_this.shape.getBounds());
+
+            }});
     }
     return Slum;
 }(Polygon));
@@ -289,16 +258,14 @@ var ElectoralWard = (function (_super) {
         _super.prototype.setListeners.call(this);
         let _this = this;
 
-        google.maps.event.addListener(this.shape, 'click', function(event) {
+        this.shape.on({'click':function(event) {
             _super.prototype.event_onClick.call(_this);
-            let bounds = new google.maps.LatLngBounds();
-            _super.prototype.show.call(_this);
-            $.each(parse_data[objBreadcrumb.val[0]]['content'][_this.name]['content'], function(k,v){
-                v.obj.show();
-            });
-            $.extend(bounds, _this.center);
-            map.fitBounds(bounds);
-        });
+                _super.prototype.show.call(_this);
+                $.each(parse_data[objBreadcrumb.val[0]]['content'][_this.name]['content'], function(k,v){
+                    v.obj.show();
+                });
+                map.fitBounds(_this.shape.getBounds());
+            }});
     }
     return ElectoralWard;
 }(Polygon));
@@ -313,18 +280,17 @@ var AdministrativeWard = (function (_super) {
     AdministrativeWard.prototype.setListeners = function(){
         _super.prototype.setListeners.call(this);
         let _this = this;
-        google.maps.event.addListener(this.shape, 'click', function(event) {
+        this.shape.on({'click': function(event) {
             _super.prototype.event_onClick.call(_this);
-            let bounds = new google.maps.LatLngBounds();
+
             $.each(parse_data[_this.name]['content'], function(k,v){
                 v.obj.show();
                 $.each(v['content'], function(key,val){
                     val.obj.show();
                 });
             });
-            $.extend(bounds, _this.center);
-            map.fitBounds(bounds);
-        });
+            map.fitBounds(_this.shape.getBounds());
+            }});
     }
     return AdministrativeWard;
 }(Polygon));
@@ -339,20 +305,19 @@ var City = (function(){
     //Added click listener to display top level details from where it started.
     City.prototype.click = function(){
         $.each(arr_poly_disp, function(k,v){
-             v.setMap(null);
+             map.removeLayer(v.shape);
         });
         arr_poly_disp = [];
-        let bounds = new google.maps.LatLngBounds();
         $.each(parse_data, function(key,value){
             value.obj.show();
             $.each(value['content'], function(k1,v1){
                 $.each(v1['content'], function(k2,v2){
                     v2.obj.show();
+                    //v2.obj.shape.bringToFront();
                 });
             });
-            $.extend(bounds, value.obj.center);
+
         });
-        map.fitBounds(bounds);
         map.setZoom(12);
         myheader = $("#maphead");
         myheader.html('');
@@ -479,7 +444,7 @@ var Breadcrumbs = (function(){
                     if(objBreadcrumb.val.length == 2)
                         obj_click = obj_click.content[objBreadcrumb.val[1]];
 
-                    google.maps.event.trigger(obj_click.obj.shape, 'click');
+                    obj_click.obj.shape.fireEvent('click');
                 }
             }
             else{
@@ -556,24 +521,18 @@ var Breadcrumbs = (function(){
             objBreadcrumb.val = arr_data;
             $.each(arr_poly_disp, function(k,v){
                 if(v.name == arr_data[2]){
-                   google.maps.event.trigger(v, 'click');
+                    //map.fireEvent('click', {latlng:v.shape.getCenter()})
+                    var latlngPoint = v.shape.getBounds().getCenter();
+
+                    //map.fire('click',{latlng:L.latLng([latlngPoint.lat,latlngPoint.lng])});
+                   v.shape.fire('click');
                 }
             });
 
         }
         return Breadcrumbs;
 }());
-
 function initMap12() {
-    labelmap();
-    map = new google.maps.Map(document.getElementById('map12'), {
-        center : {
-            lat : 19.489339,
-            lng : 74.631617
-        },
-        zoom : 6,
-        mapTypeId : 'satellite',
-    });
 
     $(".overlay").show();
     var city_id = $("#city_id").val();
@@ -583,20 +542,14 @@ function initMap12() {
         type : "GET",
         contenttype : "json",
         success : function(json) {
-            let bounds = new google.maps.LatLngBounds();
             let data = json['content'];
             city = new City(city_name);
-
             $.each(data, function(key, value){
                 let obj_parser = new Parser(0, value);
                 let ward = obj_parser.render();
-                $.extend(bounds, ward[key].obj.center);
                 $.extend(parse_data, ward);
             });
             objBreadcrumb = new Breadcrumbs([]);
-            map.setCenter(bounds.getCenter());
-            map.fitBounds(bounds);
-            map.setZoom(12);
 
             //slum name is put in the search box and enter is fired, the irt search result is loaded
            $(document).ready(function() {
@@ -607,188 +560,63 @@ function initMap12() {
                     slum_input.val(slumname);
                     slum_input.keyup();
                     $("#datatable span").get(0).click();
-                }   
+                }
             });
-             
+
             $(".overlay").hide();
         }
     });
 }
 
-//Base class for shape components
-var Shape =(function(){
-    function Shape(obj_shape){
-         this.name = obj_shape.housenumber;
-         this._this = obj_shape._this;
-         this.type = obj_shape.shape.type;
-         this.center = '';
-         this.coordinates = obj_shape.shape.coordinates;
+function initMap(){
+    let center_data = {"Navi Mumbai":new L.LatLng(19.09118307623272, 73.0159571631209),
+                        "Thane":new L.LatLng(19.215441921044757, 72.98368482425371),
+                        "Sangli":new L.LatLng(16.850235500492538, 74.60914487360401),
+                        "Kolhapur":new L.LatLng(16.700800029695312, 74.23729060058895),
+                        "PCMC":new L.LatLng(18.640083, 73.825560),
+                        "Pune":new L.LatLng(18.51099762698481, 73.86055464212859)};
+    var pos = new L.LatLng(18.640083, 73.825560);
+    if ($('#city_name').val() in center_data)
+    {
+        pos = center_data[$('#city_name').val()];
     }
-    Object.defineProperty(Shape.prototype, "coordinates", {
-        get: function () {
-            return this._coordinates;
-        },
-        set: function (coordinates_data) {
-            let par_coordinates = this.parse_coordinates(coordinates_data);
-            this._coordinates = par_coordinates;
-        },
-        enumerable: true,
-        configurable: true
-    })
-    //Parse the co-ordinates and convert it to appropiate format required by geometry.
-    Shape.prototype.parse_coordinates = function(coordinates_data){
-        let bounds = [];//new google.maps.LatLngBounds();
-        let latlong = new google.maps.LatLngBounds();
-        let coordinates = coordinates_data;
-        if (coordinates_data.length == 2)
-            coordinates = [coordinates_data];
-        if (coordinates_data.length == 1)
-            coordinates = coordinates_data[0];
-        $.each(coordinates, function(key,val){
-            bounds.push(new google.maps.LatLng(val[1], val[0]));
-            latlong.extend(new google.maps.LatLng(val[1], val[0]));
-        });
-        this.center = latlong.getCenter();
-        return bounds;
-    }
-    //Iterate through all the geometry elements and draw them appropiately.
-    Shape.prototype.geometry = function(){
-        let geo = eval('this.'+this.type +'()');
-        var options = {
-            map: map,
-            position: this.center,
-            text: '',
-            minZoom: 8,
-            zIndex : 999
-        };
-        var slumLabel = new MapLabel(options);
-        let _this = this;    //slumLabel.changed('text');
-        google.maps.event.addListener(geo, 'mouseover', function(event) {
-            slumLabel.text = _this.name;
-            slumLabel.changed('text');
-        });
-        google.maps.event.addListener(geo, 'mouseout', function(event) {
-            slumLabel.text = '';
-            slumLabel.changed('text');
-        });
-        return geo;
-    }
-    //Draw polygon
-    Shape.prototype.Polygon = function(){
-        let chkPoly = new google.maps.Polygon({
-            paths : this.coordinates,
-            strokeColor : this._this.chklinecolor,
-            strokeOpacity : 0.7,
-            strokeWeight : this._this.chklinewidth,
-            fillColor : this._this.chkcolor,
-            fillOpacity : 0.6,
-            center : this.center,
-            zIndex:1,
-        });
-        if(this._this.name == "Houses")
-            this.household_details(chkPoly, this.name);
-        return chkPoly;
-    }
-    //Draw linestring
-    Shape.prototype.LineString = function(){
-        let chkPoly = new google.maps.Polyline({
-            path : this.coordinates,
-            strokeColor : this._this.chklinecolor,
-            strokeOpacity : 0.8,
-            strokeWeight : this._this.chklinewidth
-        });
-        return chkPoly;
-    }
-    //Draw point with the icon
-    Shape.prototype.Point = function(){
-        let chklinecolor = this._this.chklinecolor;
-        let pinImage = new google.maps.MarkerImage("http://www.googlemapsmarkers.com/v1/" + chklinecolor.substring(1, chklinecolor.length) + "/");
-        if (this._this.icon!=undefined && this._this.icon!=""){
-            pinImage = new google.maps.MarkerImage(this._this.icon)//"http://www.googlemapsmarkers.com/v1/" + chklinecolor.substring(1, chklinecolor.length) + "/");
+    map = new L.Map('map', {
+                    center: pos,
+                    zoom: 12,
+                    zoomSnap: 0.25,
+                    markerZoomAnimation:false
+                });
+
+    var ggl = L.gridLayer.googleMutant({type: 'satellite' }).addTo(map);
+    initMap12();
+}
+
+//////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////
+//                  Slum Component code
+//////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////
+function onEachFeature(feature, layer){
+        if ('properties' in feature && 'name' in feature.properties){
+            var name = feature.properties.name;
+            layer.bindPopup("House:"+name);
+            layer.on('mouseover', function (e) {
+                this.openPopup();
+            });
+            layer.on('mouseout', function (e) {
+                this.closePopup();
+            });
+//          layer.on('mousemove', function (e) {
+//            e.target.closePopup();
+//            var popup = e.target.getPopup();
+//            popup.setLatLng(e.latlng).openOn(map);
+//          });
+            layer.on('click', function(e){
+                household_details(name);
+            });
+
         }
-       chkPoint = new google.maps.Marker({
-            position : this.coordinates[0],
-            icon : pinImage,
-        });
-        return chkPoint;
     }
-    //For component type houses add a click event which displays all the household detials
-    Shape.prototype.household_details = function (shape, housenumber){
-        var sponsorinfo = new google.maps.InfoWindow({
-            maxWidth : 430,
-            minWidth : 100,
-            minHeight : 100
-        });
-		sponsorinfo.setContent('<div class="overlay" style="display: block;"><div id="loading-img"></div></div>');
-        google.maps.event.addListener(shape, 'click', function(event) {
-            $.each(lst_sponsor, function(k, v) {
-                v.close();
-            });
-            lst_sponsor = [];
-            sponsorinfo.setPosition(event.latLng);
-            $.ajax({
-                url : '/component/get_kobo_RHS_list/' + global_slum_id + '/' + housenumber,
-                type : "GET",
-                contenttype : "json",
-                success : function(json) {
-                    var spstr = "";
-                    spstr += '<table class="table table-striped" style="font-size: 10px;"><tbody>';
-                    if(json['FFReport']){
-                        flag = false;
-                        let fields = $("a[name=chk_group]:contains('Sponsor')").parent().find('input[type=checkbox]');
-                        fields.slice(0, fields.length - 1).each(function(ind, chk){
-                                if($(chk).is(":checked")){
-                                        flag=true;
-                                    }
-                        });
-                        if (flag){
-                        spstr += '<tr><td colspan="2"><a href="javascript:Shape.prototype.familyfactsheet_click('+global_slum_id+', '+housenumber+')" style="cursor:pointer;color:darkred;">View Factsheet</a></td></tr>';
-                        }
-                    }
-                    var flag = false;
-                    $.each(json, function(k, v) {
-                        flag = true;
-			            if(k != 'FFReport'){
-                        	spstr += '<tr><td>' + k + '</td><td>' + v + '</td></tr>';
-			            }
-                    });
-                    spstr += '</tbody></table>';
-                    if (flag){
-                        sponsorinfo.setContent(spstr);
-                        lst_sponsor.push(sponsorinfo);
-                        sponsorinfo.open(map);
-                    }
-                }
-
-            });
-        });
-    }
-    //Family factsheet click event.
-    Shape.prototype.familyfactsheet_click = function(slum, house){
-        $(".overlay").show();
-        $.ajax({
-            url : '/admin/familyrportgenerate/',
-            data : { Sid : slum, HouseNo : house},
-            type: "POST",
-            contenttype : "json",
-            success : function(json){
-                  $(".overlay").hide();
-                    if (json['string']!=undefined){
-                    url = json.string;
-                    window.open("" + url );
-                }
-                else{
-                    alert(json['error']);
-                }
-            },
-            error:function(){
-                $(".overlay").hide();
-            }
-        });
-    }
-    return Shape;
-}());
-
 //Parse for each of the components
 var BaseShape = (function(){
     function BaseShape(obj_component){
@@ -820,51 +648,85 @@ var BaseShape = (function(){
         enumerable: true,
         configurable: true
     })
+
+    BaseShape.prototype.style_geo_geometry = function (shape_geo){
+           style_geometry = { style :{
+                strokeColor : this.chklinecolor,
+                strokeOpacity : 0.8,
+                strokeWeight : this.chklinewidth
+                }
+               };
+
+           if (shape_geo.type == "Point"){
+                let chklinecolor = this.chklinecolor;
+                myCustomColour = chklinecolor;
+
+                let pinImage =  L.divIcon({ html: '<i class="fa fa-truck" style="color: '+chklinecolor+'"></i>',
+                                            iconSize: [20, 20],
+                                            className: 'myDivIcon'
+                                          });
+                if (this.icon!=undefined && this.icon!=""){
+                    icon_image = this.icon;
+                    pinImage = new L.Icon({
+                                            iconUrl: icon_image,
+                                       });//"http://www.googlemapsmarkers.com/v1/" + chklinecolor.substring(1, chklinecolor.length) + "/");
+               }
+                style_geometry = {  icon : pinImage,
+                                    pointToLayer: function(feature, latlng) {
+                                        return L.marker(latlng, {
+                                          icon: pinImage
+                                        });
+                                    }
+                                 };
+           }
+           else if (shape_geo.type == "Polygon"){
+                style_geometry['style'] = {
+                    color : this.chklinecolor,
+                    opacity : 0.7,
+                    weight : this.chklinewidth,
+                    fillColor : this.chkcolor,
+                    fillOpacity : 0.6,
+                }
+
+            }
+            style_geometry['onEachFeature'] = onEachFeature;
+            return style_geometry;
+        }
     //Parse all the component type component and create appropiate geometry objects
     BaseShape.prototype.parse_component = function(child){
         let parse_child = {};
         let _this = this;
+        list_draw = [];
         $.each(child, function(k,v){
-            v['_this'] = _this;
-            let obj_shape = new Shape(v);
-            let geo_shape = obj_shape.geometry();
-            parse_child[obj_shape.name] = geo_shape;
+            list_draw.push(v.shape);
         });
+        parse_child = L.geoJson(list_draw, this.style_geo_geometry(child[0].shape));
         return parse_child;
     }
     // Parse all the component type filters, sponsors and copy the object from component.
     BaseShape.prototype.parse_filter = function(child){
-        let data = {};
-        let houses = parse_component["Houses"].child;
+        let parse_child = {};
+        let filter_houses = [];
         let _this = this
         $.each(child, function(k,v){
             if( v in houses){
-                let geo = {};
-                $.extend(geo, houses[v]);
-                geo.setOptions({
-                    strokeColor : _this.chklinecolor,
-                    strokeWeight : _this.chklinewidth,
-                    fillColor : _this.chkcolor,
-                });
-                data[v] = geo;
+                   filter_houses.push(houses[v])
             }
         });
-        return data;
+
+        parse_child = L.geoJson(filter_houses, this.style_geo_geometry(filter_houses[0]));
+        return parse_child;
     }
     //Show all the component selected
     BaseShape.prototype.show = function(){
-        zindex++;
-        $.each(this.child, function(k,v){
-            //v.setMap(map);
-            v.set("zIndex", zindex);
-	    v.setMap(map);
+        this.child.eachLayer(function(layer){
+            map.addLayer(layer);
         });
     }
     //Hide all the component unselected
     BaseShape.prototype.hide = function(){
-        $.each(this.child, function(k,v){
-            v.set("zIndex", null);
-            v.setMap(null);
+        this.child.eachLayer(function(layer){
+             map.removeLayer(layer);
         });
     }
     return BaseShape;
@@ -1004,7 +866,14 @@ function generate_filter(slumID, result){
                                    '<a>&nbsp;' + k1 + '</a>&nbsp;(' + v1['child'].length + ')' +
                                  '</input>' +
                                 '</div>';
-
+            if (k1=="Houses"){
+                houses = {};
+                 $.each(v1['child'], function(k2,v2){
+                    v2.shape['properties'] = {};
+                    v2.shape.properties['name'] = v2.housenumber;
+                    houses[v2.housenumber] = v2.shape;
+                 });
+            }
             let obj  = eval('new '+TYPE_COMPONENT[v1.type]+'(v1)');
              parse_component[k1] = obj;
         });
@@ -1034,11 +903,10 @@ function checkSingleGroup(singlechk){
         arr_poly_disp = [];
     } */
     $.each(arr_poly_disp, function(k,v){
-        v.setMap(null);
+        //v.setMap(null);
+        map.removeLayer(v.shape);
       });
-    var l = map.getZoom();
-    map.setZoom(l+1);
-    map.setZoom(l);
+
     var chkchild = $(singlechk).val();
 	var section = $(singlechk).attr('selection');
 	var component_type = $(singlechk).attr('component_type');
@@ -1053,5 +921,68 @@ function checkSingleGroup(singlechk){
 	    flag=true;
 	$(singlechk).parent().parent().parent().find('[name=grpchk]')[0].checked =flag;
 //    map.setZoom(l+1);
-    var s = map.setZoom(l);
+
+}
+
+//Family factsheet link generate
+function familyfactsheet_click(slum, house){
+    $(".overlay").show();
+    $.ajax({
+        url : '/admin/familyrportgenerate/',
+        data : { Sid : slum, HouseNo : house},
+        type: "POST",
+        contenttype : "json",
+        success : function(json){
+              $(".overlay").hide();
+                if (json['string']!=undefined){
+                url = json.string;
+                window.open("" + url );
+            }
+            else{
+                alert(json['error']);
+            }
+        },
+        error:function(){
+            $(".overlay").hide();
+        }
+    });
+}
+
+//household details
+function household_details(housenumber){
+    //sponsorinfo.setContent('<div class="overlay" style="display: block;"><div id="loading-img"></div></div>');
+    let div_modal = $("#household_data");
+    div_modal.find('#modelhdtext').html("House : "+housenumber);
+    div_modal.find('#modelbody').html('<div class="overlay" style="display: block;"><div id="loading-img"></div></div>');
+    div_modal.modal('show');
+    $.ajax({
+        url : '/component/get_kobo_RHS_list/' + global_slum_id + '/' + housenumber,
+        type : "GET",
+        contenttype : "json",
+        success : function(json) {
+            var spstr = "";
+            spstr += '<table class="table table-striped" style="font-size: 10px;"><tbody>';
+            if(json['FFReport']){
+                flag = false;
+                let fields = $("a[name=chk_group]:contains('Sponsor')").parent().find('input[type=checkbox]');
+                fields.slice(0, fields.length - 1).each(function(ind, chk){
+                        if($(chk).is(":checked")){
+                                flag=true;
+                            }
+                });
+                if (flag){
+                    spstr += '<tr><td colspan="2"><a href="javascript:familyfactsheet_click('+global_slum_id+', '+housenumber+')" style="cursor:pointer;color:darkred;">View Factsheet</a></td></tr>';
+                }
+            }
+
+            $.each(json, function(k, v) {
+                if(k != 'FFReport'){
+                    spstr += '<tr><td>' + k + '</td><td>' + v + '</td></tr>';
+                }
+            });
+            spstr += '</tbody></table>';
+            div_modal.find('#modelbody').html(spstr);
+
+        }
+    });
 }
