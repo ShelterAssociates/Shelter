@@ -145,7 +145,7 @@ def masterSheet(request, slum_code = 0, FF_code = 0, RHS_code = 0 ):
                     i['delay_flag'] = '#f9a4a4' # phase one delayed
                 if i['phase_two_material_date_str'] == None and is_delayed(i['phase_one_material_date_str']) :
                     i['delay_flag'] = '#f2f29f' # phase two delayed
-                if i['phase_two_material_date_str'] != i['phase_three_material_date_str']:
+                if i['phase_one_material_date_str'] != i['phase_three_material_date_str']:
                     if i['phase_three_material_date_str'] == None and is_delayed(i['phase_two_material_date_str']) :
                         i['delay_flag'] = '#aaf9a4'
                     if i['completion_date_str'] == None and is_delayed(i['phase_three_material_date_str']):
@@ -547,8 +547,8 @@ def handle_uploaded_file(f,response,slum_code):
                     try:
                         try:
                             
-                            SBM_instance = SBMUpload.objects.filter(slum = this_slum, household_number = int(i))
-                            if check_null(SBM_instance[0].application_id) is not None:
+                            SBM_instance = SBMUpload.objects.get(slum = this_slum, household_number = int(i))
+                            if True:
                                 SBM_instance.update(
                                     name = df_sbm.loc[int(i), 'SBM Name'],
                                     application_id = df_sbm.loc[int(i), 'Application ID'],
@@ -558,13 +558,14 @@ def handle_uploaded_file(f,response,slum_code):
                                     photo_verified = check_bool(df_sbm.loc[int(i), 'Toilet Photo Verified']),
                                     photo_approved = check_bool(df_sbm.loc[int(i), 'Toilet Photo Approved']),
                                     application_verified = check_bool(df_sbm.loc[int(i), 'Application Verified']),
-                                    application_approved = check_bool(df_sbm.loc[int(i), 'Application Approved'])
+                                    application_approved = check_bool(df_sbm.loc[int(i), 'Application Approved']),
+				    sbm_comment = df_sbm.loc[int(i), 'SBM Comment']
                                 )
                                 
 
                                 response.append(("updated sbm", i))
                         except Exception as e:
-                            if check_null(df1.loc[int(i), 'Application ID']) is not None:
+                            if True:
                                 SBM_instance_1 = SBMUpload(
                                  slum = this_slum,
                                  household_number = int(i),
@@ -576,7 +577,8 @@ def handle_uploaded_file(f,response,slum_code):
                                  photo_verified = check_bool(df_sbm.loc[int(i), 'Toilet Photo Verified']),
                                  photo_approved = check_bool(df_sbm.loc[int(i), 'Toilet Photo Approved']),
                                  application_verified = check_bool(df_sbm.loc[int(i), 'Application Verified']),
-                                 application_approved = check_bool(df_sbm.loc[int(i), 'Application Approved'])
+                                 application_approved = check_bool(df_sbm.loc[int(i), 'Application Approved']),
+				 sbm_comment = df_sbm.loc[int(i), 'SBM Comment']
                                 )
                                 SBM_instance_1.save()
                                 response.append(("newly created sbm", i))
