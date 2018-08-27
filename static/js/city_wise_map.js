@@ -984,8 +984,11 @@ function household_details(housenumber){
             div_modal.find('#modelbody').html(spstr);
 
         },
-        error : function(data){
+        error : function(response){
             div_modal.modal('hide');
+            if (response.responseText!=""){
+                    alert(response.responseText);
+                }
         }
     });
 }
