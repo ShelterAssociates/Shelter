@@ -2,6 +2,7 @@ from django.shortcuts import render
 from django.http import HttpResponse, HttpResponseForbidden
 from django.contrib.auth.decorators import user_passes_test, permission_required
 from mastersheet.forms import find_slum, file_form
+from django.db.models import Count,F
 from mastersheet.models import *
 from sponsor.models import *
 from itertools import chain
@@ -145,7 +146,7 @@ def masterSheet(request, slum_code = 0, FF_code = 0, RHS_code = 0 ):
                     i['delay_flag'] = '#f9a4a4' # phase one delayed
                 if i['phase_two_material_date_str'] == None and is_delayed(i['phase_one_material_date_str']) :
                     i['delay_flag'] = '#f2f29f' # phase two delayed
-                if i['phase_two_material_date_str'] != i['phase_three_material_date_str']:
+                if i['phase_one_material_date_str'] != i['phase_three_material_date_str']:
                     if i['phase_three_material_date_str'] == None and is_delayed(i['phase_two_material_date_str']) :
                         i['delay_flag'] = '#aaf9a4'
                     if i['completion_date_str'] == None and is_delayed(i['phase_three_material_date_str']):
@@ -547,8 +548,8 @@ def handle_uploaded_file(f,response,slum_code):
                     try:
                         try:
                             
-                            SBM_instance = SBMUpload.objects.filter(slum = this_slum, household_number = int(i))
-                            if check_null(SBM_instance[0].application_id) is not None:
+                            SBM_instance = SBMUpload.objects.get(slum = this_slum, household_number = int(i))
+                            if True:
                                 SBM_instance.update(
                                     name = df_sbm.loc[int(i), 'SBM Name'],
                                     application_id = df_sbm.loc[int(i), 'Application ID'],
@@ -558,13 +559,14 @@ def handle_uploaded_file(f,response,slum_code):
                                     photo_verified = check_bool(df_sbm.loc[int(i), 'Toilet Photo Verified']),
                                     photo_approved = check_bool(df_sbm.loc[int(i), 'Toilet Photo Approved']),
                                     application_verified = check_bool(df_sbm.loc[int(i), 'Application Verified']),
-                                    application_approved = check_bool(df_sbm.loc[int(i), 'Application Approved'])
+                                    application_approved = check_bool(df_sbm.loc[int(i), 'Application Approved']),
+                                    sbm_comment = df_sbm.loc[int(i), 'SBM Comment']
                                 )
                                 
 
                                 response.append(("updated sbm", i))
                         except Exception as e:
-                            if check_null(df1.loc[int(i), 'Application ID']) is not None:
+                            if True:
                                 SBM_instance_1 = SBMUpload(
                                  slum = this_slum,
                                  household_number = int(i),
@@ -576,7 +578,9 @@ def handle_uploaded_file(f,response,slum_code):
                                  photo_verified = check_bool(df_sbm.loc[int(i), 'Toilet Photo Verified']),
                                  photo_approved = check_bool(df_sbm.loc[int(i), 'Toilet Photo Approved']),
                                  application_verified = check_bool(df_sbm.loc[int(i), 'Application Verified']),
-                                 application_approved = check_bool(df_sbm.loc[int(i), 'Application Approved'])
+                                 application_approved = check_bool(df_sbm.loc[int(i), 'Application Approved']),
+                                 sbm_comment = df_sbm.loc[int(i), 'SBM Comment'],
+
                                 )
                                 SBM_instance_1.save()
                                 response.append(("newly created sbm", i))
@@ -832,34 +836,127 @@ def create_report(request):
         fancy_tree_data.append(temp) 
     return HttpResponse(json.dumps(fancy_tree_data), content_type="application/json")
 @user_passes_test(lambda u: u.is_superuser)
+@csrf_exempt
 def give_report_table_numbers(request):
-    tag =  request.GET.get('tag')
-    current_id = request.GET.get('id')
-    start_date = request.GET.get('startDate')
-    end_date = request.GET.get('endDate')
-    if len(start_date) == 0 or len(end_date) == 0:
-        start_date = datetime.datetime(2001, 1, 1) 
-        end_date = datetime.datetime.today()
-    print tag, type(current_id)
-    report_table_data = {}
+    tag_key_dict = json.loads(request.body)
+    tag = tag_key_dict['tag']
+    keys =  tag_key_dict['keys']
+    start_date = tag_key_dict['startDate']
+    end_date = tag_key_dict['endDate']
     
-    x = ToiletConstruction.objects.values('agreement_date', 'phase_one_material_date', 'phase_two_material_date', 'phase_three_material_date', 'completion_date')
+    if start_date==None or end_date==None:
+        start_date = datetime.datetime(2001, 1, 1).date()
+        end_date = datetime.datetime.today().date()
+    else:
+        start_date = datetime.datetime.strptime(tag_key_dict['startDate'], "%Y-%m-%d").date()
+        end_date = datetime.datetime.strptime(tag_key_dict['endDate'], "%Y-%m-%d").date()
+    report_table_data = []
     
-
+    temp_agreement_done_counts = ''
+    temp_p1_material_counts = ''
+    temp_p2_material_counts= ''
+    temp_p3_material_counts = ''
+    temp_completion_counts = ''
+    
     if tag == 'city':
-        x = x.filter(slum__electoral_ward__administrative_ward__city__id = current_id)
-    elif tag == 'admin_ward':
-        x = x.filter(slum__electoral_ward__administrative_ward__id = current_id)
-    elif tag == 'electoral_ward':
-        x = x.filter(slum__electoral_ward__id = current_id)
-    elif tag == None and int(current_id) != 0:
-        x = x.filter(slum = current_id)
+        agreement_done_counts = ToiletConstruction.objects.filter(slum__in=keys, agreement_date__range=[start_date,end_date]).values('slum__electoral_ward__administrative_ward__city__id', 'slum__electoral_ward__administrative_ward__city__name__city_name').annotate(total_ad=Count('slum__electoral_ward__administrative_ward__city__id')).annotate(level = F('slum__electoral_ward__administrative_ward__city__name__city_name')).order_by()
+        temp_agreement_done_counts = {obj_ad['slum__electoral_ward__administrative_ward__city__id']: obj_ad for obj_ad in agreement_done_counts}
 
-    report_table_data['counter_ad'] = x.filter(agreement_date__range=[start_date,end_date]).count()
-    report_table_data['counter_p1'] = x.filter(phase_one_material_date__range=[start_date,end_date]).count()
-    report_table_data['counter_p2'] = x.filter(phase_two_material_date__range=[start_date,end_date]).count()
-    report_table_data['counter_p3'] = x.filter(phase_three_material_date__range=[start_date,end_date]).count()
-    report_table_data['counter_c'] = x.filter(completion_date__range=[start_date,end_date]).count()
+        p1_material_counts = ToiletConstruction.objects.filter(slum__in=keys, phase_one_material_date__range=[start_date,end_date]).values('slum__electoral_ward__administrative_ward__city__id', 'slum__electoral_ward__administrative_ward__city__name__city_name').annotate(total_p1=Count('slum__electoral_ward__administrative_ward__city__id')).annotate(level = F('slum__electoral_ward__administrative_ward__city__name__city_name')).order_by()
+        temp_p1_material_counts = {obj_p1['slum__electoral_ward__administrative_ward__city__id']: obj_p1 for obj_p1 in p1_material_counts}
+
+        p2_material_counts = ToiletConstruction.objects.filter(slum__in=keys, phase_two_material_date__range=[start_date,end_date]).values('slum__electoral_ward__administrative_ward__city__id', 'slum__electoral_ward__administrative_ward__city__name__city_name').annotate(total_p2=Count('slum__electoral_ward__administrative_ward__city__id')).annotate(level = F('slum__electoral_ward__administrative_ward__city__name__city_name')).order_by()
+        temp_p2_material_counts = {obj_p2['slum__electoral_ward__administrative_ward__city__id']: obj_p2 for obj_p2 in p2_material_counts}
+
+        p3_material_counts = ToiletConstruction.objects.filter(slum__in=keys, phase_three_material_date__range=[start_date,end_date]).values('slum__electoral_ward__administrative_ward__city__id', 'slum__electoral_ward__administrative_ward__city__name__city_name').annotate(total_p3 = Count('slum__electoral_ward__administrative_ward__city__id')).annotate(level = F('slum__electoral_ward__administrative_ward__city__name__city_name')).order_by()
+        temp_p3_material_counts = {obj_p3['slum__electoral_ward__administrative_ward__city__id']: obj_p3 for obj_p3 in p3_material_counts}
+
+        completion_counts = ToiletConstruction.objects.filter(slum__in=keys, completion_date__range=[start_date,end_date]).values('slum__electoral_ward__administrative_ward__city__id', 'slum__electoral_ward__administrative_ward__city__name__city_name').annotate(total_c=Count('slum__electoral_ward__administrative_ward__city__id')).annotate(level = F('slum__electoral_ward__administrative_ward__city__name__city_name')).order_by()
+        temp_completion_counts = {obj_c['slum__electoral_ward__administrative_ward__city__id']: obj_c for obj_c in completion_counts}
+        
+      
+
+    elif tag == 'admin_ward':
+        agreement_done_counts = ToiletConstruction.objects.filter(slum__in=keys, agreement_date__range=[start_date,end_date]).values('slum__electoral_ward__administrative_ward__id', 'slum__electoral_ward__administrative_ward__name').annotate(total_ad=Count('slum__electoral_ward__administrative_ward__id')).annotate(level = F('slum__electoral_ward__administrative_ward__name')).order_by()
+        temp_agreement_done_counts = {obj_ad['slum__electoral_ward__administrative_ward__id']: obj_ad for obj_ad in agreement_done_counts}
+
+        p1_material_counts = ToiletConstruction.objects.filter(slum__in=keys, phase_one_material_date__range=[start_date,end_date]).values('slum__electoral_ward__administrative_ward__id', 'slum__electoral_ward__administrative_ward__name').annotate(total_p1=Count('slum__electoral_ward__administrative_ward__id')).annotate(level = F('slum__electoral_ward__administrative_ward__name')).order_by()
+        temp_p1_material_counts = {obj_p1['slum__electoral_ward__administrative_ward__id']: obj_p1 for obj_p1 in p1_material_counts}
+
+        p2_material_counts = ToiletConstruction.objects.filter(slum__in=keys, phase_two_material_date__range=[start_date,end_date]).values('slum__electoral_ward__administrative_ward__id', 'slum__electoral_ward__administrative_ward__name').annotate(total_p2=Count('slum__electoral_ward__administrative_ward__id')).annotate(level = F('slum__electoral_ward__administrative_ward__name')).order_by()
+        temp_p2_material_counts = {obj_p2['slum__electoral_ward__administrative_ward__id']: obj_p2 for obj_p2 in p2_material_counts}
+
+
+        p3_material_counts = ToiletConstruction.objects.filter(slum__in=keys, phase_three_material_date__range=[start_date,end_date]).values('slum__electoral_ward__administrative_ward__id', 'slum__electoral_ward__administrative_ward__name').annotate(total_p3=Count('slum__electoral_ward__administrative_ward__id')).annotate(level = F('slum__electoral_ward__administrative_ward__name')).order_by()
+        temp_p3_material_counts = {obj_p3['slum__electoral_ward__administrative_ward__id']: obj_p3 for obj_p3 in p3_material_counts}
+
+        completion_counts = ToiletConstruction.objects.filter(slum__in=keys, completion_date__range=[start_date,end_date]).values('slum__electoral_ward__administrative_ward__id', 'slum__electoral_ward__administrative_ward__name').annotate(total_c=Count('slum__electoral_ward__administrative_ward__id')).annotate(level = F('slum__electoral_ward__administrative_ward__name')).order_by()
+        temp_completion_counts = {obj_c['slum__electoral_ward__administrative_ward__id']: obj_c for obj_c in completion_counts}
+        
+    
+       
+    elif tag == 'electoral_ward':
+        agreement_done_counts = ToiletConstruction.objects.filter(slum__in=keys, agreement_date__range=[start_date,end_date]).values('slum__electoral_ward__id', 'slum__electoral_ward__name').annotate(total_ad=Count('slum__electoral_ward__id')).annotate(level = F('slum__electoral_ward__name')).order_by()
+        temp_agreement_done_counts = {obj_ad['slum__electoral_ward__id']: obj_ad for obj_ad in agreement_done_counts}
+
+        p1_material_counts = ToiletConstruction.objects.filter(slum__in=keys, phase_one_material_date__range=[start_date,end_date]).values('slum__electoral_ward__id', 'slum__electoral_ward__name').annotate(total_p1=Count('slum__electoral_ward__id')).annotate(level = F('slum__electoral_ward__name')).order_by()
+        temp_p1_material_counts = {obj_p1['slum__electoral_ward__id']: obj_p1 for obj_p1 in p1_material_counts}
+
+        p2_material_counts = ToiletConstruction.objects.filter(slum__in=keys, phase_two_material_date__range=[start_date,end_date]).values('slum__electoral_ward__id', 'slum__electoral_ward__name').annotate(total_p2=Count('slum__electoral_ward__id')).annotate(level = F('slum__electoral_ward__name')).order_by()
+        temp_p2_material_counts = {obj_p2['slum__electoral_ward__id']: obj_p2 for obj_p2 in p2_material_counts}
+
+        p3_material_counts = ToiletConstruction.objects.filter(slum__in=keys, phase_three_material_date__range=[start_date,end_date]).values('slum__electoral_ward__id', 'slum__electoral_ward__name').annotate(total_p3=Count('slum__electoral_ward__id')).annotate(level = F('slum__electoral_ward__name')).order_by()
+        temp_p3_material_counts = {obj_p3['slum__electoral_ward__id']: obj_p3 for obj_p3 in p3_material_counts}
+
+        completion_counts = ToiletConstruction.objects.filter(slum__in=keys, completion_date__range=[start_date,end_date]).values('slum__electoral_ward__id', 'slum__electoral_ward__name').annotate(total_c=Count('slum__electoral_ward__id')).annotate(level = F('slum__electoral_ward__name')).order_by()
+        temp_completion_counts = {obj_c['slum__electoral_ward__id']: obj_c for obj_c in completion_counts}
+        
+      
+    elif tag == 'slum' :
+        agreement_done_counts = ToiletConstruction.objects.filter(slum__in=keys, agreement_date__range=[start_date,end_date]).values('slum__id', 'slum__name').annotate(total_ad=Count('slum__id')).annotate(level = F('slum__name')).order_by()
+        temp_agreement_done_counts = {obj_ad['slum__id']: obj_ad for obj_ad in agreement_done_counts}
+
+        p1_material_counts = ToiletConstruction.objects.filter(slum__in=keys, phase_one_material_date__range=[start_date,end_date]).values('slum__id', 'slum__name').annotate(total_p1=Count('slum__id')).annotate(level = F('slum__name')).order_by()
+        temp_p1_material_counts = {obj_p1['slum__id']: obj_p1 for obj_p1 in p1_material_counts}
+
+        p2_material_counts = ToiletConstruction.objects.filter(slum__in=keys, phase_two_material_date__range=[start_date,end_date]).values('slum__id', 'slum__name').annotate(total_p2=Count('slum__id')).annotate(level = F('slum__name')).order_by()
+        temp_p2_material_counts = {obj_p2['slum__id']: obj_p2 for obj_p2 in p2_material_counts}
+
+        p3_material_counts = ToiletConstruction.objects.filter(slum__in=keys, phase_three_material_date__range=[start_date,end_date]).values('slum__id', 'slum__name').annotate(total_p3=Count('slum__id')).annotate(level = F('slum__name')).order_by()
+        temp_p3_material_counts = {obj_p3['slum__id']: obj_p3 for obj_p3 in p3_material_counts}
+
+        completion_counts = ToiletConstruction.objects.filter(slum__in=keys, completion_date__range=[start_date,end_date]).values('slum__id', 'slum__name').annotate(total_c=Count('slum__id')).annotate(level = F('slum__name')).order_by()
+        temp_completion_counts = {obj_c['slum__id']: obj_c for obj_c in completion_counts}
+
+    
    
-    return HttpResponse(json.dumps([report_table_data]), content_type = "application/json")
+    for p in temp_p1_material_counts.keys():
+        if p not in temp_agreement_done_counts.keys():
+            temp_agreement_done_counts[p] = temp_p1_material_counts[p] 
+        else:
+            temp_agreement_done_counts[p]['total_p1'] = temp_p1_material_counts[p]['total_p1']
+
+    for p in temp_p2_material_counts.keys():
+        if p not in temp_agreement_done_counts.keys():
+            temp_agreement_done_counts[p] = temp_p2_material_counts[p] 
+        else:
+            temp_agreement_done_counts[p]['total_p2'] = temp_p2_material_counts[p]['total_p2']
+
+    for p in temp_p3_material_counts.keys():
+        if p not in temp_agreement_done_counts.keys():
+            temp_agreement_done_counts[p] = temp_p3_material_counts[p] 
+        else:
+            temp_agreement_done_counts[p]['total_p3'] = temp_p3_material_counts[p]['total_p3']
+
+    for p in temp_completion_counts.keys():
+        if p not in temp_agreement_done_counts.keys():
+            temp_agreement_done_counts[p] = temp_completion_counts[p] 
+        else:
+            temp_agreement_done_counts[p]['total_c'] = temp_completion_counts[p]['total_c']
+
+    for key in temp_agreement_done_counts:
+        report_table_data.append(temp_agreement_done_counts[key])
+        
+
+    return HttpResponse(json.dumps(report_table_data), content_type = "application/json")
 
