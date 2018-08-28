@@ -8,12 +8,15 @@
 
 <link rel="stylesheet"  type="text/css" href="{% static "css/bootstrap.min.css" %}"/>
 <link rel="stylesheet"  type="text/css" href="{% static "css/jquery.dataTables.min.css" %}" />
+<link rel="stylesheet"  type="text/css" href="{% static "css/leaflet.css" %}" />
 
 <script src="{% static "js/jquery.min.js" %}"></script>
 <!-- <script type="text/javascript" src="http://www.google.com/jsapi" ></script> -->
-<script src="{% static "js/maplabel.js" %}"></script>
+
 <script src="{% static "js/city_wise_map.js" %}"></script>
-<script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCs114b6ZNpVH5BGnrfgy0f1K49vfBK4gs&callback=initMap12"
+<script src="{% static "js/leaflet.js" %}"></script>
+<script src="{% static "js/leaflet-google.js" %}"></script>
+<script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCs114b6ZNpVH5BGnrfgy0f1K49vfBK4gs&callback=initMap"
 async defer></script>
 <script src="{% static "js/bootstrap.min.js" %}"></script>
 <script src="{% static "js/jquery.dataTables.min.js" %}"></script>
@@ -22,7 +25,7 @@ async defer></script>
 
 {% block styleblock%}
 <style>
-	#map12 {
+	#map {
 		height: 75%;
 		width: 75%;
 		margin: 0px;
@@ -93,7 +96,7 @@ async defer></script>
 		<div class="">&nbsp;Slums where household data is available</div>
 	</div>
 	<div>
-		<div id="map12" style="float:left"></div>
+		<div id="map" style="float:left"></div>
 		<div id="compochk"  style="float:left;padding-left:15px;overflow-y:auto;height:75%;width:25%"></div>
 		<div style="height: 10px;width: 75%"></div>
 		<div style="width: 75%;" id="datatablecontainer">
@@ -101,6 +104,27 @@ async defer></script>
 		</div>
 		<div id="rim"></div>
 		<div class="modal fade" id="myModal" role="dialog">
+			<div class="modal-dialog">
+
+				<!-- Modal content-->
+				<div  class="modal-content">
+					<div id="modelheader" class="modal-header">
+						<h4 class="modal-title" ><label id="modelhdtext"></label>
+						<button type="button" class="close" data-dismiss="modal"></button>
+						</h4>
+					</div>
+					<div id="modelbody" class="modal-body" style="padding-top:0px;padding-bottom:0px;height:70%;overflow:auto;">
+					</div>
+					<div class="modal-footer">
+						<button type="button" class="btn btn-default" data-dismiss="modal">
+							Close
+						</button>
+					</div>
+				</div>
+			</div>
+		</div>
+
+		<div class="modal fade" id="household_data" role="dialog">
 			<div class="modal-dialog">
 
 				<!-- Modal content-->

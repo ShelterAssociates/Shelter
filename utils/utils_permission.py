@@ -1,6 +1,23 @@
 from django.http import HttpResponseForbidden
 from django.core.exceptions import PermissionDenied
 
+def deco_rhs_permission(view_func):
+    """
+    Decorator to check if user is superuser/sponsor/ulb
+    :param view_func: 
+    :return: 
+    """
+    def _wrapped_view(request, *args, **kwargs):
+        permissions = [
+            request.user.is_superuser,
+            request.user.groups.filter(name='sponsor').exists(),
+            request.user.groups.filter(name='ulb').exists()
+        ]
+        if not any(permissions):
+            return HttpResponseForbidden("You do not have a permission")
+        return view_func(request, *args, **kwargs)
+    return _wrapped_view
+
 def apply_permissions_ajax(perms):
     """
     Parameterised decorator for handling ajax permissions.

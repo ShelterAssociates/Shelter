@@ -561,6 +561,7 @@ def handle_uploaded_file(f,response,slum_code):
                                     application_verified = check_bool(df_sbm.loc[int(i), 'Application Verified']),
                                     application_approved = check_bool(df_sbm.loc[int(i), 'Application Approved']),
                                     sbm_comment = df_sbm.loc[int(i), 'SBM Comment']
+
                                 )
                                 
 
@@ -579,7 +580,7 @@ def handle_uploaded_file(f,response,slum_code):
                                  photo_approved = check_bool(df_sbm.loc[int(i), 'Toilet Photo Approved']),
                                  application_verified = check_bool(df_sbm.loc[int(i), 'Application Verified']),
                                  application_approved = check_bool(df_sbm.loc[int(i), 'Application Approved']),
-                                 sbm_comment = df_sbm.loc[int(i), 'SBM Comment'],
+                                 sbm_comment = df_sbm.loc[int(i), 'SBM Comment']
 
                                 )
                                 SBM_instance_1.save()
@@ -773,7 +774,8 @@ def delete_selected_records(records):
             print "No record selected to delete."
 
 @apply_permissions_ajax('mastersheet.can_sync_toilet_status')
-def sync_kobo_data(request,slum_id):
+@deco_city_permission
+def sync_kobo_data(request):
     """
     Method to sync data from kobotoolbox for community mobilization and toilet construction status(Daily reporting)
     :param request: 
@@ -782,7 +784,7 @@ def sync_kobo_data(request,slum_id):
     """
     data={}
     try:
-        slum = Slum.objects.get(id=slum_id)
+        slum = Slum.objects.get(id=request.GET['slumname'])
         user = request.user
         toilet_const = ToiletConstructionSync(slum, user)
         t_data = toilet_const.fetch_data()

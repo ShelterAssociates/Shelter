@@ -825,7 +825,8 @@ $(document).ready(function() {
         $(".overlay").show();
         $.ajax({
             type : "get",
-            url : "/mastersheet/sync/slum/"+slum,
+            url : "/mastersheet/sync/slum/",
+            data : {'slumname':slum},
             contentType : "json",
             success: function(response){
                 $(".overlay").hide();

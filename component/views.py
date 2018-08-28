@@ -18,7 +18,7 @@ from .models import Metadata, Component
 from .cipher import *
 from master.models import Slum, Rapid_Slum_Appraisal, drainage
 from sponsor.models import SponsorProjectDetails
-from utils.utils_permission import apply_permissions_ajax, access_right
+from utils.utils_permission import apply_permissions_ajax, access_right, deco_rhs_permission
 from django.core.exceptions import PermissionDenied
 
 #@staff_member_required
@@ -123,7 +123,7 @@ def get_component(request, slum_id):
             dtcomponent[key][c['name']] = c
     return HttpResponse(json.dumps(dtcomponent),content_type='application/json')
 
-@user_passes_test(lambda u: u.is_superuser or u.groups.filter(name='sponsor').exists() or u.groups.filter(name='ulb').exists(), login_url='/admin/')
+@deco_rhs_permission
 def get_kobo_RHS_data(request, slum_id,house_num):
      output = {}
      slum = get_object_or_404(Slum, pk=slum_id)

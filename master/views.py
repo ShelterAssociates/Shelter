@@ -307,7 +307,7 @@ def slummapdisplay(request,id):
 		admin_dict={}
 		admin_dict["name"]=a.name
 		admin_dict["id"]=a.id
-		admin_dict["lat"]= str(a.shape)
+		admin_dict["lat"]= json.loads(a.shape.json)
 		admin_dict["info"]=a.description
 		admin_dict["bgColor"]=a.background_color
 		admin_dict["borderColor"]=a.border_color
@@ -326,7 +326,7 @@ def slummapdisplay(request,id):
 		elctrol_dict={}
 		elctrol_dict["name"]=e.name
 		elctrol_dict["id"]=e.id
-		elctrol_dict["lat"]=str(e.shape)
+		elctrol_dict["lat"]=json.loads(e.shape.json)
 		elctrol_dict["info"]=e.extra_info
 		elctrol_dict["bgColor"]=e.background_color
 		elctrol_dict["borderColor"]=e.border_color
@@ -345,7 +345,7 @@ def slummapdisplay(request,id):
 		slum_dict={}
 		slum_dict["name"]=s.name
 		slum_dict["id"]=s.id
-		slum_dict["lat"]=str(s.shape)
+		slum_dict["lat"]=json.loads(s.shape.json)
 		slum_dict["info"]=s.description
 		slum_dict["factsheet"]=s.factsheet.url if s.factsheet else ''
 		slum_dict["photo"]=s.photo.url if s.photo else ''
