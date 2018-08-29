@@ -304,6 +304,7 @@ var City = (function(){
     }
     //Added click listener to display top level details from where it started.
     City.prototype.click = function(){
+        $(".overlay").show();
         $.each(arr_poly_disp, function(k,v){
              map.removeLayer(v.shape);
         });
@@ -331,6 +332,7 @@ var City = (function(){
         wdhead.html('');
         wdofficer.html('');
         wdaddress.html('');
+        $(".overlay").hide();
     }
     return City;
 }());
@@ -651,9 +653,9 @@ var BaseShape = (function(){
 
     BaseShape.prototype.style_geo_geometry = function (shape_geo){
            style_geometry = { style :{
-                strokeColor : this.chklinecolor,
-                strokeOpacity : 0.8,
-                strokeWeight : this.chklinewidth
+                color : this.chklinecolor,
+                opacity : 0.7,
+                weight : this.chklinewidth
                 }
                };
 
