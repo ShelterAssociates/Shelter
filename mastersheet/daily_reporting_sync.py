@@ -25,16 +25,27 @@ class DDSync(object):
     def __init__(self, slum, user):
         self.slum = slum
         self.user = user
+        survey_id = None
+        ff_survey_id = None
         try:
-            survey_id = None
-            survey = Survey.objects.filter(city=slum.electoral_ward.administrative_ward.city,
-                                  survey_type=SURVEYTYPE_CHOICES[5][0])
-            if len(survey) > 0:
-                survey_id = survey[0].kobotool_survey_id
+            surveys = Survey.objects.filter(city=slum.electoral_ward.administrative_ward.city,
+                                           survey_type__in=[SURVEYTYPE_CHOICES[1][0], SURVEYTYPE_CHOICES[3][0]])
+            if len(surveys) > 0:
+                for survey in surveys:
+                    if survey.survey_type == SURVEYTYPE_CHOICES[1][0]:
+                        survey_id = survey.kobotool_survey_id
+                    if survey.survey_type == SURVEYTYPE_CHOICES[3][0]:
+                        ff_survey_id = survey.kobotool_survey_id
+
+
         except:
-            survey_id = None
-        self.survey_id = '129'#survey_id
+            pass
+        self.survey_id = survey_id
+        self.ff_survey_id = ff_survey_id
         self.survey_date = self.convert_datetime("2017-01-21T01:02:03")
+        sync_info = KoboDDSyncTrack.objects.filter(slum=self.slum).order_by('-sync_date').first()
+        if sync_info:
+            self.survey_date = self.convert_datetime(str(timezone.localtime(sync_info.sync_date)))
         self.survey_record = None
 
     def convert_datetime(self, date_str):
@@ -48,11 +59,7 @@ class DDSync(object):
         kobo_url += ',"_submission_time":{"$gt":"%s"} }'
         return kobo_url
 
-    def fetch_kobo_data(self, community_mobilization_flag=False):
-        sync_info = KoboDDSyncTrack.objects.filter(slum=self.slum).order_by('-sync_date').first()
-        if sync_info:
-            self.survey_date = self.convert_datetime(str(timezone.localtime(sync_info.sync_date)))
-        url = self.fetch_url(community_mobilization_flag) % (str(self.survey_date).replace(' ','T'))
+    def fetch_url_data(self, url):
         kobotoolbox_request = urllib2.Request(url)
         kobotoolbox_request.add_header('User-agent', 'Mozilla 5.10')
         kobotoolbox_request.add_header('Authorization', settings.KOBOCAT_TOKEN)
@@ -61,8 +68,19 @@ class DDSync(object):
         # Read json data from kobotoolbox API
         html = res.read()
         records = json.loads(html)
-        #sorted(records, key=lambda x:x['_submission_time'])
-        self.survey_record = records
+        return records
+
+    def fetch_kobo_data(self, community_mobilization_flag=False):
+        url = self.fetch_url(community_mobilization_flag) % (str(self.survey_date).replace(' ','T'))
+        self.survey_record = self.fetch_url_data(url)
+
+    def fetch_kobo_FF_data(self):
+        url_family_factsheet = settings.KOBOCAT_FORM_URL + 'data/' + str(self.ff_survey_id) + '?format=json'
+        url_family_factsheet += '&query={"group_vq77l17/slum_name":"'+str(self.slum.shelter_slum_code)+'"'
+        url_family_factsheet += ',"_submission_time":{"$gt":"'+str(self.survey_date)+'"}'
+        url_family_factsheet += '}&fields=["_submission_time","group_vq77l17/Household_number","group_ne3ao98/Where_the_individual_ilet_is_connected_to","group_ne3ao98/Use_of_toilet"]'
+        formdict_family_factsheet = self.fetch_url_data(url_family_factsheet)
+        return formdict_family_factsheet
 
     def update_sync_info(self, sync_date):
         try:
@@ -83,7 +101,26 @@ class ToiletConstructionSync(DDSync):
         self.REGX_CHECK = {"House_numbers_where_ifted_from_HH_to_HH":"p1_material_shifted_to", "House_numbers_where_ifted_from_002":"p2_material_shifted_to","House_numbers_where_ifted_from_001":"p3_material_shifted_to","House_numbers_where_ifted_from":"st_material_shifted_to"}
         self.BOOL_CHECK = ["House_numbers_where_reement_is_cancelled"]
 
+    def fetch_FF_data(self):
+        formdict_family_factsheet = self.fetch_kobo_FF_data()
+        update_data = {}
+        for tmp_ff in formdict_family_factsheet:
+            check_list = {'slum': self.slum, 'household_number': tmp_ff['group_vq77l17/Household_number']}
+            tc, created = ToiletConstruction.objects.get_or_create(**check_list)
+            if (tmp_ff['group_ne3ao98/Use_of_toilet'] in ['01', '03']):
+                update_data['use_of_toilet'] = self.convert_datetime(tmp_ff['_submission_time'])
+            if (tmp_ff['group_ne3ao98/Where_the_individual_ilet_is_connected_to'] in ['01', '03']):
+                update_data['toilet_connected_to'] = self.convert_datetime(tmp_ff['_submission_time'])
+            update_data['factsheet_done'] = self.convert_datetime(tmp_ff['_submission_time'])
+            tc = ToiletConstruction.objects.filter(**check_list)
+            ToiletConstruction.objects.filter(**check_list).update(**update_data)
+            for toilet_const in tc:
+                toilet_const.save()
+
     def fetch_data(self):
+        #Fetch family factsheet data and store to ToiletConstruciton
+        self.fetch_FF_data()
+        #Fetch Daily reporting data and store to ToiletConstruction
         self.fetch_kobo_data()
         sync_date = ''
         flag = False

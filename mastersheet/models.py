@@ -128,7 +128,9 @@ class ToiletConstruction(models.Model):
     p2_material_shifted_to = models.CharField(max_length=5, null=True, blank=True)
     p3_material_shifted_to = models.CharField(max_length=5, null=True, blank=True)
     st_material_shifted_to = models.CharField(max_length=5, null=True, blank=True)
-
+    use_of_toilet = models.DateField(null=True, blank=True)
+    toilet_connected_to = models.DateField(null=True, blank=True)
+    factsheet_done = models.DateField(null=True, blank=True)
 
     class Meta:
         permissions = (

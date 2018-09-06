@@ -102,8 +102,8 @@ function load_report_table(){
 	else{
 		report_table = $("#report_table").DataTable({
 			"sDom": '<"top"Bfl>r<"mid"t><"bottom"ip><"clear">',
-			"paging" : false,
-
+			"paging" : true,
+            "order": [[ 9, "desc" ]],
 			"ajax":{
 				type : "POST",
 				url: "/mastersheet/report_table/",
@@ -118,12 +118,16 @@ function load_report_table(){
 			},
 			"columnDefs": [{"defaultContent": "-","targets": "_all"},{"footer":true},],
 			"columns":[
-						{"data": "level", "title": " "},
+						{"data": "level", "title": "Name"},
 						{"data": "total_ad", "title": "Agreement Done"},
 						{"data": "total_p1", "title": "Phase 1 material given"},
 						{"data": "total_p2", "title": "Phase 2 material given"},
 						{"data": "total_p3", "title": "Phase 3 material given"},
-						{"data": "total_c", "title": "Completed"}
+						{"data": "total_c", "title": "Completed"},
+						{"data": "use_of_toilet", "title": "Use of toilet"},
+						{"data": "toilet_connected_to", "title": "Toilet connected to"},
+						{"data": "factsheet_done", "title": "Factsheet done"},
+						{"data": "city_name", "title": "City name"}
 					]
 		});
 	}
