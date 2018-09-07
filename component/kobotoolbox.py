@@ -32,7 +32,7 @@ def get_household_analysis_data(city, slum_code, fields, kobo_survey=''):
 
     if kobo_survey:
         #Setting up API call and header data
-        url = settings.KOBOCAT_FORM_URL + 'data/'+ kobo_survey +'?query={"slum_name":"'+slum_code+'"}&fields=["'+ '","'.join(fields + [household_field, '_submission_time'] ) + '"]'
+        url = settings.KOBOCAT_FORM_URL + 'data/'+ kobo_survey +'?format=json&query={"slum_name":"'+slum_code+'"}&fields=["'+ '","'.join(fields + [household_field, '_submission_time'] ) + '"]'
 
         kobotoolbox_request = urllib2.Request(url)
         kobotoolbox_request.add_header('User-agent', 'Mozilla 5.10')
@@ -68,7 +68,7 @@ def get_kobo_RHS_list(city, slum_code,house_number, kobo_survey=''):
     output=OrderedDict()
     if kobo_survey:
         try:
-            url = settings.KOBOCAT_FORM_URL+'data/'+kobo_survey+'?query={"slum_name":"'+slum_code+'","Household_number":{ "$in":["'+str(house_number)+'","'+('000'.join(str(house_number)))[-4:]+'"]}}'
+            url = settings.KOBOCAT_FORM_URL+'data/'+kobo_survey+'?format=json&query={"slum_name":"'+slum_code+'","Household_number":{ "$in":["'+str(house_number)+'","'+('000'.join(str(house_number)))[-4:]+'"]}}'
         except Exception as e:
             print e
         req = urllib2.Request(url)
@@ -103,7 +103,7 @@ def get_kobo_RIM_detail(city, slum_code, kobo_survey=''):
     """
     output=OrderedDict()
     if kobo_survey:
-        url = settings.KOBOCAT_FORM_URL+'data/'+kobo_survey+'?query={"group_zl6oo94/group_uj8eg07/slum_name":"'+slum_code+'"}'
+        url = settings.KOBOCAT_FORM_URL+'data/'+kobo_survey+'?format=json&query={"group_zl6oo94/group_uj8eg07/slum_name":"'+slum_code+'"}'
         req = urllib2.Request(url)
         req.add_header('Authorization', settings.KOBOCAT_TOKEN)
         resp = urllib2.urlopen(req)
@@ -176,7 +176,7 @@ def get_kobo_RIM_report_detail(city, slum_code, kobo_survey=''):
     output=OrderedDict()
     RIM_TOILET="group_te3dx03"
     if kobo_survey:
-        url = settings.KOBOCAT_FORM_URL+'data/'+kobo_survey+'?query={"group_zl6oo94/group_uj8eg07/slum_name":"'+slum_code+'"}'
+        url = settings.KOBOCAT_FORM_URL+'data/'+kobo_survey+'?format=json&query={"group_zl6oo94/group_uj8eg07/slum_name":"'+slum_code+'"}'
         req = urllib2.Request(url)
         req.add_header('Authorization', settings.KOBOCAT_TOKEN)
         resp = urllib2.urlopen(req)
@@ -247,7 +247,7 @@ def get_kobo_FF_report_detail(city, slum_code,house_number, kobo_survey=''):
     output=OrderedDict()
     if kobo_survey:
         try:
-            url = settings.KOBOCAT_FORM_URL+'data/'+kobo_survey+'?query={"group_vq77l17/slum_name":"'+slum_code+'","group_vq77l17/Household_number":{"$in":["'+house_number+'","'+'000'.join(house_number)[-4:]+'"]}}'
+            url = settings.KOBOCAT_FORM_URL+'data/'+kobo_survey+'?format=json&query={"group_vq77l17/slum_name":"'+slum_code+'","group_vq77l17/Household_number":{"$in":["'+house_number+'","'+'000'.join(house_number)[-4:]+'"]}}'
         except Exception as e:
             print e
 
