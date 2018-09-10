@@ -6,6 +6,7 @@ from django.contrib import admin
 from master.models import CityReference, City, \
     AdministrativeWard, ElectoralWard, Slum, WardOfficeContact, ElectedRepresentative, Rapid_Slum_Appraisal, Survey, drainage
 from master.forms import CityFrom, AdministrativeWardFrom, ElectoralWardForm, SlumForm
+from django.contrib.auth.models import Group
 
 #Common filters for querying model depending on model type
 data_filter = {'CityReference': 'city_name__in',
@@ -69,7 +70,9 @@ class BaseModelAdmin(admin.ModelAdmin):
         This is for forign key field dropdown displayed at type of admin add/edit details.
         """
         group_perm = request.user.groups.values_list('name', flat=True)
-        group_perm = map(lambda x:x.split(':')[-1], group_perm)
+        if request.user.is_superuser:
+            group_perm = Group.objects.all().values_list('name', flat=True)
+	group_perm = map(lambda x:x.split(':')[-1], group_perm)
         if db_field.name == "electoral_ward":
             kwargs["queryset"] = ElectoralWard.objects.filter(administrative_ward__city__name__city_name__in=group_perm)
         if db_field.name == "administrative_ward":
