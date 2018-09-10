@@ -72,7 +72,7 @@ class BaseModelAdmin(admin.ModelAdmin):
         group_perm = request.user.groups.values_list('name', flat=True)
         if request.user.is_superuser:
             group_perm = Group.objects.all().values_list('name', flat=True)
-	group_perm = map(lambda x:x.split(':')[-1], group_perm)
+        group_perm = map(lambda x:x.split(':')[-1], group_perm)
         if db_field.name == "electoral_ward":
             kwargs["queryset"] = ElectoralWard.objects.filter(administrative_ward__city__name__city_name__in=group_perm)
         if db_field.name == "administrative_ward":
