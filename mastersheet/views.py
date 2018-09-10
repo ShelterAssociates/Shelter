@@ -811,11 +811,12 @@ def sync_kobo_data(request):
         data['flag']=False
         data['msg'] = "Error occurred while sync from kobo. Please contact administrator." +str(e)
     return HttpResponse(json.dumps(data), content_type="application/json")
-from django.core import serializers
-@user_passes_test(lambda u: u.is_superuser)
+
+@permission_required('mastersheet.can_view_mastersheet_report', raise_exception=True)
 def render_report(request):
     return render(request, 'mastersheet_report.html')
-@user_passes_test(lambda u: u.is_superuser)
+
+@apply_permissions_ajax('mastersheet.can_view_mastersheet_report')
 def create_report(request):
     '''
         This view generates source structure for the fancy tree used in the report.
@@ -823,7 +824,12 @@ def create_report(request):
     electoral_wards_dict = {}
     admin_wards_dict = {}
     fancy_tree_data = []
-    cities = City.objects.all().values('id', 'name__city_name')
+    group_perm = request.user.groups.values_list('name', flat=True)
+    if request.user.is_superuser:
+        group_perm = Group.objects.all().values_list('name', flat=True)
+    group_perm = map(lambda x:x.split(':')[-1], group_perm)
+
+    cities = City.objects.filter(name__city_name__in = group_perm).values('id', 'name__city_name')
     for i in cities:
         temp = {}
         temp['name'] = i['name__city_name']
@@ -838,12 +844,19 @@ def create_report(request):
                 k['children'] = list(Slum.objects.filter(electoral_ward = k['id']).values('id', 'name'))
         fancy_tree_data.append(temp) 
     return HttpResponse(json.dumps(fancy_tree_data), content_type="application/json")
-@user_passes_test(lambda u: u.is_superuser)
 @csrf_exempt
+@apply_permissions_ajax('mastersheet.can_view_mastersheet_report')
 def give_report_table_numbers(request):
     tag_key_dict = json.loads(request.body)
     tag = tag_key_dict['tag']
     keys = tag_key_dict['keys']
+    group_perm = request.user.groups.values_list('name', flat=True)
+    if request.user.is_superuser:
+        group_perm = Group.objects.all().values_list('name', flat=True)
+    group_perm = map(lambda x:x.split(':')[-1], group_perm)
+
+    keys = Slum.objects.filter(id__in = keys, electoral_ward__administrative_ward__city__name__city_name__in=group_perm).values_list('id',flat=True)
+
     start_date = tag_key_dict['startDate']
     end_date = tag_key_dict['endDate']
 

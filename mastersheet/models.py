@@ -138,7 +138,9 @@ class ToiletConstruction(models.Model):
             ("can_sync_toilet_status", "Can sync toilet status"),
             ("can_upload_mastersheet", "Can upload mastersheet"),
             ("can_delete_kobo_record", "Can delete kobo record"),
-            ("can_export_mastersheet", "Can export mastersheet")
+            ("can_view_mastersheet_report", "Can view mastersheet report"),
+            ("can_export_mastersheet_report", "Can export mastersheet report"),
+
         )
         unique_together = ("slum", "household_number")
         verbose_name = 'Toilet construction progress'

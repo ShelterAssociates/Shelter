@@ -48,7 +48,7 @@
 	</div>
 	{%endif%}
 
-	{% if request.user.is_superuser%}
+	{% if perms.mastersheet.can_view_mastersheet_report%}
 	<div style ="margin:auto;witdth:20%,margin-top:100px;">
 		<a href="/mastersheet/report/" ><h2>Mastersheet Reports</h2></a>
 	</div>

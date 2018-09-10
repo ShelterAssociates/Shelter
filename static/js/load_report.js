@@ -95,6 +95,7 @@ function load_report_table(){
 	
 	tag_key_dict['startDate'] = $("#startDate").val();
 	tag_key_dict['endDate'] = $("#endDate").val();
+	tag_key_dict['csrfmiddlewaretoken'] = $("#date_form input").val()
 
 	if (report_table != null){
 		report_table.ajax.reload();
