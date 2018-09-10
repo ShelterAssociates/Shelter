@@ -25,19 +25,13 @@ class DDSync(object):
     def __init__(self, slum, user):
         self.slum = slum
         self.user = user
-        survey_id = None
+        survey_id = '129'
         ff_survey_id = None
         try:
             surveys = Survey.objects.filter(city=slum.electoral_ward.administrative_ward.city,
-                                           survey_type__in=[SURVEYTYPE_CHOICES[1][0], SURVEYTYPE_CHOICES[3][0]])
+                                           survey_type__in=[SURVEYTYPE_CHOICES[3][0]])
             if len(surveys) > 0:
-                for survey in surveys:
-                    if survey.survey_type == SURVEYTYPE_CHOICES[1][0]:
-                        survey_id = survey.kobotool_survey_id
-                    if survey.survey_type == SURVEYTYPE_CHOICES[3][0]:
-                        ff_survey_id = survey.kobotool_survey_id
-
-
+                ff_survey_id = surveys[0].kobotool_survey_id
         except:
             pass
         self.survey_id = survey_id
@@ -60,7 +54,8 @@ class DDSync(object):
         return kobo_url
 
     def fetch_url_data(self, url):
-        kobotoolbox_request = urllib2.Request(url)
+	print(url)
+	kobotoolbox_request = urllib2.Request(url)
         kobotoolbox_request.add_header('User-agent', 'Mozilla 5.10')
         kobotoolbox_request.add_header('Authorization', settings.KOBOCAT_TOKEN)
 
