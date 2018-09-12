@@ -1,15 +1,18 @@
 {%extends "admin/base_site.html"%}
 {% load static %}
 {% block extrahead%}
-<script src = "{% static "js/load_report.js" %}"></script>
-<script src = "{% static "js/jquery.fancytree-all-deps.min.js" %}"></script>
-<script src = "{% static "js/jquery.dataTables.min.js" %}"></script>
 
-
-<link rel = "stylesheet" type="text/css" href = "{% static "css/ui.fancytree.min.css" %}">
 <link rel = "stylesheet" type="text/css" href = "{% static "css/jquery.dataTables.min.css" %}">
+<link rel = "stylesheet" type="text/css" href = "{% static "css/ui.fancytree.min.css" %}">
 <link rel = "stylesheet" type="text/css" href = "{% static "css/master_report_stylesheet.css" %}">
 
+
+<script src = "{% static "js/jquery.dataTables.min.js" %}"></script>
+<script src = "{% static "js/dataTables.buttons.min.js" %}"></script>
+<script src = "{% static "js/buttons.html5.min.js" %}"></script>
+<script src = "{% static "js/jszip.min.js" %}"></script>
+<script src = "{% static "js/jquery.fancytree-all-deps.min.js" %}"></script>
+<script src = "{% static "js/load_report.js" %}"></script>
 
 
 {% endblock %}
@@ -17,6 +20,7 @@
 <div class="overlay">
     <div id="loading-img"></div>
 </div>
+<input id="export_mastersheet" type="hidden" value="{{perms.mastersheet.can_export_mastersheet_record}}"/>
 <div id = "show_dropdown" class = "show_dropdown display_line">
 	<button class="btn  btn-default toggle-button btn btn-info" type="button" onclick="showDropdown()">
        <span class="topic-dropdown-text " >Everything</span>
@@ -47,8 +51,8 @@
   <label><input id = "city" value = 'city' type="radio" name="optradio" onclick="changeDatatableLevel()" checked>City</label>
 </div>
 
-	<table id="report_table" class="display" width="100%" cellspacing="0">
-        </table>
-</div>
-	
+	<table id="report_table" class="display" width="100%" cellspacing="0"></table>
+  
+</div >
+	<div id = "report_table_aggregated_div"><table id="report_table_aggregated" class="display" width="100%" cellspacing="0"></table></div>
 {%endblock%}
