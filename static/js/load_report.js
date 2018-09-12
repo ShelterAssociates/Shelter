@@ -1,4 +1,5 @@
 var report_table = null;
+var report_table_aggregated = null;
 var tag  = null;
 var key = null;
 var tag_key_dict = {};
@@ -6,7 +7,18 @@ var delta = 30 * 1000 * 60 * 60 * 24;
 var todayTime = new Date();
 var aMonthAgo = todayTime.getTime() - delta ;
 var aMonthAgoTime = new Date(aMonthAgo);
+var btn_default = [];
+var total_counts = [{
+						'aggregated_total_ad':0, 
+						'aggregated_total_p1':0,
+						'aggregated_total_p2':0,
+						'aggregated_total_p3':0,
+						'aggregated_total_c':0,
+						'aggregated_use_of_toilet':0,
+						'aggregated_toilet_connected_to':0,
+						'aggregated_factsheet_done':0
 
+					}];
 
 function changeDateFormat(date){
     var yyyy = date.getFullYear();
@@ -92,7 +104,44 @@ function changeDatatableLevel(){
 
 }
 function load_report_table(){
-	
+	total_counts = [{
+						'aggregated_total_ad':0, 
+						'aggregated_total_p1':0,
+						'aggregated_total_p2':0,
+						'aggregated_total_p3':0,
+						'aggregated_total_c':0,
+						'aggregated_use_of_toilet':0,
+						'aggregated_toilet_connected_to':0,
+						'aggregated_factsheet_done':0
+
+					}];
+	btn_default = [
+						{
+                            extend: 'excel',
+                            text: 'Excel',
+                        }
+                   ];
+    if (report_table_aggregated == null){
+		report_table_aggregated = $("#report_table_aggregated").DataTable({
+			"dom": 't',
+			"data": total_counts,
+			"columnDefs": [{"defaultContent": "-","targets": "_all"},{"footer":true}],
+			"columns":[
+							{"data": "aggregated_total_ad", "title": "Agreement Done"},
+							{"data": "aggregated_total_p1", "title": "Phase 1 material given"},
+							{"data": "aggregated_total_p2", "title": "Phase 2 material given"},
+							{"data": "aggregated_total_p3", "title": "Phase 3 material given"},
+							{"data": "aggregated_total_c", "title": "Completed"},
+							{"data": "aggregated_use_of_toilet", "title": "Use of toilet"},
+							{"data": "aggregated_toilet_connected_to", "title": "Toilet connected to"},
+							{"data": "aggregated_factsheet_done", "title": "Factsheet done"}
+						]
+		});
+	}
+               
+	if($("#export_mastersheet").val()=="False"){
+        btn_default=[];
+    }       
 	tag_key_dict['startDate'] = $("#startDate").val();
 	tag_key_dict['endDate'] = $("#endDate").val();
 	tag_key_dict['csrfmiddlewaretoken'] = $("#date_form input").val()
@@ -112,11 +161,42 @@ function load_report_table(){
 					return JSON.stringify(tag_key_dict);
 				} ,
 				contentType : "application/json",
-				dataSrc : "",
+				dataSrc : function(data){
+					for (i = 0; i < data.length; i++){
+						if(typeof data[i]['total_ad'] != 'undefined'){
+							total_counts[0]['aggregated_total_ad'] += data[i]['total_ad'];
+						}
+						if(typeof data[i]['total_p1'] != 'undefined'){	
+							total_counts[0]['aggregated_total_p1'] += data[i]['total_p1'];
+						}
+						if(typeof data[i]['total_p2'] != 'undefined'){
+							total_counts[0]['aggregated_total_p2'] += data[i]['total_p2'];
+						}
+						if(typeof data[i]['total_p3'] != 'undefined'){
+							total_counts[0]['aggregated_total_p3'] += data[i]['total_p3'];
+						}
+						if(typeof data[i]['total_c'] != 'undefined'){
+							total_counts[0]['aggregated_total_c'] += data[i]['total_c'];
+						}
+						if(typeof data[i]['use_of_toilet'] != 'undefined'){
+							total_counts[0]['aggregated_use_of_toilet'] += data[i]['use_of_toilet'];
+						}
+						if(typeof data[i]['factsheet_done'] != 'undefined'){
+							total_counts[0]['aggregated_factsheet_done'] += data[i]['factsheet_done'];
+						}
+						if(typeof data[i]['toilet_connected_to'] != 'undefined'){
+							total_counts[0]['aggregated_toilet_connected_to'] += data[i]['toilet_connected_to'];
+						}
+					}
+					report_table_aggregated.row(0).data(total_counts[0]);
+					return data;
+				},
 				complete: function(data){
+					$("div.dt-buttons>button").addClass("pull-left");
 					
 				}
 			},
+			"buttons":btn_default,
 			"columnDefs": [{"defaultContent": "-","targets": "_all"},{"footer":true},],
 			"columns":[
 						{"data": "level", "title": "Name"},
@@ -131,23 +211,9 @@ function load_report_table(){
 						{"data": "city_name", "title": "City name"}
 					]
 		});
-	}
-
+	}	
+	
 }
-
-
-var opts = {
-       autoApply: true,            // Re-apply last filter if lazy data is loaded
-       autoExpand: true,           // Expand all branches that contain matches while filtered
-       counter: false,             // Show a badge with number of matching child nodes near parent icons
-       fuzzy: false,               // Match single characters in order, e.g. 'fb' will match 'FooBar'
-       hideExpandedCounter: true,  // Hide counter badge if parent is expanded
-       hideExpanders: false,       // Hide expanders if all child nodes are hidden by filter
-       highlight: true,            // Highlight matches by wrapping inside <mark> tags
-       leavesOnly: false,          // Match end nodes only
-       nodata: false,              // Display a 'no data' status node if result is empty
-       mode: 'hide'                // Grayout unmatched nodes (pass "hide" to remove unmatched node instead)
-   };
 
 $(document).ready(function() {
 	todayDate = changeDateFormat(todayTime);
