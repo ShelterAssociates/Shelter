@@ -1,0 +1,114 @@
+
+
+
+/* The container */
+.custom_checkbox {
+    display: block;
+    position: relative;
+    /*padding-left: 35px;
+    margin-bottom: 12px;
+    cursor: pointer;
+    font-size: 22px;*/
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+}
+
+/* Hide the browser's default checkbox */
+.custom_checkbox input {
+    position: absolute;
+    opacity: 0;
+    
+}
+
+/* Create a custom checkbox */
+.checkmark {
+    position: relative;
+    float: left;
+    top: 0;
+    left: 0;
+    height: 15px;
+    width: 15px;
+   
+}
+
+
+
+/* When the checkbox is checked, add a blue background */
+.custom_checkbox   .checkmark {
+    background-color: #ea1943;
+}
+
+/* Create the checkmark/indicator (hidden when not checked) */
+.checkmark:after {
+    content: "";
+    position: relative;
+    display: none;
+}
+
+/* Show the checkmark when checked */
+.custom_checkbox input:checked ~ .checkmark:after {
+    display: block;
+    
+}
+
+/* Style the checkmark/indicator */
+.custom_checkbox .checkmark:after {
+    left: 5px;
+    top: 1px;
+    width: 5px;
+    height: 10px;
+    
+    border: solid black;
+    border-width: 0 2px 2px 0;
+    -webkit-transform: rotate(45deg);
+    -ms-transform: rotate(45deg);
+    transform: rotate(45deg);
+}
+
+
+#loading-img {
+    background: url(/static/images/spinner.gif) center center no-repeat;
+    height: 100%;
+    width: 100%;
+    z-index: 20;
+}
+
+.display_line{
+    display: inline-block;
+}
+.error_display{
+    
+    overflow-y:scroll;height:150px;
+}
+.overlay {
+    background: #e9e9e9;
+    display: none;
+    position: fixed;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    opacity: 0.5;
+    z-index: 2000;
+}
+div.dt-buttons>button{
+    margin-right: 20px;
+}
+.trFirst{
+    border-left:2px solid #d4d4d4;
+    border-top:2px solid #d4d4d4;
+}
+.trMiddle{
+    border-top:2px solid #d4d4d4;
+}
+.trLast{
+    border-right:0px solid #d4d4d4;
+    border-top:2px solid #d4d4d4;
+}
+.mid{
+    overflow-x: scroll;
+    width:100%;
+    border:2px solid #d4d4d4;
+}
