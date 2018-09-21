@@ -61,7 +61,7 @@ class SBMUploadAdmin(BaseAdmin):
 admin.site.register(SBMUpload, SBMUploadAdmin)
 
 class ToiletConstructionAdmin(BaseAdmin):
-    list_display = ('slum_name', 'household_number','agreement_date','agreement_cancelled','status')
+    list_display = ('slum_name', 'household_number','agreement_date','agreement_cancelled','status','use_of_toilet','toilet_connected_to','factsheet_done')
     search_fields = ['slum__name','household_number','agreement_date','agreement_cancelled','status']
     ordering = ['slum__name','household_number']
     raw_id_fields = ['slum']

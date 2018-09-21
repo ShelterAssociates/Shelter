@@ -98,7 +98,7 @@ class AdministrativeWard(models.Model):
 
 class ElectoralWard(models.Model):
     """Electoral Ward Database"""
-    administrative_ward = models.ForeignKey(AdministrativeWard)
+    administrative_ward = models.ForeignKey(AdministrativeWard, blank=True, null=True)
     name = models.CharField(max_length=2048, default="")
     shape = models.PolygonField(srid=4326, default="")
     ward_no = models.CharField(max_length=2048, default="")
@@ -119,7 +119,7 @@ class ElectoralWard(models.Model):
 
 class Slum(models.Model):
     """Slum Database"""
-    electoral_ward = models.ForeignKey(ElectoralWard)
+    electoral_ward = models.ForeignKey(ElectoralWard, blank=True, null=True)
     name = models.CharField(max_length=2048)
     shape = models.PolygonField(srid=4326)
     description = models.TextField(max_length=2048,blank=True,null=True)
