@@ -27,6 +27,7 @@
 {%endblock%}
 
 {% block content %}
+
 <div class="overlay">
     <div id="loading-img"></div>
 </div>
@@ -36,6 +37,15 @@
     <input id="export_mastersheet" type="hidden" value="{{perms.mastersheet.can_export_mastersheet}}"/>
     <form id = "slum_form" style="display: inline-block;" method="POST">{% csrf_token %}
         {{ form.as_p }}
+        <label style="display: inline-block;">  
+            <input s type="checkbox" name = "show_rhs"  id ="show_rhs">
+            &nbsp;Fetch RHS data        
+        </label> <br>
+        <label class = "display_line">  
+            <input   type="checkbox" name = "show_ff"  id ="show_ff">
+            &nbsp;Fetch Family Factsheet data       
+        </label> <br>
+
         <button type="button" id="btnFetch" class="btn btn-primary" ><span class="glyphicon glyphicon-search"></span> Search</button>
         {% if perms.mastersheet.can_sync_toilet_status%}
         <button type="button" id="btnSync" class="btn btn-success"><span class="glyphicon glyphicon-cloud"></span> Sync</button>
@@ -44,7 +54,11 @@
         <button type="button" id="btnUpload" class="btn btn-success"  data-target="#myModal"><span class="glyphicon glyphicon-upload"></span> Upload</button><!-- data-toggle="modal" -->
         {%endif%}
         <input type="hidden" class="hide" id="slum_code" value="{{slum_code}}"/>
+
+        
     </form>
+
+    
     {% if perms.mastersheet.can_upload_mastersheet%}
     <div class="modal fade" id="myModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
       <div class="modal-dialog" role="document">
@@ -79,6 +93,8 @@
 
      <div id="buttons" style="padding-top:20px;"></div>
 </div>
+
+
 <div class="col-md-4">
         <div class="" style = "float:right;display: none;" id = "legend" >
           
