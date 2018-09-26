@@ -726,6 +726,7 @@ $(document).ready(function() {
     }
 
     $("#btnFetch").click(function(){
+        
         if(document.forms[0].slumname.value == ""){
             alert("Please select a slum");
         }
