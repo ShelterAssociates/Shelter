@@ -73,7 +73,7 @@ class ToiletConstructionAdmin(BaseAdmin):
 admin.site.register(ToiletConstruction, ToiletConstructionAdmin)
 
 class ActivityTypeAdmin(admin.ModelAdmin):
-    list_display = ('name','display_flag','display_order')
+    list_display = ('name','key','display_flag','display_order')
     search_fields = ['name']
     ordering = ['name']
 admin.site.register(ActivityType, ActivityTypeAdmin)
