@@ -21,8 +21,14 @@ class KMLParser(object):
         ''' Get latlong and data from the placemark object
         '''
         # Get household number
-        extendeddata = list(placemark.ExtendedData.SchemaData.iterchildren())
-        household_no = extendeddata[len(extendeddata)-1]
+        household_no = ''
+        extendeddata = {marker_place.get('name').lower():marker_place for marker_place in placemark.ExtendedData.SchemaData.iterchildren()}
+        if 'id' in  extendeddata.keys():
+            household_no = extendeddata['id']
+        if 'houseno' in  extendeddata.keys():
+            household_no = extendeddata['houseno']
+        if household_no == "" and len(extendeddata.keys()) > 0:
+            household_no = extendeddata[extendeddata.keys()[0]]
 
         #Get lat long coordinates as per the type of shape(polygon, point and linestring)
         key = LINESTRING

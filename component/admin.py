@@ -1,5 +1,5 @@
 from django.contrib import admin
-from django.contrib.gis import admin
+#from django.contrib.gis import admin
 from models import *
 
 class MetadataInline(admin.TabularInline):
@@ -28,10 +28,35 @@ class MetadataAdmin(admin.ModelAdmin):
 admin.site.register(Metadata, MetadataAdmin)
 admin.site.register(Fact)
 
+class ComponentTypeFilter(admin.SimpleListFilter):
+    """
+    City level filter 
+    """
+    title = 'Type'
+    parameter_name = 'types'
+
+    def lookups(self, request, model_admin):
+        """
+        Creating list filter lookup 
+        """
+        obj_meta = Metadata.objects.filter(type__in=['C']).order_by('name')
+        obj_meta = obj_meta.values_list('name', 'name')
+        return tuple(obj_meta)
+
+    def queryset(self, request, queryset):
+        """
+        Filter data as per list filter selected. 
+        """
+        cust_filter = {}
+        if self.value():
+            cust_filter = {"metadata__name__in" : [self.value()]}
+        return queryset.filter(**cust_filter)
+
 class ComponentAdmin(admin.ModelAdmin):
     list_display = ('slum_name', 'component_name', 'number', 'shape_type')
     search_fields = ['slum__name','metadata__name','housenumber']
     ordering = ['slum__name','metadata__name','housenumber']
+    list_filter = [ComponentTypeFilter]
 
     def number(self, obj):
         return obj.housenumber

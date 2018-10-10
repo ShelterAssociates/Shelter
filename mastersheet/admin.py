@@ -96,7 +96,7 @@ class SBMUploadAdmin(BaseAdmin):
 admin.site.register(SBMUpload, SBMUploadAdmin)
 
 class ToiletConstructionAdmin(BaseAdmin):
-    list_display = ('slum_name', 'household_number','agreement_date','agreement_cancelled','status')
+    list_display = ('slum_name', 'household_number','agreement_date','agreement_cancelled','status','use_of_toilet','toilet_connected_to','factsheet_done')
     search_fields = ['slum__name','household_number','agreement_date','agreement_cancelled','status']
     ordering = ['slum__name','household_number']
     raw_id_fields = ['slum']
@@ -108,7 +108,7 @@ class ToiletConstructionAdmin(BaseAdmin):
 admin.site.register(ToiletConstruction, ToiletConstructionAdmin)
 
 class ActivityTypeAdmin(admin.ModelAdmin):
-    list_display = ('name','display_flag','display_order')
+    list_display = ('name','key','display_flag','display_order')
     search_fields = ['name']
     ordering = ['name']
 admin.site.register(ActivityType, ActivityTypeAdmin)

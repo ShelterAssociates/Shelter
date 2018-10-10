@@ -7,6 +7,12 @@ from master.models import CityReference, City, \
     AdministrativeWard, ElectoralWard, Slum, WardOfficeContact, ElectedRepresentative, Rapid_Slum_Appraisal, Survey, drainage
 from master.forms import CityFrom, AdministrativeWardFrom, ElectoralWardForm, SlumForm
 from django.contrib.auth.models import Group
+from django.utils.html import format_html
+from django.core.urlresolvers import reverse
+from django.conf.urls import include, url
+from django.http import HttpResponse
+import json
+from kmllevelparser import KMLLevelParser
 
 #Common filters for querying model depending on model type
 data_filter = {'CityReference': 'city_name__in',
@@ -16,6 +22,83 @@ data_filter = {'CityReference': 'city_name__in',
                'Slum': 'electoral_ward__administrative_ward__city__name__city_name__in',
                'WardOfficeContact': 'administrative_ward__city__name__city_name__in',
                'ElectedRepresentative': 'electoral_ward__administrative_ward__city__name__city_name__in'}
+
+class UploadKMLBase(admin.ModelAdmin):
+
+    class Media:
+        js = ['js/admin_upload_kml.js']
+
+    def get_urls(self):
+        urls = super(UploadKMLBase, self).get_urls()
+        custom_urls = [
+            url(
+                r'^(?P<city_id>.+)/City/$',
+                self.admin_site.admin_view(self.process_city),
+                name='city-kml-upload',
+            ),
+            url(
+                r'^(?P<city_id>.+)/AdministrativeWard/$',
+                self.admin_site.admin_view(self.process_administrativeward),
+                name='adminward-kml-upload',
+            ),
+            url(
+                r'^(?P<city_id>.+)/ElectoralWard/$',
+                self.admin_site.admin_view(self.process_electoralward),
+                name='electoralward-kml-upload',
+            ),
+            url(
+                r'^(?P<city_id>.+)/Slum/$',
+                self.admin_site.admin_view(self.process_slum),
+                name='slum-kml-upload',
+            ),
+        ]
+        return custom_urls + urls
+
+    def kml_upload_actions(self, obj):
+        return format_html(
+            '<button type="button" class="btn btn-success btn-sm"  data-target="#kmlModal" href="{}">City</button>&nbsp;&nbsp;'
+            '<button type="button" class="btn btn-success btn-sm"  data-target="#kmlModal" href="{}">Administrative Ward</button>&nbsp;&nbsp;'
+            '<button type="button" class="btn btn-success btn-sm"  data-target="#kmlModal" href="{}">Electoral Ward</button>&nbsp;&nbsp;'
+            '<button type="button" class="btn btn-success btn-sm"  data-target="#kmlModal" href="{}">Slum</button>',
+            reverse('admin:city-kml-upload', args=[obj.pk]),
+            reverse('admin:adminward-kml-upload', args=[obj.pk]),
+            reverse('admin:electoralward-kml-upload', args=[obj.pk]),
+            reverse('admin:slum-kml-upload', args=[obj.pk])
+        )
+
+    def process_city(self, request, city_id, *args, **kwargs):
+        return self.process_action(request,city_id, "City")
+
+    def process_administrativeward(self, request, city_id, *args, **kwargs):
+        return  self.process_action(request, city_id, "AdministrativeWard")
+
+    def process_electoralward(self, request, city_id, *args, **kwargs):
+        return self.process_action( request, city_id, "ElectoralWard")
+
+    def process_slum(self, request, city_id, *args, **kwargs):
+        return self.process_action(request, city_id, "Slum")
+
+    def process_action(self, request, city_id, action_title):
+        response = {"status":True, 'message':""}
+        if request.method == "POST":
+            docFile = request.FILES['file'].read()
+            chk_delete = request.POST['chk_delete']
+            try:
+                kml_level_parser = KMLLevelParser(docFile, city_id, chk_delete, action_title)
+                cnt = kml_level_parser.parse_kml()
+
+                if cnt['created'] > 0:
+                    response['message'] = "Created "+str(cnt['created']) + " " + action_title
+                if cnt['updated'] > 0:
+                    response['message'] += "\nUpdated " +str(cnt['updated']) + " " + action_title
+                if response['message'] == "":
+                    response['message']= "Nothing parsed"
+            except Exception as e:
+                response['status'] = False
+                response['message'] = str(e)
+        return HttpResponse(json.dumps(response), content_type='application/json')
+
+
 
 class CityListFilter(admin.SimpleListFilter):
     """
@@ -77,9 +160,12 @@ class BaseModelAdmin(admin.ModelAdmin):
             kwargs["queryset"] = ElectoralWard.objects.filter(administrative_ward__city__name__city_name__in=group_perm)
         if db_field.name == "administrative_ward":
             kwargs["queryset"] = AdministrativeWard.objects.filter(city__name__city_name__in=group_perm)
-        if db_field.name in  ["city","name"]:
+        if db_field.name in  ["city"]:
             kwargs["queryset"] = City.objects.filter(name__city_name__in=group_perm)
+        if db_field.name in ['name']:
+            kwargs["queryset"] = CityReference.objects.filter(city_name__in=group_perm)
         return super(BaseModelAdmin, self).formfield_for_foreignkey(db_field, request, **kwargs)
+
 
 #City Reference
 class CityReferenceAdmin(BaseModelAdmin):
@@ -134,9 +220,10 @@ admin.site.register(Slum, SlumDetailAdmin)
 # admin.site.register(Survey,SurveyDetailAdmin)
 
 #City
-class CityAdmin(BaseModelAdmin):
+class CityAdmin(BaseModelAdmin, UploadKMLBase):
     """Display panel of CityAdmin Model"""
     form = CityFrom
+    list_display = ('name','kml_upload_actions')
     model = City
     search_fields = ('name',)
     def save_model(self, request, obj, form, change):
