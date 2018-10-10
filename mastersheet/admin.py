@@ -20,6 +20,41 @@ class VendorTypeAdmin(admin.ModelAdmin):
     ordering = ['name']
 admin.site.register(VendorType, VendorTypeAdmin)
 
+class InvoiceItemsInline(admin.TabularInline):
+    """Display panel of WardOfficeContacts Model"""
+    model = InvoiceItems
+    search_fields = ('name',)
+    extra = 1
+
+
+class InvoiceAdmin(admin.ModelAdmin):
+    list_display = ('vendor', 'invoice_number','challan_number','invoice_date')
+    search_fields = ['vendor', 'invoice_number','challan_number','invoice_date']
+    ordering = ['vendor']
+    inlines = [InvoiceItemsInline]
+
+    def vendor_type_name(self, obj):
+        return obj.vendor.name
+admin.site.register(Invoice, InvoiceAdmin)
+
+
+class MaterialTypeAdmin(admin.ModelAdmin):
+    list_display = ('name','description','display_flag','display_order')
+    search_fields = ['name']
+    ordering = ['name']
+admin.site.register(MaterialType, MaterialTypeAdmin)
+
+
+class InvoiceItemsAdmin(admin.ModelAdmin):
+    list_display = ('invoice', 'material_type','slum','household_numbers','quantity','unit','rate','tax','total')
+    search_fields = ['invoice', 'material_type','slum']
+    ordering = ['invoice']
+
+    def vendor_type_name(self, obj):
+        return obj.invoice.vendor.name
+admin.site.register(InvoiceItems, InvoiceItemsAdmin)
+
+
 class VendorAdmin(admin.ModelAdmin):
     list_display = ('name', 'vendor_type_name','gst_number','phone_number','email_address')
     search_fields = ['name', 'vendor_type__name', 'gst_number','phone_number','email_address']
