@@ -55,7 +55,6 @@ def masterSheet(request, slum_code = 0, FF_code = 0, RHS_code = 0 ):
                 RHS_code = i.kobotool_survey_id
     except Exception as e:
         print str(e)
-        
     formdict = []
     formdict_family_factsheet =[]
     name_label_data = []
@@ -69,6 +68,7 @@ def masterSheet(request, slum_code = 0, FF_code = 0, RHS_code = 0 ):
         res = urllib2.urlopen(kobotoolbox_request)
         html = res.read()
         formdict = json.loads(html)
+
         if flag_fetch_rhs:
             url_RHS_form = str(settings.KOBOCAT_FORM_URL)+str('forms/'+str(RHS_code)+'/form.json')
             kobotoolbox_request_RHS_form = urllib2.Request(url_RHS_form)
@@ -180,6 +180,8 @@ def masterSheet(request, slum_code = 0, FF_code = 0, RHS_code = 0 ):
 
         # Vendor and Accounts - fetching data
         vendor = VendorHouseholdInvoiceDetail.objects.filter(slum__shelter_slum_code=slum_code[0][0])
+        invoices = InvoiceItems.objects.filter(slum__shelter_slum_code=slum_code[0][0])
+
         # Arranging name_label_data with respect to label and corresponding codes('names' is the key used for them in the json) and labels
         if flag_fetch_rhs or flag_fetch_ff:
             name_label_data_dict = {
@@ -188,20 +190,22 @@ def masterSheet(request, slum_code = 0, FF_code = 0, RHS_code = 0 ):
 
         for x in formdict:
 
-            for y in vendor:
-                for z in y.household_number:
+            # Changing the codes to actual labels
+            for y in invoices:
+                for z in y.household_numbers:
                     if int(x['Household_number']) == int(z):
-                        vendor_name = "vendor_type" + y.vendor.vendor_type.name
-                        invoice_number = "invoice_number" + y.vendor.vendor_type.name
+                        vendor_name = "vendor_type" + str(y.material_type)
+                        invoice_number = "invoice_number" + str(y.material_type)
                         x.update({
-                            vendor_name: y.vendor.name,
-                            invoice_number: y.invoice_number
+                            vendor_name: y.invoice.vendor.name,
+                            invoice_number: y.invoice.invoice_number
                         })
-                        x.update({str(y.vendor.vendor_type.name) + " Invoice Number"+"_id" : y.id})
-                        x.update({"Name of "+str(y.vendor.vendor_type.name)+" vendor"+"_id" : y.id})
+                        x.update({str(y.material_type) + " Invoice Number"+"_id" : y.invoice.id})
+                        x.update({"Name of "+str(y.material_type)+" vendor"+"_id" : y.invoice.id})
 
-                        # Changing the codes to actual labels
-                        
+
+
+
             for i in range(len(community_mobilization_data)):
                 y = community_mobilization_data[i]
                 for z in y.household_number:
@@ -496,7 +500,6 @@ def handle_uploaded_file(f,response,slum_code):
         response.append(("total_records",len(df1.index.values)))
     except Exception as e:
         flag_overall = 1
-        print e
         response.append(("Household number error", e))
 
 
@@ -538,6 +541,7 @@ def handle_uploaded_file(f,response,slum_code):
     try:
 
         if flag_overall != 1:
+            count = 0
 
             for i in df1.index.values:
                 #this_slum = Slum.objects.get(name=str(df1.loc[int(i), 'Select Slum']))
@@ -549,7 +553,9 @@ def handle_uploaded_file(f,response,slum_code):
                         try:
                             
                             SBM_instance = SBMUpload.objects.filter(slum = this_slum, household_number = int(i))
+
                             if True:
+                                
                                 SBM_instance.update(
                                     name = df_sbm.loc[int(i), 'SBM Name'],
                                     application_id = df_sbm.loc[int(i), 'Application ID'],
@@ -564,10 +570,11 @@ def handle_uploaded_file(f,response,slum_code):
 
                                 )
                                 
-
                                 response.append(("updated sbm", i))
                         except Exception as e:
+                            print e
                             if True:
+                                print "creating new..."
                                 SBM_instance_1 = SBMUpload(
                                  slum = this_slum,
                                  household_number = int(i),

@@ -11,6 +11,9 @@ from django.db.models.signals import pre_save,post_save
 from django.dispatch import receiver
 
 
+
+
+
 class VendorType(models.Model):
     """
     All the type of vendors.
@@ -70,6 +73,71 @@ class VendorHouseholdInvoiceDetail(models.Model):
 
     def __unicode__(self):
         return self.vendor.name + ' - '+ self.slum.name + '(' + self.invoice_number + ')'
+
+class Invoice(models.Model):
+    vendor = models.ForeignKey(Vendor)
+    invoice_date = models.DateField(null=True, blank=True)
+    invoice_number = models.CharField(max_length=100,null=True, blank=True)
+    challan_number = models.CharField(max_length=100,null=True, blank=True)
+    paid = models.BooleanField(default=False)
+    created_on = models.DateTimeField(default=datetime.datetime.now)
+    created_by = models.ForeignKey(User,related_name='invoice_created_by')
+    modified_on = models.DateTimeField(default=datetime.datetime.now)
+    modified_by = models.ForeignKey(User, related_name='invoice_modified_by')
+
+    class Meta:
+        verbose_name = 'Invoice'
+        verbose_name_plural = 'Invoices'
+
+    def __unicode__(self):
+        """Returns string representation of object"""
+        return self.vendor.name + '(' + self.invoice_number + ')' 
+    
+
+
+class MaterialType(models.Model):
+    name = models.CharField(max_length=512)
+    description = models.TextField(null=True, blank=True)
+    display_flag = models.BooleanField()
+    display_order = models.FloatField()
+    created_date = models.DateTimeField(default=datetime.datetime.now)
+    
+
+    class Meta:
+        verbose_name = 'Material Type'
+        verbose_name_plural = 'Material Types'
+
+    def __unicode__(self):
+        """Returns string representation of object"""
+        return self.name
+        
+UNITS=(('1', 'Tempo/Piago'),
+                ('2', 'Bags'),
+                ('3', 'Nos'))
+
+
+class InvoiceItems(models.Model):
+    invoice = models.ForeignKey(Invoice)
+    material_type = models.ForeignKey(MaterialType)
+    slum = models.ForeignKey(Slum)
+    household_numbers = JSONField(null=True, blank=True)
+    quantity = models.FloatField(null=True, blank=True)
+    unit = models.CharField(max_length=100,choices = UNITS,null=True, blank=True)
+    rate = models.FloatField(null=True, blank=True)
+    tax = models.FloatField(null=True, blank=True)
+    total = models.FloatField(null=True, blank=True)
+    created_on = models.DateTimeField(default=datetime.datetime.now)
+    created_by = models.ForeignKey(User, related_name='invoiceitem_created_by')
+    modified_on = models.DateTimeField(default=datetime.datetime.now)
+    modified_by = models.ForeignKey(User, related_name='invoiceitem_modified_by')
+
+    class Meta:
+        verbose_name = 'Invoice item'
+        verbose_name_plural = 'Invoice items'
+
+    def __unicode__(self):
+        """Returns string representation of object"""
+        return self.material_type.name
 
 class SBMUpload(models.Model):
     """
