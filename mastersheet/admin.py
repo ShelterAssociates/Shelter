@@ -1,6 +1,11 @@
 from django.contrib import admin
 from .models import *
 from .forms import VendorHouseholdInvoiceDetailForm, SBMUploadForm, ToiletConstructionForm, CommunityMobilizationForm
+import datetime
+from django.contrib.auth.models import User
+
+
+
 
 class BaseAdmin(admin.ModelAdmin):
     '''
@@ -24,14 +29,38 @@ class InvoiceItemsInline(admin.TabularInline):
     """Display panel of WardOfficeContacts Model"""
     model = InvoiceItems
     search_fields = ('name',)
-    extra = 1
+    raw_id_fields = ('slum',)
+    extra = 0
+    min_num = 1
+
+    exclude = ('created_by','created_on','modified_by','modified_on',)
 
 
 class InvoiceAdmin(admin.ModelAdmin):
+    list_filter = ['vendor']
     list_display = ('vendor', 'invoice_number','challan_number','invoice_date')
     search_fields = ['vendor', 'invoice_number','challan_number','invoice_date']
     ordering = ['vendor']
     inlines = [InvoiceItemsInline]
+    exclude = ('created_by','created_on','modified_by','modified_on',)
+
+    def save_related(self,request, form, formset, change):
+
+        inst = formset[0].save(commit = False)
+        for instance in inst:
+            instance.created_by = request.user
+            instance.modified_by = request.user
+            instance.save()
+
+    def save_model(self, request, obj, form, change):
+        user = User.objects.get(pk = request.user.id)
+        if not obj.pk :
+            obj.created_by = user
+            obj.created_on = datetime.datetime.now()
+        obj.modified_by = user
+        obj.modified_on = datetime.datetime.now()
+        obj.save()
+        super(InvoiceAdmin, self).save_model(request, obj, form, change)
 
     def vendor_type_name(self, obj):
         return obj.vendor.name
@@ -49,9 +78,8 @@ class InvoiceItemsAdmin(admin.ModelAdmin):
     list_display = ('invoice', 'material_type','slum','household_numbers','quantity','unit','rate','tax','total')
     search_fields = ['invoice', 'material_type','slum']
     ordering = ['invoice']
+    exclude = ('created_by','created_on','modified_by','modified_on',)
 
-    def vendor_type_name(self, obj):
-        return obj.invoice.vendor.name
 admin.site.register(InvoiceItems, InvoiceItemsAdmin)
 
 
