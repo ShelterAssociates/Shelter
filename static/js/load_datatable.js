@@ -103,7 +103,7 @@ $(document).ready(function() {
                 for (i = 0 ; i < tmp_ACC.length ; i ++ ){
                     columns_defs['data'][tmp_ACC[i]]['render']= function ( data, type, row,meta ) {
                         if(typeof data != 'undefined'){
-                            url_accounts = String("/admin/master/mastersheet/vendorhouseholdinvoicedetail/") + row[columns_defs['data'][meta.col]['title']+"_id"] + String("/");
+                            url_accounts = String("/admin/master/mastersheet/invoice/") + row[columns_defs['data'][meta.col]['title']+"_id"] + String("/");
                             if(type === 'display'){
                                         data = '<a href = "#" onclick="window.open(\''+url_accounts+'\', \'_blank\', \'width=850,height=750\');">' + data + "</a>";
 
@@ -726,6 +726,7 @@ $(document).ready(function() {
     }
 
     $("#btnFetch").click(function(){
+        
         if(document.forms[0].slumname.value == ""){
             alert("Please select a slum");
         }
