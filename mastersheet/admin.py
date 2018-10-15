@@ -47,7 +47,7 @@ class InvoiceAdmin(admin.ModelAdmin):
 
     class Media:
         js = ['js/calculate_total_invoice.js']
-        
+
     def save_related(self,request, form, formset, change):
 
         inst = formset[0].save(commit = False)
@@ -88,12 +88,11 @@ admin.site.register(InvoiceItems, InvoiceItemsAdmin)
 
 
 class VendorAdmin(admin.ModelAdmin):
-    list_display = ('name', 'vendor_type_name','gst_number','phone_number','email_address')
-    search_fields = ['name', 'vendor_type__name', 'gst_number','phone_number','email_address']
+    list_display = ('name', 'gst_number','phone_number','email_address')
+    search_fields = ['name', 'gst_number','phone_number','email_address']
     ordering = ['name']
 
-    def vendor_type_name(self, obj):
-        return obj.vendor_type.name
+    
 admin.site.register(Vendor, VendorAdmin)
 
 class VendorHouseholdInvoiceDetailAdmin(BaseAdmin):
