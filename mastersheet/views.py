@@ -447,10 +447,10 @@ def define_columns(request):
         print e
     final_data['buttons']['Community Mobilization'] = range(activity_pre_len, len(formdict_new))
 
-    vendor_type_model = VendorType.objects.filter(display_flag=True).order_by('display_order')
+    material_type_model = MaterialType.objects.filter(display_flag=True).order_by('display_order')
     vendor_pre_len = len(formdict_new)
     try:
-        for i in vendor_type_model:
+        for i in material_type_model:
             formdict_new.append({"data":"vendor_type"+str(i.name), "title":"Name of "+str(i.name)+" vendor"})
             formdict_new.append({"data":"invoice_number"+str(i.name), "title":str(i.name) + " Invoice Number"})
     except Exception as e:

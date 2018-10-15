@@ -40,7 +40,6 @@ class Vendor(models.Model):
     phone_number = models.CharField(max_length=15, null=True, blank=True)
     email_address = models.CharField(max_length=512, null=True, blank=True)
     description = models.TextField(null=True, blank=True)
-    vendor_type = models.ForeignKey(VendorType)
     gst_number = models.CharField(max_length=100)
     city = models.ForeignKey(City)
     created_date = models.DateTimeField(default=datetime.datetime.now)
@@ -51,7 +50,7 @@ class Vendor(models.Model):
 
     def __unicode__(self):
         """Returns string representation of object"""
-        return self.name + '(' + self.vendor_type.name + ')'
+        return self.name 
 
 class VendorHouseholdInvoiceDetail(models.Model):
     """
@@ -86,6 +85,7 @@ class Invoice(models.Model):
     modified_by = models.ForeignKey(User, related_name='invoice_modified_by')
 
     class Meta:
+        unique_together = ("vendor", "invoice_number")
         verbose_name = 'Invoice'
         verbose_name_plural = 'Invoices'
 
@@ -120,12 +120,12 @@ class InvoiceItems(models.Model):
     invoice = models.ForeignKey(Invoice)
     material_type = models.ForeignKey(MaterialType)
     slum = models.ForeignKey(Slum)
-    household_numbers = JSONField(null=True, blank=True)
-    quantity = models.FloatField(null=True, blank=True)
+    household_numbers = JSONField()
+    quantity = models.FloatField(default = 0)
     unit = models.CharField(max_length=100,choices = UNITS,null=True, blank=True)
-    rate = models.FloatField(null=True, blank=True)
-    tax = models.FloatField(null=True, blank=True)
-    total = models.FloatField(null=True, blank=True)
+    rate = models.FloatField(default = 0)
+    tax = models.FloatField(default = 0)
+    total = models.FloatField(default = 0)
     created_on = models.DateTimeField(default=datetime.datetime.now)
     created_by = models.ForeignKey(User, related_name='invoiceitem_created_by')
     modified_on = models.DateTimeField(default=datetime.datetime.now)
