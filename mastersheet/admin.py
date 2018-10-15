@@ -44,6 +44,10 @@ class InvoiceAdmin(admin.ModelAdmin):
     inlines = [InvoiceItemsInline]
     exclude = ('created_by','created_on','modified_by','modified_on',)
 
+
+    class Media:
+        js = ['js/calculate_total_invoice.js']
+        
     def save_related(self,request, form, formset, change):
 
         inst = formset[0].save(commit = False)
