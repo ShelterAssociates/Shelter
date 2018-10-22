@@ -57,7 +57,7 @@ $(document).ready(function() {
                 for (i = 0 ; i < tmp_download_TF.length ; i ++ ){
 
                         //Toilet photo
-                        columns_defs['data'][54]['render']= function ( data, type, row,meta ) {
+                        columns_defs['data'][55]['render']= function ( data, type, row,meta ) {
                             if(typeof data != 'undefined'){
                                 url_download_TF = row['toilet_photo_url'];
                                 if(type === 'display'){
@@ -69,7 +69,7 @@ $(document).ready(function() {
                         }
                     
                     //Family photo
-                        columns_defs['data'][53]['render']= function ( data, type, row,meta ) {
+                        columns_defs['data'][54]['render']= function ( data, type, row,meta ) {
                             if(typeof data != 'undefined'){
                                 url_download_FF = row['family_photo_url'];
                                 if(type === 'display'){
@@ -127,12 +127,18 @@ $(document).ready(function() {
                             return data;
                         }
                     }
-                    columns_defs['data'][11]['render']= function ( data, type, row,meta ) {
+                    columns_defs['data'][12]['render']= function ( data, type, row,meta ) {
                         if(typeof data != 'undefined'){
                             url_SBM = String("/admin/master/mastersheet/sbmupload/") + row['sbm_id_'+String(row.Household_number)] + String("/");
                             if(type === 'display'){
                                         data = '<a href = "#" onclick="window.open(\''+url_SBM+'\', \'_blank\', \'width=850,height=750\');">' + data + "</a>";
 
+                            }
+
+                            if(row['no_rhs_flag'] != '' )
+                            {
+
+                                data = "<p class = 'highlight_p' style = 'background-color : "+row['no_rhs_flag']+";'>"+data+"</p>";
                             }
                             return data;
                         }
@@ -287,14 +293,14 @@ $(document).ready(function() {
                             text: 'Excel(Flagged records)',
                             exportOptions: {
                                 rows:'.highlight_p' ,
-                                columns: [...Array(length_table).keys()].slice(11,length_table)
+                                columns: [...Array(length_table).keys()].slice(12,length_table)
                             }
                         },
                         {
                             extend : 'excel',
                             text : 'Excel(ALL)',
                             exportOptions:{
-                                columns:[...Array(length_table).keys()].slice(11,length_table)
+                                columns:[...Array(length_table).keys()].slice(12,length_table)
                             }
                         }
 
@@ -576,7 +582,7 @@ $(document).ready(function() {
                 } );
 
                 
-                $('#p1, #p2, #p3, #cd, #ad, #md, #wo').click( function() {
+                $('#p1, #p2, #p3, #cd, #ad, #md, #wo, #no_rhs').click( function() {
                        var selected = [];
                        boxes = [];
                         $.each($("input[name='checkbox_filter']:checked"),function(k,v){boxes.push($(v).attr('value'))});
@@ -585,10 +591,8 @@ $(document).ready(function() {
                 $.fn.dataTable.ext.search.push(
 
                     function( settings, data, dataIndex ) {
-                        //|| ($("#md:checked").length == 1 && )
 
-
-                        if (boxes.indexOf(data[9])> -1 || ($("#wo:checked").length == 1 && data[10] == "Written-off") || ($("#md:checked").length == 1 && (data[0] != '' || data[1] != ''||data[2] != ''||data[3] != '')) || ($("#ad:checked").length == 1 && (data[4] != '' || data[5] != ''||data[6] != ''||data[7] != '' || data[8] != ''))){
+                        if (boxes.indexOf(data[9])> -1 || ($("#no_rhs:checked").length == 1 && data[11].length >1) || ($("#wo:checked").length == 1 && data[10] == "Written-off") || ($("#md:checked").length == 1 && (data[0] != '' || data[1] != ''||data[2] != ''||data[3] != '')) || ($("#ad:checked").length == 1 && (data[4] != '' || data[5] != ''||data[6] != ''||data[7] != '' || data[8] != ''))){
                             return true;
                         }
                         if($(".checkmark").parent().find("input:checked").length == 0 )
@@ -665,13 +669,13 @@ $(document).ready(function() {
                 $.each(columns_defs['buttons'], function(key,val){
                     html_table = $("#example");
                     //html_table.find("thead>tr>th:eq(0)").addClass("trFirst");
-                    html_table.find("thead>tr>th:eq("+(val[0]-11)+")").addClass("trFirst");
+                    html_table.find("thead>tr>th:eq("+(val[0]-12)+")").addClass("trFirst");
                     $.each(val.slice(1,val.length-1),function(k,v){
-                        html_table.find("thead>tr>th:eq("+(v-11)+")").addClass("trMiddle");
+                        html_table.find("thead>tr>th:eq("+(v-12)+")").addClass("trMiddle");
                         
                     });
                     $.each(val,function(k,v){
-                        var va = v-11;
+                        var va = v-12;
                         if (String(key) === "RHS"){
                                 html_table.find("thead>tr>th:eq("+va+")").css('background-color', '#d6d0dd');//
                                 //background-color: lightblue;
@@ -705,7 +709,7 @@ $(document).ready(function() {
                             }
 
                     });
-                    html_table.find("thead>tr>th:eq("+(val[val.length-1]-11)+")").addClass("trLast");
+                    html_table.find("thead>tr>th:eq("+(val[val.length-1]-12)+")").addClass("trLast");
                 });
 
                 $("#buttons button")[0].click();
