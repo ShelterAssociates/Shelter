@@ -187,41 +187,77 @@ def masterSheet(request, slum_code = 0, FF_code = 0, RHS_code = 0 ):
             name_label_data_dict = {
             obj_name_label_data['name']: {child['name']: child['label'] for child in obj_name_label_data['children']} for
             obj_name_label_data in name_label_data}
-
-        for x in formdict:
-
-            # Changing the codes to actual labels
-            for y in invoices:
+        
+        dummy_formdict = {x['Household_number']:x for x in formdict}
+        for y in invoices:
                 for z in y.household_numbers:
-                    if int(x['Household_number']) == int(z):
-                        vendor_name = "vendor_type" + str(y.material_type)
-                        invoice_number = "invoice_number" + str(y.material_type)
-                        x.update({
-                            vendor_name: y.invoice.vendor.name,
-                            invoice_number: y.invoice.invoice_number
-                        })
-                        x.update({str(y.material_type) + " Invoice Number"+"_id" : y.invoice.id})
-                        x.update({"Name of "+str(y.material_type)+" vendor"+"_id" : y.invoice.id})
-
-
-
-
-            for i in range(len(community_mobilization_data)):
+                    if str(z) not in dummy_formdict.keys():
+                        dummy_formdict[str(z)] = {
+                            "Household_number":z,   
+                            "_id":"",
+                            "ff_id":"",
+                            "ff_xform_id_string" :"",
+                            "_xform_id_string" : "",
+                            "_attachments" : "",
+                            "no_rhs_flag": "#eba6fc"
+                        }
+                    vendor_name = "vendor_type" + str(y.material_type)
+                    invoice_number = "invoice_number" + str(y.material_type)
+                    dummy_formdict[str(z)].update({
+                        vendor_name: y.invoice.vendor.name,
+                        invoice_number: y.invoice.invoice_number,
+                        str(y.material_type) + " Invoice Number"+"_id" : y.invoice.id,
+                        "Name of "+str(y.material_type)+" vendor"+"_id" : y.invoice.id
+                    })
+        for i in range(len(community_mobilization_data)):
                 y = community_mobilization_data[i]
                 for z in y.household_number:
-                    if int(x['Household_number']) == int(z):
-                        new_activity_type = community_mobilization_data[i].activity_type.name
-                        x.update({new_activity_type: y.activity_date_str})
-                        x.update({str(new_activity_type) + "_id" : y.id})
+                    new_activity_type = community_mobilization_data[i].activity_type.name
+                    if str(z) not in dummy_formdict.keys():
+                        dummy_formdict[str(z)] = {
+                            "Household_number":z,   
+                            "_id":"",
+                            "ff_id":"",
+                            "ff_xform_id_string" :"",
+                            "_xform_id_string" : "",
+                            "_attachments" : "",
+                            "no_rhs_flag": "#eba6fc"
+                        }
+                        
+                    dummy_formdict[str(z)].update({new_activity_type: y.activity_date_str, str(new_activity_type) + "_id" : y.id})
+                    
+                    
+        for i in temp_sbm_keys:
+            if str(i) not in dummy_formdict.keys():
+                dummy_formdict[str(i)] = {
+                            "Household_number":i,   
+                            "_id":"",
+                            "ff_id":"",
+                            "ff_xform_id_string" :"",
+                            "_xform_id_string" : "",
+                            "_attachments" : "",
+                            "no_rhs_flag": "#eba6fc"
+                        }
+            dummy_formdict[str(i)].update(temp_sbm[str(i)])
+            dummy_formdict[str(i)].update({'sbm_id_'+str(i): temp_sbm[str(i)]['id']})
+            
+        for i in temp_DR_keys:
+            if str(i) not in dummy_formdict.keys():
+                dummy_formdict[str(i)] = {
+                            "Household_number":i,   
+                            "_id":"",
+                            "ff_id":"",
+                            "ff_xform_id_string" :"",
+                            "_xform_id_string" : "",
+                            "_attachments" : "",
+                            "no_rhs_flag": "#eba6fc"
+                        }
+            dummy_formdict[str(i)].update(temp_daily_reporting[str(i)])
+            dummy_formdict[str(i)].update({'tc_id_'+str(i): temp_daily_reporting[str(i)]['id']})
 
-            if x['Household_number'] in temp_sbm_keys:
-                x.update(temp_sbm[x['Household_number']])
-                x.update({'sbm_id_'+str(x['Household_number']): temp_sbm[x['Household_number']]['id']})
 
-                ####################
-            if x['Household_number'] in temp_DR_keys:
-                x.update(temp_daily_reporting[x['Household_number']])
-                x.update({'tc_id_'+str(x['Household_number']): temp_daily_reporting[x['Household_number']]['id']})
+
+        for key, x in dummy_formdict.iteritems():
             
             temp = x["_id"]
             x['ff_id'] = None
@@ -240,17 +276,16 @@ def masterSheet(request, slum_code = 0, FF_code = 0, RHS_code = 0 ):
                     x['_id'] = temp
                     x['ff_id'] = ff_id
                     x['ff_xform_id_string'] = ff_xform_id_string
-            if flag_fetch_ff:
-                if len(x['_attachments']) != 0:
+            if '_attachments' in x.keys() and  len(x['_attachments']) != 0:
 
-                    PATH = settings.BASE_URL + '/'.join(x['_attachments'][0]['download_url'].split('/')[:-1])
-                    if 'Toilet_Photo' in x.keys():
-                        x.update({'toilet_photo_url': PATH + '/' + x['Toilet_Photo']})
-                            
-                    if 'Family_Photo' in x.keys():
-                        x.update({'family_photo_url': PATH + '/' + x['Family_Photo']})
-                x.update({'rhs_url': settings.BASE_URL + str('shelter/forms/') + str(x['_xform_id_string']) + str('/instance#/')+str(x["_id"]) })
-                x.update({'ff_url': settings.BASE_URL + str('shelter/forms/') + str(x['ff_xform_id_string']) + str('/instance#/')+str(x["ff_id"]) })
+                PATH = settings.BASE_URL + '/'.join(x['_attachments'][0]['download_url'].split('/')[:-1])
+                if 'Toilet_Photo' in x.keys():
+                    x.update({'toilet_photo_url': PATH + '/' + x['Toilet_Photo']})
+                        
+                if 'Family_Photo' in x.keys():
+                    x.update({'family_photo_url': PATH + '/' + x['Family_Photo']})
+            x.update({'rhs_url': settings.BASE_URL + str('shelter/forms/') + str(x['_xform_id_string']) + str('/instance#/')+str(x["_id"]) })
+            x.update({'ff_url': settings.BASE_URL + str('shelter/forms/') + str(x['ff_xform_id_string']) + str('/instance#/')+str(x["ff_id"]) })
 
             if  flag_fetch_rhs or flag_fetch_ff:
                 try:
@@ -277,12 +312,13 @@ def masterSheet(request, slum_code = 0, FF_code = 0, RHS_code = 0 ):
             if 'group_oi8ts04/C5' in x.keys():
                 x.update({'current place of defecation': x['group_oi8ts04/C5']})
             
-   # try:
+ 
             if len(slum_funder)!=0:
                 for funder in slum_funder:
                     if int(x['Household_number']) in funder.household_code:
                         x.update({'Funder': funder.sponsor.organization_name})
-    
+        
+    formdict = map(lambda x:dummy_formdict[x], dummy_formdict)
     return HttpResponse(json.dumps(formdict),  content_type = "application/json")
 
 
@@ -316,19 +352,20 @@ def define_columns(request):
     :return: 
     """
     formdict_new = [
-        {'data':'a_missing', 'title':'a_missing', 'bVisible':False},
+        {'data':'a_missing', 'title':'a_missing', 'bVisible':False},#0
         {'data':'p1_missing', 'title':'p1_missing' ,'bVisible':False},
         {'data':'p2_missing', 'title':'p2_missing','bVisible':False},
-        {'data':'p3_missing', 'title':'p3_missing' ,'bVisible':False},
+        {'data':'p3_missing', 'title':'p3_missing' ,'bVisible':False},#3
 
-        {'data':'a_amb', 'title':'a_amb', 'bVisible':False},
-        {'data':'p1_amb', 'title':'p1_amb' ,'bVisible':False},
-        {'data':'p2_amb', 'title':'p2_amb' ,'bVisible':False},
-        {'data':'p3_amb', 'title':'p3_amb' ,'bVisible':False},
-        {'data':'c_amb', 'title':'c_amb', 'bVisible':False},
+        {'data':'a_amb', 'title':'a_amb', 'bVisible':False},#4
+        {'data':'p1_amb', 'title':'p1_amb' ,'bVisible':False},#5
+        {'data':'p2_amb', 'title':'p2_amb' ,'bVisible':False},#6
+        {'data':'p3_amb', 'title':'p3_amb' ,'bVisible':False},#7
+        {'data':'c_amb', 'title':'c_amb', 'bVisible':False},#8
 
-        {"data": "delay_flag", "title": "delay_flag" , "bVisible":False},
-        {"data": "status", "title": "Dummy Status", "bVisible":False},
+        {"data": "delay_flag", "title": "delay_flag" , "bVisible":False},#9
+        {"data": "status", "title": "Dummy Status", "bVisible":False},#10
+        {"data": "no_rhs_flag", "title": "no_rhs_flag" , "bVisible":False},#11
         
         
         {"data": "Household_number", "title": "Household Number" ,"className": "add_hyperlink"},#1
@@ -429,11 +466,11 @@ def define_columns(request):
     ]
     final_data = {}
     final_data['buttons'] = collections.OrderedDict()
-    final_data['buttons']['RHS'] = range(12,30)
-    final_data['buttons']['Follow-up'] = range(30,48) 
-    final_data['buttons']['Family factsheet'] = range(48,55) 
-    final_data['buttons']['SBM'] = range(55,65)
-    final_data['buttons']['Construction status'] = range(65,80)
+    final_data['buttons']['RHS'] = range(13,31)
+    final_data['buttons']['Follow-up'] = range(31,49) 
+    final_data['buttons']['Family factsheet'] = range(49,56) 
+    final_data['buttons']['SBM'] = range(56,66)
+    final_data['buttons']['Construction status'] = range(66,81)
 
     # We define the columns for community mobilization and vendor details in a dynamic way. The
     # reason being these columns are prone to updates and additions.
@@ -541,7 +578,6 @@ def handle_uploaded_file(f,response,slum_code):
     try:
 
         if flag_overall != 1:
-            count = 0
 
             for i in df1.index.values:
                 #this_slum = Slum.objects.get(name=str(df1.loc[int(i), 'Select Slum']))
