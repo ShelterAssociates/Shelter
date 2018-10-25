@@ -119,8 +119,11 @@ ul.fancytree-container {
     z-index: 20;
 }
 
-#report_table_aggregated_div{
+.dataTables_wrapper
+{
   position: relative;
-  top:20px;
+  padding-bottom:50px;
+  padding-top: 10px; 
+  
 
 }
