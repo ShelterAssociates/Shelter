@@ -44,15 +44,30 @@
     <button class="btn btn-primary display_line" onclick = "changeDatatableLevel()">Apply</button>
 </div>
 
+
+
+
 <div id = "radioForm" class="radio display_line" >
   <label><input id = "slum" type="radio" name="optradio"  value = "slum" onclick="changeDatatableLevel()">Slum</label>
   <label><input id = "electoral_ward" type="radio" name="optradio" onclick="changeDatatableLevel()">Electoral ward</label>
   <label><input id = "admin_ward" type="radio" name="optradio" onclick="changeDatatableLevel()">Administrative ward</label>
   <label><input id = "city" value = 'city' type="radio" name="optradio" onclick="changeDatatableLevel()" checked>City</label>
+<div id = "tc">
+  <h2>Toilet Construction</h2>
+  </div>
+  	<table id="report_table" class="display" width="100%" cellspacing="0"></table> 
+  </div >
+	<div id = "report_table_aggregated_div">
+    <table id="report_table_aggregated" class="display" width="100%" cellspacing="0"></table>
+  </div>
 </div>
-
-	<table id="report_table" class="display" width="100%" cellspacing="0"></table>
-  
-</div >
-	<div id = "report_table_aggregated_div"><table id="report_table_aggregated" class="display" width="100%" cellspacing="0"></table></div>
+<div id = "cm">
+  <h2>Community Mobilization</h2>
+  <div id = "report_table_cm_div" >
+    <table id="report_table_cm" class="display" width="100%" cellspacing="0"></table>
+  </div>
+  <div id = "report_table_cm_aggregated_div">
+    <table id="report_table_cm_aggregated" class="display" width="100%" cellspacing="0"></table>
+  </div>
+</div>
 {%endblock%}

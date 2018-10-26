@@ -6,6 +6,7 @@ from django.contrib.auth import views as auth_views
 from mastersheet.views import *
 
 urlpatterns = [
+    url(r'^report_table_cm/$', report_table_cm, name="report_table_cm"),
 	url(r'^report_table/$', give_report_table_numbers, name="give_report_table_numbers"),
 	url(r'^details/$', give_details, name="give_details"),
 	url(r'^report/$', render_report, name="render_report"),
