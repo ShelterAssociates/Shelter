@@ -6,34 +6,34 @@
 <div class ="row" style = "margin-left:0.5%;">
 
 <div style ="margin:auto;witdth:20%,margin-top:100px;">
-	<a href="master/"><h2>Database Adminstration </h2></a>
+	<a href="/accounts/"><h2>Database Adminstration </h2></a>
 </div>
 	{%if perms.master.view_survey%}
 	<div style ="margin:auto;witdth:20%,margin-top:100px;">
-		<a href="surveymapping/"><h2>Survey Mapping </h2></a>
+		<a href="/admin/surveymapping/"><h2>Survey Mapping </h2></a>
 	</div>
 	{%endif%}
 
 	{%if perms.master.view_rapid_slum_appraisal%}
 	<div style ="margin:auto;witdth:20%,margin-top:100px;">
-		<a href="sluminformation/"><h2>Slum Information</h2></a>
+		<a href="/admin/sluminformation/"><h2>Slum Information</h2></a>
 	</div>
 	{%endif%}
 
 	{%if perms.master.can_generate_reports%}
 	<div style ="margin:auto;witdth:20%,margin-top:100px;">
-		<a href="report/"><h2>Factsheet Report</h2></a>
+		<a href="/admin/report/"><h2>Factsheet Report</h2></a>
 	</div>
 	{%endif%}
 
 	{%if perms.master.can_generate_reports%}
 	<div style ="margin:auto;witdth:20%,margin-top:100px;">
-		<a href="VulnerabilityReport/" target="__blank"><h2>Vulnerability Report</h2></a>
+		<a href="/admin/VulnerabilityReport/" target="__blank"><h2>Vulnerability Report</h2></a>
 	</div>
 	{%endif%}
 
 	<div style ="margin:auto;witdth:20%,margin-top:100px;">
-		<a href="slummap/" ><h2>Slum Map Display</h2></a>
+		<a href="/" ><h2>Slum Map Display</h2></a>
 	</div>
 
 	{%if perms.component.can_upload_KML%}
@@ -53,7 +53,8 @@
 		<a href="/mastersheet/report/" ><h2>Mastersheet Reports</h2></a>
 	</div>
 	{%endif%}
-	
+
+
 {% endblock %}
 
 {% block content %}

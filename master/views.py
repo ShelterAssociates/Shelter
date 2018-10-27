@@ -537,79 +537,28 @@ def city_wise_map(request, key, slumname = None):
 	context = RequestContext(request, data)
 	return HttpResponse(template.render(context))
 
-@csrf_exempt
-def user_login(request):
+def login_success(request):
 	return_to = ""
 	if 'next' in request.GET:
 		return_to =  request.GET['next']
-	#previous_url = request.META.get('HTTP_REFERER')
-	#print "previous_url = " + previous_url
-	if request.method == 'POST':
-
-		if request.session.get('username'):
-			user_logout(request)
-		form = LoginForm(request.POST)
-		if form.is_valid():
-			cd = form.cleaned_data
-			user = authenticate(username=cd['username'],password=cd['password'])
-			if user is not None:
-				if user.is_active:
-					request.session.set_expiry(0)
-					login(request, user)
-					print return_to
-					if return_to:
-
-						print "...going back"
-						return HttpResponseRedirect(return_to.strip().replace(" ", "+"))
-
-
-					if (request.user.groups.filter(name__in=['sponsor']).exists()):
-						return HttpResponseRedirect('/sponsor/')
-					else:
-						if (request.user.groups.filter(name__in=['ulb']).exists()):
-							return HttpResponseRedirect('/city::B5+A2nt050dP4nC55nmuYx9/MPi6RFp2cgBUKxRkedE=')
-						else:
-							return HttpResponseRedirect('/admin/')
-				else:
-					return HttpResponse('Disabled account')
-			else:
-				return HttpResponse('Invalid login')
+	if (request.user.groups.filter(name__in=['sponsor']).exists()):
+		return HttpResponseRedirect('/sponsor/')
 	else:
-		if request.user.groups.filter(name__in=['sponsor']).exists():
-			return HttpResponseRedirect('/sponsor/')
+		if (request.user.groups.filter(name__in=['ulb']).exists()):
+			return HttpResponseRedirect('/city::B5+A2nt050dP4nC55nmuYx9/MPi6RFp2cgBUKxRkedE=')
 
-		else:
-			form = LoginForm()
-			return render(request, 'login.html', {'form': form})
-from django.core.cache import cache
-@csrf_exempt
-def user_logout(request):
-	#del request.session.get('username')
-	cache.clear()
-	logout(request)
-	form = LoginForm(request.POST)
-	return render(request, 'login.html', {'form': form})
-
-@csrf_exempt
-def iframeuser(request):
-	return render(request, 'iframe.html', {})
-
-@csrf_exempt
-def user_login2(request):
-	if request.method == 'POST':
-		form = LoginForm(request.POST)
-		if form.is_valid():
-			cd = form.cleaned_data
-			user = authenticate(username=cd['username'],password=cd['password'])
-			print request.user.groups.filter(name__in=['sponsor']).exists()
-			if user is not None:
-				if user.is_active:
-					login(request, user)
-					return HttpResponseRedirect('/')
-				else:
-					return HttpResponse('Disabled account')
-			else:
-				return HttpResponse('Invalid login')
+	if return_to:
+		return HttpResponseRedirect(return_to.strip().replace(" ", "+"))
 	else:
-		form = LoginForm()
-	return render(request, 'login.html', {'form': form})
+		return HttpResponseRedirect('/admin/')
+
+def user_login(request):
+	"""
+	This is temp function used to navigate all the users using old URL.
+	:param request: 
+	:return: 
+	"""
+	return HttpResponseRedirect('/accounts/login/')
+
+
+
