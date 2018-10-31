@@ -94,17 +94,15 @@
      <div id="buttons" style="padding-top:20px;"></div>
 </div>
 
-
-<div class="col-md-4">
-        <div class="" style = "float:right;display: none;" id = "legend" >
-          
-            
+<div class = "row">
+    <div class="col-md-2">
+            <div class="" style = "float:left;display: none;" id = "legend1" >
             <label class="custom_checkbox">  
                 <input type="checkbox"  id ="p1" value = "#f9a4a4" name = "checkbox_filter">
                 <span style="background-color: #f9a4a4; " class="checkmark"></span>&nbsp;Phase 1 material is delayed
             </label>
          
-            
+        
             <label class="custom_checkbox">
                 <input type="checkbox"  id = "p2" value = "#f2f29f" name = "checkbox_filter">&nbsp;Phase 2 material is delayed
                 <span style="background-color: #f2f29f; " class="checkmark"></span>
@@ -119,7 +117,12 @@
                 <input type="checkbox"  id = "cd" value = "#aaa4f4" name = "checkbox_filter">&nbsp;Completion is delayed
                 <span style="background-color: #aaa4f4; " class="checkmark"></span>
             </label>
-            
+
+        </div>
+    </div>
+    <div class="col-md-2">
+        <div class="" style = "float:right;display: none;" id = "legend2" >
+
             <label class="custom_checkbox">
                 <input type="checkbox"  id = "md" value = "#f9a4a4">&nbsp;Missing dates
                 <span style="background-color: #a9d2fc; " class="checkmark"></span>
@@ -131,7 +134,7 @@
             </label>
            
             <label class="custom_checkbox">
-                <input type="checkbox"   id = "ad" value = "#f9a4a4">&nbsp;Ambiguous dates
+                <input type="checkbox"   id = "ad" value = "#f9a4a4">&nbsp;Mismatched dates
                 <span style="background-color: #fc0707; " class="checkmark"></span>
             </label>
 
@@ -139,10 +142,10 @@
                 <input type="checkbox"   id = "no_rhs" value = "#eba6fc">&nbsp;RHS is not done
                 <span style="background-color:  #eba6fc;" class="checkmark"></span>
             </label>
-        
+            
         </div> 
-        </div> 
-        
+    </div> 
+</div>
 
 </div>
        
