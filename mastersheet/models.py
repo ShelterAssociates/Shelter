@@ -78,6 +78,7 @@ class Invoice(models.Model):
     invoice_date = models.DateField(null=True, blank=True)
     invoice_number = models.CharField(max_length=100,null=True, blank=True)
     challan_number = models.CharField(max_length=100,null=True, blank=True)
+    total = models.FloatField(default = 0)
     paid = models.BooleanField(default=False)
     created_on = models.DateTimeField(default=datetime.datetime.now)
     created_by = models.ForeignKey(User,related_name='invoice_created_by')
