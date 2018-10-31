@@ -64,7 +64,7 @@ function latlongformat(city) {
 		}
 	}
 	PolygonPoints.pop();
-	var Poly1 = drawPolygon(PolygonPoints, bounds, bgcolor, bordercolor);
+	var Poly1 = drawPolygon(PolygonPoints, bounds, bgcolor, bordercolor, shapename);
 	var options = {
         map: map,
         position: bounds.getCenter(),
@@ -83,7 +83,7 @@ function latlongformat(city) {
 
 }
 
-function drawPolygon(PolygonPoints, centerlatlang, bgcolor, bordercolor, index=1) {
+function drawPolygon(PolygonPoints, centerlatlang, bgcolor, bordercolor, shapename, index=2) {
 	var Poly;
 	var newbgcolor = "#FFA3A3";
 	var newbordercolor = "#FF0000";
@@ -95,6 +95,10 @@ function drawPolygon(PolygonPoints, centerlatlang, bgcolor, bordercolor, index=1
 	if (bordercolor != undefined && bordercolor != "") {
 		newbordercolor = bordercolor;
 	}
+
+    if(['Pune', 'PCMC'].indexOf(shapename)< 0){
+        index=1;
+    }
 
 	Poly = new google.maps.Polygon({
 		paths : PolygonPoints,

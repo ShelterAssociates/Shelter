@@ -25,7 +25,7 @@ from master.views import index, SurveyListView, SurveyCreateView, \
     vulnerabilityreport,formList,slummapdisplay,slummap,citymapdisplay, \
     modelmapdisplay, drainageinsert, sluminformation, drainagedisplay , \
     drainageedit, cityList, drainagereportgenerate, modelList, \
-    familyrportgenerate, user_login, iframeuser, user_login2
+    familyrportgenerate, user_login
 
 from django.conf import settings
 from django.conf.urls.static import static
@@ -35,7 +35,6 @@ admin.autodiscover()
 
 urlpatterns = [
     url(r'^$', index, name='index'),
-    url(r'^master/', include(admin.site.urls)),
     url(r'^surveymapping/', SurveyListView.as_view(),name='SurveyCreate'),
     url(r'^surveymapping/(?P<name>\w[a-zA-Z_0-9]+)/$', SurveyListView.as_view(), name="SurveyCreate"),
     url(r'survey/$', SurveyCreateView.as_view(),name='survey-add'),
@@ -64,21 +63,14 @@ urlpatterns = [
     url(r'^drainagereportgenerate/$', drainagereportgenerate, name='drainagereportgenerate'),
     url(r'^modelList/$', modelList, name='modelList'),
     url(r'^familyrportgenerate/$', familyrportgenerate, name='familyrportgenerate'),
-   # url(r'^slummap/component/fetchcomponents', include('component.urls')),
-    url(r'^user_login/$',user_login, name='user_login'),
-    #url(r'^user_logout/$',user_logout, name='user_logout'),
-    url(r'^iframeuser/$',iframeuser, name='iframeuser'),
-    url(r'^user_login2/$',user_login2, name='user_login2'),
-
-  
+    #Redirect user to new url
+    url(r'^user_login/$',user_login, name="user_login")
     #url(r'^sponsors/$',sponsors, name='sponsors'),
     #url(r'^password_reset/$', auth_views.password_reset, name='password_reset'),
     #url(r'^password_reset/done/$', auth_views.password_reset_done, name='password_reset_done'),
     #url(r'^reset-password/confirm/(?P<uidb64>[0-9A-Za-z]+)-(?P<token>.+)/$',
     #    auth_views.password_reset_confirm, name='password_reset_confirm'),
-    #url(r'^reset/done/$', auth_views.password_reset_complete, name='password_reset_complete'),     
-    url('^', include('django.contrib.auth.urls')),
-    url(r'^logout/$', 'django.contrib.auth.views.logout'),
+    #url(r'^reset/done/$', auth_views.password_reset_complete, name='password_reset_complete'),
 
 ]
     
