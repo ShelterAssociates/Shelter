@@ -452,7 +452,8 @@ $(document).ready(function() {
         {
                 
                 $(".overlay").show();
-                $("#legend").show();
+                $("#legend1").show();
+                $("#legend2").show();
                 buttons = '<div class="btn-group">';
                 $.each(columns_defs['buttons'],function(index, button){
                     buttons += '<button type="button" class="active btn btn-default" value="'+index+'" id="'+index.replace(/ /g,'')+'">'+index+'</button>';
