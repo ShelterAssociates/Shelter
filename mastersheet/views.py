@@ -1007,7 +1007,6 @@ def report_table_cm(request):
     }
     report_table_data_cm = defaultdict(dict)
     activity_type = ActivityType.objects.all()
-    
     for x in activity_type:
         key_for_datatable = "total_"+(x.name).replace(" ", "")
         filter_field ={'slum__id__in':keys, 'activity_date__range':[start_date,end_date]}
