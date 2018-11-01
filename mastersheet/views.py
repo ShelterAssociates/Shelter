@@ -1023,3 +1023,73 @@ def report_table_cm(request):
             else:
                 report_table_data_cm[str(level_id)].update(data)  
     return HttpResponse(json.dumps(map(lambda x:report_table_data_cm[x], report_table_data_cm)), content_type="application/json")
+
+
+@csrf_exempt
+def report_table_cm_activity_count(request):
+    tag_key_dict = json.loads(request.body)
+    tag = tag_key_dict['tag']
+    keys = tag_key_dict['keys']
+    group_perm = request.user.groups.values_list('name', flat=True)
+    if request.user.is_superuser:
+        group_perm = Group.objects.all().values_list('name', flat=True)
+    group_perm = map(lambda x:x.split(':')[-1], group_perm)
+
+    keys = Slum.objects.filter(id__in = keys, electoral_ward__administrative_ward__city__name__city_name__in=group_perm).values_list('id',flat=True)
+
+    start_date = tag_key_dict['startDate']
+    end_date = tag_key_dict['endDate']
+
+    if start_date == None or end_date == None:
+        start_date = datetime.datetime(2001, 1, 1).date()
+        end_date = datetime.datetime.today().date()
+    else:
+        start_date = datetime.datetime.strptime(tag_key_dict['startDate'], "%Y-%m-%d").date()
+        end_date = datetime.datetime.strptime(tag_key_dict['endDate'], "%Y-%m-%d").date()
+
+    level_data = {
+        'city':
+            {
+                'city_name': F('slum__electoral_ward__administrative_ward__city__name__city_name'),
+                'level': F('slum__electoral_ward__administrative_ward__city__name__city_name'),
+                'level_id': F('slum__electoral_ward__administrative_ward__city__id')
+            },
+        'admin_ward':
+            {
+                'city_name': F('slum__electoral_ward__administrative_ward__city__name__city_name'),
+                'level': F('slum__electoral_ward__administrative_ward__name'),
+                'level_id': F('slum__electoral_ward__administrative_ward__id')
+            },
+        'electoral_ward':
+            {
+                'city_name': F('slum__electoral_ward__administrative_ward__city__name__city_name'),
+                'level': F('slum__electoral_ward__name'),
+                'level_id': F('slum__electoral_ward__id')
+            },
+        'slum':
+            {
+                'city_name': F('slum__electoral_ward__administrative_ward__city__name__city_name'),
+                'level': F('slum__name'),
+                'level_id': F('slum__id'),
+                
+            }
+    }
+    report_table_data_cm_activity_count = defaultdict(dict)
+    activity_type = ActivityType.objects.all()
+    for x in activity_type:
+        key_for_datatable = "total_"+(x.name).replace(" ", "")
+        filter_field ={'slum__id__in':keys, 'activity_date__range':[start_date,end_date]}
+        count_field= {key_for_datatable:Count('activity_type')}
+
+        y = x.communitymobilization_set.filter(**filter_field)\
+            .annotate(**level_data[tag]).values('level','level_id','city_name')\
+            .annotate(**count_field).order_by('city_name')
+        
+
+        for data in y:
+            level_id = data['level_id']
+            if str(level_id) in report_table_data_cm_activity_count.keys() and key_for_datatable in report_table_data_cm_activity_count[str(level_id)].keys():
+                report_table_data_cm_activity_count[str(level_id)][key_for_datatable] +=  data[key_for_datatable]
+            else:
+                report_table_data_cm_activity_count[str(level_id)].update(data) 
+    return HttpResponse(json.dumps(map(lambda x:report_table_data_cm_activity_count[x], report_table_data_cm_activity_count)), content_type="application/json")

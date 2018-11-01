@@ -1,8 +1,11 @@
+
+
 $(document).ready(function(){
 	
-	var grand_total = 0;
+	
 
 	function calculateGrandTotal(){
+		var grand_total = 0;
 
 		$(".field-total>input").each(function(v,input){
 			grand_total += parseFloat($(input).val());
@@ -12,7 +15,7 @@ $(document).ready(function(){
 		$("#id_total").val(grand_total);
 	}
 	
-	calculateGrandTotal();
+	
 
 	$(document).on('change',$(".field-quantity>input, .field-rate>input, .field-tax>input"),function(e){
 		var quantity = 0.0;
@@ -36,8 +39,7 @@ $(document).ready(function(){
 		
 		var total = (quantity*rate) + (quantity*rate*tax)/100;
 		$("#id_invoiceitems_set-"+index+"-total").val(total) ;
-		
-		$("#id_total").val(parseFloat(grand_total)+total);
+		calculateGrandTotal();
 	});
 
 	$(".field-quantity").each(function(v,input){
