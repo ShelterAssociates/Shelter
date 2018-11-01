@@ -89,7 +89,7 @@ $(document).ready(function() {
                 for (i = 0 ; i < tmp_DR.length ; i ++ ){
                     columns_defs['data'][tmp_DR[i]]['render']= function ( data, type, row,meta ) {
                         if(typeof data != 'undefined') {
-                            url_daily_reporting = String("/admin/master/mastersheet/communitymobilization/") + row[columns_defs['data'][meta.col]['title']+"_id"] + String("/");
+                            url_daily_reporting = String("/accounts/mastersheet/communitymobilization/") + row[columns_defs['data'][meta.col]['title']+"_id"] + String("/");
                             if(type === 'display'){
                                         data = '<a href = "#" onclick="window.open(\''+url_daily_reporting+'\', \'_blank\', \'width=850,height=750\');">' + data + "</a>";
                             }
@@ -103,7 +103,7 @@ $(document).ready(function() {
                 for (i = 0 ; i < tmp_ACC.length ; i ++ ){
                     columns_defs['data'][tmp_ACC[i]]['render']= function ( data, type, row,meta ) {
                         if(typeof data != 'undefined'){
-                            url_accounts = String("/admin/master/mastersheet/invoice/") + row[columns_defs['data'][meta.col]['title']+"_id"] + String("/");
+                            url_accounts = String("/accounts/mastersheet/invoice/") + row[columns_defs['data'][meta.col]['title']+"_id"] + String("/");
                             if(type === 'display'){
                                         data = '<a href = "#" onclick="window.open(\''+url_accounts+'\', \'_blank\', \'width=850,height=750\');">' + data + "</a>";
 
@@ -119,7 +119,7 @@ $(document).ready(function() {
                 for (i = 0 ; i < tmp_SBM.length ; i ++ ){
                     columns_defs['data'][tmp_SBM[i]]['render']= function ( data, type, row,meta ) {
                         if(typeof data != 'undefined'){
-                            url_SBM = String("/admin/master/mastersheet/sbmupload/") + row['sbm_id_'+String(row.Household_number)] + String("/");
+                            url_SBM = String("/accounts/mastersheet/sbmupload/") + row['sbm_id_'+String(row.Household_number)] + String("/");
                             if(type === 'display'){
                                         data = '<a href = "#" onclick="window.open(\''+url_SBM+'\', \'_blank\', \'width=850,height=750\');">' + data + "</a>";
 
@@ -129,7 +129,7 @@ $(document).ready(function() {
                     }
                     columns_defs['data'][12]['render']= function ( data, type, row,meta ) {
                         if(typeof data != 'undefined'){
-                            url_SBM = String("/admin/master/mastersheet/sbmupload/") + row['sbm_id_'+String(row.Household_number)] + String("/");
+                            url_SBM = String("/accounts/mastersheet/sbmupload/") + row['sbm_id_'+String(row.Household_number)] + String("/");
                             if(type === 'display'){
                                         data = '<a href = "#" onclick="window.open(\''+url_SBM+'\', \'_blank\', \'width=850,height=750\');">' + data + "</a>";
 
@@ -154,7 +154,7 @@ $(document).ready(function() {
             		if (columns_defs['data'][tmp_TC[i]]['data']!= "Funder"){
                                 columns_defs['data'][tmp_TC[i]]['render']= function ( data, type, row,meta ) {
                                     if(typeof data != 'undefined'){
-                                        url_TC = String("/admin/master/mastersheet/toiletconstruction/") + row['tc_id_'+String(row.Household_number)] + String("/");
+                                        url_TC = String("/accounts/mastersheet/toiletconstruction/") + row['tc_id_'+String(row.Household_number)] + String("/");
                                         if(type === 'display'){
                                                     data = '<a href = "#" onclick="window.open(\''+url_TC+'\', \'_blank\', \'width=850,height=750\');">' + data + "</a>";
                                         }
@@ -166,7 +166,7 @@ $(document).ready(function() {
                      {
                         columns_defs['data'][tmp_TC[i]]['render']= function ( data, type, row,meta ) {
                                 if(typeof data != 'undefined'){
-                                    url_TC = String("/admin/master/mastersheet/toiletconstruction/") + row['tc_id_'+String(row.Household_number)] + String("/");
+                                    url_TC = String("/accounts/mastersheet/toiletconstruction/") + row['tc_id_'+String(row.Household_number)] + String("/");
                                     if(type === 'display'){
                                                 data = '<a href = "#" onclick="window.open(\''+url_TC+'\', \'_blank\', \'width=850,height=750\');">' + data + "</a>";
                                     }
@@ -183,7 +183,7 @@ $(document).ready(function() {
                      {
                         columns_defs['data'][tmp_TC[i]]['render']= function ( data, type, row,meta ) {
                                 if(typeof data != 'undefined'){
-                                    url_TC = String("/admin/master/mastersheet/toiletconstruction/") + row['tc_id_'+String(row.Household_number)] + String("/");
+                                    url_TC = String("/accounts/mastersheet/toiletconstruction/") + row['tc_id_'+String(row.Household_number)] + String("/");
                                     if(type === 'display'){
                                                 data = '<a href = "#" onclick="window.open(\''+url_TC+'\', \'_blank\', \'width=850,height=750\');">' + data + "</a>";
                                     }
@@ -208,7 +208,7 @@ $(document).ready(function() {
                      {
                         columns_defs['data'][tmp_TC[i]]['render']= function ( data, type, row,meta ) {
                                 if(typeof data != 'undefined'){
-                                    url_TC = String("/admin/master/mastersheet/toiletconstruction/") + row['tc_id_'+String(row.Household_number)] + String("/");
+                                    url_TC = String("/accounts/mastersheet/toiletconstruction/") + row['tc_id_'+String(row.Household_number)] + String("/");
                                     if(type === 'display'){
                                                 data = '<a href = "#" onclick="window.open(\''+url_TC+'\', \'_blank\', \'width=850,height=750\');">' + data + "</a>";
                                     }
@@ -229,7 +229,7 @@ $(document).ready(function() {
                      {
                         columns_defs['data'][tmp_TC[i]]['render']= function ( data, type, row,meta ) {
                                 if(typeof data != 'undefined'){
-                                    url_TC = String("/admin/master/mastersheet/toiletconstruction/") + row['tc_id_'+String(row.Household_number)] + String("/");
+                                    url_TC = String("/accounts/mastersheet/toiletconstruction/") + row['tc_id_'+String(row.Household_number)] + String("/");
                                     if(type === 'display'){
                                                 data = '<a href = "#" onclick="window.open(\''+url_TC+'\', \'_blank\', \'width=850,height=750\');">' + data + "</a>";
                                     }
@@ -250,7 +250,7 @@ $(document).ready(function() {
                      {
                         columns_defs['data'][tmp_TC[i]]['render']= function ( data, type, row,meta ) {
                                 if(typeof data != 'undefined'){
-                                    url_TC = String("/admin/master/mastersheet/toiletconstruction/") + row['tc_id_'+String(row.Household_number)] + String("/");
+                                    url_TC = String("/accounts/mastersheet/toiletconstruction/") + row['tc_id_'+String(row.Household_number)] + String("/");
                                     if(type === 'display'){
                                                 data = '<a href = "#" onclick="window.open(\''+url_TC+'\', \'_blank\', \'width=850,height=750\');">' + data + "</a>";
                                     }
@@ -271,7 +271,7 @@ $(document).ready(function() {
                      {
                         columns_defs['data'][tmp_TC[i]]['render']= function ( data, type, row,meta ) {
                                 if(typeof data != 'undefined'){
-                                    url_TC = String("/admin/master/mastersheet/toiletconstruction/") + row['tc_id_'+String(row.Household_number)] + String("/");
+                                    url_TC = String("/accounts/mastersheet/toiletconstruction/") + row['tc_id_'+String(row.Household_number)] + String("/");
                                     if(type === 'display'){
                                                 data = '<a href = "#" onclick="window.open(\''+url_TC+'\', \'_blank\', \'width=850,height=750\');">' + data + "</a>";
                                     }
