@@ -23,16 +23,16 @@
 			{%else%}
 			<a href="/">
 			{%endif%}
-    		<img src="/static/images/shelter_footer.png" height="60"/>
+    		<img src="/static/images/shelter.png" height="45" style="padding:5px;"/>
 		</a>
     </div>
 	<div class="navbar-collapse collapse">
 		<a style="padding-top: 10px;">
 		{% if user.is_authenticated %}
-			<a style="margin-top:5px;" href="{% url 'logout' %}?next=/accounts/login/"<button type="button" class="btn btn-lg btn-default pull-right" >logout</button> </a>
+			<a style="margin-top:5px;" href="{% url 'logout' %}?next=/accounts/login/"<button type="button" class="btn btn-default pull-right" >logout</button> </a>
 			<div class="pull-right" style="padding:10px;"> <h5>Welcome {{user}} </h5> </div>
 		{% else %}
-			<a style="margin-top:5px;" href = "/accounts/login/"<button id="loggedin" type="button" class="btn btn-lg btn-default pull-right"  data-toggle="popover">login</button></a>
+			<a style="margin-top:5px;" href = "/accounts/login/"<button id="loggedin" type="button" class="btn btn-default pull-right"  data-toggle="popover">login</button></a>
 		{% endif %}	
 		</div >	
 	</div>
