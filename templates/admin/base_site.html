@@ -3,7 +3,63 @@
 {% block title %} {{ site_title|default:_('Shelter site admin') }}{% endblock %}
 
 {% block branding %}
-<h1 id="site-name"><a href="/admin">{{_('Shelter Administration') }}</a></h1>
+<a href="/home"><img src="/static/images/shelter.png" height="45" style="padding:5px;"/></a>
 {% endblock %}
+
+{% block menubar %}
+<ul class="nav navbar-nav">
+    <li class="dropdown" id="admin-menu">
+        <a href="#admin-menu" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="true">
+            Admin
+            <span class="caret"></span>
+        </a>
+        <ul class="dropdown-menu">
+
+            <li><a href="/accounts/">Database Adminstration </a></li>
+            <li role="separator" class="divider"></li>
+            {%if perms.master.view_survey%}
+                <li><a href="/admin/surveymapping/">Survey Mapping </a></li>
+            {%endif%}
+            {%if perms.master.view_rapid_slum_appraisal%}
+            <li><a href="/admin/sluminformation/rim/display/">RIM additional Info</a></li>
+            {%endif%}
+
+            {%if perms.component.can_upload_KML%}
+            <li>
+                <a href="/component/" >Upload KML</a>
+            </li>
+            {%endif%}
+        </ul>
+    </li>
+
+    {% if perms.mastersheet.can_view_mastersheet or perms.mastersheet.can_view_mastersheet_report or perms.master.can_generate_reports or perms.master.can_generate_reports%}
+    <li class="dropdown" id="report-menu">
+        <a href="#report-menu" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="true">
+            Reports
+            <span class="caret"></span>
+        </a>
+        <ul class="dropdown-menu">
+            {% if perms.mastersheet.can_view_mastersheet%}
+            <li>
+                <a href="/mastersheet/show/mastersheet/" >Mastersheet status</a>
+            </li>
+            {%endif%}
+            {% if perms.mastersheet.can_view_mastersheet_report%}
+            <li>
+                <a href="/mastersheet/report/" >Mastersheet Reports</a>
+            </li>
+            <li role="separator" class="divider"></li>
+            {%endif%}
+            {%if perms.master.can_generate_reports%}
+                <li><a href="/admin/report/">Factsheet Report</a></li>
+            {%endif%}
+            {%if perms.master.can_generate_reports%}
+                <li><a href="/admin/VulnerabilityReport/" target="__blank">Vulnerability Report</a></li>
+            {%endif%}
+        </ul>
+    </li>
+</ul>
+{%endif%}
+{% endblock%}
 
 {% block nav-global %}{% endblock %}

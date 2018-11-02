@@ -3,56 +3,11 @@
 
 {% block breadcrumbs %}
 
-<div class ="row" style = "margin-left:0.5%;">
-
-<div style ="margin:auto;witdth:20%,margin-top:100px;">
-	<a href="/accounts/"><h2>Database Adminstration </h2></a>
+<div class ="" style="height:520px;">
+	<div class="col-md-4"></div>
+	<div class="col-md-4 text-center" style="margin-top:20%;">Shelter Associates</div>
+	<div class="col-md-4"></div>
 </div>
-	{%if perms.master.view_survey%}
-	<div style ="margin:auto;witdth:20%,margin-top:100px;">
-		<a href="/admin/surveymapping/"><h2>Survey Mapping </h2></a>
-	</div>
-	{%endif%}
-
-	{%if perms.master.view_rapid_slum_appraisal%}
-	<div style ="margin:auto;witdth:20%,margin-top:100px;">
-		<a href="/admin/sluminformation/"><h2>Slum Information</h2></a>
-	</div>
-	{%endif%}
-
-	{%if perms.master.can_generate_reports%}
-	<div style ="margin:auto;witdth:20%,margin-top:100px;">
-		<a href="/admin/report/"><h2>Factsheet Report</h2></a>
-	</div>
-	{%endif%}
-
-	{%if perms.master.can_generate_reports%}
-	<div style ="margin:auto;witdth:20%,margin-top:100px;">
-		<a href="/admin/VulnerabilityReport/" target="__blank"><h2>Vulnerability Report</h2></a>
-	</div>
-	{%endif%}
-
-	<div style ="margin:auto;witdth:20%,margin-top:100px;">
-		<a href="/" ><h2>Slum Map Display</h2></a>
-	</div>
-
-	{%if perms.component.can_upload_KML%}
-	<div style ="margin:auto;witdth:20%,margin-top:100px;">
-		<a href="/component/" ><h2>Upload KML</h2></a>
-	</div>
-	{%endif%}
-
-	{% if perms.mastersheet.can_view_mastersheet%}
-	<div style ="margin:auto;witdth:20%,margin-top:100px;">
-		<a href="/mastersheet/show/mastersheet/" ><h2>Mastersheet status</h2></a>
-	</div>
-	{%endif%}
-
-	{% if perms.mastersheet.can_view_mastersheet_report%}
-	<div style ="margin:auto;witdth:20%,margin-top:100px;">
-		<a href="/mastersheet/report/" ><h2>Mastersheet Reports</h2></a>
-	</div>
-	{%endif%}
 
 
 {% endblock %}

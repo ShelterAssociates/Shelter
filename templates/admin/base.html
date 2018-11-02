@@ -3,6 +3,13 @@
 <html lang="{{ LANGUAGE_CODE|default:"en-us" }}" {% if LANGUAGE_BIDI %}dir="rtl"{% endif %}>
 <head>
 <title>{% block title %}{% endblock %}</title>
+<style>
+    .dropdown-menu li
+    {
+        list-style: none !important;
+        list-style-type: none !important;
+    }
+</style>
 <link rel="stylesheet"  type="text/css" href="{% static "css/bootstrap.min.css" %}"/>
 <link rel="stylesheet" type="text/css" href="{% block stylesheet %}{% static "admin/css/base.css" %}{% endblock %}" />
 {% block extrastyle %}{% endblock %}
@@ -12,6 +19,7 @@
 <script type="text/javascript">window.__admin_utc_offset__ = "{% filter escapejs %}{% now "Z" %}{% endfilter %}";</script>
 <script src="{% static "js/jquery.min.js" %}"></script>
 <script src="{% static "js/bootstrap.min.js" %}"></script>
+
 {% block extrahead %}{% endblock %}
 {% block blockbots %}<meta name="robots" content="NONE,NOARCHIVE" />{% endblock %}
 </head>
@@ -20,39 +28,60 @@
 <body class="{% if is_popup %}popup {% endif %}{% block bodyclass %}{% endblock %}">
 
 <!-- Container -->
-<div id="container">
 
+{% if user.is_authenticated %}
     <!-- Header -->
-    <div id="header">
+    <div class="navbar navbar-default navbar-fixed-top" id="">
+
+        <!-- Logo -->
         <div id="branding">
         {% block branding %}{% endblock %}
         </div>
-        {% block usertools %}
-        <div id="user-tools">
-            {% block welcome-msg %}
-                {% trans 'Welcome,' %}
-                <strong>{% firstof user.get_short_name user.get_username %}</strong>.
-            {% endblock %}
-            {% block userlinks %}
-                {% if site_url %}
-                    <a href="{{ site_url }}">{% trans 'View site' %}</a> /
-                {% endif %}
-                {% if user.is_active and user.is_staff %}
-                    {% url 'django-admindocs-docroot' as docsroot %}
-                    {% if docsroot %}
-                        <a href="{{ docsroot }}">{% trans 'Documentation' %}</a> /
-                    {% endif %}
-                {% endif %}
-                {% if user.has_usable_password %}
-                <a href="{% url 'admin:password_change' %}">{% trans 'Change password' %}</a> /
-                {% endif %}
-                <a href="{% url 'admin:logout' %}">{% trans 'Log out' %}</a>
-            {% endblock %}
+        <!-- END Logo -->
+
+        <!-- Menu -->
+        <div id="navbar" class="navbar-collapse collapse">
+
+            <!-- Left Menu -->
+            {% block menubar %}{% endblock %}
+            <!-- END Left Menu -->
+
+            <!-- Right Menu -->
+            <div class="nav navbar-nav navbar-right" style="margin-right:0px;">
+                {% block usertools %}
+                <div id="user-tools">
+                    {% block welcome-msg %}
+                        {% trans 'Welcome,' %}
+                        <strong>{% firstof user.get_short_name user.get_username %}</strong>.
+                    {% endblock %}
+                    {% block userlinks %}
+                        {% if site_url %}
+                            <a href="{{ site_url }}">{% trans 'View site' %}</a> /
+                        {% endif %}
+                        {% if user.is_active and user.is_staff %}
+                            {% url 'django-admindocs-docroot' as docsroot %}
+                            {% if docsroot %}
+                                <a href="{{ docsroot }}">{% trans 'Documentation' %}</a> /
+                            {% endif %}
+                        {% endif %}
+                        {% if user.has_usable_password %}
+                        <a href="{% url 'admin:password_change' %}">{% trans 'Change password' %}</a> /
+                        {% endif %}
+                        <a href="{% url 'admin:logout' %}">{% trans 'Log out' %}</a>
+                    {% endblock %}
+                </div>
+                {% endblock %}
+                {% block nav-global %}{% endblock %}
+            </div>
+            <!-- END Right Menu -->
         </div>
-        {% endblock %}
-        {% block nav-global %}{% endblock %}
+        <!-- END Menu -->
     </div>
     <!-- END Header -->
+{%endif%}
+
+
+<div style="margin-top:50px;">
     {% block breadcrumbs %}
     <div class="breadcrumbs">
     <a href="{% url 'admin:index' %}">{% trans 'Home' %}</a>

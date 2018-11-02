@@ -39,7 +39,7 @@ from django.core.exceptions import PermissionDenied
 def index(request):
 	"""Renders the index template in browser"""
 	template = loader.get_template('index.html')
-	context = RequestContext(request, {})
+	context = RequestContext(request, {'site_url':'/'})
 	return HttpResponse(template.render(context))
 
 
