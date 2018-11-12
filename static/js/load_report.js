@@ -237,6 +237,7 @@
 				"data": total_counts,
 				"columnDefs": [{"defaultContent": "-","targets": "_all"},{"footer":true}],
 				"columns":[
+								{"data": "", "title": "Name"},
 								{"data": "aggregated_total_ad", "title": "Agreement Done"},
 								{"data": "aggregated_total_p1", "title": "Phase 1 material given"},
 								{"data": "aggregated_total_p2", "title": "Phase 2 material given"},
@@ -329,7 +330,8 @@
 				"data": total_counts_cm,
 				"columnDefs": [{"defaultContent": "-","targets": "_all"},{"footer":true}],
 				"columns":[
-								
+
+							{"data": "", "title": "Name"},	
 							{"data": "aggregated_total_Awarenesssong", "title": "Awareness song"},
 							{"data": "aggregated_total_CornerMeeting", "title": "Corner Meeting"},
 							{"data": "aggregated_total_FGDwithBoys", "title": "FGD with Boys"},
@@ -361,7 +363,7 @@
 				"data": total_counts_cm_activity_count,
 				"columnDefs": [{"defaultContent": "-","targets": "_all"},{"footer":true}],
 				"columns":[
-								
+							{"data": "", "title": "Name"},	
 							{"data": "aggregated_total_Awarenesssong", "title": "Awareness song"},
 							{"data": "aggregated_total_CornerMeeting", "title": "Corner Meeting"},
 							{"data": "aggregated_total_FGDwithBoys", "title": "FGD with Boys"},
