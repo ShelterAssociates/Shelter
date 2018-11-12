@@ -587,29 +587,27 @@ def handle_uploaded_file(f,response,slum_code):
                 if flag_SBM != 1:
                     #print "in sbm"
                     try:
-                        try:
+                        SBM_instance = SBMUpload.objects.filter(slum = this_slum, household_number = int(i))
+                                                    
+                        if len(SBM_instance) != 0:
                             
-                            SBM_instance = SBMUpload.objects.filter(slum = this_slum, household_number = int(i))
+                            SBM_instance.update(
+                                name = df_sbm.loc[int(i), 'SBM Name'],
+                                application_id = df_sbm.loc[int(i), 'Application ID'],
+                                phone_number = df_sbm.loc[int(i), 'Phone Number'],
+                                aadhar_number = df_sbm.loc[int(i), 'Aadhar Number'],
+                                photo_uploaded = check_bool(df_sbm.loc[int(i), 'Toilet photo uploaded on SBM site']),
+                                photo_verified = check_bool(df_sbm.loc[int(i), 'Toilet Photo Verified']),
+                                photo_approved = check_bool(df_sbm.loc[int(i), 'Toilet Photo Approved']),
+                                application_verified = check_bool(df_sbm.loc[int(i), 'Application Verified']),
+                                application_approved = check_bool(df_sbm.loc[int(i), 'Application Approved']),
+                                sbm_comment = df_sbm.loc[int(i), 'SBM Comment']
 
-                            if True:
-                                
-                                SBM_instance.update(
-                                    name = df_sbm.loc[int(i), 'SBM Name'],
-                                    application_id = df_sbm.loc[int(i), 'Application ID'],
-                                    phone_number = df_sbm.loc[int(i), 'Phone Number'],
-                                    aadhar_number = df_sbm.loc[int(i), 'Aadhar Number'],
-                                    photo_uploaded = check_bool(df_sbm.loc[int(i), 'Toilet photo uploaded on SBM site']),
-                                    photo_verified = check_bool(df_sbm.loc[int(i), 'Toilet Photo Verified']),
-                                    photo_approved = check_bool(df_sbm.loc[int(i), 'Toilet Photo Approved']),
-                                    application_verified = check_bool(df_sbm.loc[int(i), 'Application Verified']),
-                                    application_approved = check_bool(df_sbm.loc[int(i), 'Application Approved']),
-                                    sbm_comment = df_sbm.loc[int(i), 'SBM Comment']
-
-                                )
-                                
-                                response.append(("updated sbm", i))
-                        except Exception as e:
-                            print e
+                            )
+                            
+                            response.append(("updated sbm", i))
+                        
+                        else:
                             if True:
                                 SBM_instance_1 = SBMUpload(
                                  slum = this_slum,
