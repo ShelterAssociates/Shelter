@@ -16,10 +16,12 @@ $(document).ready(function(){
     //Used for the list view for household codes
     function update_view(){
         if($('#result_list').length > 0){
+            $('#result_list thead tr').append('<th>Count</th>');
             $.each($('.field-household_code'), function(index, house){
                 houses = $(house).html();
                 $(house).html("<div class='lesslist' style='display:none;'>"+houses+"&nbsp;&nbsp;<b><a onclick='less_click(this);'>Less</a></b></div>");
                 $(house).append("<div class='morelist'>"+houses.split(',').splice(0,10).join()+" ...<b><a onclick='more_click(this);'>More</a></b></div>");
+                $(house).parent().append('<td>'+houses.split(',').length+'</td>');
             });
         }
     }
