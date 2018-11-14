@@ -162,16 +162,16 @@
             </div>
             <div class="col-md-10" id = "add_buttons">
                 {% if perms.mastersheet.add_communitymobilization%}
-                <button id = "add_com_mob" type="button" class="btn btn-default btn-success pull-right" style="margin-left:10px;" onclick = "window.open('/admin/master/mastersheet/communitymobilization/add/', '_blank', 'width=850,height=750')"><span class="glyphicon glyphicon-plus"></span> Community Mobilization</button>
+                <button id = "add_com_mob" type="button" class="btn btn-default btn-success pull-right" style="margin-left:10px;" onclick = "window.open('/accounts/mastersheet/communitymobilization/add/', '_blank', 'width=850,height=750')"><span class="glyphicon glyphicon-plus"></span> Community Mobilization</button>
                 {%endif%}
                 {% if perms.mastersheet.add_vendorhouseholdinvoicedetail%}
-                <button id = "add_accounts" type="button" class="btn btn-default btn-success pull-right" style="margin-left:10px;" onclick = "window.open('/admin/master/mastersheet/vendorhouseholdinvoicedetail/add/', '_blank', 'width=850,height=750')"><span class="glyphicon glyphicon-plus"></span> Accounts</button>
+                <button id = "add_accounts" type="button" class="btn btn-default btn-success pull-right" style="margin-left:10px;" onclick = "window.open('/accounts/mastersheet/invoice/add/', '_blank', 'width=850,height=750')"><span class="glyphicon glyphicon-plus"></span> Accounts</button>
                 {%endif%}
                 {% if perms.mastersheet.add_toiletconstruction%}
-                <button id = "add_tc" type="button" class="btn btn-default btn-success pull-right" style="margin-left:10px;" onclick = "window.open('/admin/master/mastersheet/toiletconstruction/add/', '_blank', 'width=850,height=750')" ><span class="glyphicon glyphicon-plus"></span> Toilet Construction</button>
+                <button id = "add_tc" type="button" class="btn btn-default btn-success pull-right" style="margin-left:10px;" onclick = "window.open('/accounts/mastersheet/toiletconstruction/add/', '_blank', 'width=850,height=750')" ><span class="glyphicon glyphicon-plus"></span> Toilet Construction</button>
                 {%endif%}
                 {% if perms.mastersheet.add_sbmupload%}
-                <a id = "add_sbm" type="button" class="btn btn-default btn-success pull-right" style="margin-left:10px;" onclick = "window.open('/admin/master/mastersheet/sbmupload/add/?_to_field=id&_popup=1', '_blank', 'width=850,height=750')" ><span class="glyphicon glyphicon-plus"></span> SBM</a>
+                <a id = "add_sbm" type="button" class="btn btn-default btn-success pull-right" style="margin-left:10px;" onclick = "window.open('/accounts/mastersheet/sbmupload/add/?_changelist_filters=q%3Dawac', '_blank', 'width=850,height=750')" ><span class="glyphicon glyphicon-plus"></span> SBM</a>
                 {%endif%}
             </div>
         </div>
