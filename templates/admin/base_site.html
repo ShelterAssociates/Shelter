@@ -35,21 +35,30 @@
     {% if perms.mastersheet.can_view_mastersheet or perms.mastersheet.can_view_mastersheet_report or perms.master.can_generate_reports or perms.master.can_generate_reports%}
     <li class="dropdown" id="report-menu">
         <a href="#report-menu" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="true">
-            Reports
+            Analytics
             <span class="caret"></span>
         </a>
         <ul class="dropdown-menu">
+            <li class="dropdown-header">Graphs</li>
+            <li><a href="/graphs/community_mobilization/">Community Mobilization</a></li>
+            {% if perms.mastersheet.can_view_mastersheet or perms.mastersheet.can_view_mastersheet_report%}
+                <li role="separator" class="divider"></li>
+                <li class="dropdown-header">Mastersheets</li>
+            {%endif%}
             {% if perms.mastersheet.can_view_mastersheet%}
             <li>
-                <a href="/mastersheet/show/mastersheet/" >Mastersheet status</a>
+                <a href="/mastersheet/show/mastersheet/" >Progress Tracking</a>
             </li>
             {%endif%}
             {% if perms.mastersheet.can_view_mastersheet_report%}
             <li>
-                <a href="/mastersheet/report/" >Mastersheet Reports</a>
+                <a href="/mastersheet/report/" >Reports</a>
             </li>
-            <li role="separator" class="divider"></li>
             {%endif%}
+            {% if perms.master.can_generate_reports %}
+            <li role="separator" class="divider"></li>
+            <li class="dropdown-header">Documents</li>
+            {% endif %}
             {%if perms.master.can_generate_reports%}
                 <li><a href="/admin/report/">Factsheet Report</a></li>
             {%endif%}

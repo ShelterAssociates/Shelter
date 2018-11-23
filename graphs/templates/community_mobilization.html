@@ -1,0 +1,19 @@
+{% extends "admin/base_site.html" %}
+{% load i18n %}
+{% block breadcrumbs %}
+{% load staticfiles %}
+{% endblock %}
+{% block sidebar %}
+<script>
+    $(document).ready(function(){
+        $("#custom_iframe").parent().css("margin","0px");
+        $("#custom_iframe").parent().css("height","88vh");
+    });
+</script>
+{% endblock %}
+
+{% block content %}
+
+<iframe id="custom_iframe" src="{{custom_url}}" width="100%" height="100%" style="border:0px;"></iframe>
+
+{% endblock %}

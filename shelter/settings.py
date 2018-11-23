@@ -14,7 +14,6 @@ https://docs.djangoproject.com/en/1.8/ref/settings/
 import os
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-print BASE_DIR
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/1.8/howto/deployment/checklist/
@@ -38,15 +37,14 @@ INSTALLED_APPS = (
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'django.contrib.gis',
-   # 'south',
-   'master',
-   'component',
-
-   #'Filter',
-   'sponsor',
-   'colorfield',
-    'mastersheet',
-
+     #'south',
+     'master',
+     'component',
+      #'Filter',
+     'sponsor',
+     'colorfield',
+     'mastersheet',
+     'graphs',
 )
 
 ADMIN_VIEW_PERMISSION_MODELS = [
@@ -110,10 +108,11 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/1.8/howto/static-files/
 
-from local_settings import *
+from shelter.local_settings import *
 
 STATIC_URL = '/static/'
 
+SITE_URL = '/'
 
 STATIC_ROOT = ''
 
