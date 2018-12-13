@@ -79,6 +79,10 @@ class Invoice(models.Model):
     invoice_number = models.CharField(max_length=100,null=True, blank=True)
     challan_number = models.CharField(max_length=100,null=True, blank=True)
     total = models.FloatField(default = 0)
+    loading_unloading_charges = models.FloatField(default = 0)
+    transport_charges = models.FloatField(default = 0)
+    roundoff = models.FloatField(default = 0)
+    final_total = models.FloatField(default = 0)
     paid = models.BooleanField(default=False)
     created_on = models.DateTimeField(default=datetime.datetime.now)
     created_by = models.ForeignKey(User,related_name='invoice_created_by')
@@ -115,6 +119,9 @@ class MaterialType(models.Model):
 UNITS=(('1', 'Tempo/Piago'),
                 ('2', 'Bags'),
                 ('3', 'Nos'))
+PHASE = (('1', 'Phase One'),
+            ('2', 'Phase Two'),
+            ('3', 'Phase Three'))
 
 
 class InvoiceItems(models.Model):
@@ -122,6 +129,7 @@ class InvoiceItems(models.Model):
     material_type = models.ForeignKey(MaterialType)
     slum = models.ForeignKey(Slum)
     household_numbers = JSONField()
+    phase = models.CharField(max_length=2, choices = PHASE,null=True, blank=True)
     quantity = models.FloatField(default = 0)
     unit = models.CharField(max_length=100,choices = UNITS,null=True, blank=True)
     rate = models.FloatField(default = 0)
