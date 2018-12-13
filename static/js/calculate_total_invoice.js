@@ -6,13 +6,30 @@ $(document).ready(function(){
 
 	function calculateGrandTotal(){
 		var grand_total = 0;
-
+		var final_grand_total = 0;
 		$(".field-total>input").each(function(v,input){
 			grand_total += parseFloat($(input).val());
 
 		});
 
+		var round_off = $("#id_roundoff").val();
+		if( round_off!= '' && !isNaN(round_off)){
+			round_off = parseFloat($("#id_roundoff").val());
+		}
+
+		var l_u_charges = $("#id_loading_unloading_charges").val();
+		if( l_u_charges!= '' && !isNaN(l_u_charges)){
+			l_u_charges = parseFloat($("#id_loading_unloading_charges").val());
+		}
+
+		var transport_charges = $("#id_transport_charges").val();
+		if( transport_charges!= '' && !isNaN(transport_charges)){
+			transport_charges = parseFloat($("#id_transport_charges").val());
+		}
 		$("#id_total").val(grand_total);
+		final_grand_total = grand_total + round_off + l_u_charges + transport_charges;
+
+		$("#id_final_total").val(final_grand_total);
 	}
 	
 	
@@ -27,16 +44,15 @@ $(document).ready(function(){
 		r_value = $("#id_invoiceitems_set-"+index+"-rate").val();
 		t_value = $("#id_invoiceitems_set-"+index+"-tax").val();
 		if( q_value!= '' && !isNaN(q_value)){
-			quantity = parseInt($("#id_invoiceitems_set-"+index+"-quantity").val());
+			quantity = parseFloat($("#id_invoiceitems_set-"+index+"-quantity").val());
 		}
 		if ( r_value!= '' && !isNaN(r_value)){	
-			 rate = parseInt($("#id_invoiceitems_set-"+index+"-rate").val());
+			 rate = parseFloat($("#id_invoiceitems_set-"+index+"-rate").val());
 		}
 		if(t_value != '' && !isNaN(t_value)){
-		 	tax = parseInt($("#id_invoiceitems_set-"+index+"-tax").val());
+		 	tax = parseFloat($("#id_invoiceitems_set-"+index+"-tax").val());
 		}
 
-		
 		var total = (quantity*rate) + (quantity*rate*tax)/100;
 		$("#id_invoiceitems_set-"+index+"-total").val(total) ;
 		calculateGrandTotal();
