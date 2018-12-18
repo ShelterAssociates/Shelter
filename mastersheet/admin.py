@@ -39,7 +39,7 @@ class InvoiceItemsInline(admin.TabularInline):
 class InvoiceAdmin(admin.ModelAdmin):
     list_filter = ['vendor']
     list_display = ('vendor', 'invoice_number','challan_number','invoice_date')
-    search_fields = ['vendor', 'invoice_number','challan_number','invoice_date']
+    search_fields = ['vendor__name', 'invoice_number','challan_number','invoice_date']
     ordering = ['vendor']
     inlines = [InvoiceItemsInline]
     exclude = ('created_by','created_on','modified_by','modified_on',)
