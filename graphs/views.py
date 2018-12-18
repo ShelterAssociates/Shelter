@@ -1,6 +1,8 @@
 from django.shortcuts import render
 from django.conf import settings
 from django.contrib.auth.decorators import login_required
+from master.models import *
+
 
 @login_required(login_url='/accounts/login/')
 def graphs_display(request, graph_type):
