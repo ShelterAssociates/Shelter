@@ -3,7 +3,7 @@
 {% block title %} {{ site_title|default:_('Shelter site admin') }}{% endblock %}
 
 {% block branding %}
-<a href="/home"><img src="/static/images/shelter.png" height="45" style="padding:5px;"/></a>
+<a href="/home"><img src="/static/images/shelter.png" height="52" style="padding:5px;"/></a>
 {% endblock %}
 
 {% block menubar %}
@@ -40,7 +40,8 @@
         </a>
         <ul class="dropdown-menu">
             <li class="dropdown-header">Graphs</li>
-            <li><a href="/graphs/community_mobilization/">Community Mobilization</a></li>
+            <li><a href="/graphs/type/toilet_construction/">Toilet Construction</a></li>
+            <li><a href="/graphs/type/community_mobilization/">Community Mobilization</a></li>
             {% if perms.mastersheet.can_view_mastersheet or perms.mastersheet.can_view_mastersheet_report%}
                 <li role="separator" class="divider"></li>
                 <li class="dropdown-header">Mastersheets</li>
