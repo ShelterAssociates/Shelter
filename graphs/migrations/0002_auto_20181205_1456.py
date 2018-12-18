@@ -7,7 +7,6 @@ from django.db import models, migrations
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('master', '0014_auto_20181205_1456'),
         ('graphs', '0001_initial'),
     ]
 
