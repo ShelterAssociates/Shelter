@@ -49,12 +49,13 @@ class KMLParser(object):
 
         for geometry in geometry_data:
             coordinates = geometry.strip()
-            coordinates = coordinates.split(',0')
+            coordinates = coordinates.split(' ')
             lst_coordinates = []
 
-            for coordinate in coordinates[:-1]:
-                lst_coordinates.append(list(map(float, coordinate.split(','))))
-
+            for coordinate in coordinates:
+                if coordinate:
+                    lst_coordinates.append(list(map(float, coordinate.split(',')[:2])))
+            print lst_coordinates, key
             if key == POLYGON:
                 lst_coordinates = [lst_coordinates]
             elif key == POINT:
