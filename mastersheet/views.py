@@ -941,7 +941,10 @@ def give_report_table_numbers(request):#view for toilet construction
     }
     report_table_data = defaultdict(dict)
     for query_field in query_on.keys():
-        filter_field ={'slum__id__in':keys, query_field+'__range':[start_date,end_date]}
+        if query_field in ['factsheet_done','use_of_toilet','toilet_connected_to']:
+            filter_field ={'slum__id__in':keys, 'completion_date__range':[start_date,end_date], query_field+'__isnull':False}
+        else:
+            filter_field ={'slum__id__in':keys, query_field+'__range':[start_date,end_date]}
         count_field= {query_on[query_field]:Count('level_id')}
         tc = ToiletConstruction.objects.filter(**filter_field)\
             .exclude(agreement_cancelled=True)\
