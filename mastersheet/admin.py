@@ -79,7 +79,7 @@ admin.site.register(MaterialType, MaterialTypeAdmin)
 
 
 class InvoiceItemsAdmin(admin.ModelAdmin):
-    list_display = ('invoice', 'material_type','slum','household_numbers','quantity','unit','rate','tax','total')
+    list_display = ('invoice', 'material_type','phase','slum','household_numbers','quantity','unit','rate','tax','total')
     search_fields = ['invoice', 'material_type','slum']
     ordering = ['invoice']
     exclude = ('created_by','created_on','modified_by','modified_on',)
