@@ -2,10 +2,6 @@
 
 $(document).ready(function(){
 
-
-	
-	
-
 	function calculateGrandTotal(){
 		var grand_total = 0;
 		var final_grand_total = 0;
@@ -35,9 +31,12 @@ $(document).ready(function(){
 		$("#id_final_total").val(final_grand_total);
 	}
 	
-	
+	$(".form-row>div>input").on('change',function(e){
+		calculateGrandTotal();
 
-	$(document).on('change',$(".field-quantity>input, .field-rate>input, .field-tax>input, .vLargeTextField"),function(e){
+	});
+
+	$(".field-quantity>input, .field-rate>input, .field-tax>input, .vLargeTextField").on('change',function(e){
 		var quantity = 0.0;
 		var rate = 0.0;
 		var tax = 0.0;
