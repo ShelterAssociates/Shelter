@@ -1,6 +1,8 @@
 
 
 $(document).ready(function(){
+
+
 	
 	
 
@@ -29,12 +31,13 @@ $(document).ready(function(){
 		$("#id_total").val(grand_total);
 		final_grand_total = grand_total + round_off + l_u_charges + transport_charges;
 
+		final_grand_total = Number(final_grand_total.toFixed(2));
 		$("#id_final_total").val(final_grand_total);
 	}
 	
 	
 
-	$(document).on('change',$(".field-quantity>input, .field-rate>input, .field-tax>input"),function(e){
+	$(document).on('change',$(".field-quantity>input, .field-rate>input, .field-tax>input, .vLargeTextField"),function(e){
 		var quantity = 0.0;
 		var rate = 0.0;
 		var tax = 0.0;
@@ -52,10 +55,26 @@ $(document).ready(function(){
 		if(t_value != '' && !isNaN(t_value)){
 		 	tax = parseFloat($("#id_invoiceitems_set-"+index+"-tax").val());
 		}
-
-		var total = (quantity*rate) + (quantity*rate*tax)/100;
+		var hh_count = JSON.parse($("#id_invoiceitems_set-"+index+"-household_numbers").val()).length;
+		var total = (hh_count*quantity*rate) + (hh_count*quantity*rate*tax)/100;
+		total = Number(total.toFixed(2));
 		$("#id_invoiceitems_set-"+index+"-total").val(total) ;
 		calculateGrandTotal();
+		
+		if(document.getElementById("id_count_household"+index)){
+
+			var newdiv = document.getElementById("id_count_household"+index);
+			newdiv.innerText = "Total Number of Households = " + hh_count;
+			
+		}
+		else{
+			
+			var newdiv = document.createElement("DIV");
+			newdiv.setAttribute("id","id_count_household"+index);
+			newdiv.appendChild(document.createTextNode("Total Number of Households = " + hh_count));
+			$(".field-household_numbers")[index].appendChild(newdiv);
+		}
+		
 	});
 
 	$(".field-quantity").each(function(v,input){
