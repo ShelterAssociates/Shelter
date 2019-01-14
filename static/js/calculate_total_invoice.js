@@ -36,7 +36,7 @@ $(document).ready(function(){
 
 	});
 
-	$(".field-quantity>input, .field-rate>input, .field-tax>input, .vLargeTextField").on('change',function(e){
+	$(document).on('change',$(".field-quantity>input, .field-rate>input, .field-tax>input, .vLargeTextField"),function(e){
 		var quantity = 0.0;
 		var rate = 0.0;
 		var tax = 0.0;
