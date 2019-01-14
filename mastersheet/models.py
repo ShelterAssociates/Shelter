@@ -9,7 +9,7 @@ import pandas
 import django.dispatch
 from django.db.models.signals import pre_save,post_save
 from django.dispatch import receiver
-
+from django.conf import settings
 
 
 
@@ -129,9 +129,9 @@ class InvoiceItems(models.Model):
     material_type = models.ForeignKey(MaterialType)
     slum = models.ForeignKey(Slum)
     household_numbers = JSONField()
-    phase = models.CharField(max_length=2, choices = PHASE,null=True, blank=True)
+    phase = models.CharField(max_length=2, choices = PHASE)
     quantity = models.FloatField(default = 0)
-    unit = models.CharField(max_length=100,choices = UNITS,null=True, blank=True)
+    unit = models.CharField(max_length=100,choices = UNITS)
     rate = models.FloatField(default = 0)
     tax = models.FloatField(default = 0)
     total = models.FloatField(default = 0)

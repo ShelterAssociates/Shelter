@@ -7,6 +7,7 @@ from datetime import date
 
 
 
+
 class HouseholdData(models.Model):
 
 	household_number = models.CharField(max_length=5)
@@ -15,6 +16,7 @@ class HouseholdData(models.Model):
 	submission_date = models.DateTimeField()
 	created_date = models.DateTimeField(default=datetime.datetime.now)
 	rhs_data = JSONField(null=True, blank=True)
+	ff_data = JSONField(null = True, blank = True)
 
 	class Meta:
 		unique_together = ("slum", "household_number")
