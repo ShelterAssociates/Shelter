@@ -9,6 +9,7 @@ from django.conf import settings
 from itertools import chain
 from itertools import groupby
 from django.utils.dateparse import parse_datetime
+import pdb
 
 
 
@@ -49,43 +50,71 @@ def fetch_labels_codes(rhs_data, form_code):
 			if key in name_label_data_dict.keys():
 				string = value_f.split(" ")
 				for num in string:
-					string[string.index(num)] = name_label_data_dict[key][num]
+					try:
+						string[string.index(num)] = name_label_data_dict[key][num]
+					except Exception as e:
+						print e
+						print num
+						print key
+						print string.index(num)
 				x[key_f] = ", ".join(string)
 
 	return rhs_data
 
-def build_url(form_code, latest_date):
-	rhs_url = str(settings.KOBOCAT_FORM_URL)+'data/' + str(form_code) + '?format=json'
-	rhs_url += '&query={"_submission_time":{"$gt":"'+str(timezone.localtime(latest_date))+'"}}' #"slum_name":"272537892104", udyog nagar dalvi nagar pcmc "slum_name":"272537891802",
-	#"slum_name":"272537891802",
-	return rhs_url
 	
-def fetch_data(url):
-	print(url)
-        kobotoolbox_request = urllib2.Request(url)
-        kobotoolbox_request.add_header('User-agent', 'Mozilla 5.10')
-        kobotoolbox_request.add_header('Authorization', settings.KOBOCAT_TOKEN)
+def fetch_data(form_code, latest_date):
+	rhs_url = str(settings.KOBOCAT_FORM_URL)+'data/' + str(form_code) + '?format=json'
+	if latest_date != '':
+		rhs_url += '&query={"_submission_time":{"$gt":"'+str(timezone.localtime(latest_date))+'"}}'
+	find_count = rhs_url + '&count=1'
+	count_url = urllib2.Request(find_count)
+	count_url.add_header('User-agent', 'Mozilla 5.10')
+	count_url.add_header('Authorization', settings.KOBOCAT_TOKEN)
 
-        res = urllib2.urlopen(kobotoolbox_request)
-        # Read json data from kobotoolbox API
-        html = res.read()
-        records = json.loads(html)
-        return records
+	count_url_res = urllib2.urlopen(count_url)
+	count_html = count_url_res.read()
+	count_records =json.loads(count_html) 
+	slots = count_records['count'] / 30000
+	records = []
+	if int(count_records['count']) > 0 :
+		for x in range(slots+1):
+			start = x*30000
+			url = rhs_url
+			if latest_date != '':
+				url = url + '&query={"_submission_time":{"$gt":"'+str(timezone.localtime(latest_date))+'"}}'
+			url+='&start='+str(start)
+			kobotoolbox_request = urllib2.Request(url)
+			kobotoolbox_request.add_header('User-agent', 'Mozilla 5.10')
+			kobotoolbox_request.add_header('Authorization', settings.KOBOCAT_TOKEN)
+			print "here aboves"
+			res = urllib2.urlopen(kobotoolbox_request)
+			html = res.read()
+			records.extend(json.loads(html))
+			print url
+	return records
 
 def syn_rhs_followup_data():
 	count_o = []
 	count_u = []
 	count_l = []
 	a = []
+	no_rhs_but_ff = []
 	replaced_locked_houses = {}
 	double_houses = {}
 	only_followup_updated = 0
 	rhs_and_followup_updated = 0
 	total_records = 0
 	cities = City.objects.all()
+	is_initial = True
+
 	for city in cities:
-		survey_forms = Survey.objects.filter(city__id = int(city.id), description__contains = 'RHS')
-		for i in survey_forms:
+		# if city.id == 6:
+		# 	Type_of_structure_occupancy = 'group_ce0hf58/Type_of_structure_occupancy'
+		# 	Household_number = 'group_ce0hf58/house_no'
+		# 	slum_name = 'group_ce0hf58/slum_name'
+
+		survey_forms_rhs = Survey.objects.filter(city__id = int(city.id), description__contains = 'RHS')
+		for i in survey_forms_rhs:
 			latest_rhs_date = datetime.datetime(2000, 1, 1,0,0,0,0, pytz.UTC)
 			latest_followup_date = datetime.datetime(2000, 1, 1,0,0,0,0, pytz.UTC)
 
@@ -100,13 +129,14 @@ def syn_rhs_followup_data():
 				latest_followup_date = latest_followup[0].submission_date
 
 			latest_date = latest_followup_date if latest_followup_date > latest_rhs_date else latest_rhs_date
-			if city.id == 3:
+			if city.id == 8: #3,4 done
 				print timezone.localtime(latest_date)
-				url = build_url(form_code, latest_date)
-				rhs_data = fetch_data(url)
+				# url = build_url()
+				rhs_data = fetch_data(form_code, latest_date)
 				data_with_lables = fetch_labels_codes(rhs_data, form_code)
 				total_records +=(len(data_with_lables))
 				sorted(data_with_lables, key = lambda x:x['slum_name'])
+
 
 				for key,list_records in groupby(data_with_lables, lambda x:x['slum_name']):
 					try:
@@ -240,15 +270,40 @@ def syn_rhs_followup_data():
 									print "error in followup"
 									print e
 									print record['Household_number']
-			# print "unoccupied =" + str(count_u) + str(len(count_u))
+		
+
+		survey_forms_ff = Survey.objects.filter(city__id = int(city.id), description__contains = 'FF')
+		for i in survey_forms_ff:
+			form_code = i.kobotool_survey_id
+			ff_data = fetch_data(form_code, '')
+			ff_data_with_labels = fetch_labels_codes(ff_data, form_code)
+			if city.id ==8:
+				sorted(ff_data_with_labels, key = lambda x:x['group_vq77l17/slum_name']) #group_vq77l17/slum_name
+				
+				for key,list_records in groupby(ff_data_with_labels, lambda x:x['group_vq77l17/slum_name']):
+					try:
+						slum = Slum.objects.get(shelter_slum_code = key)
+					except:
+						print key 
+						slum = Slum.objects.get(shelter_slum_code = 272537891001)
+					for record in list_records:
+						try:
+							temp = HouseholdData.objects.get(household_number = record['group_vq77l17/Household_number'], slum = slum)
+							temp.ff_data = record
+							temp.save()
+						except:
+							print no_rhs_but_ff.append(record['group_vq77l17/Household_number'] + " in" + str(slum) + " has a factesheet but no rhs/followup record") 
+			
+
+	# print "unoccupied =" + str(count_u) + str(len(count_u))
 			# print "locked = " + str(count_l) + str(len(count_l))
 			# print "Occupied = " + str(count_o) + str(len(count_o))
-			print "All = " + str(a)	
-			print "Only RHS updated = " + str(rhs_and_followup_updated)
-			print "Only Follow-up updated = " + str(only_followup_updated)
-			print "total records = " + str(total_records) 
-			print "replaced_locked_houses : " + str(replaced_locked_houses)
-			print "double_houses : " + str(double_houses)
+			# print "All = " + str(a)	
+			# print "Only RHS updated = " + str(rhs_and_followup_updated)
+			# print "Only Follow-up updated = " + str(only_followup_updated)
+	print "no rhs but ff = " + str(no_rhs_but_ff) 
+			# print "replaced_locked_houses : " + str(replaced_locked_houses)
+			# print "double_houses : " + str(double_houses)
 							
 				
 				
