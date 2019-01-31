@@ -2,6 +2,30 @@ from django.contrib import admin
 #from django.contrib.gis import admin
 from models import *
 
+class SectionListFilter(admin.SimpleListFilter):
+    """
+    Section level filter 
+    """
+    title = 'Section'
+    parameter_name = 'section'
+
+    def lookups(self, request, model_admin):
+        """
+        Creating list filter lookup 
+        """
+        obj_section = Section.objects.all().order_by('name')
+        obj_section = obj_section.values_list('name', 'name')
+        return tuple(obj_section)
+
+    def queryset(self, request, queryset):
+        """
+        Filter data as per list filter selected. 
+        """
+        cust_filter = {}
+        if self.value():
+            cust_filter = {'section__name' : self.value()}
+        return queryset.filter(**cust_filter)
+
 class MetadataInline(admin.TabularInline):
     """Inline to add metadata while adding sections
     """
@@ -21,6 +45,7 @@ class MetadataAdmin(admin.ModelAdmin):
     list_display = ('name', 'section_name', 'type', 'visible')
     search_fields = ['name']
     ordering = ['name', 'section__name', 'type', 'visible']
+    list_filter = [SectionListFilter]
 
     def section_name(self, obj):
         return obj.section.name

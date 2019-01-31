@@ -338,6 +338,7 @@ class KoboDDSyncTrack(models.Model):
 @receiver(pre_save, sender=ToiletConstruction)
 def update_status(sender ,instance, **kwargs):
     #instance.status = STATUS_CHOICES[4][0]#Under Construction
+    print 'updating status'
     if instance.status != STATUS_CHOICES[6][0]:
         if instance.agreement_cancelled is None:
             instance.status = ""
@@ -443,6 +444,15 @@ def handle_shifted_material(sender ,instance, **kwargs):
             
     if temp['flag']:
         del(temp['flag'])
+        if (instance.phase_one_material_date is None) and (instance.phase_two_material_date is None) and (instance.phase_three_material_date is None) and instance.agreement_date and (datetime.date.today() - instance.agreement_date > datetime.timedelta(days=8)):
+            if instance.slum.electoral_ward.administrative_ward.city.id == 4 : 
+                if (instance.septic_tank_date is None):
+                    temp['defaults']['status'] = STATUS_CHOICES[2][0]
+                else:
+                    temp['defaults']['status'] = STATUS_CHOICES[4][0]
+            else:
+                temp['defaults']['status'] = STATUS_CHOICES[2][0]
+
         TC_instance, is_created = ToiletConstruction.objects.update_or_create(**temp)
         TC_instance.save()
         print is_created

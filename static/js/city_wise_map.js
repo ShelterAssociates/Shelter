@@ -577,7 +577,7 @@ function initMap(){
                         "Kolhapur":new L.LatLng(16.700800029695312, 74.23729060058895),
                         "PCMC":new L.LatLng(18.640083, 73.825560),
                         "Pune":new L.LatLng(18.51099762698481, 73.86055464212859),
-                        "Panvel":new L.LatLng(19.00097124528485, 73.11650062276782)};
+                        "Panvel":new L.LatLng(19.051509, 73.109058)};
     var pos = new L.LatLng(18.640083, 73.825560);
     if ($('#city_name').val() in center_data)
     {
