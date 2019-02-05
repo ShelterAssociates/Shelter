@@ -2,7 +2,7 @@
 set -e
 LOGFILE=/var/log/gunicorn/shelter.log
 LOGDIR=$(dirname $LOGFILE)
-NUM_WORKERS=3
+NUM_WORKERS=4
 # user/group to run as
 USER=ubuntu
 GROUP=ubuntu
