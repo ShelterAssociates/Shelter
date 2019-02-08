@@ -95,7 +95,7 @@ def fetch_data(form_code, latest_date):
 	return records
 
 def syn_rim_data():
-	cities = City.objects.filter(id__in=[1,2])
+	cities = City.objects.filter(id__in=[3])
 	for city in cities:
 		survey = Survey.objects.filter(city__id = int(city.id), description__contains = 'RIM')
 		if survey:
@@ -124,19 +124,25 @@ def syn_rim_data():
 		if len(submission) > 0:
 			for record in submission:
 				key = record['group_zl6oo94/group_uj8eg07/slum_name']
-				slum = Slum.objects.get(shelter_slum_code=key)
-				output = parse_RIM_data(record, form_data)
-				data = {
-							'slum' : slum,
-							'city' : city,
-							'submission_date' : convert_datetime(str(record['_submission_time'])),
-							'rim_data' : record,
-						}
-				slum_data, created= SlumData.objects.update_or_create(slum=slum, default=data)
-				slum_data.modified_on = datetime.datetime.now()
-				if created:
-					slum_data.created_on = datetime.datetime.now()
-				slum_data.save()
+				print key
+				try:
+
+					slum = Slum.objects.get(shelter_slum_code=key)
+
+					output = parse_RIM_data([record], form_data)
+					data = {
+								'slum' : slum,
+								'city' : city,
+								'submission_date' : convert_datetime(str(record['_submission_time'])),
+								'rim_data' : record,
+							}
+					slum_data, created= SlumData.objects.update_or_create(slum=slum, defaults=data)
+					slum_data.modified_on = datetime.datetime.now()
+					if created:
+						slum_data.created_on = datetime.datetime.now()
+					slum_data.save()
+				except Exception as e:
+					pass
 
 def syn_rhs_followup_data():
 	count_o = []
@@ -352,5 +358,7 @@ def syn_rhs_followup_data():
 							
 				
 				
-syn_rhs_followup_data()
+#syn_rhs_followup_data()
+
+syn_rim_data()
 
