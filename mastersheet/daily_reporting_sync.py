@@ -102,9 +102,9 @@ class ToiletConstructionSync(DDSync):
             update_data = {}
             check_list = {'slum': self.slum, 'household_number': tmp_ff['group_vq77l17/Household_number']}
             tc, created = ToiletConstruction.objects.get_or_create(**check_list)
-            if ('group_ne3ao98/Use_of_toilet' in tmp_ff and tmp_ff['group_ne3ao98/Use_of_toilet'] in ['01', '03']):
+            if ('group_ne3ao98/Use_of_toilet' in tmp_ff and tmp_ff['group_ne3ao98/Use_of_toilet'] in ['01','02' '03', '04', '05', '06']):
                 update_data['use_of_toilet'] = self.convert_datetime(tmp_ff['_submission_time'])
-            if ('group_ne3ao98/Where_the_individual_ilet_is_connected_to' in tmp_ff and tmp_ff['group_ne3ao98/Where_the_individual_ilet_is_connected_to'] in ['01', '03']):
+            if ('group_ne3ao98/Where_the_individual_ilet_is_connected_to' in tmp_ff and tmp_ff['group_ne3ao98/Where_the_individual_ilet_is_connected_to'] in ['01', '02', '03', '04']):
                 update_data['toilet_connected_to'] = self.convert_datetime(tmp_ff['_submission_time'])
             if not tc.factsheet_done:
 	    	    update_data['factsheet_done'] = self.convert_datetime(tmp_ff['_submission_time'])

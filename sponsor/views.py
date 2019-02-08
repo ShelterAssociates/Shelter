@@ -145,8 +145,8 @@ def create_zip(request, slumname):
         i = 0
         for household_code in sponsored_slums[0].household_code:
             key = cipher.encrypt(str(rp_slum_code) + '|' + str(household_code) + '|' + str(request.user.id))
-            com = "sh /home/shelter/BIRT_NEW/ReportEngine/genReport.sh -f PDF -o " + folder_name + "/household_code_" + str(
-                household_code) + ".pdf -p key=" + key + " /home/shelter/Documents/Project/Shelter/reports/FFReport.rptdesign"
+            com = "sh /opt/BIRT/ReportEngine/genReport.sh -f PDF -o " + folder_name + "/household_code_" + str(
+                household_code) + ".pdf -p key=" + key + " /srv/Shelter/reports/FFReport.rptdesign"
             print com
             os.system(com)
             i = i + 1

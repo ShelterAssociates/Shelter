@@ -110,63 +110,74 @@ def get_kobo_RIM_detail(city, slum_code, kobo_survey=''):
         content = resp.read()
         submission = json.loads(content)
 
-        RIM_GENERAL="group_zl6oo94"
-        RIM_TOILET="group_te3dx03"
-        RIM_WATER="group_zj8tc43"
-        RIM_WASTE="group_ks0wh10"
-        RIM_DRAINAGE="group_kk5gz02"
-        RIM_GUTTER="group_bv7hf31"
-        RIM_ROAD="group_xy9hz30"
-        section = {RIM_GENERAL:"General", RIM_TOILET:"Toilet", RIM_WATER:"Water",
-                   RIM_WASTE:"Waste", RIM_DRAINAGE:"Drainage", RIM_GUTTER:"Gutter", RIM_ROAD:"Road"}
-
         url1 = settings.KOBOCAT_FORM_URL+'forms/'+kobo_survey+'/form.json'
         req1 = urllib2.Request(url1)
         req1.add_header('Authorization', settings.KOBOCAT_TOKEN)
         resp1 = urllib2.urlopen(req1)
         content1 = resp1.read()
-        data1 = json.loads(content1)
+        form_data = json.loads(content1)
         #To maintain the order in which questions are displayed we iterate through the form data
         if len(submission) > 0:
-            for data in data1['children']:
-                if data['type'] == "group" and data['name'] in section.keys():
-                    #Group wise get the entire list for questions
-                    sect_form_data = trav(data)
-                    #Find the list of keys available in the submission data
-                    toil_keys = [ str(k) for k in submission[0].keys() if data['name'] in k]
-                    count = 0
-                    sub_key = []
-                    sub = []
-                    # Needed for toilet section which has repeat section
-                    for sub_k in toil_keys:
-                        if type(submission[0][sub_k]) == list:
-                            count = len(submission[0][sub_k])
-                            sub = submission[0][sub_k]
-                            sub_key.extend(sum([k.keys() for k in submission[0][sub_k]], []))
-                        else:
-                            sub_key.append(sub_k)
-                    #Default values
+            output = parse_RIM_data(submission, form_data)
+    return output
+
+def parse_RIM_data(submission, form_data):
+    """
+    parse RIM data function used in get_kobo_RIM_detail(function above)  and while sync of kobo data locally
+    :param submission: 
+    :param form_data: 
+    :return: 
+    """
+    output = OrderedDict()
+    RIM_GENERAL = "group_zl6oo94"
+    RIM_TOILET = "group_te3dx03"
+    RIM_WATER = "group_zj8tc43"
+    RIM_WASTE = "group_ks0wh10"
+    RIM_DRAINAGE = "group_kk5gz02"
+    RIM_GUTTER = "group_bv7hf31"
+    RIM_ROAD = "group_xy9hz30"
+    section = {RIM_GENERAL: "General", RIM_TOILET: "Toilet", RIM_WATER: "Water",
+               RIM_WASTE: "Waste", RIM_DRAINAGE: "Drainage", RIM_GUTTER: "Gutter", RIM_ROAD: "Road"}
+
+    for data in form_data['children']:
+        if data['type'] == "group" and data['name'] in section.keys():
+            #Group wise get the entire list for questions
+            sect_form_data = trav(data)
+            #Find the list of keys available in the submission data
+            toil_keys = [ str(k) for k in submission[0].keys() if data['name'] in k]
+            count = 0
+            sub_key = []
+            sub = []
+            # Needed for toilet section which has repeat section
+            for sub_k in toil_keys:
+                if type(submission[0][sub_k]) == list:
+                    count = len(submission[0][sub_k])
+                    sub = submission[0][sub_k]
+                    sub_key.extend(sum([k.keys() for k in submission[0][sub_k]], []))
+                else:
+                    sub_key.append(sub_k)
+            #Default values
+            if data['name'] != RIM_TOILET:
+                output[section[data['name']]] = OrderedDict()
+            else:
+                output[section[data['name']]] = []
+                [output[section[data['name']]].append(OrderedDict()) for i in range(count)]
+            #Iterate through the list of questions for the group
+            for sect_form in sect_form_data:
+                key = [x for x in sub_key if x.endswith(sect_form['name'])]
+                #Check if the question has answer in the submission then only proceed further
+                if len(key)>0 and 'label' in sect_form:
                     if data['name'] != RIM_TOILET:
-                        output[section[data['name']]] = OrderedDict()
+                        #Fetch the answer for select one/text/select multiple type question
+                        ans = fetch_answer(sect_form, key, submission[0])
+                        output[section[data['name']]][sect_form['label']]  = ans
                     else:
-                        output[section[data['name']]] = []
-                        [output[section[data['name']]].append(OrderedDict()) for i in range(count)]
-                    #Iterate through the list of questions for the group
-                    for sect_form in sect_form_data:
-                        key = [x for x in sub_key if x.endswith(sect_form['name'])]
-                        #Check if the question has answer in the submission then only proceed further
-                        if len(key)>0 and 'label' in sect_form:
-                            if data['name'] != RIM_TOILET:
-                                #Fetch the answer for select one/text/select multiple type question
-                                ans = fetch_answer(sect_form, key, submission[0])
-                                output[section[data['name']]][sect_form['label']]  = ans
-                            else:
-                                #For toilet repeative section append the set of questions for all the CTB's if available
-                                for ind in range(count):
-                                    output[section[data['name']]][ind][sect_form['label']] = ""
-                                    if key[0] in sub[ind].keys():
-                                        ans = fetch_answer(sect_form, key, sub[ind])
-                                        output[section[data['name']]][ind][sect_form['label']] = ans
+                        #For toilet repeative section append the set of questions for all the CTB's if available
+                        for ind in range(count):
+                            output[section[data['name']]][ind][sect_form['label']] = ""
+                            if key[0] in sub[ind].keys():
+                                ans = fetch_answer(sect_form, key, sub[ind])
+                                output[section[data['name']]][ind][sect_form['label']] = ans
     return output
 
 @survey_mapping(SURVEYTYPE_CHOICES[0][0])

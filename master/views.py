@@ -496,7 +496,7 @@ def modelList(request):
 
 @csrf_exempt
 @login_required
-@user_passes_test(lambda u: u.is_superuser or u.groups.filter(name='sponsor').exists())
+@user_passes_test(lambda u: u.is_superuser or u.has_perm('master.can_generate_reports') or u.groups.filter(name='sponsor').exists())
 def familyrportgenerate(request):
 	"""Generate RIM Report"""
 	sid = request.POST['Sid']
@@ -506,7 +506,7 @@ def familyrportgenerate(request):
 	rp_slum_code = str(SlumObj.shelter_slum_code)
 
 	project_details = False
-	if not request.user.is_superuser:
+	if not request.user.is_superuser and not request.user.has_perm('master.can_generate_reports'):
 		project_details = SponsorProjectDetails.objects.filter(slum=SlumObj, sponsor__user=request.user, household_code__contains=int(houseno)).exists()
 	else:
 		project_details = True

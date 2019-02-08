@@ -261,7 +261,11 @@ class ElectoralWardFormAdmin(BaseModelAdmin):
         return obj.administrative_ward.name
 
     def city_name(self, obj):
-        return obj.administrative_ward.city.name.city_name
+        try:
+            return obj.administrative_ward.city.name.city_name
+        except:
+            return ''
+
 admin.site.register(ElectoralWard, ElectoralWardFormAdmin)
 
 #Ward office contact
