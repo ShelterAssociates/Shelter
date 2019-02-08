@@ -9,6 +9,7 @@ from django.conf import settings
 from itertools import chain
 from itertools import groupby
 from django.utils.dateparse import parse_datetime
+from component.kobotoolbox import parse_RIM_data
 import pdb
 
 
@@ -92,6 +93,50 @@ def fetch_data(form_code, latest_date):
 			records.extend(json.loads(html))
 			print url
 	return records
+
+def syn_rim_data():
+	cities = City.objects.filter(id__in=[1,2])
+	for city in cities:
+		survey = Survey.objects.filter(city__id = int(city.id), description__contains = 'RIM')
+		if survey:
+			kobo_survey = survey[0].kobotool_survey_id
+
+			latest_rim = SlumData.objects.filter(city=city).order_by('-submission_date').first()
+
+			latest_date = datetime.datetime(2000, 1, 1,0,0,0,0, pytz.UTC)
+			if latest_rim:
+				latest_date = latest_rim.submission_date
+
+			url = settings.KOBOCAT_FORM_URL + 'data/' + kobo_survey + '?format=json&query={"_submission_time":{"$gt":"'+str(timezone.localtime(latest_date))+'"}}'
+			req = urllib2.Request(url)
+			req.add_header('Authorization', settings.KOBOCAT_TOKEN)
+			resp = urllib2.urlopen(req)
+			content = resp.read()
+			submission = json.loads(content)
+
+			url1 = settings.KOBOCAT_FORM_URL + 'forms/' + kobo_survey + '/form.json'
+			req1 = urllib2.Request(url1)
+			req1.add_header('Authorization', settings.KOBOCAT_TOKEN)
+			resp1 = urllib2.urlopen(req1)
+			content1 = resp1.read()
+			form_data = json.loads(content1)
+		# To maintain the order in which questions are displayed we iterate through the form data
+		if len(submission) > 0:
+			for record in submission:
+				key = record['group_zl6oo94/group_uj8eg07/slum_name']
+				slum = Slum.objects.get(shelter_slum_code=key)
+				output = parse_RIM_data(record, form_data)
+				data = {
+							'slum' : slum,
+							'city' : city,
+							'submission_date' : convert_datetime(str(record['_submission_time'])),
+							'rim_data' : record,
+						}
+				slum_data, created= SlumData.objects.update_or_create(slum=slum, default=data)
+				slum_data.modified_on = datetime.datetime.now()
+				if created:
+					slum_data.created_on = datetime.datetime.now()
+				slum_data.save()
 
 def syn_rhs_followup_data():
 	count_o = []

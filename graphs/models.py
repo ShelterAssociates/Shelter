@@ -47,3 +47,24 @@ class FollowupData(models.Model):
 
    	def __unicode__(self):
 		return str(self.household_number) + ","+ str(self.slum)
+
+class SlumData(models.Model):
+	"""
+	Slum level RIM data collection.
+	"""
+	slum = models.ForeignKey(Slum)
+	city = models.ForeignKey(City)
+	submission_date = models.DateTimeField()
+	created_on = models.DateTimeField(default=datetime.datetime.now)
+	modified_on = models.DateTimeField(default=datetime.datetime.now)
+	rim_data = JSONField(null=True, blank=True)
+
+	class Meta:
+		verbose_name = 'Slum data'
+		verbose_name_plural = 'Slum data'
+
+	def __str__(self):
+		return str(self.slum)
+
+	def __unicode__(self):
+		return str(self.slum)
