@@ -101,7 +101,7 @@ def syn_rhs_followup_data():
 	no_rhs_but_ff = []
 	replaced_locked_houses = {}
 	double_houses = {}
-	only_followup_updated = 0
+	only_followup = 0
 	rhs_and_followup_updated = 0
 	total_records = 0
 	cities = City.objects.all()
@@ -129,8 +129,8 @@ def syn_rhs_followup_data():
 				latest_followup_date = latest_followup[0].submission_date
 
 			latest_date = latest_followup_date if latest_followup_date > latest_rhs_date else latest_rhs_date
-			if city.id == 8: #3,4 done
-				print timezone.localtime(latest_date)
+			if city.id == 3: #3,4 done
+				#print timezone.localtime(latest_date)
 				# url = build_url()
 				rhs_data = fetch_data(form_code, latest_date)
 				data_with_lables = fetch_labels_codes(rhs_data, form_code)
@@ -142,7 +142,7 @@ def syn_rhs_followup_data():
 					try:
 						slum = Slum.objects.get(shelter_slum_code = key)
 					except:
-						print key 
+						#print key 
 						slum = Slum.objects.get(shelter_slum_code = 272537891001)
 					for record in list_records:
 						#print record['Type_of_structure_occupancy'], record['_submission_time'], record['group_og5bx85/Type_of_survey']
@@ -153,8 +153,8 @@ def syn_rhs_followup_data():
 							if record['Type_of_structure_occupancy'] == 'Locked house':
 								count_l.append(record['Household_number'])
 								a.append(record['Household_number'])
-							print '******************************'
-							print record['Type_of_structure_occupancy']	, record['Household_number']
+							#print '******************************'
+							#print record['Type_of_structure_occupancy']	, record['Household_number']
 							try:
 								household_data = HouseholdData(
 
@@ -175,7 +175,7 @@ def syn_rhs_followup_data():
 					try:
 						slum = Slum.objects.get(shelter_slum_code = key)
 					except:
-						print key 
+						#print key 
 						slum = Slum.objects.get(shelter_slum_code = 272537891001)
 					for record in list_records:
 					 	if record['Type_of_structure_occupancy'] == 'Occupied house':
@@ -194,11 +194,9 @@ def syn_rhs_followup_data():
 											temp_hh.delete()
 
 								except Exception as e:
-									print "temp_hh error"
+									#print "temp_hh error"
 									print e
-
-								count_o.append(record['Household_number'])
-								a.append(record['Household_number'])
+									#.append(record['Household_number'])
 								
 								for i in record.iteritems():	
 									if 'group_oi8ts04' in i[0]:
@@ -228,7 +226,7 @@ def syn_rhs_followup_data():
 									flag_followup_in_rhs = True
 									)
 									followup_data.save()
-									print record['group_og5bx85/Type_of_survey']
+									#print record['group_og5bx85/Type_of_survey']
 								except Exception as e:
 									# print "error in followup rhs"
 									print e
@@ -239,7 +237,7 @@ def syn_rhs_followup_data():
 					try:
 						slum = Slum.objects.get(shelter_slum_code = key)
 					except:
-						print key 
+						#print key 
 						slum = Slum.objects.get(shelter_slum_code = 272537891001)
 					for record in list_records:
 						if record['Type_of_structure_occupancy'] == 'Occupied house':
@@ -253,7 +251,7 @@ def syn_rhs_followup_data():
 									
 								f_data.update({"_submission_time":record["_submission_time"], "_id":record["_id"]})
 								try:
-									print "adding folloup"
+									#print "adding followup"
 									flag = True if len(HouseholdData.objects.filter(household_number = record['Household_number'], slum = slum)) > 0 else False
 									followup_data = FollowupData(
 
@@ -262,14 +260,15 @@ def syn_rhs_followup_data():
 									city = city,
 									submission_date = convert_datetime(str(record['_submission_time'])) ,
 									followup_data = f_data,
-									flag_followup_in_rhs = flag
+									flag_followup_in_rhs = False
 									)
 									followup_data.save()
-									only_followup_updated +=1
+									only_followup +=1
+									print flag
 								except Exception as e:
-									print "error in followup"
+									#print "error in followup"
 									print e
-									print record['Household_number']
+									#print record['Household_number']
 		
 
 		survey_forms_ff = Survey.objects.filter(city__id = int(city.id), description__contains = 'FF')
@@ -284,7 +283,7 @@ def syn_rhs_followup_data():
 					try:
 						slum = Slum.objects.get(shelter_slum_code = key)
 					except:
-						print key 
+						# key 
 						slum = Slum.objects.get(shelter_slum_code = 272537891001)
 					for record in list_records:
 						try:
@@ -292,7 +291,8 @@ def syn_rhs_followup_data():
 							temp.ff_data = record
 							temp.save()
 						except:
-							print no_rhs_but_ff.append(record['group_vq77l17/Household_number'] + " in" + str(slum) + " has a factesheet but no rhs/followup record") 
+							#print no_rhs_but_ff.append(record['group_vq77l17/Household_number'] + " in" + str(slum) + " has a factesheet but no rhs/followup record") 
+							print e
 			
 
 	# print "unoccupied =" + str(count_u) + str(len(count_u))
@@ -301,7 +301,7 @@ def syn_rhs_followup_data():
 			# print "All = " + str(a)	
 			# print "Only RHS updated = " + str(rhs_and_followup_updated)
 			# print "Only Follow-up updated = " + str(only_followup_updated)
-	print "no rhs but ff = " + str(no_rhs_but_ff) 
+	print "no rhs but ff = " + str(only_followup) 
 			# print "replaced_locked_houses : " + str(replaced_locked_houses)
 			# print "double_houses : " + str(double_houses)
 							
