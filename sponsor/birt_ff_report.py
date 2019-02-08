@@ -5,12 +5,29 @@ import subprocess
 import sys
 import os
 import shutil
+from multiprocessing import Pool
+#import datetime
+from concurrent import futures
 
 ZIP_PATH='FFReport'
+def report_exec(cmd):
+    try:
+        pass#os.system(cmd)
+    except Exception as e:
+        print e
+    p = subprocess.Popen(cmd, shell = True,#[sys.executable, os.path.join(settings.BASE_DIR, 'sponsor', 'birt_ff_report.py')],
+                                    stdout=subprocess.PIPE,
+                                    stderr=subprocess.PIPE)
+    x,y = p.communicate()
+    return (x,y)
+
 class FFReport(object):
     """Class to generate family factsheet report"""
     def __init__(self, record_id):
         self.project_detail = record_id
+
+    #def report_exec(self, cmd):
+    #	os.system(cmd)
 
     def generate(self):
         cipher = AESCipher()
@@ -31,16 +48,26 @@ class FFReport(object):
             key = cipher.encrypt(str(rp_slum_code) + '|' + str(household_code) + '|' + str(logged_sponsor.user.id))
             file = os.path.join(folder_name, "household_code_" + str(household_code) + ".pdf")
             com = settings.BIRT_REPORT_CMD.format(file , key)
-            print com
-            #execute_command.append(com)
-            p = subprocess.Popen(com, shell = True,#[sys.executable, os.path.join(settings.BASE_DIR, 'sponsor', 'birt_ff_report.py')],
-                                            stdout=subprocess.PIPE,
-                                            stderr=subprocess.PIPE)
+            #print com
+            execute_command.append(com)
+            #p = subprocess.Popen(com, shell = True,#[sys.executable, os.path.join(settings.BASE_DIR, 'sponsor', 'birt_ff_report.py')],
+            #                                stdout=subprocess.PIPE,
+            #                                stderr=subprocess.PIPE)
             #x,y = p.communicate()
 
             #print x,y
-            os.system(com)
-
+            #os.system(com)
+        #print(datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
+	try:
+	    with futures.ThreadPoolExecutor(max_workers=3) as pool:
+                pool.map(report_exec, execute_command)
+            #p = Pool(2)
+	    #p.map(report_exec, execute_command)
+	    #p.close()
+	    #p.join()
+	except Exception as e:
+            print e
+        #print(datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
         shutil.make_archive(folder_name, 'zip',folder_name)
         delete_command = "rm -rf " + folder_name
         os.system(delete_command)
