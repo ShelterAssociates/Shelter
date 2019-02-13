@@ -18,3 +18,12 @@ class FollowupDataAdmin(admin.ModelAdmin):
 	ordering = ['slum', 'household_number']
 	raw_id_fields = ['slum']
 admin.site.register(FollowupData, FollowupDataAdmin)
+
+class RIMDataAdmin(admin.ModelAdmin):
+	list_filter = ['slum__electoral_ward__administrative_ward__city']
+	list_display = ('rim_data','slum','created_on','submission_date')
+	search_fields = ['slum', 'city','created_on', 'submission_date']
+	ordering = ['slum']
+	raw_id_fields = ['slum']
+
+admin.site.register(SlumData, RIMDataAdmin)
