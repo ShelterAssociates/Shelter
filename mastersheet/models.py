@@ -462,6 +462,7 @@ def handle_shifted_material(sender ,instance, **kwargs):
 
 @receiver(pre_save, sender = InvoiceItems)
 def check_duplicate_house(sender, instance, **kwargs):
+    errors = []
     if instance.id is not None:
         all_records = InvoiceItems.objects.filter(slum = instance.slum).exclude(id = instance.id)
     else:
@@ -471,8 +472,15 @@ def check_duplicate_house(sender, instance, **kwargs):
         if record.material_type == instance.material_type:
             common_households = list(set(record.household_numbers).intersection(instance.household_numbers))
             if len(common_households) != 0:
-                    raise Exception("household numbers "+str(common_households)+ " are repeated in " +str(record.invoice)+ " and "+str(instance.invoice))
+                errors.append("household numbers "+str(common_households)+ " are repeated in " +str(record.invoice)+ " and "+str(instance.invoice))
+                    #raise Exception("household numbers "+str(common_households)+ " are repeated in " +str(record.invoice)+ " and "+str(instance.invoice))
                     #messages.error(request, "household numbers "+str(common_households)+ " are repeated in " +str(record.vendor.name)+ " and "+instance.vendor.name)
+    
+    if len(errors) != 0:
+        raise Exception(errors)
+    else:
+        pass
+
                     #return Exception("household numbers "+str(common_households)+ " are repeated in " +str(record.vendor.name)+ " and "+instance.vendor.name)
 
 def check_bool(s):

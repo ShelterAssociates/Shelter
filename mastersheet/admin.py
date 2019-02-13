@@ -3,9 +3,19 @@ from .models import *
 from .forms import VendorHouseholdInvoiceDetailForm, SBMUploadForm, ToiletConstructionForm, CommunityMobilizationForm
 import datetime
 from django.contrib.auth.models import User
+from django.utils.html import format_html
 
 
 
+# class CustomButton():
+#     class Media:
+#         js = ['js/copy_above.js']
+
+#     def add_custom_button(self, obj):
+#         print 'hello there'
+#         return format_html(
+#                 '<button type="button" class="btn btn-success btn-sm"  data-target="#kmlModal" href="{}">Copy above</button>'
+#             )
 
 class BaseAdmin(admin.ModelAdmin):
     '''
@@ -26,12 +36,31 @@ class VendorTypeAdmin(admin.ModelAdmin):
 admin.site.register(VendorType, VendorTypeAdmin)
 
 class InvoiceItemsInline(admin.TabularInline):
-    """Display panel of WardOfficeContacts Model"""
     model = InvoiceItems
+    fields = ['copy_above','invoice', 'material_type','phase','slum','household_numbers','quantity','unit','rate','tax','total']
+    readonly_fields = ('copy_above',)
     search_fields = ('name',)
     raw_id_fields = ('slum',)
     extra = 0
     min_num = 1
+
+    class Media:
+        js = ['js/copy_above.js']
+
+    def copy_above(self, obj):
+        print 'hello there'
+        return '<button type="button" onclick = "copy_this(this)" class="b glyphicon glyphicon-copy" ></button>'
+    copy_above.allow_tags=True
+
+    def save_formset(self, request, form, formset, change):
+        print 'Hello'
+        super(InvoiceItemsInline, self).save_formset(self, request, form, formset, change)
+        if formset.model == InvoiceItems:
+            obj = formset.instance
+            if obj.reformat:
+                obj.delete()
+                # creating new objects
+            obj.save()
 
     exclude = ('created_by','created_on','modified_by','modified_on',)
 
@@ -48,14 +77,15 @@ class InvoiceAdmin(admin.ModelAdmin):
     class Media:
         js = ['js/calculate_total_invoice.js']
 
-    def save_related(self,request, form, formset, change):
-
+    def save_related(self,request, form, formset, change):        
         inst = formset[0].save(commit = False)
+        print inst
         for instance in inst:
             instance.created_by = request.user
             instance.modified_by = request.user
             instance.save()
-
+        super(InvoiceAdmin, self).save_related(request, form, formset, change)
+    
     def save_model(self, request, obj, form, change):
         user = User.objects.get(pk = request.user.id)
         if not obj.pk :
@@ -80,9 +110,13 @@ admin.site.register(MaterialType, MaterialTypeAdmin)
 
 class InvoiceItemsAdmin(admin.ModelAdmin):
     list_display = ('invoice', 'material_type','phase','slum','household_numbers','quantity','unit','rate','tax','total')
-    search_fields = ['invoice', 'material_type','slum']
+    search_fields = ['invoice__vendor__name', 'material_type__name','slum__name', 'phase']
     ordering = ['invoice']
     exclude = ('created_by','created_on','modified_by','modified_on',)
+
+    # def save_model(self, request, obj, form, change):
+    #     print 'gotcha'
+    #     super(InvoiceItemAdmin, self).save_model(request, obj, form, change)
 
 admin.site.register(InvoiceItems, InvoiceItemsAdmin)
 
