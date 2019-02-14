@@ -1141,7 +1141,7 @@ def accounts_excel_generation(request):
             sheet1.write(i, 0, str(inner_v.invoice.invoice_date))
             sheet1.write(i, 1, inner_v.invoice.invoice_number)
             sheet1.write(i, 2, inner_v.invoice.vendor.name)
-            sheet1.write(i, 3, str(sponsor.get(slum__id = 1008, household_code__contains = 440).sponsor.organization_name))
+            sheet1.write(i, 3, str(sponsor.get(slum__id = 1094, household_code__contains = k[0]).sponsor.organization_name))
             sheet1.write(i, 4, inner_v.slum.electoral_ward.administrative_ward.city.name.city_name)
             sheet1.write(i, 5, inner_v.slum.name)
             sheet1.write(i, 6, k[0])
