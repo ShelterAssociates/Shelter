@@ -17,5 +17,6 @@ urlpatterns = [
     url(r'^columns/$', define_columns, name="define_columns"),
     url(r'^show/mastersheet/$', renderMastersheet, name="renderMastersheet"),
     url(r'^list/show/$', masterSheet, name="masterSheet"),
-    url(r'^sync/slum/$', sync_kobo_data, name='sync_kobo_data')
+    url(r'^sync/slum/$', sync_kobo_data, name='sync_kobo_data'),
+    url(r'^account/excel/$', accounts_excel_generation, name='accounts_excel_generation')
 ]
