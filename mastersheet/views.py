@@ -1,3 +1,4 @@
+from __future__ import division
 from django.shortcuts import render
 from django.http import HttpResponse, HttpResponseForbidden
 from django.contrib.auth.decorators import user_passes_test, permission_required
@@ -22,6 +23,10 @@ from collections import defaultdict
 import datetime
 import itertools
 from django.db.models.functions import Length
+
+import xlwt
+from xlwt import Workbook
+from mastersheet.models import *
 
 #The views in this file correspond to the mastersheet functionality of shelter app.
 def give_details(request):
@@ -1094,3 +1099,73 @@ def report_table_cm_activity_count(request):
             else:
                 report_table_data_cm_activity_count[str(level_id)].update(data) 
     return HttpResponse(json.dumps(map(lambda x:report_table_data_cm_activity_count[x], report_table_data_cm_activity_count)), content_type="application/json")
+
+@user_passes_test(lambda u: u.groups.filter(name = "Account").exists() or u.is_superuser )
+def accounts_excel_generation(request):
+    wb = Workbook()
+    sheet1 = wb.add_sheet('Sheet1')
+    sheet1.write(0, 0,'Date')
+    sheet1.write(0, 1,'Invoice No')
+    sheet1.write(0, 2,'Name of Vendor')
+    sheet1.write(0, 3, 'Donar Name')
+    sheet1.write(0, 4, 'City')
+    sheet1.write(0, 5, 'Slum')
+    sheet1.write(0, 6, 'House No')
+    sheet1.write(0, 7, 'Phase I')
+    sheet1.write(0, 8, 'Phase II')
+    sheet1.write(0, 9, 'Phase III')
+    sheet1.write(0, 10, 'Type of Material')
+    sheet1.write(0, 11, 'Quantity')
+    sheet1.write(0, 12, 'Rate')
+    sheet1.write(0, 13, 'Gross Amount')
+    sheet1.write(0, 14, 'Tax Rate')
+    sheet1.write(0, 15, 'Tax Amount')
+    sheet1.write(0, 16, 'Transport Charges')
+    sheet1.write(0, 17, 'Unloading Charges')
+    sheet1.write(0, 18, 'Amount')
+
+    invoiceItems = InvoiceItems.objects.filter(slum__id = 1094)
+    dict_of_dict = defaultdict(dict)
+    sponsor = SponsorProjectDetails.objects.all()
+
+    for i in invoiceItems:
+        for j in i.household_numbers:
+            try:
+                dict_of_dict[(j, i.slum)].update({i.material_type:i})
+            except:
+                dict_of_dict[(j, i.slum)] = {i.material_type:i}
+           
+    i = 1
+    for k,v in dict_of_dict.iteritems():
+        for inner_k, inner_v in v.iteritems():
+            sheet1.write(i, 0, str(inner_v.invoice.invoice_date))
+            sheet1.write(i, 1, inner_v.invoice.invoice_number)
+            sheet1.write(i, 2, inner_v.invoice.vendor.name)
+            sheet1.write(i, 3, str(sponsor.get(slum__id = 1008, household_code__contains = 440).sponsor.organization_name))
+            sheet1.write(i, 4, inner_v.slum.electoral_ward.administrative_ward.city.name.city_name)
+            sheet1.write(i, 5, inner_v.slum.name)
+            sheet1.write(i, 6, k[0])
+            if inner_v.phase == '1':
+                sheet1.write(i, 7, 'Phase - I')
+            if inner_v.phase == '2':
+                sheet1.write(i, 8, 'Phase - II')
+            if inner_v.phase == '3':
+                sheet1.write(i, 9, 'Phase - III')
+           
+            sheet1.write(i, 10, inner_k.name)
+            sheet1.write(i, 11, inner_v.quantity)
+            sheet1.write(i, 12, inner_v.rate)
+            sheet1.write(i, 13, inner_v.quantity * inner_v.rate)
+            sheet1.write(i, 14, inner_v.tax)
+            sheet1.write(i, 15, round((float(inner_v.tax)/100) * float(inner_v.quantity) * float(inner_v.rate) , 2))
+            sheet1.write(i, 16, inner_v.invoice.transport_charges)
+            sheet1.write(i, 17, inner_v.invoice.loading_unloading_charges)
+            sheet1.write(i, 18, inner_v.total)  
+            i = i + 1
+            
+    fname = 'aa.xlsx'
+    wb.save(fname)
+    response = HttpResponse(content_type="application/ms-excel")
+    response['Content-Disposition'] = 'attachment; filename=%s' % str(fname)
+    wb.save(response)
+    return response
