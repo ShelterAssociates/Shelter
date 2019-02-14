@@ -1137,11 +1137,15 @@ def accounts_excel_generation(request):
            
     i = 1
     for k,v in dict_of_dict.iteritems():
+        try:
+            s = str(sponsor.get(slum__id = 1094, household_code__contains = k[0]).exclude(sponsor.organization_name = 'SBM Toilet').sponsor.organization_name)
+        except Exception as e:
+            s = 'Sponsor Error'
         for inner_k, inner_v in v.iteritems():
             sheet1.write(i, 0, str(inner_v.invoice.invoice_date))
             sheet1.write(i, 1, inner_v.invoice.invoice_number)
             sheet1.write(i, 2, inner_v.invoice.vendor.name)
-            sheet1.write(i, 3, str(sponsor.get(slum__id = 1094, household_code__contains = k[0]).sponsor.organization_name))
+            sheet1.write(i, 3, s)
             sheet1.write(i, 4, inner_v.slum.electoral_ward.administrative_ward.city.name.city_name)
             sheet1.write(i, 5, inner_v.slum.name)
             sheet1.write(i, 6, k[0])
@@ -1164,7 +1168,7 @@ def accounts_excel_generation(request):
             i = i + 1
             
     fname = 'aa.xlsx'
-    wb.save(fname)
+    #wb.save(fname)
     response = HttpResponse(content_type="application/ms-excel")
     response['Content-Disposition'] = 'attachment; filename=%s' % str(fname)
     wb.save(response)
