@@ -539,6 +539,7 @@ $(document).ready(function() {
                                             }
 
                                     }
+                                    console.log(data);
                                     return data;
                                         
                                     },
@@ -670,13 +671,13 @@ $(document).ready(function() {
                 $.each(columns_defs['buttons'], function(key,val){
                     html_table = $("#example");
                     //html_table.find("thead>tr>th:eq(0)").addClass("trFirst");
-                    html_table.find("thead>tr>th:eq("+(val[0]-12)+")").addClass("trFirst");
+                    html_table.find("thead>tr>th:eq("+(val[0]-13)+")").addClass("trFirst");
                     $.each(val.slice(1,val.length-1),function(k,v){
-                        html_table.find("thead>tr>th:eq("+(v-12)+")").addClass("trMiddle");
+                        html_table.find("thead>tr>th:eq("+(v-13)+")").addClass("trMiddle");
                         
                     });
                     $.each(val,function(k,v){
-                        var va = v-12;
+                        var va = v-13;
                         if (String(key) === "RHS"){
                                 html_table.find("thead>tr>th:eq("+va+")").css('background-color', '#d6d0dd');//
                                 //background-color: lightblue;

@@ -130,7 +130,7 @@ def masterSheet(request, slum_code = 0, FF_code = 0, RHS_code = 0 ):
             temp_FF = {obj_FF['group_vq77l17/Household_number']: obj_FF for obj_FF in formdict_family_factsheet}
             temp_FF_keys = temp_FF.keys()
         # Daily Reporting - fetching data
-        toilet_reconstruction_fields = ['slum', 'household_number', 'agreement_date_str', 'agreement_cancelled',
+        toilet_reconstruction_fields = ['slum','slum__name','household_number', 'agreement_date_str', 'agreement_cancelled',
                                         'septic_tank_date_str', 'phase_one_material_date_str',
                                         'phase_two_material_date_str', 'phase_three_material_date_str',
                                         'completion_date_str', 'status', 'comment','pocket', 'p1_material_shifted_to','p2_material_shifted_to','p3_material_shifted_to','st_material_shifted_to','id']
@@ -164,7 +164,7 @@ def masterSheet(request, slum_code = 0, FF_code = 0, RHS_code = 0 ):
         temp_daily_reporting = {obj_DR['household_number']: obj_DR for obj_DR in daily_reporting_data}
         temp_DR_keys = temp_daily_reporting.keys()
         # SBM - fetching data
-        sbm_fields = ['slum', 'household_number', 'name', 'application_id', 'photo_uploaded', 'created_date_str', 'id', 'phone_number', 'aadhar_number', 'photo_verified', 'photo_approved', 'application_verified', 'application_approved', 'sbm_comment']
+        sbm_fields = ['slum', 'slum__name','household_number', 'name', 'application_id', 'photo_uploaded', 'created_date_str', 'id', 'phone_number', 'aadhar_number', 'photo_verified', 'photo_approved', 'application_verified', 'application_approved', 'sbm_comment']
         sbm_data = SBMUpload.objects.extra(
             select={'created_date_str': "to_char(created_date, 'YYYY-MM-DD ')"}).filter(
             slum__shelter_slum_code=slum_code[0][0])
@@ -173,7 +173,7 @@ def masterSheet(request, slum_code = 0, FF_code = 0, RHS_code = 0 ):
         temp_sbm = {obj_DR['household_number']: obj_DR for obj_DR in sbm_data}
         temp_sbm_keys = temp_sbm.keys()
         # Community Mobilization - fetching data
-        community_mobilization_fields = ['slum', 'household_number', 'activity_type', 'activity_date_str','id']
+        community_mobilization_fields = ['slum', 'slum__name','household_number', 'activity_type', 'activity_date_str','id']
         community_mobilization_data = CommunityMobilization.objects.extra(
             select={'activity_date_str': "to_char(activity_date, 'YYYY-MM-DD ')"}).filter(
             slum__shelter_slum_code=slum_code[0][0])
@@ -264,7 +264,12 @@ def masterSheet(request, slum_code = 0, FF_code = 0, RHS_code = 0 ):
 
 
         for key, x in dummy_formdict.iteritems():
-            
+            try:
+                if x['slum__name']:
+                    continue
+            except Exception as e:
+                
+                x['slum__name'] = slum_code[0][3] 
             temp = x["_id"]
             x['ff_id'] = None
             x['ff_xform_id_string'] = None
@@ -372,6 +377,8 @@ def define_columns(request):
         {"data": "delay_flag", "title": "delay_flag" , "bVisible":False},#9
         {"data": "status", "title": "Dummy Status", "bVisible":False},#10
         {"data": "no_rhs_flag", "title": "no_rhs_flag" , "bVisible":False},#11
+        {"data": "slum__name", "title": "Slum Name" , "bVisible":False},
+
         
         
         {"data": "Household_number", "title": "Household Number" ,"className": "add_hyperlink"},#1
@@ -472,11 +479,11 @@ def define_columns(request):
     ]
     final_data = {}
     final_data['buttons'] = collections.OrderedDict()
-    final_data['buttons']['RHS'] = range(13,31)
-    final_data['buttons']['Follow-up'] = range(31,49) 
-    final_data['buttons']['Family factsheet'] = range(49,56) 
-    final_data['buttons']['SBM'] = range(56,66)
-    final_data['buttons']['Construction status'] = range(66,81)
+    final_data['buttons']['RHS'] = range(14,32)#range(13,31)
+    final_data['buttons']['Follow-up'] = range(32,50)#range(31,49) 
+    final_data['buttons']['Family factsheet'] = range(50,57)#range(49,56) 
+    final_data['buttons']['SBM'] = range(57,67)#range(56,66)
+    final_data['buttons']['Construction status'] = range(67,82)#range(66,81)
 
     # We define the columns for community mobilization and vendor details in a dynamic way. The
     # reason being these columns are prone to updates and additions.
@@ -1138,7 +1145,7 @@ def accounts_excel_generation(request):
     i = 1
     for k,v in dict_of_dict.iteritems():
         try:
-            s = str(sponsor.get(slum__id = 1094, household_code__contains = k[0]).exclude(sponsor.organization_name = 'SBM Toilet').sponsor.organization_name)
+            s = str(sponsor.filter(slum__id = 1094, household_code__contains = k[0]).exclude(sponsor__organization_name = 'SBM Toilets')[0].sponsor.organization_name)
         except Exception as e:
             s = 'Sponsor Error'
         for inner_k, inner_v in v.iteritems():
@@ -1162,9 +1169,23 @@ def accounts_excel_generation(request):
             sheet1.write(i, 13, inner_v.quantity * inner_v.rate)
             sheet1.write(i, 14, inner_v.tax)
             sheet1.write(i, 15, round((float(inner_v.tax)/100) * float(inner_v.quantity) * float(inner_v.rate) , 2))
-            sheet1.write(i, 16, inner_v.invoice.transport_charges)
-            sheet1.write(i, 17, inner_v.invoice.loading_unloading_charges)
-            sheet1.write(i, 18, inner_v.total)  
+            tc = 0
+            luc = 0
+            total_hh = 1
+            if inner_v.invoice.transport_charges != 0:
+                total_hh = 0
+                for x in inner_v.invoice.invoiceitems_set.all():
+                    total_hh += len(x.household_numbers)
+                tc = inner_v.invoice.transport_charges / total_hh
+            if inner_v.invoice.loading_unloading_charges != 0:
+                total_hh = 0
+                for x in inner_v.invoice.invoiceitems_set.all():
+                    total_hh += len(x.household_numbers)
+                tc = inner_v.invoice.transport_charges / total_hh
+
+            sheet1.write(i, 16, tc)
+            sheet1.write(i, 17, luc)
+            sheet1.write(i, 18, inner_v.total / len(inner_v.household_numbers))  
             i = i + 1
             
     fname = 'aa.xlsx'
