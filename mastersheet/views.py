@@ -1138,7 +1138,7 @@ def accounts_excel_generation(request):
     i = 1
     for k,v in dict_of_dict.iteritems():
         try:
-            s = str(sponsor.get(slum__id = 1094, household_code__contains = k[0]).exclude(sponsor.organization_name = 'SBM Toilet').sponsor.organization_name)
+            s = str(sponsor.filter(slum__id = 1094, household_code__contains = k[0]).exclude(sponsor__organization_name = 'SBM Toilets')[0].sponsor.organization_name)
         except Exception as e:
             s = 'Sponsor Error'
         for inner_k, inner_v in v.iteritems():
@@ -1162,12 +1162,29 @@ def accounts_excel_generation(request):
             sheet1.write(i, 13, inner_v.quantity * inner_v.rate)
             sheet1.write(i, 14, inner_v.tax)
             sheet1.write(i, 15, round((float(inner_v.tax)/100) * float(inner_v.quantity) * float(inner_v.rate) , 2))
-            sheet1.write(i, 16, inner_v.invoice.transport_charges)
-            sheet1.write(i, 17, inner_v.invoice.loading_unloading_charges)
-            sheet1.write(i, 18, inner_v.total)  
+            #sheet1.write(i, 16, inner_v.invoice.transport_charges)
+            #sheet1.write(i, 17, inner_v.invoice.loading_unloading_charges)
+            tc = 0
+            luc = 0
+            total_hh = 1
+            if inner_v.invoice.transport_charges != 0:
+                total_hh = 0
+                for x in inner_v.invoice.invoiceitems_set.all():
+                    total_hh += len(x.household_numbers)
+                tc = inner_v.invoice.transport_charges / total_hh
+            if inner_v.invoice.loading_unloading_charges != 0:
+                total_hh = 0
+                for x in inner_v.invoice.invoiceitems_set.all():
+                    total_hh += len(x.household_numbers)
+                tc = inner_v.invoice.transport_charges / total_hh
+
+            sheet1.write(i, 16, round(tc,2))
+            sheet1.write(i, 17, round(luc,2))
+            sheet1.write(i, 18, round(inner_v.total / len(inner_v.household_numbers) + tc + luc, 2)) 
+ 
             i = i + 1
             
-    fname = 'aa.xlsx'
+    fname = 'aa.xls'
     #wb.save(fname)
     response = HttpResponse(content_type="application/ms-excel")
     response['Content-Disposition'] = 'attachment; filename=%s' % str(fname)
