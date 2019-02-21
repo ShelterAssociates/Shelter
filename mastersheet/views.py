@@ -264,11 +264,7 @@ def masterSheet(request, slum_code = 0, FF_code = 0, RHS_code = 0 ):
 
 
         for key, x in dummy_formdict.iteritems():
-            try:
-                if x['slum__name']:
-                    continue
-            except Exception as e:
-                x['slum__name'] = slum_code[0][3] 
+            x['slum__name']= slum_code[0][3]
             temp = x["_id"]
             x['ff_id'] = None
             x['ff_xform_id_string'] = None
