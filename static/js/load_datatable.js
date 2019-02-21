@@ -591,7 +591,6 @@ $(document).ready(function() {
                         table.draw();
                 } );
                 $.fn.dataTable.ext.search.push(
-
                     function( settings, data, dataIndex ) {
 
                         if (boxes.indexOf(data[9])> -1 || ($("#no_rhs:checked").length == 1 && data[11].length >1) || ($("#wo:checked").length == 1 && data[10] == "Written-off") || ($("#md:checked").length == 1 && (data[0] != '' || data[1] != ''||data[2] != ''||data[3] != '')) || ($("#ad:checked").length == 1 && (data[4] != '' || data[5] != ''||data[6] != ''||data[7] != '' || data[8] != ''))){
