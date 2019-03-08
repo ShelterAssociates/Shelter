@@ -263,9 +263,7 @@ def masterSheet(request, slum_code = 0, FF_code = 0, RHS_code = 0 ):
 
 
 
-        for key, x in dummy_formdict.iteritems():
-
-        
+        for key, x in dummy_formdict.iteritems():       
             try:
                 if len(x['p1_material_shifted_to']) != 0 or len(x['p2_material_shifted_to']) != 0 or len(x['p3_material_shifted_to']) != 0 or len(x['st_material_shifted_to'])!=0:
                     x['material_shifts'] = '#f9cb9f'
@@ -275,6 +273,7 @@ def masterSheet(request, slum_code = 0, FF_code = 0, RHS_code = 0 ):
                 x['material_shifts'] = None
             
             x['slum__name'] = slum_code[0][3] 
+
             temp = x["_id"]
             x['ff_id'] = None
             x['ff_xform_id_string'] = None
@@ -1227,13 +1226,12 @@ def accounts_excel_generation(request):
                 for x in inner_v.invoice.invoiceitems_set.all():
                     total_hh += len(x.household_numbers)
                 tc = inner_v.invoice.transport_charges / total_hh
-
-            sheet1.write(i, 16, tc)
-            sheet1.write(i, 17, luc)
-            sheet1.write(i, 18, inner_v.total / len(inner_v.household_numbers))  
+            sheet1.write(i, 16, round(tc,2))
+            sheet1.write(i, 17, round(luc,2))
+            sheet1.write(i, 18, round(inner_v.total / len(inner_v.household_numbers) + tc + luc, 2)) 
             i = i + 1
             
-    
+
     #wb.save(fname)
     response = HttpResponse(content_type="application/ms-excel")
     response['Content-Disposition'] = 'attachment; filename=%s' % str(fname).replace(' ', '_')
