@@ -6,6 +6,7 @@
 <link rel = "stylesheet" type="text/css" href = "{% static "css/jquery.dataTables.min.css" %}">
 <link rel = "stylesheet" type="text/css" href = "{% static "admin/css/forms.css" %}">
 <link rel = "stylesheet" type="text/css" href = "{% static "css/mastersheet_stylesheet.css" %}">
+<link rel = "stylesheet" type="text/css" href = "{% static "css/bootstrap-datepicker3.min.css" %}">
 
 {%endblock%}
 {% block extrahead %}
@@ -17,8 +18,19 @@
 <script src = "{% static "js/jszip.min.js" %}"></script>
 <script src = "{% static "admin/js/admin/RelatedObjectLookups.js" %}"></script>
 <script src = "{% static "js/load_datatable.js" %}"></script>
+<script src = "{% static "js/bootstrap-datepicker.js" %}"></script>
 <script>
      $(document).ready(function() {
+        $(function() {
+            $( ".datepicker" ).datepicker({
+
+              
+              format: 'dd-mm-yyyy',
+              todayHighlight: true,
+              autoclose: true,
+              yearRange: "1900:2012",
+            });
+          });
         $('.related-lookup').click(function(e) {
             e.preventDefault();
             showRelatedObjectLookupPopup(this);
@@ -55,7 +67,8 @@
         <button type="button" id="btnUpload" class="btn btn-success"  data-target="#myModal"><span class="glyphicon glyphicon-upload"></span> Upload</button><!-- data-toggle="modal" -->
         {%endif%}
         {% if request.user|has_group:"Account" %}
-        <a type="button" href = "/mastersheet/account/excel/" id="btnAccount" class="btn btn-success"><span class="glyphicon glyphicon-download"></span> Download Excel</a>
+        <a type="button" id="btnAccount" class="btn btn-success"><span class="glyphicon glyphicon-download"></span> Download Excel</a>
+        <!-- <a type="button" href = "/mastersheet/account/excel/" id="btnAccount" class="btn btn-success"><span class="glyphicon glyphicon-download"></span> Download Excel</a> -->
         {%endif%}
         <input type="hidden" class="hide" id="slum_code" value="{{slum_code}}"/>
 
@@ -75,6 +88,7 @@
           <div id = "upload_file_field" class="modal-body">
                 {{ file_form.as_p}}
           </div>
+
           <div id = 'success_log'>
               
           </div>
@@ -93,6 +107,44 @@
         </div>
       </div>
     </div>
+    {%endif%}
+    {% if request.user|has_group:"Account" %}
+    <div class="modal fade" id="accountModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
+      <div class="modal-dialog" role="document">
+        <div class="modal-content">
+          <div class="modal-header">
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+            <h4 class="modal-title" id="accountModal_myModalLabel">Download Excel file</h4>
+          </div>
+          <form id="accountModal_selection" name="accountModal_selection" method = "POST" enctype="multipart/form-data" action='/mastersheet/account/excel/'>{% csrf_token %}
+          <div id = "accountModal_selection_slum" name = "accountModal_selection_slum" class="modal-body">
+                {{ form_account.as_table}}
+          </div>
+          <!-- <div class = "display_line">
+            <form class = " form-group form-inline form-horizontal display_line" id = "date_form">{% csrf_token %}
+                <label>Start Date :<input class = "interval display_line" type = "date" id = "startDate" name="date" placeholder = "Start date"></label>
+                <label>End Date :<input class = "interval display_line" type = "date" id = "endDate" name="date" placeholder = "End date"></label>
+            </form> 
+        </div> -->
+          <div id = 'accountModal_success_log'>
+              
+          </div>
+          <div id = 'accountModal_error_log' >
+            
+                <!-- The error msg for the file upload modal is to be displayed in the modal
+                instead of alert -->
+           
+          </div>
+
+          <div class="modal-footer">
+            <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+            <button  type="button" id = "downloadExcel" class="btn btn-primary">Download Excel</button>
+            <!-- <a type="button" id="btnAccount" class="btn btn-success"><span class="glyphicon glyphicon-download"></span> Download Excel</a> --><!--href = "/mastersheet/account/excel/" -->
+          </div>
+          </form>
+        </div>
+      </div>
+    </div> 
     {%endif%}
 
      <div id="buttons" style="padding-top:20px;"></div>
@@ -122,6 +174,11 @@
                 <span style="background-color: #aaa4f4; " class="checkmark"></span>
             </label>
 
+            <label class="custom_checkbox">
+                <input type="checkbox"  id = "material_shift" value = "#f9cb9f" name = "checkbox_filter">&nbsp;'Material Shift' cases
+                <span style="background-color: #f9cb9f; " class="checkmark"></span>
+            </label>
+
         </div>
     </div>
     <div class="col-md-2">
@@ -145,6 +202,11 @@
             <label class="custom_checkbox">
                 <input type="checkbox"   id = "no_rhs" value = "#eba6fc">&nbsp;RHS is not done
                 <span style="background-color:  #eba6fc;" class="checkmark"></span>
+            </label>
+
+            <label class="custom_checkbox">
+                <input type="checkbox"  id = "incorrect_COD" value = "#babfb1" name = "checkbox_filter">&nbsp;Incorrect 'CPoD'
+                <span style="background-color: #babfb1; " class="checkmark"></span>
             </label>
             
         </div> 
