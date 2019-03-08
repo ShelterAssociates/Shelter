@@ -55,10 +55,12 @@ $(document).ready(function() {
 
                 // Adding family factsheet photo download URLs
                 var tmp_download_TF = columns_defs['buttons']['Family factsheet'];
+                var start_of_FF = columns_defs['buttons']['Family factsheet'][0];
+
                 for (i = 0 ; i < tmp_download_TF.length ; i ++ ){
 
                         //Toilet photo
-                        columns_defs['data'][56]['render']= function ( data, type, row,meta ) {
+                        columns_defs['data'][start_of_FF+6]['render']= function ( data, type, row,meta ) {
                             if(typeof data != 'undefined'){
                                 url_download_TF = row['toilet_photo_url'];
                                 if(type === 'display'){
@@ -70,7 +72,7 @@ $(document).ready(function() {
                         }
                     
                     //Family photo
-                        columns_defs['data'][55]['render']= function ( data, type, row,meta ) {
+                        columns_defs['data'][start_of_FF+5]['render']= function ( data, type, row,meta ) {
                             if(typeof data != 'undefined'){
                                 url_download_FF = row['family_photo_url'];
                                 if(type === 'display'){

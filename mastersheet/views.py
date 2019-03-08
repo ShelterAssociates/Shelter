@@ -510,7 +510,7 @@ def define_columns(request):
     final_data['buttons']['Family factsheet'] = range(number_of_invisible_columns+1+18+18 , number_of_invisible_columns+1+18+18+7) #range(50,57)#range(49,56) 
     final_data['buttons']['SBM'] =  range(number_of_invisible_columns+1+18+18+7 , number_of_invisible_columns+1+18+18+7+10) #range(57,67)#range(56,66)
     final_data['buttons']['Construction status'] = range(number_of_invisible_columns+1+18+18+7+10 , number_of_invisible_columns+1+18+18+7+10+15) #range(67,82)#range(66,81) 
-
+    print final_data['buttons']['Family factsheet']
     # We define the columns for community mobilization and vendor details in a dynamic way. The
     # reason being these columns are prone to updates and additions.
     activity_pre_len = len(formdict_new)
@@ -1236,6 +1236,6 @@ def accounts_excel_generation(request):
     
     #wb.save(fname)
     response = HttpResponse(content_type="application/ms-excel")
-    response['Content-Disposition'] = 'attachment; filename=%s' % str(fname)
+    response['Content-Disposition'] = 'attachment; filename=%s' % str(fname).replace(' ', '_')
     wb.save(response)
     return response
