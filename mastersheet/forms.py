@@ -1,9 +1,10 @@
 from django import forms
-from django.contrib.admin.widgets import ForeignKeyRawIdWidget
+from django.contrib.admin.widgets import ForeignKeyRawIdWidget, AdminTimeWidget
 from master.models import *
 from django.contrib import admin
 from django.db.models.fields.related import ManyToOneRel
 from mastersheet.models import *
+from django.forms import extras
 
 class BaseForm(forms.Form):
     '''
@@ -56,6 +57,29 @@ class find_slum(forms.Form):
 
     class Meta:
         raw_id_fields = ('slumname',)
+        model = 'Slum'
+class account_find_slum(forms.Form):
+    def __init__(self, *args, **kwargs):
+        super(account_find_slum,self).__init__( *args, **kwargs)
+        self.fields['account_slumname'] = forms.ModelChoiceField(queryset=Slum.objects.all(), widget=ForeignKeyRawIdWidget(rel=ManyToOneRel(Slum._meta.get_field('id'),Slum, 'id' ), admin_site=admin.site))
+        self.fields['account_cityname'] = forms.ModelChoiceField(queryset = City.objects.all())
+        self.fields['account_slumname'].widget.attrs.update({'class':'customized-form'})
+        self.fields['account_slumname'].widget.attrs.update({'name':'account_slumname', 'id':'account_slumname'})
+        self.fields['account_slumname'].label = "Select slum"
+        self.fields['account_cityname'].widget.attrs.update({'class':'customized-form'})
+        self.fields['account_cityname'].widget.attrs.update({'name':'account_cityname', 'id':'account_cityname'})
+        self.fields['account_cityname'].label = "Select city"
+        self.fields['account_start_date'] = forms.DateField(widget=AdminTimeWidget())
+        self.fields['account_start_date'].label = "From"
+        self.fields['account_start_date'].widget.attrs.update({'name':'account_start_date', 'class':'datepicker', 'style':'width:80px;'})
+        self.fields['account_end_date'] = forms.DateField(widget=AdminTimeWidget())#extras.SelectDateWidget()) 
+        self.fields['account_end_date'].label = "To"
+        self.fields['account_end_date'].widget.attrs.update({'name':'account_end_date', 'class':'datepicker', 'style':'width:80px;'})
+        
+
+
+    class Meta:
+        raw_id_fields = ('account_slumname',)
         model = 'Slum'
 
 class file_form(forms.Form):

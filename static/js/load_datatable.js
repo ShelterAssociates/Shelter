@@ -13,6 +13,7 @@ var daily_reporting_columns = [];
 
 $(document).ready(function() {
 
+
     $("#add_table_btn").hide();
     
     var csrf_token = document.getElementsByName("csrfmiddlewaretoken")[0].value;
@@ -57,7 +58,7 @@ $(document).ready(function() {
                 for (i = 0 ; i < tmp_download_TF.length ; i ++ ){
 
                         //Toilet photo
-                        columns_defs['data'][55]['render']= function ( data, type, row,meta ) {
+                        columns_defs['data'][56]['render']= function ( data, type, row,meta ) {
                             if(typeof data != 'undefined'){
                                 url_download_TF = row['toilet_photo_url'];
                                 if(type === 'display'){
@@ -69,7 +70,7 @@ $(document).ready(function() {
                         }
                     
                     //Family photo
-                        columns_defs['data'][54]['render']= function ( data, type, row,meta ) {
+                        columns_defs['data'][55]['render']= function ( data, type, row,meta ) {
                             if(typeof data != 'undefined'){
                                 url_download_FF = row['family_photo_url'];
                                 if(type === 'display'){
@@ -127,7 +128,7 @@ $(document).ready(function() {
                             return data;
                         }
                     }
-                    columns_defs['data'][12]['render']= function ( data, type, row,meta ) {
+                    columns_defs['data'][columns_defs['buttons']['RHS'][0] - 1]['render']= function ( data, type, row,meta ) {
                         if(typeof data != 'undefined'){
                             url_SBM = String("/accounts/mastersheet/sbmupload/") + row['sbm_id_'+String(row.Household_number)] + String("/");
                             if(type === 'display'){
@@ -293,14 +294,14 @@ $(document).ready(function() {
                             text: 'Excel(Flagged records)',
                             exportOptions: {
                                 rows:'.highlight_p' ,
-                                columns: [...Array(length_table).keys()].slice(12,length_table)
+                                columns: [...Array(length_table).keys()].slice(columns_defs['buttons']['RHS'][0]-2,length_table)
                             }
                         },
                         {
                             extend : 'excel',
                             text : 'Excel(ALL)',
                             exportOptions:{
-                                columns:[...Array(length_table).keys()].slice(12,length_table)
+                                columns:[...Array(length_table).keys()].slice(columns_defs['buttons']['RHS'][0]-2,length_table)
                             }
                         }
 
@@ -437,6 +438,29 @@ $(document).ready(function() {
                 
             });
      });
+    $("#btnAccount").on("click", function(){
+        var slum_code = $("#slum_form")[0][1].value;
+        $("#accountModal").modal('show');
+        $('#accountModal').on('hidden.bs.modal', function() {
+                $(this).find("#error_log").html("");
+                $(this).find("#error_log").remove();
+                $(this).find("#success_log").html("");
+                $(this).find("#success_log").remove();
+                $("#accountModal_selection")[0].reset();
+
+                
+            });
+     });
+    $("#downloadExcel").on("click", function(){
+
+
+        if($("#account_slumname").val() == "" && ($("#account_cityname").val() == "")){
+            alert('Either Slum or City is required')
+        } 
+        else{
+            $("#accountModal_selection").submit();
+        }
+     });
     
 
 
@@ -539,7 +563,6 @@ $(document).ready(function() {
                                             }
 
                                     }
-                                    console.log(data);
                                     return data;
                                         
                                     },
@@ -584,7 +607,7 @@ $(document).ready(function() {
                 } );
 
                 
-                $('#p1, #p2, #p3, #cd, #ad, #md, #wo, #no_rhs').click( function() {
+                $('#p1, #p2, #p3, #cd, #ad, #md, #wo, #no_rhs, #material_shift, #incorrect_COD').click( function() {
                        var selected = [];
                        boxes = [];
                         $.each($("input[name='checkbox_filter']:checked"),function(k,v){boxes.push($(v).attr('value'))});
@@ -592,9 +615,8 @@ $(document).ready(function() {
                 } );
                 $.fn.dataTable.ext.search.push(
                     function( settings, data, dataIndex ) {
-
-                        if (boxes.indexOf(data[9])> -1 || ($("#no_rhs:checked").length == 1 && data[11].length >1) || ($("#wo:checked").length == 1 && data[10] == "Written-off") || ($("#md:checked").length == 1 && (data[0] != '' || data[1] != ''||data[2] != ''||data[3] != '')) || ($("#ad:checked").length == 1 && (data[4] != '' || data[5] != ''||data[6] != ''||data[7] != '' || data[8] != ''))){
-                            return true;
+                        if (boxes.indexOf(data[9])> -1 ||( $('#incorrect_COD:checked').length ==1 && data[13] == 'incorrect_cpod' )||( $('#material_shift:checked').length ==1 && data[12] == '#f9cb9f' )||($("#no_rhs:checked").length == 1 && data[11].length >1) || ($("#wo:checked").length == 1 && data[10] == "Written-off") || ($("#md:checked").length == 1 && (data[0] != '' || data[1] != ''||data[2] != ''||data[3] != '')) || ($("#ad:checked").length == 1 && (data[4] != '' || data[5] != ''||data[6] != ''||data[7] != '' || data[8] != ''))){
+                            return true; //( $('#material_shift').length ==1 &&  )||
                         }
                         if($(".checkmark").parent().find("input:checked").length == 0 )
                         {
@@ -666,17 +688,18 @@ $(document).ready(function() {
                         }
                     }
                 });
+                var number_of_invisible_columns = columns_defs['buttons']['RHS'][0] - 1;
 
                 $.each(columns_defs['buttons'], function(key,val){
                     html_table = $("#example");
                     //html_table.find("thead>tr>th:eq(0)").addClass("trFirst");
-                    html_table.find("thead>tr>th:eq("+(val[0]-13)+")").addClass("trFirst");
+                    html_table.find("thead>tr>th:eq("+(val[0]-number_of_invisible_columns)+")").addClass("trFirst");
                     $.each(val.slice(1,val.length-1),function(k,v){
-                        html_table.find("thead>tr>th:eq("+(v-13)+")").addClass("trMiddle");
+                        html_table.find("thead>tr>th:eq("+(v-number_of_invisible_columns)+")").addClass("trMiddle");
                         
                     });
                     $.each(val,function(k,v){
-                        var va = v-13;
+                        var va = v-number_of_invisible_columns;
                         if (String(key) === "RHS"){
                                 html_table.find("thead>tr>th:eq("+va+")").css('background-color', '#d6d0dd');//
                                 //background-color: lightblue;
@@ -710,7 +733,7 @@ $(document).ready(function() {
                             }
 
                     });
-                    html_table.find("thead>tr>th:eq("+(val[val.length-1]-12)+")").addClass("trLast");
+                    html_table.find("thead>tr>th:eq("+(val[val.length-1]-number_of_invisible_columns)+")").addClass("trLast");
                 });
 
                 $("#buttons button")[0].click();

@@ -2,7 +2,7 @@ from __future__ import division
 from django.shortcuts import render
 from django.http import HttpResponse, HttpResponseForbidden
 from django.contrib.auth.decorators import user_passes_test, permission_required
-from mastersheet.forms import find_slum, file_form
+from mastersheet.forms import find_slum, file_form, account_find_slum
 from django.db.models import Count,F
 from mastersheet.models import *
 from sponsor.models import *
@@ -264,11 +264,17 @@ def masterSheet(request, slum_code = 0, FF_code = 0, RHS_code = 0 ):
 
 
         for key, x in dummy_formdict.iteritems():
+
+        
             try:
-                if x['slum__name']:
-                    continue
+                if len(x['p1_material_shifted_to']) != 0 or len(x['p2_material_shifted_to']) != 0 or len(x['p3_material_shifted_to']) != 0 or len(x['st_material_shifted_to'])!=0:
+                    x['material_shifts'] = '#f9cb9f'
+                else:
+                    x['material_shifts'] = None
             except Exception as e:
-                x['slum__name'] = slum_code[0][3] 
+                x['material_shifts'] = None
+            
+            x['slum__name'] = slum_code[0][3] 
             temp = x["_id"]
             x['ff_id'] = None
             x['ff_xform_id_string'] = None
@@ -322,13 +328,24 @@ def masterSheet(request, slum_code = 0, FF_code = 0, RHS_code = 0 ):
             if 'group_oi8ts04/C5' in x.keys():
                 x.update({'current place of defecation': x['group_oi8ts04/C5']})
             
- 
+            
             if len(slum_funder)!=0:
                 for funder in slum_funder:
                     if int(x['Household_number']) in funder.household_code:
                         x.update({'Funder': funder.sponsor.organization_name})
+            
         
     formdict = map(lambda x:dummy_formdict[x], dummy_formdict)
+    
+    for x in formdict:
+        try:
+            
+            if  x['current place of defecation'] in ['SBM (Installment)', 'Own toilet'] and len(x['agreement_date_str']) > 1:#   in i.keys() and 'current place of defecation' in  i.keys():
+                x['incorrect_cpod'] = 'incorrect_cpod'
+        except Exception as e:
+            #print 'not found - '+str(x['Household_number'])
+            pass
+        
     return HttpResponse(json.dumps(formdict),  content_type = "application/json")
 
 
@@ -376,11 +393,16 @@ def define_columns(request):
         {"data": "delay_flag", "title": "delay_flag" , "bVisible":False},#9
         {"data": "status", "title": "Dummy Status", "bVisible":False},#10
         {"data": "no_rhs_flag", "title": "no_rhs_flag" , "bVisible":False},#11
+        {"data": "material_shifts", "title": "Material Shifts" , "bVisible":False},
+        {"data": "incorrect_cpod", "title": "Incorrect CPoD" , "bVisible":False},
         {"data": "slum__name", "title": "Slum Name" , "bVisible":False},
+        
 
         
         
         {"data": "Household_number", "title": "Household Number" ,"className": "add_hyperlink"},#1
+
+
         {"data": "Date_of_survey", "title": "Date of Survey"},
         {"data": "Name_s_of_the_surveyor_s", "title": "Name of the Surveyor"},
         {"data": "Type_of_structure_occupancy", "title": "Type of structure occupancy"},
@@ -476,13 +498,18 @@ def define_columns(request):
 
         # Append vendor type here #
     ]
+    number_of_invisible_columns = 0
+    for i in formdict_new:
+        if 'bVisible' in i.keys():
+            number_of_invisible_columns += 1
+
     final_data = {}
     final_data['buttons'] = collections.OrderedDict()
-    final_data['buttons']['RHS'] = range(14,32)#range(13,31)
-    final_data['buttons']['Follow-up'] = range(32,50)#range(31,49) 
-    final_data['buttons']['Family factsheet'] = range(50,57)#range(49,56) 
-    final_data['buttons']['SBM'] = range(57,67)#range(56,66)
-    final_data['buttons']['Construction status'] = range(67,82)#range(66,81)
+    final_data['buttons']['RHS'] = range(number_of_invisible_columns+1 , number_of_invisible_columns+1+18) #range(14,32)#range(13,31) 
+    final_data['buttons']['Follow-up'] = range(number_of_invisible_columns+1+18 , number_of_invisible_columns+1+18+18) #range(32,50)#range(31,49) 
+    final_data['buttons']['Family factsheet'] = range(number_of_invisible_columns+1+18+18 , number_of_invisible_columns+1+18+18+7) #range(50,57)#range(49,56) 
+    final_data['buttons']['SBM'] =  range(number_of_invisible_columns+1+18+18+7 , number_of_invisible_columns+1+18+18+7+10) #range(57,67)#range(56,66)
+    final_data['buttons']['Construction status'] = range(number_of_invisible_columns+1+18+18+7+10 , number_of_invisible_columns+1+18+18+7+10+15) #range(67,82)#range(66,81) 
 
     # We define the columns for community mobilization and vendor details in a dynamic way. The
     # reason being these columns are prone to updates and additions.
@@ -511,8 +538,9 @@ def define_columns(request):
 @permission_required('mastersheet.can_view_mastersheet', raise_exception=True)
 def renderMastersheet(request):
     slum_search_field = find_slum()
+    account_slum_search_field = account_find_slum()
     file_form1 = file_form()
-    return render(request, 'masterSheet.html', {'form': slum_search_field, 'file_form':file_form1})
+    return render(request, 'masterSheet.html', {'form': slum_search_field, 'form_account':account_slum_search_field,'file_form':file_form1})
 
 @csrf_exempt
 @apply_permissions_ajax('mastersheet.can_upload_mastersheet')
@@ -1108,6 +1136,18 @@ def report_table_cm_activity_count(request):
 
 @user_passes_test(lambda u: u.groups.filter(name = "Account").exists() or u.is_superuser )
 def accounts_excel_generation(request):
+    account_form = account_find_slum(request.POST)
+    # print account_form.cleaned_data.get('account_start_date')
+    
+    city_id = request.POST.get('account_cityname')
+    slum_id = request.POST.get('account_slumname')
+    # end_date = request.POST.get('account_end_date')
+    if len(request.POST.get('account_start_date')) == 0 or len(request.POST.get('account_end_date')) == 0:
+        start_date = datetime.datetime(2001, 1, 1).date()
+        end_date = datetime.datetime.today().date()
+    else:
+        start_date = datetime.datetime.strptime(request.POST.get('account_start_date'), "%d-%m-%Y").date()
+        end_date = datetime.datetime.strptime(request.POST.get('account_end_date'), "%d-%m-%Y").date()
     wb = Workbook()
     sheet1 = wb.add_sheet('Sheet1')
     sheet1.write(0, 0,'Date')
@@ -1130,7 +1170,13 @@ def accounts_excel_generation(request):
     sheet1.write(0, 17, 'Unloading Charges')
     sheet1.write(0, 18, 'Amount')
 
-    invoiceItems = InvoiceItems.objects.filter(slum__id = 1094)
+
+    if len(city_id) == 0:
+        invoiceItems = InvoiceItems.objects.filter(slum__id = int(slum_id), invoice__invoice_date__range = [start_date,end_date])
+        fname = str(Slum.objects.get(id = int(slum_id))) + '.xlsx'
+    else:
+        invoiceItems = InvoiceItems.objects.filter(slum__electoral_ward__administrative_ward__city__id =  int(city_id), invoice__invoice_date__range = [start_date,end_date])
+        fname = str(City.objects.get(id = int(city_id))) + '.xlsx'
     dict_of_dict = defaultdict(dict)
     sponsor = SponsorProjectDetails.objects.all()
 
@@ -1187,7 +1233,7 @@ def accounts_excel_generation(request):
             sheet1.write(i, 18, inner_v.total / len(inner_v.household_numbers))  
             i = i + 1
             
-    fname = 'aa.xlsx'
+    
     #wb.save(fname)
     response = HttpResponse(content_type="application/ms-excel")
     response['Content-Disposition'] = 'attachment; filename=%s' % str(fname)
