@@ -1273,10 +1273,10 @@ def accounts_excel_generation(request):
 
     if len(city_id) == 0:
         invoiceItems = InvoiceItems.objects.filter(slum__id = int(slum_id), invoice__invoice_date__range = [start_date,end_date])
-        fname = str(Slum.objects.get(id = int(slum_id))) + '.xlsx'
+        fname = str(Slum.objects.get(id = int(slum_id))) + '.xls'
     else:
         invoiceItems = InvoiceItems.objects.filter(slum__electoral_ward__administrative_ward__city__id =  int(city_id), invoice__invoice_date__range = [start_date,end_date])
-        fname = str(City.objects.get(id = int(city_id))) + '.xlsx'
+        fname = str(City.objects.get(id = int(city_id))) + '.xls'
     dict_of_dict = defaultdict(dict)
     sponsor = SponsorProjectDetails.objects.all()
 
