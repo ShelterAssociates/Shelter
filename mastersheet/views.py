@@ -509,12 +509,10 @@ def define_columns(request):
     final_data['buttons']['Family factsheet'] = range(number_of_invisible_columns+1+18+18 , number_of_invisible_columns+1+18+18+7) #range(50,57)#range(49,56) 
     final_data['buttons']['SBM'] =  range(number_of_invisible_columns+1+18+18+7 , number_of_invisible_columns+1+18+18+7+10) #range(57,67)#range(56,66)
     final_data['buttons']['Construction status'] = range(number_of_invisible_columns+1+18+18+7+10 , number_of_invisible_columns+1+18+18+7+10+15) #range(67,82)#range(66,81) 
-    print final_data['buttons']['Family factsheet']
     # We define the columns for community mobilization and vendor details in a dynamic way. The
     # reason being these columns are prone to updates and additions.
     activity_pre_len = len(formdict_new)
     activity_type_model = ActivityType.objects.filter(display_flag=True).order_by('display_order')
-
     try:
         for i in range(len(activity_type_model)):
             formdict_new.append({"data":activity_type_model[i].name, "title":activity_type_model[i].name})
@@ -524,6 +522,7 @@ def define_columns(request):
 
     material_type_model = MaterialType.objects.filter(display_flag=True).order_by('display_order')
     vendor_pre_len = len(formdict_new)
+
     try:
         for i in material_type_model:
             formdict_new.append({"data":"vendor_type"+str(i.name), "title":"Name of "+str(i.name)+" vendor"})
@@ -531,6 +530,7 @@ def define_columns(request):
     except Exception as e:
         print e
     final_data['buttons']['Accounts'] = range(vendor_pre_len, len(formdict_new))
+    # print final_data['buttons']['Accounts'] , len(final_data['buttons']['Accounts'])
     final_data['data'] = formdict_new
     return HttpResponse(json.dumps(final_data),  content_type = "application/json")
 
@@ -1132,6 +1132,107 @@ def report_table_cm_activity_count(request):
             else:
                 report_table_data_cm_activity_count[str(level_id)].update(data) 
     return HttpResponse(json.dumps(map(lambda x:report_table_data_cm_activity_count[x], report_table_data_cm_activity_count)), content_type="application/json")
+
+
+@csrf_exempt
+def give_report_table_numbers_accounts(request):
+    tag_key_dict = json.loads(request.body)
+    tag = tag_key_dict['tag']
+    keys = tag_key_dict['keys']
+    group_perm = request.user.groups.values_list('name', flat=True)
+    if request.user.is_superuser:
+        group_perm = Group.objects.all().values_list('name', flat=True)
+    group_perm = map(lambda x:x.split(':')[-1], group_perm)
+
+    keys = Slum.objects.filter(id__in = keys, electoral_ward__administrative_ward__city__name__city_name__in=group_perm).values_list('id',flat=True)
+
+    start_date = tag_key_dict['startDate']
+    end_date = tag_key_dict['endDate']
+
+    if start_date == None or end_date == None:
+        start_date = datetime.datetime(2001, 1, 1).date()
+        end_date = datetime.datetime.today().date()
+    else:
+        start_date = datetime.datetime.strptime(tag_key_dict['startDate'], "%Y-%m-%d").date()
+        end_date = datetime.datetime.strptime(tag_key_dict['endDate'], "%Y-%m-%d").date()
+
+    query_on = {'phase_one_material_date': 'total_p1',
+                'phase_two_material_date': 'total_p2', 
+                'phase_three_material_date': 'total_p3',
+                }
+
+
+    level_data = {
+        'city':
+            {
+                'city_name': F('slum__electoral_ward__administrative_ward__city__name__city_name'),
+                'level': F('slum__electoral_ward__administrative_ward__city__name__city_name'),
+                'level_id': F('slum__electoral_ward__administrative_ward__city__id')
+            },
+        'admin_ward':
+            {
+                'city_name': F('slum__electoral_ward__administrative_ward__city__name__city_name'),
+                'level': F('slum__electoral_ward__administrative_ward__name'),
+                'level_id': F('slum__electoral_ward__administrative_ward__id')
+            },
+        'electoral_ward':
+            {
+                'city_name': F('slum__electoral_ward__administrative_ward__city__name__city_name'),
+                'level': F('slum__electoral_ward__name'),
+                'level_id': F('slum__electoral_ward__id')
+            },
+        'slum':
+            {
+                'city_name': F('slum__electoral_ward__administrative_ward__city__name__city_name'),
+                'level': F('slum__name'),
+                'level_id': F('slum__id')
+            }
+    }
+    report_table_accounts_data = defaultdict(dict)
+    for query_field in query_on.keys():
+        filter_field ={'slum__id__in':keys, query_field+'__range':[start_date,end_date]}
+        count_field= {query_on[query_field]:Count('level_id')}
+        tc = ToiletConstruction.objects.filter(**filter_field)\
+            .exclude(agreement_cancelled=True)\
+            .annotate(**level_data[tag]).values('level','level_id','city_name')\
+            .annotate(**count_field).order_by('city_name')
+        tc = {obj_ad['level_id']: obj_ad for obj_ad in tc}
+
+        for level_id, data in tc.items():
+            report_table_accounts_data[level_id].update(data)
+
+    filter_field ={'slum__id__in':keys, 'invoice__invoice_date__range':[start_date,end_date]}
+
+    invoiceItems = InvoiceItems.objects.filter(**filter_field )\
+                    .annotate(**level_data[tag]).values('level','level_id','city_name','phase','household_numbers','material_type__name')\
+                    .order_by('city_name')
+
+
+    
+
+
+    invoiceItems = itertools.groupby(sorted(invoiceItems, key = lambda x: x['level_id']), key = lambda x:x['level_id'])
+
+
+    for level, level_wise_list in  invoiceItems:
+
+        new_phase_wise_list = itertools.groupby(sorted(level_wise_list, key = lambda x: x['phase']), key = lambda x: x['phase'])
+
+        for key_phase, values_list in new_phase_wise_list:
+            
+            values_list_temp = itertools.groupby(list(sorted(list(values_list), key = lambda x: x['material_type__name'])), key = lambda x: x['material_type__name'])
+            temp_material_type_count_dict = defaultdict(int)
+            for material_type_name, material_type_list in values_list_temp:
+                material_type_list_temp = list(material_type_list)
+                if len(material_type_list_temp) > 0:
+                    temp_material_type_count_dict[material_type_name] = len(json.loads(material_type_list_temp[0]['household_numbers']))
+            str_tmp = ''
+            for k,v in temp_material_type_count_dict.items():
+                str_tmp = str_tmp + k +':'+str(v)+ '\n'
+            report_table_accounts_data[level].update({'total_p'+str(key_phase)+'_accounts':str_tmp})
+
+
+    return HttpResponse(json.dumps(map(lambda x:report_table_accounts_data[x], report_table_accounts_data)), content_type="application/json")
 
 @user_passes_test(lambda u: u.groups.filter(name = "Account").exists() or u.is_superuser )
 def accounts_excel_generation(request):

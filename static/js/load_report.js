@@ -4,6 +4,7 @@
 	var report_table_cm_aggregated = null;
 	var report_table_cm_activity_count = null
 	var report_table_cm_activity_count_aggregated = null;
+	var report_table_accounts = null;
 	var tag  = null;
 	var key = null;
 	var tag_key_dict = {};
@@ -255,8 +256,38 @@
 	    }       
 		tag_key_dict['startDate'] = $("#startDate").val();
 		tag_key_dict['endDate'] = $("#endDate").val();
-		tag_key_dict['csrfmiddlewaretoken'] = $("#date_form input").val()
-
+		tag_key_dict['csrfmiddlewaretoken'] = $("#date_form input").val();
+		if (report_table_accounts != null){
+			report_table_accounts.ajax.reload();
+		}
+		else{
+			report_table_accounts = $("#report_table_accounts").DataTable({
+				"sDom": '<"top"Bfl>r<"mid"t><"bottom"ip><"clear">',
+				"paging" : true,
+				"ajax":{
+					type : "POST",
+					url: "/mastersheet/report_table_accounts/",
+					data : function(){
+						return JSON.stringify(tag_key_dict);
+					} ,
+					contentType : "application/json",
+					dataSrc:'',
+				},
+				"buttons":btn_default,
+				"columnDefs": [{"defaultContent": "-","targets": "_all"},{"footer":true},],
+				"columns":[
+							{"data": "level", "title": "Name"},
+							{"data": "total_p1", "title": "Phase 1 material given"},
+							{"data": "total_p1_accounts", "title": "Phase 1 - Accounts"},
+							{"data": "total_p2", "title": "Phase 2 material given"},
+							{"data": "total_p2_accounts", "title": "Phase 2 - Accounts"},
+							{"data": "total_p3", "title": "Phase 3 material given"},
+							{"data": "total_p3_accounts", "title": "Phase 3 - Accounts"},
+							{"data": "city_name", "title": "City name"}
+							
+						]
+			});
+		}
 		if (report_table != null){
 			report_table.ajax.reload();
 		}

@@ -9,6 +9,7 @@ urlpatterns = [
     url(r'^report_table_cm_activity_count/$', report_table_cm_activity_count, name="report_table_cm_activity_count"),
     url(r'^report_table_cm/$', report_table_cm, name="report_table_cm"),
 	url(r'^report_table/$', give_report_table_numbers, name="give_report_table_numbers"),
+    url(r'^report_table_accounts/$', give_report_table_numbers_accounts, name="give_report_table_numbers_accounts"),
 	url(r'^details/$', give_details, name="give_details"),
 	url(r'^report/$', render_report, name="render_report"),
 	url(r'^show/report/$', create_report, name="create_report"),

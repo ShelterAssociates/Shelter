@@ -1,5 +1,6 @@
 {%extends "admin/base_site.html"%}
 {% load static %}
+{% load custom_tags %}
 {% block extrahead%}
 
 <link rel = "stylesheet" type="text/css" href = "{% static "css/jquery.dataTables.min.css" %}">
@@ -52,34 +53,52 @@
   <label><input id = "electoral_ward" type="radio" name="optradio" onclick="changeDatatableLevel()">Electoral ward</label>
   <label><input id = "admin_ward" type="radio" name="optradio" onclick="changeDatatableLevel()">Administrative ward</label>
   <label><input id = "city" value = 'city' type="radio" name="optradio" onclick="changeDatatableLevel()" checked>City</label>
-<div id = "tc">
-  <h2>Toilet Construction</h2>
-  <h3>Household Counts</h3>
+</div>
+{% if request.user|has_group:"Account" == True %}
+<div>
+  
+  <h2>Accounts - Comparative Data</h2>
+  <div id = "report_table_accounts_div"><!--Comparative data between accounts and toilet construction-->
+    <table id="report_table_accounts" class="display" width="100%" cellspacing="0"></table>
   </div>
-  	<table id="report_table" class="display" width="100%" cellspacing="0"></table> 
-  </div >
+
+</div>
+{%endif%}
+{% if request.user|has_group:"Account" == False or request.user.is_superuser %}
+<div>
+  <div id = "tc">
+    <h2>Toilet Construction</h2>
+    <h3>Household Counts</h3>
+  </div>
+  <table id="report_table" class="display" width="100%" cellspacing="0"></table> 
+    
   <h3>Household Counts - aggregated</h3>
-	<div id = "report_table_aggregated_div">
+  <div id = "report_table_aggregated_div">
     <table id="report_table_aggregated" class="display" width="100%" cellspacing="0"></table>
   </div>
+
+  <div id = "cm">
+    <h2>Community Mobilization</h2>
+    <h3>Household counts</h3>
+    <div id = "report_table_cm_div" > <!-- Count of households involved-->
+      <table id="report_table_cm" class="display" width="100%" cellspacing="0"></table>
+    </div>
+    <h3>Household counts - aggregated</h3>
+    <div id = "report_table_cm_aggregated_div"><!-- Aggregated count of households involved-->
+      <table id="report_table_cm_aggregated" class="display" width="100%" cellspacing="0"></table>
+    </div>
+    <h3>Number of activities conducted</h3>
+    <div id = "report_table_cm_activity_count_div"><!--Count of activities carried out-->
+      <table id="report_table_cm_activity_count" class="display" width="100%" cellspacing="0"></table>
+    </div>
+    <h3>Number of activities conducted - aggregated</h3>
+    <div id = "report_table_cm_activity_count_aggregated_div"><!--Aggregated count of activities carried out-->
+      <table id="report_table_cm_activity_count_aggregated" class="display" width="100%" cellspacing="0"></table>
+    </div>
+
+  </div>
 </div>
-<div id = "cm">
-  <h2>Community Mobilization</h2>
-  <h3>Household counts</h3>
-  <div id = "report_table_cm_div" > <!-- Count of households involved-->
-    <table id="report_table_cm" class="display" width="100%" cellspacing="0"></table>
-  </div>
-  <h3>Household counts - aggregated</h3>
-  <div id = "report_table_cm_aggregated_div"><!-- Aggregated count of households involved-->
-    <table id="report_table_cm_aggregated" class="display" width="100%" cellspacing="0"></table>
-  </div>
-  <h3>Number of activities conducted</h3>
-  <div id = "report_table_cm_activity_count_div"><!--Count of activities carried out-->
-    <table id="report_table_cm_activity_count" class="display" width="100%" cellspacing="0"></table>
-  </div>
-  <h3>Number of activities conducted - aggregated</h3>
-  <div id = "report_table_cm_activity_count_aggregated_div"><!--Aggregated count of activities carried out-->
-    <table id="report_table_cm_activity_count_aggregated" class="display" width="100%" cellspacing="0"></table>
-  </div>
-</div>
+{%endif%}
+
 {%endblock%}
+
