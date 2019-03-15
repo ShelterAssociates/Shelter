@@ -102,7 +102,7 @@ class KMLLevelParser(object):
                     else:
                         level_name = name
                     if self.action_title != "City":
-                        parent_filter['name'] = level_name
+                        parent_filter['name'] = level_name.strip()
                     parent_filter['defaults']['shape']= coordinate
                     obj, created = self.parent_model.objects.update_or_create(**parent_filter)
                     if created == True:
