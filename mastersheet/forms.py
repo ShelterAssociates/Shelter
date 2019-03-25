@@ -64,7 +64,7 @@ class account_find_slum(forms.Form):
         self.fields['account_slumname'] = forms.ModelChoiceField(queryset=Slum.objects.all(), widget=ForeignKeyRawIdWidget(rel=ManyToOneRel(Slum._meta.get_field('id'),Slum, 'id' ), admin_site=admin.site))
         self.fields['account_cityname'] = forms.ModelChoiceField(queryset = City.objects.all())
         self.fields['account_slumname'].widget.attrs.update({'class':'customized-form'})
-        self.fields['account_slumname'].widget.attrs.update({'name':'account_slumname', 'id':'account_slumname'})
+        self.fields['account_slumname'].widget.attrs.update({'name':'account_slumname', 'id':'id_account_slumname'})
         self.fields['account_slumname'].label = "Select slum"
         self.fields['account_cityname'].widget.attrs.update({'class':'customized-form'})
         self.fields['account_cityname'].widget.attrs.update({'name':'account_cityname', 'id':'account_cityname'})
