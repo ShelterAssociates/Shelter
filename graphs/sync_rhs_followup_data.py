@@ -11,7 +11,7 @@ from itertools import groupby
 from django.utils.dateparse import parse_datetime
 from component.kobotoolbox import parse_RIM_data
 import pdb
-
+import re
 
 
 
@@ -338,6 +338,10 @@ def syn_rhs_followup_data():
 						slum = Slum.objects.get(shelter_slum_code = 272537891001)
 					for record in list_records:
 						try:
+							if 'group_im2th52/Approximate_monthly_family_income_in_Rs' in record:
+								record['group_im2th52/Approximate_monthly_family_income_in_Rs'] = int('0'+''.join(re.findall('[\d+]',re.sub('(\.[0]*)','',record['group_im2th52/Approximate_monthly_family_income_in_Rs']))))
+							if 'group_ne3ao98/Cost_of_upgradation_in_Rs' in record:
+								record['group_ne3ao98/Cost_of_upgradation_in_Rs'] = int('0'+''.join(re.findall('[\d+]',re.sub('(\.[0]*)','',record['group_ne3ao98/Cost_of_upgradation_in_Rs']))))
 							temp = HouseholdData.objects.get(household_number = record['group_vq77l17/Household_number'], slum = slum)
 							temp.ff_data = record
 							temp.save()
