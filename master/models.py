@@ -127,6 +127,7 @@ class Slum(models.Model):
     factsheet = models.FileField(upload_to=FACTSHEET_PHOTO ,blank=True,null=True)
     photo = models.ImageField(upload_to=FACTSHEET_PHOTO,blank=True, null=True)
     associated_with_SA = models.BooleanField(default=False)
+    status = models.BooleanField(default=False)
 
     def has_permission(self, user):
         if user.is_superuser:

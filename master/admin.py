@@ -185,17 +185,23 @@ admin.site.register(CityReference, CityReferenceAdmin)
 #slum
 class SlumDetailAdmin(BaseModelAdmin):
     form = SlumForm
-    list_display = ('name', 'electoral_ward', 'administrative_ward', 'city_name','associated_with_SA')
+    list_display = ('name', 'electoral_ward', 'administrative_ward', 'city_name','associated_with_SA','status')
     search_fields = ['name','electoral_ward__name', 'electoral_ward__administrative_ward__name']
     #list_filter = [CityListFilter]
     ordering = ['electoral_ward__name', 'name']
-    actions = ['associated_with_SA']
+    actions = ['associated_with_SA', 'status_of_slum']
 
     def associated_with_SA(self, request, queryset):
         for query in queryset:
             query.associated_with_SA = not query.associated_with_SA
             query.save()
     associated_with_SA.short_description = "Associate the selected slum(s)"
+
+    def status_of_slum(self, request, queryset):
+        for query in queryset:
+            query.status = not query.status
+            query.save()
+    status_of_slum.short_description = "Change status(Active/Inactive) of slum(s)"
 
     def electoral_ward(self, obj):
         return obj.electoral_ward.name
