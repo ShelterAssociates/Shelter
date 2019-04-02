@@ -19,6 +19,7 @@ mc1.days_between_agreement_phase1,
 mc2.days_between_phase1_phase2,
 mc3.days_between_phase2_phase3,
 mc4.days_between_agreement_completed,
+mc10.days_between_phase1_completed,
 mc5.phase1_delayed,
 mc6.phase2_delayed,
 mc7.phase3_delayed,
@@ -57,6 +58,8 @@ LEFT JOIN (SELECT household_number, slum_id, phase_two_material_date-phase_one_m
 LEFT JOIN (SELECT household_number, slum_id, phase_three_material_date-phase_two_material_date as "days_between_phase2_phase3" FROM mastersheet_toiletconstruction WHERE status = '6' AND phase_two_material_date IS NOT NULL AND phase_three_material_date IS NOT NULL) mc3 on mc3.household_number = mc.household_number AND mc3.slum_id = mc.slum_id
 
 LEFT JOIN (SELECT household_number, slum_id, completion_date-agreement_date as "days_between_agreement_completed" FROM mastersheet_toiletconstruction WHERE status = '6' AND agreement_date IS NOT NULL AND completion_date IS NOT NULL) mc4 on mc4.household_number = mc.household_number AND mc4.slum_id = mc.slum_id
+
+LEFT JOIN (SELECT household_number, slum_id, completion_date-phase_one_material_date as "days_between_phase1_completed" FROM mastersheet_toiletconstruction WHERE status = '6' AND agreement_date IS NOT NULL AND completion_date IS NOT NULL) mc10 on mc10.household_number = mc.household_number AND mc10.slum_id = mc.slum_id
 
 LEFT JOIN (SELECT household_number, slum_id, use_of_toilet-agreement_date as "days_between_agreement_use" FROM mastersheet_toiletconstruction WHERE status = '6' AND agreement_date IS NOT NULL AND completion_date IS NOT NULL) mc9 on mc9.household_number = mc.household_number AND mc9.slum_id = mc.slum_id
 
