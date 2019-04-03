@@ -180,13 +180,17 @@ def syn_rhs_followup_data():
 				latest_followup_date = latest_followup[0].submission_date
 
 			latest_date = latest_followup_date if latest_followup_date > latest_rhs_date else latest_rhs_date
-			if city.id == 3: #3,4 done
+			if city.id == 1: #3,4 done
 				#print timezone.localtime(latest_date)
 				# url = build_url()
 				rhs_data = fetch_data(form_code, latest_date)
 				data_with_lables = fetch_labels_codes(rhs_data, form_code)
 				total_records +=(len(data_with_lables))
-				sorted(data_with_lables, key = lambda x:x['slum_name'])
+				print 'len of data_with_lables before = ' + str(len(data_with_lables))
+				data_with_lables = [x for x in data_with_lables if 'slum_name' in x.keys()]
+				data_with_lables = [x for x in data_with_lables if 'Type_of_structure_occupancy' in x.keys()]
+				data_with_lables = sorted(data_with_lables, key = lambda x:x['slum_name'])
+				print 'len of data_with_lables after = ' + str(len(data_with_lables))
 
 
 				for key,list_records in groupby(data_with_lables, lambda x:x['slum_name']):
@@ -327,7 +331,9 @@ def syn_rhs_followup_data():
 			form_code = i.kobotool_survey_id
 			ff_data = fetch_data(form_code, '')
 			ff_data_with_labels = fetch_labels_codes(ff_data, form_code)
-			if city.id ==8:
+			if city.id ==1:
+				ff_data_with_labels = [x for x in ff_data_with_labels if 'group_vq77l17/slum_name' in x.keys()]
+				
 				sorted(ff_data_with_labels, key = lambda x:x['group_vq77l17/slum_name']) #group_vq77l17/slum_name
 				
 				for key,list_records in groupby(ff_data_with_labels, lambda x:x['group_vq77l17/slum_name']):
@@ -364,5 +370,5 @@ def syn_rhs_followup_data():
 				
 #syn_rhs_followup_data()
 
-syn_rim_data()
+#syn_rim_data()
 
