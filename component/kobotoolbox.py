@@ -262,6 +262,7 @@ def parse_RIM_answer(submission, data1):
                                 c = Counter(arr_ans)
                                 ans = ', '.join(["{}({})".format(x, y) for x, y in c.items()])
                             output[sect_form['name']] = ans
+    return output
 
 def parse_RIM_answer_with_toilet(submission, data1):
     """
@@ -306,6 +307,7 @@ def parse_RIM_answer_with_toilet(submission, data1):
                             if key[0] in sub[ind].keys():
                                 ans = fetch_answer(sect_form, key, sub[ind])
                                 output[data['name']][ind][sect_form['label']] = ans
+    return output
 
 
 @survey_mapping(SURVEYTYPE_CHOICES[3][0])
