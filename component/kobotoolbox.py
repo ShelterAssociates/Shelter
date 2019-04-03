@@ -123,7 +123,7 @@ def get_kobo_RIM_detail(city, slum_code, kobo_survey=''):
 
 def parse_RIM_data(submission, form_data):
     """
-    parse RIM data function used in get_kobo_RIM_detail(function above)  and while sync of kobo data locally
+    parse RIM data function used in get_kobo_RIM_detail(function above)
     :param submission: 
     :param form_data: 
     :return: 
@@ -202,55 +202,111 @@ def get_kobo_RIM_report_detail(city, slum_code, kobo_survey=''):
         data1 = json.loads(content1)
         #To maintain the order in which questions are displayed we iterate through the form data
         if len(submission) > 0:
-            for data in data1['children']:
-                if data['type'] == "group":
-                    #Group wise get the entire list for questions
-                    sect_form_data = trav(data)
-                    #Find the list of keys available in the submission data
-                    toil_keys = [ str(k) for k in submission[0].keys() if data['name'] in k]
-                    count = 0
-                    sub_key = []
-                    sub = []
-                    # Needed for toilet section which has repeat section
-                    for sub_k in toil_keys:
-                        if type(submission[0][sub_k]) == list:
-                            count = len(submission[0][sub_k])
-                            sub = submission[0][sub_k]
-                            sub_key.extend(sum([k.keys() for k in submission[0][sub_k]], []))
-                        else:
-                            sub_key.append(sub_k)
-
-                    #Iterate through the list of questions for the group
-                    for sect_form in sect_form_data:
-                        output[sect_form['name']]  = ""
-                        key = [x for x in sub_key if x.endswith(sect_form['name'])]
-                        #Check if the question has answer in the submission then only proceed further
-                        if len(key)>0 and 'label' in sect_form:
-                            if data['name'] != RIM_TOILET:
-                                #Fetch the answer for select one/text/select multiple type question
-                                ans = fetch_answer(sect_form, key, submission[0])
-                                output[sect_form['name']]  = ans
-                            else:
-                                #For toilet repeative section append the set of questions for all the CTB's if available
-                                if key[0] in submission[0].keys():
-                                    ans = fetch_answer(sect_form, key, submission[0])
-                                    output[sect_form['name']]  = ans
-                                else:
-                                    arr_ans = []
-                                    for ind in range(count):
-                                        if key[0] in sub[ind].keys():
-                                            ans = fetch_answer(sect_form, key, sub[ind])
-                                            if ans:
-                                                arr_ans.extend(ans.split(','))
-
-                                    ans = ""
-                                    if 'integer' in sect_form['type']:
-                                        ans = sum(map(int, arr_ans))
-                                    else:
-                                        c = Counter(arr_ans)
-                                        ans = ', '.join([ "{}({})".format(x,y) for x,y in c.items()])
-                                    output[sect_form['name']] = ans
+            output = parse_RIM_answer(submission, data1)
     return output
+
+def parse_RIM_answer(submission, data1):
+    """
+    parse RIM answer function used in get_kobo_RIM_report_detail(function above).
+    :param submission:
+    :param form_data:
+    :return:
+    """
+    RIM_TOILET = "group_te3dx03"
+    output = OrderedDict()
+    for data in data1['children']:
+        if data['type'] == "group":
+            # Group wise get the entire list for questions
+            sect_form_data = trav(data)
+            # Find the list of keys available in the submission data
+            toil_keys = [str(k) for k in submission[0].keys() if data['name'] in k]
+            count = 0
+            sub_key = []
+            sub = []
+            # Needed for toilet section which has repeat section
+            for sub_k in toil_keys:
+                if type(submission[0][sub_k]) == list:
+                    count = len(submission[0][sub_k])
+                    sub = submission[0][sub_k]
+                    sub_key.extend(sum([k.keys() for k in submission[0][sub_k]], []))
+                else:
+                    sub_key.append(sub_k)
+
+            # Iterate through the list of questions for the group
+            for sect_form in sect_form_data:
+                output[sect_form['name']] = ""
+                key = [x for x in sub_key if x.endswith(sect_form['name'])]
+                # Check if the question has answer in the submission then only proceed further
+                if len(key) > 0 and 'label' in sect_form:
+                    if data['name'] != RIM_TOILET:
+                        # Fetch the answer for select one/text/select multiple type question
+                        ans = fetch_answer(sect_form, key, submission[0])
+                        output[sect_form['name']] = ans
+                    else:
+                        # For toilet repeative section append the set of questions for all the CTB's if available
+                        if key[0] in submission[0].keys():
+                            ans = fetch_answer(sect_form, key, submission[0])
+                            output[sect_form['name']] = ans
+                        else:
+                            arr_ans = []
+                            for ind in range(count):
+                                if key[0] in sub[ind].keys():
+                                    ans = fetch_answer(sect_form, key, sub[ind])
+                                    if ans:
+                                        arr_ans.extend(ans.split(','))
+
+                            ans = ""
+                            if 'integer' in sect_form['type']:
+                                ans = sum(map(int, arr_ans))
+                            else:
+                                c = Counter(arr_ans)
+                                ans = ', '.join(["{}({})".format(x, y) for x, y in c.items()])
+                            output[sect_form['name']] = ans
+
+def parse_RIM_answer_with_toilet(submission, data1):
+    """
+    parse RIM answer function used in sync record in graphs sync data. This gives array of toilet and does not aggregates it.
+    :param submission:
+    :param form_data:
+    :return:
+    """
+    RIM_TOILET = "group_te3dx03"
+    output = OrderedDict()
+    for data in data1['children']:
+        if data['type'] == "group":
+            # Group wise get the entire list for questions
+            sect_form_data = trav(data)
+            # Find the list of keys available in the submission data
+            toil_keys = [str(k) for k in submission[0].keys() if data['name'] in k]
+            count = 0
+            sub_key = []
+            sub = []
+            # Needed for toilet section which has repeat section
+            for sub_k in toil_keys:
+                if type(submission[0][sub_k]) == list:
+                    count = len(submission[0][sub_k])
+                    sub = submission[0][sub_k]
+                    sub_key.extend(sum([k.keys() for k in submission[0][sub_k]], []))
+                else:
+                    sub_key.append(sub_k)
+
+            # Iterate through the list of questions for the group
+            for sect_form in sect_form_data:
+                output[sect_form['name']] = ""
+                key = [x for x in sub_key if x.endswith(sect_form['name'])]
+                # Check if the question has answer in the submission then only proceed further
+                if len(key) > 0 and 'label' in sect_form:
+                    if data['name'] != RIM_TOILET:
+                        # Fetch the answer for select one/text/select multiple type question
+                        ans = fetch_answer(sect_form, key, submission[0])
+                        output[sect_form['name']] = ans
+                    else:
+                        for ind in range(count):
+                            output[data['name']][ind][sect_form['label']] = ""
+                            if key[0] in sub[ind].keys():
+                                ans = fetch_answer(sect_form, key, sub[ind])
+                                output[data['name']][ind][sect_form['label']] = ans
+
 
 @survey_mapping(SURVEYTYPE_CHOICES[3][0])
 def get_kobo_FF_report_detail(city, slum_code,house_number, kobo_survey=''):
