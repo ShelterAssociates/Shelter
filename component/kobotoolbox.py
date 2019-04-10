@@ -271,10 +271,21 @@ def parse_RIM_answer_with_toilet(submission, data1):
     :param form_data:
     :return:
     """
+    RIM_ADMIN = "group_ws5ux48"
+    output = OrderedDict()
+    RIM_GENERAL = "group_zl6oo94"
     RIM_TOILET = "group_te3dx03"
+    RIM_WATER = "group_zj8tc43"
+    RIM_WASTE = "group_ks0wh10"
+    RIM_DRAINAGE = "group_kk5gz02"
+    RIM_GUTTER = "group_bv7hf31"
+    RIM_ROAD = "group_xy9hz30"
+    section = { RIM_GENERAL: "General", RIM_TOILET: "Toilet", RIM_WATER: "Water",
+               RIM_WASTE: "Waste", RIM_DRAINAGE: "Drainage", RIM_GUTTER: "Gutter", RIM_ROAD: "Road"}
+
     output = OrderedDict()
     for data in data1['children']:
-        if data['type'] == "group":
+	if data['type'] == "group" and data['name'] in section.keys():
             # Group wise get the entire list for questions
             sect_form_data = trav(data)
             # Find the list of keys available in the submission data
@@ -291,22 +302,27 @@ def parse_RIM_answer_with_toilet(submission, data1):
                 else:
                     sub_key.append(sub_k)
 
+            if data['name'] != RIM_TOILET:
+                output[section[data['name']]] = OrderedDict()
+            else:
+                output[section[data['name']]] = []
+                [output[section[data['name']]].append(OrderedDict()) for i in range(count)]
+
             # Iterate through the list of questions for the group
             for sect_form in sect_form_data:
-                output[sect_form['name']] = ""
                 key = [x for x in sub_key if x.endswith(sect_form['name'])]
                 # Check if the question has answer in the submission then only proceed further
                 if len(key) > 0 and 'label' in sect_form:
                     if data['name'] != RIM_TOILET:
                         # Fetch the answer for select one/text/select multiple type question
                         ans = fetch_answer(sect_form, key, submission[0])
-                        output[sect_form['name']] = ans
+                        output[section[data['name']]][sect_form['name']]  = ans
                     else:
                         for ind in range(count):
-                            output[data['name']][ind][sect_form['label']] = ""
+                            #output[data['name']][ind][sect_form['label']] = ""
                             if key[0] in sub[ind].keys():
                                 ans = fetch_answer(sect_form, key, sub[ind])
-                                output[data['name']][ind][sect_form['label']] = ans
+                                output[section[data['name']]][ind][sect_form['name']] = ans
     return output
 
 
