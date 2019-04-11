@@ -341,7 +341,7 @@ def slummapdisplay(request,id):
 
 		city_main["content"][str(e.administrative_ward.name)]["content"].update({e.name : elctrol_dict })
 
-	for s in Slum.objects.filter(electoral_ward__administrative_ward__city__id=id):
+	for s in Slum.objects.filter(electoral_ward__administrative_ward__city__id=id, status=True):
 		slum_dict={}
 		slum_dict["name"]=s.name
 		slum_dict["id"]=s.id
