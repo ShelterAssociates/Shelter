@@ -45,7 +45,10 @@ def accounts_excel_generation():
     for k,v in dict_of_dict.iteritems():
         for inner_k, inner_v in v.iteritems():
             print i
-            sheet1.write(i, 0, inner_v.invoice.invoice_date)
+	    amount = inner_v.quantity * inner_v.rate
+            tax_amount = round((float(inner_v.tax)/100) * float(inner_v.quantity) * float(inner_v.rate) , 2)
+            total = amount + tax_amount
+            sheet1.write(i, 0, str(inner_v.invoice.invoice_date))
             sheet1.write(i, 1, inner_v.invoice.invoice_number)
             sheet1.write(i, 2, inner_v.invoice.vendor.name)
             sheet1.write(i, 3, 'Donar Name')
@@ -62,15 +65,15 @@ def accounts_excel_generation():
             sheet1.write(i, 10, inner_k.name)
             sheet1.write(i, 11, inner_v.quantity)
             sheet1.write(i, 12, inner_v.rate)
-            sheet1.write(i, 13, inner_v.quantity * inner_v.rate)
+            sheet1.write(i, 13, amount)
             sheet1.write(i, 14, inner_v.tax)
-            sheet1.write(i, 15, round((float(inner_v.tax)/100) * float(inner_v.quantity) * float(inner_v.rate) , 2))
+            sheet1.write(i, 15, tax_amount)
             sheet1.write(i, 16, inner_v.invoice.transport_charges)
             sheet1.write(i, 17, inner_v.invoice.loading_unloading_charges)
-            sheet1.write(i, 18, inner_v.total)  
+            sheet1.write(i, 18, total)  
             i = i + 1
             print i
         
-    wb.save('/home/ubuntu/aa.xlsx')
+    wb.save('/home/ubuntu/aa1.xlsx')
 
 accounts_excel_generation()
