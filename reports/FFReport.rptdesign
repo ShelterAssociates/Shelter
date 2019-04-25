@@ -401,7 +401,7 @@
             <method name="open"><![CDATA[importPackage(Packages.java.io);
 importPackage(Packages.java.net);
 
-var inStream = new URL("http://app.shelter-associates.org/component/get_kobo_FF_report_data/"+params["key"].value).openStream();
+var inStream = new URL("https://app.shelter-associates.org/component/get_kobo_FF_report_data/"+params["key"].value).openStream();
 
 var inStreamReader = new InputStreamReader(inStream);
 
@@ -1305,7 +1305,7 @@ return false;]]></method>
     </body>
     <property name="pageVariables">
         <variable-element name="var_report_footer_image">
-            <expression name="value" type="javascript">"http://app.shelter-associates.org/static/images/shelter_footer.png"</expression>
+            <expression name="value" type="javascript">"https://app.shelter-associates.org/static/images/shelter_footer.png"</expression>
             <property name="type">report</property>
         </variable-element>
         <variable-element name="var_report_title">
@@ -1317,11 +1317,11 @@ return false;]]></method>
             <property name="type">report</property>
         </variable-element>
         <variable-element name="var_report_divider_image">
-            <expression name="value" type="javascript">"http://app.shelter-associates.org/static/images/rpt_background.png";</expression>
+            <expression name="value" type="javascript">"https://app.shelter-associates.org/static/images/rpt_background.png";</expression>
             <property name="type">report</property>
         </variable-element>
         <variable-element name="var_report_prefix_sponsor_logo">
-            <expression name="value" type="javascript">"http://app.shelter-associates.org"</expression>
+            <expression name="value" type="javascript">"https://app.shelter-associates.org"</expression>
             <property name="type">report</property>
         </variable-element>
     </property>

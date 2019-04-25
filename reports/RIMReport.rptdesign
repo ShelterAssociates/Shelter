@@ -1216,7 +1216,7 @@
             <method name="open"><![CDATA[importPackage(Packages.java.io);
 importPackage(Packages.java.net);
 
-var inStream = new URL("http://app.shelter-associates.org/component/get_kobo_RIM_report_data/"+params["slum"].value).openStream();
+var inStream = new URL("https://app.shelter-associates.org/component/get_kobo_RIM_report_data/"+params["slum"].value).openStream();
 
 var inStreamReader = new InputStreamReader(inStream);
 
@@ -3673,15 +3673,15 @@ return false;]]></method>
             <property name="type">page</property>
         </variable-element>
         <variable-element name="var_report_prefix_image_path">
-            <expression name="value" type="javascript">"http://app.shelter-associates.org/media/"</expression>
+            <expression name="value" type="javascript">"https://app.shelter-associates.org/media/"</expression>
             <property name="type">report</property>
         </variable-element>
         <variable-element name="var_report_footer_image">
-            <expression name="value" type="javascript">"http://app.shelter-associates.org/static/images/shelter_footer.png"</expression>
+            <expression name="value" type="javascript">"https://app.shelter-associates.org/static/images/shelter_footer.png"</expression>
             <property name="type">report</property>
         </variable-element>
         <variable-element name="var_report_divider_image">
-            <expression name="value" type="javascript">"http://app.shelter-associates.org/static/images/rpt_background.png";</expression>
+            <expression name="value" type="javascript">"https://app.shelter-associates.org/static/images/rpt_background.png";</expression>
             <property name="type">report</property>
         </variable-element>
     </property>
