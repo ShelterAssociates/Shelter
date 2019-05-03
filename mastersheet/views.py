@@ -1225,10 +1225,10 @@ def give_report_table_numbers_accounts(request):
             for material_type_name, material_type_list in values_list_temp:
                 material_type_list_temp = list(material_type_list)
                 if len(material_type_list_temp) > 0:
-                    temp_material_type_count_dict[material_type_name] = len(json.loads(material_type_list_temp[0]['household_numbers']))
+                    temp_material_type_count_dict[str(material_type_name)] = len(json.loads(str(material_type_list_temp[0]['household_numbers'])))
             str_tmp = ''
             for k,v in temp_material_type_count_dict.items():
-                str_tmp = str_tmp + k +':'+str(v)+ '\n'
+                str_tmp = str_tmp + k +':'+str(v)+ '<br/>'
             report_table_accounts_data[level].update({'total_p'+str(key_phase)+'_accounts':str_tmp})
 
 
