@@ -9,7 +9,7 @@ from django.conf import settings
 from itertools import chain
 from itertools import groupby
 from django.utils.dateparse import parse_datetime
-from component.kobotoolbox import parse_RIM_data
+from component.kobotoolbox import parse_RIM_answer_with_toilet
 import pdb
 import re
 
@@ -94,8 +94,8 @@ def fetch_data(form_code, latest_date):
 			print url
 	return records
 
-def syn_rim_data():
-	cities = City.objects.filter(id__in=[3])
+def syn_rim_data(city_id):
+	cities = City.objects.filter(id__in=[city_id])
 	for city in cities:
 		survey = Survey.objects.filter(city__id = int(city.id), description__contains = 'RIM')
 		if survey:
@@ -129,12 +129,12 @@ def syn_rim_data():
 
 					slum = Slum.objects.get(shelter_slum_code=key)
 
-					output = parse_RIM_data([record], form_data)
+					output = parse_RIM_answer_with_toilet([record], form_data)
 					data = {
 								'slum' : slum,
 								'city' : city,
 								'submission_date' : convert_datetime(str(record['_submission_time'])),
-								'rim_data' : record,
+								'rim_data' : output,
 							}
 					slum_data, created= SlumData.objects.update_or_create(slum=slum, defaults=data)
 					slum_data.modified_on = datetime.datetime.now()
@@ -144,7 +144,7 @@ def syn_rim_data():
 				except Exception as e:
 					pass
 
-def syn_rhs_followup_data():
+def syn_rhs_followup_data(city_id):
 	count_o = []
 	count_u = []
 	count_l = []
@@ -155,7 +155,7 @@ def syn_rhs_followup_data():
 	only_followup = 0
 	rhs_and_followup_updated = 0
 	total_records = 0
-	cities = City.objects.all()
+	cities = City.objects.filter(id__in=[city_id])
 	is_initial = True
 
 	for city in cities:
@@ -180,7 +180,7 @@ def syn_rhs_followup_data():
 				latest_followup_date = latest_followup[0].submission_date
 
 			latest_date = latest_followup_date if latest_followup_date > latest_rhs_date else latest_rhs_date
-			if city.id == 1: #3,4 done
+			if True:#city.id == 1: #3,4 done
 				#print timezone.localtime(latest_date)
 				# url = build_url()
 				rhs_data = fetch_data(form_code, latest_date)
