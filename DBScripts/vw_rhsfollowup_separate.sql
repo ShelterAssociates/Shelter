@@ -2,7 +2,8 @@ DROP VIEW vw_rhsfollowup_separate;
 CREATE VIEW vw_rhsfollowup_separate
 as
 SELECT 
-
+v.slum_id,
+v.created_date,
 v.household_number,
 v.slum_name,
 v.city_name,
