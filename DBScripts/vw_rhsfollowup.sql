@@ -1,3 +1,4 @@
+DROP VIEW vw_rhsfollowup;
 CREATE VIEW vw_rhsfollowup
 
 AS
@@ -46,7 +47,7 @@ r.followup_data::json->>'group_oi8ts04/Who_all_use_toilets_in_the_hou' as toilet
 r.followup_data::json->>'group_oi8ts04/Reason_for_not_using_toilet' as toilet_not_used_reason,
 r.followup_data::json->>'group_oi8ts04/OD1' as open_defecation_practiced,
 r.flag_followup_in_rhs,
-vw.status,
+--vw.status,
 r.city_id,
 r.slum_id,
 s.name as Slum_Name,
@@ -55,6 +56,6 @@ r.created_date,
 r.submission_date
 
 FROM graphs_followupdata as r,  master_slum as s, master_city as mcc, master_cityreference as c, master_electoralward as me,
-master_administrativeward as ma, vw_toiletconstruction as vw
+master_administrativeward as ma--, vw_toiletconstruction as vw
 
-WHERE r.slum_id = s.id AND s.electoral_ward_id= me.id AND me.administrative_ward_id=ma.id AND mcc.id = ma.city_id AND c.id = mcc.name_id and vw.household_number = r.household_number and vw.slum_id = r.slum_id
+WHERE r.slum_id = s.id AND s.electoral_ward_id= me.id AND me.administrative_ward_id=ma.id AND mcc.id = ma.city_id AND c.id = mcc.name_id-- and vw.household_number = r.household_number and vw.slum_id = r.slum_id
