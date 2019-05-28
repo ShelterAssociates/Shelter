@@ -1,0 +1,52 @@
+upstream shelter_app {
+    server 3.90.10.80:8011 fail_timeout=10;
+}
+
+
+server{
+    listen 80;
+    server_name app.shelter-associates.org;
+    access_log  /var/log/nginx/enketo_express.access.log;
+    error_log   /var/log/nginx/enketo_express.error.log;
+
+    # Support bigger headers. Useful for huge cookies
+    large_client_header_buffers 8 16k;
+
+    client_max_body_size 4G;
+    return 301 https://$http_host$request_uri;
+}
+server {
+     #listen 80;
+    server_name app.shelter-associates.org;
+    listen 443;
+
+
+    ssl on;
+#    ssl_certificate     /srv/secrets/ssl.crt;
+#    ssl_certificate_key /srv/secrets/ssl.key;
+    
+     # RSA certificate
+    ssl_certificate /etc/letsencrypt/live/app.shelter-associates.org/fullchain.pem; # managed by Certbot
+    ssl_certificate_key /etc/letsencrypt/live/app.shelter-associates.org/privkey.pem; # managed by Certbot
+
+    include /etc/letsencrypt/options-ssl-nginx.conf; # managed by Certbot
+
+     client_max_body_size 4G;
+#    add_header X-Frame-Options ALLOW-FROM http://www.shelter-associates.org;
+#    add_header X-Frame-Options SAMEORIGIN;
+    location / {
+        add_header Access-Control-Allow-Origin *;
+        # checks for static file, if not found proxy to app
+        try_files $uri @proxy_to_app;
+        proxy_read_timeout 300;
+        proxy_send_timeout 300;
+    }
+
+    location @proxy_to_app {
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header Host $http_host;
+        proxy_redirect off;
+
+        proxy_pass   http://shelter_app;
+    }
+}
