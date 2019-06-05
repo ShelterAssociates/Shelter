@@ -628,6 +628,10 @@ var BaseShape = (function(){
         this.chkcolor = obj_component.blob.polycolor || "#FFA3A3";
         this.chklinecolor = obj_component.blob.linecolor || "#ff0000";
         this.chklinewidth = obj_component.blob.linewidth || "1";
+        this.fillflag = obj_component.blob.fillflag;
+        if(this.fillflag == undefined){
+		this.fillflag= true;
+	}					
         this.type = obj_component.type;
         this.count = obj_component.count;
         this.child = obj_component.child;
@@ -664,7 +668,7 @@ var BaseShape = (function(){
                 let chklinecolor = this.chklinecolor;
                 myCustomColour = chklinecolor;
 
-                let pinImage =  L.divIcon({ html: '<i class="fa fa-truck" style="color: '+chklinecolor+'"></i>',
+                let pinImage =  L.divIcon({ html: '<span style="background-color: '+chklinecolor+'"></span>',
                                             iconSize: [20, 20],
                                             className: 'myDivIcon'
                                           });
@@ -689,6 +693,10 @@ var BaseShape = (function(){
                     weight : this.chklinewidth,
                     fillColor : this.chkcolor,
                     fillOpacity : 0.6,
+                }
+		if (!this.fillflag){
+                    style_geometry['style']['fillOpacity'] = 0
+		    //delete style_geometry['style']['fillColor'];
                 }
 
             }
