@@ -51,7 +51,6 @@ class MetadataAdmin(admin.ModelAdmin):
         return obj.section.name
 
 admin.site.register(Metadata, MetadataAdmin)
-admin.site.register(Fact)
 
 class ComponentTypeFilter(admin.SimpleListFilter):
     """
@@ -77,22 +76,43 @@ class ComponentTypeFilter(admin.SimpleListFilter):
             cust_filter = {"metadata__name__in" : [self.value()]}
         return queryset.filter(**cust_filter)
 
+class LevelListFilter(admin.SimpleListFilter):
+   """
+    Custom filter for loading slum / city level data accordingly.
+   """
+   title = 'Level filter'
+   parameter_name = 'level'
+
+   def lookups(self, request, model_admin):
+       return(
+           ('City','City level'),
+           ('Slum', 'Slum level')
+       )
+
+   def queryset(self, request, queryset):
+        if self.value():
+            return queryset.filter(content_type__model = self.value().lower())
+
 class ComponentAdmin(admin.ModelAdmin):
-    list_display = ('slum_name', 'component_name', 'number', 'shape_type')
-    search_fields = ['slum__name','metadata__name','housenumber']
-    ordering = ['slum__name','metadata__name','housenumber']
-    list_filter = [ComponentTypeFilter]
+    list_display = ('name', 'content_type', 'component_name', 'number', 'shape_type')
+    search_fields = ['component_city__name__city_name','component_slum__name','metadata__name','housenumber']
+    #Above/below contains couple of generic foreign keys component_city and component_slum
+    ordering = ['metadata__name','housenumber']
+    list_filter = [LevelListFilter, ComponentTypeFilter]
 
     def number(self, obj):
         return obj.housenumber
 
-    def slum_name(self, obj):
-        return obj.slum.name
+    def name(self, obj):
+        return obj.content_type.model_class().objects.get(id=obj.object_id).name
 
     def component_name(self, obj):
         return obj.metadata.name
 
     def shape_type(self, obj):
         return obj.shape.geom_type
+
+    name.admin_order_field = 'component_slum__name'
+    component_name.admin_order_field = 'metadata__name'
 
 admin.site.register(Component, ComponentAdmin)
