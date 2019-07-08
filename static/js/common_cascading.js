@@ -137,29 +137,45 @@ $(document).ready(function(){
    	   $("#ElectoralWards").show();
        $("#Slums").show();
     }
-    console.log(slumid);
+    flag=false;
+    $("#id_level").on('change', function(){
+         $("#AdministrativeWards").hide();
+            $("#ElectoralWards").hide();
+            $("#Slums").hide();
+        selection = $(this).val();
+        flag=false;
+        $("#id_City").val("");
+        if(selection=="Slum"){
+            flag=true;
+        }
+    });
 
-    //cityList();
 
     $("#id_City").on('change',function()
     {
-        $("#AdministrativeWards").show();
-        $("#ElectoralWards").hide();
-        $("#Slums").hide();
-       	administrativewardList();
+        if(flag){
+            $("#AdministrativeWards").show();
+            $("#ElectoralWards").hide();
+            $("#Slums").hide();
+            administrativewardList();
+       	}
     });
 
     $("#id_AdministrativeWard").on('change',function()
     {
+        if(flag){
         $("#ElectoralWards").show();
         $("#Slums").hide();
         electoralWardList();
+        }
     });
 
     $("#id_ElectoralWard").on('change',function()
     {
+        if(flag){
         $("#Slums").show();
          slumList();
+         }
     });
 
 });
