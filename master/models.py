@@ -8,6 +8,8 @@ from django.contrib.gis.db import models
 from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
 from colorfield.fields import ColorField
+from component.models import Component
+from django.contrib.contenttypes.fields import GenericRelation
 
 FACTSHEET_PHOTO="factsheet/"
 SHELTER_PHOTO="ShelterPhotos/"
@@ -39,6 +41,8 @@ class City(models.Model):
     background_color = ColorField(default='#94BBFF')
     created_by = models.ForeignKey(User)
     created_on = models.DateTimeField(default=datetime.datetime.now)
+
+    components = GenericRelation(Component, related_query_name='component_city',object_id_field="object_id") #Fields for reverse relationship
 
     def __unicode__(self):
         """Returns string representation of object"""
@@ -128,6 +132,8 @@ class Slum(models.Model):
     photo = models.ImageField(upload_to=FACTSHEET_PHOTO,blank=True, null=True)
     associated_with_SA = models.BooleanField(default=False)
     status = models.BooleanField(default=False)
+
+    components = GenericRelation(Component, related_query_name='component_slum',object_id_field="object_id")#Fields for reverse relationship
 
     def has_permission(self, user):
         if user.is_superuser:
