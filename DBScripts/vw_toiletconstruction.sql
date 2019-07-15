@@ -108,7 +108,7 @@ mc8 on mc8.household_number = mc.household_number AND mc8.slum_id = mc.slum_id
 
 /*Extracting longitudes and latitudes from shape vectors*/
 
-LEFT JOIN(SELECT housenumber, object_id,
+LEFT JOIN(SELECT housenumber, object_id as slum_id,
 ST_X(ST_Transform(ST_SetSRID(ST_AsText(ST_Centroid(shape)), 4326), 4326)) as "longitude",
 ST_Y(ST_Transform(ST_SetSRID(ST_AsText(ST_Centroid(shape)), 4326), 4326)) as "latitude",
 ST_AsText(ST_Centroid(shape)) as "coordinates" 
