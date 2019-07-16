@@ -68,7 +68,6 @@ class Component(models.Model):
     metadata = models.ForeignKey(Metadata)
     housenumber = models.CharField(max_length=100)
     shape = models.GeometryField(srid=4326)
-    # slum_id = models.IntegerField()
     content_type = models.ForeignKey(ContentType, default=ContentType.objects.get(model='slum').id, on_delete=models.CASCADE)
     object_id = models.PositiveIntegerField() #Fields for reverse relationship with slum and city table
     content_object = GenericForeignKey('content_type','object_id')
