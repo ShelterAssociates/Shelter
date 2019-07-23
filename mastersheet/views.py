@@ -328,6 +328,7 @@ def masterSheet(request, slum_code = 0, FF_code = 0, RHS_code = 0 ):
             if 'group_oi8ts04/C5' in x.keys():
                 x.update({'current place of defecation': x['group_oi8ts04/C5']})
             
+            x.update({'Household_number':int(x['Household_number'])})            
             
             if len(slum_funder)!=0:
                 for funder in slum_funder:
@@ -987,6 +988,7 @@ def give_report_table_numbers(request):#view for toilet construction
         count_field= {query_on[query_field]:Count('level_id')}
         tc = ToiletConstruction.objects.filter(**filter_field)\
             .exclude(agreement_cancelled=True)\
+            .exclude(status=7)\
             .annotate(**level_data[tag]).values('level','level_id','city_name')\
             .annotate(**count_field).order_by('city_name')
         tc = {obj_ad['level_id']: obj_ad for obj_ad in tc}
