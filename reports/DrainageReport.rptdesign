@@ -639,7 +639,7 @@
             <method name="open"><![CDATA[importPackage(Packages.java.io);
 importPackage(Packages.java.net);
 
-var inStream = new URL("http://app.shelter-associates.org/component/get_kobo_drainage_report_data/"+params["slum"].value).openStream();
+var inStream = new URL("https://app.shelter-associates.org/component/get_kobo_drainage_report_data/"+params["slum"].value).openStream();
 
 var inStreamReader = new InputStreamReader(inStream);
 
@@ -2130,15 +2130,15 @@ return false;]]></method>
     </body>
     <property name="pageVariables">
         <variable-element name="var_report_footer_image">
-            <expression name="value" type="javascript">"http://app.shelter-associates.org/static/images/rpt_drainage_footer.png"</expression>
+            <expression name="value" type="javascript">"https://app.shelter-associates.org/static/images/rpt_drainage_footer.png"</expression>
             <property name="type">report</property>
         </variable-element>
         <variable-element name="var_report_top_shelter_logo">
-            <expression name="value" type="javascript">"http://app.shelter-associates.org/static/images/shelter_footer.png"</expression>
+            <expression name="value" type="javascript">"https://app.shelter-associates.org/static/images/shelter_footer.png"</expression>
             <property name="type">report</property>
         </variable-element>
         <variable-element name="var_report_prefix_image_path">
-            <expression name="value" type="javascript">"http://app.shelter-associates.org/media/"</expression>
+            <expression name="value" type="javascript">"https://app.shelter-associates.org/media/"</expression>
             <property name="type">report</property>
         </variable-element>
     </property>
