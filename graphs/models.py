@@ -5,9 +5,6 @@ from jsonfield import JSONField
 import datetime
 from datetime import date
 
-
-
-
 class HouseholdData(models.Model):
 
 	household_number = models.CharField(max_length=5)
@@ -68,3 +65,27 @@ class SlumData(models.Model):
 
 	def __unicode__(self):
 		return str(self.slum)
+
+class Quality_of_living(models.Model):
+	"""
+	Model to save quality of living scores
+	"""
+	slum = models.ForeignKey(Slum)
+	city = models.ForeignKey(City)
+	created_date = models.DateField()
+	modified_date = models.DateField(blank=True)
+	general = models.FloatField(default=None)
+	gutter = models.FloatField(default=None)
+	water = models.FloatField(default=None)
+	waste = models.FloatField(default=None)
+	drainage = models.FloatField(default=None)
+	road = models.FloatField(default=None)
+	toilet = models.FloatField(default=None)
+	total_score = models.FloatField(default=None)
+
+	def __str__(self):
+		return str(self.slum)
+
+
+
+

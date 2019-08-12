@@ -1,0 +1,1026 @@
+{
+  "Toilet":
+    {
+      "availability_of_electricity_in":
+        {
+          "choices":
+            {
+              "no": 0,
+              "yes": 1
+            },
+          "calculate":
+            {
+              "type": "s",
+              "function": "single_select()"
+            }
+        },
+      "availability_of_electricity_in_001":
+        {
+          "choices":
+            {
+              "no": 0,
+              "yes": 1
+            } ,
+          "calculate":
+            {
+              "type": "s",
+              "function": "single_select()"
+            }
+        },
+      "does_the_ulb_ngo_communty_use":
+        {
+          "choices":
+            {
+              "no": 0,
+              "yes": 1
+            } ,
+          "calculate":
+            {
+              "type": "s",
+              "function": "single_select()"
+            }
+        },
+      "facility_in_the_toilet_block_f":
+        {
+          "choices":
+            {
+              "no": 0,
+              "yes": 1
+            } ,
+          "calculate":
+            {
+              "type": "s",
+              "function": "single_select()"
+            }
+        },
+      "'capacity_of_ctb_water_tank_in":
+        {
+          "choices":
+            {
+              "not available": -1,
+              "less than 2 hrs": 0,
+              "2-6 hrs": 1,
+              "6-12 hrs": 2,
+              "24/7": 3
+            },
+          "calculate":
+            {
+              "type": "s",
+              "function": "single_select()"
+            }
+        },
+      "frequency_of_ctb_cleaning_by_":
+        {
+          "choices":
+            {
+              "once a week":-2,
+              "twice a week":0,
+              "alternavtive days": 2,
+              "daily": 4,
+              "twice a day": 5
+            } ,
+          "calculate":
+            {
+              "type": "s",
+              "function": "single_select()"
+            }
+        },
+      "is_the_CTB_in_use":
+        {
+          "choices":
+            {
+              "closed": -1,
+              "under construction": 0,
+              "yes": 1
+            } ,
+          "calculate":
+            {
+              "type": "s",
+              "function": "single_select()"
+            }
+        },
+      "is_the_ctb_available_at_night":
+        {
+          "choices":
+            {
+              "no":0,
+              "yes, but not all night":0,
+              "yes , all night": 2
+            } ,
+          "calculate":
+            {
+              "type": "s",
+              "function": "single_select()"
+            }
+        },
+      "type_of_water_supply_in_ctb":
+        {
+          "choices":
+            {
+              "carry from home":0,
+              "water tank": 1,
+              "piped supply": 1,
+              "combination": 0
+            } ,
+          "calculate":
+            {
+              "type": "M",
+              "function": "Multi_select()"
+            }
+        },
+      "is_there_a_caretaker_for_the_C":
+        {
+          "choices":
+            {
+              "no":-1,
+              "yes, but not there full time":1,
+              "yes, and there full time": 3
+            } ,
+          "calculate":
+            {
+              "type": "s",
+              "function": "single_select()"
+            }
+        },
+      "cleanliness_of_the_ctb":
+        {
+          "choices":
+            {
+              "poor":0,
+              "average":1,
+              "good": 2
+            } ,
+          "calculate":
+            {
+              "type": "s",
+              "function": "single_select()"
+            }
+        },
+      "sewage_disposal_system":
+        {
+          "choices":
+            {
+              "laid in the open": -2,
+              "septic tank":2,
+              "ulb sewer line":5,
+              "DEWATS/Biogas":4,
+              "closed gutter":-1,
+              "no sewer line":-1
+            } ,
+          "calculate":
+            {
+              "type": "s",
+              "function": "single_select()"
+            }
+        },
+      "Out_of_total_seats_o_of_pans_not_choked":
+        {
+          "comment": "20",
+          "calculate":
+            {
+              "type": "N",
+              "function": "Numeric_select()"
+            }
+        },
+      "fee_for_use_of_ctb_per_family":
+        {
+          "comment": "20",
+          "calculate":
+            {
+              "type": "N",
+              "function": "Numeric_select()"
+            }
+        },
+      "out_of_total_seats_no_of_seats_where_tiles_on_floor_are_in_good_condition":
+        {
+          "comment": "20",
+          "calculate":
+            {
+              "type": "N",
+              "function": "Numeric_select()"
+            }
+        },
+      "total_number_of_mixed_seats_al":
+        {
+          "comment": "10",
+          "calculate":
+            {
+              "type": "N",
+              "function": "Numeric_select()"
+            }
+        },
+      "number_of_mixed_seats_allotted":
+        {
+          "comment": "10",
+          "calculate":
+            {
+              "type": "N",
+              "function": "Numeric_select()"
+            }
+        },
+      "number_of_seats_allotted_to_wo":
+        {
+          "comment": "10",
+          "calculate":
+            {
+              "type": "N",
+              "function": "Numeric_select()"
+            }
+        },
+      "number_of_seats_allotted_to_wo_001":
+        {
+          "comment": "0",
+          "calculate":
+            {
+              "type": "N",
+              "function": "Numeric_select()"
+            }
+        },
+      "number_of_seats_allotted_to_me":
+        {
+          "comment": "0",
+          "calculate":
+            {
+              "type": "N",
+              "function": "Numeric_select()"
+            }
+        },
+      "number_of_seats_allotted_to_me_001":
+        {
+          "comment": "0",
+          "calculate":
+            {
+              "type": "N",
+              "function": "Numeric_select()"
+            }
+        },
+      "out_of_total_seats_no_of_seats_where_electricity_is_available":
+        {
+          "comment": "20",
+          "calculate":
+            {
+              "type": "N",
+              "function": "Numeric_select()"
+            }
+        },
+      "out_of_total_seats_no_of_doors_in_good_condition":
+        {
+          "comment": "20",
+          "calculate":
+            {
+              "type": "N",
+              "function": "Numeric_select()"
+            }
+        },
+      "out_of_total_seats_no_of_seats_where_tiles_on_wall_are_in_good_condition":
+        {
+          "comment": "20",
+          "calculate":
+            {
+              "type": "N",
+              "function": "Numeric_select()"
+            }
+        },
+      "ctb_maintenance_provided_by":
+        {
+          "choices":
+            {
+              "ulb": 1,
+              "community": 2,
+              "yardis": 3,
+              "ngo": 4,
+              "samagra":5,
+              "other ngo": 6
+            } ,
+          "calculate":
+            {
+              "type": "M",
+              "function": "Multi_select()"
+            }
+        },
+      "ctb_gender_usage":
+        {
+          "choices":
+            {
+              "dedicated seats for men and women": 4,
+              "male":1 ,
+              "female":2 ,
+              "mix": 3
+            } ,
+          "calculate":
+            {
+              "type": "s",
+              "function": "Single_select()"
+            }
+        },
+      "litres_of_water_used_by_commun":
+        {
+          "choices":
+            {
+              "less than 2 litres": 1,
+              "2-3 litres": 2,
+              "more than 3 litres": 3
+            } ,
+          "calculate":
+            {
+              "type":"s",
+              "function": "fun(lambda)"
+            }
+        },
+      "capacity_of_ctb_water_tank_in":
+        {
+          "choices":
+          {
+            "less th 1000":
+            {
+              "<20": 1,
+              "20-50": 0,
+              "<50": -1
+            },
+            "1000-5000":
+            {
+              "<20": 1,
+              "20-50": 0,
+              "<50": -1
+            },
+            "5000-10,000":
+            {
+              "<20": 1,
+              "20-50": 0,
+              "<50": -1
+            },
+            "10,000-20,000":
+            {
+              "<20": 1,
+              "20-50": 0,
+              "<50": -1
+            },
+            "more than 20,000":
+            {
+              "<20": 1,
+              "20-50": 0,
+              "<50": -1
+            }
+          },
+          "calculate":
+            {
+              "type": "C",
+              "function": "call new function"
+            }
+        },
+      "distance_to_nearest_ulb_sewer":
+        {
+          "choices":
+            {
+              "no sewer line":1,
+              "over 0.5 km from the edge of the settlement": 2,
+              "on the edge of the settlement": 3,
+              "within the settlement": 4
+            } ,
+          "calculate":
+            {
+              "type": "s",
+              "function": "single_select()"
+            }
+        },
+      "cost_of_pay_and_use_toilet_pe":
+        {
+          "comment": "0",
+          "calculate":
+            {
+              "type": "N",
+              "function": "Numeric_select()"
+            }
+        },
+      "out_of_total_seats_no_of_pans_in_good_condition":
+        {
+          "comment": "20",
+          "calculate":
+            {
+              "type": "N",
+              "function": "Numeric_select()"
+            }
+        },
+      "availability_of_electricity_in":
+        {
+          "choices":
+            {
+              "yes": 1,
+              "no": 0
+            },
+          "calculate":
+            {
+              "type": "s",
+              "function": "single_select()"
+            }
+        },
+      "Use of Cleaning Agents to Clean CTBs":
+        {
+          "choices":
+            {
+              "no":0,
+              "yes":1
+            } ,
+          "calculate":
+            {
+              "type": "s",
+              "function": "single_select()"
+            }
+        },
+      "condition_of_ctb_structure":
+        {
+          "choices":
+            {
+              "poor": 0,
+              "average": 1,
+              "good": 2
+            } ,
+          "calculate":
+            {
+              "type": "s",
+              "function": "single_select()"
+            }
+        }
+    },
+  "Water":
+    {
+      "total_number_of_handpumps_in_":
+        {
+          "comment": "3",
+          "calculate":
+            {
+              "type": "N",
+              "function": "Numeric_select()"
+            }
+        } ,
+      "alternative_source_of_water":
+        {
+          "choices":
+            {
+              "none": 0,
+              "handpump":2 ,
+              "canal/water body": 2,
+              "tanker": 2,
+              "group water connection":4 ,
+              "buy from neighbour":-2,
+              "water standpost": 2
+            },
+          "calculate":
+            {
+              "type": "M",
+              "function": "Multi_select()"
+            }
+        },
+      "total_number_of_handpumps_in_u_001":
+        {
+          "comment": "0",
+          "calculate":
+            {
+              "type": "N",
+              "function": "Numeric_select()"
+            }
+        },
+      "total_number_of_taps_in_use_n":
+        {
+          "comment":"0",
+          "calculate":
+            {
+              "type": "N",
+              "function": "Numeric_select()"
+            }
+        },
+      "total_number_of_taps_in_use_n_001":
+        {
+          "comment":"0",
+          "calculate":
+            {
+              "type": "N",
+              "function": "Numeric_select()"
+            }
+        },
+      "total_number_of_handpumps_in_u":
+        {
+          "comment":"0",
+          "calculate":
+            {
+              "type": "N",
+              "function": "Numeric_select()"
+            }
+        },
+      "Total_number_of_standposts_NOT":
+        {
+          "comment":"0",
+          "calculate":
+            {
+              "type": "N",
+              "function": "Numeric_select()"
+            }
+        },
+      "Total_number_of_standposts_in_":
+        {
+          "comment":"0",
+          "calculate":
+            {
+              "type": "N",
+              "function": "Numeric_select()"
+            }
+        },
+      "availability_of_water":
+        {
+          "choices":
+            {
+              "no service":-2,
+              "less than 2 hrs":0,
+              "2-6 hrs": 1,
+              "6-12 hrs": 2,
+              "24/7":4
+            },
+          "calculate":
+            {
+              "type": "s",
+              "function": "single_select()"
+            }
+        },
+      "quality_of_water_in_the_system":
+        {
+          "choices":
+            {
+              "no service":-1,
+              "poor":0,
+              "average":1 ,
+              "good":2
+            },
+          "calculate":
+            {
+              "type": "s",
+              "function": "single_select()"
+            }
+        },
+      "water_supply_comment":
+        {
+          "comment":"Approximately, 90% families have an individual water connection. Water is available for atleast 6 hours and the pressure is average. However, the water pressure is very bad in the top of the slum. People use electric motor for fetching water.",
+          "calculate":
+            {
+              "type": "comment",
+              "function": false
+            }
+        },
+      "coverage_of_wateracross_settle":
+        {
+          "choices":
+            {
+              "no service/no coverage":-1,
+              "partial coverage":1,
+              "full coverage": 2
+            },
+          "calculate":
+            {
+              "type": "s",
+              "function": "single_select()"
+            }
+        },
+      "pressure_of_water_in_the_syste":
+        {
+          "choices":
+            {
+              "no service":-1,
+              "poor":0,
+              "average":1,
+              "good":2
+            },
+          "calculate":
+            {
+              "type": "s",
+              "function": "single_select()"
+            }
+        }
+    },
+
+  "Waste":
+    {
+      "facility_of_waste_collection":
+        {
+          "choices":
+            {
+              "ulb ghantagadi": 4,
+              "garbage bin": 2,
+              "mla sponsored tempo": 4,
+              "ulb van": 4,
+              "door to door waste collection": 5,
+              "open space": -2,
+              "inside gutter": -2,
+              "along/inside canal": -2
+            },
+          "calculate":
+            {
+              "type": "M",
+              "function": "Multi_select()"
+            }
+        },
+      "Frequency of MLA sponsored tempo":
+        {
+          "choices":
+            {
+              "alternate days": 2,
+              "less than twice a week": 2,
+              "twice a week": -1,
+              "daily": 5
+            },
+          "calculate":
+            {
+              "type": "s",
+              "function": "single_select()"
+            }
+        },
+      "Frequency of door to door waste collection":
+        {
+          "choices":
+            {
+              "alternate days": 2,
+              "less than twice a week": 2,
+              "twice a week": -1,
+              "daily": 5
+            },
+          "calculate":
+            {
+              "type": "s",
+              "function": "single_select()"
+            }
+        },
+      "Frequency of ULB ghantagadi":
+        {
+          "choices":
+            {
+              "alternate days": 2,
+              "less than twice a week": 2,
+              "twice a week": -1,
+              "daily": 5
+            },
+          "calculate":
+            {
+              "type": "s",
+              "function": "single_select()"
+            }
+        },
+      "Frequency of ULB van":
+        {
+          "choices":
+            {
+              "alternate days": 2,
+              "less than twice a week": 2,
+              "twice a week": -1,
+              "daily": 5
+            },
+          "calculate":
+            {
+              "type": "s",
+              "function": "single_select()"
+            }
+        },
+      "Frequency of cleaning garbage bin":
+        {
+          "choices":
+            {
+              "alternate days": 2,
+              "less than twice a week": 2,
+              "twice a week": -1,
+              "daily": 5
+            },
+          "calculate":
+            {
+              "type": "s",
+              "function": "single_select()"
+            }
+        },
+      "frequency_of_waste_collection__001":
+        {
+          "choices":
+            {
+              "alternate days": 2,
+              "less than twice a week": 2,
+              "twice a week": -1,
+              "daily": 5
+            },
+          "calculate":
+            {
+              "type": "s",
+              "function": "single_select()"
+            }
+        },
+      "where_are_the_communty_open_du":
+        {
+          "choices":
+            {
+              "within the settlement": -2,
+              "in a nearby canal/water body": -2,
+              "along the railway line": -2,
+              "at the edge of the settlement": -2,
+              "over 0.5 km from the edge of settlement": -2,
+              "none" : 1
+            },
+          "calculate":
+            {
+              "type": "M",
+              "function": "Multi_select()"
+            }
+        },
+      "Coverage of waste collection by MLA sponsored tempo":
+        {
+          "choices":
+            {
+              "partial coverage": 1,
+              "full coverage": 2
+            },
+          "calculate":
+            {
+              "type": "s",
+              "function": "single_select()"
+            }
+        },
+      "Coverage of door to door waste collection":
+        {
+          "choices":
+            {
+              "partial coverage": 1,
+              "full coverage": 2
+            },
+          "calculate":
+            {
+              "type": "s",
+              "function": "single_select()"
+            }
+        },
+      "Coverage of waste collection by ULB ghantagadi":
+        {
+          "choices":
+            {
+              "partial coverage": 1,
+              "full coverage": 2
+            },
+          "calculate":
+            {
+              "type": "s",
+              "function": "single_select()"
+            }
+        },
+      "Coverage of waste collection by ULB van":
+        {
+          "choices":
+            {
+              "partial coverage": 1,
+              "full coverage": 2
+            },
+          "calculate":
+            {
+              "type": "s",
+              "function": "single_select()"
+            }
+        },
+      "coverage_of_waste_collection_a_002":
+        {
+          "choices":
+            {
+              "partial coverage": 1,
+              "full coverage": 2
+            },
+          "calculate":
+            {
+              "type": "s",
+              "function": "single_select()"
+            }
+        },
+      "do_the_member_of_community_dep":
+        {
+          "choices":
+            {
+              "no": 1,
+              "yes": -2
+            },
+          "calculate":
+            {
+              "type": "N",
+              "function": "Numeric_select()"
+            }
+        },
+      "total_number_of_waste_containe":
+        {
+          "comment":"3",
+          "calculate":
+            {
+              "type": "N",
+              "function": "Numeric_select()"
+            }
+        },
+      "frequency_of_waste_collection_001":
+        {
+          "choices":
+            {
+              "less than twice a week": -2,
+              "twice a week": -1,
+              "alternate days": 2,
+              "daily": 5
+            },
+          "calculate":
+            {
+              "type": "s",
+              "function": "single_select()"
+            }
+        },
+      "frequency_of_waste_collection":
+        {
+          "choices":
+            {
+              "less then twice a week": -2,
+              "twice a week": -1,
+              "alternate": 2,
+              "daily": 5
+            },
+          "calculate":
+            {
+              "type": "s",
+              "function": "single_select()"
+            }
+        },
+      "frequency_of_waste_collection__002":
+        {
+          "choices":
+            {
+              "less then twice a week": -2,
+              "twice a week": -1,
+              "alternate days": 2,
+              "daily": 5
+            },
+          "calculate":
+            {
+              "type": "s",
+              "function": "single_select()"
+            }
+        },
+      "frequency_of_waste_collection_":
+        {
+          "choices":
+            {
+              "less then twice a week": -2,
+              "twice a week": -1,
+              "alternate days": 2,
+              "daily": 5
+            },
+          "calculate":
+            {
+              "type": "s",
+              "function": "single_select()"
+            }
+        },
+      "Waste_management_comments":
+        {
+          "comment":"TMC has provide 3 garbage bins in this settlement.There is partially waste collection by the LB ghantagadi bt dmping of waste in the nala and open spaces is observed on a large scale.",
+          "calculate":
+            {
+              "type": "comment",
+              "function": false
+            }
+        }
+    },
+
+  "Road":
+    {
+      "type_of_roads_within_the_settl":
+        {
+          "choices":
+            {
+              "kutcha": -1,
+              "kutcha pucca": 1,
+              "pucca": 3
+            },
+          "calculate":
+            {
+              "type": "s",
+              "function": "single_select()"
+            }
+        },
+      "average_width_of_internal_road":
+        {
+          "choices":
+            {
+              "less than 1.5m": -1,
+              "1.5-2m": 1,
+              "more than 2m": 3
+            },
+          "calculate":
+            {
+              "type": "M",
+              "function": "Multi_select()"
+            }
+        },
+      "are_the_huts_below_or_above_th":
+        {
+          "choices":
+            {
+              "above": 3,
+              "above and below": 2,
+              "below": 0,
+              "same level": -1
+            },
+          "calculate":
+            {
+              "type": "s",
+              "function": "single_select()"
+            }
+        },
+      "presence_of_roads_within_the_s":
+        {
+          "choices":
+            {
+              "yes": 1,
+              "no": 0
+            },
+          "calculate":
+            {
+              "type": "s",
+              "function": "single_select()"
+            }
+        },
+      "finish_of_the_road":
+        {
+          "choices":
+            {
+              "mud": -1,
+              "shahabadi farshi": 1,
+              "paving blocks": 2,
+              "concrete": 3,
+              "tar": 3
+            },
+          "calculate":
+            {
+              "type": "M",
+              "function": "Multi_select()"
+            }
+        },
+      "point_of_vehicular_access_to_t":
+        {
+          "choices":
+            {
+              "none": 0,
+              "one": 1,
+              "more than one": 3
+            },
+          "calculate":
+            {
+              "type": "s",
+              "function": "single_select()"
+            }
+        },
+      "coverage_of_pucca_road_across":
+        {
+          "choices":
+            {
+              "no coverage": -1,
+              "partail coverage": 1,
+              "full coverage": 3
+            },
+          "calculate":
+            {
+              "type": "s",
+              "function": "single_select()"
+            }
+        },
+      "average_width_of_arterial_road":
+        {
+          "choices":
+            {
+              "less than 3m": -1,
+              "3-4.5m": 1,
+              "more tha 4.5m": 3
+            },
+          "calculate":
+            {
+              "type": "s",
+              "function": "single_select()"
+            }
+        },
+      "is_the_settlement_below_or_abo":
+        {
+          "choices":
+            {
+              "above": 2,
+              "above and below": 0,
+              "below": -1,
+              "same level": 3
+            },
+          "calculate":
+            {
+              "type": "s",
+              "function": "single_select()"
+            }
+        },
+      "road_and_access_comment":
+        {
+          "comment":"Partial coverage of concrete finish roads is available in the settlement.",
+          "calculate":
+            {
+              "type": "comment",
+              "function": false
+            }
+        }
+    }
+}
