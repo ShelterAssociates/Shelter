@@ -36,7 +36,7 @@
             } ,
           "calculate":
             {
-              "type": "s",
+              "type": "x",
               "function": "single_select()"
             }
         },
@@ -138,7 +138,7 @@
             } ,
           "calculate":
             {
-              "type": "s",
+              "type": "x",
               "function": "single_select()"
             }
         },
@@ -294,7 +294,7 @@
             } ,
           "calculate":
             {
-              "type": "M",
+              "type": "x",
               "function": "Multi_select()"
             }
         },
@@ -309,7 +309,7 @@
             } ,
           "calculate":
             {
-              "type": "s",
+              "type": "x",
               "function": "Single_select()"
             }
         },
@@ -323,7 +323,7 @@
             } ,
           "calculate":
             {
-              "type":"s",
+              "type":"x",
               "function": "fun(lambda)"
             }
         },
@@ -379,7 +379,7 @@
             } ,
           "calculate":
             {
-              "type": "s",
+              "type": "x",
               "function": "single_select()"
             }
         },
@@ -442,6 +442,375 @@
             }
         }
     },
+  "General":
+    {
+      "development_plan_reservation_t":
+        {
+          "choices":
+            {
+              "residential": 1,
+              "industrial": 2,
+              "public purpose":3,
+              "open space, garden, play ground": 4,
+              "river, nala, lake etc.": 5,
+              "road widening, proposed road": 6,
+              "commerce": 7,
+              "public semi-public": 8,
+              "transportation": 9,
+              "no development zone (Agriculture)": 10,
+              "reservation": 11,
+              "high density population area": 12,
+              "not available": 13
+            },
+          "calculate":
+            {
+              "type": "x",
+              "function": "Multi_select()"
+            }
+        },
+      "development_plan_reservation":
+        {
+          "comment": "Cluster",
+          "calculate":
+            {
+              "type": "N",
+              "function": "Numeric_select()"
+            }
+        },
+      "describe_the_slum":
+        {
+          "comment": "The slum is located near Lokmanya Depot. There are 80% semi pukka and 20% pukka huts. TMC has provided 8 Community Toilets and 3 Garbage bins. Only 19% famililies have their own toilets and the drainage presence is in 25% area. Around 91% families have access to individual water connection.",
+          "calculate":
+            {
+              "type": "comment",
+              "function": false
+            }
+        },
+      "survey_sector_number":
+        {
+          "comment": "520, 272, 372",
+          "calculate":
+            {
+              "type": "N",
+              "function": "Numeric_select()"
+            }
+        },
+      "legal_status":
+        {
+          "choices":
+            {
+              "undeclared":0,
+              "partly declared":1 ,
+              "declared":2
+            },
+          "calculate":
+            {
+              "type": "s",
+              "function": "single_select()"
+            }
+        },
+      "land_owner":
+      {
+        "choices":
+          {
+            "private":1,
+            "central government":2 ,
+            "state government":3 ,
+            "local government (ulb)":4,
+            "cidco":3 ,
+            "midc": 3,
+            "not known":0
+          },
+        "calculate":
+          {
+            "type": "M",
+            "function": "Multi_select()"
+          }
+      },
+      "topography":
+        {
+          "choices":
+            {
+              "acute slope":1,
+              "depression slope":-1,
+              "reasonable slope":2,
+              "slight slope":2,
+              "flat":3
+            },
+          "calculate":
+            {
+              "type": "M",
+              "function": "Multi_select()"
+            }
+        },
+      "Date_of_declaration":
+        {
+          "comment": "Not available",
+          "calculate":
+            {
+              "type": "comment",
+              "function":false
+            }
+        },
+      "number_of_huts_in_settlement":
+        {
+          "comment": "4047",
+          "calculate":
+            {
+              "type": "N",
+              "function": "Numeric_select()"
+            }
+        },
+      "landmark":
+        {
+          "comment": "Near Main Road",
+          "calculate":
+            {
+              "type": "comment",
+              "function": false
+            }
+        },
+      "slum_name":
+        {
+          "comment":"272171481504",
+          "calculate":
+            {
+              "type": "comment",
+              "function": false
+            }
+        },
+      "admin_ward":
+        {
+          "comment": "Rayladevi",
+          "calculate":
+            {
+              "type": "comment",
+              "function": false
+            }
+        },
+      "approximate_area_of_the_settle":
+        {
+          "comment": "118611",
+          "calculate":
+            {
+              "type": "N",
+              "function": "Numeric_select()"
+            }
+        },
+      "year_established_according_to":
+        {
+          "comment": "1970",
+          "calculate":
+            {
+              "type": "N",
+              "function": "Numeric_select()"
+            }
+        },
+      "location":
+        {
+          "choices":
+            {
+              "water body/river bed/canal": 1,
+              "hill top/hillslope":2,
+              "railway line": 3,
+              "main road": 4,
+              "within one km from an airport": 5,
+              "isolated": 6
+            },
+          "calculate":
+            {
+              "type": "x",
+              "function": "Multi_select()"
+            }
+        }
+    },
+  "Gutter":
+    {
+      "do_gutters_flood":
+        {
+          "choices":
+            {
+              "yes": -2,
+              "no": 1
+            },
+          "calculate":
+            {
+              "type": "s",
+              "function": "single_select()"
+            }
+        },
+      "do_gutter_get_choked":
+        {
+          "choices":
+            {
+              "yes":-2,
+              "no": 1
+            },
+          "calculate":
+            {
+              "type": "x",
+              "function": "single_select()"
+            }
+        },
+      "coverage_of_gutter":
+        {
+        "choices":
+          {
+            "full coverage": -2,
+            "partial coverage": 1
+          } ,
+        "calculate":
+          {
+            "type": "x",
+            "function": "single_select()"
+          }
+        },
+      "are_gutter_covered":
+        {
+          "choices":
+            {
+              "yes": 1,
+              "partly covered":2,
+              "no": 3
+            } ,
+          "calculate":
+            {
+              "type": "x",
+              "function": "single_select()"
+            }
+        },
+      "type_of_gutter_within_the_sett":
+        {
+          "choices":
+            {
+              "pucca": 1,
+              "kutcha": -1,
+              "kutcha and pucca": 0
+            } ,
+          "calculate":
+            {
+              "type": "x",
+              "function": "single_select()"
+            }
+        },
+      "is_gutter_gradient_adequate":
+        {
+          "choices":
+            {
+              "yes": 1,
+              "no": -2
+            } ,
+          "calculate":
+            {
+              "type": "s",
+              "function": "single_select()"
+            }
+        },
+      "Presence_of_gutter":
+        {
+          "choices":
+            {
+              "yes": 1,
+              "no": 0
+            } ,
+          "calculate":
+            {
+              "type": "x",
+              "function": "single_select()"
+            }
+        },
+      "comments_on_gutter":
+        {
+          "comment":"All gutters are covered in the settlement but those gutters overflow in the rainy season.",
+          "calculate":
+            {
+              "type": "comment",
+              "function": false
+            }
+        }
+    },
+  "Drainage":
+    {
+      "is_the_drainage_gradient_adequ":
+        {
+          "choices":
+            {
+              "yes": 1,
+              "no": -2
+            },
+          "calculate":
+            {
+              "type": "s",
+              "function": "single_select()"
+            }
+        },
+      "do_the_drains_get_blocked":
+        {
+          "choices":
+            {
+              "yes": -2,
+              "no": 1
+            },
+          "calculate":
+            {
+              "type": "s",
+              "function": "single_select()"
+            }
+        },
+      "presence_of_drains_within_the":
+      {
+        "choices":
+          {
+            "yes": 1,
+            "no": -1
+          },
+        "calculate":
+          {
+            "type": "s",
+            "function": "single_select()"
+          }
+      },
+      "drainage_comment":
+        {
+          "comment": "Partial coverage of drainage is present in the settlement. Drainage lines are in good condition and is present only on the main road.",
+          "calculate":
+            {
+              "type": "comment",
+              "function": false
+            }
+        },
+      "coverage_of_drains_across_the":
+        {
+          "choices":
+            {
+              "partial coverage": 2,
+              "full coverage": 4
+            },
+          "calculate":
+            {
+              "type": "s",
+              "function": "single_select()"
+            }
+        },
+      "diameter_of_ulb_sewer_line_acr":
+        {
+          "choices":
+            {
+              "six inch (6\") diameter": 1,
+              "eight inch (8\") diameter": 2,
+              "ten inch (10\")diameter": 3,
+              "twelve inch (12\") diameter": 4,
+              "eighteen inch (18\") diameter": 5,
+              "twenty four inch (24\") diameter": 6,
+              "thirty six inch (36\") diameter": 7
+            },
+          "calculate":
+            {
+              "type": "X",
+              "function": "Multi_select()"
+            }
+        }
+      },
   "Water":
     {
       "total_number_of_handpumps_in_":
@@ -467,7 +836,7 @@
             },
           "calculate":
             {
-              "type": "M",
+              "type": "x",
               "function": "Multi_select()"
             }
         },
@@ -595,7 +964,6 @@
             }
         }
     },
-
   "Waste":
     {
       "facility_of_waste_collection":
@@ -622,7 +990,7 @@
           "choices":
             {
               "alternate days": 2,
-              "less than twice a week": 2,
+              "less than twice a week":-2,
               "twice a week": -1,
               "daily": 5
             },
@@ -637,7 +1005,7 @@
           "choices":
             {
               "alternate days": 2,
-              "less than twice a week": 2,
+              "less than twice a week": -2,
               "twice a week": -1,
               "daily": 5
             },
@@ -652,7 +1020,7 @@
           "choices":
             {
               "alternate days": 2,
-              "less than twice a week": 2,
+              "less than twice a week": -2,
               "twice a week": -1,
               "daily": 5
             },
@@ -667,7 +1035,7 @@
           "choices":
             {
               "alternate days": 2,
-              "less than twice a week": 2,
+              "less than twice a week": -2,
               "twice a week": -1,
               "daily": 5
             },
@@ -682,7 +1050,7 @@
           "choices":
             {
               "alternate days": 2,
-              "less than twice a week": 2,
+              "less than twice a week": -2,
               "twice a week": -1,
               "daily": 5
             },
@@ -697,7 +1065,7 @@
           "choices":
             {
               "alternate days": 2,
-              "less than twice a week": 2,
+              "less than twice a week": -2,
               "twice a week": -1,
               "daily": 5
             },
@@ -711,12 +1079,12 @@
         {
           "choices":
             {
-              "within the settlement": -2,
-              "in a nearby canal/water body": -2,
-              "along the railway line": -2,
-              "at the edge of the settlement": -2,
-              "over 0.5 km from the edge of settlement": -2,
-              "none" : 1
+              "within the settlement": -4,
+              "in a nearby canal/water body": -4,
+              "along the railway line": -4,
+              "at the edge of the settlement": -4,
+              "over 0.5 km from the edge of settlement": -4,
+              "none" : 2
             },
           "calculate":
             {
@@ -793,13 +1161,13 @@
         {
           "choices":
             {
-              "no": 1,
-              "yes": -2
+              "no": 2,
+              "yes": -4
             },
           "calculate":
             {
-              "type": "N",
-              "function": "Numeric_select()"
+              "type": "s",
+              "function": "single_select()"
             }
         },
       "total_number_of_waste_containe":
