@@ -34,6 +34,7 @@ from utils.utils_permission import access_right
 import urllib
 from django.http import Http404
 from django.core.exceptions import PermissionDenied
+from graphs.models import *
 
 @staff_member_required
 def index(request):
@@ -41,7 +42,6 @@ def index(request):
 	template = loader.get_template('index.html')
 	context = RequestContext(request, {'site_url':'/'})
 	return HttpResponse(template.render(context))
-
 
 class SurveyListView(ListView):
 	"""Renders the Survey View template in browser"""
@@ -58,7 +58,6 @@ class SurveyListView(ListView):
 		else:
 			object_list = self.model.objects.all()
 		return object_list
-
 
 class SurveyCreateView(FormView):
 	"""Fetches and renders the Add New Survey Mapping template in browser"""
@@ -120,7 +119,6 @@ def search(request):
 	return HttpResponse(json.dumps(data_dict),
 						content_type='application/json')
 
-
 @csrf_exempt
 def rimdisplay(request):
 	"""Display Rapid Slum Appraisal Records"""
@@ -149,7 +147,6 @@ def rimdisplay(request):
 		RA = paginator.page(paginator.num_pages)
 	return render(request, 'rimdisplay.html',{'R':R,'RA':RA})
 
-
 @csrf_exempt
 def rimedit(request,Rapid_Slum_Appraisal_id):
 	"""Update Rapid Slum Appraisal Record"""
@@ -176,13 +173,11 @@ def riminsert(request):
 		form = Rapid_Slum_AppraisalForm()
 	return render(request, 'riminsert.html', {'form': form})
 
-
 @csrf_exempt
 def report(request):
 	""" RIM Report Form"""
 	form = ReportForm()
 	return render(request,'report.html', {'form':form})
-
 
 @csrf_exempt
 def administrativewardList(request):
@@ -199,7 +194,6 @@ def administrativewardList(request):
 			 'nameArray': nameArray
 			}
 	return HttpResponse(json.dumps(data),content_type='application/json')
-
 
 @csrf_exempt
 def electoralWardList(request):
@@ -259,7 +253,7 @@ def vulnerabilityreport(request):
 	string = settings.BIRT_REPORT_URL + "Birt/frameset?__format=pdf&__report=Vulnerability_Report.rptdesign"
 	return HttpResponseRedirect(string)
 
-@xframe_options_exempt
+# @xframe_options_exempt
 def slummap(request):
 	template = loader.get_template('slummapdisplay.html')
 	context = RequestContext(request, {})
@@ -282,9 +276,7 @@ def citymapdisplay(request):
 		city_dict["content"]={}
 		city_main.update({str(c.name.city_name) : city_dict })
 
-
 	return HttpResponse(json.dumps(city_main),content_type='application/json')
-
 
 @csrf_exempt
 @access_right
@@ -299,8 +291,7 @@ def slummapdisplay(request,id):
 	slum_dict=dict()
 	slum_main=dict()
 	main_list=[]
-
-
+	score_dict ={}
 
 	admin_main={}
 	for a in AdministrativeWard.objects.filter(city__id=id):
@@ -320,7 +311,31 @@ def slummapdisplay(request,id):
 		admin_dict["content"]={}
 		city_main["content"].update({a.name:admin_dict})
 
-
+		adminwd_score = QolScoreData.objects.filter(slum__electoral_ward__administrative_ward__name = a.name)
+		"""Quality of living scores setion and admin ward wise"""
+		if adminwd_score:
+			scores = []
+			section_scores = {}
+			slum_general = adminwd_score.values_list('general', flat=True)
+			slum_gutter = adminwd_score.values_list('gutter', flat=True)
+			slums_drainage = adminwd_score.values_list('drainage', flat=True)
+			slum_waste = adminwd_score.values_list('waste', flat=True)
+			slum_water = adminwd_score.values_list('water', flat=True)
+			slum_toilet = adminwd_score.values_list('toilet', flat=True)
+			slum_str_n_occup = adminwd_score.values_list('str_n_occup', flat=True)
+			slum_road = adminwd_score.values_list('road', flat=True)
+			slum_total_all_sections = adminwd_score.values_list('total_score', flat=True)
+			section_scores = {'total_score': sum(slum_total_all_sections) / len(slum_total_all_sections),
+							  'toilet': sum(slum_toilet)/len(slum_toilet),
+							  'general': sum(slum_general) / len(slum_general),
+							  'str_n_occup': sum(slum_str_n_occup) / len(slum_str_n_occup),
+							  'road': sum(slum_road) / len(slum_road),
+							  'water': sum(slum_water) / len(slum_water),
+							  'waste': sum(slum_waste) / len(slum_waste),
+							  'drainage': sum(slums_drainage) / len(slums_drainage),
+							  'gutter': sum(slum_gutter) / len(slum_gutter)}
+			scores.append(section_scores)
+			admin_dict['ele_scores'] = section_scores
 
 	for e in ElectoralWard.objects.filter(administrative_ward__city__id=id):
 		elctrol_dict={}
@@ -337,8 +352,32 @@ def slummapdisplay(request,id):
 			elctrol_dict["wardOfficeAddress"]= electrolwd[0].address +" "+electrolwd[0].post_code
 			elctrol_dict["wardOfficeTel"] = electrolwd[0].tel_nos
 
+		electrolwd_scores = QolScoreData.objects.filter(slum__electoral_ward__name = e.name)
+		"""Quality of living scores setion and ward wise"""
+		if electrolwd_scores:
+			scores=[]
+			section_scores = {}
+			slum_general = electrolwd_scores.values_list('general', flat=True)
+			slum_gutter = electrolwd_scores.values_list('gutter', flat=True)
+			slums_drainage = electrolwd_scores.values_list('drainage', flat=True)
+			slum_waste = electrolwd_scores.values_list('waste', flat=True)
+			slum_water = electrolwd_scores.values_list('water', flat=True)
+			slum_toilet = electrolwd_scores.values_list('toilet', flat=True)
+			slum_str_n_occup = electrolwd_scores.values_list('str_n_occup', flat=True)
+			slum_road = electrolwd_scores.values_list('road', flat=True)
+			slum_total_all_sections = electrolwd_scores.values_list('total_score',flat=True)
+			section_scores ={'total_score': sum(slum_total_all_sections)/len(slum_total_all_sections),
+							 'toilet': sum(slum_toilet)/len(slum_toilet),
+							 'general':sum(slum_general)/len(slum_general),
+							 'str_n_occup':sum(slum_str_n_occup)/len(slum_str_n_occup),
+							 'road': sum(slum_road)/len(slum_road),
+							 'water': sum(slum_water)/len(slum_water),
+							 'waste':sum(slum_waste)/len(slum_waste),
+							 'drainage': sum(slums_drainage)/len(slums_drainage),
+							 'gutter': sum(slum_gutter)/len(slum_gutter)}
+			scores.append(section_scores)
+			elctrol_dict['ele_scores']= section_scores
 		elctrol_dict["content"]={}
-
 		city_main["content"][str(e.administrative_ward.name)]["content"].update({e.name : elctrol_dict })
 
 	for s in Slum.objects.filter(electoral_ward__administrative_ward__city__id=id, status=True):
@@ -353,8 +392,25 @@ def slummapdisplay(request,id):
 		city_main["content"]\
 		[str(s.electoral_ward.administrative_ward.name)]["content"]\
 		[str(s.electoral_ward.name)]["content"].update({s.name : slum_dict })
-	return HttpResponse(json.dumps(city_main),content_type='application/json')
 
+	for i in QolScoreData.objects.filter(slum__electoral_ward__administrative_ward__city__id=id):
+		"""Quality of living scores setion and slum wise"""
+		score_dict = {}
+		score_dict['total_score'] = i.total_score
+		score_dict['road'] = i.road
+		score_dict['water'] = i.water
+		score_dict['waste'] = i.waste
+		score_dict['drainage'] = i.drainage
+		score_dict['gutter'] = i.gutter
+		score_dict['general'] = i.general
+		score_dict['str_n_occup'] = i.str_n_occup
+		score_dict['toilet'] = i.toilet
+		city_main["content"] \
+			[str(i.slum.electoral_ward.administrative_ward.name)]["content"] \
+			[str(i.slum.electoral_ward.name)]['content'] \
+			[str(i.slum.name)].update({'scores': score_dict})
+
+	return HttpResponse(json.dumps(city_dict),content_type='application/json')
 
 @csrf_exempt
 def modelmapdisplay(request):
@@ -378,8 +434,6 @@ def modelmapdisplay(request):
 	data = {'shape': shape,'background_color':background_color}
 	return HttpResponse(json.dumps(data),content_type='application/json')
 
-
-
 def drainageinsert(request):
 	""" RIM Report Form"""
 	if request.method == 'POST':
@@ -390,7 +444,6 @@ def drainageinsert(request):
 	else:
 		form = DrainageForm()
 	return render(request,'drainageinsert.html', {'form':form})
-
 
 def drainagedisplay(request):
 	""" drainage display List Form"""
