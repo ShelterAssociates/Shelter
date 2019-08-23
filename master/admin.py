@@ -185,8 +185,8 @@ admin.site.register(CityReference, CityReferenceAdmin)
 #slum
 class SlumDetailAdmin(BaseModelAdmin):
     form = SlumForm
-    list_display = ('name', 'electoral_ward', 'administrative_ward', 'city_name','associated_with_SA','status')
-    search_fields = ['name','electoral_ward__name', 'electoral_ward__administrative_ward__name']
+    list_display = ('name', 'electoral_ward', 'administrative_ward', 'city_name','shelter_slum_code', 'associated_with_SA','status')
+    search_fields = ['name','electoral_ward__name', 'electoral_ward__administrative_ward__name','shelter_slum_code']
     #list_filter = [CityListFilter]
     ordering = ['electoral_ward__name', 'name']
     actions = ['associated_with_SA', 'status_of_slum']

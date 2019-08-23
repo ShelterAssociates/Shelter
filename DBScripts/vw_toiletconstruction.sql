@@ -108,11 +108,11 @@ mc8 on mc8.household_number = mc.household_number AND mc8.slum_id = mc.slum_id
 
 /*Extracting longitudes and latitudes from shape vectors*/
 
-LEFT JOIN(SELECT housenumber, slum_id,
+LEFT JOIN(SELECT housenumber, object_id as slum_id,
 ST_X(ST_Transform(ST_SetSRID(ST_AsText(ST_Centroid(shape)), 4326), 4326)) as "longitude",
 ST_Y(ST_Transform(ST_SetSRID(ST_AsText(ST_Centroid(shape)), 4326), 4326)) as "latitude",
 ST_AsText(ST_Centroid(shape)) as "coordinates" 
-FROM component_component WHERE metadata_id = 1) cc on cc.housenumber = mc.household_number::varchar AND cc.slum_id = mc.slum_id
+FROM component_component WHERE metadata_id = 1 and content_type_id = 12) cc on cc.housenumber = mc.household_number::varchar AND cc.slum_id = mc.slum_id
 
 LEFT JOIN(SELECT id, electoral_ward_id, name FROM master_slum) s on s.id = mc.slum_id
 

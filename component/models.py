@@ -1,14 +1,16 @@
 from django.contrib.gis.db import models
-from master.models import Slum
 #from picklefield.fields import PickledObjectField
 from jsonfield import JSONField
 from django.core.exceptions import ValidationError
+from django.contrib.contenttypes.fields import GenericForeignKey
+from django.contrib.contenttypes.models import ContentType
 
 DISPLAY_TYPE_CHOICES = (
         ('M', 'Map'),
         ('T', 'Tabular'),
     )
 LEVEL_CHOICES  = (
+        ('C', 'City'),
         ('S', 'Slum'),
         ('H', 'Household'),
     )
@@ -66,12 +68,15 @@ class Component(models.Model):
     metadata = models.ForeignKey(Metadata)
     housenumber = models.CharField(max_length=100)
     shape = models.GeometryField(srid=4326)
-    slum  = models.ForeignKey(Slum)
+    content_type = models.ForeignKey(ContentType, default=ContentType.objects.get(model='slum').id, on_delete=models.CASCADE)
+    object_id = models.PositiveIntegerField() #Fields for reverse relationship with slum and city table
+    content_object = GenericForeignKey('content_type','object_id')
+
     objects = models.GeoManager()
 
     def __unicode__(self):
         """Returns string representation of object"""
-        return self.slum.name + ' - '+ self.metadata.name + ':'+ self.housenumber
+        return self.content_type.model + ' - '+ self.metadata.name + ':'+ self.housenumber
 
     class Meta:
         """Metadata for class Component"""
@@ -80,18 +85,3 @@ class Component(models.Model):
         )
         verbose_name = 'Component'
         verbose_name_plural = 'Components'
-
-class Fact(models.Model):
-    """Fact analysis data"""
-    metadata  = models.ForeignKey(Metadata)
-    slum  = models.ForeignKey(Slum)
-    blob  = JSONField()
-
-    def __unicode__(self):
-        """Returns string representation of object"""
-        return self.slum.name
-
-    class Meta:
-        """Metadata for class Fact"""
-        verbose_name = 'Fact'
-        verbose_name_plural = 'Fact'

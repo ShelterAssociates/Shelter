@@ -1,0 +1,38 @@
+{% load staticfiles %}
+
+{%block scriptblock %}
+<link rel="stylesheet"  type="text/css" href="{% static "css/bootstrap.min.css" %}"/>
+<script src="{% static "js/jquery.min.js" %}"></script>
+<script src="{% static "js/bootstrap.min.js" %}"></script>
+{%endblock %}
+
+{% block scriptblock1 %}
+{% endblock %}
+
+{% block styleblock %}
+{% endblock %}
+
+{% block headerblock %}
+<!--Header starts here-->
+<nav class="navbar navbar-default navbar-fixed-top" id="navbar">
+  <div class="header">
+    <div class="img">
+      <img src="/static/images/shelter.png"  height="45" style="padding:5px;"/>
+    </div>
+    <div class="divider"></div>
+    <div class="bread-crumb">
+
+    </div>
+    <div class="info-icon">
+      <img src="/static/images/ico_info.png" />
+    </div>
+  </div>
+  <!--Header ends here-->
+</nav>
+{%endblock %}
+
+{% block mainblock %}
+{% endblock %}
+{% block content %}
+{% endblock %}
+

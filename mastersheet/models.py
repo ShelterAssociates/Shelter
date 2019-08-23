@@ -439,7 +439,7 @@ def handle_shifted_material(sender ,instance, **kwargs):
         if flag and len(instance.st_material_shifted_to)!=0 and instance.septic_tank_date is not None:
             temp['flag'] = True
             temp['household_number'] = int(instance.st_material_shifted_to)
-            temp['defaults']['phase_three_material_date'] = instance.septic_tank_date
+            temp['defaults']['septic_tank_date'] = instance.septic_tank_date
             instance.septic_tank_date = None
             
     if temp['flag']:

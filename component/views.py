@@ -29,7 +29,10 @@ def kml_upload(request):
         form = KMLUpload(request.POST or None,request.FILES)
         if form.is_valid():
             docFile = request.FILES['kml_file'].read()
-            objKML = KMLParser(docFile, form.cleaned_data['slum_name'], form.cleaned_data['delete_flag'])
+            data = form.cleaned_data['slum_name']
+            if form.cleaned_data['level'] == 'City':
+                data = form.cleaned_data['City']
+            objKML = KMLParser(docFile, data, form.cleaned_data['delete_flag'])
             try:
                 parsed_data = objKML.other_components()
                 context_data['parsed'] = [k for k,v in parsed_data.items() if v==True]
@@ -84,7 +87,7 @@ def get_component(request, slum_id):
         #Component
         if metad.type == 'C':
             #Fetch component for selected filter and slum , assign it finally to child
-            for comp in metad.component_set.filter(slum=slum):
+            for comp in slum.components.filter(metadata=metad):
                 component['child'].append({'housenumber':comp.housenumber, 'shape':json.loads(comp.shape.json)})
         #Filter
         elif metad.type == 'F' and metad.code != "":

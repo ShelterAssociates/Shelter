@@ -1,6 +1,5 @@
 from pykml import parser
 from .models import Component, Metadata
-from master.models import Slum
 from django.contrib.gis.geos import GEOSGeometry
 
 POINT = 'Point'
@@ -12,8 +11,8 @@ class KMLParser(object):
     '''
     component_data = []
 
-    def __init__(self, docFile, slum, delete_flag):
-        self.slum = slum
+    def __init__(self, docFile, object_type, delete_flag):
+        self.object_type = object_type
         self.delete_flag = delete_flag
         self.root = parser.fromstring(docFile)
 
@@ -76,7 +75,7 @@ class KMLParser(object):
             for index, pnt in enumerate(coordinates):
                 val = {'shape':pnt}
                 #Create or update in component
-                obj, created = Component.objects.update_or_create(housenumber=key_no, slum=self.slum, metadata = metadata, defaults=val)
+                obj, created = self.object_type.components.update_or_create(housenumber=key_no, metadata = metadata, defaults=val)
                 key_no = str(key) + '.'+str(index+1)
 
     def other_components(self):
@@ -91,7 +90,7 @@ class KMLParser(object):
         metadata_component = Metadata.objects.filter(type='C').values_list('code', flat=True)
 
         if self.delete_flag:
-            Component.objects.filter(slum = self.slum).delete()
+            self.object_type.components.delete()
 
         for folder in folders:
           try:

@@ -127,7 +127,7 @@ def masterSheet(request, slum_code = 0, FF_code = 0, RHS_code = 0 ):
 
             # Family Factsheet - fetching data
             # arranging data with respect to household numbers
-            temp_FF = {obj_FF['group_vq77l17/Household_number']: obj_FF for obj_FF in formdict_family_factsheet}
+            temp_FF = {int(obj_FF['group_vq77l17/Household_number']): obj_FF for obj_FF in formdict_family_factsheet}
             temp_FF_keys = temp_FF.keys()
         # Daily Reporting - fetching data
         toilet_reconstruction_fields = ['slum','slum__name','household_number', 'agreement_date_str', 'agreement_cancelled',
@@ -161,7 +161,7 @@ def masterSheet(request, slum_code = 0, FF_code = 0, RHS_code = 0 ):
                 else: 
                     if i['completion_date_str'] == None and is_delayed(i['phase_two_material_date_str']):
                         i['delay_flag'] = '#aaa4f4'
-        temp_daily_reporting = {obj_DR['household_number']: obj_DR for obj_DR in daily_reporting_data}
+        temp_daily_reporting = {int(obj_DR['household_number']): obj_DR for obj_DR in daily_reporting_data}
         temp_DR_keys = temp_daily_reporting.keys()
         # SBM - fetching data
         sbm_fields = ['slum', 'slum__name','household_number', 'name', 'application_id', 'photo_uploaded', 'created_date_str', 'id', 'phone_number', 'aadhar_number', 'photo_verified', 'photo_approved', 'application_verified', 'application_approved', 'sbm_comment']
@@ -170,7 +170,7 @@ def masterSheet(request, slum_code = 0, FF_code = 0, RHS_code = 0 ):
             slum__shelter_slum_code=slum_code[0][0])
         sbm_data = sbm_data.values(*sbm_fields)
 
-        temp_sbm = {obj_DR['household_number']: obj_DR for obj_DR in sbm_data}
+        temp_sbm = {int(obj_DR['household_number']): obj_DR for obj_DR in sbm_data}
         temp_sbm_keys = temp_sbm.keys()
         # Community Mobilization - fetching data
         community_mobilization_fields = ['slum', 'slum__name','household_number', 'activity_type', 'activity_date_str','id']
@@ -194,11 +194,11 @@ def masterSheet(request, slum_code = 0, FF_code = 0, RHS_code = 0 ):
             obj_name_label_data['name']: {child['name']: child['label'] for child in obj_name_label_data['children']} for
             obj_name_label_data in name_label_data}
         
-        dummy_formdict = {x['Household_number']:x for x in formdict}
+        dummy_formdict = {int(x['Household_number']):x for x in formdict}
         for y in invoices:
                 for z in y.household_numbers:
-                    if str(z) not in dummy_formdict.keys():
-                        dummy_formdict[str(z)] = {
+                    if int(z) not in dummy_formdict.keys():
+                        dummy_formdict[int(z)] = {
                             "Household_number":z,   
                             "_id":"",
                             "ff_id":"",
@@ -209,7 +209,7 @@ def masterSheet(request, slum_code = 0, FF_code = 0, RHS_code = 0 ):
                         }
                     vendor_name = "vendor_type" + str(y.material_type)
                     invoice_number = "invoice_number" + str(y.material_type)
-                    dummy_formdict[str(z)].update({
+                    dummy_formdict[int(z)].update({
                         vendor_name: y.invoice.vendor.name,
                         invoice_number: y.invoice.invoice_number,
                         str(y.material_type) + " Invoice Number"+"_id" : y.invoice.id,
@@ -219,8 +219,8 @@ def masterSheet(request, slum_code = 0, FF_code = 0, RHS_code = 0 ):
                 y = community_mobilization_data[i]
                 for z in y.household_number:
                     new_activity_type = community_mobilization_data[i].activity_type.name
-                    if str(z) not in dummy_formdict.keys():
-                        dummy_formdict[str(z)] = {
+                    if int(z) not in dummy_formdict.keys():
+                        dummy_formdict[int(z)] = {
                             "Household_number":z,   
                             "_id":"",
                             "ff_id":"",
@@ -230,12 +230,12 @@ def masterSheet(request, slum_code = 0, FF_code = 0, RHS_code = 0 ):
                             "no_rhs_flag": "#eba6fc"
                         }
                         
-                    dummy_formdict[str(z)].update({new_activity_type: y.activity_date_str, str(new_activity_type) + "_id" : y.id})
+                    dummy_formdict[int(z)].update({new_activity_type: y.activity_date_str, str(new_activity_type) + "_id" : y.id})
                     
                     
         for i in temp_sbm_keys:
-            if str(i) not in dummy_formdict.keys():
-                dummy_formdict[str(i)] = {
+            if i not in dummy_formdict.keys():
+                dummy_formdict[i] = {
                             "Household_number":i,   
                             "_id":"",
                             "ff_id":"",
@@ -244,12 +244,12 @@ def masterSheet(request, slum_code = 0, FF_code = 0, RHS_code = 0 ):
                             "_attachments" : "",
                             "no_rhs_flag": "#eba6fc"
                         }
-            dummy_formdict[str(i)].update(temp_sbm[str(i)])
-            dummy_formdict[str(i)].update({'sbm_id_'+str(i): temp_sbm[str(i)]['id']})
+            dummy_formdict[i].update(temp_sbm[i])
+            dummy_formdict[i].update({'sbm_id_'+str(i): temp_sbm[i]['id']})
             
         for i in temp_DR_keys:
-            if str(i) not in dummy_formdict.keys():
-                dummy_formdict[str(i)] = {
+            if i not in dummy_formdict.keys():
+                dummy_formdict[i] = {
                             "Household_number":i,   
                             "_id":"",
                             "ff_id":"",
@@ -258,8 +258,8 @@ def masterSheet(request, slum_code = 0, FF_code = 0, RHS_code = 0 ):
                             "_attachments" : "",
                             "no_rhs_flag": "#eba6fc"
                         }
-            dummy_formdict[str(i)].update(temp_daily_reporting[str(i)])
-            dummy_formdict[str(i)].update({'tc_id_'+str(i): temp_daily_reporting[str(i)]['id']})
+            dummy_formdict[i].update(temp_daily_reporting[i])
+            dummy_formdict[i].update({'tc_id_'+str(i): temp_daily_reporting[i]['id']})
 
 
 
@@ -278,15 +278,16 @@ def masterSheet(request, slum_code = 0, FF_code = 0, RHS_code = 0 ):
             x['ff_id'] = None
             x['ff_xform_id_string'] = None
             if flag_fetch_ff:
-                if x['Household_number'] in temp_FF_keys:
-                    if '_id' in temp_FF[x['Household_number']].keys():
-                        ff_id = temp_FF[x['Household_number']]['_id']
-                        del(temp_FF[x['Household_number']]['_id'])
-                    if '_xform_id_string' in temp_FF[x['Household_number']].keys():
-                        ff_xform_id_string = temp_FF[x['Household_number']]['_xform_id_string']
-                        del(temp_FF[x['Household_number']]['_xform_id_string'])
+		househ = int(x['Household_number'])
+                if househ in temp_FF_keys:
+                    if '_id' in temp_FF[househ].keys():
+                        ff_id = temp_FF[househ]['_id']
+                        del(temp_FF[househ]['_id'])
+                    if '_xform_id_string' in temp_FF[househ].keys():
+                        ff_xform_id_string = temp_FF[househ]['_xform_id_string']
+                        del(temp_FF[househ]['_xform_id_string'])
 
-                    x.update(temp_FF[x['Household_number']])
+                    x.update(temp_FF[househ])
                     x['OnfieldFactsheet'] = 'Yes'
                     x['_id'] = temp
                     x['ff_id'] = ff_id
@@ -327,6 +328,7 @@ def masterSheet(request, slum_code = 0, FF_code = 0, RHS_code = 0 ):
             if 'group_oi8ts04/C5' in x.keys():
                 x.update({'current place of defecation': x['group_oi8ts04/C5']})
             
+            x.update({'Household_number':int(x['Household_number'])})            
             
             if len(slum_funder)!=0:
                 for funder in slum_funder:
@@ -986,6 +988,7 @@ def give_report_table_numbers(request):#view for toilet construction
         count_field= {query_on[query_field]:Count('level_id')}
         tc = ToiletConstruction.objects.filter(**filter_field)\
             .exclude(agreement_cancelled=True)\
+            .exclude(status=7)\
             .annotate(**level_data[tag]).values('level','level_id','city_name')\
             .annotate(**count_field).order_by('city_name')
         tc = {obj_ad['level_id']: obj_ad for obj_ad in tc}

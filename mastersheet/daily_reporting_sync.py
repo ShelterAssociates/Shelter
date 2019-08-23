@@ -72,7 +72,7 @@ class DDSync(object):
     def fetch_kobo_FF_data(self):
         url_family_factsheet = settings.KOBOCAT_FORM_URL + 'data/' + str(self.ff_survey_id) + '?format=json'
         url_family_factsheet += '&query={"group_vq77l17/slum_name":"'+str(self.slum.shelter_slum_code)+'"'
-        url_family_factsheet += ',"_submission_time":{"$gt":"'+str(self.survey_date)+'"}'
+        #url_family_factsheet += ',"_submission_time":{"$gt":"'+str(self.survey_date)+'"}'
         url_family_factsheet += '}&fields=["_submission_time","group_vq77l17/Household_number","group_ne3ao98/Where_the_individual_ilet_is_connected_to","group_ne3ao98/Use_of_toilet"]'
         formdict_family_factsheet = self.fetch_url_data(url_family_factsheet)
         return formdict_family_factsheet
@@ -102,9 +102,9 @@ class ToiletConstructionSync(DDSync):
             update_data = {}
             check_list = {'slum': self.slum, 'household_number': tmp_ff['group_vq77l17/Household_number']}
             tc, created = ToiletConstruction.objects.get_or_create(**check_list)
-            if ('group_ne3ao98/Use_of_toilet' in tmp_ff and tmp_ff['group_ne3ao98/Use_of_toilet'] in ['01','02' '03', '04', '05', '06']):
+            if ('group_ne3ao98/Use_of_toilet' in tmp_ff and tmp_ff['group_ne3ao98/Use_of_toilet'] in ['01','02' ,'03', '04', '05', '06']):
                 update_data['use_of_toilet'] = self.convert_datetime(tmp_ff['_submission_time'])
-            if ('group_ne3ao98/Where_the_individual_ilet_is_connected_to' in tmp_ff and tmp_ff['group_ne3ao98/Where_the_individual_ilet_is_connected_to'] in ['01', '02', '03', '04']):
+            if ('group_ne3ao98/Where_the_individual_ilet_is_connected_to' in tmp_ff and tmp_ff['group_ne3ao98/Where_the_individual_ilet_is_connected_to'] in ['01', '03']):
                 update_data['toilet_connected_to'] = self.convert_datetime(tmp_ff['_submission_time'])
             if not tc.factsheet_done:
 	    	    update_data['factsheet_done'] = self.convert_datetime(tmp_ff['_submission_time'])
