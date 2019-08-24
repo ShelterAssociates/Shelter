@@ -1,20 +1,25 @@
 from __future__ import division
 from graphs.models import  *
 import json
+import numpy as np
+from scipy import stats
 from django.http import HttpResponse, HttpResponseForbidden
 
 waste_coll_to_type = {'frequency_of_waste_collection_001':'ulb ghantagadi','frequency_of_waste_collection':'mla sponsored tempo',
               'frequency_of_waste_collection_':'ulb Van','frequency_of_waste_collection__002':'door to door waste collection',
               'frequency_of_waste_collection__001':'garbage bin'}
 
+all_slum_ids = set()
+
 def score_calculation(section_key):
-    # section_key = 'Toilet'
     '''function calculates the score for single and multiselect questions'''
     all_slums_list=[]
     json_data = json.loads(open('graphs/reference_file.json').read())  # json reference data from json file
     slum_data = SlumData.objects.all().values('slum_id','rim_data')
     for i in slum_data:
         slum__id = i['slum_id']
+        all_slum_ids.add(slum__id)
+        # all_slum_ids = list(set(all_slum_ids))
         db_data = json.loads( i['rim_data'])
         for k, v in json_data.items():
             if k == section_key:                   # checks sction key like water, toilet etc
@@ -234,7 +239,6 @@ def toilet_final(z):
     toilet_all_scores.append(dummy_dict)
     return toilet_all_scores
 
-
 def Rhs_data(slumid):
     '''collection of rhs data required for every section'''
     waste_data = []
@@ -342,24 +346,138 @@ def final_section_score(w):
     d5 = general_final(w)[0]
     d6 = structure_occupancy(w)
     d7 = toilet_final(w)[0]
-    for i in d0.keys():
-            if i in d1.keys() and d7.keys() and d2.keys() and d3.keys() and d4.keys() and d5.keys() and d6.keys():
-                try:
-                    slum_total_score = d0[i]+d7[i]+d1[i]+d2[i]+d3[i]+d4[i]+d5[i]+d6[i]
-                    one_slum_score_dict[i]={'Road':d0[i],'Water': d1[i],'Waste':d2[i],'Drainage':d3[i],'Gutter':d4[i],'General':d5[i],'Str_n_occup':d6[i],'Total_score':slum_total_score,'Toilet':d7[i]}
-                except Exception as e:
-                    print 'exception in between',e
+
+    uncommom_keys = all_slum_ids - set(d0.keys() and d1.keys() and d2.keys() and d3.keys() and d4.keys() and d5.keys() and d6.keys()and d7.keys())
+    common_keys = all_slum_ids - uncommom_keys
+    for i in common_keys:
+        slum_total_score = d0[i] + d1[i] + d2[i] + d3[i] + d4[i] + d5[i] + d6[i]+ d7[i]
+        one_slum_score_dict[i]={'Road':d0[i],'Water': d1[i],'Waste':d2[i],'Drainage':d3[i],'Gutter':d4[i],'General':d5[i],'Str_n_occup':d6[i],'Total_score':slum_total_score,'Toilet':d7[i]}
+
+    for i in uncommom_keys:
+        if d1.has_key(i):
+            pass
+        else:
+            d1[i] = None
+        if d2.has_key(i):
+            pass
+        else:
+            d2[i] = None
+        if d3.has_key(i):
+            pass
+        else:
+            d3[i] = None
+        if d4.has_key(i):
+            pass
+        else:
+            d4[i] = None
+        if d5.has_key(i):
+            pass
+        else:
+            d5[i] = None
+        if d6.has_key(i):
+            pass
+        else:
+            d6[i] = None
+        if d7.has_key(i):
+            pass
+        else:
+            d7[i] = None
+        if d1[i] and d2[i] and d3[i] and d4[i] and d5[i] and d6[i] and d7[i]:
+            slum_total_score = d0[i] + d1[i] + d2[i] + d3[i] + d4[i] + d5[i] + d6[i] + d7[i]
+        else:
+            slum_total_score = None
+        one_slum_score_dict[i] = {'Road': d0[i], 'Water': d1[i], 'Waste': d2[i], 'Drainage': d3[i], 'Gutter': d4[i],
+                                  'General': d5[i], 'Str_n_occup': d6[i], 'Total_score':slum_total_score,'Toilet':d7[i]}
     return one_slum_score_dict
+
+def percentile_function():
+    # calculate and save percentile for only modified slum not for all
+    percentile_one_slum = {}
+    road_dict = {}
+    water_dict = {}
+    waste_dict = {}
+    drainage_dict = {}
+    gutter_dict = {}
+    general_dict = {}
+    toilet_dict = {}
+    stru_n_ocup_dict = {}
+    total_score_dict = {}
+    slum_percentile_sectionwise = {}
+    slum_id_list = []
+
+    def set_none_to_neg(score_dict):
+        for i in score_dict.keys():
+            if score_dict[i] == None:
+                score_dict[i] = -100
+        return score_dict
+
+    from_db = QOLScoreData.objects.all().values()  # for percentile calculations nedd all data
+    for i in from_db:
+        slum_id_list.append({'slumid': i['slum_id'],'id': i['id']})
+        road_dict[i['slum_id']] = i['road']
+        water_dict[i['slum_id']] = i['water']
+        waste_dict[i['slum_id']] = i['waste']
+        drainage_dict[i['slum_id']] = i['drainage']
+        gutter_dict[i['slum_id']] = i['gutter']
+        general_dict[i['slum_id']] = i['general']
+        stru_n_ocup_dict[i['slum_id']] = i['str_n_occup']
+        toilet_dict[i['slum_id']] = i['toilet']
+        total_score_dict[i['slum_id']] = i['total_score']
+
+    total_score_dict = set_none_to_neg(total_score_dict)
+    toilet_dict = set_none_to_neg(toilet_dict)
+    road_dict = set_none_to_neg(road_dict)
+    water_dict = set_none_to_neg(water_dict)
+    waste_dict = set_none_to_neg(waste_dict)
+    drainage_dict = set_none_to_neg(drainage_dict)
+    gutter_dict = set_none_to_neg(gutter_dict)
+    general_dict = set_none_to_neg(general_dict)
+    stru_n_ocup_dict= set_none_to_neg(stru_n_ocup_dict)
+
+
+    try:
+        total_score_pert = {i: stats.percentileofscore(total_score_dict.values(),total_score_dict[i])for i in total_score_dict.keys()}
+        toilet_pert = {i: stats.percentileofscore(toilet_dict.values(),toilet_dict[i])for i in toilet_dict.keys()}
+        road_pert = {i: stats.percentileofscore(road_dict.values(), road_dict[i]) for i in road_dict.keys()}
+        water_pert = {i: stats.percentileofscore(water_dict.values(), water_dict[i]) for i in water_dict.keys()}
+        waste_pert = {i: stats.percentileofscore(waste_dict.values(), waste_dict[i]) for i in waste_dict.keys()}
+        drainage_pert = {i: stats.percentileofscore(drainage_dict.values(), drainage_dict[i]) for i in drainage_dict.keys()}
+        gutter_pert = {i: stats.percentileofscore(gutter_dict.values(), gutter_dict[i]) for i in gutter_dict.keys()}
+        general_pert = {i: stats.percentileofscore(general_dict.values(), general_dict[i]) for i in general_dict.keys()}
+        stru_n_ocup_pert = {i: stats.percentileofscore(stru_n_ocup_dict.values(), stru_n_ocup_dict[i])
+                            for i in stru_n_ocup_dict.keys()}
+    except Exception as e:
+        print 'Exception in percentile function', e
+
+    for i in slum_id_list:
+        if i['slumid'] in road_pert.keys() and waste_pert.keys() and water_pert.keys() and gutter_pert.keys()  and general_pert.keys() \
+            and stru_n_ocup_pert.keys() and toilet_pert.keys() and total_score_pert.keys() and drainage_pert.keys():
+            slum_percentile_sectionwise[i['slumid']] = {'Waste': waste_pert[i['slumid']],'Road': road_pert[i['slumid']], 'Water': water_pert[i['slumid']],
+                    'Gutter': gutter_pert[i['slumid']],'General': general_pert[i['slumid']],'Str_n_occup': stru_n_ocup_pert[i['slumid']],
+                    'Drainage': drainage_pert[i['slumid']],'Total_score': total_score_pert[i['slumid']],'Toilet': toilet_pert[i['slumid']]}
+        for k, v in slum_percentile_sectionwise.items():
+                if i['slumid'] == k:
+                    trial = QOLScoreData.objects.filter(id = i['id'],slum_id = k).update(totalscore_percentile= v['Total_score'],
+                        toilet_percentile =v['Toilet'],str_n_ocup_percentile= v['Str_n_occup'],road_percentile = v['Road'],
+                        drainage_percentile=v['Drainage'],general_percentile = v['General'],gutter_percentile=v['Gutter'],
+                        waste_percentile=v['Waste'],water_percentile=v['Water'])
+                else:
+                    pass
+                    # trial = QOLScoreData.objects.update_or_create(slum_id = k,general_percentile = v['General'])
 
 def QOL_save_data(request):
     '''saving data to db'''
     result = final_section_score(request)
     for i in result.items():
-        slum_id =i[0]
-        data =i[1]
-        p = QolScoreData(slum_id =i[0], water =data['Water'], waste =data['Waste'], road =data['Road'],str_n_occup = data['Str_n_occup'],
-                              drainage =data['Drainage'], gutter =data['Gutter'], toilet =data['Toilet'],general =data['General'],total_score =data['Total_score'])
-        # p.save()
+        data = i[1]
+        try:
+            to_save = QOLScoreData.objects.get_or_create(slum_id = i[0],water =data['Water'], waste =data['Waste'],
+                            road =data['Road'],str_n_occup = data['Str_n_occup'],drainage =data['Drainage'],
+                            gutter =data['Gutter'],toilet =data['Toilet'],general =data['General'],
+                            total_score = data['Total_score'])
+        except Exception as e:
+            print e
+    percentile_function()
     return HttpResponse(json.dumps(result), content_type="application/json")
 
 # verified and corrected codes
