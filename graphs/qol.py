@@ -15,12 +15,12 @@ def score_calculation(section_key):
     '''function calculates the score for single and multiselect questions'''
     all_slums_list=[]
     json_data = json.loads(open('graphs/reference_file.json').read())  # json reference data from json file
-    slum_data = SlumData.objects.all().values('slum_id','rim_data','city_id')
+    slum_data = SlumData.objects.all()#.values('slum_id','rim_data','city_id')
     for i in slum_data:
-        slum__id = i['slum_id']
+        slum__id = i.slum.id
         all_slum_ids.add(slum__id)
-        slumid_cityid_list[i['slum_id']]= i['city_id']
-        db_data = json.loads(i['rim_data'])
+        slumid_cityid_list[slum__id]= i.city.id
+        db_data = i.rim_data
         for k, v in json_data.items():
             if k == section_key:                   # checks sction key like water, toilet etc
                 if k in db_data.keys():
