@@ -315,29 +315,31 @@ def slummapdisplay(request,id):
 
 		adminwd_score = QOLScoreData.objects.filter(slum__electoral_ward__administrative_ward__name = a.name)
 		"""Quality of living scores setion and admin ward wise"""
+		section_scores = {}
 		if adminwd_score:
-			scores = []
-			section_scores = {}
-			slum_general = adminwd_score.values_list('general_percentile', flat=True)
-			slum_gutter = adminwd_score.values_list('gutter_percentile', flat=True)
-			slums_drainage = adminwd_score.values_list('drainage_percentile', flat=True)
-			slum_waste = adminwd_score.values_list('waste_percentile', flat=True)
-			slum_water = adminwd_score.values_list('water_percentile', flat=True)
-			slum_toilet = adminwd_score.values_list('toilet_percentile', flat=True)
-			slum_str_n_occup = adminwd_score.values_list('str_n_ocup_percentile', flat=True)
-			slum_road = adminwd_score.values_list('road_percentile', flat=True)
-			slum_total_all_sections = adminwd_score.values_list('totalscore_percentile', flat=True)
-			section_scores = {'total_score': sum(slum_total_all_sections) / len(slum_total_all_sections),
-							  'toilet': sum(slum_toilet)/len(slum_toilet),
-							  'general': sum(slum_general) / len(slum_general),
-							  'str_n_occup': sum(slum_str_n_occup) / len(slum_str_n_occup),
-							  'road': sum(slum_road) / len(slum_road),
-							  'water': sum(slum_water) / len(slum_water),
-							  'waste': sum(slum_waste) / len(slum_waste),
-							  'drainage': sum(slums_drainage) / len(slums_drainage),
-							  'gutter': sum(slum_gutter) / len(slum_gutter)}
-			scores.append(section_scores)
-			admin_dict["content"] = {'Admin_scores':scores}
+			try:
+				slum_general = adminwd_score.values_list('general_percentile', flat=True)
+				slum_gutter = adminwd_score.values_list('gutter_percentile', flat=True)
+				slums_drainage = adminwd_score.values_list('drainage_percentile', flat=True)
+				slum_waste = adminwd_score.values_list('waste_percentile', flat=True)
+				slum_water = adminwd_score.values_list('water_percentile', flat=True)
+				slum_toilet = adminwd_score.values_list('toilet_percentile', flat=True)
+				slum_str_n_occup = adminwd_score.values_list('str_n_ocup_percentile', flat=True)
+				slum_road = adminwd_score.values_list('road_percentile', flat=True)
+				slum_total_all_sections = adminwd_score.values_list('totalscore_percentile', flat=True)
+				section_scores = {'total_score': sum(slum_total_all_sections) / len(slum_total_all_sections),
+								  'toilet': sum(slum_toilet)/len(slum_toilet),
+								  'general': sum(slum_general) / len(slum_general),
+								  'str_n_occup': sum(slum_str_n_occup) / len(slum_str_n_occup),
+								  'road': sum(slum_road) / len(slum_road),
+								  'water': sum(slum_water) / len(slum_water),
+								  'waste': sum(slum_waste) / len(slum_waste),
+								  'drainage': sum(slums_drainage) / len(slums_drainage),
+								  'gutter': sum(slum_gutter) / len(slum_gutter)}
+			except Exception as e:
+				print e
+		admin_dict['scores'] = section_scores
+		admin_dict["content"] = {}
 		city_main["content"].update({a.name: admin_dict})
 
 	for e in ElectoralWard.objects.filter(administrative_ward__city__id=id):
@@ -357,30 +359,31 @@ def slummapdisplay(request,id):
 
 		electrolwd_scores = QOLScoreData.objects.filter(slum__electoral_ward__name = e.name)
 		"""Quality of living scores setion and ward wise"""
+		section_scores = {}
 		if electrolwd_scores:
-			scores=[]
-			section_scores = {}
-			slum_general = electrolwd_scores.values_list('general_percentile', flat=True)
-			slum_gutter = electrolwd_scores.values_list('gutter_percentile', flat=True)
-			slums_drainage = electrolwd_scores.values_list('drainage_percentile', flat=True)
-			slum_waste = electrolwd_scores.values_list('waste_percentile', flat=True)
-			slum_water = electrolwd_scores.values_list('water_percentile', flat=True)
-			slum_toilet = electrolwd_scores.values_list('toilet_percentile', flat=True)
-			slum_str_n_occup = electrolwd_scores.values_list('str_n_ocup_percentile', flat=True)
-			slum_road = electrolwd_scores.values_list('road_percentile', flat=True)
-			slum_total_all_sections = electrolwd_scores.values_list('totalscore_percentile',flat=True)
-			section_scores ={'total_score': sum(slum_total_all_sections)/len(slum_total_all_sections),
-							 'toilet': sum(slum_toilet)/len(slum_toilet),
-							 'general':sum(slum_general)/len(slum_general),
-							 'str_n_occup':sum(slum_str_n_occup)/len(slum_str_n_occup),
-							 'road': sum(slum_road)/len(slum_road),
-							 'water': sum(slum_water)/len(slum_water),
-							 'waste':sum(slum_waste)/len(slum_waste),
-							 'drainage': sum(slums_drainage)/len(slums_drainage),
-							 'gutter': sum(slum_gutter)/len(slum_gutter)}
-			scores.append(section_scores)
+			try:
+				slum_general = electrolwd_scores.values_list('general_percentile', flat=True)
+				slum_gutter = electrolwd_scores.values_list('gutter_percentile', flat=True)
+				slums_drainage = electrolwd_scores.values_list('drainage_percentile', flat=True)
+				slum_waste = electrolwd_scores.values_list('waste_percentile', flat=True)
+				slum_water = electrolwd_scores.values_list('water_percentile', flat=True)
+				slum_toilet = electrolwd_scores.values_list('toilet_percentile', flat=True)
+				slum_str_n_occup = electrolwd_scores.values_list('str_n_ocup_percentile', flat=True)
+				slum_road = electrolwd_scores.values_list('road_percentile', flat=True)
+				slum_total_all_sections = electrolwd_scores.values_list('totalscore_percentile',flat=True)
+				section_scores ={'total_score': sum(slum_total_all_sections)/len(slum_total_all_sections),
+								 'toilet': sum(slum_toilet)/len(slum_toilet),
+								 'general':sum(slum_general)/len(slum_general),
+								 'str_n_occup':sum(slum_str_n_occup)/len(slum_str_n_occup),
+								 'road': sum(slum_road)/len(slum_road),
+								 'water': sum(slum_water)/len(slum_water),
+								 'waste':sum(slum_waste)/len(slum_waste),
+								 'drainage': sum(slums_drainage)/len(slums_drainage),
+								 'gutter': sum(slum_gutter)/len(slum_gutter)}
+			except Exception as e:
+				print e
+		elctrol_dict['scores'] = section_scores
 		elctrol_dict["content"]= {}
-		elctrol_dict["content"] ={'Electroral_scores':scores}
 		city_main["content"][str(e.administrative_ward.name)]["content"].update({e.name : elctrol_dict })
 
 	for s in Slum.objects.filter(electoral_ward__administrative_ward__city__id=id, status=True):
@@ -398,20 +401,23 @@ def slummapdisplay(request,id):
 
 	for i in QOLScoreData.objects.filter(slum__electoral_ward__administrative_ward__city__id=id):
 		"""Quality of living scores setion and slum wise"""
-		score_dict = {}
-		score_dict['total_score'] = i.totalscore_percentile
-		score_dict['road'] = i.road_percentile
-		score_dict['water'] = i.water_percentile
-		score_dict['waste'] = i.waste_percentile
-		score_dict['drainage'] = i.drainage_percentile
-		score_dict['gutter'] = i.gutter_percentile
-		score_dict['general'] = i.general_percentile
-		score_dict['str_n_occup'] = i.str_n_ocup_percentile
-		score_dict['toilet'] = i.toilet_percentile
-		city_main["content"] \
-			[str(i.slum.electoral_ward.administrative_ward.name)]["content"] \
-			[str(i.slum.electoral_ward.name)]['content'] \
-			[str(i.slum.name)].update({'percentile': score_dict})
+		try:
+			score_dict = {}
+			score_dict['total_score'] = i.totalscore_percentile
+			score_dict['road'] = i.road_percentile
+			score_dict['water'] = i.water_percentile
+			score_dict['waste'] = i.waste_percentile
+			score_dict['drainage'] = i.drainage_percentile
+			score_dict['gutter'] = i.gutter_percentile
+			score_dict['general'] = i.general_percentile
+			score_dict['str_n_occup'] = i.str_n_ocup_percentile
+			score_dict['toilet'] = i.toilet_percentile
+			city_main["content"] \
+				[str(i.slum.electoral_ward.administrative_ward.name)]["content"] \
+				[str(i.slum.electoral_ward.name)]['content'] \
+				[str(i.slum.name)].update({'scores': score_dict})
+		except Exception as e:
+			print e
 	return HttpResponse(json.dumps(city_main),content_type='application/json')
 
 @csrf_exempt
