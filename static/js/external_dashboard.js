@@ -10,17 +10,25 @@ style_value ={
   fillOpacity : 0.6,
 }
 
-scores = [0.5, 0.4, 0.3, 0.25, 0.2, 0.15, 0.1];
-
+scores = [0, 25, 50, 75, 100];
 function getColor(d) {
-    return d > 0.5 ? '#800026' :
-           d > 0.4  ? '#BD0026' :
-           d > 0.3  ? '#E31A1C' :
-           d > 0.25  ? '#FC4E2A' :
-           d > 0.2   ? '#FD8D3C' :
-           d > 0.15   ? '#FEB24C' :
-           d > 0.1   ? '#FED976' :
-                      '#FFEDA0';
+    return d < 0 ? '#C0EC83' :
+           d < 25  ? '#A7E074' :
+           d < 50  ? '#96CC39' :
+           d < 75   ? '#6BA32D' :
+           d < 100   ? '#547A1D' :
+                      '#3B5C0A';
+}
+
+function get_message(layer){
+  var content = [];
+  var properties = layer.feature.properties;
+  content.push("Name" + " : "+ properties.name);
+    var level_sel = $("#levels_tag").val();
+    if (properties.scores != undefined){
+      content.push("&nbsp;&nbsp;" + level_sel + " score: "+parseInt(properties.scores[level_sel.toLowerCase()])+"%");
+    }
+    return content.join('<br>');
 }
 
 var MapLoad = (function() {
@@ -35,29 +43,18 @@ var MapLoad = (function() {
       "features": this.data
     };
     this.shape = L.geoJson(geo_data, {style: function(feature){
-        style_value['fillColor'] = style_value['color'] = getColor(feature.properties.score.General);
+    if('scores' in feature.properties && feature.properties.scores != undefined){
+        style_value['fillColor'] = style_value['color'] = getColor(feature.properties.scores.general);
+        }
+        else{
+          style_value['fillColor'] = style_value['color'] = getColor();
+        }
         return style_value;
     },  onEachFeature:this.onEachFeature});
   }
   MapLoad.prototype.onEachFeature = function(feature, layer){
     var properties = feature.properties;
-    // Build the label / tooltip content…
-    var content = [];
-    for (var key in properties) {
-
-      if (typeof properties[key] == "object")
-      {
-//        content.push(key +":");
-//        for (var key1 in properties[key]) {
-//            content.push('&nbsp;&nbsp;'+key1 + ' : '+ properties[key][key1]);
-//        }
-      }
-      else{
-        content.push(key + ': ' + properties[key]);
-      }
-
-    }
-    layer.bindPopup(content.join('<br>'),{autoPan:false});
+    layer.bindPopup(get_message(layer),{autoPan:false});
     layer.on({
        'mouseover': function (ev) {
                         this.openPopup();
@@ -67,10 +64,16 @@ var MapLoad = (function() {
                     }
     });
   }
-  MapLoad.prototype.show_all = function(selected_level='General',flag_only_border=false){
+  MapLoad.prototype.show_all = function(selected_level='general',flag_only_border=false){
     map.addLayer(this.shape);
     this.shape.eachLayer(function (layer) {
-        style_value['fillColor'] = style_value['color'] = getColor(layer.feature.properties.score[selected_level]);
+      layer.setPopupContent(get_message(layer));
+      if('scores' in layer.feature.properties && layer.feature.properties.scores != undefined){
+        style_value['fillColor'] = style_value['color'] = getColor(layer.feature.properties.scores[selected_level]);
+        }
+        else{
+          style_value['fillColor'] = style_value['color'] = getColor('');
+        }
         if (flag_only_border == true){
           style_value['fillOpacity'] = 0;
           //style_value['weight'] = 4;
@@ -175,37 +178,19 @@ function parse_custom_fields(data){
     $.each(data, function(key,value){
      value['lat'] = { 'geometry':value['lat'],
        'type':'Feature',
-       'properties' : {'name':key, 'score':{ 'General' : scores[Math.floor(Math.random() * scores.length)],
-                                              'Toilet' : scores[Math.floor(Math.random() * scores.length)],
-                                              'Gutter' : scores[Math.floor(Math.random() * scores.length)],
-                                              'Drainage' : scores[Math.floor(Math.random() * scores.length)],
-                                              'Road':scores[Math.floor(Math.random() * scores.length)],
-                                              'Water': scores[Math.floor(Math.random() * scores.length)],
-                                              'Waste' : scores[Math.floor(Math.random() * scores.length)]}},
+       'properties' : {'name':key, 'scores':value['scores']},
      }
      $.each(value.content, function(k1,v1){
 
         v1['lat'] = { 'geometry':v1['lat'],
          'type':'Feature',
-         'properties' : {'name':k1, 'score':{'General' : scores[Math.floor(Math.random() * scores.length)],
-                                              'Toilet' : scores[Math.floor(Math.random() * scores.length)],
-                                              'Gutter' : scores[Math.floor(Math.random() * scores.length)],
-                                              'Drainage' : scores[Math.floor(Math.random() * scores.length)],
-                                              'Road':scores[Math.floor(Math.random() * scores.length)],
-                                              'Water': scores[Math.floor(Math.random() * scores.length)],
-                                              'Waste' : scores[Math.floor(Math.random() * scores.length)]}},
+         'properties' : {'name':k1, 'scores':v1['scores']},
        }
 
        $.each(v1.content, function(k2,v2){
         v2['lat'] = { 'geometry':v2['lat'],
          'type':'Feature',
-         'properties' : {'name':k2, 'score':{'General' : scores[Math.floor(Math.random() * scores.length)],
-                                              'Toilet' : scores[Math.floor(Math.random() * scores.length)],
-                                              'Gutter' : scores[Math.floor(Math.random() * scores.length)],
-                                              'Drainage' : scores[Math.floor(Math.random() * scores.length)],
-                                              'Road':scores[Math.floor(Math.random() * scores.length)],
-                                              'Water': scores[Math.floor(Math.random() * scores.length)],
-                                              'Waste' : scores[Math.floor(Math.random() * scores.length)]}},
+         'properties' : {'name':k2, 'scores':v2['scores']},
         }
        });
      });
@@ -220,9 +205,9 @@ $(document).ready(function(){
     map_data[2].hide_all();
     if (level != 0)
     {
-      map_data[0].show_all(level_tag, true);
+      map_data[0].show_all(level_tag.toLowerCase(), true);
     }
-    map_data[level].show_all(level_tag);
+    map_data[level].show_all(level_tag.toLowerCase());
   }
   $('input[type=radio][name=level]').change(function() {
     let level = $(this).val();
