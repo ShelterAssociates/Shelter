@@ -1,7 +1,6 @@
 from __future__ import division
 from graphs.models import  *
 import json
-import numpy as np
 from scipy import stats
 from django.http import HttpResponse, HttpResponseForbidden
 
@@ -19,7 +18,6 @@ def score_calculation(section_key):
     for i in slum_data:
         slum__id = i['slum_id']
         all_slum_ids.add(slum__id)
-        # all_slum_ids = list(set(all_slum_ids))
         db_data = json.loads( i['rim_data'])
         for k, v in json_data.items():
             if k == section_key:                   # checks sction key like water, toilet etc
@@ -39,7 +37,6 @@ def score_calculation(section_key):
                                 dummy_list = []
                                 if v1['calculate']['type'] == 's':
                                     score = single_select(i, k1, v1)
-                                    # print 'single', k1 , score
                                     if k == 'Toilet':
                                         score = single_select(i, k1, v1)
                                         if score != None:
@@ -65,9 +62,8 @@ def score_calculation(section_key):
 
                                 if v1['calculate']['type'] == 'M':
                                     score = multiselect(i,k1,v1)
-                                    # print 'multi', k1, score
                                     if score != None:
-                                        ques_score[k1] = score    #ques_score.append(score)
+                                        ques_score[k1] = score
                                     else:
                                         ques_score[k1] = 0
                                     dummy_list.append(ques_score)
@@ -165,7 +161,6 @@ def waste_final(z):
         dumy_di[id] = final_score
     waste_all_scores.append(dumy_di)
     return waste_all_scores
-    # return HttpResponse(json.dumps(waste_all_scores), content_type="application/json")
 
 def gutter_final(z):
     '''calculation of final score for gutter section
@@ -434,7 +429,6 @@ def percentile_function():
     general_dict = set_none_to_neg(general_dict)
     stru_n_ocup_dict= set_none_to_neg(stru_n_ocup_dict)
 
-
     try:
         total_score_pert = {i: stats.percentileofscore(total_score_dict.values(),total_score_dict[i])for i in total_score_dict.keys()}
         toilet_pert = {i: stats.percentileofscore(toilet_dict.values(),toilet_dict[i])for i in toilet_dict.keys()}
@@ -446,24 +440,26 @@ def percentile_function():
         general_pert = {i: stats.percentileofscore(general_dict.values(), general_dict[i]) for i in general_dict.keys()}
         stru_n_ocup_pert = {i: stats.percentileofscore(stru_n_ocup_dict.values(), stru_n_ocup_dict[i])
                             for i in stru_n_ocup_dict.keys()}
+
+        for i in slum_id_list:
+            if i['slumid'] in road_pert.keys() and waste_pert.keys() and water_pert.keys() and gutter_pert.keys() \
+                    and general_pert.keys() and stru_n_ocup_pert.keys() and toilet_pert.keys() and total_score_pert.keys() \
+                    and drainage_pert.keys():
+                slum_percentile_sectionwise[i['slumid']] = {'Waste': waste_pert[i['slumid']],'Road': road_pert[i['slumid']],
+                        'Water': water_pert[i['slumid']],'Gutter': gutter_pert[i['slumid']],'General': general_pert[i['slumid']],
+                        'Str_n_occup': stru_n_ocup_pert[i['slumid']],'Drainage': drainage_pert[i['slumid']],
+                        'Total_score': total_score_pert[i['slumid']],'Toilet': toilet_pert[i['slumid']]}
+
+            for k, v in slum_percentile_sectionwise.items():
+                    if i['slumid'] == k:
+                        trial = QOLScoreData.objects.filter(id = i['id'],slum_id = k).update(totalscore_percentile= v['Total_score'],
+                            toilet_percentile =v['Toilet'],str_n_ocup_percentile= v['Str_n_occup'],road_percentile = v['Road'],
+                            drainage_percentile=v['Drainage'],general_percentile = v['General'],gutter_percentile=v['Gutter'],
+                            waste_percentile=v['Waste'],water_percentile=v['Water'])
+                    else:
+                        pass
     except Exception as e:
         print 'Exception in percentile function', e
-
-    for i in slum_id_list:
-        if i['slumid'] in road_pert.keys() and waste_pert.keys() and water_pert.keys() and gutter_pert.keys()  and general_pert.keys() \
-            and stru_n_ocup_pert.keys() and toilet_pert.keys() and total_score_pert.keys() and drainage_pert.keys():
-            slum_percentile_sectionwise[i['slumid']] = {'Waste': waste_pert[i['slumid']],'Road': road_pert[i['slumid']], 'Water': water_pert[i['slumid']],
-                    'Gutter': gutter_pert[i['slumid']],'General': general_pert[i['slumid']],'Str_n_occup': stru_n_ocup_pert[i['slumid']],
-                    'Drainage': drainage_pert[i['slumid']],'Total_score': total_score_pert[i['slumid']],'Toilet': toilet_pert[i['slumid']]}
-        for k, v in slum_percentile_sectionwise.items():
-                if i['slumid'] == k:
-                    trial = QOLScoreData.objects.filter(id = i['id'],slum_id = k).update(totalscore_percentile= v['Total_score'],
-                        toilet_percentile =v['Toilet'],str_n_ocup_percentile= v['Str_n_occup'],road_percentile = v['Road'],
-                        drainage_percentile=v['Drainage'],general_percentile = v['General'],gutter_percentile=v['Gutter'],
-                        waste_percentile=v['Waste'],water_percentile=v['Water'])
-                else:
-                    pass
-                    # trial = QOLScoreData.objects.update_or_create(slum_id = k,general_percentile = v['General'])
 
 def QOL_save_data(request):
     '''saving data to db'''
@@ -480,7 +476,6 @@ def QOL_save_data(request):
     percentile_function()
     return HttpResponse(json.dumps(result), content_type="application/json")
 
-# verified and corrected codes
 def single_select(db_data,k1, v1):
     '''scores for single select questions from reference json file'''
     score = None
