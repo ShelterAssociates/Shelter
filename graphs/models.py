@@ -102,3 +102,27 @@ class QOLScoreData(models.Model):
 
 	def __str__(self):
 		return str(self.slum)
+
+class DashboardData(models.Model):
+   """
+   Dashboard card data
+   """
+   slum = models.ForeignKey(Slum)
+   city = models.ForeignKey(City)
+   created_on = models.DateTimeField(default=datetime.datetime.now)
+   modified_on = models.DateTimeField(default=datetime.datetime.now)
+   household_count = models.IntegerField()
+   houehold_member_count = models.IntegerField()
+   member_size = models.IntegerField()
+   tenement_density = models.IntegerField()
+
+   class Meta:
+	   unique_together = ('id', 'slum')
+	   verbose_name = 'Dashboard data'
+	   verbose_name_plural = 'Dashboard data'
+
+   def __str__(self):
+	   return str(self.slum)
+
+   def __unicode__(self):
+	   return str(self.slum)
