@@ -560,5 +560,26 @@ def user_login(request):
 	"""
 	return HttpResponseRedirect('/accounts/login/')
 
+def dashboard_view(request, key, slumname = None):
+	"""
+
+	:param request:
+	:return:
+	"""
+	cipher = AESCipher()
+	city = cipher.decrypt(key.split('::')[1])
+	city = City.objects.get(pk=int(city))
+	template = loader.get_template('external_dashboard.html')
+	data = {}
+	if slumname:
+		data['slum_name'] = slumname
+	if city:
+		data['city_id'] = city.id
+		data['city_name'] = city.name.city_name
+	else:
+		data['error'] = "URL incorrect"
+	context = RequestContext(request, data)
+	return HttpResponse(template.render(context))
+
 
 
