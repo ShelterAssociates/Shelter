@@ -9,16 +9,18 @@ waste_coll_to_type = {'frequency_of_waste_collection_001':'ulb ghantagadi','freq
               'frequency_of_waste_collection__001':'garbage bin'}
 
 all_slum_ids = set()
+slumid_cityid_list = {}
 
 def score_calculation(section_key):
     '''function calculates the score for single and multiselect questions'''
     all_slums_list=[]
     json_data = json.loads(open('graphs/reference_file.json').read())  # json reference data from json file
-    slum_data = SlumData.objects.all().values('slum_id','rim_data')
+    slum_data = SlumData.objects.all().values('slum_id','rim_data','city_id')
     for i in slum_data:
         slum__id = i['slum_id']
         all_slum_ids.add(slum__id)
-        db_data = json.loads( i['rim_data'])
+        slumid_cityid_list[i['slum_id']]= i['city_id']
+        db_data = json.loads(i['rim_data'])
         for k, v in json_data.items():
             if k == section_key:                   # checks sction key like water, toilet etc
                 if k in db_data.keys():
@@ -464,15 +466,17 @@ def percentile_function():
 def QOL_save_data(request):
     '''saving data to db'''
     result = final_section_score(request)
+    slum_city_list = slumid_cityid_list
     for i in result.items():
         data = i[1]
-        try:
-            to_save = QOLScoreData.objects.get_or_create(slum_id = i[0],water =data['Water'], waste =data['Waste'],
-                            road =data['Road'],str_n_occup = data['Str_n_occup'],drainage =data['Drainage'],
-                            gutter =data['Gutter'],toilet =data['Toilet'],general =data['General'],
-                            total_score = data['Total_score'])
-        except Exception as e:
-            print e
+        if i[0] in slum_city_list.keys():
+            try:
+                to_save = QOLScoreData.objects.get_or_create(slum_id = i[0],defaults={ 'water' : data['Water'], 'waste':data['Waste'],
+                                'road':data['Road'], 'str_n_occup':data['Str_n_occup'],'city_id' : slum_city_list[i[0]],
+                                'drainage':data['Drainage'],'gutter':data['Gutter'], 'toilet':data['Toilet'],
+                                'general':data['General'],'total_score':data['Total_score']})
+            except Exception as e:
+                print e
     percentile_function()
     return HttpResponse(json.dumps(result), content_type="application/json")
 
