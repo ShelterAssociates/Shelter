@@ -2,7 +2,7 @@ from django.shortcuts import get_object_or_404
 from graphs.models import *
 from master.models import Slum
 
-class RHSData:
+class RHSData(object):
     def __init__(self, slum):
         self.slum = get_object_or_404(Slum, pk=slum)
         self.household_data = HouseholdData.objects.filter(slum=self.slum)
