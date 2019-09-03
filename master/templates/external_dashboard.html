@@ -101,9 +101,10 @@
   <div class="container-fluid">
     <div class="row">
       <div class="col-md-5">
-        <input type="radio" value="0" name="level" checked> Administrative Ward
-        <input type="radio" value="1" name="level"> Electoral Ward
-        <input type="radio" value="2" name="level"> Slum
+        <b id="city_name_text"></b>
+        <input type="radio" value="0" name="level" checked text="Administrative ward"> Administrative Ward
+        <input type="radio" value="1" name="level" text="Electoral ward"> Electoral Ward
+        <input type="radio" value="2" name="level" text="Slum"> Slum
         <div id="map"></div>
       </div>
       <div class="col-md-7">
@@ -130,12 +131,12 @@
                             </div>
                             <div class="info-divider"></div> -->
           <div class="overall-score">
-            <span class="overall-cnt">50</span>
-            <span class="overall-text">Overall score for Pune City</span>
+            <span class="overall-cnt" id="total_score">50</span>
+            <span class="overall-text" id="total_score_text">Overall score for Pune City</span>
           </div>
         </div>
         <!--Information endss here-->
-        <div class="report-card">
+        <div class="report-card" id="report_selections">
           Water Report Card for all Admin Wards
           <span class="full-screen"
             ><img src="/static/images/Symbol 38 – 1.svg"
@@ -146,44 +147,26 @@
             <div class="first-card">
               <p class="average-img"><img src="/static/images/Image 55.png" /></p>
               <p class="average-val-label">
-                <span class="average-val">60</span>
+                <span class="average-val" id="score_val">60</span>
                 <span class="average-label">Total Score</span>
                 <span class="average-label">Above Average</span>
               </p>
-              <p class="result-text">70 in previous period</p>
+              <p class="result-text hide">70 in previous period</p>
             </div>
-            <div class="first-card cards-bg">
+
+            <div id="section_cards">
+
+            </div>
+            <div name="section_card_clone" class="first-card cards-bg hide">
               <p class="average-img">
                 <img src="/static/images/Image 58.png" />
                 <img src="/static/images/Image 54.png" />
               </p>
               <p class="average-val-label">
-                <span class="average-val">902</span>
-                <span class="average-label">Standposts in Use</span>
+                <span class="average-val"></span>
+                <span class="average-label"></span>
               </p>
-              <p class="result-text positive">800 in previous period</p>
-            </div>
-            <div class="first-card cards-bg">
-              <p class="average-img">
-                <img src="/static/images/Image 58.png" />
-                <img src="/static/images/Image 54.png" />
-              </p>
-              <p class="average-val-label">
-                <span class="average-val">3.7%</span>
-                <span class="average-label">Tap Coverage</span>
-              </p>
-              <p class="result-text positive">1.5% in previous period</p>
-            </div>
-            <div class="first-card cards-bg">
-              <p class="average-img">
-                <img src="/static/images/Image 58.png" />
-                <img src="/static/images/Image 54.png" />
-              </p>
-              <p class="average-val-label">
-                <span class="average-val">0.196%</span>
-                <span class="average-label">Handpump Coverage</span>
-              </p>
-              <p class="result-text">2% in previous period</p>
+              <p class="result-text positive hide">800 in previous period</p>
             </div>
 
             <div class="bar-chart hide">

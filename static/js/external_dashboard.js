@@ -7,17 +7,17 @@ style_value ={
   opacity : 0.9,
   weight : 2,
   fillColor : "#A3A3FF",
-  fillOpacity : 0.6,
+  fillOpacity : 0.4,
 }
 
 scores = [0, 25, 50, 75, 100];
 function getColor(d) {
-    return d < 0 ? '#C0EC83' :
-           d < 25  ? '#A7E074' :
-           d < 50  ? '#96CC39' :
-           d < 75   ? '#6BA32D' :
-           d < 100   ? '#547A1D' :
-                      '#3B5C0A';
+    return d < 25 ? '#C0EC83' :
+           d < 50  ? '#A7E074' :
+           d < 75  ? '#96CC39' :
+           d < 100   ? '#6BA32D' :
+                       '#547A1D';
+
 }
 
 function get_message(layer){
@@ -81,7 +81,7 @@ var MapLoad = (function() {
         }
         else{
           //style_value['weight'] = 2;
-          style_value['fillOpacity'] = 0.6;
+          style_value['fillOpacity'] = 0.4;
         }
         layer.setStyle(style_value);
     });
@@ -122,9 +122,9 @@ function initMap(){
 
       var div = L.DomUtil.create('div', 'info legend'),
         labels = [];
-
+      div.innerHTML = "<b>Percentile score</b><br/>";
       // loop through our density intervals and generate a label with a colored square for each interval
-      for (var i = 0; i < scores.length; i++) {
+      for (var i = 0; i < scores.length-1; i++) {
         div.innerHTML +=
           '<i style="background:' + getColor(scores[i]) + '"></i> ' +
           scores[i] + (scores[i + 1] ? ' &ndash; ' + scores[i + 1] + '<br>' : '+');
@@ -197,8 +197,9 @@ function parse_custom_fields(data){
     });
   return data;
 }
-
+var card_data = {};
 $(document).ready(function(){
+
   function changeMap(level, level_tag){
     map_data[0].hide_all();
     map_data[1].hide_all();
@@ -213,11 +214,58 @@ $(document).ready(function(){
     let level = $(this).val();
     let level_tag = $("#levels_tag").val();
     changeMap(level, level_tag);
+    change_text();
   });
 
   $("#levels_tag").change(function(){
     let level_tag = $(this).val();
     let level = $('input[type=radio][name=level]:checked').val();
     changeMap(level, level_tag);
+    display_cards();
+    change_text();
   });
+
+  var city_id = $("#city_id").val();
+  var names = $("#city_name").val();
+
+  $("#city_name_text").html(names + ": ");
+  $.ajax({
+        url : "/graphs/dashboard/" + city_id + "/",
+        type : "GET",
+        contenttype : "json",
+        success : function(json) {
+          card_data= json
+          $("#total_score").html(parseInt(card_data['city'][names]['scores']['totalscore_percentile']));
+          $("#total_score_text").html("Overall score for "+names+" City");
+          display_cards();
+        }
+    });
+
+  function display_cards(name='', level='city'){
+
+    var names = '';
+    if(name == ''){
+      names = $("#city_name").val();
+    }
+    section = $("#levels_tag").val();
+    var section_score = card_data[level][names]['scores'][section.toLowerCase()+'_percentile'];
+    $("#score_val").html(parseInt(section_score));
+
+    $("#section_cards").html("");
+    if (section.toLowerCase() in card_data[level][names]['cards']){
+      $.each(card_data[level][names]['cards'][section.toLowerCase()], function(key,value){
+          var section_card = $("div[name=section_card_clone]")[0].outerHTML;
+          section_card = $(section_card).attr('name','section_card').removeClass('hide');
+          section_card.find('span')[0].innerHTML = value;
+          section_card.find('span')[1].innerHTML = card_data["metadata"][section.toLowerCase()][key];
+          $("#section_cards").append(section_card);
+      });
+    }
+  }
+
+  function change_text(){
+    var vis = $("#levels_tag").val() + " Report Card for all " + $('input[type=radio][name=level]:checked').attr('text');
+    $("#report_selections").html(vis);
+  }
+  change_text();
 });
