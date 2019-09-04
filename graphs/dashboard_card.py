@@ -74,7 +74,6 @@ class DashboardCard(RHSData):
                                 {'toilet_men_women_seats_ratio': men_to_wmn_seats_ratio,
                                  'toilet_seat_to_person_ratio': toilet_to_per_ratio })
 
-
 def dashboard_data_Save(city):
     slums = Slum.objects.filter(electoral_ward__administrative_ward__city__id__in = [city])
     for slum in slums:
@@ -87,6 +86,5 @@ def dashboard_data_Save(city):
             dashboard_data.save_toilet()
         except Exception as e:
             print 'Exception in dashboard_data_save',(e)
-
 
 dashboard_data_Save(4)

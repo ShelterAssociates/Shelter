@@ -17,6 +17,9 @@ class RHSData(object):
     #toilet data
     def get_toilet_data(self):
         toilet_data = self.slum_data.rim_data['Toilet']
+        fun_male_seats=[]
+        fun_fmale_seats=[]
+        fun_mix_seats=[]
         for i in toilet_data:
             wrk_male_seats =  i['number_of_seats_allotted_to_me'] if 'number_of_seats_allotted_to_me' in i else 0
             wrk_nt_male_seats = i['number_of_seats_allotted_to_me_001'] if 'number_of_seats_allotted_to_me_001' in i else 0
@@ -25,12 +28,12 @@ class RHSData(object):
             wrk_mix_seats = i['total_number_of_mixed_seats_al'] if 'total_number_of_mixed_seats_al' in i else 0
             wrk_nt_mix_seats = i['number_of_mixed_seats_allotted'] if 'number_of_mixed_seats_allotted' in i else 0
 
-        fun_male_seats = int(wrk_male_seats) - int(wrk_nt_male_seats)
-        fun_fmale_seate = int(wrk_fmale_seats) -int(wrk_nt_fmale_seats)
-        fun_mix_seats = int(wrk_mix_seats) -int(wrk_nt_mix_seats)
+            fun_male_seats.append(int(wrk_male_seats) - int(wrk_nt_male_seats))
+            fun_fmale_seats.append(int(wrk_fmale_seats) -int(wrk_nt_fmale_seats))
+            fun_mix_seats.append(int(wrk_mix_seats) -int(wrk_nt_mix_seats))
 
-        toilet_to_per_ratio = (fun_male_seats +fun_fmale_seate+fun_mix_seats)/self.get_slum_population()
-        men_to_wmn_seats_ratio = (fun_male_seats/fun_fmale_seate) if fun_fmale_seate!=0 else 0
+        toilet_to_per_ratio = (sum(fun_male_seats) +sum(fun_fmale_seats)+sum(fun_mix_seats))/self.get_slum_population()
+        men_to_wmn_seats_ratio = sum(fun_male_seats)/sum(fun_fmale_seats) if sum(fun_fmale_seats)!=0 else 0
 
         return (toilet_to_per_ratio, men_to_wmn_seats_ratio)
 
