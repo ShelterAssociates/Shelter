@@ -1052,7 +1052,7 @@ def report_table_cm(request):
     for x in activity_type:
         key_for_datatable = "total_"+(x.name).replace(" ", "")
         filter_field ={'slum__id__in':keys, 'activity_date__range':[start_date,end_date]}
-        count_field= {key_for_datatable:Length('household_number')}
+        count_field= {key_for_datatable:F('household_number')}
 
         y = x.communitymobilization_set.filter(**filter_field)\
             .annotate(**level_data[tag]).values('level','level_id','city_name')\
@@ -1060,6 +1060,7 @@ def report_table_cm(request):
         
         for data in y:
             level_id = data['level_id']
+	    data[key_for_datatable] = len(data[key_for_datatable])
             if str(level_id) in report_table_data_cm.keys() and key_for_datatable in report_table_data_cm[str(level_id)].keys():
                 report_table_data_cm[str(level_id)][key_for_datatable] +=  data[key_for_datatable]
             else:
