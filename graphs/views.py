@@ -73,20 +73,10 @@ def get_dashboard_card(request, key):
     return HttpResponse(json.dumps(output_data),content_type='application/json')
 
 def get_card_data(slum_name):
-
-    Road = DashboardData.objects.filter(slum__name = slum_name).values('pucca_road_coverage','pucca_road','road_with_no_vehicle_access',
-                                                            'kutcha_road','kutcha_road_coverage')
-    Drain =DashboardData.objects.filter(slum__name = slum_name).values('drains_coverage')
-    General = DashboardData.objects.filter(slum__name = slum_name).values('gen_tenement_density','household_count',
-                                                            'gen_avg_household_size')
-    Waste = DashboardData.objects.filter(slum__name = slum_name).values('waste_door_to_door_collection_facility_percentile',
-                                                            'waste_dump_in_open_percent','waste_no_collection_facility_percentile')
-    Water = DashboardData.objects.filter(slum__name = slum_name).values('water_individual_connection_percentile',
-                                                            'water_no_service_percentile')
-    Toilet = DashboardData.objects.filter(slum__name = slum_name).values('toilet_seat_to_person_ratio','toilet_men_women_seats_ratio',
-                                                'ctb_coverage','individual_toilet_coverage','open_defecation_coverage')
-    data_cards = {'Waste':Waste[0].values(),'General':General[0].values(),'Toilet':Toilet[0].values(),'Road':Road[0].values(),
-                  'Drain':Drain[0].values(), 'Water':Water[0].values()}
+    data_cards ={}
+    root_query = DashboardData.objects.filter(slum__name = slum_name)
+    for k,v in CARDS.items():
+        data_cards[k] = [root_query.values_list(i.keys()[0],flat = True)[0] for i in v]
     return data_cards
 
 def score_cards(element):
