@@ -5,7 +5,6 @@ from graphs.models import *
 from master.models import Slum
 from component.models import *
 from django.contrib.gis.geos import GEOSGeometry, LineString, Point
-
 from django.contrib.contenttypes.models import ContentType
 
 class RHSData(object):
@@ -14,30 +13,67 @@ class RHSData(object):
         self.household_data = HouseholdData.objects.filter(slum=self.slum)
         self.slum_data = SlumData.objects.get(slum=self.slum)
 
+    def occupide_houses(self):
+        '''count of occupied houses in slums'''
+        count = filter(lambda x:'Type_of_structure_occupancy' in x.rhs_data and x.rhs_data[
+                    'Type_of_structure_occupancy'] == 'Occupied house',self.household_data)
+        return len(count)
+
     #toilet data
     def get_toilet_data(self):
+        household_count = self.occupide_houses() * 4
         toilet_data = self.slum_data.rim_data['Toilet']
-        fun_male_seats=[]
-        fun_fmale_seats=[]
-        fun_mix_seats=[]
+        wrk_male_seats = 0
+        wrk_nt_male_seats = 0
+        wrk_fmale_seats=0
+        wrk_nt_fmale_seats=0
+        wrk_mix_seats=0
+        wrk_nt_mix_seats=0
         for i in toilet_data:
-            wrk_male_seats =  i['number_of_seats_allotted_to_me'] if 'number_of_seats_allotted_to_me' in i else 0
-            wrk_nt_male_seats = i['number_of_seats_allotted_to_me_001'] if 'number_of_seats_allotted_to_me_001' in i else 0
-            wrk_fmale_seats = i['number_of_seats_allotted_to_wo'] if 'number_of_seats_allotted_to_wo' in i else 0
-            wrk_nt_fmale_seats = i['number_of_seats_allotted_to_wo_001'] if 'number_of_seats_allotted_to_wo_001' in i else 0
-            wrk_mix_seats = i['total_number_of_mixed_seats_al'] if 'total_number_of_mixed_seats_al' in i else 0
-            wrk_nt_mix_seats = i['number_of_mixed_seats_allotted'] if 'number_of_mixed_seats_allotted' in i else 0
+            wrk_male_seats += int(i['number_of_seats_allotted_to_me'] if 'number_of_seats_allotted_to_me' in i else 0)
+            wrk_nt_male_seats += int(i['number_of_seats_allotted_to_me_001'] if 'number_of_seats_allotted_to_me_001' in i else 0)
+            wrk_fmale_seats += int(i['number_of_seats_allotted_to_wo'] if 'number_of_seats_allotted_to_wo' in i else 0)
+            wrk_nt_fmale_seats += int(i['number_of_seats_allotted_to_wo_001'] if 'number_of_seats_allotted_to_wo_001' in i else 0)
+            wrk_mix_seats += int(i['total_number_of_mixed_seats_al'] if 'total_number_of_mixed_seats_al' in i else 0)
+            wrk_nt_mix_seats += int(i['number_of_mixed_seats_allotted'] if 'number_of_mixed_seats_allotted' in i else 0)
 
-            fun_male_seats.append(int(wrk_male_seats) - int(wrk_nt_male_seats))
-            fun_fmale_seats.append(int(wrk_fmale_seats) -int(wrk_nt_fmale_seats))
-            fun_mix_seats.append(int(wrk_mix_seats) -int(wrk_nt_mix_seats))
+        fun_male_seats = wrk_male_seats - wrk_nt_male_seats
+        fun_fmale_seats = wrk_fmale_seats- wrk_nt_fmale_seats
+        fun_mix_seats = wrk_mix_seats -wrk_nt_mix_seats
 
-        toilet_to_per_ratio = (sum(fun_male_seats) +sum(fun_fmale_seats)+sum(fun_mix_seats))/self.get_slum_population()
-        men_to_wmn_seats_ratio = sum(fun_male_seats)/sum(fun_fmale_seats) if sum(fun_fmale_seats)!=0 else 0
+        total_fun_toilets = fun_male_seats + fun_fmale_seats + fun_mix_seats
+        toilet_to_per_ratio = household_count / total_fun_toilets if total_fun_toilets!=0 else 0
+        men_to_wmn_seats_ratio = fun_male_seats/fun_fmale_seats if fun_fmale_seats !=0 else 0
 
         return (toilet_to_per_ratio, men_to_wmn_seats_ratio)
 
+    def get_road_coverage(self): #may need to convert in percentile for road coverage
+        kutcha_road_coverage = 0
+        pucca_road_coverage = 0
+        roads ={'Kutcha road','Coba road','Tar road','Concrete road','Paving block','Farashi'}
+
+        def get_road_len(LineString):
+            # converts the road length into meters
+            line = LineString['shape']
+            line.srid = 4326
+            line.transform(3857)
+            len_in_meter = line.length
+            return len_in_meter
+
+        slum_type = ContentType.objects.get_for_model(Slum)
+        for i in roads:
+            shape = Component.objects.filter(content_type=slum_type, object_id=self.slum.id,metadata__name = i).values('shape')
+            if i == 'Kutcha road':
+                for i in shape:
+                    kutcha_road_coverage += get_road_len(i)
+            else:
+                for i in shape:
+                    pucca_road_coverage += get_road_len(i)
+        return (pucca_road_coverage,kutcha_road_coverage)
+
+
     def get_road_vehicle_facility(self):
+        a =self.get_road_coverage()
         no_vehicle_access = self.slum_data.rim_data['Road']['point_of_vehicular_access_to_t'] if 'point_of_vehicular_access_to_t' in \
                                                  self.slum_data.rim_data['Road'] else 0
         return (no_vehicle_access)

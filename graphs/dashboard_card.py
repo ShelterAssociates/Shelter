@@ -14,13 +14,13 @@ class DashboardCard(RHSData):
     def General_Info(self):
         avg_household_size = self.get_household_member_size()
         tenement_density = self.get_tenement_density()
-        sex_ratio = self.get_sex_ratio()
+        # sex_ratio = self.get_sex_ratio()
         household_count = self.get_household_count()
-        return (avg_household_size, tenement_density,household_count,sex_ratio)
+        return (avg_household_size, tenement_density,household_count)
 
     def save_general(self):
         """Save information to database"""
-        (avg_household_size, tenement_density,household_count,sex_ratio) = self.General_Info()
+        (avg_household_size, tenement_density,household_count) = self.General_Info()
         to_save = DashboardData.objects.update_or_create(slum = self.slum , defaults = {'gen_tenement_density' : tenement_density,
                                     'gen_avg_household_size': avg_household_size , 'household_count':household_count,
                                     'city_id': self.slum.electoral_ward.administrative_ward.city.id})
@@ -43,7 +43,7 @@ class DashboardCard(RHSData):
 
     def Water_Info(self):
         individual_connection_percent = self.get_perc_of_water_coverage('Individual connection')
-        no_connection_percent = self.get_perc_of_water_coverage('')
+        # no_connection_percent = self.get_perc_of_water_coverage('')
         return (individual_connection_percent)
 
     def save_water(self):
@@ -56,17 +56,15 @@ class DashboardCard(RHSData):
         pucca = 1   if self.get_road_type() == 'Pucca' else 0
         kutcha = 1 if self.get_road_type() == 'Kutcha' else 0
         no_vehicle =1 if self.get_road_vehicle_facility() =='None' else 0
-        # pucca_road_coverage
-        # kutcha_road_coverage
-        return (pucca,kutcha,no_vehicle)
+        pucca_road_coverage, kutcha_road_coverage = self.get_road_coverage()
+        return (pucca,kutcha,no_vehicle,pucca_road_coverage,kutcha_road_coverage)
 
     def save_road(self):
-        (pucca,kutcha, no_vehicle) = self.Road_Info()
-        toilet = self.get_toilet_data()
-        # road_cov = self.get_road_coverage()
+        (pucca,kutcha,no_vehicle,pucca_road_coverage,kutcha_road_coverage) = self.Road_Info()
         to_save = DashboardData.objects.update_or_create(slum = self.slum, defaults =
                                 {'road_with_no_vehicle_access' : no_vehicle,'pucca_road' : pucca,
-                                 'kutcha_road':kutcha, 'pucca_road_coverage':0,'kutcha_road_coverage':0,})
+                                 'kutcha_road':kutcha, 'pucca_road_coverage':pucca_road_coverage,
+                                 'kutcha_road_coverage':kutcha_road_coverage,})
 
     def save_toilet(self):
         (toilet_to_per_ratio, men_to_wmn_seats_ratio) = self.get_toilet_data()
@@ -76,7 +74,7 @@ class DashboardCard(RHSData):
 
 def dashboard_data_Save(city):
     slums = Slum.objects.filter(electoral_ward__administrative_ward__city__id__in = [city])
-    for slum in slums:
+    for slum in slums[1:5]:
         try:
             dashboard_data = DashboardCard(slum.id)
             dashboard_data.save_general()
