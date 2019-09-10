@@ -4,7 +4,7 @@
 {% block styleblock %}
 <link rel="stylesheet"  type="text/css" href="{% static "css/jquery.dataTables.min.css" %}" />
 
-<!-- <script type="text/javascript" src="http://www.google.com/jsapi" ></script> -->
+<meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests"/>
 <script src="{% static "js/maplabel.js" %}"></script>
 <script src="{% static "js/slumMapping.js" %}"></script>
 <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCs114b6ZNpVH5BGnrfgy0f1K49vfBK4gs&callback=initMap12"
@@ -53,6 +53,14 @@ async defer></script>
 	}
 
 </style>
+<script>
+$(document).ready(function(){
+    if(window.location !== window.parent.location) {
+        $('#navbar').hide();
+    }
+
+});
+</script>
 {% endblock %}
 {%block mainblock %}
 <div class="container">

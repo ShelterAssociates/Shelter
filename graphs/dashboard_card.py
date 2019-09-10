@@ -85,4 +85,4 @@ def dashboard_data_Save(city):
         except Exception as e:
             print 'Exception in dashboard_data_save',(e)
 
-dashboard_data_Save(4)
+#dashboard_data_Save(4)
