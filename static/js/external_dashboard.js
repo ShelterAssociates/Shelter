@@ -252,12 +252,16 @@ $(document).ready(function(){
     $("#score_val").html(parseInt(section_score));
 
     $("#section_cards").html("");
-    if (section.toLowerCase() in card_data[level][names]['cards']){
-      $.each(card_data[level][names]['cards'][section.toLowerCase()], function(key,value){
+    if (section in card_data[level][names]['cards']){
+      $.each(card_data[level][names]['cards'][section], function(key,value){
           var section_card = $("div[name=section_card_clone]")[0].outerHTML;
           section_card = $(section_card).attr('name','section_card').removeClass('hide');
-          section_card.find('span')[0].innerHTML = value;
-          section_card.find('span')[1].innerHTML = card_data["metadata"][section.toLowerCase()][key];
+	  val = '-';
+	  if(isNaN(parseInt(value))==false){
+		val = parseInt(value);
+          }
+          section_card.find('span')[0].innerHTML = val;
+          section_card.find('span')[1].innerHTML = Object.values(card_data["metadata"][section][key])[0];
           $("#section_cards").append(section_card);
       });
     }
