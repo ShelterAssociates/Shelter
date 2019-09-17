@@ -31,7 +31,6 @@ class RHSData(object):
         score = 0
         drain = self.slum_data.rim_data['Drainage']
         gutter =self.slum_data.rim_data['Gutter']
-
         return score
 
     #toilet data
@@ -87,12 +86,11 @@ class RHSData(object):
                 pucca_road_coverage += get_road_len(j)
 
         total_coverage = kutcha_road_coverage + pucca_road_coverage
-        kutcha_road_coverage_percent = (kutcha_road_coverage / total_coverage) *100
-        pucca_road_coverage_percent =  (pucca_road_coverage / total_coverage) *100
+        kutcha_road_coverage_percent = (kutcha_road_coverage / total_coverage) *100 if total_coverage!=0 else 0
+        pucca_road_coverage_percent =  (pucca_road_coverage / total_coverage) *100 if total_coverage!=0 else 0
         return (pucca_road_coverage_percent,kutcha_road_coverage_percent)
 
     def get_road_vehicle_facility(self):
-        a =self.get_road_coverage()
         no_vehicle_access = self.slum_data.rim_data['Road']['point_of_vehicular_access_to_t'] if 'point_of_vehicular_access_to_t' in \
                                                  self.slum_data.rim_data['Road'] else 0
         return (no_vehicle_access)
