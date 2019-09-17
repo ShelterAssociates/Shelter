@@ -1,17 +1,21 @@
-
 from __future__ import division
 from django.shortcuts import get_object_or_404
 from graphs.models import *
 from master.models import Slum
 from component.models import *
-from django.contrib.gis.geos import GEOSGeometry, LineString, Point
+from mastersheet.models import *
+import json
 from django.contrib.contenttypes.models import ContentType
+
+json_data = json.loads(open('graphs/reference_file.json').read())  # json reference data from json file
 
 class RHSData(object):
     def __init__(self, slum):
         self.slum = get_object_or_404(Slum, pk=slum)
         self.household_data = HouseholdData.objects.filter(slum=self.slum)
+        self.followup_data = FollowupData.objects.filter(slum=self.slum)
         self.slum_data = SlumData.objects.get(slum=self.slum)
+        self.toilet_ms_data = ToiletConstruction.objects.filter(slum=self.slum)
 
     def occupide_houses(self):
         '''count of occupied houses in slums'''
@@ -19,9 +23,21 @@ class RHSData(object):
                     'Type_of_structure_occupancy'] == 'Occupied house',self.household_data)
         return len(count)
 
+    def get_scores(self):
+        drain =self.get_drain_gutter_score()
+        return 0
+
+    def get_drain_gutter_score(self):
+        score = 0
+        drain = self.slum_data.rim_data['Drainage']
+        gutter =self.slum_data.rim_data['Gutter']
+
+        return score
+
     #toilet data
     def get_toilet_data(self):
         household_count = self.occupide_houses() * 4
+        # toilet_status = self.get_toilet_status()
         toilet_data = self.slum_data.rim_data['Toilet']
         wrk_male_seats = 0
         wrk_nt_male_seats = 0
@@ -47,30 +63,33 @@ class RHSData(object):
 
         return (toilet_to_per_ratio, men_to_wmn_seats_ratio)
 
-    def get_road_coverage(self): #may need to convert in percentile for road coverage
+    def get_road_coverage(self):
         kutcha_road_coverage = 0
         pucca_road_coverage = 0
-        roads ={'Kutcha road','Coba road','Tar road','Concrete road','Paving block','Farashi'}
 
-        def get_road_len(LineString):
+        def get_road_len(linestring):
             # converts the road length into meters
-            line = LineString['shape']
+            line = linestring['shape']
             line.srid = 4326
             line.transform(3857)
             len_in_meter = line.length
             return len_in_meter
 
         slum_type = ContentType.objects.get_for_model(Slum)
-        for i in roads:
-            shape = Component.objects.filter(content_type=slum_type, object_id=self.slum.id,metadata__name = i).values('shape')
-            if i == 'Kutcha road':
-                for i in shape:
-                    kutcha_road_coverage += get_road_len(i)
-            else:
-                for i in shape:
-                    pucca_road_coverage += get_road_len(i)
-        return (pucca_road_coverage,kutcha_road_coverage)
+        for i in ['Kutcha road','Paving block','Farashi']:
+            shape = Component.objects.filter(content_type=slum_type, object_id=self.slum.id, metadata__name=i).values('shape')
+            for j in shape:
+                kutcha_road_coverage += get_road_len(j)
 
+        for i in ['Coba road','Tar road','Concrete road']:
+            shape = Component.objects.filter(content_type=slum_type, object_id=self.slum.id, metadata__name=i).values('shape')
+            for j in shape:
+                pucca_road_coverage += get_road_len(j)
+
+        total_coverage = kutcha_road_coverage + pucca_road_coverage
+        kutcha_road_coverage_percent = (kutcha_road_coverage / total_coverage) *100
+        pucca_road_coverage_percent =  (pucca_road_coverage / total_coverage) *100
+        return (pucca_road_coverage_percent,kutcha_road_coverage_percent)
 
     def get_road_vehicle_facility(self):
         a =self.get_road_coverage()
@@ -87,6 +106,7 @@ class RHSData(object):
         return self.household_data.count()
 
     def get_slum_population(self):
+        # group_el9cl08 / Number_of_household_members (col in rhs data for household member count)
         return self.get_household_count() * 4
 
     def get_waste_facility(self, facility):

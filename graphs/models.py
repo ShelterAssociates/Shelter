@@ -93,13 +93,6 @@ class QOLScoreData(models.Model):
 	toilet_percentile = models.FloatField(default=None, blank=True, null=True)
 	totalscore_percentile = models.FloatField(default=None, blank=True, null=True)
 
-	# def save(QOLScoreData, *args, **kwargs):
-	# 	''' On save, update timestamps '''
-	# 	if not QOLScoreData.slum_id:
-	# 		QOLScoreData.created = timezone.now()
-	# 	QOLScoreData.modified = timezone.now()
-	# 	return super(User, QOLScoreData).save(*args,**kwargs)
-
 	def __str__(self):
 		return str(self.slum)
 
@@ -111,7 +104,7 @@ class DashboardData(models.Model):
    city = models.ForeignKey(City)
    created_on = models.DateTimeField(default=datetime.datetime.now)
    modified_on = models.DateTimeField(default=datetime.datetime.now)
-   household_count = models.FloatField()
+   household_count = models.FloatField(blank= True,null=True)
 
    # Genreal section columns
    gen_avg_household_size = models.FloatField(blank= True,null=True)
