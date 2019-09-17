@@ -9,15 +9,17 @@ from graphs.models import *
 from master.models import *
 import json
 
-CARDS = {'General': [{'gen_avg_household_size':"Household size"}, {'gen_tenement_density':"Tenement desnsity"}],
-         'Waste': [{'waste_no_collection_facility_percentile':'No collection facility'},{'waste_door_to_door_collection_facility_percentile':'Door to door'},
+CARDS = {'General':[{'gen_avg_household_size':"Household size"}, {'gen_tenement_density':"Tenement desnsity"}],
+         'Waste': [{'waste_no_collection_facility_percentile':'No collection facility'},
+                   {'waste_door_to_door_collection_facility_percentile':'Door to door'},
                    {'waste_dump_in_open_percent':'Dump in open'}],
-         'Water': [{'water_individual_connection_percentile':'Individual connection'},{'water_no_service_percentile':'No service'}],
-         'Toilet': [{'toilet_seat_to_person_ratio':'Toilet to person'},{'toilet_men_women_seats_ratio':'Men to women seats'},
-                    {'individual_toilet_coverage':'Individual Toilets'},{'open_defecation_coverage':'Open defecation'},{'ctb_coverage':'CTB coverage'}],
-         'Road': [{'pucca_road':'Pucca road'},{'road_with_no_vehicle_access':'No vehicle access'},{'pucca_road_coverage':'Pucca Road Coverage'},
-                  {'kutcha_road_coverage':'Kutcha Road Coverage'},{'kutcha_road':'Kutcha road'}],
-         'Drainage':[{'drains_coverage':'Drain coverage'}]}
+         'Water': [{'water_individual_connection_percentile':'Individual connection'}],#,{'water_no_service_percentile':'No service'}],
+         'Toilet': [{'toilet_seat_to_person_ratio':'Toilet to person'},{'toilet_men_women_seats_ratio':'Men to women seats'}],
+                    # {'individual_toilet_coverage':'Individual Toilets'},{'open_defecation_coverage':'Open defecation'},{'ctb_coverage':'CTB coverage'}],
+         'Road': [{'pucca_road':'Pucca road'},{'road_with_no_vehicle_access':'No vehicle access'},
+                  {'pucca_road_coverage':'Pucca Road Coverage'},{'kutcha_road_coverage':'Kutcha Road Coverage'},
+                  {'kutcha_road':'Kutcha road'}]}
+         # 'Drainage':[{'drains_coverage':'Drain coverage'}]}
 
 @login_required(login_url='/accounts/login/')
 def graphs_display(request, graph_type):

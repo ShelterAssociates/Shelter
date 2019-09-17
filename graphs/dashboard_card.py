@@ -4,8 +4,7 @@ Script to get aggregated data.
 from graphs.models import *
 from analyse_data import *
 from master.models import *
-from django.http import HttpResponse
-import json
+from graphs.qol_score import *
 
 class DashboardCard(RHSData):
     def __init__(self, slum):
@@ -14,13 +13,17 @@ class DashboardCard(RHSData):
     def General_Info(self):
         avg_household_size = self.get_household_member_size()
         tenement_density = self.get_tenement_density()
-        sex_ratio = self.get_sex_ratio()
+        # sex_ratio = self.get_sex_ratio()
         household_count = self.get_household_count()
-        return (avg_household_size, tenement_density,household_count,sex_ratio)
+        return (avg_household_size, tenement_density,household_count)
+
+    def get_general_score(self):
+        # qol_score = qol_score_save() # get rim data and
+        pass
 
     def save_general(self):
         """Save information to database"""
-        (avg_household_size, tenement_density,household_count,sex_ratio) = self.General_Info()
+        (avg_household_size, tenement_density,household_count) = self.General_Info()
         to_save = DashboardData.objects.update_or_create(slum = self.slum , defaults = {'gen_tenement_density' : tenement_density,
                                     'gen_avg_household_size': avg_household_size , 'household_count':household_count,
                                     'city_id': self.slum.electoral_ward.administrative_ward.city.id})
@@ -43,7 +46,7 @@ class DashboardCard(RHSData):
 
     def Water_Info(self):
         individual_connection_percent = self.get_perc_of_water_coverage('Individual connection')
-        no_connection_percent = self.get_perc_of_water_coverage('')
+        # no_connection_percent = self.get_perc_of_water_coverage('')
         return (individual_connection_percent)
 
     def save_water(self):
@@ -55,18 +58,16 @@ class DashboardCard(RHSData):
     def Road_Info(self):
         pucca = 1   if self.get_road_type() == 'Pucca' else 0
         kutcha = 1 if self.get_road_type() == 'Kutcha' else 0
-        no_vehicle =1 if self.get_road_vehicle_facility() =='None' else 0
-        # pucca_road_coverage
-        # kutcha_road_coverage
-        return (pucca,kutcha,no_vehicle)
+        no_vehicle = 1 if self.get_road_vehicle_facility() =='None' else 0
+        pucca_road_coverage, kutcha_road_coverage = self.get_road_coverage()
+        return (pucca,kutcha,no_vehicle,pucca_road_coverage,kutcha_road_coverage)
 
     def save_road(self):
-        (pucca,kutcha, no_vehicle) = self.Road_Info()
-        toilet = self.get_toilet_data()
-        # road_cov = self.get_road_coverage()
-        to_save = DashboardData.objects.update_or_create(slum = self.slum, defaults =
-                                {'road_with_no_vehicle_access' : no_vehicle,'pucca_road' : pucca,
-                                 'kutcha_road':kutcha, 'pucca_road_coverage':0,'kutcha_road_coverage':0,})
+        (pucca,kutcha,no_vehicle,pucca_road_coverage,kutcha_road_coverage) = self.Road_Info()
+        to_save = DashboardData.objects.update_or_create( slum = self.slum, defaults =
+                                {'road_with_no_vehicle_access': no_vehicle,'pucca_road' : pucca,
+                                 'kutcha_road':kutcha,'pucca_road_coverage':pucca_road_coverage,
+                                 'kutcha_road_coverage':kutcha_road_coverage })
 
     def save_toilet(self):
         (toilet_to_per_ratio, men_to_wmn_seats_ratio) = self.get_toilet_data()
@@ -74,11 +75,15 @@ class DashboardCard(RHSData):
                                 {'toilet_men_women_seats_ratio': men_to_wmn_seats_ratio,
                                  'toilet_seat_to_person_ratio': toilet_to_per_ratio })
 
+    def save_qol_scores(self):
+        scores = self.get_scores()
+
 def dashboard_data_Save(city):
     slums = Slum.objects.filter(electoral_ward__administrative_ward__city__id__in = [city])
     for slum in slums:
         try:
             dashboard_data = DashboardCard(slum.id)
+            # dashboard_data.save_qol_scores()
             dashboard_data.save_general()
             dashboard_data.save_waste()
             dashboard_data.save_water()
@@ -87,4 +92,6 @@ def dashboard_data_Save(city):
         except Exception as e:
             print 'Exception in dashboard_data_save',(e)
 
-#dashboard_data_Save(4)
+
+dashboard_data_Save(3)
+
