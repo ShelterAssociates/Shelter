@@ -4,7 +4,7 @@ Script to get aggregated data.
 from graphs.models import *
 from analyse_data import *
 from master.models import *
-from graphs.qol_score import *
+from graphs.qol import *
 
 class DashboardCard(RHSData):
     def __init__(self, slum):
@@ -93,5 +93,5 @@ def dashboard_data_Save(city):
             print 'Exception in dashboard_data_save',(e)
 
 
-dashboard_data_Save(3)
+#dashboard_data_Save(3)
 
