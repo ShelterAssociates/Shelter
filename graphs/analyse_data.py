@@ -7,7 +7,7 @@ from mastersheet.models import *
 import json
 from django.contrib.contenttypes.models import ContentType
 
-json_data = json.loads(open('graphs/reference_file.json').read())  # json reference data from json file
+# json_data = json.loads(open('graphs/reference_file.json').read())  # json reference data from json file
 
 class RHSData(object):
     def __init__(self, slum):
@@ -155,4 +155,17 @@ class RHSData(object):
         return self.get_slum_population() / area_size if area_size != 0 else 0
 
     def get_sex_ratio(self):
-        return 0
+        rhs_ff = self.household_data.values('ff_data')
+        mem_count ={ 'males':[],'females':[]}
+        for i in rhs_ff:
+            for k,v in i.items():
+                if v == None:
+                    pass
+                else:
+                    for k1,v1 in (json.loads(v)).items():
+                        if k1 == 'group_im2th52/Number_of_Male_members':
+                            mem_count['males'].append(int(v1))
+                        if k1 == 'group_im2th52/Number_of_Female_members':
+                            mem_count['females'].append(int(v1))
+        # female_male_ratio =(sum(mem_count['females'])/sum(mem_count['males'])) if sum(mem_count['males'])!= 0 else 0
+        return mem_count

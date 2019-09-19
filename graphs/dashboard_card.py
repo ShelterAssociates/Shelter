@@ -92,6 +92,4 @@ def dashboard_data_Save(city):
         except Exception as e:
             print 'Exception in dashboard_data_save',(e)
 
-def trial(request):
-    dashboard_data_Save(3)
-    return HttpResponse(json.dumps('dashboard'))
+# dashboard_data_Save(3)
