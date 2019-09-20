@@ -18,7 +18,7 @@ class Migration(migrations.Migration):
                 ('id', models.AutoField(verbose_name='ID', serialize=False, auto_created=True, primary_key=True)),
                 ('created_on', models.DateTimeField(default=datetime.datetime.now)),
                 ('modified_on', models.DateTimeField(default=datetime.datetime.now)),
-                ('household_count', models.FloatField(null=True, blank=True)),
+                ('household_count', models.FloatField()),
                 ('gen_avg_household_size', models.FloatField(null=True, blank=True)),
                 ('gen_tenement_density', models.FloatField(null=True, blank=True)),
                 ('waste_no_collection_facility_percentile', models.FloatField(null=True, blank=True)),

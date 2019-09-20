@@ -4,7 +4,6 @@ Script to get aggregated data.
 from graphs.models import *
 from analyse_data import *
 from master.models import *
-from django.http import HttpResponse
 
 class DashboardCard(RHSData):
     def __init__(self, slum):
@@ -91,5 +90,3 @@ def dashboard_data_Save(city):
             dashboard_data.save_toilet()
         except Exception as e:
             print 'Exception in dashboard_data_save',(e)
-
-# dashboard_data_Save(3)
