@@ -4,7 +4,6 @@ Script to get aggregated data.
 from graphs.models import *
 from analyse_data import *
 from master.models import *
-from graphs.qol import *
 
 class DashboardCard(RHSData):
     def __init__(self, slum):
@@ -56,7 +55,7 @@ class DashboardCard(RHSData):
                                           #'water_no_service_percentile':no_connection_percent})
 
     def Road_Info(self):
-        pucca = 1   if self.get_road_type() == 'Pucca' else 0
+        pucca = 1 if self.get_road_type() == 'Pucca' else 0
         kutcha = 1 if self.get_road_type() == 'Kutcha' else 0
         no_vehicle = 1 if self.get_road_vehicle_facility() =='None' else 0
         pucca_road_coverage, kutcha_road_coverage = self.get_road_coverage()
@@ -91,7 +90,3 @@ def dashboard_data_Save(city):
             dashboard_data.save_toilet()
         except Exception as e:
             print 'Exception in dashboard_data_save',(e)
-
-
-#dashboard_data_Save(3)
-

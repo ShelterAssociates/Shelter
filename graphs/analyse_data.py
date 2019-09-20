@@ -7,7 +7,7 @@ from mastersheet.models import *
 import json
 from django.contrib.contenttypes.models import ContentType
 
-json_data = json.loads(open('graphs/reference_file.json').read())  # json reference data from json file
+# json_data = json.loads(open('graphs/reference_file.json').read())  # json reference data from json file
 
 class RHSData(object):
     def __init__(self, slum):
@@ -31,7 +31,6 @@ class RHSData(object):
         score = 0
         drain = self.slum_data.rim_data['Drainage']
         gutter =self.slum_data.rim_data['Gutter']
-
         return score
 
     #toilet data
@@ -87,12 +86,11 @@ class RHSData(object):
                 pucca_road_coverage += get_road_len(j)
 
         total_coverage = kutcha_road_coverage + pucca_road_coverage
-        kutcha_road_coverage_percent = (kutcha_road_coverage / total_coverage) *100
-        pucca_road_coverage_percent =  (pucca_road_coverage / total_coverage) *100
+        kutcha_road_coverage_percent = (kutcha_road_coverage / total_coverage) *100 if total_coverage!=0 else 0
+        pucca_road_coverage_percent =  (pucca_road_coverage / total_coverage) *100 if total_coverage!=0 else 0
         return (pucca_road_coverage_percent,kutcha_road_coverage_percent)
 
     def get_road_vehicle_facility(self):
-        a =self.get_road_coverage()
         no_vehicle_access = self.slum_data.rim_data['Road']['point_of_vehicular_access_to_t'] if 'point_of_vehicular_access_to_t' in \
                                                  self.slum_data.rim_data['Road'] else 0
         return (no_vehicle_access)
@@ -157,4 +155,17 @@ class RHSData(object):
         return self.get_slum_population() / area_size if area_size != 0 else 0
 
     def get_sex_ratio(self):
-        return 0
+        rhs_ff = self.household_data.values('ff_data')
+        mem_count ={ 'males':[],'females':[]}
+        for i in rhs_ff:
+            for k,v in i.items():
+                if v == None:
+                    pass
+                else:
+                    for k1,v1 in (json.loads(v)).items():
+                        if k1 == 'group_im2th52/Number_of_Male_members':
+                            mem_count['males'].append(int(v1))
+                        if k1 == 'group_im2th52/Number_of_Female_members':
+                            mem_count['females'].append(int(v1))
+        # female_male_ratio =(sum(mem_count['females'])/sum(mem_count['males'])) if sum(mem_count['males'])!= 0 else 0
+        return mem_count

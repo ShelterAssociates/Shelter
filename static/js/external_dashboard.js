@@ -256,11 +256,7 @@ $(document).ready(function(){
       $.each(card_data[level][names]['cards'][section], function(key,value){
           var section_card = $("div[name=section_card_clone]")[0].outerHTML;
           section_card = $(section_card).attr('name','section_card').removeClass('hide');
-	  val = '-';
-	  if(isNaN(parseInt(value))==false){
-		val = parseInt(value);
-          }
-          section_card.find('span')[0].innerHTML = val;
+          section_card.find('span')[0].innerHTML = value;
           section_card.find('span')[1].innerHTML = Object.values(card_data["metadata"][section][key])[0];
           $("#section_cards").append(section_card);
       });
