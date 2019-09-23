@@ -10,7 +10,7 @@ class DashboardCard(RHSData):
         super(DashboardCard,self).__init__(slum)
 
     def dashboard_page_parameters(self):
-        population = self.get_household_member_size()[0]
+        population = self.get_household_member_total()
         toilet_count = self.toilet_constructed()
         people_impacted = toilet_count * 5
         to_save = DashboardData.objects.update_or_create(slum=self.slum,
@@ -18,7 +18,7 @@ class DashboardCard(RHSData):
                           'slum_population':population})
 
     def General_Info(self):
-        avg_household_size = self.get_household_member_size()[1]
+        avg_household_size = self.get_household_member_size()
         tenement_density = self.get_tenement_density()
         # sex_ratio = self.get_sex_ratio()
         household_count = self.get_household_count()

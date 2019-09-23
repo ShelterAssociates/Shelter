@@ -7,8 +7,6 @@ from mastersheet.models import *
 import json
 from django.contrib.contenttypes.models import ContentType
 
-# json_data = json.loads(open('graphs/reference_file.json').read())  # json reference data from json file
-
 class RHSData(object):
     def __init__(self, slum):
         self.slum = get_object_or_404(Slum, pk=slum)
@@ -18,14 +16,10 @@ class RHSData(object):
         self.toilet_ms_data = ToiletConstruction.objects.filter(slum=self.slum)
 
     def toilet_constructed(self):
-        db_data = filter(lambda x : True if x == '6' else None ,self.toilet_ms_data.values_list('status',flat= True))
-        # for i in self.toilet_ms_data.values('status','household_number'):
-        #     for k, v in i.items():
-        #         if k == 'status' and v == '6':
-        #             toilet_complete.append(i['household_number'])
-        return len(db_data)
+        result = self.toilet_ms_data.filter(status ='6').count()
+        return result
 
-    def occupide_houses(self):
+    def occupied_houses(self):
         '''count of occupied houses in slums'''
         count = filter(lambda x:'Type_of_structure_occupancy' in x.rhs_data and x.rhs_data[
                     'Type_of_structure_occupancy'] == 'Occupied house',self.household_data)
@@ -43,7 +37,7 @@ class RHSData(object):
 
     #toilet data
     def get_toilet_data(self):
-        household_count = self.occupide_houses() * 4
+        household_count = self.occupied_houses() * 4
         # toilet_status = self.get_toilet_status()
         toilet_data = self.slum_data.rim_data['Toilet']
         wrk_male_seats = 0
@@ -143,17 +137,24 @@ class RHSData(object):
         :param type:
         :return:
         """
-        percent = (self.get_water_coverage(type) / self.occupide_houses()) * 100 if self.occupide_houses() !=0 else 0
+        percent = (self.get_water_coverage(type) / self.occupied_houses()) * 100 if self.occupied_houses() !=0 else 0
         return percent
 
     # General Information data
+    def get_household_members(self):
+        household_member =filter(lambda x: 'group_el9cl08/Number_of_household_members' in x.rhs_data
+                                            and int(x.rhs_data['group_el9cl08/Number_of_household_members']) < 20,
+                                            self.household_data)
+        return household_member
+
+    def get_household_member_total(self):
+       slum_population = sum(map(lambda x: int(x.rhs_data['group_el9cl08/Number_of_household_members']
+                            if int(x.rhs_data['group_el9cl08/Number_of_household_members']) else 0) ,self.get_household_members()))
+       return slum_population
+
     def get_household_member_size(self):
-        household_member = filter(lambda x: 'group_el9cl08/Number_of_household_members' in x.rhs_data
-                                    and int(x.rhs_data['group_el9cl08/Number_of_household_members']) < 20,
-                                  self.household_data)
-        slum_population = sum(map(lambda x: int(x.rhs_data['group_el9cl08/Number_of_household_members']),household_member))
-        avg_household_size = slum_population / len(household_member) if len(household_member) != 0 else 0
-        return (slum_population,avg_household_size)
+        avg_household_size = self.get_household_member_total() / len(self.get_household_members()) if len(self.get_household_members()) != 0 else 0
+        return avg_household_size
 
     def get_slum_area_size(self):
         return int(self.slum_data.rim_data['General']['approximate_area_of_the_settle']) / 1000 \
