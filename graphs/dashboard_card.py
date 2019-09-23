@@ -9,8 +9,16 @@ class DashboardCard(RHSData):
     def __init__(self, slum):
         super(DashboardCard,self).__init__(slum)
 
+    def dashboard_page_parameters(self):
+        population = self.get_household_member_size()[0]
+        toilet_count = self.toilet_constructed()
+        people_impacted = toilet_count * 5
+        to_save = DashboardData.objects.update_or_create(slum=self.slum,
+                defaults={'count_of_toilets_completed': toilet_count,'people_impacted':people_impacted,
+                          'slum_population':population})
+
     def General_Info(self):
-        avg_household_size = self.get_household_member_size()
+        avg_household_size = self.get_household_member_size()[1]
         tenement_density = self.get_tenement_density()
         # sex_ratio = self.get_sex_ratio()
         household_count = self.get_household_count()
@@ -45,14 +53,15 @@ class DashboardCard(RHSData):
 
     def Water_Info(self):
         individual_connection_percent = self.get_perc_of_water_coverage('Individual connection')
-        # no_connection_percent = self.get_perc_of_water_coverage('')
-        return (individual_connection_percent)
+        shared_connection_percent = self.get_perc_of_water_coverage('Shared connection')
+        water_standpost_percent = self.get_perc_of_water_coverage('Water standpost')
+        return (individual_connection_percent,shared_connection_percent,water_standpost_percent)
 
     def save_water(self):
-        (individual_connection_percent) = self.Water_Info()
+        (individual_connection_percent,shared_connection_percent,water_standpost_percent) = self.Water_Info()
         to_save = DashboardData.objects.update_or_create(slum =self.slum,
-                                defaults={'water_individual_connection_percentile':individual_connection_percent})
-                                          #'water_no_service_percentile':no_connection_percent})
+            defaults={'water_individual_connection_percentile':individual_connection_percent,
+            'water_shared_service_percentile':shared_connection_percent,'waterstandpost_percentile':water_standpost_percent})
 
     def Road_Info(self):
         pucca = 1 if self.get_road_type() == 'Pucca' else 0
@@ -73,7 +82,6 @@ class DashboardCard(RHSData):
         to_save = DashboardData.objects.update_or_create(slum=self.slum, defaults=
                                 {'toilet_men_women_seats_ratio': men_to_wmn_seats_ratio,
                                  'toilet_seat_to_person_ratio': toilet_to_per_ratio })
-
     def save_qol_scores(self):
         scores = self.get_scores()
 
@@ -84,6 +92,7 @@ def dashboard_data_Save(city):
             dashboard_data = DashboardCard(slum.id)
             # dashboard_data.save_qol_scores()
             dashboard_data.save_general()
+            dashboard_data.dashboard_page_parameters()
             dashboard_data.save_waste()
             dashboard_data.save_water()
             dashboard_data.save_road()

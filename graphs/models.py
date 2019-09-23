@@ -119,7 +119,8 @@ class DashboardData(models.Model):
 
    # water section columns
    water_individual_connection_percentile = models.FloatField(blank=True,null=True)
-   water_no_service_percentile  = models.FloatField(blank=True, null= True)
+   water_shared_service_percentile  = models.FloatField(blank=True, null= True)
+   waterstandpost_percentile = models.FloatField(blank=True, null= True)
 
    # Road
    pucca_road = models.FloatField(blank= True,null=True)
@@ -137,6 +138,11 @@ class DashboardData(models.Model):
    individual_toilet_coverage =models.FloatField(blank= True,null=True)
    open_defecation_coverage = models.FloatField(blank= True,null=True)
    ctb_coverage = models.FloatField(blank= True,null=True)
+
+   #dashboard parameters
+   people_impacted = models.IntegerField(blank= True,null=True)
+   count_of_toilets_completed = models.IntegerField(blank= True,null=True)
+   slum_population = models.IntegerField(blank= True,null=True)
 
    class Meta:
 	   unique_together = ('id', 'slum')

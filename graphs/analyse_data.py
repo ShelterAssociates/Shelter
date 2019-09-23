@@ -17,6 +17,14 @@ class RHSData(object):
         self.slum_data = SlumData.objects.get(slum=self.slum)
         self.toilet_ms_data = ToiletConstruction.objects.filter(slum=self.slum)
 
+    def toilet_constructed(self):
+        db_data = filter(lambda x : True if x == '6' else None ,self.toilet_ms_data.values_list('status',flat= True))
+        # for i in self.toilet_ms_data.values('status','household_number'):
+        #     for k, v in i.items():
+        #         if k == 'status' and v == '6':
+        #             toilet_complete.append(i['household_number'])
+        return len(db_data)
+
     def occupide_houses(self):
         '''count of occupied houses in slums'''
         count = filter(lambda x:'Type_of_structure_occupancy' in x.rhs_data and x.rhs_data[
@@ -135,7 +143,7 @@ class RHSData(object):
         :param type:
         :return:
         """
-        percent = (self.get_water_coverage(type) / self.get_household_count()) * 100 if self.get_household_count() !=0 else 0
+        percent = (self.get_water_coverage(type) / self.occupide_houses()) * 100 if self.occupide_houses() !=0 else 0
         return percent
 
     # General Information data
@@ -143,8 +151,9 @@ class RHSData(object):
         household_member = filter(lambda x: 'group_el9cl08/Number_of_household_members' in x.rhs_data
                                     and int(x.rhs_data['group_el9cl08/Number_of_household_members']) < 20,
                                   self.household_data)
-        return sum(map(lambda x: int(x.rhs_data['group_el9cl08/Number_of_household_members']), household_member)) \
-               / len(household_member) if len(household_member) != 0 else 0
+        slum_population = sum(map(lambda x: int(x.rhs_data['group_el9cl08/Number_of_household_members']),household_member))
+        avg_household_size = slum_population / len(household_member) if len(household_member) != 0 else 0
+        return (slum_population,avg_household_size)
 
     def get_slum_area_size(self):
         return int(self.slum_data.rim_data['General']['approximate_area_of_the_settle']) / 1000 \
