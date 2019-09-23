@@ -4,19 +4,21 @@ from django.contrib.auth.decorators import login_required
 from django.shortcuts import get_object_or_404
 from django.http import HttpResponse
 from itertools import groupby
-from django.db.models import Avg,Sum
+from django.db.models import Avg,Sum, Count
 from graphs.models import *
 from master.models import *
 import json
+
 
 CARDS = {'General':[{'gen_avg_household_size':"Avg Household size"}, {'gen_tenement_density':"Tenement density (Persons/Hector)"}],
          'Waste': [{'waste_no_collection_facility_percentile':'No waste collection'},
                    {'waste_door_to_door_collection_facility_percentile':'Door to door waste collection'},
                    {'waste_dump_in_open_percent':'Dump in open'}],
-         'Water': [{'water_individual_connection_percentile':'Individual water connection'}],#,{'water_no_service_percentile':'No service'}],
+         'Water': [{'water_individual_connection_percentile':'Individual water connection'},
+                   {'water_shared_service_percentile':'Shared Water Connection'},{'waterstandpost_percentile':'Water Standposts'}],
          'Toilet': [{'toilet_seat_to_person_ratio':'Toilet to person ratio'},{'toilet_men_women_seats_ratio':'Men to women toilet seats ratio'}],
                     # {'individual_toilet_coverage':'Individual Toilets'},{'open_defecation_coverage':'Open defecation'},{'ctb_coverage':'CTB coverage'}],
-         'Road': [{'pucca_road':'No. of slums with pucca road'},{'road_with_no_vehicle_access':'Slums with no vehicle access'},
+         'Road': [{'pucca_road':'No. of slums with pucca road'},{'road_with_no_vehicle_access':'No. of slums with no vehicle access'},
                   {'pucca_road_coverage':'Pucca Road Coverage'},{'kutcha_road_coverage':'Kutcha Road Coverage'},
                   {'kutcha_road':'No. of slums with kutcha road'}]}
          # 'Drainage':[{'drains_coverage':'Drain coverage'}]}
@@ -92,14 +94,14 @@ def convert_float_to_str(data_dict):
         roundoff_str[k].append(str(r) + '%')
         return roundoff_str
 
-    def to_str(j):
+    def to_str(i):
         r = round(float(i), 2) if i != None else 0.0
         roundoff_str[k].append(str(r))
         return roundoff_str
 
     for k,v in data_dict.items():
         roundoff_str[k] = []
-        if k in ['Waste', 'Water']:
+        if k in ['Waste','Water']:
             for i in v:
                 if i != None:
                     roundoff_str.update(to_str_per(i))
@@ -118,15 +120,15 @@ def score_cards(ele):
     all_cards ={}
     for k,v in CARDS.items():
         cards = {}
-        if k == 'Road':
+        if k =='Road':
             cards[k] = []
-            for i in v:
-                for k1,v1 in i.items():
-                    if k1 in ['kutcha_road','pucca_road','road_with_no_vehicle_access']:
-                        avrg = ele.aggregate(Sum(k1)).values()[0]
+            for i in v: # list of dict
+                for j in i.keys():
+                    if j in ['kutcha_road','pucca_road','road_with_no_vehicle_access']:
+                        avrg = ele.aggregate(Sum(j)).values()[0]
                         cards[k].append(avrg)
                     else:
-                        avrg = ele.aggregate(Avg(k1)).values()[0]
+                        avrg = ele.aggregate(Avg(j)).values()[0]
                         cards[k].append(avrg)
         else:
             avrg = [ele.aggregate(Avg(i.keys()[0])).values()[0] for i in v]
