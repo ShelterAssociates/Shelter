@@ -12,11 +12,11 @@ style_value ={
 
 scores = [0, 25, 50, 75, 100];
 function getColor(d) {
-    return d < 25 ? '#C0EC83' :
-           d < 50  ? '#A7E074' :
-           d < 75  ? '#96CC39' :
-           d < 100   ? '#6BA32D' :
-                       '#547A1D';
+    return d < 25 ? '#ff0000' :
+           d < 50  ? '#ffaa00' :
+           d < 75  ? '#f6ff00' :
+           d < 100   ? '#00ff00' :
+                       '#0000ff';
 
 }
 
@@ -258,6 +258,7 @@ $(document).ready(function(){
           section_card = $(section_card).attr('name','section_card').removeClass('hide');
           section_card.find('span')[0].innerHTML = value;
           section_card.find('span')[1].innerHTML = Object.values(card_data["metadata"][section][key])[0];
+          section_card.find('img')[0].src = "/static/images/dashboard/" + Object.keys(card_data["metadata"][section][key])[0] + '.png';
           $("#section_cards").append(section_card);
       });
     }
