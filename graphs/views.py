@@ -8,6 +8,8 @@ from django.db.models import Avg,Sum, Count
 from graphs.models import *
 from master.models import *
 import json
+from component.cipher import *
+
 
 CARDS = {'General':[{'gen_avg_household_size':"Avg Household size"}, {'gen_tenement_density':"Tenement density (Persons/Hector)"}],
          'Waste': [{'waste_no_collection_facility_percentile':'No waste collection'},
@@ -139,6 +141,8 @@ def score_cards(ele):
 def dashboard_all_cards(request,key):
 
     def get_data(key):
+
+        cipher = AESCipher()
         dict_filter = {}
         output_data = {'city': {}}
         if key != 'all':
@@ -152,7 +156,7 @@ def dashboard_all_cards(request,key):
             slum_count = SlumData.objects.filter(city_id=i['name']).count()
             qol_scores = QOLScoreData.objects.filter(city_id=i['name']).aggregate(Avg('totalscore_percentile'))
             output_data['city'][i['name__city_name']] = dashboard_data
-            output_data['city'][i['name__city_name']]['city_id'] = i['id']
+            output_data['city'][i['name__city_name']]['city_id'] = "city::" + cipher.encrypt(str(i['id']))
             output_data['city'][i['name__city_name']].update(qol_scores)
             output_data['city'][i['name__city_name']]['slum_count'] = slum_count
         return output_data
