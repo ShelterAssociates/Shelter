@@ -9,7 +9,6 @@ from graphs.models import *
 from master.models import *
 import json
 
-
 CARDS = {'General':[{'gen_avg_household_size':"Avg Household size"}, {'gen_tenement_density':"Tenement density (Persons/Hector)"}],
          'Waste': [{'waste_no_collection_facility_percentile':'No waste collection'},
                    {'waste_door_to_door_collection_facility_percentile':'Door to door waste collection'},
@@ -136,3 +135,34 @@ def score_cards(ele):
         str = convert_float_to_str(cards) # convert values in "40.0%" format
         all_cards.update(str)
     return all_cards
+
+def dashboard_all_cards(request):
+
+    city_ids = City.objects.values('name', 'name__city_name')
+    output_data = {'city': {}}
+    for i in city_ids:
+        dashboard_data = DashboardData.objects.filter(city_id=i['name']).aggregate(Sum('slum_population'),
+                                                                                   Sum('household_count'),
+                                                                                   Sum('count_of_toilets_completed'),
+                                                                                   Sum('people_impacted'))
+        slum_count = SlumData.objects.filter(city_id=i['name']).count()
+        qol_scores = QOLScoreData.objects.filter(city_id=i['name']).aggregate(Avg('totalscore_percentile'))
+        output_data['city'][i['name__city_name']] = dashboard_data
+        output_data['city'][i['name__city_name']].update(qol_scores)
+        output_data['city'][i['name__city_name']]['slum_count'] = slum_count
+
+    return HttpResponse(json.dumps(output_data),content_type='application/json')
+
+def dashboard_one_city(request,key):
+    output_data = {'city': {}}
+    city = get_object_or_404(City, pk=key)
+
+    dashboard_data = DashboardData.objects.filter(city=city).aggregate(Sum('slum_population'),Sum('household_count'),
+                                        Sum('count_of_toilets_completed'),Sum('people_impacted'))
+    slum_count = SlumData.objects.filter(city__name__city_name=city).count()
+    qol_scores = QOLScoreData.objects.filter(city__name__city_name=city).aggregate(Avg('totalscore_percentile'))
+    output_data['city'][city.name.city_name] = dashboard_data
+    output_data['city'][city.name.city_name]['slum_count'] = slum_count
+    output_data['city'][city.name.city_name].update(qol_scores)
+
+    return HttpResponse(json.dumps(output_data),content_type='application/json')
