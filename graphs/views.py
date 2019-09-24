@@ -136,33 +136,26 @@ def score_cards(ele):
         all_cards.update(str)
     return all_cards
 
-def dashboard_all_cards(request):
+def dashboard_all_cards(request,key):
 
-    city_ids = City.objects.values('name', 'name__city_name')
-    output_data = {'city': {}}
-    for i in city_ids:
-        dashboard_data = DashboardData.objects.filter(city_id=i['name']).aggregate(Sum('slum_population'),
-                                                                                   Sum('household_count'),
-                                                                                   Sum('count_of_toilets_completed'),
-                                                                                   Sum('people_impacted'))
-        slum_count = SlumData.objects.filter(city_id=i['name']).count()
-        qol_scores = QOLScoreData.objects.filter(city_id=i['name']).aggregate(Avg('totalscore_percentile'))
-        output_data['city'][i['name__city_name']] = dashboard_data
-        output_data['city'][i['name__city_name']].update(qol_scores)
-        output_data['city'][i['name__city_name']]['slum_count'] = slum_count
+    def get_data(key):
+        dict_filter = {}
+        output_data = {'city': {}}
+        if key != 'all':
+            dict_filter['id'] = key
+        city_ids = City.objects.filter(**dict_filter).values('id','name', 'name__city_name')
+        for i in city_ids:
+            dashboard_data = DashboardData.objects.filter(city_id=i['name']).aggregate(Sum('slum_population'),
+                                                                                       Sum('household_count'),
+                                                                                       Sum('count_of_toilets_completed'),
+                                                                                       Sum('people_impacted'))
+            slum_count = SlumData.objects.filter(city_id=i['name']).count()
+            qol_scores = QOLScoreData.objects.filter(city_id=i['name']).aggregate(Avg('totalscore_percentile'))
+            output_data['city'][i['name__city_name']] = dashboard_data
+            output_data['city'][i['name__city_name']]['city_id'] = i['id']
+            output_data['city'][i['name__city_name']].update(qol_scores)
+            output_data['city'][i['name__city_name']]['slum_count'] = slum_count
+        return output_data
 
-    return HttpResponse(json.dumps(output_data),content_type='application/json')
-
-def dashboard_one_city(request,key):
-    output_data = {'city': {}}
-    city = get_object_or_404(City, pk=key)
-
-    dashboard_data = DashboardData.objects.filter(city=city).aggregate(Sum('slum_population'),Sum('household_count'),
-                                        Sum('count_of_toilets_completed'),Sum('people_impacted'))
-    slum_count = SlumData.objects.filter(city__name__city_name=city).count()
-    qol_scores = QOLScoreData.objects.filter(city__name__city_name=city).aggregate(Avg('totalscore_percentile'))
-    output_data['city'][city.name.city_name] = dashboard_data
-    output_data['city'][city.name.city_name]['slum_count'] = slum_count
-    output_data['city'][city.name.city_name].update(qol_scores)
-
-    return HttpResponse(json.dumps(output_data),content_type='application/json')
+    result = get_data(key)
+    return HttpResponse(json.dumps(result), content_type='application/json')
