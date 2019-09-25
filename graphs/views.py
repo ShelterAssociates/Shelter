@@ -153,7 +153,7 @@ def dashboard_all_cards(request,key):
                                                                                        Sum('household_count'),
                                                                                        Sum('count_of_toilets_completed'),
                                                                                        Sum('people_impacted'))
-            slum_count = Slum.objects.filter(electoral_ward__administrative_ward__city=city).count()
+            slum_count = Slum.objects.filter(electoral_ward__administrative_ward__city=city, associated_with_SA=True).count()
             qol_scores = QOLScoreData.objects.filter(city=city).aggregate(Avg('totalscore_percentile'))
             city_name = city.name.city_name
             output_data['city'][city_name] = dashboard_data
