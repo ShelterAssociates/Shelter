@@ -147,18 +147,19 @@ def dashboard_all_cards(request,key):
         output_data = {'city': {}}
         if key != 'all':
             dict_filter['id'] = key
-        city_ids = City.objects.filter(**dict_filter).values('id','name', 'name__city_name')
-        for i in city_ids:
-            dashboard_data = DashboardData.objects.filter(city_id=i['name']).aggregate(Sum('slum_population'),
+        cities = City.objects.filter(**dict_filter)
+        for city in cities:
+            dashboard_data = DashboardData.objects.filter(city=city).aggregate(Sum('slum_population'),
                                                                                        Sum('household_count'),
                                                                                        Sum('count_of_toilets_completed'),
                                                                                        Sum('people_impacted'))
-            slum_count = SlumData.objects.filter(city_id=i['name']).count()
-            qol_scores = QOLScoreData.objects.filter(city_id=i['name']).aggregate(Avg('totalscore_percentile'))
-            output_data['city'][i['name__city_name']] = dashboard_data
-            output_data['city'][i['name__city_name']]['city_id'] = "city::" + cipher.encrypt(str(i['id']))
-            output_data['city'][i['name__city_name']].update(qol_scores)
-            output_data['city'][i['name__city_name']]['slum_count'] = slum_count
+            slum_count = Slum.objects.filter(electoral_ward__administrative_ward__city=city).count()
+            qol_scores = QOLScoreData.objects.filter(city=city).aggregate(Avg('totalscore_percentile'))
+            city_name = city.name.city_name
+            output_data['city'][city_name] = dashboard_data
+            output_data['city'][city_name]['city_id'] = "city::" + cipher.encrypt(str(city.id))
+            output_data['city'][city_name].update(qol_scores)
+            output_data['city'][city_name]['slum_count'] = slum_count
         return output_data
 
     result = get_data(key)
