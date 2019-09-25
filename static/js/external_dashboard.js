@@ -129,7 +129,7 @@ function initMap(){
           '<i style="background:' + getColor(scores[i]) + '"></i> ' +
           scores[i] + (scores[i + 1] ? ' &ndash; ' + scores[i + 1] + '<br>' : '+');
       }
-
+      div.innerHTML += '<i style="background:#0000ff;"></i> No score';
       return div;
     };
     legend.addTo(map);
