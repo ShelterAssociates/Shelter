@@ -1,4 +1,7 @@
 $(document).ready(function(){
+    if(window.location !== window.parent.location) {
+        $('#navbar').hide();
+    }
     function add_cards(name, data){
         var card = $("div[name=section_card_clone]")[0].outerHTML;
         card = $(card).attr('name','card').removeClass('hide');
@@ -19,17 +22,17 @@ $(document).ready(function(){
         total_households += value['household_count__sum'] == null ? 0 : value['household_count__sum'];
         total_population += value['slum_population__sum'] == null ? 0 : value['slum_population__sum'];
         total_toilets += value['count_of_toilets_completed__sum'] == null ? 0 : value['count_of_toilets_completed__sum'];
-        total_impact += value['people_impacted__sum'] == null ? 0 : value['people_impacted__sum'];
+        //total_impact += value['people_impacted__sum'] == null ? 0 : value['people_impacted__sum'];
       });
       $('.total-slums').html(''+total_slums);
       $('.total-households').html(''+total_households);
       $('.total-population').html(''+total_population);
       $('.total-toilets').html(''+total_toilets);
-      total_impact = ''+total_impact;
-      $('.total-impact').html('');
-      for(i=0; i<total_impact.length; i++){
-        $('.total-impact').append('<li><span>'+total_impact[i]+'</span></li>');
-      }
+      //total_impact = ''+total_impact;
+      //$('.total-impact').html('');
+      //for(i=0; i<total_impact.length; i++){
+      //  $('.total-impact').append('<li><span>'+total_impact[i]+'</span></li>');
+      //}
 
     }
 
