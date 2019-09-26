@@ -120,7 +120,6 @@ class ElectoralWard(models.Model):
         verbose_name = 'Electoral Ward'
         verbose_name_plural = 'Electoral Wards'
 
-
 class Slum(models.Model):
     """Slum Database"""
     electoral_ward = models.ForeignKey(ElectoralWard, blank=True, null=True)
@@ -326,6 +325,7 @@ class Rapid_Slum_Appraisal(models.Model):
     drainage_report_image = models.ImageField(upload_to=DRAINAGE_PHOTO,blank=True, null=True)
     location_of_defecation = models.CharField(max_length=2048,blank=True, null=True)
     percentage_with_individual_toilet = models.CharField(max_length=2048,blank=True, null=True)
+    drainage_coverage = models.CharField(max_length=2048,blank=True, null=True)
 
     class Meta:
         permissions = (

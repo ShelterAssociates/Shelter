@@ -280,8 +280,8 @@ def citymapdisplay(request):
 
 	return HttpResponse(json.dumps(city_main),content_type='application/json')
 
-# @csrf_exempt
-# @access_right
+@csrf_exempt
+@access_right
 def slummapdisplay(request,id):
 	slum_list=[]
 	city_dict={}
