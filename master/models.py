@@ -78,7 +78,6 @@ class Survey(models.Model):
         verbose_name = 'Survey'
         verbose_name_plural = 'Surveys'
 
-
 class AdministrativeWard(models.Model):
     """Administrative Ward Database"""
     city = models.ForeignKey(City)
@@ -120,6 +119,9 @@ class ElectoralWard(models.Model):
         verbose_name = 'Electoral Ward'
         verbose_name_plural = 'Electoral Wards'
 
+
+ODF_CHOICES =(('ODF','ODF'),('ODF+','ODF+'),('ODF++','ODF++'))
+
 class Slum(models.Model):
     """Slum Database"""
     electoral_ward = models.ForeignKey(ElectoralWard, blank=True, null=True)
@@ -130,6 +132,7 @@ class Slum(models.Model):
     factsheet = models.FileField(upload_to=FACTSHEET_PHOTO ,blank=True,null=True)
     photo = models.ImageField(upload_to=FACTSHEET_PHOTO,blank=True, null=True)
     associated_with_SA = models.BooleanField(default=False)
+    odf_status = models.CharField(max_length=2048,choices=ODF_CHOICES,default=ODF_CHOICES)
     status = models.BooleanField(default=False)
 
     components = GenericRelation(Component, related_query_name='component_slum',object_id_field="object_id")#Fields for reverse relationship

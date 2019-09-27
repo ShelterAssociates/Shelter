@@ -98,8 +98,6 @@ class UploadKMLBase(admin.ModelAdmin):
                 response['message'] = str(e)
         return HttpResponse(json.dumps(response), content_type='application/json')
 
-
-
 class CityListFilter(admin.SimpleListFilter):
     """
     City level filter 
@@ -185,11 +183,29 @@ admin.site.register(CityReference, CityReferenceAdmin)
 #slum
 class SlumDetailAdmin(BaseModelAdmin):
     form = SlumForm
-    list_display = ('name', 'electoral_ward', 'administrative_ward', 'city_name','shelter_slum_code', 'associated_with_SA','status')
+    list_display = ('name', 'electoral_ward', 'administrative_ward', 'city_name','shelter_slum_code', 'associated_with_SA','status','odf_status')
     search_fields = ['name','electoral_ward__name', 'electoral_ward__administrative_ward__name','shelter_slum_code']
     #list_filter = [CityListFilter]
     ordering = ['electoral_ward__name', 'name']
-    actions = ['associated_with_SA', 'status_of_slum']
+    actions = ['associated_with_SA', 'status_of_slum','ODF','ODF_plus','ODF_plusplus']
+
+    def ODF(self,request,queryset):
+        for query in queryset:
+            query.odf_status = 'ODF'
+            query.save()
+    ODF.short_description = "Change status of slum(s) to ODF"
+
+    def ODF_plus(self,request,queryset):
+        for query in queryset:
+            query.odf_status = 'ODF+'
+            query.save()
+    ODF_plus.short_description = "Change status of slum(s) to ODF+"
+
+    def ODF_plusplus(self,request,queryset):
+        for query in queryset:
+            query.odf_status = 'ODF++'
+            query.save()
+    ODF_plusplus.short_description = "Change status of slum(s) to ODF++"
 
     def associated_with_SA(self, request, queryset):
         for query in queryset:

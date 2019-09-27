@@ -7,6 +7,8 @@ from mastersheet.models import *
 import json
 from django.contrib.contenttypes.models import ContentType
 
+# json_file = json.loads(open('/home/shelter/Desktop/New_project/QOL_three/Shelter/graphs/json_reference_file.json').read())  # json reference data from json file
+
 class RHSData(object):
     def __init__(self, slum):
         self.slum = get_object_or_404(Slum, pk=slum)
@@ -28,6 +30,7 @@ class RHSData(object):
 
     def get_toilet_data(self):
         household_count = self.occupied_houses() * 4
+        # toilet_status = self.get_toilet_status()
         toilet_data = self.slum_data.rim_data['Toilet']
         wrk_male_seats = 0
         wrk_nt_male_seats = 0
