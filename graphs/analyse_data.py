@@ -7,6 +7,8 @@ from mastersheet.models import *
 import json
 from django.contrib.contenttypes.models import ContentType
 
+# json_file = json.loads(open('/home/shelter/Desktop/New_project/QOL_three/Shelter/graphs/json_reference_file.json').read())  # json reference data from json file
+
 class RHSData(object):
     def __init__(self, slum):
         self.slum = get_object_or_404(Slum, pk=slum)
@@ -15,27 +17,17 @@ class RHSData(object):
         self.slum_data = SlumData.objects.get(slum=self.slum)
         self.toilet_ms_data = ToiletConstruction.objects.filter(slum=self.slum)
 
-    def toilet_constructed(self):
-        result = self.toilet_ms_data.filter(status ='6').count()
-        return result
-
     def occupied_houses(self):
         '''count of occupied houses in slums'''
         count = filter(lambda x:'Type_of_structure_occupancy' in x.rhs_data and x.rhs_data[
                     'Type_of_structure_occupancy'] == 'Occupied house',self.household_data)
         return len(count)
 
-    def get_scores(self):
-        drain =self.get_drain_gutter_score()
-        return 0
-
-    def get_drain_gutter_score(self):
-        score = 0
-        drain = self.slum_data.rim_data['Drainage']
-        gutter =self.slum_data.rim_data['Gutter']
-        return score
-
     #toilet data
+    def toilet_constructed(self):
+        result = self.toilet_ms_data.filter(status='6').count()
+        return result
+
     def get_toilet_data(self):
         household_count = self.occupied_houses() * 4
         # toilet_status = self.get_toilet_status()
@@ -106,7 +98,6 @@ class RHSData(object):
         return self.household_data.count()
 
     def get_slum_population(self):
-        # group_el9cl08 / Number_of_household_members (col in rhs data for household member count)
         return self.get_household_count() * 4
 
     def get_waste_facility(self, facility):
@@ -161,6 +152,10 @@ class RHSData(object):
             if 'approximate_area_of_the_settle' in self.slum_data.rim_data['General'] else 0
 
     def get_tenement_density(self):
+        area_size = self.get_slum_area_size()
+        return self.get_household_count() / area_size if area_size != 0 else 0
+
+    def get_population_density(self):
         area_size = self.get_slum_area_size()
         return self.get_slum_population() / area_size if area_size != 0 else 0
 

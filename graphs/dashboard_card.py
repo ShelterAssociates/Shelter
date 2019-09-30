@@ -20,9 +20,9 @@ class DashboardCard(RHSData):
     def General_Info(self):
         avg_household_size = self.get_household_member_size()
         tenement_density = self.get_tenement_density()
-        # sex_ratio = self.get_sex_ratio()
+        population_density = self.get_population_density()
         household_count = self.get_household_count()
-        return (avg_household_size, tenement_density,household_count)
+        return (population_density,avg_household_size, tenement_density,household_count)
 
     def get_general_score(self):
         # qol_score = qol_score_save() # get rim data and
@@ -30,11 +30,10 @@ class DashboardCard(RHSData):
 
     def save_general(self):
         """Save information to database"""
-        (avg_household_size, tenement_density,household_count) = self.General_Info()
-        to_save = DashboardData.objects.update_or_create(slum = self.slum , defaults = {'gen_tenement_density' : tenement_density,
-                                    'gen_avg_household_size': avg_household_size , 'household_count':household_count,
-                                    'city_id': self.slum.electoral_ward.administrative_ward.city.id})
-                                    # 'gen_sex_ration':sex_ratio, 'gen_odf_status' : gen_ofd
+        (population_density, avg_household_size, tenement_density, household_count) = self.General_Info()
+        to_save = DashboardData.objects.update_or_create(slum = self.slum , defaults ={'city_id': self.slum.electoral_ward.administrative_ward.city.id,
+                                    'gen_tenement_density' : tenement_density,'gen_avg_household_size': avg_household_size,
+                                    'household_count':household_count,'gen_population_density':population_density})
 
     def Waste_Info(self):
         door_to_door_percent = self.get_perc_of_waste_collection('Door to door waste collection')
@@ -82,6 +81,7 @@ class DashboardCard(RHSData):
         to_save = DashboardData.objects.update_or_create(slum=self.slum, defaults=
                                 {'toilet_men_women_seats_ratio': men_to_wmn_seats_ratio,
                                  'toilet_seat_to_person_ratio': toilet_to_per_ratio })
+
     def save_qol_scores(self):
         scores = self.get_scores()
 

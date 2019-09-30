@@ -966,6 +966,23 @@
     },
   "Waste":
     {
+      "where_are_the_communty_open_du":
+        {
+          "choices":
+            {
+              "within the settlement": -4,
+              "in a nearby canal/water body": -4,
+              "along the railway line": -4,
+              "at the edge of the settlement": -4,
+              "over 0.5 km from the edge of settlement": -4,
+              "none" : 2
+            },
+          "calculate":
+            {
+              "type": "M",
+              "function": "Multi_select()"
+            }
+        },
       "facility_of_waste_collection":
         {
           "choices":
@@ -1073,23 +1090,6 @@
             {
               "type": "s",
               "function": "single_select()"
-            }
-        },
-      "where_are_the_communty_open_du":
-        {
-          "choices":
-            {
-              "within the settlement": -4,
-              "in a nearby canal/water body": -4,
-              "along the railway line": -4,
-              "at the edge of the settlement": -4,
-              "over 0.5 km from the edge of settlement": -4,
-              "none" : 2
-            },
-          "calculate":
-            {
-              "type": "M",
-              "function": "Multi_select()"
             }
         },
       "Coverage of waste collection by MLA sponsored tempo":

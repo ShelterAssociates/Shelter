@@ -10,19 +10,18 @@ from master.models import *
 import json
 from component.cipher import *
 
-
-CARDS = {'General':[{'gen_avg_household_size':"Avg Household size"}, {'gen_tenement_density':"Tenement density (Persons/Hector)"}],
+CARDS = {'General':[{'gen_avg_household_size':"Avg Household size"}, {'gen_tenement_density':"Tenement density (Huts/Hector)"},
+                    {'gen_population_density':'Population density (Persons/Hector)'}],
          'Waste': [{'waste_no_collection_facility_percentile':'No waste collection'},
                    {'waste_door_to_door_collection_facility_percentile':'Door to door waste collection'},
                    {'waste_dump_in_open_percent':'Dump in open'}],
          'Water': [{'water_individual_connection_percentile':'Individual water connection'},
                    {'water_shared_service_percentile':'Shared Water Connection'},{'waterstandpost_percentile':'Water Standposts'}],
-         'Toilet': [{'toilet_seat_to_person_ratio':'Toilet to person ratio'},{'toilet_men_women_seats_ratio':'Men to women toilet seats ratio'}],
-                    # {'individual_toilet_coverage':'Individual Toilets'},{'open_defecation_coverage':'Open defecation'},{'ctb_coverage':'CTB coverage'}],
-         'Road': [{'pucca_road':'No. of slums with pucca road'},{'road_with_no_vehicle_access':'No. of slums with no vehicle access'},
-                  {'pucca_road_coverage':'Pucca Road Coverage'},{'kutcha_road_coverage':'Kutcha Road Coverage'},
-                  {'kutcha_road':'No. of slums with kutcha road'}]}
-         # 'Drainage':[{'drains_coverage':'Drain coverage'}]}
+         'Toilet': [{'toilet_seat_to_person_ratio':'Toilet seat to person ratio'},{'toilet_men_women_seats_ratio':'Men to women toilet seats ratio'}],
+                    #{'count_of_toilets_completed':'Individual Toilets'}],{'ctb_coverage':'CTB coverage'}],
+         'Road': [{'road_with_no_vehicle_access':'No. of slums with no vehicle access'},
+                  {'pucca_road_coverage':'Pucca Road Coverage'},{'kutcha_road_coverage':'Kutcha Road Coverage'}],
+         'Drainage':[{'drainage_coverage':'Drain coverage'}]}
 
 @login_required(login_url='/accounts/login/')
 def graphs_display(request, graph_type):
@@ -79,11 +78,17 @@ def get_dashboard_card(request, key):
 def get_card_data(slum_name):
     all_cards = {}
     root_query = DashboardData.objects.filter(slum__name = slum_name)
+    drainage_coverage = Rapid_Slum_Appraisal.objects.filter(slum_name__name = slum_name)
     for k,v in CARDS.items():
         data_cards = {}
-        data_cards[k] = [root_query.values_list(i.keys()[0], flat=True)[0] for i in v]
-        data_cards = convert_float_to_str(data_cards)
-        all_cards.update(data_cards)
+        if k == 'Drainage':
+            data_cards[k] = [drainage_coverage.values_list(i.keys()[0], flat=True)[0] for i in v]
+            data_cards = convert_float_to_str(data_cards)
+            all_cards.update(data_cards)
+        else:
+            data_cards[k] = [root_query.values_list(i.keys()[0], flat=True)[0] for i in v]
+            data_cards = convert_float_to_str(data_cards)
+            all_cards.update(data_cards)
     return all_cards
 
 def convert_float_to_str(data_dict):
@@ -102,10 +107,18 @@ def convert_float_to_str(data_dict):
 
     for k,v in data_dict.items():
         roundoff_str[k] = []
-        if k in ['Waste','Water']:
+        if k in ['Waste','Water','Drainage']:
             for i in v:
                 if i != None:
                     roundoff_str.update(to_str_per(i))
+        elif k == 'Toilet':
+            for i in v:
+                if i != None and v.index(i) == 0:
+                    r = int(i) if i != None else 0
+                    roundoff_str[k].append('1:'+ str(r))
+                else:
+                    r = int(i) if i != None else 0
+                    roundoff_str[k].append(str(r))
         elif k == 'Road':
             for i in v:
                 if v.index(i) in [2,3]:
@@ -124,13 +137,14 @@ def score_cards(ele):
         if k =='Road':
             cards[k] = []
             for i in v: # list of dict
-                for j in i.keys():
-                    if j in ['kutcha_road','pucca_road','road_with_no_vehicle_access']:
-                        avrg = ele.aggregate(Sum(j)).values()[0]
-                        cards[k].append(avrg)
-                    else:
-                        avrg = ele.aggregate(Avg(j)).values()[0]
-                        cards[k].append(avrg)
+                if i.keys()[0] == 'road_with_no_vehicle_access':
+                    avrg = ele.aggregate(Sum(i.keys()[0])).values()[0]
+                    cards[k].append(avrg)
+                else:
+                    avrg = ele.aggregate(Avg(i.keys()[0])).values()[0]
+                    cards[k].append(avrg)
+        elif k =='Drainage':
+            pass
         else:
             avrg = [ele.aggregate(Avg(i.keys()[0])).values()[0] for i in v]
             cards[k] = avrg
