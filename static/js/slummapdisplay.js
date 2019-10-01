@@ -7,7 +7,7 @@ $(document).ready(function(){
         card = $(card).attr('name','card').removeClass('hide');
         card.find(".city_name")[0].innerHTML = name;
         card.find(".total-score")[0].innerHTML = ''+parseInt(data['totalscore_percentile__avg'])+'%';
-        card.find(".number-of-slums")[0].innerHTML = data['slum_count'];
+        card.find(".number-of-slums")[0].innerHTML = data['slum_count'] + " / "+data['total_slum_count'];
         card.find(".household-count")[0].innerHTML = data['household_count__sum'];
         card.find('.dashboard-url')[0].href = "/dashboard/"+ data['city_id'];
         card.find('.gis-url')[0].href = "/"+data['city_id'];
