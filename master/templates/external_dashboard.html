@@ -1,4 +1,4 @@
-{% extends "dashboard_header.html" %}
+{% extends "dashboard_sub_header.html" %}
 {% load i18n %}
 {% load staticfiles %}
 
@@ -51,156 +51,116 @@
 <script src="{% static "js/leaflet.js" %}"></script>
 <script src="{% static "js/leaflet-google.js" %}"></script>
 <script src="{% static "js/external_dashboard.js" %}"></script>
+<script src="{% static "js/external_dashboard_subheader.js" %}"></script>
 <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCs114b6ZNpVH5BGnrfgy0f1K49vfBK4gs&callback=initMap" async defer></script>
 {% endblock %}
 
-{% block content %}
+{%block content %}
+<div class="container-fluid">
 <div class="overlay">
     <div id="loading-img"></div>
 </div>
 <input type="text" class="hide" id="city_id" value="{{city_id}}"/>
 <input type="text" class="hide" id="city_name" value="{{city_name}}"/>
-<div class="container-fluid overridePadding" style="padding-top:60px;">
-  <!--Sub header starts here-->
-  <div class="sub-header">
-    <span class="ppl-label">People Impacted</span>
-    <ul class="count">
-      <li><span>0</span></li>
-      <li><span>2</span></li>
-      <li><span>5</span></li>
-      <li><span>4</span></li>
-      <li><span>8</span></li>
-      <li><span>3</span></li>
-    </ul>
-    <span class="ppl-label ml-10">& counting...</span>
-    <span class="divider-line"></span>
-    <span class="toilent-count">
-      <span>Toilets Built by Shelter </span>
-      <span>: 16,200</span>
-    </span>
-    <span class="all-values">
-      <ul>
-        <li>
-          <span class="labels">Slums :</span>
-          <span class="values"> 302</span>
-        </li>
-        <li>
-          <span class="labels">Households :</span>
-          <span class="values"> 1,35,600</span>
-        </li>
-        <li>
-          <span class="labels">Women & children :</span>
-          <span class="values"> 15000</span>
-        </li>
-      </ul>
-    </span>
-  </div>
-  <!--Sub header ends here-->
-
   <!--Content starts here-->
-  <div class="container-fluid">
-    <div class="row">
-      <div class="col-md-5">
-        <b id="city_name_text"></b>
-        <input type="radio" value="0" name="level" checked text="Administrative ward"> Administrative Ward
-        <input type="radio" value="1" name="level" text="Electoral ward"> Electoral Ward
-        <input type="radio" value="2" name="level" text="Slum"> Slum
-        <div id="map"></div>
+
+  <div class="row">
+    <div class="col-md-5" style="">
+      <b id="city_name_text"></b>
+      <input type="radio" value="0" name="level" checked text="Administrative ward"> Administrative Ward
+      <input type="radio" value="1" name="level" text="Electoral ward"> Electoral Ward
+      <input type="radio" value="2" name="level" text="Slum"> Slum
+      <div id="map"></div>
+    </div>
+    <div class="col-md-7">
+      <!--Information starts here-->
+      <div class="information">
+        <div class="water-info">
+          <span><img src="/static/images/ico_info.png"/></span>
+          <select id="levels_tag">
+            <option value="General">General</option>
+            <option value="Toilet">Toilet</option>
+            <option value="Drainage">Drainage</option>
+            <option value="Water">Water</option>
+            <option value="Waste">Waste</option>
+            <option value="Road">Road</option>
+          </select>
+        </div>
+        <div class="info-divider"></div>
+        <!-- <div class="water-info">
+                              <span><img src="images/ico_info.png"/></span>
+                              <span class="water-label">16 May 2018 - 10 May 2019</span>
+                              <span class="info-arrow l30">
+                                  <i class="down"></i>
+                              </span>
+                          </div>
+                          <div class="info-divider"></div> -->
+        <div class="overall-score">
+          <span class="overall-cnt" id="total_score">50</span>
+          <span class="overall-text" id="total_score_text">Overall score for Pune City</span>
+        </div>
       </div>
-      <div class="col-md-7">
-        <!--Information starts here-->
-        <div class="information">
-          <div class="water-info">
-            <span><img src="/static/images/ico_info.png"/></span>
-            <select id="levels_tag">
-              <option value="General">General</option>
-              <option value="Toilet">Toilet</option>
-              <option value="Drainage">Drainage</option>
-              <option value="Water">Water</option>
-              <option value="Waste">Waste</option>
-              <option value="Road">Road</option>
-            </select>
+      <!--Information endss here-->
+      <div class="report-card" id="report_selections">
+        Water Report Card for all Admin Wards
+        <span class="full-screen"
+          ><img src="/static/images/Symbol 38 – 1.svg"
+        /></span>
+      </div>
+      <div class="details">
+        <div class="cards">
+          <div class="first-card">
+            <p class="average-img"><img width="60px" src="/static/images/dashboard/score.png" /></p>
+            <p class="average-val-label">
+              <span class="average-val" id="score_val">60</span>
+              <span class="average-label">Total Score</span>
+              <span class="average-label">Above Average</span>
+            </p>
+            <p class="result-text hide">70 in previous period</p>
           </div>
-          <div class="info-divider"></div>
-          <!-- <div class="water-info">
-                                <span><img src="images/ico_info.png"/></span>
-                                <span class="water-label">16 May 2018 - 10 May 2019</span>
-                                <span class="info-arrow l30">
-                                    <i class="down"></i>
-                                </span>
-                            </div>
-                            <div class="info-divider"></div> -->
-          <div class="overall-score">
-            <span class="overall-cnt" id="total_score">50</span>
-            <span class="overall-text" id="total_score_text">Overall score for Pune City</span>
+
+          <div id="section_cards">
+
           </div>
-        </div>
-        <!--Information endss here-->
-        <div class="report-card" id="report_selections">
-          Water Report Card for all Admin Wards
-          <span class="full-screen"
-            ><img src="/static/images/Symbol 38 – 1.svg"
-          /></span>
-        </div>
-        <div class="details">
-          <div class="cards">
-            <div class="first-card">
-              <p class="average-img"><img width="60px" src="/static/images/dashboard/score.png" /></p>
-              <p class="average-val-label">
-                <span class="average-val" id="score_val">60</span>
-                <span class="average-label">Total Score</span>
-                <span class="average-label">Above Average</span>
-              </p>
-              <p class="result-text hide">70 in previous period</p>
-            </div>
+          <div name="section_card_clone" class="first-card cards-bg hide">
+            <p class="average-img">
+              <img width="60px" src="" />
+            </p>
+            <p class="average-val-label">
+              <span class="average-val"></span>
+              <span class="average-label"></span>
+            </p>
+            <p class="result-text positive hide">800 in previous period</p>
+          </div>
 
-            <div id="section_cards">
-
+          <div class="bar-chart hide">
+            <div class="bar-header">
+              <span>Water Availability</span>
+              <span class="bar-select">Select Any two parameters</span>
             </div>
-            <div name="section_card_clone" class="first-card cards-bg hide">
-              <p class="average-img">
-                <img width="60px" src="" />
-              </p>
-              <p class="average-val-label">
-                <span class="average-val"></span>
-                <span class="average-label"></span>
-              </p>
-              <p class="result-text positive hide">800 in previous period</p>
+            <div class="bar-graph"></div>
+          </div>
+          <div class="key-values hide">
+            <div class="key-takeaways">
+              Key Takeaways
+              <i class="down"></i>
             </div>
-
-            <div class="bar-chart hide">
-              <div class="bar-header">
-                <span>Water Availability</span>
-                <span class="bar-select">Select Any two parameters</span>
-              </div>
-              <div class="bar-graph"></div>
-            </div>
-            <div class="key-values hide">
-              <div class="key-takeaways">
-                Key Takeaways
-                <i class="down"></i>
-              </div>
-              <ul class="takeaways">
-                <li><span>2 wards</span> with no water service.</li>
-                <li>
-                  <span>1 ward</span> with Average quality water but with
-                  High Pressure
-                </li>
-                <li>
-                  More than <span>6 wards</span> with Low quality and Medium
-                  Pressure
-                </li>
-              </ul>
-            </div>
+            <ul class="takeaways">
+              <li><span>2 wards</span> with no water service.</li>
+              <li>
+                <span>1 ward</span> with Average quality water but with
+                High Pressure
+              </li>
+              <li>
+                More than <span>6 wards</span> with Low quality and Medium
+                Pressure
+              </li>
+            </ul>
           </div>
         </div>
       </div>
     </div>
   </div>
-  <!--Content ends here-->
-</div>
-<!-- main container End -->
-{% endblock %}
-
-{% block sidebar %}
+  </div>
+<!--Content ends here-->
 {% endblock %}

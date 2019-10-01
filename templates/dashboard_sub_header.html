@@ -1,0 +1,40 @@
+{% extends "dashboard_header.html" %}
+{% load i18n %}
+{% load staticfiles %}
+
+{% block scriptblock1 %}
+{% endblock %}
+
+{% block styleblock %}
+{% endblock %}
+
+{% block subheader %}
+<!--Sub header starts here-->
+  <div class="sub-header">
+    <div class="sub-header-child col-md-12">
+    <div class="visible-lg hidden-sm visible-md">
+    <span class="toilent-count">
+      <span>Household toilets facilitated by SA :</span>
+      <span class="total-toilets"></span>
+    </span>
+    </div>
+    <span class="all-values">
+      <ul>
+        <li>
+          <span class="labels">Slums :</span>
+          <span class="values total-slums"></span>
+        </li>
+        <li>
+          <span class="labels">Households :</span>
+          <span class="values total-households"> </span>
+        </li>
+        <li>
+          <span class="labels">Population :</span>
+          <span class="values total-population"> </span>
+        </li>
+      </ul>
+    </span>
+  </div>
+  </div>
+  <!--Sub header ends here-->
+{% endblock %}

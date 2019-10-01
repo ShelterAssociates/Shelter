@@ -1,4 +1,4 @@
-{% extends 'header.html' %}
+{% extends 'dashboard_sub_header.html' %}
 {% load staticfiles %}
 
 {% block styleblock %}
@@ -10,74 +10,44 @@
 <script src="{% static "js/bootstrap.min.js" %}"></script>
 <script src="{% static "js/jquery.min.js" %}"></script>
 <script src="{% static "js/slummapdisplay.js" %}"></script>
-
+<script src="{% static "js/external_dashboard_subheader.js" %}"></script>
 {% endblock %}
-{%block mainblock %}
-<div class="top-header" >
-<div class="sub-header">
-    <div class="sub-header-child col-md-12">
-    <div class=" hidden-lg hidden-sm visible-md">
-    <span class="toilent-count">
-      <span>Household toilets facilitated by SA :</span>
-      <span class="total-toilets"></span>
-    </span>
-    </div>
-    <span class="all-values">
-      <ul>
-        <li>
-          <span class="labels">Slums :</span>
-          <span class="values total-slums"></span>
-        </li>
-        <li>
-          <span class="labels">Households :</span>
-          <span class="values total-households"> </span>
-        </li>
-        <li>
-          <span class="labels">Population :</span>
-          <span class="values total-population"> </span>
-        </li>
-      </ul>
-    </span>
-  </div>
-  </div>
-<div class="container-fluid" >
-	<div class="overlay">
-		<div id="loading-img"></div>
-	</div>
+{%block content %}
 
-	<div>
-		<div class="details">
-			<div class="cards scrolling-wrapper">
+<div class="overlay">
+    <div id="loading-img"></div>
+</div>
 
-			</div>
-		</div>
-	</div>
-    <div name="section_card_clone" class="first-card cards-bg hide">
-        <p class="city_name average-img">
+<div class="container-fluid">
+    <div class="details">
+        <div class="cards scrolling-wrapper">
 
-        </p>
-        <p class="average-val-label">
-            <span class="number-of-slums average-val-impact">0</span>
-            <span class="average-label">Number of slums</span>
-        </p>
-        <p class="average-val-label">
-            <span class="household-count average-val-impact">0</span>
-            <span class="average-label">Number of Households</span>
-        </p>
-        <p class="average-val-label">
-            <span class="total-score average-val">0</span>
-            <span class="average-label">Score for quality of living</span>
-        </p>
-        <div class="average-val-label">
-            <div class="card-btn hide">
-               <a class="card-url dashboard-url" target="_blank" href=""> Dashboard</a>
-            </div>
-            <div class="card-btn card-btn-right">
-                <a class="card-url gis-url" target="_blank" href="">Spatial data(GIS)</a>
-            </div>
         </div>
     </div>
 </div>
-</div>
+<div name="section_card_clone" class="first-card cards-bg hide">
+    <p class="city_name average-img">
 
+    </p>
+    <p class="average-val-label">
+        <span class="number-of-slums average-val-impact">0</span>
+        <span class="average-label">Number of slums</span>
+    </p>
+    <p class="average-val-label">
+        <span class="household-count average-val-impact">0</span>
+        <span class="average-label">Number of Households</span>
+    </p>
+    <p class="average-val-label">
+        <span class="total-score average-val">0</span>
+        <span class="average-label">Score for quality of living</span>
+    </p>
+    <div class="average-val-label">
+        <div class="card-btn">
+           <a class="card-url dashboard-url" target="_blank" href=""> Dashboard</a>
+        </div>
+        <div class="card-btn card-btn-right">
+            <a class="card-url gis-url" target="_blank" href="">Spatial data(GIS)</a>
+        </div>
+    </div>
+</div>
 {% endblock %}

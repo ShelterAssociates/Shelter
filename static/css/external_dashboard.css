@@ -385,3 +385,7 @@ span.l30 {
   height: 302px;
   width: 100%;
 }
+.sub-header-child{
+  justify-content: center;
+  display:flex;
+}

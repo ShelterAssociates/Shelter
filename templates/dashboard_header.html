@@ -12,27 +12,40 @@
 {% block styleblock %}
 {% endblock %}
 
-{% block headerblock %}
-<!--Header starts here-->
-<nav class="navbar navbar-default navbar-fixed-top" id="navbar">
-  <div class="header">
-    <div class="img">
-      <img src="/static/images/shelter.png"  height="45" style="padding:5px;"/>
-    </div>
-    <div class="divider"></div>
-    <div class="bread-crumb">
+<body>
+<div class="container-fluid" style="padding-top:50px;">
+  {% block headerblock %}
+  <!--Header starts here-->
+  <nav class="navbar navbar-default navbar-fixed-top" id="navbar">
 
-    </div>
-    <div class="info-icon">
-      <img src="/static/images/ico_info.png" />
-    </div>
-  </div>
-  <!--Header ends here-->
-</nav>
-{%endblock %}
+      <div class="container-fluid" >
+        <div class="navbar-header">
+            {% if user.is_authenticated %}
+            <a href="{% url 'login_success' %}">
+                {%else%}
+                <a href="/">
+                {%endif%}
+                <img src="/static/images/shelter.png" height="45" style="padding:5px;"/>
+            </a>
+        </div>
+        <div class="navbar-collapse collapse">
+            <a style="padding-top: 10px;">
+            {% if user.is_authenticated %}
+                <a style="margin-top:5px;" href="{% url 'logout' %}?next=/accounts/login/"<button type="button" class="btn btn-default pull-right" >logout</button> </a>
+                <div class="pull-right" style="padding:10px;"> <h5>Welcome {{user}} </h5> </div>
+            {% else %}
+                <a style="margin-top:5px;" href = "/accounts/login/"><button id="loggedin" type="button" class="btn btn-default pull-right"  data-toggle="popover">login</button></a>
+            {% endif %}
+            </div >
+        </div>
+      </div>
+  </nav>
+  {%endblock %}
 
-{% block mainblock %}
-{% endblock %}
-{% block content %}
-{% endblock %}
+  {% block subheader %}
+  {% endblock %}
 
+  {% block content %}
+  {% endblock %}
+</div>
+</body>

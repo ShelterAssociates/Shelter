@@ -269,4 +269,15 @@ $(document).ready(function(){
     $("#report_selections").html(vis);
   }
   change_text();
+
+  $.ajax({
+     url : "/graphs/card/all/",
+      type : "GET",
+      contenttype : "json",
+      success : function(json) {
+        let city_name = $("#city_name").val();
+        populate_top_bar({city_name : json['city'][city_name]});
+      },
+  });
+
 });

@@ -272,7 +272,7 @@ span.l30 {
   width: 100%;
 }
 .first-card {
-  height: 400px;
+  height: 430px;
   width: 250px;
   border: 1px solid #c6ccd1;
   border-radius: 8px;
@@ -354,6 +354,7 @@ span.l30 {
   overflow-y: hidden;
   white-space: nowrap;
   text-align: center;
+  padding-left:0px;
 }
 .first-card {
   display: inline-block;
