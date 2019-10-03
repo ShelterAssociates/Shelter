@@ -31,6 +31,29 @@ function get_message(layer){
     return content.join('<br>');
 }
 
+function section_cards(properties){
+        var city_id = $("#city_id").val();
+        let level = $('input[type=radio][name=level]:checked').attr("text").toLowerCase().split(" ").join("_");
+        $.ajax({
+        url : "/graphs/dashboard/"+city_id+"/",
+        type : "GET",
+        contenttype : "json",
+        success : function(json) {
+        var names = properties.name;
+        card_data=json;
+        $("#score_val").html(parseInt(card_data[level][names]['scores']['totalscore_percentile']));
+        $("#section_cards").html("");
+        if (section in card_data[level][names]['cards']){
+          $.each(card_data[level][names]['cards'][section], function(key,value){
+              var section_card = $("div[name=section_card_clone]")[0].outerHTML;
+              section_card = $(section_card).attr('name','section_card').removeClass('hide');
+              section_card.find('span')[0].innerHTML = value;
+              section_card.find('span')[1].innerHTML = Object.values(card_data["metadata"][section][key])[0];
+              section_card.find('img')[0].src = "/static/images/dashboard/" + Object.keys(card_data["metadata"][section][key])[0] + '.png';
+              $("#section_cards").append(section_card);});}
+        }});
+}
+
 var MapLoad = (function() {
   function MapLoad(data){
         this.data = data;
@@ -61,8 +84,11 @@ var MapLoad = (function() {
                      },
        'mouseout' : function(ev){
                         this.closePopup();
-                    }
-    });
+                    },
+       'click' : function(){
+                 section_cards(properties)
+                 }
+                 });
   }
   MapLoad.prototype.show_all = function(selected_level='general',flag_only_border=false){
     map.addLayer(this.shape);
@@ -129,7 +155,7 @@ function initMap(){
           '<i style="background:' + getColor(scores[i]) + '"></i> ' +
           scores[i] + (scores[i + 1] ? ' &ndash; ' + scores[i + 1] + '<br>' : '+');
       }
-      div.innerHTML += '<i style="background:#0000ff;"></i> No score';
+      div.innerHTML += '<i style="background:#0000ff;"></i> No slum';
       return div;
     };
     legend.addTo(map);

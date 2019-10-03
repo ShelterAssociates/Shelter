@@ -29,7 +29,7 @@ def graphs_display(request, graph_type):
     return render(request, 'graphs.html', {'custom_url':custom_url})
 
 def get_dashboard_card(request, key):
-    output_data = {'city':{}, 'admin_ward':{}, 'electoral_ward':{}, 'slum':{}}
+    output_data = {'city':{}, 'administrative_ward':{}, 'electoral_ward':{}, 'slum':{}}
     select_clause = ['totalscore_percentile', 'general_percentile', 'drainage_percentile',
                      'road_percentile', 'toilet_percentile', 'water_percentile', 'waste_percentile']
 
@@ -46,13 +46,13 @@ def get_dashboard_card(request, key):
 
     #Administrative ward calculations
     for admin_ward in AdministrativeWard.objects.filter(city=city):
-        output_data['admin_ward'][admin_ward.name] = {'scores': {}, 'cards':{}}
+        output_data['administrative_ward'][admin_ward.name] = {'scores': {}, 'cards':{}}
         qol_scores = QOLScoreData.objects.filter(slum__electoral_ward__administrative_ward=admin_ward)
         for clause in select_clause:
-            output_data['admin_ward'][admin_ward.name]['scores'][clause] = qol_scores.aggregate(Avg(clause))[clause + '__avg']
+            output_data['administrative_ward'][admin_ward.name]['scores'][clause] = qol_scores.aggregate(Avg(clause))[clause + '__avg']
         admin_wards = DashboardData.objects.filter(slum__electoral_ward__administrative_ward=admin_ward)
         cards = score_cards(admin_wards)
-        output_data['admin_ward'][admin_ward.name]['cards'] = cards
+        output_data['administrative_ward'][admin_ward.name]['cards'] = cards
 
     #Electoral ward calculations
     for electoral_ward in ElectoralWard.objects.filter(administrative_ward__city=city):
@@ -82,9 +82,10 @@ def get_card_data(slum_name):
     for k,v in CARDS.items():
         data_cards = {}
         if k == 'Drainage':
-            data_cards[k] = [drainage_coverage.values_list(i.keys()[0], flat=True)[0] for i in v]
-            data_cards = convert_float_to_str(data_cards)
-            all_cards.update(data_cards)
+            pass
+            # data_cards[k] = [drainage_coverage.values_list(i.keys()[0], flat=True)[0] for i in v]
+            # data_cards = convert_float_to_str(data_cards)
+            # all_cards.update(data_cards)
         else:
             data_cards[k] = [root_query.values_list(i.keys()[0], flat=True)[0] for i in v]
             data_cards = convert_float_to_str(data_cards)
