@@ -148,7 +148,7 @@ class RHSData(object):
         return avg_household_size
 
     def get_slum_area_size(self):
-        return int(self.slum_data.rim_data['General']['approximate_area_of_the_settle']) / 1000 \
+        return int(self.slum_data.rim_data['General']['approximate_area_of_the_settle']) / 10000 \
             if 'approximate_area_of_the_settle' in self.slum_data.rim_data['General'] else 0
 
     def get_tenement_density(self):

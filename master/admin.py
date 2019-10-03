@@ -187,7 +187,13 @@ class SlumDetailAdmin(BaseModelAdmin):
     search_fields = ['name','electoral_ward__name', 'electoral_ward__administrative_ward__name','shelter_slum_code']
     #list_filter = [CityListFilter]
     ordering = ['electoral_ward__name', 'name']
-    actions = ['associated_with_SA', 'status_of_slum','ODF','ODF_plus','ODF_plusplus']
+    actions = ['associated_with_SA', 'status_of_slum', 'OD', 'ODF', 'ODF_plus', 'ODF_plusplus']
+
+    def OD(self, request, queryset):
+        for query in queryset:
+            query.odf_status = 'OD'
+            query.save()
+    OD.short_description = "Change status of slum(s) to OD"
 
     def ODF(self,request,queryset):
         for query in queryset:
