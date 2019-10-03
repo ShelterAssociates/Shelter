@@ -82,10 +82,9 @@ def get_card_data(slum_name):
     for k,v in CARDS.items():
         data_cards = {}
         if k == 'Drainage':
-            pass
-            # data_cards[k] = [drainage_coverage.values_list(i.keys()[0], flat=True)[0] for i in v]
-            # data_cards = convert_float_to_str(data_cards)
-            # all_cards.update(data_cards)
+            data_cards[k] = [drainage_coverage.values_list(i.keys()[0], flat=True)[0] for i in v]
+            data_cards = convert_float_to_str(data_cards)
+            all_cards.update(data_cards)
         else:
             data_cards[k] = [root_query.values_list(i.keys()[0], flat=True)[0] for i in v]
             data_cards = convert_float_to_str(data_cards)
