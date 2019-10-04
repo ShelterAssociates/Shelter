@@ -40,6 +40,7 @@ function section_cards(properties){
         contenttype : "json",
         success : function(json) {
         var names = properties.name;
+        var text = $("#levels_tag").val() + " Report Card for " + names;
         card_data=json;
         $("#score_val").html(parseInt(card_data[level][names]['scores']['totalscore_percentile']));
         $("#section_cards").html("");
@@ -51,6 +52,7 @@ function section_cards(properties){
               section_card.find('span')[1].innerHTML = Object.values(card_data["metadata"][section][key])[0];
               section_card.find('img')[0].src = "/static/images/dashboard/" + Object.keys(card_data["metadata"][section][key])[0] + '.png';
               $("#section_cards").append(section_card);});}
+        $("#report_selections").html(text);
         }});
 }
 
@@ -86,9 +88,9 @@ var MapLoad = (function() {
                         this.closePopup();
                     },
        'click' : function(){
-                 section_cards(properties)
-                 }
-                 });
+                    section_cards(properties)
+                  }
+                  });
   }
   MapLoad.prototype.show_all = function(selected_level='general',flag_only_border=false){
     map.addLayer(this.shape);
@@ -223,6 +225,7 @@ function parse_custom_fields(data){
     });
   return data;
 }
+
 var card_data = {};
 $(document).ready(function(){
 

@@ -118,10 +118,10 @@ def convert_float_to_str(data_dict):
                     roundoff_str[k].append('1:'+ str(r))
                 else:
                     r = int(i) if i != None else 0
-                    roundoff_str[k].append(str(r))
+                    roundoff_str[k].append(str(r)) #(str(r)+':100')
         elif k == 'Road':
             for i in v:
-                if v.index(i) in [2,3]:
+                if v.index(i) in [1,2]:
                     roundoff_str.update(to_str_per(i))
                 else:
                     roundoff_str.update(to_str(i))
