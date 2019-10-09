@@ -37,13 +37,14 @@ class DashboardCard(RHSData):
         openspace_percent= self.get_perc_of_waste_collection('Open space')
         gutter_facility = self.get_perc_of_waste_collection('inside gutter')
         canal_facility = self.get_perc_of_waste_collection('along/inside canal')
-        waste_no_collection_facility_percentile = (openspace_percent+gutter_facility+canal_facility)/3
-        return (door_to_door_percent, waste_no_collection_facility_percentile,openspace_percent)
+        garbage_bin_facility = self.get_perc_of_waste_collection('Garbage bin')
+        # waste_no_collection_facility_percentile = (openspace_percent+gutter_facility+canal_facility)/3 # replaced with garbage_bin_facility
+        return (door_to_door_percent, garbage_bin_facility,openspace_percent)
 
     def save_waste(self):
-        (door_to_door_percent, waste_no_collection_facility_percentile,openspace_percent) = self.Waste_Info()
+        (door_to_door_percent, garbage_bin_facility,openspace_percent) = self.Waste_Info()
         to_save = DashboardData.objects.update_or_create(slum =self.slum, defaults=
-                                {'waste_no_collection_facility_percentile': waste_no_collection_facility_percentile,
+                                {'waste_no_collection_facility_percentile': garbage_bin_facility,
                                 'waste_door_to_door_collection_facility_percentile': door_to_door_percent,
                                 'waste_dump_in_open_percent': openspace_percent })
 
@@ -98,3 +99,4 @@ def dashboard_data_Save(city):
             dashboard_data.save_toilet()
         except Exception as e:
             print 'Exception in dashboard_data_save',(e)
+
