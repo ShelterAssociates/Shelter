@@ -43,7 +43,7 @@ class RHSData(object):
 
     def individual_toilet_count(self):
         rhs_count = filter(lambda x: 'group_oi8ts04/Current_place_of_defecation' in x.followup_data and
-                int(x.followup_data['group_oi8ts04/Current_place_of_defecation']) == 05 ,self.followup_data)
+                int(x.followup_data['group_oi8ts04/Current_place_of_defecation']) == 03 or 05 or 06 or 07 ,self.followup_data)
 
         total_individual_toilets = ((len(rhs_count) + self.toilet_constructed())/len(self.followup_data))*100 \
                                     if len(self.followup_data) != 0 else 0
@@ -72,7 +72,7 @@ class RHSData(object):
 
         total_fun_toilets = fun_male_seats + fun_fmale_seats + fun_mix_seats
         toilet_to_per_ratio = household_population / total_fun_toilets if total_fun_toilets!=0 else 0
-        men_to_wmn_seats_ratio = fun_male_seats/fun_fmale_seats if fun_fmale_seats !=0 else 0
+        men_to_wmn_seats_ratio = (fun_male_seats/fun_fmale_seats)*100 if fun_fmale_seats !=0 else 0
 
         return (toilet_to_per_ratio, men_to_wmn_seats_ratio)
 

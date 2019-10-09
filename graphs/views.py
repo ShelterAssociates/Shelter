@@ -13,13 +13,13 @@ from component.cipher import *
 
 CARDS = {'General':[{'gen_avg_household_size':"Avg Household size"}, {'gen_tenement_density':"Tenement density (Huts/Hector)"},
                     {'household_owners_count':'Superstructure Ownership'}],
-         'Waste': [{'waste_no_collection_facility_percentile':'No waste collection'},
+         'Waste': [{'waste_no_collection_facility_percentile':'Garbage Bin'},
                    {'waste_door_to_door_collection_facility_percentile':'Door to door waste collection'},
                    {'waste_dump_in_open_percent':'Dump in open'}],
          'Water': [{'water_individual_connection_percentile':'Individual water connection'},
                    {'water_shared_service_percentile':'Shared Water Connection'},{'waterstandpost_percentile':'Water Standposts'}],
          'Toilet': [{'toilet_seat_to_person_ratio':'Toilet seat to person ratio'},
-                    {'toilet_men_women_seats_ratio':'Men to women toilet seats ratio'},
+                    # {'toilet_men_women_seats_ratio':'Men to women toilet seats ratio'},
                     {'individual_toilet_coverage':'Individual Toilet Coverage'},{'ctb_coverage':'CTB coverage'}],
          'Road': [{'road_with_no_vehicle_access':'No. of slums with no vehicle access'},
                   {'pucca_road_coverage':'Pucca Road Coverage'},{'kutcha_road_coverage':'Kutcha Road Coverage'}],
@@ -66,7 +66,6 @@ def get_dashboard_card(request, key):
         if ele_wards.count() > 0:
             cards = score_cards(ele_wards)
             output_data['electoral_ward'][electoral_ward.name]['cards'] = cards
-
 
     #Slum level calculations
     output_data['slum'] = {'scores':{},'cards':{}}
@@ -126,7 +125,7 @@ def convert_float_to_str(data_dict):
                     r = int(i) if i != None else 0
                     roundoff_str[k].append(str(r)+':100')
                 else:
-                    if i != None :
+                    if i != None and v.index(i) in [2,3]:
                         roundoff_str.update(to_str_per(i))
         elif k == 'Road':
             for i in v:
@@ -160,7 +159,7 @@ def score_cards(ele):
                     cards[k].append(avrg)
         elif k =='Drainage':
             pass
-        else:
+        else :
             avrg = [ele.aggregate(Avg(i.keys()[0])).values()[0] for i in v]
             cards[k] = avrg
         str = convert_float_to_str(cards) # convert values in "40.0%" format
