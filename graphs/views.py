@@ -81,14 +81,17 @@ def get_card_data(slum_name):
     drainage_coverage = Rapid_Slum_Appraisal.objects.filter(slum_name__name = slum_name)
     for k,v in CARDS.items():
         data_cards = {}
-        if k == 'Drainage':
-            data_cards[k] = [drainage_coverage.values_list(i.keys()[0], flat=True)[0] for i in v]
-            data_cards = convert_float_to_str(data_cards)
-            all_cards.update(data_cards)
-        else:
-            data_cards[k] = [root_query.values_list(i.keys()[0], flat=True)[0] for i in v]
-            data_cards = convert_float_to_str(data_cards)
-            all_cards.update(data_cards)
+	try:
+         if k == 'Drainage':
+             data_cards[k] = [drainage_coverage.values_list(i.keys()[0], flat=True)[0] for i in v]
+             data_cards = convert_float_to_str(data_cards)
+             all_cards.update(data_cards)
+         else:
+             data_cards[k] = [root_query.values_list(i.keys()[0], flat=True)[0] for i in v]
+             data_cards = convert_float_to_str(data_cards)
+             all_cards.update(data_cards)
+	except:
+		pass
     return all_cards
 
 def convert_float_to_str(data_dict):
@@ -121,7 +124,7 @@ def convert_float_to_str(data_dict):
                     roundoff_str[k].append(str(r))
         elif k == 'Road':
             for i in v:
-                if v.index(i) in [2,3]:
+                if v.index(i) in [1,2]:
                     roundoff_str.update(to_str_per(i))
                 else:
                     roundoff_str.update(to_str(i))
@@ -168,7 +171,7 @@ def dashboard_all_cards(request,key):
                                                                                        Sum('count_of_toilets_completed'),
                                                                                        Sum('people_impacted'))
             slum_count = Slum.objects.filter(electoral_ward__administrative_ward__city=city, associated_with_SA=True).count()
-            total_slum_count = Slum.objects.filter(electoral_ward__administrative_ward__city=city).count()
+            total_slum_count = Slum.objects.filter(electoral_ward__administrative_ward__city=city).exclude(status=False).count()
             qol_scores = QOLScoreData.objects.filter(city=city).aggregate(Avg('totalscore_percentile'))
             city_name = city.name.city_name
             output_data['city'][city_name] = dashboard_data
