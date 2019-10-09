@@ -19,7 +19,7 @@ CARDS = {'General':[{'gen_avg_household_size':"Avg Household size"}, {'gen_tenem
          'Water': [{'water_individual_connection_percentile':'Individual water connection'},
                    {'water_shared_service_percentile':'Shared Water Connection'},{'waterstandpost_percentile':'Water Standposts'}],
          'Toilet': [{'toilet_seat_to_person_ratio':'Toilet seat to person ratio'},
-                    {'toilet_men_women_seats_ratio':'Men to women toilet seats ratio'},
+                    # {'toilet_men_women_seats_ratio':'Men to women toilet seats ratio'},
                     {'individual_toilet_coverage':'Individual Toilet Coverage'},{'ctb_coverage':'CTB coverage'}],
          'Road': [{'road_with_no_vehicle_access':'No. of slums with no vehicle access'},
                   {'pucca_road_coverage':'Pucca Road Coverage'},{'kutcha_road_coverage':'Kutcha Road Coverage'}],
