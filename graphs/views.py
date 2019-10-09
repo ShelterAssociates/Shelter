@@ -11,14 +11,15 @@ import json
 from component.cipher import *
 
 CARDS = {'General':[{'gen_avg_household_size':"Avg Household size"}, {'gen_tenement_density':"Tenement density (Huts/Hector)"},
-                    {'gen_population_density':'Population density (Persons/Hector)'}],
+                    {'household_owners_count':'Superstructure Ownership'}],
          'Waste': [{'waste_no_collection_facility_percentile':'No waste collection'},
                    {'waste_door_to_door_collection_facility_percentile':'Door to door waste collection'},
                    {'waste_dump_in_open_percent':'Dump in open'}],
          'Water': [{'water_individual_connection_percentile':'Individual water connection'},
                    {'water_shared_service_percentile':'Shared Water Connection'},{'waterstandpost_percentile':'Water Standposts'}],
-         'Toilet': [{'toilet_seat_to_person_ratio':'Toilet seat to person ratio'},{'toilet_men_women_seats_ratio':'Men to women toilet seats ratio'}],
-                    #{'count_of_toilets_completed':'Individual Toilets'}],{'ctb_coverage':'CTB coverage'}],
+         'Toilet': [{'toilet_seat_to_person_ratio':'Toilet seat to person ratio'},
+                    {'toilet_men_women_seats_ratio':'Men to women toilet seats ratio'},
+                    {'individual_toilet_coverage':'Individual Toilet Coverage'},{'ctb_coverage':'CTB coverage'}],
          'Road': [{'road_with_no_vehicle_access':'No. of slums with no vehicle access'},
                   {'pucca_road_coverage':'Pucca Road Coverage'},{'kutcha_road_coverage':'Kutcha Road Coverage'}],
          'Drainage':[{'drainage_coverage':'Drain coverage'}]}
@@ -29,7 +30,7 @@ def graphs_display(request, graph_type):
     return render(request, 'graphs.html', {'custom_url':custom_url})
 
 def get_dashboard_card(request, key):
-    output_data = {'city':{}, 'admin_ward':{}, 'electoral_ward':{}, 'slum':{}}
+    output_data = {'city':{}, 'administrative_ward':{}, 'electoral_ward':{}, 'slum':{}}
     select_clause = ['totalscore_percentile', 'general_percentile', 'drainage_percentile',
                      'road_percentile', 'toilet_percentile', 'water_percentile', 'waste_percentile']
 
@@ -46,13 +47,13 @@ def get_dashboard_card(request, key):
 
     #Administrative ward calculations
     for admin_ward in AdministrativeWard.objects.filter(city=city):
-        output_data['admin_ward'][admin_ward.name] = {'scores': {}, 'cards':{}}
+        output_data['administrative_ward'][admin_ward.name] = {'scores': {}, 'cards':{}}
         qol_scores = QOLScoreData.objects.filter(slum__electoral_ward__administrative_ward=admin_ward)
         for clause in select_clause:
-            output_data['admin_ward'][admin_ward.name]['scores'][clause] = qol_scores.aggregate(Avg(clause))[clause + '__avg']
+            output_data['administrative_ward'][admin_ward.name]['scores'][clause] = qol_scores.aggregate(Avg(clause))[clause + '__avg']
         admin_wards = DashboardData.objects.filter(slum__electoral_ward__administrative_ward=admin_ward)
         cards = score_cards(admin_wards)
-        output_data['admin_ward'][admin_ward.name]['cards'] = cards
+        output_data['administrative_ward'][admin_ward.name]['cards'] = cards
 
     #Electoral ward calculations
     for electoral_ward in ElectoralWard.objects.filter(administrative_ward__city=city):
@@ -64,6 +65,7 @@ def get_dashboard_card(request, key):
         if ele_wards.count() > 0:
             cards = score_cards(ele_wards)
             output_data['electoral_ward'][electoral_ward.name]['cards'] = cards
+
 
     #Slum level calculations
     output_data['slum'] = {'scores':{},'cards':{}}
@@ -99,12 +101,12 @@ def convert_float_to_str(data_dict):
     roundoff_str = {}
 
     def to_str_per(i):
-        r = round(float(i), 2) if i != None else 0.0
+        r = round(float(i), 2) if i != None else 0
         roundoff_str[k].append(str(r) + '%')
         return roundoff_str
 
     def to_str(i):
-        r = round(float(i), 2) if i != None else 0.0
+        r = round(float(i), 2) if i != None else 0
         roundoff_str[k].append(str(r))
         return roundoff_str
 
@@ -119,9 +121,12 @@ def convert_float_to_str(data_dict):
                 if i != None and v.index(i) == 0:
                     r = int(i) if i != None else 0
                     roundoff_str[k].append('1:'+ str(r))
-                else:
+                elif i != None and v.index(i) == 1:
                     r = int(i) if i != None else 0
-                    roundoff_str[k].append(str(r))
+                    roundoff_str[k].append(str(r)+':100')
+                else:
+                    if i != None :
+                        roundoff_str.update(to_str_per(i))
         elif k == 'Road':
             for i in v:
                 if v.index(i) in [1,2]:

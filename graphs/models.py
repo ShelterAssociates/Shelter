@@ -109,7 +109,7 @@ class DashboardData(models.Model):
    # Genreal section columns
    gen_avg_household_size = models.FloatField(blank= True,null=True)
    gen_tenement_density = models.FloatField(blank= True,null=True)
-   gen_population_density = models.FloatField(blank=True,null=True)
+   household_owners_count = models.FloatField(blank=True,null=True)
    # gen_sex_ration = models.IntegerField(blank= True,null=True)
    # gen_odf_status = models.IntegerField(blank= True,null=True)
 

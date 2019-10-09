@@ -1,7 +1,7 @@
 function populate_top_bar(data){
   let total_slums = 0, total_households = 0, total_population = 0, total_toilets = 0, total_impact = 0;
   //1282 - Sangli, 3952-Pune, 14- Donje
-  if(Object.keys(data).length > 1)
+   if(Object.keys(data).length > 1)
   {
     total_toilets = 1282+3952+14;
   }
