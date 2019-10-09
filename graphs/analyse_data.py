@@ -23,14 +23,34 @@ class RHSData(object):
                     'Type_of_structure_occupancy'] == 'Occupied house',self.household_data)
         return len(count)
 
+    def ownership_status(self):
+        owner_count = filter(lambda x: 'group_el9cl08/Ownership_status_of_the_house' in x.rhs_data and x.rhs_data[
+            'group_el9cl08/Ownership_status_of_the_house'] == 'Own house', self.household_data)
+        owner_percent =(len(owner_count)/self.occupied_houses())*100 if self.occupied_houses() !=0 else 0
+        return owner_percent
+
     #toilet data
     def toilet_constructed(self):
         result = self.toilet_ms_data.filter(status='6').count()
         return result
 
+    def ctb_coverage(self):
+        rhs_count = filter(lambda x: 'group_oi8ts04/Current_place_of_defecation' in x.followup_data and
+                    (x.followup_data['group_oi8ts04/Current_place_of_defecation'].encode('ascii','ignore')) == '09',self.followup_data)
+
+        ctb_coverage_in_slum = (len(rhs_count)/len(self.followup_data)) * 100 if len(self.followup_data) !=0 else 0 #self.get_household_count()
+        return ctb_coverage_in_slum
+
+    def individual_toilet_count(self):
+        rhs_count = filter(lambda x: 'group_oi8ts04/Current_place_of_defecation' in x.followup_data and
+                int(x.followup_data['group_oi8ts04/Current_place_of_defecation']) == 05 ,self.followup_data)
+
+        total_individual_toilets = ((len(rhs_count) + self.toilet_constructed())/len(self.followup_data))*100 \
+                                    if len(self.followup_data) != 0 else 0
+        return total_individual_toilets
+
     def get_toilet_data(self):
-        household_count = self.occupied_houses() * 4
-        # toilet_status = self.get_toilet_status()
+        household_population = self.occupied_houses() * 4
         toilet_data = self.slum_data.rim_data['Toilet']
         wrk_male_seats = 0
         wrk_nt_male_seats = 0
@@ -51,7 +71,7 @@ class RHSData(object):
         fun_mix_seats = wrk_mix_seats -wrk_nt_mix_seats
 
         total_fun_toilets = fun_male_seats + fun_fmale_seats + fun_mix_seats
-        toilet_to_per_ratio = household_count / total_fun_toilets if total_fun_toilets!=0 else 0
+        toilet_to_per_ratio = household_population / total_fun_toilets if total_fun_toilets!=0 else 0
         men_to_wmn_seats_ratio = fun_male_seats/fun_fmale_seats if fun_fmale_seats !=0 else 0
 
         return (toilet_to_per_ratio, men_to_wmn_seats_ratio)
@@ -148,7 +168,7 @@ class RHSData(object):
         return avg_household_size
 
     def get_slum_area_size(self):
-        return int(self.slum_data.rim_data['General']['approximate_area_of_the_settle']) / 1000 \
+        return int(self.slum_data.rim_data['General']['approximate_area_of_the_settle']) / 10000 \
             if 'approximate_area_of_the_settle' in self.slum_data.rim_data['General'] else 0
 
     def get_tenement_density(self):

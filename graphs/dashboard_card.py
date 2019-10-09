@@ -4,6 +4,7 @@ Script to get aggregated data.
 from graphs.models import *
 from analyse_data import *
 from master.models import *
+from django.http import HttpResponse
 
 class DashboardCard(RHSData):
     def __init__(self, slum):
@@ -20,20 +21,16 @@ class DashboardCard(RHSData):
     def General_Info(self):
         avg_household_size = self.get_household_member_size()
         tenement_density = self.get_tenement_density()
-        population_density = self.get_population_density()
+        household_owners_count = self.ownership_status()
         household_count = self.get_household_count()
-        return (population_density,avg_household_size, tenement_density,household_count)
-
-    def get_general_score(self):
-        # qol_score = qol_score_save() # get rim data and
-        pass
+        return (household_owners_count,avg_household_size, tenement_density,household_count)
 
     def save_general(self):
         """Save information to database"""
-        (population_density, avg_household_size, tenement_density, household_count) = self.General_Info()
+        (household_owners_count, avg_household_size, tenement_density, household_count) = self.General_Info()
         to_save = DashboardData.objects.update_or_create(slum = self.slum , defaults ={'city_id': self.slum.electoral_ward.administrative_ward.city.id,
                                     'gen_tenement_density' : tenement_density,'gen_avg_household_size': avg_household_size,
-                                    'household_count':household_count,'gen_population_density':population_density})
+                                    'household_count':household_count,'household_owners_count':household_owners_count})
 
     def Waste_Info(self):
         door_to_door_percent = self.get_perc_of_waste_collection('Door to door waste collection')
@@ -77,13 +74,15 @@ class DashboardCard(RHSData):
                                  'kutcha_road_coverage':kutcha_road_coverage })
 
     def save_toilet(self):
+        individual_toilet_count = self.individual_toilet_count()
+        ctb_coverage = self.ctb_coverage()
         (toilet_to_per_ratio, men_to_wmn_seats_ratio) = self.get_toilet_data()
-        to_save = DashboardData.objects.update_or_create(slum=self.slum, defaults=
-                                {'toilet_men_women_seats_ratio': men_to_wmn_seats_ratio,
-                                 'toilet_seat_to_person_ratio': toilet_to_per_ratio })
+        to_save = DashboardData.objects.update_or_create(slum=self.slum, defaults= {'toilet_men_women_seats_ratio': men_to_wmn_seats_ratio,
+                                 'toilet_seat_to_person_ratio': toilet_to_per_ratio,'individual_toilet_coverage':individual_toilet_count,
+                                 'ctb_coverage':ctb_coverage})
 
-    def save_qol_scores(self):
-        scores = self.get_scores()
+    # def save_qol_scores(self):
+    #     scores = self.get_scores()
 
 def dashboard_data_Save(city):
     slums = Slum.objects.filter(electoral_ward__administrative_ward__city__id__in = [city])
