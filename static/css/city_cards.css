@@ -266,10 +266,11 @@ span.l30 {
 .details {
   overflow: hidden;
   padding-bottom: 10px;
+  text-align:center;
 }
 .cards {
   padding:15px;
-  width: 100%;
+  float:left;
 }
 .first-card {
   height: 430px;
@@ -350,7 +351,7 @@ span.l30 {
   color:#fff;
 }
 .scrolling-wrapper {
-  overflow-x: scroll;
+  overflow-x: hidden;
   overflow-y: hidden;
   white-space: nowrap;
   text-align: center;
@@ -379,4 +380,15 @@ span.l30 {
 .sub-header-child{
   justify-content: center;
   display:flex;
+}
+
+/*Carousel*/
+.details .leftLst, .details .rightLst { height:100px; display: inline-block; }
+
+.arrow{
+  float:left;
+  height:440px;
+  padding-top:170px;
+  padding-right:0px;
+  padding-left:0px;
 }

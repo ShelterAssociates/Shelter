@@ -28,4 +28,14 @@ $(document).ready(function(){
           populate_top_bar(json['city']);
         },
     });
+
+    $('.leftLst').click(function(){
+      var card_selector = $('.cards')[0];
+      card_selector.scrollLeft = card_selector.scrollLeft - 250;
+    });
+    $('.rightLst').click(function(){
+      var card_selector = $('.cards')[0];
+      card_selector.scrollLeft = card_selector.scrollLeft + 250;
+    });
 });
+
