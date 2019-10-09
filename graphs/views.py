@@ -5,6 +5,7 @@ from django.shortcuts import get_object_or_404
 from django.http import HttpResponse
 from itertools import groupby
 from django.db.models import Avg,Sum, Count
+from collections import OrderedDict
 from graphs.models import *
 from master.models import *
 import json
@@ -133,6 +134,12 @@ def convert_float_to_str(data_dict):
                     roundoff_str.update(to_str_per(i))
                 else:
                     roundoff_str.update(to_str(i))
+	elif k == 'General':
+	    for i in v:
+		if i !=None and v.index(i) == 2:
+		    roundoff_str.update(to_str_per(i))
+		else:
+		    roundoff_str.update(to_str(i))
         else:
             for i in v:
                 roundoff_str.update(to_str(i))
@@ -166,10 +173,10 @@ def dashboard_all_cards(request,key):
 
         cipher = AESCipher()
         dict_filter = {}
-        output_data = {'city': {}}
+        output_data = {'city': OrderedDict()}
         if key != 'all':
             dict_filter['id'] = key
-        cities = City.objects.filter(**dict_filter)
+        cities = City.objects.filter(**dict_filter).order_by('name__city_name')
         for city in cities:
             dashboard_data = DashboardData.objects.filter(city=city).aggregate(Sum('slum_population'),
                                                                                        Sum('household_count'),
