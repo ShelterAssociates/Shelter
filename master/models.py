@@ -120,7 +120,7 @@ class ElectoralWard(models.Model):
         verbose_name_plural = 'Electoral Wards'
 
 
-ODF_CHOICES =(('ODF','ODF'),('ODF+','ODF+'),('ODF++','ODF++'))
+ODF_CHOICES =(('',''), ('OD', 'OD'), ('ODF','ODF'),('ODF+','ODF+'),('ODF++','ODF++'))
 
 class Slum(models.Model):
     """Slum Database"""
@@ -328,7 +328,7 @@ class Rapid_Slum_Appraisal(models.Model):
     drainage_report_image = models.ImageField(upload_to=DRAINAGE_PHOTO,blank=True, null=True)
     location_of_defecation = models.CharField(max_length=2048,blank=True, null=True)
     percentage_with_individual_toilet = models.CharField(max_length=2048,blank=True, null=True)
-    drainage_coverage = models.CharField(max_length=2048,blank=True, null=True)
+    drainage_coverage = models.IntegerField(max_length=2048,blank=True, null=True)
 
     class Meta:
         permissions = (
