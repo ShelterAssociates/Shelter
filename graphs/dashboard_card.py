@@ -98,7 +98,3 @@ def dashboard_data_Save(city):
             dashboard_data.save_toilet()
         except Exception as e:
             print 'Exception in dashboard_data_save',(e)
-
-def fun_call(request):
-    dashboard_data_Save(4)
-    return HttpResponse(json.dumps('latest_record'))
