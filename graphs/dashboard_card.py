@@ -75,12 +75,11 @@ class DashboardCard(RHSData):
                                  'kutcha_road_coverage':kutcha_road_coverage })
 
     def save_toilet(self):
-        individual_toilet_count = self.individual_toilet_count()
-        ctb_coverage = self.ctb_coverage()
+        (own_toilet_count,ctb_use_count,x) = self.individual_toilet_count()
         (toilet_to_per_ratio, men_to_wmn_seats_ratio) = self.get_toilet_data()
         to_save = DashboardData.objects.update_or_create(slum=self.slum, defaults= {'toilet_men_women_seats_ratio': men_to_wmn_seats_ratio,
-                                 'toilet_seat_to_person_ratio': toilet_to_per_ratio,'individual_toilet_coverage':individual_toilet_count,
-                                 'ctb_coverage':ctb_coverage})
+                                 'toilet_seat_to_person_ratio': toilet_to_per_ratio,'individual_toilet_coverage':own_toilet_count,
+                                 'ctb_coverage':ctb_use_count})
 
     # def save_qol_scores(self):
     #     scores = self.get_scores()
@@ -100,3 +99,6 @@ def dashboard_data_Save(city):
         except Exception as e:
             print 'Exception in dashboard_data_save',(e)
 
+def fun_call(request):
+    dashboard_data_Save(4)
+    return HttpResponse(json.dumps('latest_record'))

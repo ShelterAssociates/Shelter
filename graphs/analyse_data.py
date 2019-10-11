@@ -6,6 +6,9 @@ from component.models import *
 from mastersheet.models import *
 import json
 from django.contrib.contenttypes.models import ContentType
+from django.db.models import Count
+
+
 
 # json_file = json.loads(open('/home/shelter/Desktop/New_project/QOL_three/Shelter/graphs/json_reference_file.json').read())  # json reference data from json file
 
@@ -13,41 +16,72 @@ class RHSData(object):
     def __init__(self, slum):
         self.slum = get_object_or_404(Slum, pk=slum)
         self.household_data = HouseholdData.objects.filter(slum=self.slum)
-        self.followup_data = FollowupData.objects.filter(slum=self.slum)
+        self.followup_data =FollowupData.objects.filter(slum=self.slum)
         self.slum_data = SlumData.objects.get(slum=self.slum)
         self.toilet_ms_data = ToiletConstruction.objects.filter(slum=self.slum)
 
     def occupied_houses(self):
         '''count of occupied houses in slums'''
-        count = filter(lambda x:'Type_of_structure_occupancy' in x.rhs_data and x.rhs_data[
-                    'Type_of_structure_occupancy'] == 'Occupied house',self.household_data)
-        return len(count)
+        occupide_house_count = 0
+
+        repeated_houses = self.household_data.values('household_number').annotate(Count('household_number')).order_by()\
+            .filter(household_number__count__gte = 1).values_list('household_number', flat=True)
+
+        for i in repeated_houses:
+            if self.household_data.filter(household_number = int(i)):
+                data = json.loads(self.household_data.values('rhs_data')[0].values()[0])
+                if 'Type_of_structure_occupancy' in data.keys() and data['Type_of_structure_occupancy'] == 'Occupied house':
+                    occupide_house_count +=1
+
+        return occupide_house_count
 
     def ownership_status(self):
         owner_count = filter(lambda x: 'group_el9cl08/Ownership_status_of_the_house' in x.rhs_data and x.rhs_data[
             'group_el9cl08/Ownership_status_of_the_house'] == 'Own house', self.household_data)
+
         owner_percent =(len(owner_count)/self.occupied_houses())*100 if self.occupied_houses() !=0 else 0
         return owner_percent
 
-    #toilet data
-    def toilet_constructed(self):
-        result = self.toilet_ms_data.filter(status='6').count()
-        return result
-
-    def ctb_coverage(self):
-        rhs_count = filter(lambda x: 'group_oi8ts04/Current_place_of_defecation' in x.followup_data and
-                    (x.followup_data['group_oi8ts04/Current_place_of_defecation'].encode('ascii','ignore')) == '09',self.followup_data)
-
-        ctb_coverage_in_slum = (len(rhs_count)/len(self.followup_data)) * 100 if len(self.followup_data) !=0 else 0 #self.get_household_count()
-        return ctb_coverage_in_slum
-
+    # def ctb_coverage(self):
+    #     rhs_count = filter(lambda x: 'group_oi8ts04/Current_place_of_defecation' in x.followup_data and
+    #                 (x.followup_data['group_oi8ts04/Current_place_of_defecation'].encode('ascii','ignore')) == '09',
+    #                 self.followup_data)
+    #
+    #     ctb_coverage_in_slum = (len(rhs_count)/len(self.followup_data)) * 100 if len(self.followup_data) !=0 else 0
+    #
+    #     return ctb_coverage_in_slum
+    # toilet data
     def individual_toilet_count(self):
-        rhs_count = filter(lambda x: 'group_oi8ts04/Current_place_of_defecation' in x.followup_data and
-                int(x.followup_data['group_oi8ts04/Current_place_of_defecation']) == 03 or 05 or 06 or 07 ,self.followup_data)
 
-        total_individual_toilets = ((len(rhs_count) + self.toilet_constructed())/len(self.followup_data))*100 \
-                                    if len(self.followup_data) != 0 else 0
-        return total_individual_toilets
+        own_toilet_count = 0
+        ctb_count = 0
+
+        repeated_houses = self.followup_data.values('household_number').annotate(Count('household_number')).order_by().filter(
+           household_number__count__gt = 1).values_list('household_number',flat=True)
+
+        households_with_toilets_completed = self.toilet_ms_data.filter(status='6').values_list('household_number',flat=True)
+
+        common_households = [value for value in repeated_houses if value in households_with_toilets_completed]
+
+        for i in repeated_houses:
+            latest_record = self.followup_data.filter(household_number=int(i)).values('followup_data').latest('submission_date')
+            for j in latest_record.values():
+                j =json.loads(j)
+                if 'group_oi8ts04/Current_place_of_defecation' in j.keys() and (j['group_oi8ts04/Current_place_of_defecation'].encode('ascii','ignore')) == '09' :
+                    ctb_count +=1
+                if 'group_oi8ts04/Current_place_of_defecation' in j.keys() and int(j['group_oi8ts04/Current_place_of_defecation']) in [1,2,3,4,5,6,7]:
+                    own_toilet_count += 1
+
+        own_toilet_count = (own_toilet_count/self.occupied_houses())*100
+        ctb_use_count = (ctb_count/self.occupied_houses())*100
+
+        return (own_toilet_count,ctb_use_count,common_households)
+
+    def toilet_constructed(self):
+        '''total toilets faciliated by SA '''
+        data = len(self.individual_toilet_count()[2])
+        result = self.toilet_ms_data.filter(status='6').count()
+        return result + data
 
     def get_toilet_data(self):
         household_population = self.occupied_houses() * 4
