@@ -19,7 +19,7 @@ CARDS = {'General':[{'gen_avg_household_size':"Avg Household size"}, {'gen_tenem
          'Water': [{'water_individual_connection_percentile':'Individual water connection'},
                    {'water_shared_service_percentile':'Shared Water Connection'},{'waterstandpost_percentile':'Water Standposts'}],
          'Toilet': [{'toilet_seat_to_person_ratio':'Toilet seat to person ratio'},
-                    # {'toilet_men_women_seats_ratio':'Men to women toilet seats ratio'},
+                    {'toilet_men_women_seats_ratio':'Men to women toilet seats ratio'},
                     {'individual_toilet_coverage':'Individual Toilet Coverage'},{'ctb_coverage':'CTB coverage'}],
          'Road': [{'road_with_no_vehicle_access':'No. of slums with no vehicle access'},
                   {'pucca_road_coverage':'Pucca Road Coverage'},{'kutcha_road_coverage':'Kutcha Road Coverage'}],
@@ -45,6 +45,9 @@ def get_dashboard_card(request, key):
     cities = DashboardData.objects.filter(city=city)
     cards = score_cards(cities)
     output_data['city'][city.name.city_name]['cards'] = cards
+    drain_cov_admin = Rapid_Slum_Appraisal.objects.filter(slum_name__electoral_ward__administrative_ward__city__name__city_name=city).values('drainage_coverage')
+    drain_card_admin = drainage_coverage(drain_cov_admin)
+    output_data['city'][city.name.city_name]['cards']['Drainage']= drain_card_admin
 
     #Administrative ward calculations
     for admin_ward in AdministrativeWard.objects.filter(city=city):
@@ -55,6 +58,9 @@ def get_dashboard_card(request, key):
         admin_wards = DashboardData.objects.filter(slum__electoral_ward__administrative_ward=admin_ward)
         cards = score_cards(admin_wards)
         output_data['administrative_ward'][admin_ward.name]['cards'] = cards
+        drain_coverage_admin = Rapid_Slum_Appraisal.objects.filter(slum_name__electoral_ward__administrative_ward=admin_ward)
+        drain_card_admin = drainage_coverage(drain_coverage_admin)
+        output_data['administrative_ward'][admin_ward.name]['cards']['Drainage'] = drain_card_admin
 
     #Electoral ward calculations
     for electoral_ward in ElectoralWard.objects.filter(administrative_ward__city=city):
@@ -63,9 +69,12 @@ def get_dashboard_card(request, key):
         for clause in select_clause:
             output_data['electoral_ward'][electoral_ward.name]['scores'][clause] = qol_scores.aggregate(Avg(clause))[clause + '__avg']
         ele_wards = DashboardData.objects.filter(slum__electoral_ward=electoral_ward)
+        drain_cover_wards = Rapid_Slum_Appraisal.objects.filter(slum_name__electoral_ward=electoral_ward)
         if ele_wards.count() > 0:
             cards = score_cards(ele_wards)
             output_data['electoral_ward'][electoral_ward.name]['cards'] = cards
+            drain_card_elec = drainage_coverage(drain_cover_wards)
+            output_data['electoral_ward'][electoral_ward.name]['cards']['Drainage'] = drain_card_elec
 
     #Slum level calculations
     output_data['slum'] = {'scores':{},'cards':{}}
@@ -133,16 +142,32 @@ def convert_float_to_str(data_dict):
                     roundoff_str.update(to_str_per(i))
                 else:
                     roundoff_str.update(to_str(i))
-	elif k == 'General':
-	    for i in v:
-		if i !=None and v.index(i) == 2:
-		    roundoff_str.update(to_str_per(i))
-		else:
-		    roundoff_str.update(to_str(i))
-        else:
+        elif k == 'General':
             for i in v:
-                roundoff_str.update(to_str(i))
+                if i !=None and v.index(i) == 2:
+                    roundoff_str.update(to_str_per(i))
+                else:
+                    roundoff_str.update(to_str(i))
+        else :
+            roundoff_str.update(to_str(i))
+
     return roundoff_str
+
+def drainage_coverage(ele):
+    new_list =[]
+    for k,v in CARDS.items():
+        if k == 'Drainage':
+            for i in v:
+                avrg = ele.values_list(i.keys()[0],flat=True)
+    for i in avrg:
+        try:
+            i = int(i) if i != None else 0
+            new_list.append(i)
+        except:
+            pass
+    drain = (sum(new_list)/len(new_list) if len(new_list)!=0 else 0)
+    drain_coverage = [str(round(float(drain), 2)) + '%']
+    return drain_coverage
 
 def score_cards(ele):
     all_cards ={}

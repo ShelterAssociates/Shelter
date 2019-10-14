@@ -4,7 +4,6 @@ Script to get aggregated data.
 from graphs.models import *
 from analyse_data import *
 from master.models import *
-from django.http import HttpResponse
 
 class DashboardCard(RHSData):
     def __init__(self, slum):
@@ -35,10 +34,9 @@ class DashboardCard(RHSData):
     def Waste_Info(self):
         door_to_door_percent = self.get_perc_of_waste_collection('Door to door waste collection')
         openspace_percent= self.get_perc_of_waste_collection('Open space')
-        gutter_facility = self.get_perc_of_waste_collection('inside gutter')
-        canal_facility = self.get_perc_of_waste_collection('along/inside canal')
+        # gutter_facility = self.get_perc_of_waste_collection('inside gutter')
+        # canal_facility = self.get_perc_of_waste_collection('along/inside canal')
         garbage_bin_facility = self.get_perc_of_waste_collection('Garbage bin')
-        # waste_no_collection_facility_percentile = (openspace_percent+gutter_facility+canal_facility)/3 # replaced with garbage_bin_facility
         return (door_to_door_percent, garbage_bin_facility,openspace_percent)
 
     def save_waste(self):
@@ -75,7 +73,7 @@ class DashboardCard(RHSData):
                                  'kutcha_road_coverage':kutcha_road_coverage })
 
     def save_toilet(self):
-        (own_toilet_count,ctb_use_count,x) = self.individual_toilet_count()
+        (own_toilet_count,ctb_use_count) = self.individual_toilet_and_ctb_count()
         (toilet_to_per_ratio, men_to_wmn_seats_ratio) = self.get_toilet_data()
         to_save = DashboardData.objects.update_or_create(slum=self.slum, defaults= {'toilet_men_women_seats_ratio': men_to_wmn_seats_ratio,
                                  'toilet_seat_to_person_ratio': toilet_to_per_ratio,'individual_toilet_coverage':own_toilet_count,
