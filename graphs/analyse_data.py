@@ -18,28 +18,36 @@ class RHSData(object):
         self.toilet_ms_data = ToiletConstruction.objects.filter(slum=self.slum)
 
     def get_unique_houses(self):
+
         repeated_houses = self.followup_data.values('household_number').annotate(
             Count('household_number')).order_by().filter(
             household_number__count__gt=1).values_list('household_number', flat=True)
         return repeated_houses
 
+    def get_unique_houses_from_household_data(self):
+        repeated_houses = self.household_data.values('household_number').annotate(Count('household_number')).order_by().filter(
+            household_number__count__gte =1).values_list('household_number', flat=True)
+        return repeated_houses
+
     def occupied_houses(self):
         '''count of occupied houses in slums'''
         occupide_house_count = 0
-
         for i in self.get_unique_houses():
-            if self.household_data.filter(household_number = int(i)):
-                data = json.loads(self.household_data.values('rhs_data')[0].values()[0])
-                if 'Type_of_structure_occupancy' in data.keys() and data['Type_of_structure_occupancy'] == 'Occupied house':
-                    occupide_house_count +=1
-
+            if (filter(lambda x: 'Type_of_structure_occupancy' in x.rhs_data and x.rhs_data[
+                'Type_of_structure_occupancy'] == 'Occupied house', self.household_data.filter(household_number=int(i)))):
+                occupide_house_count += 1
+            else: pass
         return occupide_house_count
 
     def ownership_status(self):
-        owner_count = filter(lambda x: 'group_el9cl08/Ownership_status_of_the_house' in x.rhs_data and x.rhs_data[
-            'group_el9cl08/Ownership_status_of_the_house'] == 'Own house', self.household_data)
-
-        owner_percent =(len(owner_count)/self.occupied_houses())*100 if self.occupied_houses() !=0 else 0
+        owner_count =0
+        for i in self.get_unique_houses():
+            if (filter(lambda x: 'group_el9cl08/Ownership_status_of_the_house' in x.rhs_data and x.rhs_data[
+            'group_el9cl08/Ownership_status_of_the_house'] == 'Own house', self.household_data.filter(household_number = int(i)))):
+                owner_count +=1
+            else:
+                pass
+        owner_percent =(owner_count/self.occupied_houses())*100 if self.occupied_houses()!= 0 else 0
         return owner_percent
 
     def individual_toilet_and_ctb_count(self):
@@ -56,8 +64,8 @@ class RHSData(object):
                 if 'group_oi8ts04/Current_place_of_defecation' in record.keys() and int(record['group_oi8ts04/Current_place_of_defecation']) in [1,2,3,4,5,6,7]:
                     own_toilet_count += 1
 
-        own_toilet_count = (own_toilet_count/self.occupied_houses())*100
-        ctb_use_count = (ctb_count/self.occupied_houses())*100
+        own_toilet_count = ((own_toilet_count/self.occupied_houses())*100) if self.occupied_houses()!=0 else 0
+        ctb_use_count = ((ctb_count/self.occupied_houses())*100) if self.occupied_houses()!=0 else 0
         return (own_toilet_count,ctb_use_count)
 
     def toilet_constructed(self):
@@ -133,21 +141,27 @@ class RHSData(object):
         return road_type
 
     def get_household_count(self):
-        return self.household_data.count()
+        household_count = len(self.get_unique_houses_from_household_data())
+        return household_count
 
     def get_slum_population(self):
         return self.get_household_count() * 4
 
     def get_waste_facility(self, facility):
-        waste_facility = filter(lambda x: 'group_el9cl08/Facility_of_solid_waste_collection' in x.rhs_data
-                        and x.rhs_data['group_el9cl08/Facility_of_solid_waste_collection'] == facility,self.household_data)
-        return len(waste_facility)
+        waste_facility_count =0
+        for i in self.get_unique_houses():
+            if(filter(lambda x: 'group_el9cl08/Facility_of_solid_waste_collection' in x.rhs_data and
+            x.rhs_data['group_el9cl08/Facility_of_solid_waste_collection'] == facility,self.household_data.filter(household_number = int(i)))):
+                waste_facility_count +=1
+        return waste_facility_count
 
     def get_water_coverage(self, type):
-        water_coverage = filter(
-            lambda x: 'group_el9cl08/Type_of_water_connection' in x.rhs_data and x.rhs_data[
-                'group_el9cl08/Type_of_water_connection'] == type, self.household_data)
-        return len(water_coverage)
+        water_coverage_count = 0
+        for i in self.get_unique_houses():
+            if(filter(lambda x: 'group_el9cl08/Type_of_water_connection' in x.rhs_data and x.rhs_data[
+                'group_el9cl08/Type_of_water_connection'] == type, self.household_data.filter(household_number = int(i)))):
+                water_coverage_count+=1
+        return water_coverage_count
 
     #Waste data
     def get_perc_of_waste_collection(self, facility ='Door to door waste collection'):

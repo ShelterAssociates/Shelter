@@ -85,14 +85,15 @@ class DashboardCard(RHSData):
 def dashboard_data_Save(city):
     slums = Slum.objects.filter(electoral_ward__administrative_ward__city__id__in = [city])
     for slum in slums:
-        try:
-            dashboard_data = DashboardCard(slum.id)
-            # dashboard_data.save_qol_scores()
-            dashboard_data.save_general()
-            dashboard_data.dashboard_page_parameters()
-            dashboard_data.save_waste()
-            dashboard_data.save_water()
-            dashboard_data.save_road()
-            dashboard_data.save_toilet()
-        except Exception as e:
-            print 'Exception in dashboard_data_save',(e)
+            try:
+                dashboard_data = DashboardCard(slum.id)
+                # dashboard_data.save_qol_scores()
+                dashboard_data.save_general()
+                dashboard_data.dashboard_page_parameters()
+                dashboard_data.save_waste()
+                dashboard_data.save_water()
+                dashboard_data.save_road()
+                dashboard_data.save_toilet()
+            except Exception as e:
+                print 'Exception in dashboard_data_save',(e)
+
