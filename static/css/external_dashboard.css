@@ -215,8 +215,6 @@ span.l30 {
   left: 30px;
 }
 .overall-score {
-  width: 237px;
-  height: 38px;
   border-radius: 21px;
   background-color: #e9ecee;
   float: right;
@@ -224,11 +222,12 @@ span.l30 {
   position: relative;
   top: 24px;
   font-size: 14px;
+  padding:5px 20px;
 }
 .overall-cnt {
   font-family: "SFDisplaySemiBold";
   font-size: 20px;
-  padding: 5px 0 0 20px;
+
   display: inline-block;
 }
 .overall-text {
