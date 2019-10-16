@@ -257,7 +257,7 @@ $(document).ready(function(){
   var city_id = $("#city_id").val();
   var names = $("#city_name").val();
 
-  $("#city_name_text").html(names + ": ");
+//  $("#city_name_text").html(names + ": ");
   $.ajax({
         url : "/graphs/dashboard/" + city_id + "/",
         type : "GET",
@@ -266,6 +266,7 @@ $(document).ready(function(){
           card_data= json
           $("#total_score").html(parseInt(card_data['city'][names]['scores']['totalscore_percentile']));
           $("#total_score_text").html("Overall score for "+names+" City");
+          $(".overall-score").removeClass('hide');
           display_cards();
         }
     });
@@ -305,8 +306,18 @@ $(document).ready(function(){
       contenttype : "json",
       success : function(json) {
         let city_name = $("#city_name").val();
+        $("#city_name_text").html("");
+        $.each(json['city'], function(key,values){
+            if(values['household_count__sum'] > 0)
+              $("#city_name_text").append("<option value="+values.city_id+">"+key+"</option>");
+        });
+        $("#city_name_text").val(json['city'][city_name].city_id);
         populate_top_bar({city_name : json['city'][city_name]});
       },
+  });
+
+  $("#city_name_text").change(function(){
+    document.location.href = '/dashboard/'+$(this).val();
   });
 
 });

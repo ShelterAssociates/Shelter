@@ -66,7 +66,7 @@
 
   <div class="row">
     <div class="col-md-5" style="">
-      <b id="city_name_text"></b>
+      <b><select id="city_name_text"></select></b>
       <input type="radio" value="0" name="level" checked text="Administrative ward"> Administrative Ward
       <input type="radio" value="1" name="level" text="Electoral ward"> Electoral Ward
       <input type="radio" value="2" name="level" text="Slum"> Slum
@@ -76,7 +76,6 @@
       <!--Information starts here-->
       <div class="information">
         <div class="water-info">
-          <span><img src="/static/images/ico_info.png"/></span>
           <select id="levels_tag">
             <option value="General">General</option>
             <option value="Toilet">Toilet</option>
@@ -86,7 +85,7 @@
             <option value="Road">Road</option>
           </select>
         </div>
-        <div class="info-divider"></div>
+
         <!-- <div class="water-info">
                               <span><img src="images/ico_info.png"/></span>
                               <span class="water-label">16 May 2018 - 10 May 2019</span>
@@ -95,9 +94,9 @@
                               </span>
                           </div>
                           <div class="info-divider"></div> -->
-        <div class="overall-score">
-          <span class="overall-cnt" id="total_score">50</span>
-          <span class="overall-text" id="total_score_text">Overall score for Pune City</span>
+        <div class="overall-score hide">
+          <span class="overall-cnt" id="total_score"></span>
+          <span class="overall-text" id="total_score_text"></span>
         </div>
       </div>
       <!--Information endss here-->
