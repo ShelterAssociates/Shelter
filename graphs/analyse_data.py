@@ -5,7 +5,6 @@ from component.models import *
 from mastersheet.models import *
 import json
 from django.contrib.contenttypes.models import ContentType
-from django.db.models import Count
 
 # json_file = json.loads(open('/home/shelter/Desktop/New_project/QOL_three/Shelter/graphs/json_reference_file.json').read())  # json reference data from json file
 
@@ -17,63 +16,54 @@ class RHSData(object):
         self.slum_data = SlumData.objects.get(slum=self.slum)
         self.toilet_ms_data = ToiletConstruction.objects.filter(slum=self.slum)
 
-    def get_unique_houses(self):
-
-        repeated_houses = self.followup_data.values('household_number').annotate(
-            Count('household_number')).order_by().filter(
-            household_number__count__gt=1).values_list('household_number', flat=True)
-        return repeated_houses
-
-    def get_unique_houses_from_household_data(self):
-        repeated_houses = self.household_data.values('household_number').annotate(Count('household_number')).order_by().filter(
-            household_number__count__gte =1).values_list('household_number', flat=True)
-        return repeated_houses
+    def get_unique_houses_rhs_householddata(self):
+        unique_houses = self.household_data.distinct('household_number').values_list('household_number',flat=True)
+        return unique_houses
 
     def occupied_houses(self):
         '''count of occupied houses in slums'''
-        occupide_house_count = 0
-        for i in self.get_unique_houses():
-            if (filter(lambda x: 'Type_of_structure_occupancy' in x.rhs_data and x.rhs_data[
-                'Type_of_structure_occupancy'] == 'Occupied house', self.household_data.filter(household_number=int(i)))):
-                occupide_house_count += 1
-            else: pass
-        return occupide_house_count
+        occupide_house_count = filter(lambda x: 'Type_of_structure_occupancy' in x.rhs_data and x.rhs_data[
+                'Type_of_structure_occupancy'] == 'Occupied house', self.household_data)
+        return len(occupide_house_count)
 
     def ownership_status(self):
-        owner_count =0
-        for i in self.get_unique_houses():
-            if (filter(lambda x: 'group_el9cl08/Ownership_status_of_the_house' in x.rhs_data and x.rhs_data[
-            'group_el9cl08/Ownership_status_of_the_house'] == 'Own house', self.household_data.filter(household_number = int(i)))):
-                owner_count +=1
-            else:
-                pass
-        owner_percent =(owner_count/self.occupied_houses())*100 if self.occupied_houses()!= 0 else 0
+        owner_count =filter(lambda x: 'group_el9cl08/Ownership_status_of_the_house' in x.rhs_data and x.rhs_data[
+            'group_el9cl08/Ownership_status_of_the_house'] == 'Own house', self.household_data)
+
+        owner_percent =(len(owner_count)/self.occupied_houses())*100 if self.occupied_houses()!= 0 else 0
         return owner_percent
-
-    def individual_toilet_and_ctb_count(self):
-
-        own_toilet_count = 0
-        ctb_count = 0
-
-        for house in self.get_unique_houses():
-            latest_record = self.followup_data.filter(household_number=int(house)).values('followup_data').latest('submission_date')
-            for record in latest_record.values():
-                record = json.loads(record)
-                if 'group_oi8ts04/Current_place_of_defecation' in record.keys() and (record['group_oi8ts04/Current_place_of_defecation'].encode('ascii','ignore')) == '09' :
-                    ctb_count +=1
-                if 'group_oi8ts04/Current_place_of_defecation' in record.keys() and int(record['group_oi8ts04/Current_place_of_defecation']) in [1,2,3,4,5,6,7]:
-                    own_toilet_count += 1
-
-        own_toilet_count = ((own_toilet_count/self.occupied_houses())*100) if self.occupied_houses()!=0 else 0
-        ctb_use_count = ((ctb_count/self.occupied_houses())*100) if self.occupied_houses()!=0 else 0
-        return (own_toilet_count,ctb_use_count)
 
     def toilet_constructed(self):
         '''total toilets faciliated by SA '''
         households_with_toilets_completed = self.toilet_ms_data.filter(status='6').values_list('household_number',flat=True)
-        common_households = [value for value in self.get_unique_houses() if value in households_with_toilets_completed]
-        total_completed_toilets = len(households_with_toilets_completed) + len(common_households)
-        return total_completed_toilets
+        return households_with_toilets_completed
+
+    def ctb_count(self):
+        ctb_count = 0
+        toilet_completed = self.toilet_constructed()
+        for house in self.get_unique_houses_rhs_householddata():
+            try:
+                latest_record = self.followup_data.filter(household_number=house).latest('submission_date')
+                if latest_record.household_number not in toilet_completed and \
+                ('group_oi8ts04/Current_place_of_defecation' in latest_record.followup_data and \
+                latest_record.followup_data['group_oi8ts04/Current_place_of_defecation'] == '09'):
+                        ctb_count += 1
+            except :pass
+        ctb_use_count = ((ctb_count / self.occupied_houses()) * 100) if self.occupied_houses() != 0 else 0
+        return ctb_use_count
+
+    def individual_toilet(self):
+        own_toilet_count = 0
+        for house in self.get_unique_houses_rhs_householddata():
+            try:
+                latest_record = self.followup_data.filter(household_number= house).latest('submission_date')
+                if 'group_oi8ts04/Current_place_of_defecation' in latest_record.followup_data and \
+                        int(latest_record.followup_data['group_oi8ts04/Current_place_of_defecation']) in [1,2,3,4,5,6,7]:
+                        own_toilet_count += 1
+            except : pass
+        total = own_toilet_count+len(self.toilet_constructed())
+        own_toilet_count = (total/self.occupied_houses())*100 if self.occupied_houses()!=0 else 0
+        return own_toilet_count
 
     def get_toilet_data(self):
         household_population = self.occupied_houses() * 4
@@ -141,27 +131,20 @@ class RHSData(object):
         return road_type
 
     def get_household_count(self):
-        household_count = len(self.get_unique_houses_from_household_data())
-        return household_count
+        return len(self.household_data)
 
     def get_slum_population(self):
         return self.get_household_count() * 4
 
     def get_waste_facility(self, facility):
-        waste_facility_count =0
-        for i in self.get_unique_houses():
-            if(filter(lambda x: 'group_el9cl08/Facility_of_solid_waste_collection' in x.rhs_data and
-            x.rhs_data['group_el9cl08/Facility_of_solid_waste_collection'] == facility,self.household_data.filter(household_number = int(i)))):
-                waste_facility_count +=1
-        return waste_facility_count
+        waste_facility_count = filter(lambda x: 'group_el9cl08/Facility_of_solid_waste_collection' in x.rhs_data and
+            x.rhs_data['group_el9cl08/Facility_of_solid_waste_collection'] == facility,self.household_data)
+        return len(waste_facility_count)
 
     def get_water_coverage(self, type):
-        water_coverage_count = 0
-        for i in self.get_unique_houses():
-            if(filter(lambda x: 'group_el9cl08/Type_of_water_connection' in x.rhs_data and x.rhs_data[
-                'group_el9cl08/Type_of_water_connection'] == type, self.household_data.filter(household_number = int(i)))):
-                water_coverage_count+=1
-        return water_coverage_count
+        water_coverage = filter( lambda x: 'group_el9cl08/Type_of_water_connection' in x.rhs_data and x.rhs_data[
+                'group_el9cl08/Type_of_water_connection'] == type, self.household_data)
+        return len(water_coverage)
 
     #Waste data
     def get_perc_of_waste_collection(self, facility ='Door to door waste collection'):
@@ -180,7 +163,7 @@ class RHSData(object):
         :param type:
         :return:
         """
-        percent = (self.get_water_coverage(type) / self.occupied_houses()) * 100 if self.occupied_houses() !=0 else 0
+        percent = (self.get_water_coverage(type) /  self.get_household_count()) * 100 if  self.get_household_count() !=0 else 0
         return percent
 
     # General Information data

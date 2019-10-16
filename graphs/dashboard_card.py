@@ -11,7 +11,7 @@ class DashboardCard(RHSData):
 
     def dashboard_page_parameters(self):
         population = self.get_household_member_total()
-        toilet_count = self.toilet_constructed()
+        toilet_count = len(self.toilet_constructed())
         people_impacted = toilet_count * 5
         to_save = DashboardData.objects.update_or_create(slum=self.slum,
                 defaults={'count_of_toilets_completed': toilet_count,'people_impacted':people_impacted,
@@ -73,7 +73,8 @@ class DashboardCard(RHSData):
                                  'kutcha_road_coverage':kutcha_road_coverage })
 
     def save_toilet(self):
-        (own_toilet_count,ctb_use_count) = self.individual_toilet_and_ctb_count()
+        own_toilet_count = self.individual_toilet()
+        ctb_use_count = self.ctb_count()
         (toilet_to_per_ratio, men_to_wmn_seats_ratio) = self.get_toilet_data()
         to_save = DashboardData.objects.update_or_create(slum=self.slum, defaults= {'toilet_men_women_seats_ratio': men_to_wmn_seats_ratio,
                                  'toilet_seat_to_person_ratio': toilet_to_per_ratio,'individual_toilet_coverage':own_toilet_count,
@@ -96,4 +97,3 @@ def dashboard_data_Save(city):
                 dashboard_data.save_toilet()
             except Exception as e:
                 print 'Exception in dashboard_data_save',(e)
-
