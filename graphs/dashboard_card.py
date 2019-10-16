@@ -4,7 +4,6 @@ Script to get aggregated data.
 from graphs.models import *
 from analyse_data import *
 from master.models import *
-from django.http import HttpResponse
 
 class DashboardCard(RHSData):
     def __init__(self, slum):
@@ -12,7 +11,7 @@ class DashboardCard(RHSData):
 
     def dashboard_page_parameters(self):
         population = self.get_household_member_total()
-        toilet_count = self.toilet_constructed()
+        toilet_count = len(self.toilet_constructed())
         people_impacted = toilet_count * 5
         to_save = DashboardData.objects.update_or_create(slum=self.slum,
                 defaults={'count_of_toilets_completed': toilet_count,'people_impacted':people_impacted,
@@ -35,10 +34,9 @@ class DashboardCard(RHSData):
     def Waste_Info(self):
         door_to_door_percent = self.get_perc_of_waste_collection('Door to door waste collection')
         openspace_percent= self.get_perc_of_waste_collection('Open space')
-        gutter_facility = self.get_perc_of_waste_collection('inside gutter')
-        canal_facility = self.get_perc_of_waste_collection('along/inside canal')
+        # gutter_facility = self.get_perc_of_waste_collection('inside gutter')
+        # canal_facility = self.get_perc_of_waste_collection('along/inside canal')
         garbage_bin_facility = self.get_perc_of_waste_collection('Garbage bin')
-        # waste_no_collection_facility_percentile = (openspace_percent+gutter_facility+canal_facility)/3 # replaced with garbage_bin_facility
         return (door_to_door_percent, garbage_bin_facility,openspace_percent)
 
     def save_waste(self):
@@ -75,12 +73,12 @@ class DashboardCard(RHSData):
                                  'kutcha_road_coverage':kutcha_road_coverage })
 
     def save_toilet(self):
-        individual_toilet_count = self.individual_toilet_count()
-        ctb_coverage = self.ctb_coverage()
+        own_toilet_count = self.individual_toilet()
+        ctb_use_count = self.ctb_count()
         (toilet_to_per_ratio, men_to_wmn_seats_ratio) = self.get_toilet_data()
         to_save = DashboardData.objects.update_or_create(slum=self.slum, defaults= {'toilet_men_women_seats_ratio': men_to_wmn_seats_ratio,
-                                 'toilet_seat_to_person_ratio': toilet_to_per_ratio,'individual_toilet_coverage':individual_toilet_count,
-                                 'ctb_coverage':ctb_coverage})
+                                 'toilet_seat_to_person_ratio': toilet_to_per_ratio,'individual_toilet_coverage':own_toilet_count,
+                                 'ctb_coverage':ctb_use_count})
 
     # def save_qol_scores(self):
     #     scores = self.get_scores()
@@ -88,15 +86,14 @@ class DashboardCard(RHSData):
 def dashboard_data_Save(city):
     slums = Slum.objects.filter(electoral_ward__administrative_ward__city__id__in = [city])
     for slum in slums:
-        try:
-            dashboard_data = DashboardCard(slum.id)
-            # dashboard_data.save_qol_scores()
-            dashboard_data.save_general()
-            dashboard_data.dashboard_page_parameters()
-            dashboard_data.save_waste()
-            dashboard_data.save_water()
-            dashboard_data.save_road()
-            dashboard_data.save_toilet()
-        except Exception as e:
-            print 'Exception in dashboard_data_save',(e)
-
+            try:
+                dashboard_data = DashboardCard(slum.id)
+                # dashboard_data.save_qol_scores()
+                dashboard_data.save_general()
+                dashboard_data.dashboard_page_parameters()
+                dashboard_data.save_waste()
+                dashboard_data.save_water()
+                dashboard_data.save_road()
+                dashboard_data.save_toilet()
+            except Exception as e:
+                print 'Exception in dashboard_data_save',(e)
