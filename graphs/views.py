@@ -45,9 +45,6 @@ def get_dashboard_card(request, key):
     cities = DashboardData.objects.filter(city=city)
     cards = score_cards(cities)
     output_data['city'][city.name.city_name]['cards'] = cards
-    drain_cov_admin = Rapid_Slum_Appraisal.objects.filter(slum_name__electoral_ward__administrative_ward__city__name__city_name=city).values('drainage_coverage')
-    drain_card_admin = drainage_coverage(drain_cov_admin)
-    output_data['city'][city.name.city_name]['cards']['Drainage']= drain_card_admin
 
     #Administrative ward calculations
     for admin_ward in AdministrativeWard.objects.filter(city=city):
@@ -58,9 +55,6 @@ def get_dashboard_card(request, key):
         admin_wards = DashboardData.objects.filter(slum__electoral_ward__administrative_ward=admin_ward)
         cards = score_cards(admin_wards)
         output_data['administrative_ward'][admin_ward.name]['cards'] = cards
-        drain_coverage_admin = Rapid_Slum_Appraisal.objects.filter(slum_name__electoral_ward__administrative_ward=admin_ward)
-        drain_card_admin = drainage_coverage(drain_coverage_admin)
-        output_data['administrative_ward'][admin_ward.name]['cards']['Drainage'] = drain_card_admin
 
     #Electoral ward calculations
     for electoral_ward in ElectoralWard.objects.filter(administrative_ward__city=city):
@@ -69,126 +63,107 @@ def get_dashboard_card(request, key):
         for clause in select_clause:
             output_data['electoral_ward'][electoral_ward.name]['scores'][clause] = qol_scores.aggregate(Avg(clause))[clause + '__avg']
         ele_wards = DashboardData.objects.filter(slum__electoral_ward=electoral_ward)
-        drain_cover_wards = Rapid_Slum_Appraisal.objects.filter(slum_name__electoral_ward=electoral_ward)
         if ele_wards.count() > 0:
             cards = score_cards(ele_wards)
             output_data['electoral_ward'][electoral_ward.name]['cards'] = cards
-            drain_card_elec = drainage_coverage(drain_cover_wards)
-            output_data['electoral_ward'][electoral_ward.name]['cards']['Drainage'] = drain_card_elec
 
     #Slum level calculations
     output_data['slum'] = {'scores':{},'cards':{}}
     select_clause.append('slum__name')
     qol_scores = QOLScoreData.objects.filter(city = city).values(*select_clause)
     qol_scores = groupby(qol_scores, key=lambda x:x['slum__name'])
-    qol_scores = {key: {'scores': list(values)[0],'cards': get_card_data(key)} for key, values in qol_scores}
+    qol_scores = {key: {'scores': list(values)[0],'cards': score_cards(DashboardData.objects.filter(slum__name=key))} for key, values in qol_scores}
     output_data['slum'] = qol_scores
     output_data['metadata'] = CARDS
     return HttpResponse(json.dumps(output_data),content_type='application/json')
 
-def get_card_data(slum_name):
-    all_cards = {}
-    root_query = DashboardData.objects.filter(slum__name = slum_name)
-    drainage_coverage = Rapid_Slum_Appraisal.objects.filter(slum_name__name = slum_name)
-    for k,v in CARDS.items():
-        data_cards = {}
-	try:
-         if k == 'Drainage':
-             data_cards[k] = [drainage_coverage.values_list(i.keys()[0], flat=True)[0] for i in v]
-             data_cards = convert_float_to_str(data_cards)
-             all_cards.update(data_cards)
-         else:
-             data_cards[k] = [root_query.values_list(i.keys()[0], flat=True)[0] for i in v]
-             data_cards = convert_float_to_str(data_cards)
-             all_cards.update(data_cards)
-	except:
-		pass
-    return all_cards
-
-def convert_float_to_str(data_dict):
-
-    roundoff_str = {}
-
-    def to_str_per(i):
-        r = round(float(i), 2) if i != None else 0
-        roundoff_str[k].append(str(r) + '%')
-        return roundoff_str
-
-    def to_str(i):
-        r = round(float(i), 2) if i != None else 0
-        roundoff_str[k].append(str(r))
-        return roundoff_str
-
-    for k,v in data_dict.items():
-        roundoff_str[k] = []
-        if k in ['Waste','Water','Drainage']:
-            for i in v:
-                if i != None:
-                    roundoff_str.update(to_str_per(i))
-        elif k == 'Toilet':
-            for i in v:
-                if i != None and v.index(i) == 0:
-                    r = int(i) if i != None else 0
-                    roundoff_str[k].append('1:'+ str(r))
-                elif i != None and v.index(i) == 1:
-                    r = int(i) if i != None else 0
-                    roundoff_str[k].append(str(r)+':100')
-                else:
-                    if i != None and v.index(i) in [2,3]:
-                        roundoff_str.update(to_str_per(i))
-        elif k == 'Road':
-            for i in v:
-                if v.index(i) in [1,2]:
-                    roundoff_str.update(to_str_per(i))
-                else:
-                    roundoff_str.update(to_str(i))
-        elif k == 'General':
-            for i in v:
-                if i !=None and v.index(i) == 2:
-                    roundoff_str.update(to_str_per(i))
-                else:
-                    roundoff_str.update(to_str(i))
-        else :
-            roundoff_str.update(to_str(i))
-
-    return roundoff_str
-
-def drainage_coverage(ele):
-    new_list =[]
-    for k,v in CARDS.items():
-        if k == 'Drainage':
-            for i in v:
-                avrg = ele.values_list(i.keys()[0],flat=True)
-    for i in avrg:
-        try:
-            i = int(i) if i != None else 0
-            new_list.append(i)
-        except:
-            pass
-    drain = (sum(new_list)/len(new_list) if len(new_list)!=0 else 0)
-    drain_coverage = [str(round(float(drain), 2)) + '%']
-    return drain_coverage
+def get_ratio(m,wm):
+    def findgcd(a, b):
+        if (b == 0):
+            return a
+        else:
+            return findgcd(b, a % b)
+    gcd = findgcd(m,wm)
+    a = m/gcd if gcd!=0 else 0
+    b= wm/gcd if gcd!=0 else 0
+    ratio =(str(a)+":"+str(b))
+    return ratio
 
 def score_cards(ele):
+    """To calculate aggregate level data for electoral, admin and city"""
     all_cards ={}
+    #data required for cal
+    occupide_household_count = ele.aggregate(Sum('occupied_household_count')).values()[0]
+    total_household_count = ele.aggregate(Sum('household_count')).values()[0]
+    #road data
+    total_road_area = ele.aggregate(Sum('total_road_area')).values()[0]
+    road_with_no_vehicle_access = ele.aggregate(Sum('road_with_no_vehicle_access')).values()[0]
+    pucca_road_coverage = ele.aggregate(Sum('pucca_road_coverage')).values()[0]
+    kutcha_road_coverage = ele.aggregate(Sum('kutcha_road_coverage')).values()[0]
+    #general data
+    gen_avg_household_size = ele.aggregate(Avg('gen_avg_household_size')).values()[0]
+    gen_tenement_density = ele.aggregate(Sum('gen_tenement_density')).values()[0]
+    household_owners_count = ele.aggregate(Sum('household_owners_count')).values()[0]
+    #waste data
+    waste_no_garbage_bin_percentile = ele.aggregate(Sum('waste_no_collection_facility_percentile')).values()[0]
+    waste_door_to_door_collection_facility_percentile = ele.aggregate(Sum('waste_door_to_door_collection_facility_percentile')).values()[0]
+    waste_dump_in_open_percent = ele.aggregate(Sum('waste_dump_in_open_percent')).values()[0]
+    #water data
+    water_individual_connection_percentile = ele.aggregate(Sum('water_individual_connection_percentile')).values()[0]
+    water_shared_service_percentile = ele.aggregate(Sum('water_shared_service_percentile')).values()[0]
+    waterstandpost_percentile = ele.aggregate(Sum('waterstandpost_percentile')).values()[0]
+    #toilet data
+    toilet_seat_to_person_ratio = ele.aggregate(Sum('toilet_seat_to_person_ratio')).values()[0]
+    individual_toilet_coverage = ele.aggregate(Sum('individual_toilet_coverage')).values()[0]
+    ctb_coverage = ele.aggregate(Sum('ctb_coverage')).values()[0]
+    fun_male_seats = ele.aggregate(Sum('fun_male_seats')).values()[0]
+    fun_fmale_seats = ele.aggregate(Sum('fun_fmale_seats')).values()[0]
+
+    #drainage_card data
+    slum_ids = ele.values_list('slum_id',flat=True)
+    total_drain_count = 0
+    for i in slum_ids:
+        try:
+            data = Rapid_Slum_Appraisal.objects.get(slum_name_id=i)
+            drain_card = data.drainage_coverage if data else 0
+            total_drain_count += drain_card if drain_card != None else 0
+        except Exception as e:
+            print e
+
     for k,v in CARDS.items():
         cards = {}
-        if k =='Road':
-            cards[k] = []
-            for i in v: # list of dict
-                if i.keys()[0] == 'road_with_no_vehicle_access':
-                    avrg = ele.aggregate(Sum(i.keys()[0])).values()[0]
-                    cards[k].append(avrg)
-                else:
-                    avrg = ele.aggregate(Avg(i.keys()[0])).values()[0]
-                    cards[k].append(avrg)
-        elif k =='Drainage':
-            pass
-        else :
-            avrg = [ele.aggregate(Avg(i.keys()[0])).values()[0] for i in v]
-            cards[k] = avrg
-        str = convert_float_to_str(cards) # convert values in "40.0%" format
-        all_cards.update(str)
+        cards[k] = []
+        if k =='Drainage':
+            drain_coverage = str(round(total_drain_count / total_household_count if total_household_count != 0 else 0, 2)) + ' %'
+            cards[k]= [drain_coverage]
+            all_cards.update(cards)
+        elif k =='Road':
+            cards[k].append(str(int(road_with_no_vehicle_access)))
+            cards[k].append(str(round((pucca_road_coverage/total_road_area)*100 if total_road_area!=0 else 0,2))+' %')
+            cards[k].append(str(round((kutcha_road_coverage/total_road_area)*100 if total_road_area!=0 else 0,2))+' %')
+            all_cards.update(cards)
+        elif k == 'Toilet':
+            cards[k].append("1:"+ str(int((occupide_household_count*4)/toilet_seat_to_person_ratio if toilet_seat_to_person_ratio!=0 else 0)))
+            men_wmn_seats_ratio = get_ratio(fun_male_seats, fun_fmale_seats)
+            cards[k].append(men_wmn_seats_ratio)
+            cards[k].append(str(round((individual_toilet_coverage/occupide_household_count)*100 if occupide_household_count!=0 else 0,2))+" %")
+            cards[k].append(str(round((ctb_coverage/occupide_household_count)*100 if occupide_household_count!=0 else 0,2))+" %")
+            all_cards.update(cards)
+        elif k == 'General':
+            cards[k].append(str(round(gen_avg_household_size,2)))
+            cards[k].append(str(int(total_household_count / gen_tenement_density if gen_tenement_density != 0 else 0)))
+            cards[k].append(str(round((household_owners_count / occupide_household_count) * 100 if occupide_household_count != 0 else 0,2))+" %")
+            all_cards.update(cards)
+        elif k =='Water':
+            cards[k].append(str(round((water_individual_connection_percentile / occupide_household_count) * 100 if occupide_household_count != 0 else 0,2))+" %")
+            cards[k].append(str(round((water_shared_service_percentile / occupide_household_count) * 100 if occupide_household_count != 0 else 0,2))+" %")
+            cards[k].append(str(round((waterstandpost_percentile / occupide_household_count) * 100 if occupide_household_count != 0 else 0,2))+" %")
+            all_cards.update(cards)
+        else:
+            cards[k].append(str(round((waste_no_garbage_bin_percentile / occupide_household_count) * 100 if occupide_household_count != 0 else 0, 2)) + " %")
+            cards[k].append(str(round((waste_door_to_door_collection_facility_percentile / occupide_household_count) * 100 if occupide_household_count != 0 else 0, 2)) + " %")
+            cards[k].append(str(round((waste_dump_in_open_percent / occupide_household_count) * 100 if occupide_household_count != 0 else 0, 2)) + " %")
+            all_cards.update(cards)
     return all_cards
 
 def dashboard_all_cards(request,key):
