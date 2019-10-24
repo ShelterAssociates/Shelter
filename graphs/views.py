@@ -81,7 +81,7 @@ def get_dashboard_card(request, key):
 
 def get_ratio(m,wm):
     a = m/wm if wm !=0 else 0
-    ratio = Fraction(a).limit_denominator().replace('/',':')
+    ratio = str(Fraction(a).limit_denominator()).replace('/',':')
     return ratio
 
 def score_cards(ele):
