@@ -173,9 +173,9 @@ class RHSData(object):
                             if int(x.rhs_data['group_el9cl08/Number_of_household_members']) else 0) ,self.get_household_members()))
        return slum_population
 
-    def get_household_member_size(self):
-        avg_household_size = self.get_household_member_total() / len(self.get_household_members()) if len(self.get_household_members()) != 0 else 0
-        return avg_household_size
+    # def get_household_member_size(self):
+    #     avg_household_size = self.get_household_member_total() / len(self.get_household_members()) if len(self.get_household_members()) != 0 else 0
+    #     return avg_household_size
 
     def get_slum_area_size_in_hectors(self):
         return int(self.slum_data.rim_data['General']['approximate_area_of_the_settle']) / 10000 \

@@ -18,7 +18,7 @@ class DashboardCard(RHSData):
                           'slum_population':population})
 
     def General_Info(self):
-        avg_household_size = self.get_household_member_size()
+        avg_household_size = self.get_household_member_total()
         slum_area_size_in_hectors = self.get_slum_area_size_in_hectors()
         household_owners_count = self.ownership_status()
         household_count = self.get_household_count()
