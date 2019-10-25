@@ -31,29 +31,34 @@ function get_message(layer){
     return content.join('<br>');
 }
 
-function section_cards(properties){
-        var city_id = $("#city_id").val();
-        let level = $('input[type=radio][name=level]:checked').attr("text").toLowerCase().split(" ").join("_");
-        $.ajax({
-        url : "/graphs/dashboard/"+city_id+"/",
-        type : "GET",
-        contenttype : "json",
-        success : function(json) {
-        var names = properties.name;
-        var text = $("#levels_tag").val() + " Report Card for " + names;
-        card_data=json;
-        $("#score_val").html(parseInt(card_data[level][names]['scores']['totalscore_percentile']));
+function fun_call(){
+      let level = 'city'
+//      alert('Data for '+ $('#city_name').val() +' city')
+      $("#score_val").html(parseInt(card_data[level][$('#city_name').val()]['scores']['totalscore_percentile']));
+      section_cards($('#city_name').val(),level)
+      $('.closebtn').hide()
+      $("#levels_tag").change(function(){
+      section_cards($('#city_name').val(),level)
+      $('.closebtn').hide()
+      });
+      }
+
+function section_cards(name, level){
+        var text = $("#levels_tag").val() + "  Report Card for "
+        $("#score_val").html(parseInt(card_data[level][name]['scores']['totalscore_percentile']));
         $("#section_cards").html("");
-        if (section in card_data[level][names]['cards']){
-          $.each(card_data[level][names]['cards'][section], function(key,value){
+        if (section in card_data[level][name]['cards']){
+          $.each(card_data[level][name]['cards'][section], function(key,value){
               var section_card = $("div[name=section_card_clone]")[0].outerHTML;
               section_card = $(section_card).attr('name','section_card').removeClass('hide');
               section_card.find('span')[0].innerHTML = value;
               section_card.find('span')[1].innerHTML = Object.values(card_data["metadata"][section][key])[0];
               section_card.find('img')[0].src = "/static/images/dashboard/" + Object.keys(card_data["metadata"][section][key])[0] + '.png';
               $("#section_cards").append(section_card);});}
-        $("#report_selections").html(text);
-        }});
+        $("#report_selections").html(text).append("<div class='chip' id ='contact-chip'>Add data </div> ")
+        $(".chip").html(name).append("<span class='closebtn'>&times</span>");
+        $('.closebtn').on({'click':function(){
+        fun_call() }});
 }
 
 var MapLoad = (function() {
@@ -88,9 +93,15 @@ var MapLoad = (function() {
                         this.closePopup();
                     },
        'click' : function(){
-                    section_cards(properties)
-                  }
+                  let level = $('input[type=radio][name=level]:checked').attr("text").toLowerCase().split(" ").join("_");
+                  selected_name = properties.name
+                  section_cards(selected_name, level)
+                  $("#levels_tag").change(function(){
+                  let level = $('input[type=radio][name=level]:checked').attr("text").toLowerCase().split(" ").join("_");
+                  section_cards(selected_name, level)
                   });
+                  }
+            });
   }
   MapLoad.prototype.show_all = function(selected_level='general',flag_only_border=false){
     map.addLayer(this.shape);
@@ -296,6 +307,7 @@ $(document).ready(function(){
 
   function change_text(){
     var vis = $("#levels_tag").val() + " Report Card for all " + $('input[type=radio][name=level]:checked').attr('text');
+//    var vis = $("#levels_tag").val() +  $('input[type=radio][name=level]:checked').attr('text');
     $("#report_selections").html(vis);
   }
   change_text();
