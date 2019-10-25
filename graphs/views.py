@@ -21,7 +21,7 @@ CARDS = {'General':[{'gen_avg_household_size':"Avg Household size"}, {'gen_tenem
          'Water': [{'water_individual_connection_percentile':'Individual water connection'},
                    {'water_shared_service_percentile':'Shared Water Connection'},{'waterstandpost_percentile':'Water Standposts'}],
          'Toilet': [{'toilet_seat_to_person_ratio':'Toilet seat to person ratio'},
-                    {'toilet_men_women_seats_ratio':'Men to women toilet seats ratio'},
+                    {'toilet_men_women_seats_ratio':'Men to women toilet seats'},
                     {'individual_toilet_coverage':'Individual Toilet Coverage'},{'ctb_coverage':'CTB coverage'}],
          'Road': [{'road_with_no_vehicle_access':'No. of slums with no vehicle access'},
                   {'pucca_road_coverage':'Pucca Road Coverage'},{'kutcha_road_coverage':'Kutcha Road Coverage'}],
@@ -80,8 +80,9 @@ def get_dashboard_card(request, key):
     return HttpResponse(json.dumps(output_data),content_type='application/json')
 
 def get_ratio(m,wm):
-    a = m/wm if wm !=0 else 0
-    ratio = str(Fraction(a).limit_denominator()).replace('/',':')
+    #a = m/wm if wm and m else 0
+    #ratio = str(Fraction(a).limit_denominator()).replace('/',':')
+    ratio = str(m) + ":"+ str(wm)
     return ratio
 
 def score_cards(ele):
@@ -104,37 +105,37 @@ def score_cards(ele):
         cards = {}
         cards[k] = []
         if k =='Drainage':
-            drain_coverage = str(round(total_drain_count / aggrgated_data['household_count__sum'] if aggrgated_data['household_count__sum'] != 0 else 0, 2)) + ' %'
+            drain_coverage = str(round((total_drain_count / aggrgated_data['household_count__sum'])*100 if aggrgated_data['household_count__sum'] else 0, 2)) + ' %'
             cards[k]= [drain_coverage]
             all_cards.update(cards)
         elif k =='Road':
-            cards[k].append(str(int(aggrgated_data['road_with_no_vehicle_access__sum'])))
-            cards[k].append(str(round((aggrgated_data['pucca_road_coverage__sum']/aggrgated_data['total_road_area__sum'])*100 if aggrgated_data['total_road_area__sum']!=0 else 0,2))+' %')
-            cards[k].append(str(round((aggrgated_data['kutcha_road_coverage__sum']/aggrgated_data['total_road_area__sum'])*100 if aggrgated_data['total_road_area__sum']!=0 else 0,2))+' %')
+            cards[k].append(str(int(aggrgated_data['road_with_no_vehicle_access__sum'] if aggrgated_data['road_with_no_vehicle_access__sum'] else 0 )))
+            cards[k].append(str(round((aggrgated_data['pucca_road_coverage__sum']/aggrgated_data['total_road_area__sum'])*100 if aggrgated_data['total_road_area__sum'] else 0,2))+' %')
+            cards[k].append(str(round((aggrgated_data['kutcha_road_coverage__sum']/aggrgated_data['total_road_area__sum'])*100 if aggrgated_data['total_road_area__sum'] else 0,2))+' %')
             all_cards.update(cards)
         elif k == 'Toilet':
             cards[k].append("1:"+ str(int((aggrgated_data['occupied_household_count__sum']*4)/aggrgated_data['toilet_seat_to_person_ratio__sum']\
-                                              if aggrgated_data['toilet_seat_to_person_ratio__sum']!=0 else 0)))
+                                              if aggrgated_data['toilet_seat_to_person_ratio__sum'] else 0)))
             men_wmn_seats_ratio = get_ratio(aggrgated_data['fun_male_seats__sum'],aggrgated_data['fun_fmale_seats__sum'])
             cards[k].append(men_wmn_seats_ratio)
-            cards[k].append(str(round((aggrgated_data['individual_toilet_coverage__sum']/aggrgated_data['occupied_household_count__sum'])*100 if aggrgated_data['occupied_household_count__sum']!=0 else 0,2))+" %")
-            cards[k].append(str(round((aggrgated_data['ctb_coverage__sum']/aggrgated_data['occupied_household_count__sum'])*100 if aggrgated_data['occupied_household_count__sum']!=0 else 0,2))+" %")
+            cards[k].append(str(round((aggrgated_data['individual_toilet_coverage__sum']/aggrgated_data['occupied_household_count__sum'])*100 if aggrgated_data['occupied_household_count__sum'] else 0,2))+" %")
+            cards[k].append(str(round((aggrgated_data['ctb_coverage__sum']/aggrgated_data['occupied_household_count__sum'])*100 if aggrgated_data['occupied_household_count__sum'] else 0,2))+" %")
             all_cards.update(cards)
         elif k == 'General':
             cards[k].append(str(round(aggrgated_data['gen_avg_household_size__sum']/aggrgated_data['occupied_household_count__sum']\
-                                      if aggrgated_data['occupied_household_count__sum'] !=0 else 0,2)))
-            cards[k].append(str(int(aggrgated_data['household_count__sum'] / aggrgated_data['gen_tenement_density__sum'] if aggrgated_data['gen_tenement_density__sum'] != 0 else 0)))
-            cards[k].append(str(round((aggrgated_data['household_owners_count__sum'] / aggrgated_data['occupied_household_count__sum']) * 100 if aggrgated_data['occupied_household_count__sum'] != 0 else 0,2))+" %")
+                                      if aggrgated_data['occupied_household_count__sum'] else 0,2)))
+            cards[k].append(str(int(aggrgated_data['household_count__sum'] / aggrgated_data['gen_tenement_density__sum'] if aggrgated_data['gen_tenement_density__sum']  else 0)))
+            cards[k].append(str(round((aggrgated_data['household_owners_count__sum'] / aggrgated_data['occupied_household_count__sum']) * 100 if aggrgated_data['occupied_household_count__sum'] else 0,2))+" %")
             all_cards.update(cards)
         elif k =='Water':
-            cards[k].append(str(round((aggrgated_data['water_individual_connection_percentile__sum'] / aggrgated_data['occupied_household_count__sum']) * 100 if aggrgated_data['occupied_household_count__sum'] != 0 else 0,2))+" %")
-            cards[k].append(str(round((aggrgated_data['water_shared_service_percentile__sum'] / aggrgated_data['occupied_household_count__sum']) * 100 if aggrgated_data['occupied_household_count__sum'] != 0 else 0,2))+" %")
-            cards[k].append(str(round((aggrgated_data['waterstandpost_percentile__sum'] / aggrgated_data['occupied_household_count__sum']) * 100 if aggrgated_data['occupied_household_count__sum'] != 0 else 0,2))+" %")
+            cards[k].append(str(round((aggrgated_data['water_individual_connection_percentile__sum'] / aggrgated_data['occupied_household_count__sum']) * 100 if aggrgated_data['occupied_household_count__sum'] else 0,2))+" %")
+            cards[k].append(str(round((aggrgated_data['water_shared_service_percentile__sum'] / aggrgated_data['occupied_household_count__sum']) * 100 if aggrgated_data['occupied_household_count__sum'] else 0,2))+" %")
+            cards[k].append(str(round((aggrgated_data['waterstandpost_percentile__sum'] / aggrgated_data['occupied_household_count__sum']) * 100 if aggrgated_data['occupied_household_count__sum'] else 0,2))+" %")
             all_cards.update(cards)
         else:
-            cards[k].append(str(round((aggrgated_data['waste_no_collection_facility_percentile__sum'] / aggrgated_data['occupied_household_count__sum']) * 100 if aggrgated_data['occupied_household_count__sum'] != 0 else 0, 2)) + " %")
-            cards[k].append(str(round((aggrgated_data['waste_door_to_door_collection_facility_percentile__sum'] / aggrgated_data['occupied_household_count__sum']) * 100 if aggrgated_data['occupied_household_count__sum'] != 0 else 0, 2)) + " %")
-            cards[k].append(str(round((aggrgated_data['waste_dump_in_open_percent__sum'] / aggrgated_data['occupied_household_count__sum']) * 100 if aggrgated_data['occupied_household_count__sum'] != 0 else 0, 2)) + " %")
+            cards[k].append(str(round((aggrgated_data['waste_no_collection_facility_percentile__sum'] / aggrgated_data['occupied_household_count__sum']) * 100 if aggrgated_data['occupied_household_count__sum'] else 0, 2)) + " %")
+            cards[k].append(str(round((aggrgated_data['waste_door_to_door_collection_facility_percentile__sum'] / aggrgated_data['occupied_household_count__sum']) * 100 if aggrgated_data['occupied_household_count__sum'] else 0, 2)) + " %")
+            cards[k].append(str(round((aggrgated_data['waste_dump_in_open_percent__sum'] / aggrgated_data['occupied_household_count__sum']) * 100 if aggrgated_data['occupied_household_count__sum'] else 0, 2)) + " %")
             all_cards.update(cards)
     return all_cards
 
