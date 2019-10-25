@@ -80,13 +80,13 @@ class RHSData(object):
 
         fun_male_seats = wrk_male_seats - wrk_nt_male_seats
         fun_fmale_seats = wrk_fmale_seats- wrk_nt_fmale_seats
-        # fun_mix_seats = wrk_mix_seats -wrk_nt_mix_seats
+        fun_mix_seats = wrk_mix_seats -wrk_nt_mix_seats
         # total_functional_toilets = fun_male_seats + fun_fmale_seats + fun_mix_seats  # these are seats in use n working
         total_toilet_seats = wrk_male_seats + wrk_fmale_seats + wrk_mix_seats #considered total seats
         # toilet_to_per_ratio = household_population / total_toilet_seats if total_toilet_seats!=0 else 0
-        men_to_wmn_seats_ratio = (fun_male_seats/fun_fmale_seats)*100 if fun_fmale_seats !=0 else 0
+        #men_to_wmn_seats_ratio = (fun_male_seats/fun_fmale_seats)*100 if fun_fmale_seats !=0 else 0
 
-        return (total_toilet_seats, men_to_wmn_seats_ratio)
+        return (total_toilet_seats, fun_mix_seats, fun_male_seats, fun_fmale_seats)
 
     #road section
     def get_road_coverage(self): #add total coverage col to dn and len of road to db at road_coverage column

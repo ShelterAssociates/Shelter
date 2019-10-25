@@ -79,10 +79,10 @@ class DashboardCard(RHSData):
     def save_toilet(self):
         own_toilet_count = self.individual_toilet()
         ctb_use_count = self.ctb_count()
-        (total_toilet_seats, men_to_wmn_seats_ratio) = self.get_toilet_data()
+        (total_toilet_seats, fun_mix_seats, fun_male_seats, fun_female_seats) = self.get_toilet_data()
         to_save = DashboardData.objects.update_or_create(slum=self.slum, defaults= {'individual_toilet_coverage':own_toilet_count,
-                                 'ctb_coverage':ctb_use_count,'toilet_men_women_seats_ratio': men_to_wmn_seats_ratio,
-                                'toilet_seat_to_person_ratio': total_toilet_seats })
+                                 'ctb_coverage':ctb_use_count,'toilet_men_women_seats_ratio': fun_mix_seats, 'fun_male_seats':fun_male_seats,
+                                'toilet_seat_to_person_ratio': total_toilet_seats, 'fun_fmale_seats':fun_female_seats })
 
     # def save_qol_scores(self):
     #     scores = self.get_scores()
