@@ -33,33 +33,47 @@ function get_message(layer){
 
 function fun_call(){
       let level = 'city'
-//      alert('Data for '+ $('#city_name').val() +' city')
       $("#score_val").html(parseInt(card_data[level][$('#city_name').val()]['scores']['totalscore_percentile']));
-      section_cards($('#city_name').val(),level)
+      display_cards('',level)
+      $(".chip").css({'background-color': '#ffffff'}).html('all Administrative ward');
       $('.closebtn').hide()
       $("#levels_tag").change(function(){
-      section_cards($('#city_name').val(),level)
+      display_cards('',level)
+      $(".chip").html('all Administrative ward').css({'background-color': '#ffffff'});
       $('.closebtn').hide()
       });
       }
 
-function section_cards(name, level){
-        var text = $("#levels_tag").val() + "  Report Card for "
-        $("#score_val").html(parseInt(card_data[level][name]['scores']['totalscore_percentile']));
-        $("#section_cards").html("");
-        if (section in card_data[level][name]['cards']){
-          $.each(card_data[level][name]['cards'][section], function(key,value){
-              var section_card = $("div[name=section_card_clone]")[0].outerHTML;
-              section_card = $(section_card).attr('name','section_card').removeClass('hide');
-              section_card.find('span')[0].innerHTML = value;
-              section_card.find('span')[1].innerHTML = Object.values(card_data["metadata"][section][key])[0];
-              section_card.find('img')[0].src = "/static/images/dashboard/" + Object.keys(card_data["metadata"][section][key])[0] + '.png';
-              $("#section_cards").append(section_card);});}
-        $("#report_selections").html(text).append("<div class='chip' id ='contact-chip'>Add data </div> ")
-        $(".chip").html(name).append("<span class='closebtn'>&times</span>");
-        $('.closebtn').on({'click':function(){
-        fun_call() }});
-}
+function display_cards(name='', level='city'){
+
+    var names = '';
+    if(name == ''){
+      names = $("#city_name").val();
+    }
+    else{
+    names = name
+    var text = $("#levels_tag").val() + "  Report Card for"
+    $("#report_selections").html(text).append("<div class='chip' id ='contact-chip'>Add data </div> ")
+    $(".chip").html(name).append("<span class='closebtn'>&times</span>");
+    $('.closebtn').on({'click':function(){ fun_call() } });
+    }
+
+    section = $("#levels_tag").val();
+    var section_score = card_data[level][names]['scores'][section.toLowerCase()+'_percentile'];
+    $("#score_val").html(parseInt(section_score));
+
+    $("#section_cards").html("");
+    if (section in card_data[level][names]['cards']){
+      $.each(card_data[level][names]['cards'][section], function(key,value){
+          var section_card = $("div[name=section_card_clone]")[0].outerHTML;
+          section_card = $(section_card).attr('name','section_card').removeClass('hide');
+          section_card.find('span')[0].innerHTML = value;
+          section_card.find('span')[1].innerHTML = Object.values(card_data["metadata"][section][key])[0];
+          section_card.find('img')[0].src = "/static/images/dashboard/" + Object.keys(card_data["metadata"][section][key])[0] + '.png';
+          $("#section_cards").append(section_card);
+      });
+    }
+  }
 
 var MapLoad = (function() {
   function MapLoad(data){
@@ -95,10 +109,17 @@ var MapLoad = (function() {
        'click' : function(){
                   let level = $('input[type=radio][name=level]:checked').attr("text").toLowerCase().split(" ").join("_");
                   selected_name = properties.name
-                  section_cards(selected_name, level)
+                  display_cards(selected_name, level)
+
+                  var text = $("#levels_tag").val() + "  Report Card for"
+                  $("#report_selections").html(text).append("<div class='chip' id ='contact-chip'>Add data </div> ")
+                  $(".chip").html(selected_name).append("<span class='closebtn'>&times</span>");
+                  $('.closebtn').on({'click':function(){
+                  fun_call()  }});
+
                   $("#levels_tag").change(function(){
                   let level = $('input[type=radio][name=level]:checked').attr("text").toLowerCase().split(" ").join("_");
-                  section_cards(selected_name, level)
+                  display_cards(selected_name, level)
                   });
                   }
             });
@@ -282,32 +303,31 @@ $(document).ready(function(){
         }
     });
 
-  function display_cards(name='', level='city'){
-
-    var names = '';
-    if(name == ''){
-      names = $("#city_name").val();
-    }
-    section = $("#levels_tag").val();
-    var section_score = card_data[level][names]['scores'][section.toLowerCase()+'_percentile'];
-    $("#score_val").html(parseInt(section_score));
-
-    $("#section_cards").html("");
-    if (section in card_data[level][names]['cards']){
-      $.each(card_data[level][names]['cards'][section], function(key,value){
-          var section_card = $("div[name=section_card_clone]")[0].outerHTML;
-          section_card = $(section_card).attr('name','section_card').removeClass('hide');
-          section_card.find('span')[0].innerHTML = value;
-          section_card.find('span')[1].innerHTML = Object.values(card_data["metadata"][section][key])[0];
-          section_card.find('img')[0].src = "/static/images/dashboard/" + Object.keys(card_data["metadata"][section][key])[0] + '.png';
-          $("#section_cards").append(section_card);
-      });
-    }
-  }
+//  function display_cards(name='', level='city'){
+//
+//    var names = '';
+//    if(name == ''){
+//      names = $("#city_name").val();
+//    }
+//    section = $("#levels_tag").val();
+//    var section_score = card_data[level][names]['scores'][section.toLowerCase()+'_percentile'];
+//    $("#score_val").html(parseInt(section_score));
+//
+//    $("#section_cards").html("");
+//    if (section in card_data[level][names]['cards']){
+//      $.each(card_data[level][names]['cards'][section], function(key,value){
+//          var section_card = $("div[name=section_card_clone]")[0].outerHTML;
+//          section_card = $(section_card).attr('name','section_card').removeClass('hide');
+//          section_card.find('span')[0].innerHTML = value;
+//          section_card.find('span')[1].innerHTML = Object.values(card_data["metadata"][section][key])[0];
+//          section_card.find('img')[0].src = "/static/images/dashboard/" + Object.keys(card_data["metadata"][section][key])[0] + '.png';
+//          $("#section_cards").append(section_card);
+//      });
+//    }
+//  }
 
   function change_text(){
     var vis = $("#levels_tag").val() + " Report Card for all " + $('input[type=radio][name=level]:checked').attr('text');
-//    var vis = $("#levels_tag").val() +  $('input[type=radio][name=level]:checked').attr('text');
     $("#report_selections").html(vis);
   }
   change_text();

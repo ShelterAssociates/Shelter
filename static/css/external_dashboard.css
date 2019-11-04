@@ -263,12 +263,12 @@ span.l30 {
 }
 .chip {
   display:inline-block;
-  padding: 0 25px;
+  padding: 1px 10px 0px 10px ;
   height: 30px;
   font-size: 18px;
-  /*line-height: 40px;*/
+  color: #1b2a2e;
   border-radius: 25px;
-  background-color: #f1f1f1;
+  background-color: #e9ecee;
 }
 .full-screen {
   float: right;
