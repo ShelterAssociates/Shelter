@@ -10,6 +10,8 @@ style_value ={
   fillOpacity : 0.4,
 }
 
+level_names = ["administrative_ward", "electoral_ward" , "slum", "city"]
+
 scores = [0, 25, 50, 75, 100];
 function getColor(d) {
     return d < 25 ? '#ff0000' :
@@ -23,7 +25,7 @@ function getColor(d) {
 function get_message(layer){
   var content = [];
   var properties = layer.feature.properties;
-  content.push("Name" + " : "+ properties.name);
+  content.push("Click on " + properties.name + " for details");
     var level_sel = $("#levels_tag").val();
     if (properties.scores != undefined){
       content.push("&nbsp;&nbsp;" + level_sel + " score: "+parseInt(properties.scores[level_sel.toLowerCase()])+"%");
@@ -32,32 +34,36 @@ function get_message(layer){
 }
 
 function fun_call(){
-      let level = 'city'
-      $("#score_val").html(parseInt(card_data[level][$('#city_name').val()]['scores']['totalscore_percentile']));
-      display_cards('',level)
-      $(".chip").css({'background-color': '#ffffff'}).html('all Administrative ward');
+      // function to set city level data on onclick of close button at admin, electoral and slum level
+      let level = level_names[3]
+      let name = $("#city_name").val()
+      text = 'all ' + $('input[type=radio][name=level]:checked').attr('text').toLowerCase()
+      display_cards(name,level)
+      $(".chip").css({'background-color': '#ffffff'}).html(text);
       $('.closebtn').hide()
-      $("#levels_tag").change(function(){
-      display_cards('',level)
-      $(".chip").html('all Administrative ward').css({'background-color': '#ffffff'});
-      $('.closebtn').hide()
-      });
       }
 
-function display_cards(name='', level='city'){
-
-    var names = '';
-    if(name == ''){
-      names = $("#city_name").val();
-    }
-    else{
-    names = name
+function change_text(name){
+    // function to change the dashboard report text according to selected attributes
+    if (name != $("#city_name").val()){
     var text = $("#levels_tag").val() + "  Report Card for"
-    $("#report_selections").html(text).append("<div class='chip' id ='contact-chip'>Add data </div> ")
+    $("#report_selections").html(text).append("<div class='chip' id ='contact-chip'>Add text</div> ")
     $(".chip").html(name).append("<span class='closebtn'>&times</span>");
-    $('.closebtn').on({'click':function(){ fun_call() } });
+    $('.closebtn').on({'click':function(){
+    fun_call();
+    selected_name = $("#city_name").val();
+    set_level = level_names[3]
+    } });
     }
+    else {
+    var vis = $("#levels_tag").val() + " Report Card for all " + $('input[type=radio][name=level]:checked').attr('text').toLowerCase();
+    $("#report_selections").html(vis);
+    $('.closebtn').hide()
+    }
+}
 
+function display_cards(names,level){
+    //function to change card data as per map and drop down section selected
     section = $("#levels_tag").val();
     var section_score = card_data[level][names]['scores'][section.toLowerCase()+'_percentile'];
     $("#score_val").html(parseInt(section_score));
@@ -107,20 +113,12 @@ var MapLoad = (function() {
                         this.closePopup();
                     },
        'click' : function(){
-                  let level = $('input[type=radio][name=level]:checked').attr("text").toLowerCase().split(" ").join("_");
+                  //function to set card scores of selected ward on onclick
+                  let level = $('input[type=radio][name=level]:checked').val();
                   selected_name = properties.name
-                  display_cards(selected_name, level)
-
-                  var text = $("#levels_tag").val() + "  Report Card for"
-                  $("#report_selections").html(text).append("<div class='chip' id ='contact-chip'>Add data </div> ")
-                  $(".chip").html(selected_name).append("<span class='closebtn'>&times</span>");
-                  $('.closebtn').on({'click':function(){
-                  fun_call()  }});
-
-                  $("#levels_tag").change(function(){
-                  let level = $('input[type=radio][name=level]:checked').attr("text").toLowerCase().split(" ").join("_");
-                  display_cards(selected_name, level)
-                  });
+                  set_level = level_names[level]
+                  display_cards(selected_name,set_level)
+                  change_text(selected_name)
                   }
             });
   }
@@ -228,7 +226,7 @@ function initMap12() {
 
             map_data[2] = new MapLoad(slum_data);
             map_data[2].map_render();
-
+            $("#levels_tag").trigger('change');
             $(".overlay").hide();
         }
     });
@@ -271,19 +269,25 @@ $(document).ready(function(){
     }
     map_data[level].show_all(level_tag.toLowerCase());
   }
+
+  selected_name = $("#city_name").val()
+  set_level = level_names[3]
+
   $('input[type=radio][name=level]').change(function() {
     let level = $(this).val();
     let level_tag = $("#levels_tag").val();
     changeMap(level, level_tag);
-    change_text();
+    change_text(selected_name);
+    fun_call();
   });
 
   $("#levels_tag").change(function(){
     let level_tag = $(this).val();
     let level = $('input[type=radio][name=level]:checked').val();
     changeMap(level, level_tag);
-    display_cards();
-    change_text();
+    change_text(selected_name);
+    display_cards(selected_name,set_level);
+
   });
 
   var city_id = $("#city_id").val();
@@ -299,38 +303,9 @@ $(document).ready(function(){
           $("#total_score").html(parseInt(card_data['city'][names]['scores']['totalscore_percentile']));
           $("#total_score_text").html("Overall score for "+names+" City");
           $(".overall-score").removeClass('hide');
-          display_cards();
+          display_cards(selected_name,set_level);
         }
     });
-
-//  function display_cards(name='', level='city'){
-//
-//    var names = '';
-//    if(name == ''){
-//      names = $("#city_name").val();
-//    }
-//    section = $("#levels_tag").val();
-//    var section_score = card_data[level][names]['scores'][section.toLowerCase()+'_percentile'];
-//    $("#score_val").html(parseInt(section_score));
-//
-//    $("#section_cards").html("");
-//    if (section in card_data[level][names]['cards']){
-//      $.each(card_data[level][names]['cards'][section], function(key,value){
-//          var section_card = $("div[name=section_card_clone]")[0].outerHTML;
-//          section_card = $(section_card).attr('name','section_card').removeClass('hide');
-//          section_card.find('span')[0].innerHTML = value;
-//          section_card.find('span')[1].innerHTML = Object.values(card_data["metadata"][section][key])[0];
-//          section_card.find('img')[0].src = "/static/images/dashboard/" + Object.keys(card_data["metadata"][section][key])[0] + '.png';
-//          $("#section_cards").append(section_card);
-//      });
-//    }
-//  }
-
-  function change_text(){
-    var vis = $("#levels_tag").val() + " Report Card for all " + $('input[type=radio][name=level]:checked').attr('text');
-    $("#report_selections").html(vis);
-  }
-  change_text();
 
   $.ajax({
      url : "/graphs/card/all/",
@@ -351,5 +326,4 @@ $(document).ready(function(){
   $("#city_name_text").change(function(){
     document.location.href = '/dashboard/'+$(this).val();
   });
-
 });

@@ -250,6 +250,13 @@ span.l30 {
 .closebtn:hover {
   color: #000;
 }
+.note{
+ background-color: #e9ecee;
+ border: 1px solid #c6ccd1;
+ color: #1b2a2e;
+ font-size: 16px;
+ padding:5px 20px;
+}
 .report-card {
   height: 59px;
   font-family: "SFDisplaySemiBold";
