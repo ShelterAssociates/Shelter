@@ -189,7 +189,7 @@ ul.count li {
   float: left;
   position: relative;
   top: 30px;
-  width: 290px;
+  width: 120px;
   margin-left: 30px;
 }
 .water-label {
@@ -227,7 +227,6 @@ span.l30 {
 .overall-cnt {
   font-family: "SFDisplaySemiBold";
   font-size: 20px;
-
   display: inline-block;
 }
 .overall-text {
@@ -239,6 +238,25 @@ span.l30 {
 .content {
   clear: both;
 }
+
+.closebtn {
+  top: 24px;
+  padding-left: 10px;
+  color: #888;
+  font-weight: bold;
+  font-size: 20px;
+  cursor: pointer;
+}
+.closebtn:hover {
+  color: #000;
+}
+.note{
+ background-color: #e9ecee;
+ border: 1px solid #c6ccd1;
+ color: #1b2a2e;
+ font-size: 16px;
+ padding:5px 20px;
+}
 .report-card {
   height: 59px;
   font-family: "SFDisplaySemiBold";
@@ -249,6 +267,15 @@ span.l30 {
   opacity: 0.7;
   border-top: none;
   border-right: none;
+}
+.chip {
+  display:inline-block;
+  padding: 1px 10px 0px 10px ;
+  height: 30px;
+  font-size: 18px;
+  color: #1b2a2e;
+  border-radius: 25px;
+  background-color: #e9ecee;
 }
 .full-screen {
   float: right;
