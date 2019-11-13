@@ -255,7 +255,8 @@ span.l30 {
  border: 1px solid #c6ccd1;
  color: #1b2a2e;
  font-size: 16px;
- padding:5px 20px;
+ padding:5px 10px;
+ margin-top: 5px;
 }
 .report-card {
   height: 59px;

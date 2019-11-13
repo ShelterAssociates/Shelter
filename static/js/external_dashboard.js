@@ -25,7 +25,7 @@ function getColor(d) {
 function get_message(layer){
   var content = [];
   var properties = layer.feature.properties;
-  content.push("Click on " + properties.name + " for details");
+  content.push("Click on area \"" + properties.name + "\" for details");
     var level_sel = $("#levels_tag").val();
     if (properties.scores != undefined){
       content.push("&nbsp;&nbsp;" + level_sel + " score: "+parseInt(properties.scores[level_sel.toLowerCase()])+"%");
