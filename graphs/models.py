@@ -105,16 +105,17 @@ class DashboardData(models.Model):
    created_on = models.DateTimeField(default=datetime.datetime.now)
    modified_on = models.DateTimeField(default=datetime.datetime.now)
    household_count = models.FloatField(blank= True,null=True)
+   occupied_household_count = models.IntegerField(blank=True,null=True)
 
    # Genreal section columns
    gen_avg_household_size = models.FloatField(blank= True,null=True)
-   gen_tenement_density = models.FloatField(blank= True,null=True)
+   gen_tenement_density = models.FloatField(blank= True,null=True) # get_slum_area_size_in_hectors
    household_owners_count = models.FloatField(blank=True,null=True)
    # gen_sex_ration = models.IntegerField(blank= True,null=True)
    # gen_odf_status = models.IntegerField(blank= True,null=True)
 
    # Waste section columns
-   waste_no_collection_facility_percentile = models.FloatField(blank=True, null=True)
+   waste_no_collection_facility_percentile = models.FloatField(blank=True, null=True) # repalce this field to garbage_bin_facility
    waste_door_to_door_collection_facility_percentile = models.FloatField(blank=True, null=True)
    waste_dump_in_open_percent= models.FloatField(blank=True, null=True)
 
@@ -129,13 +130,16 @@ class DashboardData(models.Model):
    road_with_no_vehicle_access = models.FloatField(blank= True,null=True)
    pucca_road_coverage = models.FloatField(blank= True,null=True)
    kutcha_road_coverage = models.FloatField(blank= True,null=True)
+   total_road_area = models.FloatField(blank=True,null=True)
 
    # Drainage
    drains_coverage =models.FloatField(blank= True,null=True)
 
    # Toilet
-   toilet_seat_to_person_ratio = models.FloatField(blank= True,null=True)
-   toilet_men_women_seats_ratio = models.FloatField(blank= True,null=True)
+   toilet_seat_to_person_ratio = models.FloatField(blank= True,null=True) # total_toilet_seats
+   fun_male_seats = models.IntegerField(blank= True,null=True)#toilet seats in use (male)
+   fun_fmale_seats = models.IntegerField(blank= True,null=True)#toilet seats in use (female)
+   toilet_men_women_seats_ratio = models.FloatField(blank= True,null=True)#toilet seats in use (mix)
    individual_toilet_coverage =models.FloatField(blank= True,null=True)
    open_defecation_coverage = models.FloatField(blank= True,null=True)
    ctb_coverage = models.FloatField(blank= True,null=True)
