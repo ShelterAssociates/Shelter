@@ -25,11 +25,16 @@ function getColor(d) {
 function get_message(layer){
   var content = [];
   var properties = layer.feature.properties;
-  content.push("Click on area \"" + properties.name + "\" for details");
+  //content.push("Click on area \"" + properties.name + "\" for details");
     var level_sel = $("#levels_tag").val();
-    if (properties.scores != undefined){
-      content.push("&nbsp;&nbsp;" + level_sel + " score: "+parseInt(properties.scores[level_sel.toLowerCase()])+"%");
+    if (properties.scores != undefined && properties.scores[level_sel.toLowerCase()] != '' && !isNaN(parseInt(properties.scores[level_sel.toLowerCase()]))){
+      content.push("Click on area \"" + properties.name + "\" for details");
+      content.push("" + level_sel + " score: "+parseInt(properties.scores[level_sel.toLowerCase()])+"%");
     }
+    else{
+      content.push("No data available for \""+properties.name+"\"" );
+    }
+
     return content.join('<br>');
 }
 
@@ -111,7 +116,12 @@ var MapLoad = (function() {
                      },
        'mouseout' : function(ev){
                         this.closePopup();
-                    },
+                    }
+    });
+    var level_sel = $("#levels_tag").val();
+
+    if (properties.scores != undefined && properties.scores[level_sel.toLowerCase()] != '' && !isNaN(parseInt(properties.scores[level_sel.toLowerCase()]))){
+    layer.on({
        'click' : function(){
                   //function to set card scores of selected ward on onclick
                   let level = $('input[type=radio][name=level]:checked').val();
@@ -121,12 +131,13 @@ var MapLoad = (function() {
                   change_text(selected_name)
                   }
             });
+     }
   }
   MapLoad.prototype.show_all = function(selected_level='general',flag_only_border=false){
     map.addLayer(this.shape);
     this.shape.eachLayer(function (layer) {
       layer.setPopupContent(get_message(layer));
-      if('scores' in layer.feature.properties && layer.feature.properties.scores != undefined){
+      if('scores' in layer.feature.properties && layer.feature.properties.scores != undefined ){
         style_value['fillColor'] = style_value['color'] = getColor(layer.feature.properties.scores[selected_level]);
         }
         else{
