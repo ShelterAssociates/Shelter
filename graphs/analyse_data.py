@@ -16,6 +16,7 @@ class RHSData(object):
         self.slum_data = SlumData.objects.get(slum=self.slum)
         self.toilet_ms_data = ToiletConstruction.objects.filter(slum=self.slum)
 
+
     def get_unique_houses_rhs_householddata(self):
         unique_houses = self.household_data.distinct('household_number').values_list('household_number',flat=True)
         return unique_houses
@@ -63,33 +64,34 @@ class RHSData(object):
         return own_toilet_count
 
     def get_toilet_data(self):
+
         toilet_data = self.slum_data.rim_data['Toilet']
+
         wrk_male_seats = 0
-        wrk_nt_male_seats = 0
+        male_seats_not_in_use = 0
         wrk_fmale_seats=0
-        wrk_nt_fmale_seats=0
+        fmale_seats_not_in_use=0
         wrk_mix_seats=0
-        wrk_nt_mix_seats=0
+        mix_seats_not_in_use=0
         for i in toilet_data:
             wrk_male_seats += int(i['number_of_seats_allotted_to_me'] if 'number_of_seats_allotted_to_me' in i else 0)
-            wrk_nt_male_seats += int(i['number_of_seats_allotted_to_me_001'] if 'number_of_seats_allotted_to_me_001' in i else 0)
+            male_seats_not_in_use += int(i['number_of_seats_allotted_to_me_001'] if 'number_of_seats_allotted_to_me_001' in i else 0)
             wrk_fmale_seats += int(i['number_of_seats_allotted_to_wo'] if 'number_of_seats_allotted_to_wo' in i else 0)
-            wrk_nt_fmale_seats += int(i['number_of_seats_allotted_to_wo_001'] if 'number_of_seats_allotted_to_wo_001' in i else 0)
+            fmale_seats_not_in_use += int(i['number_of_seats_allotted_to_wo_001'] if 'number_of_seats_allotted_to_wo_001' in i else 0)
             wrk_mix_seats += int(i['total_number_of_mixed_seats_al'] if 'total_number_of_mixed_seats_al' in i else 0)
-            wrk_nt_mix_seats += int(i['number_of_mixed_seats_allotted'] if 'number_of_mixed_seats_allotted' in i else 0)
+            mix_seats_not_in_use += int(i['number_of_mixed_seats_allotted'] if 'number_of_mixed_seats_allotted' in i else 0)
 
-        fun_male_seats = wrk_male_seats - wrk_nt_male_seats
-        fun_fmale_seats = wrk_fmale_seats- wrk_nt_fmale_seats
-        fun_mix_seats = wrk_mix_seats -wrk_nt_mix_seats
+        fun_male_seats = wrk_male_seats - male_seats_not_in_use
+        fun_fmale_seats = wrk_fmale_seats- fmale_seats_not_in_use
+        fun_mix_seats = wrk_mix_seats -mix_seats_not_in_use
         # total_functional_toilets = fun_male_seats + fun_fmale_seats + fun_mix_seats  # these are seats in use n working
         total_toilet_seats = wrk_male_seats + wrk_fmale_seats + wrk_mix_seats #considered total seats
         # toilet_to_per_ratio = household_population / total_toilet_seats if total_toilet_seats!=0 else 0
         #men_to_wmn_seats_ratio = (fun_male_seats/fun_fmale_seats)*100 if fun_fmale_seats !=0 else 0
-
         return (total_toilet_seats, fun_mix_seats, fun_male_seats, fun_fmale_seats)
 
     #road section
-    def get_road_coverage(self): #add total coverage col to dn and len of road to db at road_coverage column
+    def get_road_coverage(self):
         kutcha_road_area = 0
         pucca_road_area = 0
 
@@ -173,21 +175,9 @@ class RHSData(object):
                             if int(x.rhs_data['group_el9cl08/Number_of_household_members']) else 0) ,self.get_household_members()))
        return slum_population
 
-    # def get_household_member_size(self):
-    #     avg_household_size = self.get_household_member_total() / len(self.get_household_members()) if len(self.get_household_members()) != 0 else 0
-    #     return avg_household_size
-
     def get_slum_area_size_in_hectors(self):
         return int(self.slum_data.rim_data['General']['approximate_area_of_the_settle']) / 10000 \
             if 'approximate_area_of_the_settle' in self.slum_data.rim_data['General'] else 0
-
-    # def get_tenement_density(self):
-    #     area_size = self.get_slum_area_size()
-    #     return self.get_household_count() / area_size if area_size != 0 else 0
-    #
-    # def get_population_density(self):
-    #     area_size = self.get_slum_area_size()
-    #     return self.get_slum_population() / area_size if area_size != 0 else 0
 
     def get_sex_ratio(self):
         rhs_ff = self.household_data.values('ff_data')
@@ -204,3 +194,85 @@ class RHSData(object):
                             mem_count['females'].append(int(v1))
         # female_male_ratio =(sum(mem_count['females'])/sum(mem_count['males'])) if sum(mem_count['males'])!= 0 else 0
         return mem_count
+
+    def key_takeaways_general(self):
+        '''key take aways for general section'''
+        general = self.slum_data.rim_data['General']
+        land_owner = general['land_owner']
+        land_status = general['legal_status']
+        topography = general['topography']
+
+        return (land_owner,land_status,topography)
+
+    def key_takeaways_ctb(self,ctb):
+        '''collecting each ctb data from slum where ctb in use'''
+        if 'is_the_CTB_in_use' in ctb and ctb['is_the_CTB_in_use'] == 'Yes':
+            electricity = ctb['availability_of_electricity_in_001'] if 'availability_of_electricity_in_001' in ctb else 0
+            sewage_system = ctb['sewage_disposal_system'] if 'sewage_disposal_system' in ctb else 0
+            ctb_available_at_night = ctb['is_the_ctb_available_at_night'] if 'is_the_ctb_available_at_night' in ctb else 0
+            ctb_cleaning = ctb['cleanliness_of_the_ctb'] if 'cleanliness_of_the_ctb' in ctb else 0
+            ctb_cleaning_freq = ctb['frequency_of_ctb_cleaning_by_U'] if 'frequency_of_ctb_cleaning_by_U' in ctb else 0
+            water_in_ctb = ctb['availability_of_water_in_the_t'] if 'availability_of_water_in_the_t' in ctb else 0
+            water_supply_type = ctb['type_of_water_supply_in_ctb'] if 'type_of_water_supply_in_ctb' in ctb else 0
+            ctb_door = ctb['out_of_total_seats_no_of_doors_in_good_condition'] if 'out_of_total_seats_no_of_doors_in_good_condition' in ctb else 0
+            ctb_condition = ctb['condition_of_ctb_structure'] if 'condition_of_ctb_structure' in ctb else 0
+            ctb_seats_good_condtn = ctb['out_of_total_seats_no_of_pans_in_good_condition'] \
+                if 'out_of_total_seats_no_of_pans_in_good_condition' in ctb else 0
+            ctb_tank_capacity = ctb['capacity_of_ctb_water_tank_in'] if 'capacity_of_ctb_water_tank_in' in ctb else 0
+            cost_per_use = ctb['cost_of_pay_and_use_toilet_pe'] if 'cost_of_pay_and_use_toilet_pe' in ctb else 0
+            ctb_caretaker = ctb['is_there_a_caretaker_for_the_C'] if 'is_there_a_caretaker_for_the_C' in ctb else 0
+            for_child = ctb['facility_in_the_toilet_block_f'] if 'facility_in_the_toilet_block_f' in ctb else 0
+            ctb_cond_for_child = ctb['condition_of_facility_for_chil'] if 'condition_of_facility_for_chil' in ctb else 0
+
+            return (electricity,sewage_system,ctb_available_at_night,ctb_cleaning,ctb_cleaning_freq,water_in_ctb,water_supply_type,
+                    ctb_door,ctb_condition,ctb_seats_good_condtn,ctb_tank_capacity,cost_per_use,ctb_caretaker,for_child,ctb_cond_for_child)
+
+    def key_takeaways_road(self):
+        '''key take aways for road section'''
+        road = self.slum_data.rim_data['Road']
+        slum_level = road['is_the_settlement_below_or_abo'] if 'is_the_settlement_below_or_abo' in road else 0
+        huts_level = road['are_the_huts_below_or_above_th'] if 'are_the_huts_below_or_above_th' in road else 0
+        vehicular_access = road['point_of_vehicular_access_to_t'] if 'point_of_vehicular_access_to_t' in road else 0
+
+        return (slum_level,huts_level,vehicular_access)
+
+    def key_takeaways_water(self):
+        '''key take aways for water section'''
+        water = self.slum_data.rim_data['Water']
+        water_availability = water['availability_of_water'] if 'availability_of_water' in water else 0
+        water_quality = water['quality_of_water_in_the_system'] if 'quality_of_water_in_the_system' in water else 0
+        water_coverage = water['coverage_of_wateracross_settle'] if 'coverage_of_wateracross_settle' in water else 0
+        alternate_water_source = water['alternative_source_of_water'] if 'alternative_source_of_water' in water else 0
+
+        return (water_availability,water_coverage,water_quality,alternate_water_source)
+
+    def key_takeaways_drain_n_gutter(self):
+        '''key take aways for drinage and gutter section'''
+        drainage = self.slum_data.rim_data['Drainage']
+        gutter = self.slum_data.rim_data['Gutter']
+        drain_block = drainage['do_the_drains_get_blocked'] if 'do_the_drains_get_blocked' in drainage else 0
+        drain_gradient = drainage['is_the_drainage_gradient_adequ'] if 'is_the_drainage_gradient_adequ' in drainage else 0
+        gutter_flood = gutter['do_gutters_flood'] if 'do_gutters_flood' in gutter else 0
+        gutter_gradient = gutter['is_gutter_gradient_adequate'] if 'is_gutter_gradient_adequate' in gutter else 0
+
+        return (drain_block, drain_gradient, gutter_flood, gutter_gradient)
+
+    def key_takeaways_waste(self):
+        '''key take aways for waste section'''
+        waste = self.slum_data.rim_data['Waste']
+        dump_in_drains = waste['do_the_member_of_community_dep'] if 'do_the_member_of_community_dep' in waste else 0
+        community_dump_site = waste['where_are_the_communty_open_du'] if 'where_are_the_communty_open_du' in waste else 0
+        waste_containers = waste['total_number_of_waste_containe'] if 'total_number_of_waste_containe' in waste else 0
+        waste_coll_by_mla_tempo = waste['coverage_of_waste_collection_a'] if 'coverage_of_waste_collection_a' in waste else 0
+        waste_coll_door_to_door = waste['coverage_of_waste_collection_a_001'] if 'coverage_of_waste_collection_a_001' in waste else 0
+        waste_coll_by_ghantagadi = waste['coverage_of_waste_collection_a_002'] if 'coverage_of_waste_collection_a_002' in waste else 0
+        waste_coll_by_ulb_van = waste['coverage_of_waste_collection_a_003'] if 'coverage_of_waste_collection_a_003' in waste else 0
+        waste_freq_by_ulb_van = waste['frequency_of_waste_collection_'] if 'frequency_of_waste_collection_' in waste else 0
+        waste_freq_by_mla_tempo = waste['frequency_of_waste_collection'] if 'frequency_of_waste_collection' in waste else 0
+        waste_freq_door_to_door = waste['frequency_of_waste_collection__002'] if 'frequency_of_waste_collection__002' in waste else 0
+        waste_freq_by_ghantagadi = waste['frequency_of_waste_collection_001'] if 'frequency_of_waste_collection_001' in waste else 0
+        waste_freq_bin = waste['frequency_of_waste_collection__001'] if 'frequency_of_waste_collection__001' in waste else 0
+
+        return (dump_in_drains,community_dump_site,waste_containers,waste_coll_by_mla_tempo,waste_coll_door_to_door,
+                waste_coll_by_ghantagadi,waste_coll_by_ulb_van,waste_freq_bin,waste_freq_by_ghantagadi,waste_freq_by_mla_tempo,
+                waste_freq_by_ulb_van,waste_freq_door_to_door)
