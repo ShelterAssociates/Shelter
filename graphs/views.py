@@ -31,11 +31,12 @@ CARDS = {'Cards': {'General':[{'gen_avg_household_size':"Avg Household size"}, {
                 {'land_topography':' <b>data</b>  slums likely to be affected by flooding, drainage and gutter problems due to <b>reasonable slope</b> of land topography <br>'}],
          'Water': [{'availability_of_water':[' slums where water availability  is <b>less than 2 hours</b> , ',' with <b>water availability 24/7</b> <br>']},
                   {'quality_of_water':[' slum with <b>poor</b> quality of water ',' with <b>good</b> quality of water<br>']},
-                  {'coverage_of_water':[' slum with <b>full water coverage</b> ,','<b> slum with no water coverage</b> <br>']},
+                  {'coverage_of_water':[' slum with <b>full water coverage</b> ,','slum with <b>partial water coverage</b> <br>']},
                   {'water_source':[' slums where alternate water sources are <b>tanker</b> , ',' with <b>water standposts</b> <br>']}],
          'Waste': [{'dump_sites':' <b>data</b>  slums having <b>open community dumping sites</b> <br>'},{'dump_in_drain':' <b>data</b>  slums practice <b> dumping in drains</b> <br>'},
                    {'count_waste_container':' <b>data</b>  slums with <b>availability of waste containers</b> <br>'},
-                   {'waste_coverage_full':[' slums with <b>full waste coverage</b> facility, ',' with <b>partial waste coverage</b><br>']},
+                   {'waste_coverage_full':[' slums with <b>full waste coverage</b> facility, ',
+                    ' with <b>partial waste coverage</b> and ' , ' with <b> no coverage</b> <br>']},
                    {'colln_freq_daily':[' slums with <b>daily</b>, ',' with <b>twice a week </b> waste collection frequency <br>']}],
          'Road': [{'road_vehicle_access':' <b>data</b>  slums having <b>more than one</b> vehicular access <br>'},
                   {'slum_level':' <b>data</b>  slums where settlement is <b> below</b> access road<br>'},{'huts_level':' <b>data</b>  slums where huts are <b>above</b> internal roads<br>'}],
@@ -157,18 +158,45 @@ def key_takeaways(slum_name):
     gen_land_topography =slum_name.filter(land_topography='Depression Slope').count()
 
     #water data
-    # t1 = slum_name.values('availability_of_water').annotate(count=Count('availability_of_water'))
+    water_availability ={}
+    water_quality ={}
+    water_coverage ={}
+    water_source ={}
 
-    water_availability_2hrs = slum_name.filter(availability_of_water ='Less than 2 hrs').count()
-    water_availability_24_7 = slum_name.filter(availability_of_water= '24/7').count()
-    quality_poor = slum_name.filter(quality_of_water='Poor').count()
-    qualiyt_good = slum_name.filter(quality_of_water ='Good').count()
-    coverage_full = slum_name.filter(coverage_of_water = "Full coverage").count()
-    no_coverage = slum_name.filter(coverage_of_water = 0).count()
-    tanker = slum_name.filter(alternative_source_of_water ='Tanker').count()
-    standpost = slum_name.filter(alternative_source_of_water='Water standpost').count()
+    availability = slum_name.values('availability_of_water').annotate(count=Count('availability_of_water'))
+    for i in availability:
+        water_availability[i['availability_of_water']]= i['count']
+    water_availability_2hrs = water_availability['Less than 2 hrs']  if 'Less than 2 hrs' in water_availability.keys() else 0
+    water_availability_24_7 = water_availability['24/7']  if 'Daily' in water_availability.keys() else 0
+
+    quality = slum_name.values('quality_of_water').annotate(count=Count('quality_of_water'))
+    for i in quality:
+        water_quality[i['quality_of_water']]= i['count']
+    quality_poor = water_quality['Poor']  if 'Poor' in water_quality.keys() else 0
+    qualiyt_good = water_quality['Good']  if 'Good' in water_quality.keys() else 0
+
+    coverage = slum_name.values('coverage_of_water').annotate(count=Count('coverage_of_water'))
+    for i in coverage:
+        water_coverage[i['coverage_of_water']]= i['count']
+    coverage_full = water_coverage["Full coverage"]  if 'Full coverage' in water_coverage.keys() else 0
+    prtial_coverage = water_coverage['Partial coverage']  if 'Partial coverage' in water_coverage.keys() else 0
+
+    source = slum_name.values('alternative_source_of_water').annotate(count=Count('alternative_source_of_water'))
+    for i in source:
+        water_source[i['alternative_source_of_water']]= i['count']
+    tanker = water_source['Tanker']  if 'Tanker' in water_source.keys() else 0
+    standpost = water_source['Water standpost']  if 'Water standpost' in water_source.keys() else 0
 
     #waste data
+    waste_coverage_door ={}
+    waste_coverage_tempo = {}
+    waste_coverage_van = {}
+    waste_coverage_ghantagadi = {}
+    waste_freq_door = {}
+    waste_freq_tempo = {}
+    waste_freq_van = {}
+    waste_freq_ghantagadi = {}
+
     count_waste_container = 0
     dump_sites = slum_name.filter(~Q(community_dump_sites = 'None')).count()
     dump_in_drain = slum_name.filter(dump_in_drains ='Yes').count()
@@ -176,42 +204,63 @@ def key_takeaways(slum_name):
     count_waste_container += container
 
     cvrg_door_t_door = slum_name.values('waste_coverage_door_to_door').annotate(count=Count('waste_coverage_door_to_door'))
-
     for i in cvrg_door_t_door:
-        dtd_full = int(i['count']) if 'Full coverage' in i.values() else 0
-        dtd_part = int(i['count']) if 'Partial coverage' in i.values() else 0
+        waste_coverage_door[i['waste_coverage_door_to_door']] = i['count']
+    dtd_full = waste_coverage_door['Full coverage'] if 'Full coverage' in waste_coverage_door.keys() else 0
+    dtd_part = waste_coverage_door['Partial coverage'] if 'Partial coverage' in waste_coverage_door.keys() else 0
+    dtd_no = waste_coverage_door['0'] if '0' in waste_coverage_door.keys() else 0
 
-    cvrg_mla = slum_name.values('waste_coverage_by_mla_tempo').annotate(count=Count('waste_coverage_by_mla_tempo'))
-    for i in cvrg_mla:
-        mla_full = int(i['count']) if 'Full coverage' in i.values() else 0
-        mla_part = int(i['count']) if 'Partial coverage' in i.values() else 0
+    cvrg_mla_tempo = slum_name.values('waste_coverage_by_mla_tempo').annotate(count=Count('waste_coverage_by_mla_tempo'))
+    for i in cvrg_mla_tempo:
+        waste_coverage_tempo[i['waste_coverage_by_mla_tempo']] = i['count']
+    mla_full = waste_coverage_tempo['Full coverage'] if 'Full coverage' in waste_coverage_tempo.keys() else 0
+    mla_part = waste_coverage_tempo['Partial coverage'] if 'Partial coverage' in waste_coverage_tempo.keys() else 0
+    mla_no = waste_coverage_tempo['0'] if '0' in waste_coverage_tempo.keys() else 0
 
     cvrg_van = slum_name.values('waste_coverage_by_ulb_van').annotate(count=Count('waste_coverage_by_ulb_van'))
     for i in cvrg_van:
-        van_full = int(i['count']) if 'Full coverage' in i.values() else 0
-        van_part = int(i['count']) if 'Partial coverage' in i.values() else 0
+        waste_coverage_van[i['waste_coverage_by_ulb_van']]= i['count']
+    van_full = waste_coverage_van['Full coverage'] if 'Full coverage' in waste_coverage_van.keys() else 0
+    van_part = waste_coverage_van['Partial coverage'] if 'Partial coverage' in waste_coverage_van.keys() else 0
+    van_no = waste_coverage_van['0'] if '0' in waste_coverage_van.keys() else 0
 
     cvrg_ghantagadi = slum_name.values('waste_coverage_by_ghantagadi').annotate(count=Count('waste_coverage_by_ghantagadi'))
     for i in cvrg_ghantagadi:
-        gadi_full = int(i['count']) if 'Full coverage' in i.values() else 0
-        gadi_part = int(i['count']) if 'Partial coverage' in i.values() else 0
+        waste_coverage_ghantagadi[i['waste_coverage_by_ghantagadi']] = i['count']
+    gadi_full = waste_coverage_ghantagadi['Full coverage']  if 'Full coverage' in waste_coverage_ghantagadi.keys() else 0
+    gadi_part = waste_coverage_ghantagadi['Partial coverage']  if 'Partial coverage' in waste_coverage_ghantagadi.keys() else 0
+    gado_no = waste_coverage_ghantagadi['0'] if '0' in waste_coverage_ghantagadi.keys() else 0
 
-    full_coverage = dtd_full +mla_full+van_full+gadi_full
-    partial_coverage = dtd_part+mla_part+van_part+gadi_part
+    full_coverage = gadi_full+van_full+dtd_full+mla_full
+    partial_coverage =gadi_part+van_part+dtd_part+mla_part
+    no_coverage = gado_no+van_no+mla_no+dtd_no
 
-    freq_mla = slum_name.filter(waste_coll_freq_by_mla_tempo='Less than twice a week').count()
-    freq_van = slum_name.filter(waste_coll_freq_by_ulb_van='Less than twice a week').count()
-    freq_door_t_door = slum_name.filter(waste_coll_freq_door_to_door='Less than twice a week').count()
-    freq_ghantagadi = slum_name.filter(waste_coll_freq_by_ghantagadi='Less than twice a week').count()
+    freq_door = slum_name.values('waste_coll_freq_door_to_door').annotate(count=Count('waste_coll_freq_door_to_door'))
+    for i in freq_door:
+        waste_freq_door[i['waste_coll_freq_door_to_door']] = i['count']
+    door_freq = waste_freq_door['Less than twice a week'] if 'Less than twice a week' in waste_freq_door.keys() else 0
+    door_freq_daily = waste_freq_door['Daily'] if 'Daily' in waste_freq_door.keys() else 0
 
-    freq_colln_twice = freq_ghantagadi+freq_door_t_door+freq_van+freq_mla
+    freq_van = slum_name.values('waste_coll_freq_by_ulb_van').annotate(count=Count('waste_coll_freq_by_ulb_van'))
+    for i in freq_van:
+        waste_freq_van[i['waste_coll_freq_by_ulb_van']] = i['count']
+    van_freq = waste_freq_van['Less than twice a week'] if 'Less than twice a week' in waste_freq_van.keys() else 0
+    van_freq_daily = waste_freq_van['Daily'] if 'Daily' in waste_freq_van.keys() else 0
 
-    freq_mla1 = slum_name.filter(waste_coll_freq_by_mla_tempo='Daily').count()
-    freq_van1 = slum_name.filter(waste_coll_freq_by_ulb_van='Daily').count()
-    freq_door_t_door1 = slum_name.filter(waste_coll_freq_door_to_door='Daily').count()
-    freq_ghantagadi1 = slum_name.filter(waste_coll_freq_by_ghantagadi='Daily').count()
+    freq_tempo= slum_name.values('waste_coll_freq_by_mla_tempo').annotate(count=Count('waste_coll_freq_by_mla_tempo'))
+    for i in freq_tempo:
+        waste_freq_tempo[i['waste_coll_freq_by_mla_tempo']] = i['count']
+    tempo_freq = waste_freq_tempo['Less than twice a week'] if 'Less than twice a week' in waste_freq_tempo.keys() else 0
+    tempo_freq_daily = waste_freq_tempo['Daily'] if 'Daily' in waste_freq_tempo.keys() else 0
 
-    freq_colln_daily =freq_ghantagadi1+freq_van1+freq_mla1+freq_door_t_door1
+    freq_ghantagadi = slum_name.values('waste_coll_freq_by_ghantagadi').annotate(count=Count('waste_coll_freq_by_ghantagadi'))
+    for i in freq_ghantagadi:
+        waste_freq_ghantagadi[i['waste_coll_freq_by_ghantagadi']] = i['count']
+    gadi_freq = waste_freq_ghantagadi['Less than twice a week'] if 'Less than twice a week' in waste_freq_ghantagadi.keys() else 0
+    gadi_freq_daily = waste_freq_ghantagadi['Daily'] if 'Daily' in waste_freq_ghantagadi.keys() else 0
+
+    freq_colln_twice = door_freq+van_freq+gadi_freq+tempo_freq
+    freq_colln_daily = gadi_freq_daily+tempo_freq_daily+door_freq_daily+van_freq_daily
 
     #road data
     slum_level = slum_name.filter(is_the_settlement_below_or_above='Below').count()
@@ -236,10 +285,10 @@ def key_takeaways(slum_name):
                     all_cards.update(cards)
                 elif k == 'Water':
                     cards[k]= [(water_availability_2hrs,water_availability_24_7),(quality_poor,qualiyt_good),
-                               (coverage_full,no_coverage),(tanker,standpost)]
+                               (coverage_full,prtial_coverage),(tanker,standpost)]
                     all_cards.update(cards)
                 elif k == 'Waste':
-                    cards[k] = [dump_sites,dump_in_drain,count_waste_container,(full_coverage,partial_coverage),(freq_colln_twice,freq_colln_daily)]
+                    cards[k] = [dump_sites,dump_in_drain,count_waste_container,(full_coverage,partial_coverage,no_coverage),(freq_colln_twice,freq_colln_daily)]
                     all_cards.update(cards)
                 elif k == 'Road':
                     cards[k]= [slum_level,huts_level,vehicle_access]
