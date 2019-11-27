@@ -33,7 +33,7 @@ class DashboardCard(RHSData):
         # print type(household_count), type(household_owners_count),type(avg_household_size),type(slum_area_size_in_hectors)
         to_save = DashboardData.objects.update_or_create(slum = self.slum , defaults ={'city_id': self.slum.electoral_ward.administrative_ward.city.id,
                     'gen_tenement_density' : get_slum_area_size_in_hectors,'gen_avg_household_size': avg_household_size,
-                    'total_household_count':household_count,'household_owners_count':household_owners_count,
+                    'household_count':household_count,'household_owners_count':household_owners_count,
                     'occupied_household_count':occupied_household_count})
 
     def Waste_Info(self):
