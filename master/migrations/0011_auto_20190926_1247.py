@@ -15,6 +15,6 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='rapid_slum_appraisal',
             name='drainage_coverage',
-            field=models.CharField(max_length=2048, null=True, blank=True),
+            field=models.IntegerField(max_length=2048, null=True, blank=True),
         ),
     ]
