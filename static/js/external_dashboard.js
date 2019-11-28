@@ -195,10 +195,10 @@ function initMap(){
       // loop through our density intervals and generate a label with a colored square for each interval
       for (var i = 0; i < scores.length-1; i++) {
         div.innerHTML +=
-          '<i style="background:' + getColor(scores[i]) + '"></i> ' +
+          '<i style="height:15px;background:' + getColor(scores[i]) + '"></i> ' +
           scores[i] + (scores[i + 1] ? ' &ndash; ' + scores[i + 1] + '<br>' : '+');
       }
-      div.innerHTML += '<i style="background:#0000ff;"></i> No slum';
+      div.innerHTML += '<i style="height:15px;background:#0000ff;"></i> No slum';
       return div;
     };
     legend.addTo(map);
