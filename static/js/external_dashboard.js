@@ -66,9 +66,19 @@ function change_text(name){
     $('.closebtn').hide()
     }
 }
+
+function create_text_key_takeaways(value,text){
+     if (value.length > 1 && text.length > 1){
+
+     }
+     else{
+      text = value == 0 ? '' : ( regex = /data/, text1 = (String(name).replace(regex, value)),'&#128477' + text1 )
+      $(".takeaways").append(text)
+     }
+}
+
 function display_cards(names,level){
     //function to change card data as per map and drop down section selected
-//    alert(level);
     section = $("#levels_tag").val();
     var section_score = card_data[level][names]['scores'][section.toLowerCase()+'_percentile'];
     $("#score_val").html(parseInt(section_score));
@@ -85,24 +95,16 @@ function display_cards(names,level){
     }
     $(".takeaways").html("");
     if (section in card_data[level][names]['key_takeaways']){
-      $.each(card_data[level][names]['key_takeaways'][section], function(key,value){
-      var name = Object.values(card_data["metadata"]['Keytakeaways'][section][key])
-      if(value.length > 1){
-      if (value[0]== 0 && value[1] == 0){ }
-      else if(value[0]== 0){
-      text ="&#128477" + "<b>"+ value[1] + "</b>" + name[0][1]
-      $(".takeaways").append(text) }
-      else if(value[1] == 0){
-      text = "&#128477"  + "<b>"+ value[0] + "</b>" + name[0][0] + "<br>"
-      $(".takeaways").append(text)}
-      else{
-      text = "&#128477"  + "<b>"+ value[0] + "</b>" + name[0][0] + "<b>"+ value[1] + "</b>" + name[0][1]
-      $(".takeaways").append(text)}
+      var value = card_data[level][names]['key_takeaways'][section]
+      var name = Object.values(card_data["metadata"]['Keytakeaways'][section])
+      if( value.every(item => item === 0)){$('.key-values').hide()}
+      for(i = 0 ;i <=(value.length-1); i++){
+          if (value[i] > 0){
+             newname = String(name[i]).replace('value', value[i])
+             $(".takeaways").append(newname)
+          }
       }
-      else{
-       text = value == 0 ? '' : ( regex = /data/, text1 = (String(name).replace(regex, value)),'&#128477' + text1 )
-      $(".takeaways").append(text)}
-      }); }
+    }
   }
 
 var MapLoad = (function() {
