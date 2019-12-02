@@ -67,16 +67,6 @@ function change_text(name){
     }
 }
 
-function create_text_key_takeaways(value,text){
-     if (value.length > 1 && text.length > 1){
-
-     }
-     else{
-      text = value == 0 ? '' : ( regex = /data/, text1 = (String(name).replace(regex, value)),'&#128477' + text1 )
-      $(".takeaways").append(text)
-     }
-}
-
 function display_cards(names,level){
     //function to change card data as per map and drop down section selected
     section = $("#levels_tag").val();
@@ -85,26 +75,30 @@ function display_cards(names,level){
     $("#section_cards").html("");
     if (section in card_data[level][names]['cards']){
       $.each(card_data[level][names]['cards'][section], function(key,value){
-          var section_card = $("div[name=section_card_clone]")[0].outerHTML;
-          section_card = $(section_card).attr('name','section_card').removeClass('hide');
-          section_card.find('span')[0].innerHTML = value;
-          section_card.find('span')[1].innerHTML = Object.values(card_data["metadata"]['Cards'][section][key])[0];
-          section_card.find('img')[0].src = "/static/images/dashboard/" + Object.keys(card_data["metadata"]['Cards'][section][key])[0] + '.png';
-          $("#section_cards").append(section_card);
-      });
+      if(value == 0 || value == '0.0 %' || value == "NO CTB") { }
+      else {
+      var section_card = $("div[name=section_card_clone]")[0].outerHTML;
+      section_card = $(section_card).attr('name','section_card').removeClass('hide');
+      section_card = $(section_card).attr('name','section_card').removeClass('hide');
+      section_card.find('span')[0].innerHTML = value;
+      section_card.find('span')[1].innerHTML = Object.values(card_data["metadata"]['Cards'][section][key])[0];
+      section_card.find('img')[0].src = "/static/images/dashboard/" + Object.keys(card_data["metadata"]['Cards'][section][key])[0] + '.png';
+      $("#section_cards").append(section_card);}
+    });
     }
-    $(".takeaways").html("");
-    if (section in card_data[level][names]['key_takeaways']){
-      var value = card_data[level][names]['key_takeaways'][section]
-      var name = Object.values(card_data["metadata"]['Keytakeaways'][section])
-      if( value.every(item => item === 0)){$('.key-values').hide()}
-      for(i = 0 ;i <=(value.length-1); i++){
-          if (value[i] > 0){
-             newname = String(name[i]).replace('value', value[i])
-             $(".takeaways").append(newname)
-          }
-      }
-    }
+//    $(".takeaways").html("");
+//    if (section in card_data[level][names]['key_takeaways']){
+//      var value = card_data[level][names]['key_takeaways'][section]
+//      var name = Object.values(card_data["metadata"]['Keytakeaways'][section])
+//      for(i = 0 ;i <=(value.length-1); i++){
+//          key = '<br>'+ '&#128477'
+//          text = String(name[i]).replace('<br>',key)
+//          if (value[i] > 0){
+//              newname = String(text).replace('value', value[i])
+//              $(".takeaways").append(newname)
+//          }
+//      }
+//    }
   }
 
 var MapLoad = (function() {
@@ -180,7 +174,6 @@ var MapLoad = (function() {
   MapLoad.prototype.hide_all = function(){
      map.removeLayer(this.shape);
   }
-
    return MapLoad;
 }());
 
