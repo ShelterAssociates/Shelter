@@ -10,7 +10,7 @@ style_value ={
   fillOpacity : 0.4,
 }
 
-level_names = ["administrative_ward", "electoral_ward" , "slum", "city"]
+level_names = ["administrative_ward", "electoral_ward" , "slum"]
 
 scores = [0, 25, 50, 75, 100];
 function getColor(d) {
@@ -40,7 +40,7 @@ function get_message(layer){
 
 function fun_call(){
       // function to set city level data on onclick of close button at admin, electoral and slum level
-      let level = level_names[3]
+      let level = 'city'
       let name = $("#city_name").val()
       text = 'all ' + $('input[type=radio][name=level]:checked').attr('text').toLowerCase()
       display_cards(name,level)
@@ -57,7 +57,7 @@ function change_text(name){
     $('.closebtn').on({'click':function(){
     fun_call();
     selected_name = $("#city_name").val();
-    set_level = level_names[3]
+    set_level = 'city'
     } });
     }
     else {
@@ -72,18 +72,33 @@ function display_cards(names,level){
     section = $("#levels_tag").val();
     var section_score = card_data[level][names]['scores'][section.toLowerCase()+'_percentile'];
     $("#score_val").html(parseInt(section_score));
-
     $("#section_cards").html("");
     if (section in card_data[level][names]['cards']){
       $.each(card_data[level][names]['cards'][section], function(key,value){
-          var section_card = $("div[name=section_card_clone]")[0].outerHTML;
-          section_card = $(section_card).attr('name','section_card').removeClass('hide');
-          section_card.find('span')[0].innerHTML = value;
-          section_card.find('span')[1].innerHTML = Object.values(card_data["metadata"][section][key])[0];
-          section_card.find('img')[0].src = "/static/images/dashboard/" + Object.keys(card_data["metadata"][section][key])[0] + '.png';
-          $("#section_cards").append(section_card);
-      });
+      if(value == 0 || value == '0.0 %' || value == "NO CTB") { }
+      else {
+      var section_card = $("div[name=section_card_clone]")[0].outerHTML;
+      section_card = $(section_card).attr('name','section_card').removeClass('hide');
+      section_card = $(section_card).attr('name','section_card').removeClass('hide');
+      section_card.find('span')[0].innerHTML = value;
+      section_card.find('span')[1].innerHTML = Object.values(card_data["metadata"]['Cards'][section][key])[0];
+      section_card.find('img')[0].src = "/static/images/dashboard/" + Object.keys(card_data["metadata"]['Cards'][section][key])[0] + '.png';
+      $("#section_cards").append(section_card);}
+    });
     }
+//    $(".takeaways").html("");
+//    if (section in card_data[level][names]['key_takeaways']){
+//      var value = card_data[level][names]['key_takeaways'][section]
+//      var name = Object.values(card_data["metadata"]['Keytakeaways'][section])
+//      for(i = 0 ;i <=(value.length-1); i++){
+//          key = '<br>'+ '&#128477'
+//          text = String(name[i]).replace('<br>',key)
+//          if (value[i] > 0){
+//              newname = String(text).replace('value', value[i])
+//              $(".takeaways").append(newname)
+//          }
+//      }
+//    }
   }
 
 var MapLoad = (function() {
@@ -159,7 +174,6 @@ var MapLoad = (function() {
   MapLoad.prototype.hide_all = function(){
      map.removeLayer(this.shape);
   }
-
    return MapLoad;
 }());
 
@@ -237,7 +251,7 @@ function initMap12() {
 
             map_data[2] = new MapLoad(slum_data);
             map_data[2].map_render();
-            $("#levels_tag").trigger('change');
+
             $(".overlay").hide();
         }
     });
@@ -282,7 +296,7 @@ $(document).ready(function(){
   }
 
   selected_name = $("#city_name").val()
-  set_level = level_names[3]
+  set_level = 'city'
 
   $('input[type=radio][name=level]').change(function() {
     let level = $(this).val();
@@ -298,7 +312,6 @@ $(document).ready(function(){
     changeMap(level, level_tag);
     change_text(selected_name);
     display_cards(selected_name,set_level);
-
   });
 
   var city_id = $("#city_id").val();
@@ -314,7 +327,8 @@ $(document).ready(function(){
           $("#total_score").html(parseInt(card_data['city'][names]['scores']['totalscore_percentile']));
           $("#total_score_text").html("Overall score for "+names+" City");
           $(".overall-score").removeClass('hide');
-          display_cards(selected_name,set_level);
+          $("#levels_tag").trigger('change');
+//          display_cards(selected_name,set_level);
         }
     });
 
