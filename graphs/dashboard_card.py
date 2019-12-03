@@ -4,6 +4,7 @@ Script to get aggregated data.
 from graphs.models import *
 from analyse_data import *
 from master.models import *
+from django.http import HttpResponse
 
 class DashboardCard(RHSData):
     def __init__(self, slum):
@@ -28,9 +29,10 @@ class DashboardCard(RHSData):
         """Save information to database"""
         occupied_household_count = self.occupied_houses()
         get_slum_area_size_in_hectors = self.get_slum_area_size_in_hectors()
+        shops_in_slum = self.get_shop_count()
         (household_owners_count, avg_household_size, slum_area_size_in_hectors, household_count) = self.General_Info()
         to_save = DashboardData.objects.update_or_create(slum = self.slum , defaults ={'city_id': self.slum.electoral_ward.administrative_ward.city.id,
-                    'gen_tenement_density' : get_slum_area_size_in_hectors,'gen_avg_household_size': avg_household_size,
+                    'gen_tenement_density' : get_slum_area_size_in_hectors,'get_shops_count':shops_in_slum,'gen_avg_household_size': avg_household_size,
                     'total_household_count':household_count,'household_owners_count':household_owners_count,
                     'occupied_household_count':occupied_household_count})
 
@@ -141,6 +143,7 @@ class DashboardCard(RHSData):
 
 def dashboard_data_Save(city):
     slums = Slum.objects.filter(electoral_ward__administrative_ward__city__id__in = [city])
+
     for slum in slums:
         try:
             dashboard_data = DashboardCard(slum.id)
@@ -151,11 +154,11 @@ def dashboard_data_Save(city):
             dashboard_data.save_water()
             dashboard_data.save_road()
             dashboard_data.save_toilet()
-            dashboard_data.save_rim_drainGutter()
-            dashboard_data.save_rim_road()
-            dashboard_data.save_rim_waste()
-            dashboard_data.save_rim_water()
-            dashboard_data.save_rim_gen()
-            dashboard_data.call_rim_ctb()
+            # dashboard_data.save_rim_drainGutter()
+            # dashboard_data.save_rim_road()
+            # dashboard_data.save_rim_waste()
+            # dashboard_data.save_rim_water()
+            # dashboard_data.save_rim_gen()
+            # dashboard_data.call_rim_ctb()
         except Exception as e:
             print 'Exception in dashboard_data_save',(e)

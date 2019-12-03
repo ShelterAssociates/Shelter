@@ -3,6 +3,7 @@ from __future__ import unicode_literals
 
 from django.db import models, migrations
 
+
 class Migration(migrations.Migration):
 
     dependencies = [
@@ -67,6 +68,11 @@ class Migration(migrations.Migration):
                 ('city', models.ForeignKey(to='master.City')),
                 ('slum', models.ForeignKey(to='master.Slum')),
             ],
+        ),
+        migrations.AddField(
+            model_name='dashboarddata',
+            name='get_shops_count',
+            field=models.IntegerField(null=True, blank=True),
         ),
         migrations.AlterUniqueTogether(
             name='slumdatasplit',

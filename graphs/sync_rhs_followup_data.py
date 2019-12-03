@@ -71,7 +71,6 @@ def fetch_data(form_code, latest_date):
 	count_url = urllib2.Request(find_count)
 	count_url.add_header('User-agent', 'Mozilla 5.10')
 	count_url.add_header('Authorization', settings.KOBOCAT_TOKEN)
-
 	count_url_res = urllib2.urlopen(count_url)
 	count_html = count_url_res.read()
 	count_records =json.loads(count_html) 
@@ -107,7 +106,7 @@ def syn_rim_data(city_id):
 			if latest_rim:
 				latest_date = latest_rim.submission_date
 
-			url = settings.KOBOCAT_FORM_URL + 'data/' + kobo_survey + '?format=json&query={"_submission_time":{"$gt":"'+str(timezone.localtime(latest_date))+'"}}'
+			url = settings.KOBOCAT_FORM_URL +'data/' + kobo_survey + '?format=json&query={"_submission_time":{"$gt":"'+str(timezone.localtime(latest_date))+'"}}'
 			req = urllib2.Request(url)
 			req.add_header('Authorization', settings.KOBOCAT_TOKEN)
 			resp = urllib2.urlopen(req)
