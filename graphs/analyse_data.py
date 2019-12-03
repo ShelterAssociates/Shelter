@@ -16,7 +16,6 @@ class RHSData(object):
         self.slum_data = SlumData.objects.get(slum=self.slum)
         self.toilet_ms_data = ToiletConstruction.objects.filter(slum=self.slum)
 
-
     def get_unique_houses_rhs_householddata(self):
         unique_houses = self.household_data.distinct('household_number').values_list('household_number',flat=True)
         return unique_houses
@@ -25,6 +24,7 @@ class RHSData(object):
         '''count of occupied houses in slums'''
         occupide_house_count = filter(lambda x: 'Type_of_structure_occupancy' in x.rhs_data and x.rhs_data[
                 'Type_of_structure_occupancy'] == 'Occupied house', self.household_data)
+
         return len(occupide_house_count)
 
     def ownership_status(self):
@@ -126,6 +126,12 @@ class RHSData(object):
         road_type = self.slum_data.rim_data['Road']['type_of_roads_within_the_settl'] if 'type_of_roads_within_the_settl' in \
                                                  self.slum_data.rim_data['Road'] else 0
         return road_type
+
+    def get_shop_count(self):
+        slum_type = ContentType.objects.get_for_model(Slum)
+        get_shops_count_in_slum = len(Component.objects.filter(content_type=slum_type, object_id=self.slum.id,
+                                                               metadata__name='Shops').values('shape'))
+        return get_shops_count_in_slum
 
     def get_household_count(self):
         return len(self.household_data)

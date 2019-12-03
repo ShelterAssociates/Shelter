@@ -14,7 +14,7 @@ slumid_cityid_list = {}
 def score_calculation(section_key):
     '''function calculates the score for single and multiselect questions'''
     all_slums_list=[]
-    json_data = json.loads(open('graphs/reference_file.json').read())  # json reference data from json file
+    json_data = json.loads(open('/home/shelter/Desktop/New_project/QOL_three/Shelter/graphs/json_reference_file.json').read())  # json reference data from json file
     slum_data = SlumData.objects.all()#.values('slum_id','rim_data','city_id')
     for i in slum_data:
         slum__id = i.slum.id
@@ -194,6 +194,12 @@ def drainage_final(z):
 
 def toilet_final(z):
     '''calculation of final score for toilet section'''
+    # DashboardData.objects.filter(slum__name=key)
+    # cards[k].append(str(round((aggrgated_data['individual_toilet_coverage__sum'] / aggrgated_data['occupied_household_count__sum']) * 100 if
+    #     aggrgated_data['occupied_household_count__sum'] else 0, 2)) + " %")
+    #
+    # individual_toilet_percent = 0
+
     toilet_all_scores =[]
     dummy_dict={}
     cost = []
@@ -232,6 +238,9 @@ def toilet_final(z):
                     final_score_of_1_toilet = ctb_in_use * sum(one_ctb_data.values()) + total_cost + total_wrk_seats
                     toilet_scores.append(final_score_of_1_toilet)
                     final_score = sum(toilet_scores)/len(toilet_scores)
+                    # add individual score here
+
+
                     dummy_dict[id]= final_score
     toilet_all_scores.append(dummy_dict)
     return toilet_all_scores
