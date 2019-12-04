@@ -68,27 +68,24 @@ class RHSData(object):
         toilet_data = self.slum_data.rim_data['Toilet']
 
         wrk_male_seats = 0
+        wrk_fmale_seats = 0
+        wrk_mix_seats = 0
         male_seats_not_in_use = 0
-        wrk_fmale_seats=0
         fmale_seats_not_in_use=0
-        wrk_mix_seats=0
         mix_seats_not_in_use=0
         for i in toilet_data:
             wrk_male_seats += int(i['number_of_seats_allotted_to_me'] if 'number_of_seats_allotted_to_me' in i else 0)
-            male_seats_not_in_use += int(i['number_of_seats_allotted_to_me_001'] if 'number_of_seats_allotted_to_me_001' in i else 0)
             wrk_fmale_seats += int(i['number_of_seats_allotted_to_wo'] if 'number_of_seats_allotted_to_wo' in i else 0)
-            fmale_seats_not_in_use += int(i['number_of_seats_allotted_to_wo_001'] if 'number_of_seats_allotted_to_wo_001' in i else 0)
             wrk_mix_seats += int(i['total_number_of_mixed_seats_al'] if 'total_number_of_mixed_seats_al' in i else 0)
-            mix_seats_not_in_use += int(i['number_of_mixed_seats_allotted'] if 'number_of_mixed_seats_allotted' in i else 0)
-
-        fun_male_seats = wrk_male_seats - male_seats_not_in_use
-        fun_fmale_seats = wrk_fmale_seats- fmale_seats_not_in_use
-        fun_mix_seats = wrk_mix_seats -mix_seats_not_in_use
-        # total_functional_toilets = fun_male_seats + fun_fmale_seats + fun_mix_seats  # these are seats in use n working
+            # male_seats_not_in_use += int(i['number_of_seats_allotted_to_me_001'] if 'number_of_seats_allotted_to_me_001' in i else 0)
+            # fmale_seats_not_in_use += int(i['number_of_seats_allotted_to_wo_001'] if 'number_of_seats_allotted_to_wo_001' in i else 0)
+            # mix_seats_not_in_use += int(i['number_of_mixed_seats_allotted'] if 'number_of_mixed_seats_allotted' in i else 0)
+            # fun_male_seats = wrk_male_seats - male_seats_not_in_use
+            # fun_fmale_seats = wrk_fmale_seats- fmale_seats_not_in_use
+            # fun_mix_seats = wrk_mix_seats -mix_seats_not_in_use
+            # total_functional_toilets = fun_male_seats + fun_fmale_seats + fun_mix_seats  # these are seats in use n working
         total_toilet_seats = wrk_male_seats + wrk_fmale_seats + wrk_mix_seats #considered total seats
-        # toilet_to_per_ratio = household_population / total_toilet_seats if total_toilet_seats!=0 else 0
-        #men_to_wmn_seats_ratio = (fun_male_seats/fun_fmale_seats)*100 if fun_fmale_seats !=0 else 0
-        return (total_toilet_seats, fun_mix_seats, fun_male_seats, fun_fmale_seats)
+        return (total_toilet_seats, wrk_mix_seats, wrk_male_seats, wrk_fmale_seats)
 
     #road section
     def get_road_coverage(self):
