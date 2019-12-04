@@ -32,7 +32,7 @@ class DashboardCard(RHSData):
         shops_in_slum = self.get_shop_count()
         (household_owners_count, avg_household_size, slum_area_size_in_hectors, household_count) = self.General_Info()
         to_save = DashboardData.objects.update_or_create(slum = self.slum , defaults ={'city_id': self.slum.electoral_ward.administrative_ward.city.id,
-                    'gen_tenement_density' : get_slum_area_size_in_hectors,'get_shops_count':shops_in_slum,'gen_avg_household_size': avg_household_size,
+                    'gen_tenement_density' : get_slum_area_size_in_hectors,'open_defecation_coverage':shops_in_slum,'gen_avg_household_size': avg_household_size,
                     'total_household_count':household_count,'household_owners_count':household_owners_count,
                     'occupied_household_count':occupied_household_count})
 
