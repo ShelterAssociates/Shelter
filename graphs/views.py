@@ -5,7 +5,7 @@ from django.contrib.auth.decorators import login_required
 from django.shortcuts import get_object_or_404
 from django.http import HttpResponse
 from itertools import groupby
-from django.db.models import Avg,Sum, Count
+from django.db.models import Avg,Sum
 from collections import OrderedDict
 from graphs.models import *
 from master.models import *
@@ -27,10 +27,10 @@ CARDS = {'Cards': {'General':[{'gen_avg_household_size':"Avg Household size"}, {
                   {'pucca_road_coverage':'Pucca Road Coverage'},{'kutcha_road_coverage':'Kutcha Road Coverage'}],
          'Drainage':[{'drainage_coverage':'Drain coverage'}]},
          'Keytakeaways' :
-         {'General':[ [" &#128477 <b>value</b> slums with <b>undeclared</b> land status",],
+         {'General':[ [" <b>value</b> slums with <b>undeclared</b> land status",],
                       [" <br> <b>value</b> slums with <b>private</b> land ownership",],
                       [" <br><b>value</b> slums likely to be affected by flooding, drainage and gutter problems due to <b>reasonable slope</b> of land topography"]],
-         'Water': [[' &#128477 <b>value</b> slums where water availability  is <b>less than 2 hours</b>, '],
+         'Water': [[' <b>value</b> slums where water availability  is <b>less than 2 hours</b>, '],
                   [' <b>value</b> with <b>water availability 24/7</b>'],
                   [' <br><b>value</b> slums with <b>poor</b> quality of water '],
                   [' <b>value</b> with <b>good</b> quality of water'],
@@ -38,7 +38,7 @@ CARDS = {'Cards': {'General':[{'gen_avg_household_size':"Avg Household size"}, {
                   [' <b>value</b> slums with <b>partial water coverage</b>'],
                   [' <br><b>value</b> slums where alternate water sources are <b>tanker</b> , '],
                   [' <b>value</b> with <b>water standposts</b>']],
-         'Waste': [[' &#128477 <b>value</b>  slums having <b>open community dumping sites</b>'],
+         'Waste': [[' <b>value</b>  slums having <b>open community dumping sites</b>'],
                    [' <br><b>value</b> slums practice <b> dumping in drains</b>'],
                    ['  <br><b>value</b> slums with <b>availability of waste containers</b>'],
                    ['  <br><b>value</b> slums with <b>full waste coverage</b> facility, '],
@@ -46,16 +46,16 @@ CARDS = {'Cards': {'General':[{'gen_avg_household_size':"Avg Household size"}, {
                    [' <b>value</b> with <b> no coverage</b>'],
                    [' <br><b>value</b> slums with <b>daily</b>, '],
                    [' <b>value</b> with <b>twice a week </b> waste collection frequency']],
-         'Road': [[' &#128477 <b>value</b>  slums having <b>more than one</b> vehicular access'],
+         'Road': [[' <b>value</b>  slums having <b>more than one</b> vehicular access'],
                   [' <br><b>value</b>  slums where settlement is <b> below</b> access road'],
                   [' <br><b>value</b>  slums where huts are <b>above</b> internal roads']],
-         'Drainage':[[' &#128477 <b>value</b>  slums where drains <b> get blocked </b>'],
+         'Drainage':[[' <b>value</b>  slums where drains <b> get blocked </b>'],
                     [' <br><b>value</b> slums with <b>adequete</b> drain gradient, '],
                     [' <b>value</b>  with<b> inadequete </b>drain gradient'],
                     [' <br><b>value</b>  slums where gutter gets <b>flooded</b>'],
                     [' <br><b>value</b> slums with<b>adequete</b> gutter gradient, '],
                     [' <b>value</b> with <b> inadequete</b> gutter gradient']],
-         'Toilet':[[' &#128477 <b>value</b>  slums where CTB structure is in <b> poor </b> condition'],
+         'Toilet':[[' <b>value</b>  slums where CTB structure is in <b> poor </b> condition'],
                    [' <br><b>value</b>  CTB seats out of total <b>are in good condition </b>'],
                    [' <br><b>value</b>  slums where <b> no availability of water</b> in CTB'],
                    [' <br><b>value</b>  slums where sewage is <b> laid in open</b>'],
