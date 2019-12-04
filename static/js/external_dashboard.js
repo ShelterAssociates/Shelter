@@ -327,8 +327,8 @@ $(document).ready(function(){
           $("#total_score").html(parseInt(card_data['city'][names]['scores']['totalscore_percentile']));
           $("#total_score_text").html("Overall score for "+names+" City");
           $(".overall-score").removeClass('hide');
-          $("#levels_tag").trigger('change');
-//          display_cards(selected_name,set_level);
+//          $("#levels_tag").trigger('change');
+          display_cards(selected_name,set_level);
         }
     });
 
