@@ -3,6 +3,7 @@ from graphs.models import  *
 import json
 from scipy import stats
 from django.http import HttpResponse, HttpResponseForbidden
+from django.db.models import Sum
 
 waste_coll_to_type = {'frequency_of_waste_collection_001':'ulb ghantagadi','frequency_of_waste_collection':'mla sponsored tempo',
               'frequency_of_waste_collection_':'ulb Van','frequency_of_waste_collection__002':'door to door waste collection',
@@ -194,11 +195,6 @@ def drainage_final(z):
 
 def toilet_final(z):
     '''calculation of final score for toilet section'''
-    # DashboardData.objects.filter(slum__name=key)
-    # cards[k].append(str(round((aggrgated_data['individual_toilet_coverage__sum'] / aggrgated_data['occupied_household_count__sum']) * 100 if
-    #     aggrgated_data['occupied_household_count__sum'] else 0, 2)) + " %")
-    #
-    # individual_toilet_percent = 0
 
     toilet_all_scores =[]
     dummy_dict={}
@@ -209,6 +205,10 @@ def toilet_final(z):
         id = i[1]
         id_list.append(id)
         other_data = i[0]
+        get_data = DashboardData.objects.filter(slum = i[1]).aggregate(Sum('individual_toilet_coverage'),Sum('occupied_household_count'))
+        toilet_count = get_data['individual_toilet_coverage__sum'] if get_data['individual_toilet_coverage__sum'] else 0
+        total_houses = get_data['occupied_household_count__sum'] if get_data['occupied_household_count__sum'] else 0
+        own_toilet_coverage = (toilet_count/total_houses)*100 if total_houses else 0
         men_seats = ['number_of_seats_allotted_to_me','number_of_seats_allotted_to_me_001']
         wm_seats = ['number_of_seats_allotted_to_wo','number_of_seats_allotted_to_wo_001']
         mix_seats =['total_number_of_mixed_seats_al','number_of_mixed_seats_allotted']
@@ -238,9 +238,14 @@ def toilet_final(z):
                     final_score_of_1_toilet = ctb_in_use * sum(one_ctb_data.values()) + total_cost + total_wrk_seats
                     toilet_scores.append(final_score_of_1_toilet)
                     final_score = sum(toilet_scores)/len(toilet_scores)
-                    # add individual score here
-
-
+                    if own_toilet_coverage <= 25:
+                        final_score += 10
+                    elif own_toilet_coverage in range(26,50):
+                        final_score += 20
+                    elif own_toilet_coverage in range(51,75):
+                        final_score += 30
+                    else:
+                        final_score += 40
                     dummy_dict[id]= final_score
     toilet_all_scores.append(dummy_dict)
     return toilet_all_scores
