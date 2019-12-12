@@ -45,7 +45,7 @@ def get_household_analysis_data(city, slum_code, fields, kobo_survey=''):
         grouped_records = itertools.groupby(sorted(records, key=lambda x:int(x['Household_number'])), key=lambda x:int(x["Household_number"]))
 
         for household, list_record in grouped_records:
-            record_sorted = sorted(list(list_record), key=lambda x:x['_submission_time'], reverse=True)
+            record_sorted = sorted(list(list_record), key=lambda x:x['_submission_time'], reverse=False)
             household_no = int(household)
             if len(record_sorted)>0:
                 record = record_sorted[0]
