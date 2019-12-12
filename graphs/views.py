@@ -150,7 +150,7 @@ def score_cards(ele):
         Sum('waste_no_collection_facility_percentile'),Sum('waste_door_to_door_collection_facility_percentile'),Sum('waste_dump_in_open_percent'),
         Sum('water_individual_connection_percentile'),Sum('water_shared_service_percentile'),Sum('waterstandpost_percentile'),
         Sum('toilet_seat_to_person_ratio'),Sum('individual_toilet_coverage'),Sum('fun_male_seats'),Sum('fun_fmale_seats'),
-        Sum('toilet_men_women_seats_ratio'),Sum('ctb_coverage'),Sum('open_defecation_coverage'))
+        Sum('toilet_men_women_seats_ratio'),Sum('ctb_coverage'),Sum('get_shops_count'))
 
     #drainage_card data
     slum_ids = ele.values_list('slum__id',flat=True)
@@ -190,7 +190,7 @@ def score_cards(ele):
                     all_cards.update(cards)
                 elif k == 'General':
                     houses = aggrgated_data['household_count__sum'] if aggrgated_data['household_count__sum']  else 0
-                    shops = aggrgated_data['open_defecation_coverage__sum'] if aggrgated_data['open_defecation_coverage__sum'] else 0 #this column contains shops count for slum
+                    shops = aggrgated_data['get_shops_count__sum'] if aggrgated_data['get_shops_count__sum'] else 0 #this column contains shops count for slum
                     cards[k].append(str(round(aggrgated_data['gen_avg_household_size__sum']/aggrgated_data['occupied_household_count__sum']\
                                               if aggrgated_data['occupied_household_count__sum'] else 0,2)))
                     cards[k].append(str(int( (houses+shops) / aggrgated_data['gen_tenement_density__sum'] if aggrgated_data['gen_tenement_density__sum'] else 0)))
