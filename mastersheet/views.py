@@ -55,8 +55,8 @@ def give_details(request):
 def masterSheet(request, slum_code=0, FF_code=0, RHS_code=0):
     flag_fetch_rhs = 'show_rhs' in request.GET
     flag_fetch_ff = 'show_ff' in request.GET
-    dat = None
     try:
+        data_list =[]
         formdict = []
         formdict_family_factsheet = []
 
@@ -66,23 +66,36 @@ def masterSheet(request, slum_code=0, FF_code=0, RHS_code=0):
         slum_funder = SponsorProjectDetails.objects.filter(slum__name=str(slum_code[0][4])).exclude(sponsor__id=10)
         form_ids = Survey.objects.filter(city__id=int(slum_code[0][2]))
 
-        data = HouseholdData.objects.filter(slum__id=slum_code[0][0])  # this is list of all household numbers for specific slum
+        household_data = HouseholdData.objects.filter(slum__id=slum_code[0][0])  # this is list of all household numbers for specific slum
         followup_data_for_ODF = FollowupData.objects.filter(slum=slum_code[0][0])
 
+        for i in household_data:
+            try:
+                data = {'Household_number':i.household_number,
+                        '_id' : i.rhs_data['_id'] if i.rhs_data else "",
+                        '_xform_id_string': i.rhs_data['_xform_id_string'] if i.rhs_data else "",
+                        '_attachments': i.rhs_data['_attachments'] if i.rhs_data else '',
+                        'ff_id' : i.ff_data['_id'] if i.ff_data else "",
+                        'ff_xform_id_string':i.ff_data['_xform_id_string'] if i.ff_data else "",
+                'group_og5bx85/Type_of_survey': i.rhs_data['group_og5bx85/Type_of_survey'] if 'group_og5bx85/Type_of_survey'in i.rhs_data else "",
+                        }
+                data_list.append(data)
+            except  Exception as e:
+                print e, household_data[i]
+
         if slum_code is not 0:
-            tempdict = data.values_list('household_number', flat=True)
-            formdict = map(lambda x:{'Household_number':x}, tempdict)
+            formdict = data_list
 
             if flag_fetch_rhs:
-                formdict = map(lambda x:x.rhs_data, data)
+                formdict = map(lambda x: x.rhs_data, household_data)
 
             if flag_fetch_ff:
-                formdict_family_factsheet = map(lambda x:(x.ff_data if x.ff_data else {'group_vq77l17/Household_number': 00 }),data)
+                formdict_family_factsheet = map(lambda x:(x.ff_data if x.ff_data else {'group_vq77l17/Household_number': 00 }),household_data)
 
-            # Family Factsheet - fetching data
-            # arranging data with respect to household numbers
-            temp_FF = {obj_FF['group_vq77l17/Household_number']: obj_FF for obj_FF in formdict_family_factsheet}
-            temp_FF_keys = temp_FF.keys()
+                # Family Factsheet - fetching data
+                # arranging data with respect to household numbers
+                temp_FF = {obj_FF['group_vq77l17/Household_number']: obj_FF for obj_FF in formdict_family_factsheet}
+                temp_FF_keys = temp_FF.keys() # list of household numbers
 
             # Daily Reporting - fetching data
             toilet_reconstruction_fields = ['slum', 'slum__name', 'household_number', 'agreement_date_str',
@@ -219,11 +232,11 @@ def masterSheet(request, slum_code=0, FF_code=0, RHS_code=0):
                         "_attachments": "",
                         "no_rhs_flag": "#eba6fc"
                     }
+
                 dummy_formdict[str(i)].update(temp_daily_reporting[str(i)])
                 dummy_formdict[str(i)].update({'tc_id_' + str(i): temp_daily_reporting[str(i)]['id']})
 
             for key, x in dummy_formdict.iteritems():
-
                 try:
                     if len(x['p1_material_shifted_to']) != 0 or len(x['p2_material_shifted_to']) != 0 or len(
                             x['p3_material_shifted_to']) != 0 or len(x['st_material_shifted_to']) != 0:
@@ -233,40 +246,39 @@ def masterSheet(request, slum_code=0, FF_code=0, RHS_code=0):
                 except Exception as e:
                     x['material_shifts'] = None
 
+                temp = x['_id']
                 x['slum__name'] = slum_code[0][3]
-                if '_id' in dummy_formdict.keys():
-                    temp = x["_id"]
-                    x['ff_id'] = None
-                    x['ff_xform_id_string'] = None
-                    if flag_fetch_ff:
-                        if x['Household_number'] in temp_FF_keys:
-                            if '_id' in temp_FF[x['Household_number']].keys():
-                                ff_id = temp_FF[x['Household_number']]['_id']
-                                del (temp_FF[x['Household_number']]['_id'])
-                            if '_xform_id_string' in temp_FF[x['Household_number']].keys():
-                                ff_xform_id_string = temp_FF[x['Household_number']]['_xform_id_string']
-                                del (temp_FF[x['Household_number']]['_xform_id_string'])
+                x['ff_id'] = None
+                x['ff_xform_id_string'] = None
 
-                            x.update(temp_FF[x['Household_number']])
-                            x['OnfieldFactsheet'] = 'Yes'
-                            x['_id'] = temp
-                            x['ff_id'] = ff_id
-                            x['ff_xform_id_string'] = ff_xform_id_string
+                if flag_fetch_ff:
+                    if x['Household_number'] in temp_FF_keys:
+                        if '_id' in temp_FF[x['Household_number']].keys():
+                            ff_id = temp_FF[x['Household_number']]['_id']
+                            del (temp_FF[x['Household_number']]['_id'])
 
-                    if '_attachments' in x.keys() and len(x['_attachments']) != 0:
-                        PATH = settings.BASE_URL + '/'.join(x['_attachments'][0]['download_url'].split('/')[:-1])
-                        if 'Toilet_Photo' in x.keys():
-                            x.update({'toilet_photo_url': PATH + '/' + x['Toilet_Photo']})
+                        if '_xform_id_string' in temp_FF[x['Household_number']].keys():
+                            ff_xform_id_string = temp_FF[x['Household_number']]['_xform_id_string']
+                            del (temp_FF[x['Household_number']]['_xform_id_string'])
 
-                        if 'Family_Photo' in x.keys():
-                            x.update({'family_photo_url': PATH + '/' + x['Family_Photo']})
-                    x.update({'rhs_url': settings.BASE_URL + str('shelter/forms/') + str(x['_xform_id_string']) + str(
-                        '/instance#/') + str(x["_id"])})
-                    x.update({'ff_url': settings.BASE_URL + str('shelter/forms/') + str(x['ff_xform_id_string']) + str(
-                        '/instance#/') + str(x["ff_id"])})
+                        x.update(temp_FF[x['Household_number']])
+                        x['OnfieldFactsheet'] = 'Yes'
+                        x['_id'] = temp
+                        x['ff_id'] = ff_id
+                        x['ff_xform_id_string'] = ff_xform_id_string
+
+                if '_attachments' in x.keys() and len(x['_attachments']) != 0:
+                    PATH = settings.BASE_URL + '/'.join(x['_attachments'][0]['download_url'].split('/')[:-1])
+                    if 'Toilet_Photo' in x.keys():
+                        x.update({'toilet_photo_url': PATH + '/' + x['Toilet_Photo']})
+                    if 'Family_Photo' in x.keys():
+                        x.update({'family_photo_url': PATH + '/' + x['Family_Photo']})
+
+                x.update({'rhs_url': settings.BASE_URL + str('shelter/forms/') + str(x['_xform_id_string']) + str('/instance#/') + str(x['_id'])})
+                x.update({'ff_url': settings.BASE_URL + str('shelter/forms/') + str(x['ff_xform_id_string']) + str('/instance#/') + str(x["ff_id"])})
 
                 for i in followup_data_for_ODF:
-                    if i.household_number == key:
+                    if i.household_number == key: #i.flag_followup_in_rhs == True and
                         x.update(i.followup_data)
                         if i.followup_data['group_oi8ts04/Current_place_of_defecation'] in ['01','02','03','04','05','06','07']:
                             x.update({'current place of defecation':'Own Toilet'})
@@ -277,11 +289,10 @@ def masterSheet(request, slum_code=0, FF_code=0, RHS_code=0):
                         elif i.followup_data['group_oi8ts04/Current_place_of_defecation'] == '11':
                             x.update({'current place of defecation': 'Public toilet outside slum'})
                         else : x.update({'current place of defecation': 'None'})
-                # x.update({'current place of defecation': i.followup_data['group_oi8ts04/C1']}) if 'group_oi8ts04/C1' in i.followup_data else 0
-                # x.update({'current place of defecation': i.followup_data['group_oi8ts04/C2']}) if 'group_oi8ts04/C2' in i.followup_data else 0
-                # x.update({'current place of defecation': i.followup_data['group_oi8ts04/C3']}) if 'group_oi8ts04/C3' in i.followup_data else 0
-                # x.update({'current place of defecation': i.followup_data['group_oi8ts04/C4']}) if 'group_oi8ts04/C4' in i.followup_data else 0
-                # x.update({'current place of defecation': i.followup_data['group_oi8ts04/C5']}) if 'group_oi8ts04/C5' in i.followup_data else 0
+
+                for i in daily_reporting_data:
+                    if i['household_number'] == key and i['status'] == 'Completed':
+                            x.update({'current place of defecation': 'Own Toilet'})
 
                 if len(slum_funder) != 0:
                     for funder in slum_funder:
@@ -302,228 +313,6 @@ def masterSheet(request, slum_code=0, FF_code=0, RHS_code=0):
        print e
        raise
     return HttpResponse(json.dumps(formdict), content_type="application/json")
-
-            # Family Factsheet - fetching data
-            # arranging data with respect to household numbers
-            # temp_FF = {obj_FF['Household_number']: obj_FF for obj_FF in formdict}
-            # temp_FF_keys = temp_FF.keys()
-
-            # Daily Reporting - fetching data
-            # toilet_reconstruction_fields = ['slum', 'slum__name', 'household_number', 'agreement_date_str',
-            #                                 'agreement_cancelled',
-            #                                 'septic_tank_date_str', 'phase_one_material_date_str',
-            #                                 'phase_two_material_date_str', 'phase_three_material_date_str',
-            #                                 'completion_date_str', 'status', 'comment', 'pocket',
-            #                                 'p1_material_shifted_to',
-            #                                 'p2_material_shifted_to', 'p3_material_shifted_to',
-            #                                 'st_material_shifted_to',
-            #                                 'id']
-            #
-            # daily_reporting_data = ToiletConstruction.objects.extra(
-            #     select={'phase_one_material_date_str': "to_char(phase_one_material_date, 'YYYY-MM-DD ')",
-            #             'phase_two_material_date_str': "to_char(phase_two_material_date, 'YYYY-MM-DD ')",
-            #             'phase_three_material_date_str': "to_char(phase_three_material_date, 'YYYY-MM-DD ')",
-            #             'septic_tank_date_str': "to_char(septic_tank_date, 'YYYY-MM-DD ')",
-            #             'agreement_date_str': "to_char(agreement_date, 'YYYY-MM-DD ')",
-            #             'completion_date_str': "to_char(completion_date, 'YYYY-MM-DD ')"}).filter(
-            #     slum__shelter_slum_code=slum_code[0][1])
-            #
-            # daily_reporting_data = daily_reporting_data.values(*toilet_reconstruction_fields)
-            # for i in daily_reporting_data:
-            #     if i['status'] is not None:
-            #         if i['status'].strip() != "":
-            #             i['status'] = ToiletConstruction.get_status_display(i['status'])
-            #             i['delay_flag'] = ''
-            #     if i['agreement_date_str'] != None and i['status'] != 'Agreement cancel':
-            #         if i['phase_one_material_date_str'] == None and is_delayed(i['agreement_date_str']):
-            #             i['delay_flag'] = '#f9a4a4'  # phase one delayed
-            #         if i['phase_two_material_date_str'] == None and is_delayed(i['phase_one_material_date_str']):
-            #             i['delay_flag'] = '#f2f29f'  # phase two delayed
-            #         if i['phase_one_material_date_str'] != i['phase_three_material_date_str']:
-            #             if i['phase_three_material_date_str'] == None and is_delayed(i['phase_two_material_date_str']):
-            #                 i['delay_flag'] = '#aaf9a4'
-            #             if i['completion_date_str'] == None and is_delayed(i['phase_three_material_date_str']):
-            #                 i['delay_flag'] = '#aaa4f4'
-            #         else:
-            #             if i['completion_date_str'] == None and is_delayed(i['phase_two_material_date_str']):
-            #                 i['delay_flag'] = '#aaa4f4'
-            # temp_daily_reporting = {obj_DR['household_number']: obj_DR for obj_DR in daily_reporting_data}
-            # temp_DR_keys = temp_daily_reporting.keys()
-            #
-            # # SBM - fetching data
-            # sbm_fields = ['slum', 'slum__name', 'household_number', 'name', 'application_id', 'photo_uploaded',
-            #               'created_date_str', 'id', 'phone_number', 'aadhar_number', 'photo_verified', 'photo_approved',
-            #               'application_verified', 'application_approved', 'sbm_comment']
-            # sbm_data = SBMUpload.objects.extra(
-            #     select={'created_date_str': "to_char(created_date, 'YYYY-MM-DD ')"}).filter(
-            #     slum__shelter_slum_code=slum_code[0][1])
-            # sbm_data = sbm_data.values(*sbm_fields)
-            #
-            # temp_sbm = {obj_DR['household_number']: obj_DR for obj_DR in sbm_data}
-            # temp_sbm_keys = temp_sbm.keys()
-
-            # Community Mobilization - fetching data
-            # community_mobilization_fields = ['slum', 'slum__name', 'household_number', 'activity_type',
-            #                                  'activity_date_str',
-            #                                  'id']
-            # community_mobilization_data = CommunityMobilization.objects.extra(
-            #     select={'activity_date_str': "to_char(activity_date, 'YYYY-MM-DD ')"}).filter(
-            #     slum__shelter_slum_code=slum_code[0][1])
-            # community_mobilization_data1 = community_mobilization_data.values(*community_mobilization_fields)
-            # community_mobilization_data_list = list(community_mobilization_data1)
-            #
-            # # The json field of 'household_numbers' will have a list of household numbers.
-            # # We need to sort the data with respect to each household number in order to
-            # # append it in formdict.
-            #
-            # # Vendor and Accounts - fetching data
-            # vendor = VendorHouseholdInvoiceDetail.objects.filter(slum__shelter_slum_code=slum_code[0][1])
-            # invoices = InvoiceItems.objects.filter(slum__shelter_slum_code=slum_code[0][1])
-            #
-            # dummy_formdict = {x['Household_number']: x for x in formdict}
-            #
-            # for y in invoices:
-            #     for z in y.household_numbers:
-            #         if str(z) not in dummy_formdict.keys():
-            #             dummy_formdict[str(z)] = {
-            #                 "Household_number": z,
-            #                 "_id": "",
-            #                 "ff_id": "",
-            #                 "ff_xform_id_string": "",
-            #                 "_xform_id_string": "",
-            #                 "_attachments": "",
-            #                 "no_rhs_flag": "#eba6fc"
-            #             }
-            #         vendor_name = "vendor_type" + str(y.material_type)
-            #         invoice_number = "invoice_number" + str(y.material_type)
-            #         dummy_formdict[str(z)].update({
-            #             vendor_name: y.invoice.vendor.name,
-            #             invoice_number: y.invoice.invoice_number,
-            #             str(y.material_type) + " Invoice Number" + "_id": y.invoice.id,
-            #             "Name of " + str(y.material_type) + " vendor" + "_id": y.invoice.id
-            #         })
-            #
-            # #
-            # for i in range(len(community_mobilization_data)):
-            #     y = community_mobilization_data[i]
-            #     for z in y.household_number:
-            #         new_activity_type = community_mobilization_data[i].activity_type.name
-            #         if str(z) not in dummy_formdict.keys():
-            #             dummy_formdict[str(z)] = {
-            #                 "Household_number": z,
-            #                 "_id": "",
-            #                 "ff_id": "",
-            #                 "ff_xform_id_string": "",
-            #                 "_xform_id_string": "",
-            #                 "_attachments": "",
-            #                 "no_rhs_flag": "#eba6fc"
-            #             }
-            #
-            #         dummy_formdict[str(z)].update(
-            #             {new_activity_type: y.activity_date_str, str(new_activity_type) + "_id": y.id})
-            #
-            # for i in temp_sbm_keys:
-            #     if str(i) not in dummy_formdict.keys():
-            #         dummy_formdict[str(i)] = {
-            #             "Household_number": i,
-            #             "_id": "",
-            #             "ff_id": "",
-            #             "ff_xform_id_string": "",
-            #             "_xform_id_string": "",
-            #             "_attachments": "",
-            #             "no_rhs_flag": "#eba6fc"
-            #         }
-            # dummy_formdict[str(i)].update(temp_sbm[str(i)])
-            # dummy_formdict[str(i)].update({'sbm_id_' + str(i): temp_sbm[str(i)]['id']})
-            #
-            # for i in temp_DR_keys:
-            #     if str(i) not in dummy_formdict.keys():
-            #         dummy_formdict[str(i)] = {
-            #             "Household_number": i,
-            #             "_id": "",
-            #             "ff_id": "",
-            #             "ff_xform_id_string": "",
-            #             "_xform_id_string": "",
-            #             "_attachments": "",
-            #             "no_rhs_flag": "#eba6fc"
-            #         }
-            #     dummy_formdict[str(i)].update(temp_daily_reporting[str(i)])
-            #     dummy_formdict[str(i)].update({'tc_id_' + str(i): temp_daily_reporting[str(i)]['id']})
-            #
-            # for key, x in dummy_formdict.iteritems():
-            #     try:
-            #         if len(x['p1_material_shifted_to']) != 0 or len(x['p2_material_shifted_to']) != 0 or len(
-            #                 x['p3_material_shifted_to']) != 0 or len(x['st_material_shifted_to']) != 0:
-            #             x['material_shifts'] = '#f9cb9f'
-            #         else:
-            #             x['material_shifts'] = None
-            #     except Exception as e:
-            #         x['material_shifts'] = None
-            #
-            #     x['slum__name'] = slum_code[0][4]
-            #
-            #     if '_id' in dummy_formdict.keys():
-            #         temp = x['_id']
-            #         x['ff_id'] = None
-            #         x['ff_xform_id_string'] = None
-            #         if flag_fetch_ff:
-            #             if x['Household_number'] in temp_FF_keys:
-            #                 if '_id' in temp_FF[x['Household_number']].keys():
-            #                     ff_id = temp_FF[x['Household_number']]['_id']
-            #                     del (temp_FF[x['Household_number']]['_id'])
-            #                 if '_xform_id_string' in temp_FF[x['Household_number']].keys():
-            #                     ff_xform_id_string = temp_FF[x['Household_number']]['_xform_id_string']
-            #                     del (temp_FF[x['Household_number']]['_xform_id_string'])
-            #
-            #                 x.update(temp_FF[x['Household_number']])
-            #                 x['OnfieldFactsheet'] = 'Yes'
-            #                 x['_id'] = temp
-            #                 x['ff_id'] = ff_id
-            #                 x['ff_xform_id_string'] = ff_xform_id_string
-            #
-            #         if '_attachments' in x.keys() and len(x['_attachments']) != 0:
-            #
-            #             PATH = settings.BASE_URL + '/'.join(x['_attachments'][0]['download_url'].split('/')[:-1])
-            #             if 'Toilet_Photo' in x.keys():
-            #                 x.update({'toilet_photo_url': PATH + '/' + x['Toilet_Photo']})
-            #
-            #             if 'Family_Photo' in x.keys():
-            #                 x.update({'family_photo_url': PATH + '/' + x['Family_Photo']})
-            #             x.update({'rhs_url': settings.BASE_URL + str('shelter/forms/') + str(x['_xform_id_string']) + str(
-            #                 '/instance#/') + str(x["_id"])})
-            #             x.update({'ff_url': settings.BASE_URL + str('shelter/forms/') + str(x['ff_xform_id_string']) + str(
-            #                 '/instance#/') + str(x["ff_id"])})
-
-                    # Handling current place of defecation column
-                    # if 'group_oi8ts04/C1' in x.keys():
-                    #     x.update({'current place of defecation': x['group_oi8ts04/C1']})
-                    # if 'group_oi8ts04/C2' in x.keys():
-                    #     x.update({'current place of defecation': x['group_oi8ts04/C2']})
-                    # if 'group_oi8ts04/C3' in x.keys():
-                    #     x.update({'current place of defecation': x['group_oi8ts04/C3']})
-                    # if 'group_oi8ts04/C4' in x.keys():
-                    #     x.update({'current place of defecation': x['group_oi8ts04/C4']})
-                    # if 'group_oi8ts04/C5' in x.keys():
-                    #     x.update({'current place of defecation': x['group_oi8ts04/C5']})
-                    #
-                    # if len(slum_funder) != 0:
-                    #     for funder in slum_funder:
-                    #         if int(x['Household_number']) in funder.household_code:
-                    #             x.update({'Funder': funder.sponsor.organization_name})
-
-                # formdict = map(lambda x: dummy_formdict[x], dummy_formdict)
-    #
-    #             for x in formdict:
-    #                 try:
-    #                     if x['current place of defecation'] in ['SBM (Installment)', 'Own toilet'] and len(x['agreement_date_str']) > 1:  # in i.keys() and 'current place of defecation' in  i.keys():
-    #                         x['incorrect_cpod'] = 'incorrect_cpod'
-    #                 except Exception as e:
-    #                     # print 'not found - '+str(x['Household_number'])
-    #                     pass
-    # except:
-    #     raise
-    #
-    # return HttpResponse(json.dumps(formdict), content_type="application/json")
 
 def to_date(s):
     if s != None:
