@@ -22,10 +22,22 @@ class RHSData(object):
 
     def occupied_houses(self):
         '''count of occupied houses in slums'''
+
+        houses_occupide_in_followup =[]
+        followup_households_list = self.followup_data.values_list('household_number', flat=True)
+
+        unoccupide_locked_houses = filter(lambda x: 'Type_of_structure_occupancy' in x.rhs_data and x.rhs_data[
+                'Type_of_structure_occupancy'] != 'Occupied house', self.household_data)
+
         occupide_house_count = filter(lambda x: 'Type_of_structure_occupancy' in x.rhs_data and x.rhs_data[
                 'Type_of_structure_occupancy'] == 'Occupied house', self.household_data)
 
-        return len(occupide_house_count)
+        for i in unoccupide_locked_houses:
+                if i.household_number in followup_households_list:
+                    houses_occupide_in_followup.append(i)
+
+        total_occupide_houses = len(occupide_house_count) + len(houses_occupide_in_followup)
+        return total_occupide_houses
 
     def ownership_status(self):
         owner_count =filter(lambda x: 'group_el9cl08/Ownership_status_of_the_house' in x.rhs_data and x.rhs_data[
@@ -48,7 +60,7 @@ class RHSData(object):
                 ('group_oi8ts04/Current_place_of_defecation' in latest_record.followup_data and \
                 latest_record.followup_data['group_oi8ts04/Current_place_of_defecation'] == '09'):
                         ctb_count += 1
-            except :pass
+            except : pass
         return ctb_count
 
     def individual_toilet(self):
