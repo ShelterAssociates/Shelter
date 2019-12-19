@@ -15,6 +15,6 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='slum',
             name='odf_status',
-            field=models.CharField(default=((b'ODF', b'ODF'), (b'ODF+', b'ODF+'), (b'ODF++', b'ODF++')), max_length=2048, choices=[(b'ODF', b'ODF'), (b'ODF+', b'ODF+'), (b'ODF++', b'ODF++')]),
+            field=models.CharField(default=((b'', b''), (b'OD', b'OD'), (b'ODF', b'ODF'), (b'ODF+', b'ODF+'), (b'ODF++', b'ODF++')), max_length=2048, choices=[(b'', b''), (b'OD', b'OD'), (b'ODF', b'ODF'), (b'ODF+', b'ODF+'), (b'ODF++', b'ODF++')]),
         ),
     ]
