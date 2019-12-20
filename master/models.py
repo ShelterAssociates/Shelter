@@ -328,7 +328,7 @@ class Rapid_Slum_Appraisal(models.Model):
     drainage_report_image = models.ImageField(upload_to=DRAINAGE_PHOTO,blank=True, null=True)
     location_of_defecation = models.CharField(max_length=2048,blank=True, null=True)
     percentage_with_individual_toilet = models.CharField(max_length=2048,blank=True, null=True)
-    drainage_coverage = models.IntegerField(max_length=2048,blank=True, null=True)
+    drainage_coverage = models.IntegerField(blank=True, null=True)
 
     class Meta:
         permissions = (
