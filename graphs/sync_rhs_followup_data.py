@@ -106,7 +106,7 @@ def syn_rim_data(city_id):
 			if latest_rim:
 				latest_date = latest_rim.submission_date
 
-			url = settings.KOBOCAT_FORM_URL +'data/' + kobo_survey + '?format=json&query={"_submission_time":{"$gt":"'+str(timezone.localtime(latest_date))+'"}}'
+			url = settings.KOBOCAT_FORM_URL +'data/' + kobo_survey + '?format=json&query={"end":{"$gt":"'+str(timezone.localtime(latest_date))+'"}}'
 			req = urllib2.Request(url)
 			req.add_header('Authorization', settings.KOBOCAT_TOKEN)
 			resp = urllib2.urlopen(req)

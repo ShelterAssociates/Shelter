@@ -223,7 +223,7 @@ def key_takeaways_toilet(slum):
     ctb_cleaning_poor =0
     for i in slum:
         safe_m1 += 1 if i.ctb_structure_condition == 'Poor' else 0
-        safe_m2 += int(i.seats_in_good_condtn) if i.seats_in_good_condtn != 0 else 0
+        safe_m2 += int(i.seats_in_good_condtn) if type(i.seats_in_good_condtn) == int else 0
         water += 1 if i.water_availability == ' Not available' else 0
         electricity += 1 if i.electricity_in_ctb == 'No' else 0
         sewage += 1 if i.sewage_disposal_system == 'Laid in the open' else 0
@@ -285,7 +285,10 @@ def key_takeaways(slum_name):
     count_waste_container = 0
     dump_sites = slum_name.filter(~Q(community_dump_sites = 'None')).count()
     dump_in_drain = slum_name.filter(dump_in_drains ='Yes').count()
-    container = int(slum_name.values_list('number_of_waste_container',flat=True)[0])
+    try:
+      container = int(slum_name.values_list('number_of_waste_container',flat=True)[0])
+    except :
+      container = 0
     count_waste_container += container
 
     cvrg_door_t_door = slum_name.values('waste_coverage_door_to_door').annotate(count=Count('waste_coverage_door_to_door'))
