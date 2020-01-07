@@ -239,7 +239,7 @@ def syn_rhs_followup_data(city_id):
 								try:
 									temp_hh = HouseholdData.objects.get(household_number = record['Household_number'], slum = slum)
 									if str(temp_hh.rhs_data['Type_of_structure_occupancy']) == 'Locked house':
-										temp.temp_locked_houses_replaced.append(temp_hh.household_number)
+										temp_locked_houses_replaced.append(temp_hh.household_number)
 										temp_hh.delete()
 
 									if str(temp_hh.rhs_data['Type_of_structure_occupancy']) == 'Occupied house':
@@ -320,27 +320,28 @@ def syn_rhs_followup_data(city_id):
 									only_followup +=1
 									print flag
 								except Exception as e:
-									#print "error in followup"
 									print e
-									#print record['Household_number']
 		
-
+def sync_ff_data(city_id):
+	cities = City.objects.filter(id__in=[city_id])
+	for city in cities:
 		survey_forms_ff = Survey.objects.filter(city__id = int(city.id), description__contains = 'FF')
 		for i in survey_forms_ff:
 			form_code = i.kobotool_survey_id
 			ff_data = fetch_data(form_code, '')
 			ff_data_with_labels = fetch_labels_codes(ff_data, form_code)
-			if city.id ==1:
-				ff_data_with_labels = [x for x in ff_data_with_labels if 'group_vq77l17/slum_name' in x.keys()]
-				
-				sorted(ff_data_with_labels, key = lambda x:x['group_vq77l17/slum_name']) #group_vq77l17/slum_name
-				
-				for key,list_records in groupby(ff_data_with_labels, lambda x:x['group_vq77l17/slum_name']):
-					try:
-						slum = Slum.objects.get(shelter_slum_code = key)
-					except:
-						# key 
-						slum = Slum.objects.get(shelter_slum_code = 272537891001)
+
+			ff_data_with_labels = [x for x in ff_data_with_labels if 'group_vq77l17/slum_name' in x.keys()]
+
+			sorted(ff_data_with_labels, key = lambda x:x['group_vq77l17/slum_name']) #group_vq77l17/slum_name
+
+			for key,list_records in groupby(ff_data_with_labels, lambda x:x['group_vq77l17/slum_name']):
+				slum = None
+				try:
+					slum = Slum.objects.get(shelter_slum_code = key)
+				except:
+					print (key," - slum not found")
+				if slum:
 					for record in list_records:
 						try:
 							if 'group_im2th52/Approximate_monthly_family_income_in_Rs' in record:
@@ -350,8 +351,8 @@ def syn_rhs_followup_data(city_id):
 							temp = HouseholdData.objects.get(household_number = record['group_vq77l17/Household_number'], slum = slum)
 							temp.ff_data = record
 							temp.save()
-						except:
-							#print no_rhs_but_ff.append(record['group_vq77l17/Household_number'] + " in" + str(slum) + " has a factesheet but no rhs/followup record") 
+						except Exception as e:
+							#print no_rhs_but_ff.append(record['group_vq77l17/Household_number'] + " in" + str(slum) + " has a factesheet but no rhs/followup record")
 							print e
 			
 
@@ -361,7 +362,6 @@ def syn_rhs_followup_data(city_id):
 			# print "All = " + str(a)	
 			# print "Only RHS updated = " + str(rhs_and_followup_updated)
 			# print "Only Follow-up updated = " + str(only_followup_updated)
-	print "no rhs but ff = " + str(only_followup) 
 			# print "replaced_locked_houses : " + str(replaced_locked_houses)
 			# print "double_houses : " + str(double_houses)
 							
