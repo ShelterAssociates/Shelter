@@ -26,43 +26,44 @@ CARDS = {'Cards': {'General':[{'gen_avg_household_size':"Avg Household size"}, {
          'Road': [{'road_with_no_vehicle_access':'No. of slums with no vehicle access'},
                   {'pucca_road_coverage':'Pucca Road Coverage'},{'kutcha_road_coverage':'Kutcha Road Coverage'}],
          'Drainage':[{'drainage_coverage':'Drain coverage'}]},
+
          'Keytakeaways' :
-         {'General':[ [" <b>value</b> slums with <b>undeclared</b> land status",],
-                      [" <br> <b>value</b> slums with <b>private</b> land ownership",],
-                      [" <br><b>value</b> slums likely to be affected by flooding, drainage and gutter problems due to <b>reasonable slope</b> of land topography"]],
-         'Water': [['<b>value</b> slums where water availability  is <b>less than 2 hours</b>, '],
-                  [' <b>value</b> with <b>water availability 24/7</b>'],
-                  [' <br><b>value</b> slums with <b>poor</b> quality of water '],
-                  [' <b>value</b> with <b>good</b> quality of water'],
-                  [' <br><b>value</b> slums with <b>full water coverage</b> ,'],
-                  [' <b>value</b> slums with <b>partial water coverage</b>'],
-                  [' <br><b>value</b> slums where alternate water sources are <b>tanker</b> , '],
+         {'General':[ [" <b>value</b> slum/s with <b>undeclared</b> land status",],
+                      [" <b>value</b> slum/s with <b>private</b> land ownership",],
+                      [" <b>value</b> slum/s likely to be affected by flooding, drainage and gutter problems due to <b>reasonable slope</b> of land topography"]],
+         'Water': [['<b>value</b> slum/s where water availability  is <b>less than 2 hours</b>, '],
+                  [' <b>value</b> slum/s with <b>24/7 water availability </b>'],
+                  [' <b>value</b> slum/s with <b>poor</b> quality of water'],
+                  [' <b>value</b> slum/s with <b>good</b> quality of water'],
+                  [' <b>value</b> slum/s with <b>full water coverage</b>'],
+                  [' <b>value</b> slum/s with <b>partial water coverage</b>'],
+                  [' <b>value</b> slums where alternate water sources are <b>tanker</b>'],
                   [' <b>value</b> with <b>water standposts</b>']],
-         'Waste': [[' <b>value</b>  slums having <b>open community dumping sites</b>'],
-                   [' <br><b>value</b> slums practice <b> dumping in drains</b>'],
-                   ['  <br><b>value</b> slums with <b>availability of waste containers</b>'],
-                   ['  <br><b>value</b> slums with <b>full waste coverage</b> facility, '],
-                   [' <b>value</b> with <b>partial waste coverage</b> , ' ],
-                   [' <b>value</b> with <b> no coverage</b>'],
-                   [' <br><b>value</b> slums with <b>daily</b>, '],
-                   [' <b>value</b> with <b>twice a week </b> waste collection frequency']],
-         'Road': [[' <b>value</b>  slums having <b>more than one</b> vehicular access'],
-                  [' <br><b>value</b>  slums where settlement is <b> below</b> access road'],
-                  [' <br><b>value</b>  slums where huts are <b>above</b> internal roads']],
-         'Drainage':[[' <b>value</b>  slums where drains <b> get blocked </b>'],
-                    [' <br><b>value</b> slums with <b>adequete</b> drain gradient, '],
-                    [' <b>value</b>  with<b> inadequete </b>drain gradient'],
-                    [' <br><b>value</b>  slums where gutter gets <b>flooded</b>'],
-                    [' <br><b>value</b> slums with<b>adequete</b> gutter gradient, '],
-                    [' <b>value</b> with <b> inadequete</b> gutter gradient']],
-         'Toilet':[[' <b>value</b>  slums where CTB structure is in <b> poor </b> condition'],
-                   [' <br><b>value</b>  CTB seats out of total <b>are in good condition </b>'],
-                   [' <br><b>value</b>  slums where <b> no availability of water</b> in CTB'],
-                   [' <br><b>value</b>  slums where sewage is <b> laid in open</b>'],
-                   [' <br><b>value</b>  slums where <b>no electricity in CTB at night</b>'],
-                   [' <br><b>value</b>  slums where CTB is <b>not available at night</b>'],
-                   [' <br><b>value</b> slums where cleanliness is <b> good</b> , '],
-                   [' <b>value</b> slums where cleanliness is <b> poor </b>in condition']]
+         'Waste': [[' <b>value open community dumping sites</b> present in slum/s'],
+                   [' <b>value</b> slum/s practice <b> dumping in drains</b>'],
+                   [' Total <b>value waste containers</b> available in slum/s'],
+                   # [' <b>value</b> slum/s with <b>full waste collection coverage</b> facility'],
+                   # [' <b>value</b> slum/s with <b>partial waste collection coverage</b> facility' ],
+                   # [' <b>value</b> slum/s with <b> no waste collection coverage</b> facility'],
+                   [' <b>value </b> slum/s have <b>daily </b>waste collection frequency'],
+                   [' <b>value</b> slum/s have <b>twice a week </b> waste collection frequency']],
+         'Road': [[' <b>value</b> slum/s having <b>more than one</b> vehicular access'],
+                  [' <b>value</b> slum/s where settlement is <b> below</b> access road'],
+                  [' <b>value</b> slum/s where huts are <b>above</b> internal roads']],
+         'Drainage':[[' <b>value</b> slum/s where drains <b> get blocked </b>'],
+                    [' <b>value</b> slum/s with <b>adequete</b> drain gradient, '],
+                    # [' <b>value</b> slum/s with<b> inadequete </b>drain gradient'],
+                    [' <b>value</b>  slum/s where gutter gets <b>flooded</b>'],
+                    [' <b>value</b> slum/s with<b> adequete</b> gutter gradient, ']],
+                    # [' <b>value</b> slum/s with <b> inadequete</b> gutter gradient']],
+         'Toilet':[[' <b>value</b>  slum/s where CTB structure is in <b> poor </b> condition'],
+                   [' <b>value</b>  CTB seats out of total <b>are in good condition </b>'],
+                   [' <b>value</b>  slum/s where <b> no availability of water</b> in CTB'],
+                   [' <b>value</b>  slum/s where sewage is <b> laid in open</b>'],
+                   [' <b>value</b>  slum/s where <b>no electricity in CTB at night</b>'],
+                   [' <b>value</b>  slum/s where CTB is <b>not available at night</b>'],
+                   [' <b>value</b> slum/s where cleanliness is <b> good</b> , '],
+                   [' <b>value</b> slum/s where cleanliness is <b> poor </b>in condition']]
          }}
 
 @login_required(login_url='/accounts/login/')
@@ -376,14 +377,14 @@ def key_takeaways(slum_name):
                                coverage_full,prtial_coverage,tanker,standpost]
                     all_cards.update(cards)
                 elif k == 'Waste':
-                    cards[k] = [dump_sites,dump_in_drain,count_waste_container,full_coverage,partial_coverage,no_coverage,
-                                freq_colln_twice,freq_colln_daily]
+                    cards[k] = [dump_sites,dump_in_drain,count_waste_container,freq_colln_twice,freq_colln_daily]
+                    # full_coverage, partial_coverage, no_coverage
                     all_cards.update(cards)
                 elif k == 'Road':
                     cards[k]= [slum_level,huts_level,vehicle_access]
                     all_cards.update(cards)
                 else:
-                    cards[k]= [drain_block,drain_gradient_adequete,drain_gradient_inadequet,gutter_flood,gutter_grd_adequete,gutter_grd_inadequet]
+                    cards[k]= [drain_block,drain_gradient_adequete,gutter_flood,gutter_grd_adequete]
                     all_cards.update(cards)
     return all_cards
 
