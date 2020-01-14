@@ -236,6 +236,7 @@ def syn_rhs_followup_data(city_id):
 								print e # 
 
 				for key,list_records in groupby(data_with_lables, lambda x:x['slum_name']):
+
 					temp_locked_houses_replaced = []
 					temp_double_houses = []
 					try:
@@ -244,6 +245,16 @@ def syn_rhs_followup_data(city_id):
 						#print key 
 						slum = Slum.objects.get(shelter_slum_code = 272537891001)
 					for record in list_records:
+						if 'group_oi8ts04/C1' in record.keys():
+							record.update({'group_oi8ts04/Current_place_of_defecation': record['group_oi8ts04/C1']})
+						if 'group_oi8ts04/C2' in record.keys():
+							record.update({'group_oi8ts04/Current_place_of_defecation': record['group_oi8ts04/C2']})
+						if 'group_oi8ts04/C3' in record.keys():
+							record.update({'group_oi8ts04/Current_place_of_defecation': record['group_oi8ts04/C3']})
+						if 'group_oi8ts04/C4' in record.keys():
+							record.update({'group_oi8ts04/Current_place_of_defecation': record['group_oi8ts04/C4']})
+						if 'group_oi8ts04/C5' in record.keys():
+							record.update({'group_oi8ts04/Current_place_of_defecation': record['group_oi8ts04/C5']})
 					 	if record['Type_of_structure_occupancy'] == 'Occupied house':
 							if 'group_og5bx85/Type_of_survey' in record and record['group_og5bx85/Type_of_survey'] == 'RHS':
 								f_data = {}
@@ -277,7 +288,7 @@ def syn_rhs_followup_data(city_id):
 									slum = slum,
 									city = city,
 									submission_date = convert_datetime(str(record['_submission_time'])) ,
-									rhs_data = r_data
+									rhs_data = record
 									)
 									household_data.save()
 									rhs_and_followup_updated +=1
@@ -306,6 +317,17 @@ def syn_rhs_followup_data(city_id):
 						#print key 
 						slum = Slum.objects.get(shelter_slum_code = 272537891001)
 					for record in list_records:
+						if 'group_oi8ts04/C1' in record.keys():
+							record.update({'group_oi8ts04/Current_place_of_defecation': record['group_oi8ts04/C1']})
+						if 'group_oi8ts04/C2' in record.keys():
+							record.update({'group_oi8ts04/Current_place_of_defecation': record['group_oi8ts04/C2']})
+						if 'group_oi8ts04/C3' in record.keys():
+							record.update({'group_oi8ts04/Current_place_of_defecation': record['group_oi8ts04/C3']})
+						if 'group_oi8ts04/C4' in record.keys():
+							record.update({'group_oi8ts04/Current_place_of_defecation': record['group_oi8ts04/C4']})
+						if 'group_oi8ts04/C5' in record.keys():
+							record.update({'group_oi8ts04/Current_place_of_defecation': record['group_oi8ts04/C5']})
+
 						if record['Type_of_structure_occupancy'] == 'Occupied house':
 							if 'group_og5bx85/Type_of_survey' in record and record['group_og5bx85/Type_of_survey'] == 'Follow-up survey':
 								count_o.append(record['Household_number'])
