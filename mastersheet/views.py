@@ -63,30 +63,14 @@ def masterSheet(request, slum_code=0, FF_code=0, RHS_code=0):
         slum_funder = SponsorProjectDetails.objects.filter(slum__name=str(slum_code[0][4])).exclude(sponsor__id=10)
         form_ids = Survey.objects.filter(city__id=int(slum_code[0][2]))
 
-        # for i in household_data:
-        #     try:
-        #         data = {'Household_number':int(i.household_number),
-        #                 '_id' : i.rhs_data['_id'] if i.rhs_data else "",
-        #                 '_xform_id_string': i.rhs_data['_xform_id_string'] if i.rhs_data else "",
-        #                 '_attachments': i.rhs_data['_attachments'] if i.rhs_data else '',
-        #                 'ff_id' : i.ff_data['_id'] if i.ff_data else "",
-        #                 'ff_xform_id_string':i.ff_data['_xform_id_string'] if i.ff_data else "",
-        #         'group_og5bx85/Type_of_survey': i.rhs_data['group_og5bx85/Type_of_survey'] if 'group_og5bx85/Type_of_survey'in i.rhs_data else "",
-        #                 }
-        #         data_list.append(data)
-        #     except  Exception as e:
-        #         print e, household_data[i]
-
         household_data = HouseholdData.objects.filter(slum__id=slum_code[0][0])
         followup_data = FollowupData.objects.filter(slum=slum_code[0][0])
 
         if slum_code is not 0:
-            # if flag_fetch_rhs or flag_fetch_ff:
-            #     # household_data = HouseholdData.objects.filter(slum__id=slum_code[0][0])
-            #     # followup_data_for_ODF = FollowupData.objects.filter(slum=slum_code[0][0])
-
-            if flag_fetch_rhs:
+            if flag_fetch_rhs :
                 formdict = map(lambda x: x.rhs_data, household_data)
+                # household_data = HouseholdData.objects.filter(slum__id=slum_code[0][0])
+                # followup_data = FollowupData.objects.filter(slum=slum_code[0][0])
 
             if flag_fetch_ff:
                 formdict_family_factsheet = map(lambda x:(x.ff_data if x.ff_data else {'group_vq77l17/Household_number': 00 }),household_data)
@@ -276,28 +260,9 @@ def masterSheet(request, slum_code=0, FF_code=0, RHS_code=0):
                 x.update({'rhs_url': settings.BASE_URL + str('shelter/forms/') + str(x['_xform_id_string']) + str('/instance#/') + str(x['_id'])})
                 x.update({'ff_url': settings.BASE_URL + str('shelter/forms/') + str(x['ff_xform_id_string']) + str('/instance#/') + str(x["ff_id"])})
 
-                current_place_of_def ={'01':'SBM (Installment)','02':'SBM (Contractor)',
-                    '03':'Toilet by SA (SBM)','04':'Toilet by other NGO (SBM)',
-                    '05':'Own toilet','06':'Toilet by other NGO','07':'Toilet by SA','08':'None of the above',
-                    '09':'Use CTB','10':'Shared toilet','11':'Public toilet outside slum','12':'None of the above',
-                    '13':'Non-functional, hence CTB'}
-
                 for i in followup_data:
-                    if i.household_number == key: #i.flag_followup_in_rhs == True and
-                        x.update(i.followup_data)
-                        cpd = str(i.followup_data['group_oi8ts04/Current_place_of_defecation'])
-                        if cpd in current_place_of_def:
-                            x.update({'current place of defecation': current_place_of_def[cpd]})
-                    else : print(i.household_number)
-                        # if i.followup_data['group_oi8ts04/Current_place_of_defecation'] in ['01','02','03','04','05','06','07']:
-                        #     x.update({'current place of defecation':'Own Toilet'})
-                        # elif i.followup_data['group_oi8ts04/Current_place_of_defecation'] in ['09','13']:
-                        #     x.update({'current place of defecation': 'Use CTB'})
-                        # elif i.followup_data['group_oi8ts04/Current_place_of_defecation'] == '10':
-                        #     x.update({'current place of defecation': 'Shared toilet'})
-                        # elif i.followup_data['group_oi8ts04/Current_place_of_defecation'] == '11':
-                        #     x.update({'current place of defecation': 'Public toilet outside slum'})
-                        # else : x.update({'current place of defecation': 'None'})
+                    if i.flag_followup_in_rhs == False:
+                        x.update({'current place of defecation': i.followup_data['group_oi8ts04/Current_place_of_defecation']})
 
                 for i in daily_reporting_data:
                     if i['household_number'] == key and i['status'] == 'Completed':
