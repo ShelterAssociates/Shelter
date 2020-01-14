@@ -13,12 +13,9 @@ from component.kobotoolbox import parse_RIM_answer_with_toilet
 import pdb
 import re
 
-
-
 def convert_datetime(date_str):
 	ret = parse_datetime(date_str)
 	return ret
-
 
 def trav(node):
     #Traverse up till the child node and add to list
@@ -66,7 +63,7 @@ def fetch_labels_codes(rhs_data, form_code):
 def fetch_data(form_code, latest_date):
 	rhs_url = str(settings.KOBOCAT_FORM_URL)+'data/' + str(form_code) + '?format=json'
 	if latest_date != '':
-		rhs_url += '&query={"_submission_time":{"$gt":"'+str(timezone.localtime(latest_date))+'"}}'
+		rhs_url += '&query={"_submission_time":{"$gt":"'+urllib2.quote(str(timezone.localtime(latest_date)))+'"}}'
 	find_count = rhs_url + '&count=1'
 	count_url = urllib2.Request(find_count)
 	count_url.add_header('User-agent', 'Mozilla 5.10')
@@ -81,7 +78,7 @@ def fetch_data(form_code, latest_date):
 			start = x*30000
 			url = rhs_url
 			if latest_date != '':
-				url = url + '&query={"_submission_time":{"$gt":"'+str(timezone.localtime(latest_date))+'"}}'
+				url = url + '&query={"_submission_time":{"$gt":"'+urllib2.quote(str(timezone.localtime(latest_date)))+'"}}'
 			url+='&start='+str(start)
 			kobotoolbox_request = urllib2.Request(url)
 			kobotoolbox_request.add_header('User-agent', 'Mozilla 5.10')
@@ -106,7 +103,8 @@ def syn_rim_data(city_id):
 			if latest_rim:
 				latest_date = latest_rim.submission_date
 
-			url = settings.KOBOCAT_FORM_URL +'data/' + kobo_survey + '?format=json&query={"end":{"$gt":"'+str(timezone.localtime(latest_date))+'"}}'
+			url = settings.KOBOCAT_FORM_URL +'data/' + kobo_survey + '?format=json&query={"_submission_time":{"$gt":"'+urllib2.quote(str(timezone.localtime(latest_date)))+'"}}'
+			#url = settings.KOBOCAT_FORM_URL + 'data/' + kobo_survey + '?format=json&query={"end":{"$gt":"' + urllib2.quote(str(timezone.localtime(latest_date))) + '"}}'
 			req = urllib2.Request(url)
 			req.add_header('Authorization', settings.KOBOCAT_TOKEN)
 			resp = urllib2.urlopen(req)
@@ -121,27 +119,31 @@ def syn_rim_data(city_id):
 			form_data = json.loads(content1)
 		# To maintain the order in which questions are displayed we iterate through the form data
 		if len(submission) > 0:
+			print (url)
+			print ("Total count "+ str(len(submission)))
 			for record in submission:
-				key = record['group_zl6oo94/group_uj8eg07/slum_name']
-				print key
-				try:
+				if 'group_zl6oo94/group_uj8eg07/slum_name' in record:
+					key = record['group_zl6oo94/group_uj8eg07/slum_name']
+					try:
 
-					slum = Slum.objects.get(shelter_slum_code=key)
+						slum = Slum.objects.get(shelter_slum_code=key)
 
-					output = parse_RIM_answer_with_toilet([record], form_data)
-					data = {
-								'slum' : slum,
-								'city' : city,
-								'submission_date' : convert_datetime(str(record['_submission_time'])),
-								'rim_data' : output,
-							}
-					slum_data, created= SlumData.objects.update_or_create(slum=slum, defaults=data)
-					slum_data.modified_on = datetime.datetime.now()
-					if created:
-						slum_data.created_on = datetime.datetime.now()
-					slum_data.save()
-				except Exception as e:
-					pass
+						output = parse_RIM_answer_with_toilet([record], form_data)
+						data = {
+									'slum' : slum,
+									'city' : city,
+									'submission_date' : convert_datetime(str(record['end'])),
+									'rim_data' : output,
+								}
+						slum_data, created= SlumData.objects.update_or_create(slum=slum, defaults=data)
+						slum_data.modified_on = datetime.datetime.now()
+						if created:
+							slum_data.created_on = datetime.datetime.now()
+						slum_data.save()
+					except Exception as e:
+						print ("RIM ERROR:: Slum name not found - " +str(key))
+				else:
+					print ("RIM ERROR:: Slum name missing for "+ str(record["_id"]))
 
 def syn_rhs_followup_data(city_id):
 	count_o = []
@@ -170,11 +172,11 @@ def syn_rhs_followup_data(city_id):
 
 			form_code = i.kobotool_survey_id
 			
-			latest_rhs = HouseholdData.objects.filter(slum__electoral_ward__administrative_ward__city = i.city).order_by('-submission_date')
+			latest_rhs = HouseholdData.objects.filter(city__id = city.id).order_by('-submission_date')
 			if len(latest_rhs) != 0:
 				latest_rhs_date = latest_rhs[0].submission_date 
 
-			latest_followup = FollowupData.objects.filter(slum__electoral_ward__administrative_ward__city = i.city).order_by('-submission_date')
+			latest_followup = FollowupData.objects.filter(city__id = city.id).order_by('-submission_date')
 			if len(latest_followup) != 0:
 				latest_followup_date = latest_followup[0].submission_date
 
@@ -199,6 +201,16 @@ def syn_rhs_followup_data(city_id):
 						#print key 
 						slum = Slum.objects.get(shelter_slum_code = 272537891001)
 					for record in list_records:
+						if 'group_oi8ts04/C1' in record.keys():
+							record.update({'group_oi8ts04/Current_place_of_defecation': record['group_oi8ts04/C1']})
+						if 'group_oi8ts04/C2' in record.keys():
+							record.update({'group_oi8ts04/Current_place_of_defecation': record['group_oi8ts04/C2']})
+						if 'group_oi8ts04/C3' in record.keys():
+							record.update({'group_oi8ts04/Current_place_of_defecation': record['group_oi8ts04/C3']})
+						if 'group_oi8ts04/C4' in record.keys():
+							record.update({'group_oi8ts04/Current_place_of_defecation': record['group_oi8ts04/C4']})
+						if 'group_oi8ts04/C5' in record.keys():
+							record.update({'group_oi8ts04/Current_place_of_defecation': record['group_oi8ts04/C5']})
 						#print record['Type_of_structure_occupancy'], record['_submission_time'], record['group_og5bx85/Type_of_survey']
 						if record['Type_of_structure_occupancy'] in ['Unoccupied house', 'Locked house']:
 							if record['Type_of_structure_occupancy'] == 'Unoccupied house':
@@ -233,7 +245,7 @@ def syn_rhs_followup_data(city_id):
 						slum = Slum.objects.get(shelter_slum_code = 272537891001)
 					for record in list_records:
 					 	if record['Type_of_structure_occupancy'] == 'Occupied house':
-							if record['group_og5bx85/Type_of_survey'] == 'RHS':
+							if 'group_og5bx85/Type_of_survey' in record and record['group_og5bx85/Type_of_survey'] == 'RHS':
 								f_data = {}
 								r_data = {}
 								try:
@@ -269,7 +281,7 @@ def syn_rhs_followup_data(city_id):
 									)
 									household_data.save()
 									rhs_and_followup_updated +=1
-								
+
 									followup_data = FollowupData(
 
 									household_number = record['Household_number'],
@@ -295,7 +307,7 @@ def syn_rhs_followup_data(city_id):
 						slum = Slum.objects.get(shelter_slum_code = 272537891001)
 					for record in list_records:
 						if record['Type_of_structure_occupancy'] == 'Occupied house':
-							if record['group_og5bx85/Type_of_survey'] == 'Follow-up survey':
+							if 'group_og5bx85/Type_of_survey' in record and record['group_og5bx85/Type_of_survey'] == 'Follow-up survey':
 								count_o.append(record['Household_number'])
 								a.append(record['Household_number'])
 								f_data = {}
@@ -307,16 +319,21 @@ def syn_rhs_followup_data(city_id):
 								try:
 									#print "adding followup"
 									flag = True if len(HouseholdData.objects.filter(household_number = record['Household_number'], slum = slum)) > 0 else False
-									followup_data = FollowupData(
-
-									household_number = record['Household_number'],
-									slum = slum,
-									city = city,
-									submission_date = convert_datetime(str(record['_submission_time'])) ,
-									followup_data = f_data,
-									flag_followup_in_rhs = False
-									)
-									followup_data.save()
+									try:
+										followup = FollowupData.objects.get(kobo_id=f_data["_id"] )
+										followup.followup_data = f_data
+										followup.save()
+									except:
+										followup_data = FollowupData(
+											household_number = record['Household_number'],
+											slum = slum,
+											city = city,
+											submission_date = convert_datetime(str(record['_submission_time'])) ,
+											followup_data = f_data,
+											kobo_id = f_data["_id"],
+											flag_followup_in_rhs = False
+										)
+										followup_data.save()
 									only_followup +=1
 									print flag
 								except Exception as e:
