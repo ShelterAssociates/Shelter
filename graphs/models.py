@@ -34,6 +34,7 @@ class FollowupData(models.Model):
 	created_date = models.DateTimeField(default=datetime.datetime.now)
 	followup_data = JSONField(null=True, blank=True)
 	flag_followup_in_rhs = models.BooleanField(default=False)
+	kobo_id = models.IntegerField(null=True, blank=True)
 
 	class Meta:
 		verbose_name = 'Followup data'
