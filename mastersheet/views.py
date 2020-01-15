@@ -64,7 +64,7 @@ def masterSheet(request, slum_code=0, FF_code=0, RHS_code=0):
         form_ids = Survey.objects.filter(city__id=int(slum_code[0][2]))
 
         household_data = HouseholdData.objects.filter(slum__id=slum_code[0][0])
-        followup_data = FollowupData.objects.filter(slum=slum_code[0][0])
+        followup_data = FollowupData.objects.filter(slum=slum_code[0][0],flag_followup_in_rhs = False)
 
         if slum_code is not 0:
             if flag_fetch_rhs :
@@ -260,9 +260,9 @@ def masterSheet(request, slum_code=0, FF_code=0, RHS_code=0):
                 x.update({'rhs_url': settings.BASE_URL + str('shelter/forms/') + str(x['_xform_id_string']) + str('/instance#/') + str(x['_id'])})
                 x.update({'ff_url': settings.BASE_URL + str('shelter/forms/') + str(x['ff_xform_id_string']) + str('/instance#/') + str(x["ff_id"])})
 
-                for i in followup_data:
-                    if i.flag_followup_in_rhs == False:
-                        x.update({'current place of defecation': i.followup_data['group_oi8ts04/Current_place_of_defecation']})
+                cod_data =followup_data.filter(household_number = int(key)).order_by('submission_date')
+                if cod_data.count()>0:
+                    x.update({'current place of defecation': cod_data[len(cod_data)-1].followup_data['group_oi8ts04/Current_place_of_defecation']})
 
                 for i in daily_reporting_data:
                     if i['household_number'] == key and i['status'] == 'Completed':
