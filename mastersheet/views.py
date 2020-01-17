@@ -66,6 +66,9 @@ def masterSheet(request, slum_code=0, FF_code=0, RHS_code=0):
         household_data = HouseholdData.objects.filter(slum__id=slum_code[0][0])
         followup_data = FollowupData.objects.filter(slum=slum_code[0][0],flag_followup_in_rhs = False)
 
+        complete = ToiletConstruction.objects.filter(slum=slum_code[0][0],status= 6).values_list('household_number',flat = True)
+        followup_data1 = FollowupData.objects.filter(slum=slum_code[0][0])
+
         if slum_code is not 0:
 
             if flag_fetch_rhs :
@@ -189,8 +192,7 @@ def masterSheet(request, slum_code=0, FF_code=0, RHS_code=0):
                             "no_rhs_flag": "#eba6fc"
                         }
 
-                    dummy_formdict[str(z)].update(
-                        {new_activity_type: y.activity_date_str, str(new_activity_type) + "_id": y.id})
+                    dummy_formdict[str(z)].update({new_activity_type: y.activity_date_str, str(new_activity_type) + "_id": y.id})
 
             for i in temp_sbm_keys:
                 if str(i) not in dummy_formdict.keys():
