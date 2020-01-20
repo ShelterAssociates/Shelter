@@ -34,7 +34,6 @@ function get_message(layer){
     else{
       content.push("No data available for \""+properties.name+"\"" );
     }
-
     return content.join('<br>');
 }
 
@@ -79,28 +78,28 @@ function display_cards(names,level){
       else {
       var section_card = $("div[name=section_card_clone]")[0].outerHTML;
       section_card = $(section_card).attr('name','section_card').removeClass('hide');
-      section_card = $(section_card).attr('name','section_card').removeClass('hide');
       section_card.find('span')[0].innerHTML = value;
       section_card.find('span')[1].innerHTML = Object.values(card_data["metadata"]['Cards'][section][key])[0];
       section_card.find('img')[0].src = "/static/images/dashboard/" + Object.keys(card_data["metadata"]['Cards'][section][key])[0] + '.png';
       $("#section_cards").append(section_card);}
     });
     }
-//    $(".takeaways").html("");
-//    if (section in card_data[level][names]['key_takeaways']){
-//      var value = card_data[level][names]['key_takeaways'][section]
-//      var name = Object.values(card_data["metadata"]['Keytakeaways'][section])
-//      for(i = 0 ;i <=(value.length-1); i++){
-//          key = '<br>'+ '&#128477'
-//          text = String(name[i]).replace('<br>',key)
-//          if (value[i] > 0){
-//              newname = String(text).replace('value', value[i])
-//              $(".takeaways").append(newname)
-//          }
-//      }
-//    }
+    $(".takeaways").html("");
+    if (section in card_data[level][names]['key_takeaways']){
+      var data = card_data[level][names]['key_takeaways'][section]
+      var name = Object.values(card_data["metadata"]['Keytakeaways'][section])
+      if (data.every(item => item === 0)){
+         $('.key-values').hide()
+      }
+      for(i = 0 ;i <=(data.length-1); i++){
+            if (data[i]>0){
+                    $('.key-values').show()
+                    text = String(name[i]).replace('value',data[i])
+                    $(".takeaways").append(text + '<br>')
+                  }
+              }
+    }
   }
-
 var MapLoad = (function() {
   function MapLoad(data){
         this.data = data;
