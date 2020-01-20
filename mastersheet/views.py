@@ -64,10 +64,8 @@ def masterSheet(request, slum_code=0, FF_code=0, RHS_code=0):
         form_ids = Survey.objects.filter(city__id=int(slum_code[0][2]))
 
         household_data = HouseholdData.objects.filter(slum__id=slum_code[0][0])
-        followup_data = FollowupData.objects.filter(slum=slum_code[0][0],flag_followup_in_rhs = False)
-
-        complete = ToiletConstruction.objects.filter(slum=slum_code[0][0],status= 6).values_list('household_number',flat = True)
-        followup_data1 = FollowupData.objects.filter(slum=slum_code[0][0])
+        followup_data_false = FollowupData.objects.filter(slum=slum_code[0][0],flag_followup_in_rhs = False)
+        followup_data_true = FollowupData.objects.filter(slum=slum_code[0][0],flag_followup_in_rhs = True)
 
         if slum_code is not 0:
 
@@ -223,8 +221,6 @@ def masterSheet(request, slum_code=0, FF_code=0, RHS_code=0):
                 dummy_formdict[str(i)].update(temp_daily_reporting[str(i)])
                 if dummy_formdict[str(i)]['status'] == 'Completed':
                     dummy_formdict[str(i)].update({'current place of defecation': 'Toilet by SA'})
-                else :
-                    dummy_formdict[str(i)].update({'current place of defecation': ''})
                 dummy_formdict[str(i)].update({'tc_id_' + str(i): temp_daily_reporting[str(i)]['id']})
 
             for key, x in dummy_formdict.iteritems():
@@ -268,9 +264,18 @@ def masterSheet(request, slum_code=0, FF_code=0, RHS_code=0):
                 x.update({'rhs_url': settings.BASE_URL + str('shelter/forms/') + str(x['_xform_id_string']) + str('/instance#/') + str(x['_id'])})
                 x.update({'ff_url': settings.BASE_URL + str('shelter/forms/') + str(x['ff_xform_id_string']) + str('/instance#/') + str(x["ff_id"])})
 
-                cod_data =followup_data.filter(household_number = int(key)).order_by('-submission_date').first()
-                if cod_data and 'group_oi8ts04/Current_place_of_defecation' in cod_data.followup_data :
-                    x.update({'current place of defecation': cod_data.followup_data['group_oi8ts04/Current_place_of_defecation']})
+                cod_status ={'01':'SBM (Installment)','02':'SBM (Contractor)','03':'Toilet by SA (SBM)','04':'Toilet by other NGO (SBM)',
+                            '05':'Own toilet','06':'Toilet by other NGO', '07':'Toilet by SA','08':'None of the above','09':'Use CTB',
+                            '10':'Shared toilet','11':'Public toilet outside slum','12':'None of the above','13':'Non-functional, hence CTB'}
+
+                cod_data = followup_data_false.filter(household_number = int(key)).order_by('-submission_date').first()
+
+                if cod_data and 'status' in x and x['status'] == 'Completed':
+                    x.update({'current place of defecation': 'Toilet by SA'})
+
+                elif cod_data and 'group_oi8ts04/Current_place_of_defecation' in cod_data.followup_data :
+                    data = cod_data.followup_data['group_oi8ts04/Current_place_of_defecation']
+                    x.update({'current place of defecation': cod_status[str(data)] })
 
                 if len(slum_funder) != 0:
                     for funder in slum_funder:
@@ -278,7 +283,6 @@ def masterSheet(request, slum_code=0, FF_code=0, RHS_code=0):
                             x.update({'Funder': funder.sponsor.organization_name})
 
             formdict = map(lambda x: dummy_formdict[x], dummy_formdict)
-
 
             for x in formdict:
                 try:
