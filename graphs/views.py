@@ -17,9 +17,9 @@ CARDS = {'Cards': {'General':[{'gen_avg_household_size':"Avg Household size"}, {
                     {'household_owners_count':'Superstructure Ownership'}],
          'Waste': [{'waste_no_collection_facility_percentile':'Garbage Bin'},
                    {'waste_door_to_door_collection_facility_percentile':'Door to door waste collection'},
-                   {'waste_dump_in_open_percent':'Dump in open'}],
-         'Water': [{'water_individual_connection_percentile':'Individual water connection'},
-                   {'water_shared_service_percentile':'Shared Water Connection'},{'waterstandpost_percentile':'Water Standposts'}],
+                   {'waste_dump_in_open_percent':'Dump in open'},{'waste_other_services':'Other services'}],
+         'Water': [{'water_individual_connection_percentile':'Individual water connection'},{'water_shared_service_percentile':'Shared Water Connection'},
+                   {'waterstandpost_percentile':'Water Standposts'},{'water_other_services':'Other sources'}],
          'Toilet': [{'toilet_seat_to_person_ratio':'Toilet seat to person ratio'},
                     {'toilet_men_women_seats_ratio':'Men|Women|Mix toilet seats'},
                     {'individual_toilet_coverage':'Individual Toilet Coverage'},{'ctb_coverage':'CTB usage'}],
@@ -27,42 +27,42 @@ CARDS = {'Cards': {'General':[{'gen_avg_household_size':"Avg Household size"}, {
                   {'pucca_road_coverage':'Pucca Road Coverage'},{'kutcha_road_coverage':'Kutcha Road Coverage'}],
          'Drainage':[{'drainage_coverage':'Drain coverage'}]},
          'Keytakeaways' :
-         {'General':[ [" <b>value</b> slums with <b>undeclared</b> land status",],
-                      [" <br> <b>value</b> slums with <b>private</b> land ownership",],
-                      [" <br><b>value</b> slums likely to be affected by flooding, drainage and gutter problems due to <b>reasonable slope</b> of land topography"]],
-         'Water': [['<b>value</b> slums where water availability  is <b>less than 2 hours</b>, '],
-                  [' <b>value</b> with <b>water availability 24/7</b>'],
-                  [' <br><b>value</b> slums with <b>poor</b> quality of water '],
-                  [' <b>value</b> with <b>good</b> quality of water'],
-                  [' <br><b>value</b> slums with <b>full water coverage</b> ,'],
-                  [' <b>value</b> slums with <b>partial water coverage</b>'],
-                  [' <br><b>value</b> slums where alternate water sources are <b>tanker</b> , '],
-                  [' <b>value</b> with <b>water standposts</b>']],
-         'Waste': [[' <b>value</b>  slums having <b>open community dumping sites</b>'],
-                   [' <br><b>value</b> slums practice <b> dumping in drains</b>'],
-                   ['  <br><b>value</b> slums with <b>availability of waste containers</b>'],
-                   ['  <br><b>value</b> slums with <b>full waste coverage</b> facility, '],
-                   [' <b>value</b> with <b>partial waste coverage</b> , ' ],
-                   [' <b>value</b> with <b> no coverage</b>'],
-                   [' <br><b>value</b> slums with <b>daily</b>, '],
-                   [' <b>value</b> with <b>twice a week </b> waste collection frequency']],
-         'Road': [[' <b>value</b>  slums having <b>more than one</b> vehicular access'],
-                  [' <br><b>value</b>  slums where settlement is <b> below</b> access road'],
-                  [' <br><b>value</b>  slums where huts are <b>above</b> internal roads']],
-         'Drainage':[[' <b>value</b>  slums where drains <b> get blocked </b>'],
-                    [' <br><b>value</b> slums with <b>adequete</b> drain gradient, '],
-                    [' <b>value</b>  with<b> inadequete </b>drain gradient'],
-                    [' <br><b>value</b>  slums where gutter gets <b>flooded</b>'],
-                    [' <br><b>value</b> slums with<b>adequete</b> gutter gradient, '],
-                    [' <b>value</b> with <b> inadequete</b> gutter gradient']],
-         'Toilet':[[' <b>value</b>  slums where CTB structure is in <b> poor </b> condition'],
-                   [' <br><b>value</b>  CTB seats out of total <b>are in good condition </b>'],
-                   [' <br><b>value</b>  slums where <b> no availability of water</b> in CTB'],
-                   [' <br><b>value</b>  slums where sewage is <b> laid in open</b>'],
-                   [' <br><b>value</b>  slums where <b>no electricity in CTB at night</b>'],
-                   [' <br><b>value</b>  slums where CTB is <b>not available at night</b>'],
-                   [' <br><b>value</b> slums where cleanliness is <b> good</b> , '],
-                   [' <b>value</b> slums where cleanliness is <b> poor </b>in condition']]
+         {'General':[ [" <b>value</b> slum/s with <b>undeclared</b> land status",],
+                      [" <b>value</b> slum/s with <b>private</b> land ownership",],
+                      [" <b>value</b> slum/s likely to be affected by flooding, drainage and gutter problems due to <b>reasonable slope</b> of land topography"]],
+         'Water': [['<b>value</b> slum/s where water availability  is <b>less than 2 hours</b>, '],
+                  [' <b>value</b> slum/s with <b>24/7 water availability </b>'],
+                  [' <b>value</b> slum/s with <b>poor</b> quality of water'],
+                  [' <b>value</b> slum/s with <b>good</b> quality of water'],
+                  [' <b>value</b> slum/s with <b>full water coverage</b>'],
+                  [' <b>value</b> slum/s with <b>partial water coverage</b>'],
+                  [' <b>value</b> slum/s where alternate water sources are <b>tanker</b>'],
+                  [' <b>value</b> slum/s with <b>water standposts</b>']],
+         'Waste': [[' <b>value open community dumping sites</b> present in slum/s'],
+                   [' <b>value</b> slum/s practice <b> dumping in drains</b>'],
+                   [' Total <b>value waste containers</b> available in slum/s'],
+                   [' <b>value</b> slum/s with <b>full waste collection coverage</b> facility'],
+                   [' <b>value</b> slum/s with <b>partial waste collection coverage</b> facility' ],
+                   [' <b>value</b> slum/s with <b> no waste collection coverage</b> facility'],
+                   [' <b>value </b> slum/s have <b>daily </b>waste collection frequency'],
+                   [' <b>value</b> slum/s have <b>twice a week </b> waste collection frequency']],
+         'Road': [[' <b>value</b> slum/s having <b>more than one</b> vehicular access'],
+                  [' <b>value</b> slum/s where settlement is <b> below</b> access road'],
+                  [' <b>value</b> slum/s where huts are <b>above</b> internal roads']],
+         'Drainage':[[' <b>value</b> slum/s where drains <b> get blocked </b>'],
+                    [' <b>value</b> slum/s with <b>adequete</b> drain gradient, '],
+                    # [' <b>value</b> slum/s with<b> inadequete </b>drain gradient'],
+                    [' <b>value</b>  slum/s where gutter gets <b>flooded</b>'],
+                    [' <b>value</b> slum/s with<b> adequete</b> gutter gradient, ']],
+                    # [' <b>value</b> slum/s with <b> inadequete</b> gutter gradient']],
+         'Toilet':[[' <b>value</b>  slum/s where CTB structure is in <b> poor </b> condition'],
+                   [' <b>value</b>  CTB seats out of total <b>are in good condition </b>'],
+                   [' <b>value</b>  slum/s where <b> no availability of water</b> in CTB'],
+                   [' <b>value</b>  slum/s where sewage is <b> laid in open</b>'],
+                   [' <b>value</b>  slum/s where <b>no electricity in CTB at night</b>'],
+                   [' <b>value</b>  slum/s where CTB is <b>not available at night</b>'],
+                   [' <b>value</b> slum/s where cleanliness is <b> good</b> , '],
+                   [' <b>value</b> slum/s where cleanliness is <b> poor </b>in condition']]
          }}
 
 @login_required(login_url='/accounts/login/')
@@ -147,7 +147,8 @@ def score_cards(ele):
     aggrgated_data = ele.aggregate(Sum('occupied_household_count'),Sum('household_count'),
         Sum('total_road_area'),Sum('road_with_no_vehicle_access'),Sum('pucca_road_coverage'),Sum('kutcha_road_coverage'),
         Sum('gen_avg_household_size'),Sum('gen_tenement_density'),Sum('household_owners_count'),
-        Sum('waste_no_collection_facility_percentile'),Sum('waste_door_to_door_collection_facility_percentile'),Sum('waste_dump_in_open_percent'),
+        Sum('waste_no_collection_facility_percentile'),Sum('waste_door_to_door_collection_facility_percentile'),
+        Sum('waste_dump_in_open_percent'),Sum('water_other_services'),Sum('waste_other_services'),
         Sum('water_individual_connection_percentile'),Sum('water_shared_service_percentile'),Sum('waterstandpost_percentile'),
         Sum('toilet_seat_to_person_ratio'),Sum('individual_toilet_coverage'),Sum('fun_male_seats'),Sum('fun_fmale_seats'),
         Sum('toilet_men_women_seats_ratio'),Sum('ctb_coverage'),Sum('get_shops_count'))
@@ -200,11 +201,13 @@ def score_cards(ele):
                     cards[k].append(str(round((aggrgated_data['water_individual_connection_percentile__sum'] / aggrgated_data['occupied_household_count__sum']) * 100 if aggrgated_data['occupied_household_count__sum'] else 0,2))+" %")
                     cards[k].append(str(round((aggrgated_data['water_shared_service_percentile__sum'] / aggrgated_data['occupied_household_count__sum']) * 100 if aggrgated_data['occupied_household_count__sum'] else 0,2))+" %")
                     cards[k].append(str(round((aggrgated_data['waterstandpost_percentile__sum'] / aggrgated_data['occupied_household_count__sum']) * 100 if aggrgated_data['occupied_household_count__sum'] else 0,2))+" %")
+                    cards[k].append(str(round((aggrgated_data['water_other_services__sum'] / aggrgated_data['occupied_household_count__sum']) * 100 if aggrgated_data['occupied_household_count__sum'] else 0,2))+" %")
                     all_cards.update(cards)
                 else:
                     cards[k].append(str(round((aggrgated_data['waste_no_collection_facility_percentile__sum'] / aggrgated_data['occupied_household_count__sum']) * 100 if aggrgated_data['occupied_household_count__sum'] else 0, 2)) + " %")
                     cards[k].append(str(round((aggrgated_data['waste_door_to_door_collection_facility_percentile__sum'] / aggrgated_data['occupied_household_count__sum']) * 100 if aggrgated_data['occupied_household_count__sum'] else 0, 2)) + " %")
                     cards[k].append(str(round((aggrgated_data['waste_dump_in_open_percent__sum'] / aggrgated_data['occupied_household_count__sum']) * 100 if aggrgated_data['occupied_household_count__sum'] else 0, 2)) + " %")
+                    cards[k].append(str(round((aggrgated_data['waste_other_services__sum'] / aggrgated_data['occupied_household_count__sum']) * 100 if aggrgated_data['occupied_household_count__sum'] else 0, 2)) + " %")
                     all_cards.update(cards)
         else :
             pass
@@ -294,34 +297,34 @@ def key_takeaways(slum_name):
     cvrg_door_t_door = slum_name.values('waste_coverage_door_to_door').annotate(count=Count('waste_coverage_door_to_door'))
     for i in cvrg_door_t_door:
         waste_coverage_door[i['waste_coverage_door_to_door']] = i['count']
-    dtd_full = waste_coverage_door['Full coverage'] if 'Full coverage' in waste_coverage_door.keys() else 0
-    dtd_part = waste_coverage_door['Partial coverage'] if 'Partial coverage' in waste_coverage_door.keys() else 0
-    dtd_no = waste_coverage_door['0'] if '0' in waste_coverage_door.keys() else 0
+    full_coverage = waste_coverage_door['Full coverage'] if 'Full coverage' in waste_coverage_door.keys() else 0
+    partial_coverage = waste_coverage_door['Partial coverage'] if 'Partial coverage' in waste_coverage_door.keys() else 0
+    no_coverage = waste_coverage_door['0'] if '0' in waste_coverage_door.keys() else 0
 
-    cvrg_mla_tempo = slum_name.values('waste_coverage_by_mla_tempo').annotate(count=Count('waste_coverage_by_mla_tempo'))
-    for i in cvrg_mla_tempo:
-        waste_coverage_tempo[i['waste_coverage_by_mla_tempo']] = i['count']
-    mla_full = waste_coverage_tempo['Full coverage'] if 'Full coverage' in waste_coverage_tempo.keys() else 0
-    mla_part = waste_coverage_tempo['Partial coverage'] if 'Partial coverage' in waste_coverage_tempo.keys() else 0
-    mla_no = waste_coverage_tempo['0'] if '0' in waste_coverage_tempo.keys() else 0
+    # cvrg_mla_tempo = slum_name.values('waste_coverage_by_mla_tempo').annotate(count=Count('waste_coverage_by_mla_tempo'))
+    # for i in cvrg_mla_tempo:
+    #     waste_coverage_tempo[i['waste_coverage_by_mla_tempo']] = i['count']
+    # mla_full = waste_coverage_tempo['Full coverage'] if 'Full coverage' in waste_coverage_tempo.keys() else 0
+    # mla_part = waste_coverage_tempo['Partial coverage'] if 'Partial coverage' in waste_coverage_tempo.keys() else 0
+    # mla_no = waste_coverage_tempo['0'] if '0' in waste_coverage_tempo.keys() else 0
 
-    cvrg_van = slum_name.values('waste_coverage_by_ulb_van').annotate(count=Count('waste_coverage_by_ulb_van'))
-    for i in cvrg_van:
-        waste_coverage_van[i['waste_coverage_by_ulb_van']]= i['count']
-    van_full = waste_coverage_van['Full coverage'] if 'Full coverage' in waste_coverage_van.keys() else 0
-    van_part = waste_coverage_van['Partial coverage'] if 'Partial coverage' in waste_coverage_van.keys() else 0
-    van_no = waste_coverage_van['0'] if '0' in waste_coverage_van.keys() else 0
+    # cvrg_van = slum_name.values('waste_coverage_by_ulb_van').annotate(count=Count('waste_coverage_by_ulb_van'))
+    # for i in cvrg_van:
+    #     waste_coverage_van[i['waste_coverage_by_ulb_van']]= i['count']
+    # van_full = waste_coverage_van['Full coverage'] if 'Full coverage' in waste_coverage_van.keys() else 0
+    # van_part = waste_coverage_van['Partial coverage'] if 'Partial coverage' in waste_coverage_van.keys() else 0
+    # van_no = waste_coverage_van['0'] if '0' in waste_coverage_van.keys() else 0
+    #
+    # cvrg_ghantagadi = slum_name.values('waste_coverage_by_ghantagadi').annotate(count=Count('waste_coverage_by_ghantagadi'))
+    # for i in cvrg_ghantagadi:
+    #     waste_coverage_ghantagadi[i['waste_coverage_by_ghantagadi']] = i['count']
+    # gadi_full = waste_coverage_ghantagadi['Full coverage']  if 'Full coverage' in waste_coverage_ghantagadi.keys() else 0
+    # gadi_part = waste_coverage_ghantagadi['Partial coverage']  if 'Partial coverage' in waste_coverage_ghantagadi.keys() else 0
+    # gado_no = waste_coverage_ghantagadi['0'] if '0' in waste_coverage_ghantagadi.keys() else 0
 
-    cvrg_ghantagadi = slum_name.values('waste_coverage_by_ghantagadi').annotate(count=Count('waste_coverage_by_ghantagadi'))
-    for i in cvrg_ghantagadi:
-        waste_coverage_ghantagadi[i['waste_coverage_by_ghantagadi']] = i['count']
-    gadi_full = waste_coverage_ghantagadi['Full coverage']  if 'Full coverage' in waste_coverage_ghantagadi.keys() else 0
-    gadi_part = waste_coverage_ghantagadi['Partial coverage']  if 'Partial coverage' in waste_coverage_ghantagadi.keys() else 0
-    gado_no = waste_coverage_ghantagadi['0'] if '0' in waste_coverage_ghantagadi.keys() else 0
-
-    full_coverage = gadi_full+van_full+dtd_full+mla_full
-    partial_coverage =gadi_part+van_part+dtd_part+mla_part
-    no_coverage = gado_no+van_no+mla_no+dtd_no
+    # full_coverage = gadi_full+van_full+dtd_full+mla_full
+    # partial_coverage =gadi_part+van_part+dtd_part+mla_part
+    # no_coverage = gado_no + van_no+ mla_no+ dtd_no
 
     freq_door = slum_name.values('waste_coll_freq_door_to_door').annotate(count=Count('waste_coll_freq_door_to_door'))
     for i in freq_door:
@@ -356,11 +359,11 @@ def key_takeaways(slum_name):
     vehicle_access = slum_name.filter(point_of_vehicular_access='More than one').count()
     #drainage data
     drain_gradient_adequete = slum_name.filter(is_the_drainage_gradient_adequ='Yes').count()
-    drain_gradient_inadequet = slum_name.filter(is_the_drainage_gradient_adequ='No').count()
+    # drain_gradient_inadequet = slum_name.filter(is_the_drainage_gradient_adequ='No').count()
     drain_block = slum_name.filter(do_the_drains_get_blocked='Yes').count()
     #gutter data
     gutter_grd_adequete = slum_name.filter(do_gutters_flood='Yes').count()
-    gutter_grd_inadequet = slum_name.filter(do_gutters_flood='No').count()
+    # gutter_grd_inadequet = slum_name.filter(do_gutters_flood='No').count()
     gutter_flood = slum_name.filter(is_gutter_gradient_adequate='Yes').count()
 
     for k1,v1 in CARDS.items():
@@ -376,14 +379,13 @@ def key_takeaways(slum_name):
                                coverage_full,prtial_coverage,tanker,standpost]
                     all_cards.update(cards)
                 elif k == 'Waste':
-                    cards[k] = [dump_sites,dump_in_drain,count_waste_container,full_coverage,partial_coverage,no_coverage,
-                                freq_colln_twice,freq_colln_daily]
+                    cards[k] = [dump_sites,dump_in_drain,count_waste_container,full_coverage, partial_coverage, no_coverage,freq_colln_twice,freq_colln_daily]
                     all_cards.update(cards)
                 elif k == 'Road':
                     cards[k]= [slum_level,huts_level,vehicle_access]
                     all_cards.update(cards)
                 else:
-                    cards[k]= [drain_block,drain_gradient_adequete,drain_gradient_inadequet,gutter_flood,gutter_grd_adequete,gutter_grd_inadequet]
+                    cards[k]= [drain_block,drain_gradient_adequete,gutter_flood,gutter_grd_adequete]
                     all_cards.update(cards)
     return all_cards
 

@@ -192,10 +192,12 @@ class DashboardData(models.Model):
    waste_no_collection_facility_percentile = models.FloatField(blank=True, null=True) # repalce this field to garbage_bin_facility
    waste_door_to_door_collection_facility_percentile = models.FloatField(blank=True, null=True)
    waste_dump_in_open_percent= models.FloatField(blank=True, null=True)
+   waste_other_services = models.FloatField(blank=True, null=True)
    # water section columns
    water_individual_connection_percentile = models.FloatField(blank=True,null=True)
    water_shared_service_percentile  = models.FloatField(blank=True, null= True)
    waterstandpost_percentile = models.FloatField(blank=True, null= True)
+   water_other_services= models.FloatField(blank=True, null=True)
    # Road
    pucca_road = models.FloatField(blank= True,null=True)
    kutcha_road = models.FloatField(blank= True,null=True)

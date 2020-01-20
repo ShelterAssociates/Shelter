@@ -39,27 +39,33 @@ class DashboardCard(RHSData):
     def Waste_Info(self):
         door_to_door_percent = self.get_waste_facility('Door to door waste collection')
         openspace_percent= self.get_waste_facility('Open space')
-        # gutter_facility = self.get_perc_of_waste_collection('inside gutter')
-        # canal_facility = self.get_perc_of_waste_collection('along/inside canal')
         garbage_bin_facility = self.get_waste_facility('Garbage bin')
-        return (door_to_door_percent,garbage_bin_facility,openspace_percent)
+        other_waste_collections = self.get_perc_of_waste_collection('ULB service')
+
+        return (door_to_door_percent,garbage_bin_facility,openspace_percent,other_waste_collections)
 
     def save_waste(self):
-        (door_to_door_percent,garbage_bin_facility,openspace_percent)= self.Waste_Info()
+        (door_to_door_percent,garbage_bin_facility,openspace_percent,other_waste_collections)= self.Waste_Info()
         to_save = DashboardData.objects.update_or_create(slum =self.slum, defaults=
-                                {'waste_door_to_door_collection_facility_percentile': door_to_door_percent,
+                                {'waste_door_to_door_collection_facility_percentile': door_to_door_percent,'waste_other_services':other_waste_collections,
             'waste_dump_in_open_percent': openspace_percent,'waste_no_collection_facility_percentile': garbage_bin_facility})
 
     def Water_Info(self):
         individual_connection_percent = self.get_water_coverage('Individual connection')
         shared_connection_percent = self.get_water_coverage('Shared connection')
         water_standpost_percent = self.get_water_coverage('Water standpost')
-        return (individual_connection_percent,shared_connection_percent,water_standpost_percent)
+        hand_pump = self.get_water_coverage('Hand pump')
+        water_tanker = self.get_water_coverage('Water tanker')
+        from_other_settlements = self.get_water_coverage('From other settlements')
+        well = self.get_water_coverage('Well')
+        other_water_services = hand_pump+water_tanker+from_other_settlements+well
+
+        return (individual_connection_percent,shared_connection_percent,water_standpost_percent,other_water_services)
 
     def save_water(self):
-        (individual_connection_percent,shared_connection_percent,water_standpost_percent) = self.Water_Info()
+        (individual_connection_percent,shared_connection_percent,water_standpost_percent,other_water_services) = self.Water_Info()
         to_save = DashboardData.objects.update_or_create(slum =self.slum,
-            defaults={'water_individual_connection_percentile':individual_connection_percent,
+            defaults={'water_individual_connection_percentile':individual_connection_percent,'water_other_services':other_water_services,
             'water_shared_service_percentile':shared_connection_percent,'waterstandpost_percentile':water_standpost_percent})
 
     def Road_Info(self):

@@ -23,7 +23,6 @@ from collections import defaultdict
 import datetime
 import itertools
 from django.db.models.functions import Length
-
 import xlwt
 from xlwt import Workbook
 from mastersheet.models import *
@@ -49,45 +48,31 @@ def give_details(request):
 # Also, it retrieves the data of accounts and SBM. This view bundles them in a single object
 # to be displayed to the front end.
 
-# @csrf_exempt
-# @apply_permissions_ajax('mastersheet.can_view_mastersheet')
-# @deco_city_permission
+@csrf_exempt
+@apply_permissions_ajax('mastersheet.can_view_mastersheet')
+@deco_city_permission
 def masterSheet(request, slum_code=0, FF_code=0, RHS_code=0):
     flag_fetch_rhs = 'show_rhs' in request.GET
     flag_fetch_ff = 'show_ff' in request.GET
     try:
-        data_list =[]
         formdict = []
         formdict_family_factsheet = []
-
         slum_code = Slum.objects.filter(pk=int(request.GET['slumname'])).values_list("id", "shelter_slum_code",
                                                                                      "electoral_ward__administrative_ward__city__id",
                                                                                      "electoral_ward__name", "name")
         slum_funder = SponsorProjectDetails.objects.filter(slum__name=str(slum_code[0][4])).exclude(sponsor__id=10)
         form_ids = Survey.objects.filter(city__id=int(slum_code[0][2]))
 
-        household_data = HouseholdData.objects.filter(slum__id=slum_code[0][0])  # this is list of all household numbers for specific slum
-        followup_data_for_ODF = FollowupData.objects.filter(slum=slum_code[0][0])
-
-        for i in household_data:
-            try:
-                data = {'Household_number':i.household_number,
-                        '_id' : i.rhs_data['_id'] if i.rhs_data else "",
-                        '_xform_id_string': i.rhs_data['_xform_id_string'] if i.rhs_data else "",
-                        '_attachments': i.rhs_data['_attachments'] if i.rhs_data else '',
-                        'ff_id' : i.ff_data['_id'] if i.ff_data else "",
-                        'ff_xform_id_string':i.ff_data['_xform_id_string'] if i.ff_data else "",
-                'group_og5bx85/Type_of_survey': i.rhs_data['group_og5bx85/Type_of_survey'] if 'group_og5bx85/Type_of_survey'in i.rhs_data else "",
-                        }
-                data_list.append(data)
-            except  Exception as e:
-                print e, household_data[i]
+        household_data = HouseholdData.objects.filter(slum__id=slum_code[0][0])
+        followup_data_false = FollowupData.objects.filter(slum=slum_code[0][0],flag_followup_in_rhs = False)
+        followup_data_true = FollowupData.objects.filter(slum=slum_code[0][0],flag_followup_in_rhs = True)
 
         if slum_code is not 0:
-            formdict = data_list
 
-            if flag_fetch_rhs:
+            if flag_fetch_rhs :
                 formdict = map(lambda x: x.rhs_data, household_data)
+                # household_data = HouseholdData.objects.filter(slum__id=slum_code[0][0])
+                # followup_data = FollowupData.objects.filter(slum=slum_code[0][0])
 
             if flag_fetch_ff:
                 formdict_family_factsheet = map(lambda x:(x.ff_data if x.ff_data else {'group_vq77l17/Household_number': 00 }),household_data)
@@ -118,6 +103,7 @@ def masterSheet(request, slum_code=0, FF_code=0, RHS_code=0):
                 slum__shelter_slum_code=slum_code[0][1])
 
             daily_reporting_data = daily_reporting_data.values(*toilet_reconstruction_fields)
+
             for i in daily_reporting_data:
                 if i['status'] is not None:
                     if i['status'].strip() != "":
@@ -204,8 +190,7 @@ def masterSheet(request, slum_code=0, FF_code=0, RHS_code=0):
                             "no_rhs_flag": "#eba6fc"
                         }
 
-                    dummy_formdict[str(z)].update(
-                        {new_activity_type: y.activity_date_str, str(new_activity_type) + "_id": y.id})
+                    dummy_formdict[str(z)].update({new_activity_type: y.activity_date_str, str(new_activity_type) + "_id": y.id})
 
             for i in temp_sbm_keys:
                 if str(i) not in dummy_formdict.keys():
@@ -234,6 +219,8 @@ def masterSheet(request, slum_code=0, FF_code=0, RHS_code=0):
                     }
 
                 dummy_formdict[str(i)].update(temp_daily_reporting[str(i)])
+                if dummy_formdict[str(i)]['status'] == 'Completed':
+                    dummy_formdict[str(i)].update({'current place of defecation': 'Toilet by SA'})
                 dummy_formdict[str(i)].update({'tc_id_' + str(i): temp_daily_reporting[str(i)]['id']})
 
             for key, x in dummy_formdict.iteritems():
@@ -277,22 +264,18 @@ def masterSheet(request, slum_code=0, FF_code=0, RHS_code=0):
                 x.update({'rhs_url': settings.BASE_URL + str('shelter/forms/') + str(x['_xform_id_string']) + str('/instance#/') + str(x['_id'])})
                 x.update({'ff_url': settings.BASE_URL + str('shelter/forms/') + str(x['ff_xform_id_string']) + str('/instance#/') + str(x["ff_id"])})
 
-                for i in followup_data_for_ODF:
-                    if i.household_number == key: #i.flag_followup_in_rhs == True and
-                        x.update(i.followup_data)
-                        if i.followup_data['group_oi8ts04/Current_place_of_defecation'] in ['01','02','03','04','05','06','07']:
-                            x.update({'current place of defecation':'Own Toilet'})
-                        elif i.followup_data['group_oi8ts04/Current_place_of_defecation'] in ['09','13']:
-                            x.update({'current place of defecation': 'Use CTB'})
-                        elif i.followup_data['group_oi8ts04/Current_place_of_defecation'] == '10':
-                            x.update({'current place of defecation': 'Shared toilet'})
-                        elif i.followup_data['group_oi8ts04/Current_place_of_defecation'] == '11':
-                            x.update({'current place of defecation': 'Public toilet outside slum'})
-                        else : x.update({'current place of defecation': 'None'})
+                cod_status ={'01':'SBM (Installment)','02':'SBM (Contractor)','03':'Toilet by SA (SBM)','04':'Toilet by other NGO (SBM)',
+                            '05':'Own toilet','06':'Toilet by other NGO', '07':'Toilet by SA','08':'None of the above','09':'Use CTB',
+                            '10':'Shared toilet','11':'Public toilet outside slum','12':'None of the above','13':'Non-functional, hence CTB'}
 
-                for i in daily_reporting_data:
-                    if i['household_number'] == key and i['status'] == 'Completed':
-                            x.update({'current place of defecation': 'Own Toilet'})
+                cod_data = followup_data_false.filter(household_number = int(key)).order_by('-submission_date').first()
+
+                if cod_data and 'status' in x and x['status'] == 'Completed':
+                    x.update({'current place of defecation': 'Toilet by SA'})
+
+                elif cod_data and 'group_oi8ts04/Current_place_of_defecation' in cod_data.followup_data :
+                    data = cod_data.followup_data['group_oi8ts04/Current_place_of_defecation']
+                    x.update({'current place of defecation': cod_status[str(data)] })
 
                 if len(slum_funder) != 0:
                     for funder in slum_funder:
@@ -303,15 +286,14 @@ def masterSheet(request, slum_code=0, FF_code=0, RHS_code=0):
 
             for x in formdict:
                 try:
-                    if x['current place of defecation'] in ['SBM (Installment)', 'Own toilet'] and len(x['agreement_date_str']) > 1:  # in i.keys() and 'current place of defecation' in  i.keys():
+                    if x['current place of defecation'] in ['SBM (Installment)', 'Own toilet'] and len(x['agreement_date_str']) > 1:
                         x['incorrect_cpod'] = 'incorrect_cpod'
                 except Exception as e:
                     # print 'not found - '+str(x['Household_number'])
                     pass
 
-    except Exception as e:
-       print e
-       raise
+    except Exception as e: print e
+        # raise
     return HttpResponse(json.dumps(formdict), content_type="application/json")
 
 def to_date(s):
@@ -320,14 +302,12 @@ def to_date(s):
     else:
         return None
 
-
 def is_delayed(s):
     if (s and len(s) != 0):
         if (datetime.date.today() - to_date(s)).days > 8:
             return True
     else:
         return False
-
 
 def trav(node):
     # Traverse up till the child node and add to list
@@ -510,7 +490,6 @@ def renderMastersheet(request):
     return render(request, 'masterSheet.html',
                   {'form': slum_search_field, 'form_account': account_slum_search_field, 'file_form': file_form1})
 
-
 @csrf_exempt
 @apply_permissions_ajax('mastersheet.can_upload_mastersheet')
 def file_ops(request):
@@ -604,9 +583,7 @@ def handle_uploaded_file(f, response, slum_code):
                                 application_verified=check_bool(df_sbm.loc[int(i), 'Application Verified']),
                                 application_approved=check_bool(df_sbm.loc[int(i), 'Application Approved']),
                                 sbm_comment=df_sbm.loc[int(i), 'SBM Comment']
-
                             )
-
                             response.append(("updated sbm", i))
 
                         else:
@@ -801,7 +778,6 @@ def delete_selected(request):
     delete_selected_records(records)
 
     return HttpResponse(json.dumps(response), content_type="application/json")
-
 
 def delete_selected_records(records):
     """
