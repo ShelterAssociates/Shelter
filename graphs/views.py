@@ -10,6 +10,7 @@ from collections import OrderedDict
 from graphs.models import *
 from master.models import *
 import json
+from component.cipher import *
 from django.db.models import Q
 
 CARDS = {'Cards': {'General':[{'gen_avg_household_size':"Avg Household size"}, {'gen_tenement_density':"Tenement density (Huts/Hector)"},
@@ -393,6 +394,7 @@ def key_takeaways(slum_name):
 def dashboard_all_cards(request,key):
     '''dashboard all cities card data'''
     def get_data(key):
+        cipher = AESCipher()
         dict_filter = {}
         output_data = {'city': OrderedDict()}
         if key != 'all':
@@ -408,7 +410,8 @@ def dashboard_all_cards(request,key):
             qol_scores = QOLScoreData.objects.filter(city=city).aggregate(Avg('totalscore_percentile'))
             city_name = city.name.city_name
             output_data['city'][city_name] = dashboard_data
-            output_data['city'][city_name]['city_id'] = "city::" + city_name
+            output_data['city'][city_name]['city_id'] = "city::" + cipher.encrypt(str(city.id))
+            #output_data['city'][city_name]['city_id'] = "city::" + city_name
             output_data['city'][city_name].update(qol_scores)
             output_data['city'][city_name]['slum_count'] = slum_count
             output_data['city'][city_name]['total_slum_count'] = total_slum_count
