@@ -215,7 +215,7 @@ def masterSheet(request, slum_code=0, FF_code=0, RHS_code=0):
                         "no_rhs_flag": "#eba6fc"
                     }
                 dummy_formdict[str(i)].update(temp_daily_reporting[str(i)])
-                if 'status' in dummy_formdict[str(i)]:
+                if 'status' in dummy_formdict[str(i)] and 'group_oi8ts04/Current_place_of_defecation' in dummy_formdict[str(i)]:
                     if dummy_formdict[str(i)]['status'] == 'Completed':
                         dummy_formdict[str(i)].update({'current place of defecation': 'Toilet by SA'})
                     if dummy_formdict[str(i)]['status'] == '':
