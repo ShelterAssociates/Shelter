@@ -77,7 +77,7 @@ def masterSheet(request, slum_code=0, FF_code=0, RHS_code=0):
 
                 # Family Factsheet - fetching data
                 # arranging data with respect to household numbers
-                temp_FF = {obj_FF['group_vq77l17/Household_number']: obj_FF for obj_FF in formdict_family_factsheet}
+                temp_FF = {str(int(obj_FF['group_vq77l17/Household_number'])): obj_FF for obj_FF in formdict_family_factsheet}
                 temp_FF_keys = temp_FF.keys() # list of household numbers
 
             # Daily Reporting - fetching data
@@ -120,7 +120,7 @@ def masterSheet(request, slum_code=0, FF_code=0, RHS_code=0):
                     else:
                         if i['completion_date_str'] == None and is_delayed(i['phase_two_material_date_str']):
                             i['delay_flag'] = '#aaa4f4'
-            temp_daily_reporting = {obj_DR['household_number']: obj_DR for obj_DR in daily_reporting_data}
+            temp_daily_reporting = {str(int(obj_DR['household_number'])): obj_DR for obj_DR in daily_reporting_data}
             temp_DR_keys = temp_daily_reporting.keys()
 
             # SBM - fetching data
@@ -133,7 +133,7 @@ def masterSheet(request, slum_code=0, FF_code=0, RHS_code=0):
 
             sbm_data = sbm_data.values(*sbm_fields)
 
-            temp_sbm = {obj_DR['household_number']: obj_DR for obj_DR in sbm_data}
+            temp_sbm = {str(obj_DR['household_number']): obj_DR for obj_DR in sbm_data}
             temp_sbm_keys = temp_sbm.keys()
 
             # Community Mobilization - fetching data
@@ -150,13 +150,13 @@ def masterSheet(request, slum_code=0, FF_code=0, RHS_code=0):
             vendor = VendorHouseholdInvoiceDetail.objects.filter(slum__shelter_slum_code=slum_code[0][1])
             invoices = InvoiceItems.objects.filter(slum__shelter_slum_code=slum_code[0][1])
 
-            dummy_formdict = {x['Household_number']: x for x in formdict}
+            dummy_formdict = {str(int(x['Household_number'])): x for x in formdict}
 
             for y in invoices:
                 for z in y.household_numbers:
                     if str(z) not in dummy_formdict.keys():
                         dummy_formdict[str(z)] = {
-                            "Household_number": z,
+                            "Household_number": str(z),
                             "_id": "",
                             "ff_id": "",
                             "ff_xform_id_string": "",
