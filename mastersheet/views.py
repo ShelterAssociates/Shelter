@@ -38,6 +38,7 @@ def give_details(request):
             "shelter_slum_code", "electoral_ward__administrative_ward__city__id", "electoral_ward__name", "name")
         slum_info_dict.update(
             {"Name of the slum": slum_code[0][3], "Electoral Ward": slum_code[0][2], "City Code": slum_code[0][1]})
+
     except Exception as e:
         print e
     return HttpResponse(json.dumps(slum_info_dict), content_type='application/json')
@@ -64,13 +65,14 @@ def masterSheet(request, slum_code=0, FF_code=0, RHS_code=0):
 
         household_data = HouseholdData.objects.filter(slum__id=slum_code[0][0])
         followup_data_false = FollowupData.objects.filter(slum=slum_code[0][0],flag_followup_in_rhs = False)
+#        followup_data_true = FollowupData.objects.filter(slum=slum_code[0][0],flag_followup_in_rhs = True)
 
         if slum_code is not 0:
 
             if flag_fetch_rhs :
-                formdict = map(lambda x: x.rhs_data,household_data)
-            else:
-                formdict = map(lambda x:{'Household_number':x.household_number, '_id':x.rhs_data['_id'], '_xform_id_string':x.rhs_data['_xform_id_string']}, household_data)
+                formdict = map(lambda x: x.rhs_data, household_data)
+	    else:
+		formdict = map(lambda x:{'Household_number':x.household_number, '_id':x.rhs_data['_id'], '_xform_id_string':x.rhs_data['_xform_id_string']}, household_data)
 
             if flag_fetch_ff:
                 formdict_family_factsheet = map(lambda x:(x.ff_data if x.ff_data else {'group_vq77l17/Household_number': 00 }),household_data)
@@ -143,8 +145,8 @@ def masterSheet(request, slum_code=0, FF_code=0, RHS_code=0):
             community_mobilization_data = CommunityMobilization.objects.extra(
                 select={'activity_date_str': "to_char(activity_date, 'YYYY-MM-DD ')"}).filter(
                 slum__id=slum_code[0][0])
-            community_mobilization_data = community_mobilization_data.values(*community_mobilization_fields)
-            community_mobilization_data_list = list(community_mobilization_data)
+            #community_mobilization_data1 = community_mobilization_data.values(*community_mobilization_fields)
+            #community_mobilization_data_list = list(community_mobilization_data1)
 
             # Vendor and Accounts - fetching data
             vendor = VendorHouseholdInvoiceDetail.objects.filter(slum__id=slum_code[0][0])
@@ -174,11 +176,10 @@ def masterSheet(request, slum_code=0, FF_code=0, RHS_code=0):
                     })
 
             for y in community_mobilization_data:
-            # y = community_mobilization_data[i]
-                hhn = eval(y['household_number'])
-                for z in hhn:#y.household_number:
-                    new_activity_type = y['activity_type'] #.name
-                    #str(int(z))
+                #y = community_mobilization_data[i]
+                for z in y.household_number:
+                    new_activity_type = y.activity_type.name
+ 		    z=str(int(z))
                     if z not in dummy_formdict.keys():
                         dummy_formdict[z] = {
                             "Household_number": z,
@@ -189,7 +190,7 @@ def masterSheet(request, slum_code=0, FF_code=0, RHS_code=0):
                             "_attachments": "",
                             "no_rhs_flag": "#eba6fc"
                         }
-                    dummy_formdict[z].update({new_activity_type: y['activity_date_str'], str(new_activity_type) + "_id": y['id']})
+                    dummy_formdict[z].update({new_activity_type: y.activity_date_str, str(new_activity_type) + "_id": y.id})
 
             for i in temp_sbm_keys:
                 if str(i) not in dummy_formdict.keys():
@@ -230,7 +231,7 @@ def masterSheet(request, slum_code=0, FF_code=0, RHS_code=0):
                     x['material_shifts'] = None
 
                 temp = x['_id']
-                x['slum__name'] = slum_code[0][4]
+                x['slum__name'] = slum_code[0][3]
                 x['ff_id'] = None
                 x['ff_xform_id_string'] = None
 		x['Household_number'] = str(int(x['Household_number']))
@@ -283,7 +284,6 @@ def masterSheet(request, slum_code=0, FF_code=0, RHS_code=0):
             formdict = map(lambda x: dummy_formdict[x], dummy_formdict)
 
             for x in formdict:
-
                 try:
                     if x['current place of defecation'] in ['SBM (Installment)', 'Own toilet'] and len(x['agreement_date_str']) > 1:
                         x['incorrect_cpod'] = 'incorrect_cpod'
@@ -293,6 +293,7 @@ def masterSheet(request, slum_code=0, FF_code=0, RHS_code=0):
                 except Exception as e:
                     # print 'not found - '+str(x['Household_number'])
                     pass
+
     except Exception as e: print e
         # raise
     return HttpResponse(json.dumps(formdict), content_type="application/json")
@@ -467,6 +468,7 @@ def define_columns(request):
     except Exception as e:
         print e
     final_data['buttons']['Community Mobilization'] = range(activity_pre_len, len(formdict_new))
+
     material_type_model = MaterialType.objects.filter(display_flag=True).order_by('display_order')
     vendor_pre_len = len(formdict_new)
 
@@ -848,7 +850,7 @@ def render_report(request):
     return render(request, 'mastersheet_report.html')
 
 
-# @apply_permissions_ajax('mastersheet.can_view_mastersheet_report')
+@apply_permissions_ajax('mastersheet.can_view_mastersheet_report')
 def create_report(request):
     '''
         This view generates source structure for the fancy tree used in the report.
