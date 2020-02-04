@@ -224,7 +224,7 @@ def syn_rhs_followup_data(city_id):
 							try:
 								household_data = HouseholdData(
 
-								household_number = record['Household_number'],
+								household_number = str(int(record['Household_number'])),
 								slum = slum,
 								city = city,
 								submission_date = convert_datetime(str(record['_submission_time'])) ,
@@ -260,7 +260,7 @@ def syn_rhs_followup_data(city_id):
 								f_data = {}
 								r_data = {}
 								try:
-									temp_hh = HouseholdData.objects.get(household_number = record['Household_number'], slum = slum)
+									temp_hh = HouseholdData.objects.get(household_number = str(int(record['Household_number'])), slum = slum)
 									if str(temp_hh.rhs_data['Type_of_structure_occupancy']) == 'Locked house':
 										temp_locked_houses_replaced.append(temp_hh.household_number)
 										temp_hh.delete()
@@ -282,20 +282,28 @@ def syn_rhs_followup_data(city_id):
 										r_data.update({i[0]:i[1]})
 								f_data.update({"_submission_time":record["_submission_time"], "_id":record["_id"]})
 								try:
-									household_data = HouseholdData(
-
-									household_number = record['Household_number'],
-									slum = slum,
-									city = city,
-									submission_date = convert_datetime(str(record['_submission_time'])) ,
-									rhs_data = record
-									)
-									household_data.save()
-									rhs_and_followup_updated +=1
+									try:
+										household_data = HouseholdData.objects.filter(slum=slum, city=city, household_number = str(int(record['Household_number'])))
+										if household_data.count() > 0:
+											household_data[0].rhs_data = record
+											household_data[0].submission_date = convert_datetime(str(record['_submission_time']))
+											household_data[0].save()
+										else:
+											household_data = HouseholdData(
+												household_number=str(int(record['Household_number'])),
+												slum=slum,
+												city=city,
+												submission_date=convert_datetime(str(record['_submission_time'])),
+												rhs_data=record
+											)
+											household_data.save()
+											rhs_and_followup_updated += 1
+									except:
+										pass
 
 									followup_data = FollowupData(
 
-									household_number = record['Household_number'],
+									household_number = str(int(record['Household_number'])),
 									slum = slum,
 									city = city,
 									submission_date = convert_datetime(str(record['_submission_time'])) ,
@@ -347,7 +355,7 @@ def syn_rhs_followup_data(city_id):
 										followup.save()
 									except:
 										followup_data = FollowupData(
-											household_number = record['Household_number'],
+											household_number = str(int(record['Household_number'])),
 											slum = slum,
 											city = city,
 											submission_date = convert_datetime(str(record['_submission_time'])) ,
@@ -387,7 +395,7 @@ def sync_ff_data(city_id):
 								record['group_im2th52/Approximate_monthly_family_income_in_Rs'] = int('0'+''.join(re.findall('[\d+]',re.sub('(\.[0]*)','',record['group_im2th52/Approximate_monthly_family_income_in_Rs']))))
 							if 'group_ne3ao98/Cost_of_upgradation_in_Rs' in record:
 								record['group_ne3ao98/Cost_of_upgradation_in_Rs'] = int('0'+''.join(re.findall('[\d+]',re.sub('(\.[0]*)','',record['group_ne3ao98/Cost_of_upgradation_in_Rs']))))
-							temp = HouseholdData.objects.get(household_number = record['group_vq77l17/Household_number'], slum = slum)
+							temp = HouseholdData.objects.get(household_number = str(int(record['group_vq77l17/Household_number'])), slum = slum)
 							temp.ff_data = record
 							temp.save()
 						except Exception as e:
