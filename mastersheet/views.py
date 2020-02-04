@@ -72,7 +72,7 @@ def masterSheet(request, slum_code=0, FF_code=0, RHS_code=0):
             if flag_fetch_rhs :
                 formdict = map(lambda x: x.rhs_data, household_data)
 	    else:
-		formdict = map(lambda x:{'Household_number':x.household_number}, household_data)
+		formdict = map(lambda x:{'Household_number':x.household_number, '_id':x.rhs_data['_id'], '_xform_id_string':x.rhs_data['_xform_id_string']}, household_data)
 
             if flag_fetch_ff:
                 formdict_family_factsheet = map(lambda x:(x.ff_data if x.ff_data else {'group_vq77l17/Household_number': 00 }),household_data)
@@ -100,7 +100,7 @@ def masterSheet(request, slum_code=0, FF_code=0, RHS_code=0):
                         'septic_tank_date_str': "to_char(septic_tank_date, 'YYYY-MM-DD ')",
                         'agreement_date_str': "to_char(agreement_date, 'YYYY-MM-DD ')",
                         'completion_date_str': "to_char(completion_date, 'YYYY-MM-DD ')"}).filter(
-                slum__shelter_slum_code=slum_code[0][1])
+                slum__id=slum_code[0][0])
 
             daily_reporting_data = daily_reporting_data.values(*toilet_reconstruction_fields)
 
@@ -131,7 +131,7 @@ def masterSheet(request, slum_code=0, FF_code=0, RHS_code=0):
                           'application_verified', 'application_approved', 'sbm_comment']
             sbm_data = SBMUpload.objects.extra(
                 select={'created_date_str': "to_char(created_date, 'YYYY-MM-DD ')"}).filter(
-                slum__shelter_slum_code=slum_code[0][1])
+                slum__id=slum_code[0][0])
 
             sbm_data = sbm_data.values(*sbm_fields)
 
@@ -144,13 +144,13 @@ def masterSheet(request, slum_code=0, FF_code=0, RHS_code=0):
                                              'id']
             community_mobilization_data = CommunityMobilization.objects.extra(
                 select={'activity_date_str': "to_char(activity_date, 'YYYY-MM-DD ')"}).filter(
-                slum__shelter_slum_code=slum_code[0][1])
-            community_mobilization_data1 = community_mobilization_data.values(*community_mobilization_fields)
-            community_mobilization_data_list = list(community_mobilization_data1)
+                slum__id=slum_code[0][0])
+            #community_mobilization_data1 = community_mobilization_data.values(*community_mobilization_fields)
+            #community_mobilization_data_list = list(community_mobilization_data1)
 
             # Vendor and Accounts - fetching data
-            vendor = VendorHouseholdInvoiceDetail.objects.filter(slum__shelter_slum_code=slum_code[0][1])
-            invoices = InvoiceItems.objects.filter(slum__shelter_slum_code=slum_code[0][1])
+            vendor = VendorHouseholdInvoiceDetail.objects.filter(slum__id=slum_code[0][0])
+            invoices = InvoiceItems.objects.filter(slum__id=slum_code[0][0])
 
             dummy_formdict = {str(int(x['Household_number'])): x for x in formdict}
 
@@ -218,16 +218,7 @@ def masterSheet(request, slum_code=0, FF_code=0, RHS_code=0):
                         "no_rhs_flag": "#eba6fc"
                     }
                 dummy_formdict[str(i)].update(temp_daily_reporting[str(i)])
-               	
-		if dummy_formdict[str(i)]['status']=="" or 'group_oi8ts04/Current_place_of_defecation' in dummy_formdict[str(i)]:
-			dummy_formdict[str(i)].update({'current place of defecation':dummy_formdict[str(i)]['group_oi8ts04/Current_place_of_defecation']})
- 		
-		if 'status' in dummy_formdict[str(i)] and dummy_formdict[str(i)]['status'] == 'Completed':
-                        dummy_formdict[str(i)].update({'current place of defecation': 'Toilet by SA'})
-                  #  if dummy_formdict[str(i)]['status'] == '':
-                   #     dummy_formdict[str(i)].update({'current place of defecation': dummy_formdict[str(i)]['group_oi8ts04/Current_place_of_defecation']})
-
-                dummy_formdict[str(i)].update({'tc_id_' + str(i): temp_daily_reporting[str(i)]['id']})
+               	dummy_formdict[str(i)].update({'tc_id_' + str(i): temp_daily_reporting[str(i)]['id']})
 
             for key, x in dummy_formdict.iteritems():
                 try:
@@ -271,13 +262,13 @@ def masterSheet(request, slum_code=0, FF_code=0, RHS_code=0):
                 x.update({'ff_url': settings.BASE_URL + str('shelter/forms/') + str(x['ff_xform_id_string']) + str('/instance#/') + str(x["ff_id"])})
 
                 cod_data = followup_data_false.filter(household_number = int(key)).order_by('-submission_date').first()
-                # cod_true = followup_data_true.filter(household_number = int(key))
-		
-		if 'group_oi8ts04/Current_place_of_defecation' in x:
-			x.update({'current place of defecation' :x['group_oi8ts04/Current_place_of_defecation']})		
-		if 'status' in x and x['status'] == 'Completed':
-			x.update({'current place of defecation': 'Toilet by SA'})
-			
+
+                if 'group_oi8ts04/Current_place_of_defecation' in x:
+                    x.update({'current place of defecation' :x['group_oi8ts04/Current_place_of_defecation']})
+
+                if 'status' in x and x['status'] == 'Completed':
+                    x.update({'current place of defecation': 'Toilet by SA'})
+
                 if cod_data and 'group_oi8ts04/Current_place_of_defecation' in cod_data.followup_data :
                     data = cod_data.followup_data['group_oi8ts04/Current_place_of_defecation']
                     x.update({'current place of defecation':data})
@@ -296,6 +287,9 @@ def masterSheet(request, slum_code=0, FF_code=0, RHS_code=0):
                 try:
                     if x['current place of defecation'] in ['SBM (Installment)', 'Own toilet'] and len(x['agreement_date_str']) > 1:
                         x['incorrect_cpod'] = 'incorrect_cpod'
+
+                    if x['group_oi8ts04/Current_place_of_defecation'] == 'Own toilet' and x['status'] == 'Completed':
+                            x['incorrect_cpod'] = 'incorrect_cpod'
                 except Exception as e:
                     # print 'not found - '+str(x['Household_number'])
                     pass
