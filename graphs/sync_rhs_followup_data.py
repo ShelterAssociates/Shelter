@@ -398,28 +398,28 @@ def sync_ff_data(city_id):
 				except:
 					print (key," - slum not found")
 				if slum:
+					print(key, ' - ', str(len(list_records)))
 					for record in list_records:
 						try:
 							if 'group_im2th52/Approximate_monthly_family_income_in_Rs' in record:
 								record['group_im2th52/Approximate_monthly_family_income_in_Rs'] = int('0'+''.join(re.findall('[\d+]',re.sub('(\.[0]*)','',record['group_im2th52/Approximate_monthly_family_income_in_Rs']))))
 							if 'group_ne3ao98/Cost_of_upgradation_in_Rs' in record:
 								record['group_ne3ao98/Cost_of_upgradation_in_Rs'] = int('0'+''.join(re.findall('[\d+]',re.sub('(\.[0]*)','',record['group_ne3ao98/Cost_of_upgradation_in_Rs']))))
-							ff_data = HouseholdData.objects.filter(ff_data__contains={"_id": record["_id"]})
-							if ff_data.count() >0:
-								ff_data.update(ff_data=None)
-								for rhs in ff_data:
-									if rhs.rhs_data == None:
-										rhs.delete()
+							hh_data = HouseholdData.objects.filter(ff_data__contains={"_id": record["_id"]})
+							if hh_data.count() >0 and hh_data.filter(household_number=str(int(record['group_vq77l17/Household_number'])), slum=slum).count()==0:
+								print("Found existing id record")
+								hh_data.update(ff_data=None)
+								for hh in hh_data:
+									if not hh.rhs_data:
+										hh.delete()
 							try:
 								temp = HouseholdData.objects.get(household_number = str(int(record['group_vq77l17/Household_number'])), slum = slum)
 								temp.ff_data = record
 								temp.save()
 							except HouseholdData.DoesNotExists:
-								household_data = HouseholdData(household_number = str(int(record['group_vq77l17/Household_number'])),
-															   slum = slum,
-															   ff_data=record,
-															   city=city,
-																submission_date=convert_datetime(str(record['_submission_time'])))
+								print("RHS data not fount")
+								household_data = HouseholdData(household_number = str(int(record['group_vq77l17/Household_number'])), slum = slum,
+															   ff_data=record, city=city, submission_date=convert_datetime(str(record['_submission_time'])))
 								household_data.save()
 						except Exception as e:
 							#print no_rhs_but_ff.append(record['group_vq77l17/Household_number'] + " in" + str(slum) + " has a factesheet but no rhs/followup record")
