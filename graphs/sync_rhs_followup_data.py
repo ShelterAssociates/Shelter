@@ -284,7 +284,7 @@ def syn_rhs_followup_data(city_id):
 								try:
 									try:
 										household_data = HouseholdData.objects.filter(slum=slum, city=city, household_number = str(int(record['Household_number'])))
-										if household_data.count() > 0:
+										if household_data.count() > 0 and household_data[0].submission_date < convert_datetime(str(record['_submission_time'])):
 											household_data[0].rhs_data = record
 											household_data[0].submission_date = convert_datetime(str(record['_submission_time']))
 											household_data[0].save()
