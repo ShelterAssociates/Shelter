@@ -284,7 +284,7 @@ def syn_rhs_followup_data(city_id):
 								try:
 									try:
 										hh_data = HouseholdData.objects.filter(rhs_data__contains={"_id":record['_id']})
-										if hh_data.count() > 0:
+										if hh_data.count() > 0 and hh_data.filter(slum=slum, household_number=str(int(record['Household_number']))).count()==0:
 											hh_data.update(rhs_data=None)
 											for hh_d in hh_data:
 												if hh_d.ff_data == None:
@@ -389,7 +389,7 @@ def sync_ff_data(city_id):
 
 			ff_data_with_labels = [x for x in ff_data_with_labels if 'group_vq77l17/slum_name' in x.keys()]
 
-			sorted(ff_data_with_labels, key = lambda x:x['group_vq77l17/slum_name']) #group_vq77l17/slum_name
+			ff_data_with_labels = sorted(ff_data_with_labels, key = lambda x:x['group_vq77l17/slum_name']) #group_vq77l17/slum_name
 
 			for key,list_records in groupby(ff_data_with_labels, lambda x:x['group_vq77l17/slum_name']):
 				slum = None
@@ -398,6 +398,7 @@ def sync_ff_data(city_id):
 				except:
 					print (key," - slum not found")
 				if slum:
+					list_records = list(list_records)
 					print(key, ' - ', str(len(list_records)))
 					for record in list_records:
 						try:
@@ -407,7 +408,6 @@ def sync_ff_data(city_id):
 								record['group_ne3ao98/Cost_of_upgradation_in_Rs'] = int('0'+''.join(re.findall('[\d+]',re.sub('(\.[0]*)','',record['group_ne3ao98/Cost_of_upgradation_in_Rs']))))
 							hh_data = HouseholdData.objects.filter(ff_data__contains={"_id": record["_id"]})
 							if hh_data.count() >0 and hh_data.filter(household_number=str(int(record['group_vq77l17/Household_number'])), slum=slum).count()==0:
-								print("Found existing id record")
 								hh_data.update(ff_data=None)
 								for hh in hh_data:
 									if not hh.rhs_data:
@@ -417,7 +417,6 @@ def sync_ff_data(city_id):
 								temp.ff_data = record
 								temp.save()
 							except HouseholdData.DoesNotExists:
-								print("RHS data not fount")
 								household_data = HouseholdData(household_number = str(int(record['group_vq77l17/Household_number'])), slum = slum,
 															   ff_data=record, city=city, submission_date=convert_datetime(str(record['_submission_time'])))
 								household_data.save()
