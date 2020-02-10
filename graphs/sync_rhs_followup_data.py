@@ -77,8 +77,8 @@ def fetch_data(form_code, latest_date):
 		for x in range(slots+1):
 			start = x*30000
 			url = rhs_url
-			if latest_date != '':
-				url = url + '&query={"_submission_time":{"$gt":"'+urllib2.quote(str(timezone.localtime(latest_date)))+'"}}'
+			# if latest_date != '':
+			# 	url = url + '&query={"_submission_time":{"$gt":"'+urllib2.quote(str(timezone.localtime(latest_date)))+'"}}'
 			url+='&start='+str(start)
 			kobotoolbox_request = urllib2.Request(url)
 			kobotoolbox_request.add_header('User-agent', 'Mozilla 5.10')
@@ -145,7 +145,7 @@ def syn_rim_data(city_id):
 				else:
 					print ("RIM ERROR:: Slum name missing for "+ str(record["_id"]))
 
-def syn_rhs_followup_data(city_id):
+def syn_rhs_followup_data(city_id, ff_flag=False):
 	count_o = []
 	count_u = []
 	count_l = []
@@ -181,6 +181,9 @@ def syn_rhs_followup_data(city_id):
 				latest_followup_date = latest_followup[0].submission_date
 
 			latest_date = latest_followup_date if latest_followup_date > latest_rhs_date else latest_rhs_date
+			if ff_flag:
+				sync_ff_data(city.id, latest_date)
+
 			if True:#city.id == 1: #3,4 done
 				#print timezone.localtime(latest_date)
 				# url = build_url()
@@ -378,13 +381,13 @@ def syn_rhs_followup_data(city_id):
 								except Exception as e:
 									print e
 		
-def sync_ff_data(city_id):
+def sync_ff_data(city_id, latest_date=''):
 	cities = City.objects.filter(id__in=[city_id])
 	for city in cities:
 		survey_forms_ff = Survey.objects.filter(city__id = int(city.id), description__contains = 'FF')
 		for i in survey_forms_ff:
 			form_code = i.kobotool_survey_id
-			ff_data = fetch_data(form_code, '')
+			ff_data = fetch_data(form_code, latest_date)
 			ff_data_with_labels = fetch_labels_codes(ff_data, form_code)
 
 			ff_data_with_labels = [x for x in ff_data_with_labels if 'group_vq77l17/slum_name' in x.keys()]
