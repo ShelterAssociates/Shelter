@@ -419,7 +419,7 @@ def sync_ff_data(city_id, latest_date=''):
 								temp = HouseholdData.objects.get(household_number = str(int(record['group_vq77l17/Household_number'])), slum = slum)
 								temp.ff_data = record
 								temp.save()
-							except HouseholdData.DoesNotExists:
+							except HouseholdData.DoesNotExist:
 								household_data = HouseholdData(household_number = str(int(record['group_vq77l17/Household_number'])), slum = slum,
 															   ff_data=record, city=city, submission_date=convert_datetime(str(record['_submission_time'])))
 								household_data.save()
