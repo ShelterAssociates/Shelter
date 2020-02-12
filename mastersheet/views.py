@@ -71,8 +71,8 @@ def masterSheet(request, slum_code=0, FF_code=0, RHS_code=0):
 	    
             if flag_fetch_rhs :
                 formdict = map(lambda x: x.rhs_data, filter(lambda x: x.rhs_data!=None, household_data))
-	    else:
-		formdict = map(lambda x:{'Household_number':x.household_number, '_id':x.rhs_data['_id'], '_xform_id_string':x.rhs_data['_xform_id_string']}, filter(lambda x:x.rhs_data!=None, household_data))
+            else:
+                formdict = map(lambda x:{'Household_number':x.household_number, '_id':x.rhs_data['_id'], '_xform_id_string':x.rhs_data['_xform_id_string']}, filter(lambda x:x.rhs_data!=None, household_data))
 
             if flag_fetch_ff:
                 formdict_family_factsheet = map(lambda x:(x.ff_data if x.ff_data else {'group_vq77l17/Household_number': 00 }),household_data)
