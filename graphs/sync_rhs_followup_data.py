@@ -77,8 +77,8 @@ def fetch_data(form_code, latest_date):
 		for x in range(slots+1):
 			start = x*30000
 			url = rhs_url
-			if latest_date != '':
-				url = url + '&query={"_submission_time":{"$gt":"'+urllib2.quote(str(timezone.localtime(latest_date)))+'"}}'
+			# if latest_date != '':
+			# 	url = url + '&query={"_submission_time":{"$gt":"'+urllib2.quote(str(timezone.localtime(latest_date)))+'"}}'
 			url+='&start='+str(start)
 			kobotoolbox_request = urllib2.Request(url)
 			kobotoolbox_request.add_header('User-agent', 'Mozilla 5.10')
@@ -145,7 +145,7 @@ def syn_rim_data(city_id):
 				else:
 					print ("RIM ERROR:: Slum name missing for "+ str(record["_id"]))
 
-def syn_rhs_followup_data(city_id):
+def syn_rhs_followup_data(city_id, ff_flag=False):
 	count_o = []
 	count_u = []
 	count_l = []
@@ -181,6 +181,9 @@ def syn_rhs_followup_data(city_id):
 				latest_followup_date = latest_followup[0].submission_date
 
 			latest_date = latest_followup_date if latest_followup_date > latest_rhs_date else latest_rhs_date
+			if ff_flag:
+				sync_ff_data(city.id, latest_date)
+
 			if True:#city.id == 1: #3,4 done
 				#print timezone.localtime(latest_date)
 				# url = build_url()
@@ -224,7 +227,7 @@ def syn_rhs_followup_data(city_id):
 							try:
 								household_data = HouseholdData(
 
-								household_number = record['Household_number'],
+								household_number = str(int(record['Household_number'])),
 								slum = slum,
 								city = city,
 								submission_date = convert_datetime(str(record['_submission_time'])) ,
@@ -260,7 +263,7 @@ def syn_rhs_followup_data(city_id):
 								f_data = {}
 								r_data = {}
 								try:
-									temp_hh = HouseholdData.objects.get(household_number = record['Household_number'], slum = slum)
+									temp_hh = HouseholdData.objects.get(household_number = str(int(record['Household_number'])), slum = slum)
 									if str(temp_hh.rhs_data['Type_of_structure_occupancy']) == 'Locked house':
 										temp_locked_houses_replaced.append(temp_hh.household_number)
 										temp_hh.delete()
@@ -282,20 +285,32 @@ def syn_rhs_followup_data(city_id):
 										r_data.update({i[0]:i[1]})
 								f_data.update({"_submission_time":record["_submission_time"], "_id":record["_id"]})
 								try:
-									household_data = HouseholdData(
-
-									household_number = record['Household_number'],
-									slum = slum,
-									city = city,
-									submission_date = convert_datetime(str(record['_submission_time'])) ,
-									rhs_data = record
-									)
-									household_data.save()
-									rhs_and_followup_updated +=1
+									try:
+										hh_data = HouseholdData.objects.filter(rhs_data__contains={"_id":record['_id']})
+										if hh_data.count() > 0 and hh_data.filter(slum=slum, household_number=str(int(record['Household_number']))).count()==0:
+											hh_data.update(rhs_data=None)
+											for hh_d in hh_data:
+												if hh_d.ff_data == None:
+													hh_d.delete()
+										household_data = HouseholdData.objects.filter(slum=slum, city=city, household_number = str(int(record['Household_number'])))
+										if household_data.count() > 0 and household_data[0].submission_date < convert_datetime(str(record['_submission_time'])):
+											HouseholdData.objects.filter(id=household_data[0].id).update(rhs_data = record, submission_date = convert_datetime(str(record['_submission_time'])))
+										else:
+											household_data = HouseholdData(
+												household_number=str(int(record['Household_number'])),
+												slum=slum,
+												city=city,
+												submission_date=convert_datetime(str(record['_submission_time'])),
+												rhs_data=record
+											)
+											household_data.save()
+											rhs_and_followup_updated += 1
+									except:
+										pass
 
 									followup_data = FollowupData(
-
-									household_number = record['Household_number'],
+									kobo_id=f_data["_id"],
+									household_number = str(int(record['Household_number'])),
 									slum = slum,
 									city = city,
 									submission_date = convert_datetime(str(record['_submission_time'])) ,
@@ -342,37 +357,40 @@ def syn_rhs_followup_data(city_id):
 									#print "adding followup"
 									flag = True if len(HouseholdData.objects.filter(household_number = record['Household_number'], slum = slum)) > 0 else False
 									try:
-										followup = FollowupData.objects.get(kobo_id=f_data["_id"] )
-										followup.followup_data = f_data
-										followup.save()
+										followup = FollowupData.objects.filter(kobo_id=f_data["_id"] )
+										if followup.count()>0:
+											followup.update(slum=slum, city=city, household_number=str(int(record['Household_number'])),
+															followup_data=f_data)
+										else:
+											followup_data = FollowupData(
+												household_number = str(int(record['Household_number'])),
+												slum = slum,
+												city = city,
+												submission_date = convert_datetime(str(record['_submission_time'])) ,
+												followup_data = f_data,
+												kobo_id = f_data["_id"],
+												flag_followup_in_rhs = False
+											)
+											followup_data.save()
 									except:
-										followup_data = FollowupData(
-											household_number = record['Household_number'],
-											slum = slum,
-											city = city,
-											submission_date = convert_datetime(str(record['_submission_time'])) ,
-											followup_data = f_data,
-											kobo_id = f_data["_id"],
-											flag_followup_in_rhs = False
-										)
-										followup_data.save()
+										pass
 									only_followup +=1
 									print flag
 								except Exception as e:
 									print e
 		
-def sync_ff_data(city_id):
+def sync_ff_data(city_id, latest_date=''):
 	cities = City.objects.filter(id__in=[city_id])
 	for city in cities:
 		survey_forms_ff = Survey.objects.filter(city__id = int(city.id), description__contains = 'FF')
 		for i in survey_forms_ff:
 			form_code = i.kobotool_survey_id
-			ff_data = fetch_data(form_code, '')
+			ff_data = fetch_data(form_code, latest_date)
 			ff_data_with_labels = fetch_labels_codes(ff_data, form_code)
 
 			ff_data_with_labels = [x for x in ff_data_with_labels if 'group_vq77l17/slum_name' in x.keys()]
 
-			sorted(ff_data_with_labels, key = lambda x:x['group_vq77l17/slum_name']) #group_vq77l17/slum_name
+			ff_data_with_labels = sorted(ff_data_with_labels, key = lambda x:x['group_vq77l17/slum_name']) #group_vq77l17/slum_name
 
 			for key,list_records in groupby(ff_data_with_labels, lambda x:x['group_vq77l17/slum_name']):
 				slum = None
@@ -381,15 +399,27 @@ def sync_ff_data(city_id):
 				except:
 					print (key," - slum not found")
 				if slum:
+					list_records = list(list_records)
+					print(key, ' - ', str(len(list_records)))
 					for record in list_records:
 						try:
 							if 'group_im2th52/Approximate_monthly_family_income_in_Rs' in record:
 								record['group_im2th52/Approximate_monthly_family_income_in_Rs'] = int('0'+''.join(re.findall('[\d+]',re.sub('(\.[0]*)','',record['group_im2th52/Approximate_monthly_family_income_in_Rs']))))
 							if 'group_ne3ao98/Cost_of_upgradation_in_Rs' in record:
 								record['group_ne3ao98/Cost_of_upgradation_in_Rs'] = int('0'+''.join(re.findall('[\d+]',re.sub('(\.[0]*)','',record['group_ne3ao98/Cost_of_upgradation_in_Rs']))))
-							temp = HouseholdData.objects.get(household_number = record['group_vq77l17/Household_number'], slum = slum)
-							temp.ff_data = record
-							temp.save()
+							hh_data = HouseholdData.objects.filter(ff_data__contains={"_id": record["_id"]})
+							if hh_data.count() >0 and hh_data.filter(household_number=str(int(record['group_vq77l17/Household_number'])), slum=slum).count()==0:
+								hh_data.update(ff_data=None)
+								for hh in hh_data:
+									if not hh.rhs_data:
+										hh.delete()
+							try:
+								temp = HouseholdData.objects.filter(household_number = str(int(record['group_vq77l17/Household_number'])), slum = slum)
+								temp.update(ff_data = record)
+							except HouseholdData.DoesNotExist:
+								household_data = HouseholdData(household_number = str(int(record['group_vq77l17/Household_number'])), slum = slum,
+															   ff_data=record, city=city, submission_date=convert_datetime(str(record['_submission_time'])))
+								household_data.save()
 						except Exception as e:
 							#print no_rhs_but_ff.append(record['group_vq77l17/Household_number'] + " in" + str(slum) + " has a factesheet but no rhs/followup record")
 							print e
