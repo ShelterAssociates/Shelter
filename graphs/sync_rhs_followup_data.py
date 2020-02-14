@@ -294,9 +294,7 @@ def syn_rhs_followup_data(city_id, ff_flag=False):
 													hh_d.delete()
 										household_data = HouseholdData.objects.filter(slum=slum, city=city, household_number = str(int(record['Household_number'])))
 										if household_data.count() > 0 and household_data[0].submission_date < convert_datetime(str(record['_submission_time'])):
-											household_data[0].rhs_data = record
-											household_data[0].submission_date = convert_datetime(str(record['_submission_time']))
-											household_data[0].save()
+											HouseholdData.objects.filter(id=household_data[0].id).update(rhs_data = record, submission_date = convert_datetime(str(record['_submission_time'])))
 										else:
 											household_data = HouseholdData(
 												household_number=str(int(record['Household_number'])),
@@ -359,23 +357,23 @@ def syn_rhs_followup_data(city_id, ff_flag=False):
 									#print "adding followup"
 									flag = True if len(HouseholdData.objects.filter(household_number = record['Household_number'], slum = slum)) > 0 else False
 									try:
-										followup = FollowupData.objects.get(kobo_id=f_data["_id"] )
-										followup.slum = slum
-										followup.city=city
-										followup.household_number = str(int(record['Household_number']))
-										followup.followup_data = f_data
-										followup.save()
+										followup = FollowupData.objects.filter(kobo_id=f_data["_id"] )
+										if followup.count()>0:
+											followup.update(slum=slum, city=city, household_number=str(int(record['Household_number'])),
+															followup_data=f_data)
+										else:
+											followup_data = FollowupData(
+												household_number = str(int(record['Household_number'])),
+												slum = slum,
+												city = city,
+												submission_date = convert_datetime(str(record['_submission_time'])) ,
+												followup_data = f_data,
+												kobo_id = f_data["_id"],
+												flag_followup_in_rhs = False
+											)
+											followup_data.save()
 									except:
-										followup_data = FollowupData(
-											household_number = str(int(record['Household_number'])),
-											slum = slum,
-											city = city,
-											submission_date = convert_datetime(str(record['_submission_time'])) ,
-											followup_data = f_data,
-											kobo_id = f_data["_id"],
-											flag_followup_in_rhs = False
-										)
-										followup_data.save()
+										pass
 									only_followup +=1
 									print flag
 								except Exception as e:
@@ -416,9 +414,8 @@ def sync_ff_data(city_id, latest_date=''):
 									if not hh.rhs_data:
 										hh.delete()
 							try:
-								temp = HouseholdData.objects.get(household_number = str(int(record['group_vq77l17/Household_number'])), slum = slum)
-								temp.ff_data = record
-								temp.save()
+								temp = HouseholdData.objects.filter(household_number = str(int(record['group_vq77l17/Household_number'])), slum = slum)
+								temp.update(ff_data = record)
 							except HouseholdData.DoesNotExist:
 								household_data = HouseholdData(household_number = str(int(record['group_vq77l17/Household_number'])), slum = slum,
 															   ff_data=record, city=city, submission_date=convert_datetime(str(record['_submission_time'])))
