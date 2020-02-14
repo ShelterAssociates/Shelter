@@ -277,7 +277,7 @@ def syn_rhs_followup_data(city_id, ff_flag=False):
 
 								except Exception as e:
 									#print "temp_hh error"
-									print e
+									pass
 									#.append(record['Household_number'])
 								
 								for i in record.iteritems():	
@@ -296,9 +296,9 @@ def syn_rhs_followup_data(city_id, ff_flag=False):
 												if hh_d.ff_data == None:
 													hh_d.delete()
 										household_data = HouseholdData.objects.filter(slum=slum, city=city, household_number = str(int(record['Household_number'])))
-										if household_data.count() > 0 and household_data[0].submission_date < convert_datetime(str(record['_submission_time'])):
-											HouseholdData.objects.filter(id=household_data[0].id).update(rhs_data = record, submission_date = convert_datetime(str(record['_submission_time'])))
-											rhs_flag=True
+										if household_data.count() > 0:
+											if household_data[0].submission_date < convert_datetime(str(record['_submission_time'])):
+												HouseholdData.objects.filter(id=household_data[0].id).update(rhs_data = record, submission_date = convert_datetime(str(record['_submission_time'])))
 										else:
 											household_data = HouseholdData(
 												household_number=str(int(record['Household_number'])),
@@ -311,10 +311,12 @@ def syn_rhs_followup_data(city_id, ff_flag=False):
 											rhs_and_followup_updated += 1
 									except:
 										pass
-									if rhs_flag:
-										FollowupData.objects.filter(household_number = str(int(record['Household_number'])),
-											slum = slum,
-											city = city,flag_followup_in_rhs = True).update(submission_date = convert_datetime(str(record['_submission_time'])) ,
+
+									followup_Data = FollowupData.objects.filter(household_number = str(int(record['Household_number'])),
+										slum = slum,
+										city = city,flag_followup_in_rhs = True)
+									if followup_Data.count() > 0:
+										followup_Data.update(submission_date = convert_datetime(str(record['_submission_time'])) ,
 											followup_data = f_data, kobo_id=f_data["_id"])
 									else:
 										followup_data = FollowupData(
