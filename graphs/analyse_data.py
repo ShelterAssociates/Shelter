@@ -22,7 +22,6 @@ class RHSData(object):
 
     def occupied_houses(self):
         '''count of occupied houses in slums'''
-
         houses_occupide_in_followup =[]
         followup_households_list = self.followup_data.values_list('household_number', flat=True)
 
@@ -58,18 +57,21 @@ class RHSData(object):
                 latest_record = self.followup_data.filter(household_number=house).latest('submission_date')
                 if latest_record.household_number not in toilet_completed and \
                 ('group_oi8ts04/Current_place_of_defecation' in latest_record.followup_data and \
-                latest_record.followup_data['group_oi8ts04/Current_place_of_defecation'] == '09'):
+                latest_record.followup_data['group_oi8ts04/Current_place_of_defecation'] == 'Use CTB'):
                         ctb_count += 1
             except : pass
         return ctb_count
 
     def individual_toilet(self):
+
+        toilet_by_other = ['SBM (Installment)','SBM (Contractor)','Toilet by SA (SBM)','Toilet by other NGO (SBM)','Own toilet','Toilet by other NGO','Toilet by SA']
+        # toilet_by_other = [1,2,3,4,5,6,7]
         own_toilet_count = 0
         for house in self.get_unique_houses_rhs_householddata():
             try:
                 latest_record = self.followup_data.filter(household_number= house).latest('submission_date')
                 if 'group_oi8ts04/Current_place_of_defecation' in latest_record.followup_data and \
-                        int(latest_record.followup_data['group_oi8ts04/Current_place_of_defecation']) in [1,2,3,4,5,6,7]:
+                        (latest_record.followup_data['group_oi8ts04/Current_place_of_defecation']) in toilet_by_other:
                         own_toilet_count += 1
             except : pass
         own_toilet_count = own_toilet_count+len(self.toilet_constructed())
