@@ -12,9 +12,10 @@ from django.utils.dateparse import parse_datetime
 from component.kobotoolbox import parse_RIM_answer_with_toilet
 import pdb
 import re
+import pytz
 
 def convert_datetime(date_str):
-	ret = parse_datetime(date_str)
+	ret = pytz.utc.localize(parse_datetime(date_str))
 	return ret
 
 def trav(node):
@@ -196,7 +197,7 @@ def syn_rhs_followup_data(city_id, ff_flag=False):
 				data_with_lables = sorted(data_with_lables, key = lambda x:x['slum_name'])
 				print 'len of data_with_lables after = ' + str(len(data_with_lables))
 
-
+				print("Unoccupied Houses and locked Houses")
 				for key,list_records in groupby(data_with_lables, lambda x:x['slum_name']):
 					try:
 						slum = Slum.objects.get(shelter_slum_code = key)
@@ -238,6 +239,7 @@ def syn_rhs_followup_data(city_id, ff_flag=False):
 							except Exception as e:
 								print e # 
 
+				print("Occupied Houses")
 				for key,list_records in groupby(data_with_lables, lambda x:x['slum_name']):
 
 					temp_locked_houses_replaced = []
@@ -275,7 +277,7 @@ def syn_rhs_followup_data(city_id, ff_flag=False):
 
 								except Exception as e:
 									#print "temp_hh error"
-									print e
+									pass
 									#.append(record['Household_number'])
 								
 								for i in record.iteritems():	
@@ -284,6 +286,7 @@ def syn_rhs_followup_data(city_id, ff_flag=False):
 									else:
 										r_data.update({i[0]:i[1]})
 								f_data.update({"_submission_time":record["_submission_time"], "_id":record["_id"]})
+								rhs_flag = False
 								try:
 									try:
 										hh_data = HouseholdData.objects.filter(rhs_data__contains={"_id":record['_id']})
@@ -293,8 +296,9 @@ def syn_rhs_followup_data(city_id, ff_flag=False):
 												if hh_d.ff_data == None:
 													hh_d.delete()
 										household_data = HouseholdData.objects.filter(slum=slum, city=city, household_number = str(int(record['Household_number'])))
-										if household_data.count() > 0 and household_data[0].submission_date < convert_datetime(str(record['_submission_time'])):
-											HouseholdData.objects.filter(id=household_data[0].id).update(rhs_data = record, submission_date = convert_datetime(str(record['_submission_time'])))
+										if household_data.count() > 0:
+											if household_data[0].submission_date < convert_datetime(str(record['_submission_time'])):
+												HouseholdData.objects.filter(id=household_data[0].id).update(rhs_data = record, submission_date = convert_datetime(str(record['_submission_time'])))
 										else:
 											household_data = HouseholdData(
 												household_number=str(int(record['Household_number'])),
@@ -308,23 +312,32 @@ def syn_rhs_followup_data(city_id, ff_flag=False):
 									except:
 										pass
 
-									followup_data = FollowupData(
-									kobo_id=f_data["_id"],
-									household_number = str(int(record['Household_number'])),
-									slum = slum,
-									city = city,
-									submission_date = convert_datetime(str(record['_submission_time'])) ,
-									followup_data = f_data,
-									flag_followup_in_rhs = True
-									)
-									followup_data.save()
+									followup_Data = FollowupData.objects.filter(household_number = str(int(record['Household_number'])),
+										slum = slum,
+										city = city,flag_followup_in_rhs = True)
+									if followup_Data.count() > 0:
+										followup_Data.update(submission_date = convert_datetime(str(record['_submission_time'])) ,
+											followup_data = f_data, kobo_id=f_data["_id"])
+									else:
+										followup_data = FollowupData(
+											kobo_id=f_data["_id"],
+											household_number = str(int(record['Household_number'])),
+											slum = slum,
+											city = city,
+											submission_date = convert_datetime(str(record['_submission_time'])) ,
+											followup_data = f_data,
+											flag_followup_in_rhs = True
+										)
+										followup_data.save()
 									#print record['group_og5bx85/Type_of_survey']
 								except Exception as e:
 									# print "error in followup rhs"
 									print e
 					
 					replaced_locked_houses.update({slum:temp_locked_houses_replaced})
-					double_houses.update({slum:temp_double_houses})				
+					double_houses.update({slum:temp_double_houses})
+
+				print("Followup houses")
 				for key,list_records in groupby(data_with_lables, lambda x:x['slum_name']):
 					try:
 						slum = Slum.objects.get(shelter_slum_code = key)
