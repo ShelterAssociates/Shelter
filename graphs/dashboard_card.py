@@ -31,6 +31,7 @@ class DashboardCard(RHSData):
         get_slum_area_size_in_hectors = self.get_slum_area_size_in_hectors()
         shops_in_slum = self.get_shop_count()
         (household_owners_count, avg_household_size, slum_area_size_in_hectors, household_count) = self.General_Info()
+
         to_save = DashboardData.objects.update_or_create(slum = self.slum , defaults ={'city_id': self.slum.electoral_ward.administrative_ward.city.id,
                     'gen_tenement_density' : get_slum_area_size_in_hectors,'get_shops_count':shops_in_slum,'gen_avg_household_size': avg_household_size,
                     'household_count':household_count,'household_owners_count':household_owners_count,
@@ -40,15 +41,18 @@ class DashboardCard(RHSData):
         door_to_door_percent = self.get_waste_facility('Door to door waste collection')
         openspace_percent= self.get_waste_facility('Open space')
         garbage_bin_facility = self.get_waste_facility('Garbage bin')
-        other_waste_collections = self.get_perc_of_waste_collection('ULB service')
+        ulb = self.get_waste_facility('ULB service')
+        guttter = self.get_waste_facility('Inside gutter')
+        canal = self.get_waste_facility('Along/Inside canal')
+        other_waste_collections = guttter+canal
 
-        return (door_to_door_percent,garbage_bin_facility,openspace_percent,other_waste_collections)
+        return (door_to_door_percent,garbage_bin_facility,openspace_percent,ulb,other_waste_collections)
 
     def save_waste(self):
-        (door_to_door_percent,garbage_bin_facility,openspace_percent,other_waste_collections)= self.Waste_Info()
+        (door_to_door_percent,garbage_bin_facility,openspace_percent,ulb,other_waste_collections)= self.Waste_Info()
         to_save = DashboardData.objects.update_or_create(slum =self.slum, defaults=
                                 {'waste_door_to_door_collection_facility_percentile': door_to_door_percent,'waste_other_services':other_waste_collections,
-            'waste_dump_in_open_percent': openspace_percent,'waste_no_collection_facility_percentile': garbage_bin_facility})
+            'waste_dump_in_open_percent': openspace_percent,'waste_no_collection_facility_percentile': garbage_bin_facility,'drains_coverage':ulb})
 
     def Water_Info(self):
         individual_connection_percent = self.get_water_coverage('Individual connection')
@@ -59,7 +63,6 @@ class DashboardCard(RHSData):
         from_other_settlements = self.get_water_coverage('From other settlements')
         well = self.get_water_coverage('Well')
         other_water_services = hand_pump+water_tanker+from_other_settlements+well
-
         return (individual_connection_percent,shared_connection_percent,water_standpost_percent,other_water_services)
 
     def save_water(self):
@@ -86,6 +89,7 @@ class DashboardCard(RHSData):
         own_toilet_count = self.individual_toilet()
         ctb_use_count = self.ctb_count()
         (total_toilet_seats, fun_mix_seats, fun_male_seats, fun_female_seats) = self.get_toilet_data()
+
         to_save = DashboardData.objects.update_or_create(slum=self.slum, defaults= {'individual_toilet_coverage':own_toilet_count,
                                  'ctb_coverage':ctb_use_count,'toilet_men_women_seats_ratio': fun_mix_seats, 'fun_male_seats':fun_male_seats,
                                 'toilet_seat_to_person_ratio': total_toilet_seats, 'fun_fmale_seats':fun_female_seats })
