@@ -274,7 +274,7 @@ def syn_rhs_followup_data(city_id, ff_flag=False, latest_flag=True):
 								rhs_flag = False
 								try:
 									try:
-										hh_data = HouseholdData.objects.filter(rhs_data__contains={"_id":record['_id']})
+										hh_data = HouseholdData.objects.filter(kobo_id = record['_id'])
 										if hh_data.count() > 0 and hh_data.filter(slum=slum, household_number=str(int(record['Household_number']))).count()==0:
 											hh_data.update(rhs_data=None)
 											for hh_d in hh_data:
@@ -287,6 +287,7 @@ def syn_rhs_followup_data(city_id, ff_flag=False, latest_flag=True):
 										else:
 											household_data = HouseholdData(
 												household_number=str(int(record['Household_number'])),
+												kobo_id= record['_id'],
 												slum=slum,
 												city=city,
 												submission_date=convert_datetime(str(record['_submission_time'])),
@@ -405,7 +406,7 @@ def sync_ff_data(city_id, latest_date=''):
 								record['group_im2th52/Approximate_monthly_family_income_in_Rs'] = int('0'+''.join(re.findall('[\d+]',re.sub('(\.[0]*)','',record['group_im2th52/Approximate_monthly_family_income_in_Rs']))))
 							if 'group_ne3ao98/Cost_of_upgradation_in_Rs' in record:
 								record['group_ne3ao98/Cost_of_upgradation_in_Rs'] = int('0'+''.join(re.findall('[\d+]',re.sub('(\.[0]*)','',record['group_ne3ao98/Cost_of_upgradation_in_Rs']))))
-							hh_data = HouseholdData.objects.filter(ff_data__contains={"_id": record["_id"]})
+							hh_data = HouseholdData.objects.filter(ff_kobo_id= record["_id"])
 							if hh_data.count() >0 and hh_data.filter(household_number=str(int(record['group_vq77l17/Household_number'])), slum=slum).count()==0:
 								hh_data.update(ff_data=None)
 								for hh in hh_data:
@@ -414,10 +415,10 @@ def sync_ff_data(city_id, latest_date=''):
 							
 							temp = HouseholdData.objects.filter(household_number = str(int(record['group_vq77l17/Household_number'])), slum = slum)
 							if temp.count()>0:
-								temp.update(ff_data = record)
+								temp.update(ff_data = record, ff_kobo_id=record['_id'])
 							else:
 								household_data = HouseholdData(household_number = str(int(record['group_vq77l17/Household_number'])), slum = slum,
-															   ff_data=record, city=city, submission_date=convert_datetime(str(record['_submission_time'])))
+															   ff_data=record, ff_kobo_id=record['_id'], city=city, submission_date=convert_datetime(str(record['_submission_time'])))
 								household_data.save()
 						except Exception as e:
 							#print no_rhs_but_ff.append(record['group_vq77l17/Household_number'] + " in" + str(slum) + " has a factesheet but no rhs/followup record")

@@ -14,6 +14,8 @@ class HouseholdData(models.Model):
 	created_date = models.DateTimeField(default=datetime.datetime.now)
 	rhs_data = JSONField(null=True, blank=True)
 	ff_data = JSONField(null = True, blank = True)
+	kobo_id = models.IntegerField(null=True, blank=True)
+	ff_kobo_id = models.IntegerField(null=True, blank=True)
 
 	class Meta:
 		unique_together = ("slum", "household_number")
