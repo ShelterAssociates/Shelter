@@ -146,7 +146,7 @@ def syn_rim_data(city_id):
 				else:
 					print ("RIM ERROR:: Slum name missing for "+ str(record["_id"]))
 
-def syn_rhs_followup_data(city_id, ff_flag=False):
+def syn_rhs_followup_data(city_id, ff_flag=False, latest_flag=True):
 	count_o = []
 	count_u = []
 	count_l = []
@@ -174,14 +174,15 @@ def syn_rhs_followup_data(city_id, ff_flag=False):
 			form_code = i.kobotool_survey_id
 			
 			latest_rhs = HouseholdData.objects.filter(city__id = city.id).order_by('-submission_date')
-			if len(latest_rhs) != 0:
+			if len(latest_rhs) != 0 and latest_flag:
 				latest_rhs_date = latest_rhs[0].submission_date 
 
 			latest_followup = FollowupData.objects.filter(city__id = city.id).order_by('-submission_date')
-			if len(latest_followup) != 0:
+			if len(latest_followup) != 0 and latest_flag:
 				latest_followup_date = latest_followup[0].submission_date
 
 			latest_date = latest_followup_date if latest_followup_date > latest_rhs_date else latest_rhs_date
+			print latest_date
 			if ff_flag:
 				sync_ff_data(city.id, latest_date)
 
@@ -215,7 +216,6 @@ def syn_rhs_followup_data(city_id, ff_flag=False):
 							record.update({'group_oi8ts04/Current_place_of_defecation': record['group_oi8ts04/C4']})
 						if 'group_oi8ts04/C5' in record.keys():
 							record.update({'group_oi8ts04/Current_place_of_defecation': record['group_oi8ts04/C5']})
-						#print record['Type_of_structure_occupancy'], record['_submission_time'], record['group_og5bx85/Type_of_survey']
 						if record['Type_of_structure_occupancy'] in ['Unoccupied house', 'Locked house']:
 							if record['Type_of_structure_occupancy'] == 'Unoccupied house':
 								count_u.append(record['Household_number'])
@@ -223,8 +223,6 @@ def syn_rhs_followup_data(city_id, ff_flag=False):
 							if record['Type_of_structure_occupancy'] == 'Locked house':
 								count_l.append(record['Household_number'])
 								a.append(record['Household_number'])
-							#print '******************************'
-							#print record['Type_of_structure_occupancy']	, record['Household_number']
 							try:
 								household_data = HouseholdData(
 
@@ -237,7 +235,7 @@ def syn_rhs_followup_data(city_id, ff_flag=False):
 								household_data.save()
 								rhs_and_followup_updated +=1
 							except Exception as e:
-								print e # 
+								pass 
 
 				print("Occupied Houses")
 				for key,list_records in groupby(data_with_lables, lambda x:x['slum_name']):
@@ -249,7 +247,9 @@ def syn_rhs_followup_data(city_id, ff_flag=False):
 					except:
 						#print key 
 						slum = Slum.objects.get(shelter_slum_code = 272537891001)
-					for record in list_records:
+					list_records = list(list_records)
+					print(str(len(list_records)))
+					for index,  record in enumerate(list_records):
 						if 'group_oi8ts04/C1' in record.keys():
 							record.update({'group_oi8ts04/Current_place_of_defecation': record['group_oi8ts04/C1']})
 						if 'group_oi8ts04/C2' in record.keys():
@@ -264,21 +264,6 @@ def syn_rhs_followup_data(city_id, ff_flag=False):
 							if 'group_og5bx85/Type_of_survey' in record and record['group_og5bx85/Type_of_survey'] == 'RHS':
 								f_data = {}
 								r_data = {}
-								try:
-									temp_hh = HouseholdData.objects.get(household_number = str(int(record['Household_number'])), slum = slum)
-									if str(temp_hh.rhs_data['Type_of_structure_occupancy']) == 'Locked house':
-										temp_locked_houses_replaced.append(temp_hh.household_number)
-										temp_hh.delete()
-
-									if str(temp_hh.rhs_data['Type_of_structure_occupancy']) == 'Occupied house':
-										if temp_hh.submission_date < convert_datetime(str(record['_submission_time'])):
-											temp_double_houses.append(temp_hh.household_number)
-											temp_hh.delete()
-
-								except Exception as e:
-									#print "temp_hh error"
-									pass
-									#.append(record['Household_number'])
 								
 								for i in record.iteritems():	
 									if 'group_oi8ts04' in i[0]:
@@ -426,10 +411,11 @@ def sync_ff_data(city_id, latest_date=''):
 								for hh in hh_data:
 									if not hh.rhs_data:
 										hh.delete()
-							try:
-								temp = HouseholdData.objects.filter(household_number = str(int(record['group_vq77l17/Household_number'])), slum = slum)
+							
+							temp = HouseholdData.objects.filter(household_number = str(int(record['group_vq77l17/Household_number'])), slum = slum)
+							if temp.count()>0:
 								temp.update(ff_data = record)
-							except HouseholdData.DoesNotExist:
+							else:
 								household_data = HouseholdData(household_number = str(int(record['group_vq77l17/Household_number'])), slum = slum,
 															   ff_data=record, city=city, submission_date=convert_datetime(str(record['_submission_time'])))
 								household_data.save()
