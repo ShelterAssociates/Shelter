@@ -25,4 +25,4 @@ xlrd==0.9.3
 django-admin-view-permission==1.6
 scipy==1.2.2
 djangorestframework==3.6
-django-rest-auth
+django-rest-auth==0.9.5
