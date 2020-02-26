@@ -305,23 +305,53 @@ def general_final(z):
             + Mode of House Area + Status of Defecation Score'''
     general_all_scores = []
     dumy_di = {}
-    place_of_defecation =[]
+    direct_ff = []
+    ctb_count =0
+    own_toilet =0
+    shared =0
+    outside_slum=0
+    none_hence_open_def=0
     score_data = score_calculation('General')
     for i in score_data:
         id = i[0][2]
         scores = i[0][0]
         other_data = i[0][1]
+        total_household_count = HouseholdData.objects.filter(slum__id=id)
+        household_list = total_household_count.values_list('household_number', flat=True)
         followup_data = FollowupData.objects.filter(slum__id=id)
-        data_followup = map(lambda x: x.followup_data, followup_data)
-        for i in data_followup:
-            if 'group_oi8ts04/Current_place_of_defecation' in i:
-                place_of_defecation.append(int(i['group_oi8ts04/Current_place_of_defecation']))
+        followup_household_list = followup_data.values_list('household_number', flat=True)
+        for i in followup_household_list:
+            if i not in total_household_count:
+                direct_ff.append(i)
+
+        total_household_rhs_ff = len(household_list) + len(direct_ff)
+
+        for i in followup_household_list:
+            latest_record = followup_data.filter(household_number=int(i)).latest('submission_date')
+            if latest_record.followup_data['group_oi8ts04/Current_place_of_defecation'] in ['Use CTB',
+                                                                                            'Non-functional, hence CTB', ]:
+                ctb_count += 1
+            elif latest_record.followup_data['group_oi8ts04/Current_place_of_defecation'] in ['SBM (Installment)',
+                                                                                              'SBM (Contractor)',
+                                                                                              'Toilet by SA (SBM)',
+                                                                                              'Toilet by other NGO (SBM)',
+                                                                                              'Own toilet',
+                                                                                              'Toilet by other NGO',
+                                                                                              'Toilet by SA']:
+                own_toilet += 1
+            elif latest_record.followup_data['group_oi8ts04/Current_place_of_defecation'] == 'Shared toilet':
+                shared += 1
+            elif latest_record.followup_data[
+                'group_oi8ts04/Current_place_of_defecation'] == 'Public toilet outside slum':
+                outside_slum += 1
             else:
-                place_of_defecation.append(0)
-        if len(place_of_defecation)<=0:
-            status_of_defecation =0
-        else:
-            status_of_defecation = sum(place_of_defecation)/len(place_of_defecation)
+                none_hence_open_def += 1
+        status_of_defecation = round(((ctb_count / total_household_rhs_ff) * 2 if total_household_rhs_ff else 0) \
+                                     + ((own_toilet / total_household_rhs_ff) * 5 if total_household_rhs_ff else 0) \
+                                     + ((shared / total_household_rhs_ff) * 3 if total_household_rhs_ff else 0) \
+                                     + ((outside_slum / total_household_rhs_ff) * -1 if total_household_rhs_ff else 0) \
+                                     + ((none_hence_open_def / total_household_rhs_ff) * -2 if total_household_rhs_ff else 0),
+                                     2)
         rhs = Rhs_data(id)
         if 'General' in rhs.keys():
             house_area = rhs['General']
