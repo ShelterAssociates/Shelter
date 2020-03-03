@@ -1,107 +1,60 @@
-{% extends 'header.html' %}
+{% extends 'dashboard_sub_header.html' %}
 {% load staticfiles %}
 
 {% block styleblock %}
-<link rel="stylesheet"  type="text/css" href="{% static "css/jquery.dataTables.min.css" %}" />
+<link rel="stylesheet"  type="text/css" href="{% static "css/bootstrap.min.css" %}" />
 
-<!-- <script type="text/javascript" src="http://www.google.com/jsapi" ></script> -->
-<script src="{% static "js/maplabel.js" %}"></script>
-<script src="{% static "js/slumMapping.js" %}"></script>
-<script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCs114b6ZNpVH5BGnrfgy0f1K49vfBK4gs&callback=initMap12"
-async defer></script>
+<meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests"/>
+<link rel="stylesheet"  type="text/css" href="{% static "css/city_cards.css" %}"/>
 
-<script src="{% static "js/jquery.dataTables.min.js" %}"></script>
-
-<style>
-	#map12 {
-		height: 500px;
-		width: 700px;
-		margin: 0px;
-		padding: 0px
-	}
-	#loading-img {
-		background: url(/static/images/spinner.gif) center center no-repeat;
-		height: 100%;
-		width: 55%;
-		z-index: 20;
-	}
-	.overlay {
-		background: #e9e9e9;
-		display: none;
-		position: absolute;
-		top: 0;
-		right: 0;
-		bottom: 0;
-		left: 0;
-		opacity: 0.5;
-		z-index: 1;
-	}
-
-	input[type='checkbox']:checked:before {
-		content: "\2713";
-		position: relative;
-	}
-	.table > tbody > tr > td {
-
-		padding: 6px !important;
-	}	
-	
-	.container .jumbotron, .container-fluid .jumbotron{
-	padding-left: 0px;
-	padding-right:0px;
-
-	}
-
-</style>
+<script src="{% static "js/bootstrap.min.js" %}"></script>
+<script src="{% static "js/jquery.min.js" %}"></script>
+<script src="{% static "js/slummapdisplay.js" %}"></script>
+<script src="{% static "js/external_dashboard_subheader.js" %}"></script>
 {% endblock %}
-{%block mainblock %}
-<div class="container">
-	<div class="jumbotron" style="background-color:white;">
-	<h3>Spatial Slum Information</h3>
-	<div class="overlay">
-		<div id="loading-img"></div>
-	</div>
-	<div id="maphead"></div>
-	<div id="mapdesc" style="width: 750px"></div>
+{%block content %}
 
-	<div id="wdhead" style="width: 750px" ></div>
-	<div id="wdaddress" style="width: 750px" ></div>
-	<div id="wdofficer" style="width: 750px"></div>
+<div class="overlay">
+    <div id="loading-img"></div>
+</div>
 
-	<div id="maplink" ></div>
-	<div>
-		<div id="map12" style="float:left"></div>
-		<div id="compochk"  style="float:left;padding-left:15px;"></div>
-		<div style="height: 10px;width: 700px;"></div>
-		<div style="width: 700px;" id="datatablecontainer">
-			<table id="datatable" class="display" style="width:100% !important;"></table>
-		</div>
+<div class="container-fluid">
+    <div class="row details">
+        <div class="col-md-1 col-sm-1 arrow">
+            <button class="btn btn-primary leftLst"><<</button>
+        </div>
+        <div class="col-md-10 col-sm-10 cards scrolling-wrapper">
 
-		<div class="modal fade" id="myModal" role="dialog">
-			<div class="modal-dialog">
 
-				<!-- Modal content-->
-				<div  class="modal-content">
-					<div id="modelheader" class="modal-header">
-						<h4 class="modal-title" ><label id="modelhdtext"></label>
-						<button type="button" class="close" data-dismiss="modal">
-							&times;
-						</button></h4>
+        </div>
+        <div class="col-md-1 col-sm-1 arrow">
+            <button class="btn btn-primary rightLst">>></button>
+        </div>
+    </div>
+</div>
+<div name="section_card_clone" class="first-card cards-bg hide">
+    <p class="city_name average-img">
 
-					</div>
-					<div id="modelbody" class="modal-body" style="padding-top:0px;padding-bottom:0px;height:70%;overflow:auto;">
-
-					</div>
-					<div class="modal-footer">
-						<button type="button" class="btn btn-default" data-dismiss="modal">
-							Close
-						</button>
-					</div>
-				</div>
-
-			</div>
-		</div>
-	</div>
-	</div>
-
+    </p>
+    <p class="average-val-label">
+        <span class="number-of-slums average-val-impact">0</span>
+        <span class="average-label">Surveyed slums / Total slums</span>
+    </p>
+    <p class="average-val-label">
+        <span class="household-count average-val-impact">0</span>
+        <span class="average-label">Number of Households</span>
+    </p>
+    <p class="average-val-label">
+        <span class="total-score average-val">0</span>
+        <span class="average-label">Score for quality of living</span>
+    </p>
+    <div class="average-val-label">
+        <div class="card-btn">
+           <a class="card-url dashboard-url" target="_blank" href=""> Dashboard</a>
+        </div>
+        <div class="card-btn card-btn-right">
+            <a class="card-url gis-url" target="_blank" href="">Spatial data(GIS)</a>
+        </div>
+    </div>
+</div>
 {% endblock %}

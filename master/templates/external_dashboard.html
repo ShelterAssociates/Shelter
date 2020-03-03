@@ -1,0 +1,159 @@
+{% extends "dashboard_sub_header.html" %}
+{% load i18n %}
+{% load staticfiles %}
+
+{% block styleblock %}
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet"  type="text/css" href="{% static "css/external_dashboard.css" %}"/>
+    <link rel="stylesheet"  type="text/css" href="{% static "css/leaflet.css" %}" />
+    <title>Shelter</title>
+<style>
+  #map {
+      height: 80%;
+      width: 100%;
+      margin-top: 10px;
+      padding: 0px;
+  }
+      #loading-img {
+      background: url(/static/images/spinner.gif) center center no-repeat;
+      height: 100%;
+      width: 55%;
+      z-index: 20;
+  }
+  .overlay {
+      background: #e9e9e9;
+      display: none;
+      position: absolute;
+      top: 0;
+      right: 0;
+      bottom: 0;
+      left: 0;
+      opacity: 0.5;
+      z-index: 1;
+  }
+  .legend {
+	line-height: 18px;
+	color: #555;
+	padding:5px;
+	background: white;
+}
+.legend i {
+	width: 18px;
+	height: 18px;
+	float: left;
+	margin-right: 8px;
+	opacity: 0.7;
+}
+</style>
+{% endblock %}
+
+{% block scriptblock1 %}
+<script src="{% static "js/leaflet.js" %}"></script>
+<script src="{% static "js/leaflet-google.js" %}"></script>
+<script src="{% static "js/external_dashboard.js" %}"></script>
+<script src="{% static "js/external_dashboard_subheader.js" %}"></script>
+<script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCs114b6ZNpVH5BGnrfgy0f1K49vfBK4gs&callback=initMap" async defer></script>
+{% endblock %}
+
+{%block content %}
+<div class="container-fluid">
+<div class="overlay">
+    <div id="loading-img"></div>
+</div>
+<input type="text" class="hide" id="city_id" value="{{city_id}}"/>
+<input type="text" class="hide" id="city_name" value="{{city_name}}"/>
+  <!--Content starts here-->
+
+  <div class="row">
+    <div class="col-md-5" style="">
+      <b><select id="city_name_text"></select></b>
+      <input type="radio" value="0" name="level" checked text="Administrative ward"> Administrative Ward
+      <input type="radio" value="1" name="level" text="Electoral ward"> Electoral Ward
+      <input type="radio" value="2" name="level" text="Slum"> Slum
+      <div class="note">
+        <b>Note</b> : Click on the below coloured area to view specific details.
+      </div>
+      <div id="map"></div>
+    </div>
+    <div class="col-md-7">
+      <!--Information starts here-->
+      <div class="information">
+        <div class="water-info">
+          <select id="levels_tag">
+            <option value="General">General</option>
+            <option value="Toilet">Toilet</option>
+            <option value="Drainage">Drainage</option>
+            <option value="Water">Water</option>
+            <option value="Waste">Waste</option>
+            <option value="Road">Road</option>
+          </select>
+        </div>
+        <!-- <div class="water-info">
+                              <span><img src="images/ico_info.png"/></span>
+                              <span class="water-label">16 May 2018 - 10 May 2019</span>
+                              <span class="info-arrow l30">
+                                  <i class="down"></i>
+                              </span>
+                          </div>
+                          <div class="info-divider"></div> -->
+        <div class="overall-score hide">
+          <span class="overall-cnt" id="total_score"></span>
+          <span class="overall-text" id="total_score_text"></span>
+        </div>
+      </div>
+      <!--Information endss here-->
+      <div class="report-card" id="report_selections">
+        General Report Card for all Administrative ward
+        <span class="full-screen"
+          ><img src="/static/images/Symbol 38 – 1.svg"
+        /></span>
+      </div>
+      <div class="details">
+        <div class="cards">
+          <div class="first-card">
+            <p class="average-img"><img width="60px" src="/static/images/dashboard/score.png" /></p>
+            <p class="average-val-label">
+              <span class="average-val" id="score_val">60</span>
+              <span class="average-label">Total Percentile Score</span>
+              <span class="average-label hide">Above Average</span>
+            </p>
+            <p class="result-text hide">70 in previous period</p>
+          </div>
+
+          <div id="section_cards">
+
+          </div>
+          <div name="section_card_clone" class="first-card cards-bg hide">
+            <p class="average-img">
+              <img width="60px" src="" />
+            </p>
+            <p class="average-val-label">
+              <span class="average-val"></span>
+              <span class="average-label"></span>
+            </p>
+            <p class="result-text positive hide">800 in previous period</p>
+          </div>
+
+          <div class="bar-chart hide">
+            <div class="bar-header">
+              <span>Water Availability</span>
+              <span class="bar-select">Select Any two parameters</span>
+            </div>
+            <div class="bar-graph"></div>
+          </div>
+          <div class="key-values">
+            <div class="key-takeaways">
+              Key Takeaways
+              <i class="down"></i>
+            </div>
+            <ul class="takeaways">
+
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  </div>
+<!--Content ends here-->
+{% endblock %}

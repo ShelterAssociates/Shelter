@@ -72,7 +72,7 @@ class DDSync(object):
     def fetch_kobo_FF_data(self):
         url_family_factsheet = settings.KOBOCAT_FORM_URL + 'data/' + str(self.ff_survey_id) + '?format=json'
         url_family_factsheet += '&query={"group_vq77l17/slum_name":"'+str(self.slum.shelter_slum_code)+'"'
-        url_family_factsheet += ',"_submission_time":{"$gt":"'+str(self.survey_date)+'"}'
+        #url_family_factsheet += ',"_submission_time":{"$gt":"'+str(self.survey_date)+'"}'
         url_family_factsheet += '}&fields=["_submission_time","group_vq77l17/Household_number","group_ne3ao98/Where_the_individual_ilet_is_connected_to","group_ne3ao98/Use_of_toilet"]'
         formdict_family_factsheet = self.fetch_url_data(url_family_factsheet)
         return formdict_family_factsheet
