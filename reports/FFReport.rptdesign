@@ -452,7 +452,12 @@ row_count =1;]]></method>
 	
 	//images path 
 	row["family_photo"] = jsonObject["Family_Photo"];
-	row["toilet_photo"] = jsonObject["Toilet_Photo"];
+        if(jsonObject["Toilet_Photo"].length == 0){
+		row["toilet_photo"] = "";
+	}
+	else{
+		row["toilet_photo"] = jsonObject["Toilet_Photo"];
+ 	}
 	
 	//sponsor logo path
 	row["sponsor_logo"] = jsonObject["sponsor_logo"];
