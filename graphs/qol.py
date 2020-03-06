@@ -18,107 +18,108 @@ def score_calculation(section_key):
     json_data = json.loads(open('/home/shelter/Desktop/New_project/QOL_three/Shelter/graphs/json_reference_file.json').read())  # json reference data from json file
     slum_data = SlumData.objects.all()#.values('slum_id','rim_data','city_id')
     for i in slum_data:
-        slum__id = i.slum.id
-        all_slum_ids.add(slum__id)
-        slumid_cityid_list[slum__id]= i.city.id
-        db_data = i.rim_data
-        for k, v in json_data.items():
-            if k == section_key:                   # checks sction key like water, toilet etc
-                if k in db_data.keys():
-                    ques = db_data[k]
-                    score_list = []                 #score list for every type of questions (single select , multi select etc)
-                    num_dict = {}
-                    if type(ques) == dict:
-                        ques = [ques]
-                    all_ctb_data =[]
-                    for i in ques:
-                        ques_score = {}
-                        freq_waste_coll_type = {}
-                        road_list =[]
-                        for k1, v1 in v.items():
-                            if k1 in i:
-                                dummy_list = []
-                                if v1['calculate']['type'] == 's':
-                                    score = single_select(i, k1, v1)
-                                    if k == 'Toilet':
+        # if i.slum.id == 1338:
+            slum__id = i.slum.id
+            all_slum_ids.add(slum__id)
+            slumid_cityid_list[slum__id]= i.city.id
+            db_data = i.rim_data
+            for k, v in json_data.items():
+                if k == section_key:                   # checks sction key like water, toilet etc
+                    if k in db_data.keys():
+                        ques = db_data[k]
+                        score_list = []                 #score list for every type of questions (single select , multi select etc)
+                        num_dict = {}
+                        if type(ques) == dict:
+                            ques = [ques]
+                        all_ctb_data =[]
+                        for i in ques:
+                            ques_score = {}
+                            freq_waste_coll_type = {}
+                            road_list =[]
+                            for k1, v1 in v.items():
+                                if k1 in i:
+                                    dummy_list = []
+                                    if v1['calculate']['type'] == 's':
                                         score = single_select(i, k1, v1)
+                                        if k == 'Toilet':
+                                            score = single_select(i, k1, v1)
+                                            if score != None:
+                                                ques_score[k1] = score
+                                            else:
+                                                ques_score[k1] = 0
+                                            dummy_list.append(ques_score)
+                                        if k1 == 'presence_of_roads_within_the_s':
+                                            road_list.append({'presence' : score})
+                                        elif k1 == 'type_of_roads_within_the_settl':
+                                            road_list.append({'road_type': score})
+                                        else:
+                                            score_list.append(score)
+                                        if k == 'Waste':
+                                            try:
+                                                if k1 in waste_coll_to_type.keys():
+                                                    keyy = waste_coll_to_type[k1]
+                                                    score_for = v1['choices'][db_data[k][k1].lower()]
+                                                    freq_waste_coll_type[keyy]= score_for
+                                            except Exception as e:
+                                                print 'single select waste exception is', e
+                                            ques_score[k1] = score
+
+                                    if v1['calculate']['type'] == 'M':
+                                        score = multiselect(i,k1,v1)
                                         if score != None:
                                             ques_score[k1] = score
                                         else:
                                             ques_score[k1] = 0
                                         dummy_list.append(ques_score)
-                                    if k1 == 'presence_of_roads_within_the_s':
-                                        road_list.append({'presence' : score})
-                                    elif k1 == 'type_of_roads_within_the_settl':
-                                        road_list.append({'road_type': score})
-                                    else:
-                                        score_list.append(score)
-                                    if k == 'Waste':
-                                        try:
-                                            if k1 in waste_coll_to_type.keys():
-                                                keyy = waste_coll_to_type[k1]
-                                                score_for = v1['choices'][db_data[k][k1].lower()]
-                                                freq_waste_coll_type[keyy]= score_for
-                                        except Exception as e:
-                                            print 'single select waste exception is', e
-                                        ques_score[k1] = score
-
-                                if v1['calculate']['type'] == 'M':
-                                    score = multiselect(i,k1,v1)
-                                    if score != None:
-                                        ques_score[k1] = score
-                                    else:
-                                        ques_score[k1] = 0
-                                    dummy_list.append(ques_score)
-                                    if k == 'Waste':
-                                        ques_score[k1] = score
-                                        if k1 == 'facility_of_waste_collection':
-                                            waste_coll_choices = v1['choices']
-                                    if k == 'Road':
-                                        if k1 != 'average_width_of_internal_road':
-                                            road_list.append(score)
+                                        if k == 'Waste':
+                                            ques_score[k1] = score
+                                            if k1 == 'facility_of_waste_collection':
+                                                waste_coll_choices = v1['choices']
+                                        if k == 'Road':
+                                            if k1 != 'average_width_of_internal_road':
+                                                road_list.append(score)
+                                            else:
+                                                score_list.append(score)
                                         else:
                                             score_list.append(score)
-                                    else:
-                                        score_list.append(score)
-                                if v1['calculate']['type'] == 'N':
-                                    data = i[k1]
-                                    num_dict[k1] = data
-                                if v1['calculate']['type'] == 'C':
-                                    pass
-                        all_ctb_data.append([dummy_list, num_dict])
-                else:
-                    print 'k not in sction key', k
-        for_each_slum = []
-        if section_key == "Toilet":
-            all_slums_list.append([all_ctb_data, slum__id])
+                                    if v1['calculate']['type'] == 'N':
+                                        data = i[k1]
+                                        num_dict[k1] = data
+                                    if v1['calculate']['type'] == 'C':
+                                        pass
+                            all_ctb_data.append([dummy_list, num_dict])
+                    else:
+                        print 'k not in sction key', k
+            for_each_slum = []
+            if section_key == "Toilet":
+                all_slums_list.append([all_ctb_data, slum__id])
 
-        if section_key == 'Structure':
-            all_slums_list.append(slum__id)
+            if section_key == 'Structure':
+                all_slums_list.append(slum__id)
 
-        if section_key == 'General':
-            for_each_slum.append([score_list,num_dict, slum__id])
-            all_slums_list.append(for_each_slum)
+            if section_key == 'General':
+                for_each_slum.append([score_list,num_dict, slum__id])
+                all_slums_list.append(for_each_slum)
 
-        if section_key == 'Drainage':
-            for_each_slum.append([score_list,slum__id])
-            all_slums_list.append(for_each_slum)
+            if section_key == 'Drainage':
+                for_each_slum.append([score_list,slum__id])
+                all_slums_list.append(for_each_slum)
 
-        if section_key == 'Gutter':
-            for_each_slum.append([score_list,slum__id])
-            all_slums_list.append(for_each_slum)
+            if section_key == 'Gutter':
+                for_each_slum.append([score_list,slum__id])
+                all_slums_list.append(for_each_slum)
 
-        if section_key == 'Waste':
-            for_each_slum.append([freq_waste_coll_type, waste_coll_choices , ques_score ,slum__id])
-            all_slums_list.append(for_each_slum)
+            if section_key == 'Waste':
+                for_each_slum.append([freq_waste_coll_type, waste_coll_choices , ques_score ,slum__id])
+                all_slums_list.append(for_each_slum)
 
-        if section_key == 'Water':
-            for_each_slum.append([score_list, num_dict, slum__id])
-            all_slums_list.append(for_each_slum)
+            if section_key == 'Water':
+                for_each_slum.append([score_list, num_dict, slum__id])
+                all_slums_list.append(for_each_slum)
 
-        if section_key == 'Road':
-            for_each_slum.append([score_list, road_list, slum__id])
-            all_slums_list.append(for_each_slum)
+            if section_key == 'Road':
+                for_each_slum.append([score_list, road_list, slum__id])
+                all_slums_list.append(for_each_slum)
     return all_slums_list
 
 def waste_final(z):
@@ -195,7 +196,6 @@ def drainage_final(z):
 
 def toilet_final(z):
     '''calculation of final score for toilet section'''
-
     toilet_all_scores =[]
     dummy_dict={}
     cost = []
@@ -215,52 +215,56 @@ def toilet_final(z):
         toilet_scores = []
         for j in other_data:
             numeric_data = j[1]
-            if len(j[0]) >= 1 :
-                one_ctb_data = j[0][0]
-                ctb_in_use = one_ctb_data['is_the_CTB_in_use']
-                one_ctb_data.pop('is_the_CTB_in_use')
+            ctb_data = j[0][0]
+            if 'is_the_CTB_in_use' in ctb_data and ctb_data['is_the_CTB_in_use'] == -1:
+                ctb_in_use = -1
+                ctb_data.pop('is_the_CTB_in_use')
+                final_score_of_1_toilet = ctb_in_use * sum(ctb_data.values())
             else:
-                ctb_in_use =0
-            for i in numeric_data.keys():
-                mix_fun =0
-                men_fun=0
-                wm_fun=0
-                if i in men_seats:
-                    men_fun = int(numeric_data[men_seats[0]]) -int(numeric_data[men_seats[1]])
-                if i in wm_seats:
-                    wm_fun = int(numeric_data[wm_seats[0]]) - int(numeric_data[wm_seats[1]])
-                if i in mix_seats:
-                    mix_fun = int(numeric_data[mix_seats[0]]) - int(numeric_data[mix_seats[1]])
-                if i in ['fee_for_use_of_ctb_per_family', 'cost_of_pay_and_use_toilet_pe']:
-                    cost.append(int(numeric_data[i]))
-                    total_cost = 0 if len(cost) <= 0 else sum(cost) / len(cost)
-                    total_wrk_seats =  men_fun + wm_fun + mix_fun
-                    final_score_of_1_toilet = ctb_in_use * sum(one_ctb_data.values()) + total_cost + total_wrk_seats
-                    toilet_scores.append(final_score_of_1_toilet)
-                    final_score = sum(toilet_scores)/len(toilet_scores)
-                    if own_toilet_coverage <= 25:
-                        final_score += 10
-                    elif own_toilet_coverage in range(26,50):
-                        final_score += 20
-                    elif own_toilet_coverage in range(51,75):
-                        final_score += 30
-                    else:
-                        final_score += 40
-                    dummy_dict[id]= final_score
+                ctb_in_use = 1
+                ctb_data.pop('is_the_CTB_in_use')
+                for i in numeric_data.keys():
+                    mix_fun =0
+                    men_fun=0
+                    wm_fun=0
+                    if i in men_seats:
+                        men_fun = int(numeric_data[men_seats[0]]) -int(numeric_data[men_seats[1]])
+                    if i in wm_seats:
+                        wm_fun = int(numeric_data[wm_seats[0]]) - int(numeric_data[wm_seats[1]])
+                    if i in mix_seats:
+                        mix_fun = int(numeric_data[mix_seats[0]]) - int(numeric_data[mix_seats[1]])
+                    if i in ['fee_for_use_of_ctb_per_family', 'cost_of_pay_and_use_toilet_pe']:
+                        cost.append(int(numeric_data[i]))
+                        total_cost = 0 if len(cost) <= 0 else sum(cost) / len(cost)
+                        total_wrk_seats =  men_fun + wm_fun + mix_fun
+                final_score_of_1_toilet = ctb_in_use * (sum(ctb_data.values()) + total_cost + total_wrk_seats)
+            toilet_scores.append(final_score_of_1_toilet)
+            final_score = sum(toilet_scores)/len(toilet_scores)
+            if own_toilet_coverage <= 25:
+                final_score += 10
+            elif own_toilet_coverage in range(26,50):
+                final_score += 20
+            elif own_toilet_coverage in range(51,75):
+                final_score += 30
+            else:
+                final_score += 40
+            dummy_dict[id]= final_score
     toilet_all_scores.append(dummy_dict)
     return toilet_all_scores
 
 def Rhs_data(slumid):
     '''collection of rhs data required for every section'''
+
     waste_data = []
     WCT=[]
     unoccupide_house ={}
     hh_no =[]                           # household_number
     owner_state=[]
     gen_data =[]
-    rhs_data = HouseholdData.objects.filter(slum__id=slumid)
-    db_data = (map(lambda x: x.rhs_data, rhs_data))
-    SHC = len(rhs_data)                  # Slums_Household_count  = SHC
+    get_rhs_data = HouseholdData.objects.filter(slum__id=slumid)
+    db_data = (map(lambda x: x.rhs_data,get_rhs_data))
+    SHC = len(get_rhs_data)
+    # Slums_Household_count  = SHC
     for i in db_data:
         if  i['Type_of_structure_occupancy']  == 'Occupied house':
             if 'group_el9cl08/Facility_of_solid_waste_collection' in i:
@@ -275,7 +279,6 @@ def Rhs_data(slumid):
                 owner_state.append(i['group_el9cl08/Ownership_status_of_the_house'])
             else:
                 owner_state.append('Own house')
-
             if 'group_el9cl08/House_area_in_sq_ft' in i:
                 data = i['group_el9cl08/House_area_in_sq_ft']
                 if data in (0, 99):
