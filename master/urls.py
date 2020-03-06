@@ -18,7 +18,8 @@ Including another URLconf
 
 from django.conf.urls import include, url
 from django.contrib import admin
-from django.views.generic.base import View
+from rest_auth.views import LoginView
+
 from master.views import index, SurveyListView, SurveyCreateView, \
     survey_delete_view, search, rimedit, rimdisplay, riminsert, report, \
     administrativewardList, electoralWardList, slumList, rimreportgenerate, \
@@ -26,11 +27,10 @@ from master.views import index, SurveyListView, SurveyCreateView, \
     modelmapdisplay, drainageinsert, sluminformation, drainagedisplay , \
     drainageedit, cityList, drainagereportgenerate, modelList, \
     familyrportgenerate, user_login
-
+from django.contrib.auth import views as auth_views
 from django.conf import settings
 from django.conf.urls.static import static
-from django.contrib.auth.views import login, logout, password_reset, password_reset_done, password_reset_confirm
-from django.contrib.auth import views as auth_views
+
 admin.autodiscover()
 
 urlpatterns = [
@@ -64,7 +64,9 @@ urlpatterns = [
     url(r'^modelList/$', modelList, name='modelList'),
     url(r'^familyrportgenerate/$', familyrportgenerate, name='familyrportgenerate'),
     #Redirect user to new url
-    url(r'^user_login/$',user_login, name="user_login")
+    url(r'^user_login/$', user_login, name="user_login"),
+    #Using built in rest URLS for QGIS plugin login
+    url('rest-auth/', include('rest_auth.urls')),
     #url(r'^sponsors/$',sponsors, name='sponsors'),
     #url(r'^password_reset/$', auth_views.password_reset, name='password_reset'),
     #url(r'^password_reset/done/$', auth_views.password_reset_done, name='password_reset_done'),
