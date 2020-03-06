@@ -192,7 +192,7 @@ def get_kobo_FF_report_data(request, key):
      except:
          user = None
      if user and (user.is_superuser or user.groups.filter(name="sponsor").exists()) and slum and len(slum)>0:
-         filter_data ={"slum":slum[0], "household_code__contains":str(house_num)}
+         filter_data ={"slum":slum[0], "household_code__contains":int(house_num)}
          if user.groups.filter(name="sponsor").exists():
              filter_data["sponsor__user"] = user
          project_details = SponsorProjectDetails.objects.filter(**filter_data)
