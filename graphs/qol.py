@@ -1,9 +1,11 @@
 from __future__ import division
 from graphs.models import  *
+from master.models import *
 import json
 from scipy import stats
 from django.http import HttpResponse, HttpResponseForbidden
 from django.db.models import Sum
+import numpy as np
 
 waste_coll_to_type = {'frequency_of_waste_collection_001':'ulb ghantagadi','frequency_of_waste_collection':'mla sponsored tempo',
               'frequency_of_waste_collection_':'ulb Van','frequency_of_waste_collection__002':'door to door waste collection',
@@ -12,13 +14,17 @@ waste_coll_to_type = {'frequency_of_waste_collection_001':'ulb ghantagadi','freq
 all_slum_ids = set()
 slumid_cityid_list = {}
 
+all_city_id_list = sorted(City.objects.values_list('id',flat=True))
+
 def score_calculation(section_key):
     '''function calculates the score for single and multiselect questions'''
     all_slums_list=[]
     json_data = json.loads(open('/home/shelter/Desktop/New_project/QOL_three/Shelter/graphs/json_reference_file.json').read())  # json reference data from json file
-    slum_data = SlumData.objects.all()#.values('slum_id','rim_data','city_id')
+    for city_id in all_city_id_list:
+        slum_data = SlumData.objects.filter(city_id=city_id)#.values('slum_id','rim_data','city_id')
+
     for i in slum_data:
-        # if i.slum.id == 1338:
+        # if i.slum.id == 1117:
             slum__id = i.slum.id
             all_slum_ids.add(slum__id)
             slumid_cityid_list[slum__id]= i.city.id
@@ -208,21 +214,23 @@ def toilet_final(z):
         get_data = DashboardData.objects.filter(slum = i[1]).aggregate(Sum('individual_toilet_coverage'),Sum('occupied_household_count'))
         toilet_count = get_data['individual_toilet_coverage__sum'] if get_data['individual_toilet_coverage__sum'] else 0
         total_houses = get_data['occupied_household_count__sum'] if get_data['occupied_household_count__sum'] else 0
-        own_toilet_coverage = (toilet_count/total_houses)*100 if total_houses else 0
+        own_toilet_coverage = round((toilet_count/total_houses)*100 if total_houses else 0)
         men_seats = ['number_of_seats_allotted_to_me','number_of_seats_allotted_to_me_001']
         wm_seats = ['number_of_seats_allotted_to_wo','number_of_seats_allotted_to_wo_001']
         mix_seats =['total_number_of_mixed_seats_al','number_of_mixed_seats_allotted']
         toilet_scores = []
         for j in other_data:
             numeric_data = j[1]
-            ctb_data = j[0][0]
-            if 'is_the_CTB_in_use' in ctb_data and ctb_data['is_the_CTB_in_use'] == -1:
-                ctb_in_use = -1
-                ctb_data.pop('is_the_CTB_in_use')
-                final_score_of_1_toilet = ctb_in_use * sum(ctb_data.values())
-            else:
-                ctb_in_use = 1
-                ctb_data.pop('is_the_CTB_in_use')
+            ctb_data = j[0]
+            # print ctb_data
+            if ctb_data and 'is_the_CTB_in_use' in ctb_data[0]:
+                if ctb_data[0]['is_the_CTB_in_use'] == -1 or 0:
+                    ctb_in_use = -1
+                    ctb_data[0].pop('is_the_CTB_in_use')
+                    # final_score_of_1_toilet = ctb_in_use * sum(ctb_data[0].values())
+                else:
+                    ctb_in_use = 1
+                    ctb_data[0].pop('is_the_CTB_in_use')
                 for i in numeric_data.keys():
                     mix_fun =0
                     men_fun=0
@@ -235,26 +243,28 @@ def toilet_final(z):
                         mix_fun = int(numeric_data[mix_seats[0]]) - int(numeric_data[mix_seats[1]])
                     if i in ['fee_for_use_of_ctb_per_family', 'cost_of_pay_and_use_toilet_pe']:
                         cost.append(int(numeric_data[i]))
-                        total_cost = 0 if len(cost) <= 0 else sum(cost) / len(cost)
+                        total_cost = 0 if len(cost) <= 0 else sum(cost)/len(cost)
                         total_wrk_seats =  men_fun + wm_fun + mix_fun
-                final_score_of_1_toilet = ctb_in_use * (sum(ctb_data.values()) + total_cost + total_wrk_seats)
-            toilet_scores.append(final_score_of_1_toilet)
-            final_score = sum(toilet_scores)/len(toilet_scores)
-            if own_toilet_coverage <= 25:
-                final_score += 10
-            elif own_toilet_coverage in range(26,50):
-                final_score += 20
-            elif own_toilet_coverage in range(51,75):
-                final_score += 30
-            else:
-                final_score += 40
-            dummy_dict[id]= final_score
+                final_score_of_1_toilet = ctb_in_use * (sum(ctb_data[0].values()) + total_cost + total_wrk_seats)
+                toilet_scores.append(final_score_of_1_toilet)
+            else : print id
+        final_score = round(sum(toilet_scores) / len(toilet_scores) if len(toilet_scores) != 0 else 0,2)
+        if own_toilet_coverage <= 25:
+            final_score += 10
+        elif own_toilet_coverage in range(25,50):
+            final_score += 20
+        elif own_toilet_coverage in range(50,75):
+            final_score += 30
+        elif own_toilet_coverage >= 75:
+            final_score += 40
+        else:pass
+        # print 'final',id, final_score
+        dummy_dict[id]= final_score
     toilet_all_scores.append(dummy_dict)
     return toilet_all_scores
 
 def Rhs_data(slumid):
     '''collection of rhs data required for every section'''
-
     waste_data = []
     WCT=[]
     unoccupide_house ={}
@@ -331,24 +341,24 @@ def general_final(z):
 
         for i in followup_household_list:
             latest_record = followup_data.filter(household_number=int(i)).latest('submission_date')
-            if latest_record.followup_data['group_oi8ts04/Current_place_of_defecation'] in ['Use CTB',
-                                                                                            'Non-functional, hence CTB', ]:
-                ctb_count += 1
-            elif latest_record.followup_data['group_oi8ts04/Current_place_of_defecation'] in ['SBM (Installment)',
-                                                                                              'SBM (Contractor)',
-                                                                                              'Toilet by SA (SBM)',
-                                                                                              'Toilet by other NGO (SBM)',
-                                                                                              'Own toilet',
-                                                                                              'Toilet by other NGO',
-                                                                                              'Toilet by SA']:
-                own_toilet += 1
-            elif latest_record.followup_data['group_oi8ts04/Current_place_of_defecation'] == 'Shared toilet':
-                shared += 1
-            elif latest_record.followup_data[
-                'group_oi8ts04/Current_place_of_defecation'] == 'Public toilet outside slum':
-                outside_slum += 1
-            else:
-                none_hence_open_def += 1
+            if 'group_oi8ts04/Current_place_of_defecation' in latest_record.followup_data:
+                if latest_record.followup_data['group_oi8ts04/Current_place_of_defecation'] in ['Use CTB','Non-functional, hence CTB']:
+                    ctb_count += 1
+                elif latest_record.followup_data['group_oi8ts04/Current_place_of_defecation'] in ['SBM (Installment)',
+                                                                                                  'SBM (Contractor)',
+                                                                                                  'Toilet by SA (SBM)',
+                                                                                                  'Toilet by other NGO (SBM)',
+                                                                                                  'Own toilet',
+                                                                                                  'Toilet by other NGO',
+                                                                                                  'Toilet by SA']:
+                    own_toilet += 1
+                elif latest_record.followup_data['group_oi8ts04/Current_place_of_defecation'] == 'Shared toilet':
+                    shared += 1
+                elif latest_record.followup_data[
+                    'group_oi8ts04/Current_place_of_defecation'] == 'Public toilet outside slum':
+                    outside_slum += 1
+                else:
+                    none_hence_open_def += 1
         status_of_defecation = round(((ctb_count / total_household_rhs_ff) * 2 if total_household_rhs_ff else 0) \
                                      + ((own_toilet / total_household_rhs_ff) * 5 if total_household_rhs_ff else 0) \
                                      + ((shared / total_household_rhs_ff) * 3 if total_household_rhs_ff else 0) \
@@ -375,7 +385,7 @@ def general_final(z):
                 else:
                     t_d =5
                 final_score = sum(scores) + t_d + house_area + status_of_defecation
-                dumy_di[id] = final_score
+                dumy_di[id] = round(final_score,2)
     general_all_scores.append(dumy_di)
     return general_all_scores
 
@@ -455,7 +465,9 @@ def percentile_function():
                 score_dict[i] = -100
         return score_dict
 
-    from_db = QOLScoreData.objects.all().values()  # for percentile calculations nedd all data
+    for city_id in all_city_id_list:
+        from_db = QOLScoreData.objects.filter(city_id=city_id).values()  # for percentile calculations need all data
+
     for i in from_db:
         slum_id_list.append({'slumid': i['slum_id'],'id': i['id']})
         road_dict[i['slum_id']] = i['road']
@@ -509,6 +521,7 @@ def percentile_function():
                         pass
     except Exception as e:
         print 'Exception in percentile function', e
+
 
 def QOL_save_data(request):
     '''saving data to db'''
@@ -591,6 +604,7 @@ def road_final(z):
     dumy_di = {}
     prsn_of_rd = 0
     road_type =0
+    road_n_all_scores=0
     score_data =score_calculation('Road')
     for i in score_data:
         scores = i[0][0]
