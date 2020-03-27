@@ -45,7 +45,17 @@ INSTALLED_APPS = (
      'colorfield',
      'mastersheet',
      'graphs',
+    'rest_framework',
+    'rest_auth',
 )
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': (
+        'rest_framework.authentication.BasicAuthentication',
+    ),
+    'DEFAULT_PERMISSION_CLASSES': (
+        'rest_framework.permissions.AllowAny',
+    ),
+}
 
 ADMIN_VIEW_PERMISSION_MODELS = [
     'auth.User',
