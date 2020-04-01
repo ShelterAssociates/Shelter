@@ -24,7 +24,7 @@ let lst_sponsor =[];
 let parse_component = {};
 let modelsection = {
 		"General" : "General information" ,
-		"Toilet" : "Status of sanitation (2015-16)",
+		"Toilet" : "Status of sanitation (pre SBM)",
 		"Water" : "Type of water connection",
 		"Waste" : "Facility of solid waste collection",
 		"Drainage" : "Drainage information",
