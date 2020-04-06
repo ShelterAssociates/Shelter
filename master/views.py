@@ -4,7 +4,6 @@
 
 import json
 import psycopg2
-from django.core.urlresolvers import reverse
 from django.contrib.admin.views.decorators import staff_member_required
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.template import RequestContext, loader
@@ -22,8 +21,8 @@ from django.contrib.gis import geos
 from django.views.decorators.clickjacking import xframe_options_exempt
 
 from master.models import Survey, CityReference, Rapid_Slum_Appraisal, \
-						  Slum, AdministrativeWard, ElectoralWard, City, \
-						  WardOfficeContact, ElectedRepresentative, drainage
+	Slum, AdministrativeWard, ElectoralWard, City, \
+	WardOfficeContact, ElectedRepresentative, drainage
 from master.forms import SurveyCreateForm, ReportForm, Rapid_Slum_AppraisalForm, DrainageForm, LoginForm
 from sponsor.models import SponsorProjectDetails
 from django.contrib.auth import authenticate, login
@@ -507,7 +506,7 @@ def cityList(request):
 	data ={}
 	data = { 'idArray'  : idArray,
 			 'nameArray': nameArray
-			}
+			 }
 	return HttpResponse(json.dumps(data),content_type='application/json')
 
 @csrf_exempt
@@ -641,6 +640,4 @@ def dashboard_view(request, key, slumname = None):
 		data['error'] = "URL incorrect"
 	context = RequestContext(request, data)
 	return HttpResponse(template.render(context))
-
-
 
