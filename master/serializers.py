@@ -30,7 +30,6 @@ class CitySerializer(serializers.ModelSerializer):
     def get_city_names(self, obj):
 
         return obj.name.city_name
-
     class Meta:
         model = City
         fields = ['id','name','admin_ward']
