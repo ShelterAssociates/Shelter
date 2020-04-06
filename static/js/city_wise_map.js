@@ -27,7 +27,7 @@ let modelsection = {
 		"Toilet" : "Status of sanitation (pre SBM)",
 		"Water" : "Type of water connection",
 		"Waste" : "Facility of solid waste collection",
-		"Drainage" : "Drainage information",
+		"Drainage" : "Drainage/open gutter information",
 		"Road" : "Road & access information",
 		"Gutter" : "Gutter information"
 };
