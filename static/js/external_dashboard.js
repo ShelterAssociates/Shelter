@@ -91,13 +91,21 @@ function display_cards(names,level){
       if (data.every(item => item === 0)){
          $('.key-values').hide()
       }
+      if (data.every(item => item === 0) &&  $("#levels_tag").val() =='Toilet'){
+         data = document.getElementById('section_cards').lastChild.innerHTML.indexOf('CTB usage')
+         if (data != -1){
+             $('.key-values').hide()
+         }
+         else {
+         $('.key-values').show()
+         $(".takeaways").append('NO CTB' + '<br>') }
+      }
       for(i = 0 ;i <=(data.length-1); i++){
             if (data[i]>0){
                     $('.key-values').show()
-                    text = String(name[i]).replace('value',data[i])
-                    $(".takeaways").append(text + '<br>')
+                    $(".takeaways").append(String(name[i]).replace('value',data[i]) + '<br>')
                   }
-              }
+            }
     }
   }
 var MapLoad = (function() {
