@@ -506,7 +506,7 @@ $(document).ready(function() {
                                     
                                     dataSrc: function(data){
                                         for ( i = 0; i < data.length; i++){
-
+					      if (data[i] != null){
                                                 data[i]['a_missing'] = '';
                                                 data[i]['p1_missing'] = '';
                                                 data[i]['p2_missing'] = '';
@@ -565,6 +565,7 @@ $(document).ready(function() {
                                             }
 
                                     }
+				    }
                                     return data;
                                         
                                     },
