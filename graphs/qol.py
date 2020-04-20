@@ -15,16 +15,16 @@ all_slum_ids = set()
 slumid_cityid_list = {}
 
 all_city_id_list = sorted(City.objects.values_list('id',flat=True))
+print 'all city ids', all_city_id_list
 
 def score_calculation(section_key):
     '''function calculates the score for single and multiselect questions'''
     all_slums_list=[]
 
     json_data = json.loads(open('graphs/json_reference_file.json').read())  # json reference data from json file
-    # json_data = json.loads(open('/home/shelter/Desktop/New_project/QOL_three/Shelter/graphs/json_reference_file.json').read())  # json reference data from json file
-    for city_id in all_city_id_list:
-        slum_data = SlumData.objects.filter(city_id=city_id)#.values('slum_id','rim_data','city_id')
-        for i in slum_data:
+#    for city_id in all_city_id_list[4:5]:
+    slum_data = SlumData.objects.all()#filter(city_id=city_id)#.values('slum_id','rim_data','city_id')
+    for i in slum_data:
             # if i.slum.id == 1117:
                 slum__id = i.slum.id
                 all_slum_ids.add(slum__id)
@@ -532,7 +532,7 @@ def QOL_save_data(request):
         data = i[1]
         if i[0] in slum_city_list.keys():
             try:
-                to_save = QOLScoreData.objects.get_or_create(slum_id = i[0],defaults={ 'water' : data['Water'], 'waste':data['Waste'],
+                to_save = QOLScoreData.objects.update_or_create(slum_id = i[0],defaults={ 'water' : data['Water'], 'waste':data['Waste'],
                                 'road':data['Road'], 'str_n_occup':data['Str_n_occup'],'city_id' : slum_city_list[i[0]],
                                 'drainage':data['Drainage'],'gutter':data['Gutter'], 'toilet':data['Toilet'],
                                 'general':data['General'],'total_score':data['Total_score']})
