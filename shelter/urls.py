@@ -18,7 +18,7 @@ from django.contrib.auth import views as auth_views
 from django.conf.urls.static import static
 from django.conf import settings
 from settings import *
-from master.views import slummap, city_wise_map, login_success, dashboard_view
+from master.views import slummap, city_wise_map, city_wise_map_base64, login_success, dashboard_view
 from rest_framework import urls
 from rest_auth import views
 admin.autodiscover()
@@ -31,9 +31,13 @@ urlpatterns = [
                   url(r'^accounts/logout/', auth_views.logout, {'next_page': '/accounts/login/'}, name='logout'),
                   url(r'^accounts/', include(admin.site.urls)),
 
-                  url(r'^(?P<key>{})$'.format(base64_pattern), city_wise_map, name="city_map"),
-                  url(r'^(?P<key>{})/(?P<slumname>.*)$'.format(base64_pattern), city_wise_map, name="city_mapp"),
-                  url(r'^dashboard/(?P<key>{})$'.format(base64_pattern), dashboard_view, name="dashboard_view"),
+                  url(r'^(?P<key>{})$'.format(base64_pattern), city_wise_map_base64, name="city_map_base64"),
+                  url(r'^(?P<key>{})/(?P<slumname>.*)$'.format(base64_pattern), city_wise_map_base64,
+                           name="city_map_base64"),
+                  url(r'^(?P<key>city::([A-Za-z0-9 ]*)?)$', city_wise_map, name="city_map"),
+                  url(r'^(?P<key>city::([A-Za-z0-9 ]*)?)/(?P<slumname>.*)$', city_wise_map, name="city_mapp"),
+                  url(r'^dashboard/(?P<key>city::([A-Za-z0-9 ]*)?)$', dashboard_view, name="dashboard_view"),
+
                   url(r'^admin/', include('master.urls')),
                   url(r'^component/', include('component.urls')),
                   url(r'^sponsor/', include('sponsor.urls')),

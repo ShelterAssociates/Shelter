@@ -12,6 +12,7 @@ from django.http import HttpResponse, HttpResponseRedirect
 from django.views.generic import ListView
 from django.views.decorators.csrf import csrf_exempt
 from django.views.generic.edit import FormView
+from django.shortcuts import get_object_or_404
 from django.views.generic.base import View
 from django.shortcuts import render
 from django.core.paginator import Paginator, PageNotAnInteger, EmptyPage
@@ -266,12 +267,12 @@ def slummap(request):
 def citymapdisplay(request):
 	city_dict={}
 	city_main={}
-	cipher = AESCipher()
+	#cipher = AESCipher()
 
 	for c in City.objects.all():
 		city_dict={}
 		city_dict["name"]= c.name.city_name
-		city_dict["id"]= "city::"+cipher.encrypt(str(c.id))
+		city_dict["id"]= "city::"+c.name.city_name
 		city_dict["lat"]= str(c.shape)
 		city_dict["bgColor"]= c.background_color
 		city_dict["borderColor"]= c.border_color
@@ -582,10 +583,18 @@ def familyrportgenerate(request):
 		data = {'error':'Not authorized'}
 	return HttpResponse(json.dumps(data),content_type='application/json')
 
-def city_wise_map(request, key, slumname = None):
-	cipher = AESCipher()
-	city = cipher.decrypt(key.split('::')[1])
- 	city = City.objects.get(pk=int(city))
+def city_wise_map_base64(request, key, slumname = None):
+	return city_wise_map(request, key, slumname, False)
+
+def city_wise_map(request, key, slumname = None, flag=True):
+	if flag:
+		city = key.split('::')[1]
+		city = get_object_or_404(City, name__city_name=city)
+	else:
+		#cipher = AESCipher()
+		city = key.split('::')[1]#cipher.decrypt(key.split('::')[1])
+		city = City.objects.get(name__city_name=city)
+
 	template = loader.get_template('city_wise_map.html')
         data={}
 	if slumname :
@@ -627,9 +636,8 @@ def dashboard_view(request, key, slumname = None):
 	:param request:
 	:return:
 	"""
-	cipher = AESCipher()
-	city = cipher.decrypt(key.split('::')[1])
-	city = City.objects.get(pk=int(city))
+	city = key.split('::')[1]
+	city = get_object_or_404(City, name__city_name=city)
 	template = loader.get_template('external_dashboard.html')
 	data = {}
 	if slumname:
