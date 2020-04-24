@@ -50,7 +50,7 @@ class SlumData(models.Model):
 	"""
 	Slum level RIM data collection.
 	"""
-	slum = models.ForeignKey(Slum)
+	slum = models.ForeignKey(Slum, related_name='R_H_S')
 	city = models.ForeignKey(City)
 	submission_date = models.DateTimeField()
 	created_on = models.DateTimeField(default=datetime.datetime.now)

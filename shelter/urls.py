@@ -29,6 +29,7 @@ from master.api import CityViewset as city
 from rest_framework import routers
 from component.api import MetadataViewSet as meta
 
+
 router = routers.DefaultRouter()
 router.register(r'meta',meta)
 router.register(r'city',city)
