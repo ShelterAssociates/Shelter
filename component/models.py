@@ -1,3 +1,4 @@
+
 from django.contrib.gis.db import models
 #from picklefield.fields import PickledObjectField
 from jsonfield import JSONField
@@ -20,6 +21,8 @@ META_TYPE_CHOICES = (
         ('S', 'Sponsor'),
     )
 COMPONENT_ICON = "componentIcons/"
+
+
 class Section(models.Model):
     """Section data"""
     name  = models.CharField(max_length=2048)
@@ -71,7 +74,6 @@ class Component(models.Model):
     content_type = models.ForeignKey(ContentType, default=ContentType.objects.get(model='slum').id, on_delete=models.CASCADE)
     object_id = models.PositiveIntegerField() #Fields for reverse relationship with slum and city table
     content_object = GenericForeignKey('content_type','object_id')
-
     objects = models.GeoManager()
 
     def __unicode__(self):

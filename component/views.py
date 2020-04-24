@@ -14,7 +14,9 @@ from kobotoolbox import *
 
 from .forms import KMLUpload
 from .kmlparser import KMLParser
-from .models import Metadata, Component
+from .models import Metadata
+
+
 from .cipher import *
 from master.models import Slum, Rapid_Slum_Appraisal, drainage
 from sponsor.models import SponsorProjectDetails
