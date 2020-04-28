@@ -10,7 +10,6 @@ from collections import OrderedDict
 from graphs.models import *
 from master.models import *
 import json
-from component.cipher import *
 from django.db.models import Q
 
 CARDS = {'Cards': {'General':[{'gen_avg_household_size':"Avg Household size"}, {'gen_tenement_density':"Tenement density (Huts/Hector)"},
@@ -79,10 +78,11 @@ def get_dashboard_card(request, key):
 
     #City level
     output_data['city'][city.name.city_name] = {'scores':{}, 'cards':{}}#,'key_takeaways':{} }
+    list_associated_with_SA_city = Slum.objects.filter(associated_with_SA=True, electoral_ward__administrative_ward__city__name__city_name=city)
     qol_scores = QOLScoreData.objects.filter(city=city)
     for clause in select_clause:
         output_data['city'][city.name.city_name]['scores'][clause] = qol_scores.aggregate(Avg(clause))[clause + '__avg']
-    cities = DashboardData.objects.filter(city=city)
+    cities = DashboardData.objects.filter(slum__in=list_associated_with_SA_city)
     city_keyTakeaways = SlumDataSplit.objects.filter(city=city)
     city_keyTakeaways_ctb = SlumCTBdataSplit.objects.filter(city=city)
     cards = score_cards(cities)
@@ -91,13 +91,15 @@ def get_dashboard_card(request, key):
     output_data['city'][city.name.city_name]['cards'] = cards
     output_data['city'][city.name.city_name]['key_takeaways'] = key_takeaway
 
-    #Administrative ward calculations
+    # Administrative ward calculations
     for admin_ward in AdministrativeWard.objects.filter(city=city):
         output_data['administrative_ward'][admin_ward.name] = {'scores': {}, 'cards':{}}#, 'key_takeaways':{}}
         qol_scores = QOLScoreData.objects.filter(slum__electoral_ward__administrative_ward=admin_ward)
+        list_associated_with_SA_admins = Slum.objects.filter(associated_with_SA=True,electoral_ward__administrative_ward = admin_ward)
         for clause in select_clause:
             output_data['administrative_ward'][admin_ward.name]['scores'][clause] = qol_scores.aggregate(Avg(clause))[clause + '__avg']
-        admin_wards = DashboardData.objects.filter(slum__electoral_ward__administrative_ward=admin_ward)
+        # admin_wards = DashboardData.objects.filter(slum__electoral_ward__administrative_ward=admin_ward)
+        admin_wards = DashboardData.objects.filter(slum__in = list_associated_with_SA_admins)
         admin_keyTakeaways = SlumDataSplit.objects.filter(slum__electoral_ward__administrative_ward=admin_ward)
         admin_keyTakeaways_ctb = SlumCTBdataSplit.objects.filter(slum__electoral_ward__administrative_ward=admin_ward)
         cards = score_cards(admin_wards)
@@ -110,9 +112,10 @@ def get_dashboard_card(request, key):
     for electoral_ward in ElectoralWard.objects.filter(administrative_ward__city=city):
         output_data['electoral_ward'][electoral_ward.name] = {'scores': {}, 'cards':{} }#, 'key_takeaways':{}}
         qol_scores = QOLScoreData.objects.filter(slum__electoral_ward=electoral_ward)
+        list_associated_with_SA_electorals = Slum.objects.filter(associated_with_SA=True,electoral_ward = electoral_ward)
         for clause in select_clause:
             output_data['electoral_ward'][electoral_ward.name]['scores'][clause] = qol_scores.aggregate(Avg(clause))[clause + '__avg']
-        ele_wards = DashboardData.objects.filter(slum__electoral_ward=electoral_ward)
+        ele_wards = DashboardData.objects.filter(slum__in =list_associated_with_SA_electorals)
         ele_keyTakeaways_other = SlumDataSplit.objects.filter(slum__electoral_ward=electoral_ward)
         ele_keyTakeaways_ctb = SlumCTBdataSplit.objects.filter(slum__electoral_ward=electoral_ward)
         if ele_wards.count() > 0:
@@ -125,10 +128,10 @@ def get_dashboard_card(request, key):
     #Slum level calculations
     output_data['slum'] = {'scores':{},'cards':{}}#,'key_takeaways':{} }
     select_clause.append('slum__name')
-    qol_scores = QOLScoreData.objects.filter(city=city).values(*select_clause)
+    qol_scores = QOLScoreData.objects.filter(slum__in = list_associated_with_SA_city).values(*select_clause)
     qol_scores = groupby(qol_scores, key=lambda x: x['slum__name'])
-    qol_scores = {key: {'scores': list(values)[0],'cards': score_cards(DashboardData.objects.filter(slum__name=key)),#} for key, values in qol_scores}
-                        'key_takeaways': all_key_takeaways(key) } for key, values in qol_scores}
+    qol_scores = {key: {'scores': list(values)[0], 'cards': score_cards(DashboardData.objects.filter(slum__name=key)),
+                        'key_takeaways': all_key_takeaways(key)} for key, values in qol_scores}
     output_data['slum'] = qol_scores
     output_data['metadata'] = CARDS
 
@@ -154,9 +157,9 @@ def score_cards(ele):
         Sum('toilet_men_women_seats_ratio'),Sum('ctb_coverage'),Sum('get_shops_count'), Sum('drains_coverage'))
 
     #drainage_card data
-    slum_ids = ele.values_list('slum__id',flat=True)
+    slum_ids_hh = ele.filter( household_count__gt = 0.0).values_list('slum_id',flat=True)
     total_drain_count = 0
-    data = Rapid_Slum_Appraisal.objects.filter(slum_name__id__in = slum_ids).aggregate(Sum('drainage_coverage'))
+    data = Rapid_Slum_Appraisal.objects.filter(slum_name__id__in = slum_ids_hh).aggregate(Sum('drainage_coverage'))
     total_drain_count += data['drainage_coverage__sum'] if data['drainage_coverage__sum'] !=None else 0
 
     for k1,v1 in CARDS.items():
@@ -208,7 +211,8 @@ def score_cards(ele):
                     cards[k].append(str(round((aggrgated_data['waste_no_collection_facility_percentile__sum'] / aggrgated_data['occupied_household_count__sum']) * 100 if aggrgated_data['occupied_household_count__sum'] else 0, 2)) + " %")
                     cards[k].append(str(round((aggrgated_data['waste_door_to_door_collection_facility_percentile__sum'] / aggrgated_data['occupied_household_count__sum']) * 100 if aggrgated_data['occupied_household_count__sum'] else 0, 2)) + " %")
                     cards[k].append(str(round((aggrgated_data['waste_dump_in_open_percent__sum'] / aggrgated_data['occupied_household_count__sum']) * 100 if aggrgated_data['occupied_household_count__sum'] else 0, 2)) + " %")
-                    cards[k].append(str(round((aggrgated_data['drains_coverage__sum'] / aggrgated_data['occupied_household_count__sum']) * 100 if aggrgated_data['occupied_household_count__sum'] else 0, 2)) + " %")
+                    ulb = aggrgated_data['drains_coverage__sum'] if aggrgated_data['drains_coverage__sum'] else 0
+                    cards[k].append(str(round((ulb / aggrgated_data['occupied_household_count__sum']) * 100 if aggrgated_data['occupied_household_count__sum'] else 0, 2)) + " %")
                     waste_data = aggrgated_data['waste_other_services__sum'] if aggrgated_data['waste_other_services__sum'] else 0
                     cards[k].append(str(round((waste_data / aggrgated_data['occupied_household_count__sum']) * 100 if aggrgated_data['occupied_household_count__sum'] else 0, 2)) + " %")
                     all_cards.update(cards)
@@ -395,7 +399,6 @@ def key_takeaways(slum_name):
 def dashboard_all_cards(request,key):
     '''dashboard all cities card data'''
     def get_data(key):
-        cipher = AESCipher()
         dict_filter = {}
         output_data = {'city': OrderedDict()}
         if key != 'all':
@@ -411,7 +414,7 @@ def dashboard_all_cards(request,key):
             qol_scores = QOLScoreData.objects.filter(city=city).aggregate(Avg('totalscore_percentile'))
             city_name = city.name.city_name
             output_data['city'][city_name] = dashboard_data
-            output_data['city'][city_name]['city_id'] = "city::" + cipher.encrypt(str(city.id))
+            output_data['city'][city_name]['city_id'] = "city::" + city_name
             #output_data['city'][city_name]['city_id'] = "city::" + city_name
             output_data['city'][city_name].update(qol_scores)
             output_data['city'][city_name]['slum_count'] = slum_count

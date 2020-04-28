@@ -11,9 +11,11 @@ class HouseholdData(models.Model):
 	slum = models.ForeignKey(Slum)
 	city = models.ForeignKey(City)
 	submission_date = models.DateTimeField()
-	created_date = models.DateTimeField(default=datetime.datetime.now)
+	created_date = models.DateTimeField(default=timezone.now)
 	rhs_data = JSONField(null=True, blank=True)
 	ff_data = JSONField(null = True, blank = True)
+	kobo_id = models.IntegerField(null=True, blank=True)
+	ff_kobo_id = models.IntegerField(null=True, blank=True)
 
 	class Meta:
 		unique_together = ("slum", "household_number")
@@ -31,7 +33,7 @@ class FollowupData(models.Model):
 	slum = models.ForeignKey(Slum, default = '')
 	city = models.ForeignKey(City, default = '')
 	submission_date = models.DateTimeField()
-	created_date = models.DateTimeField(default=datetime.datetime.now)
+	created_date = models.DateTimeField(default=timezone.now)
 	followup_data = JSONField(null=True, blank=True)
 	flag_followup_in_rhs = models.BooleanField(default=False)
 	kobo_id = models.IntegerField(null=True, blank=True)
@@ -53,8 +55,8 @@ class SlumData(models.Model):
 	slum = models.ForeignKey(Slum)
 	city = models.ForeignKey(City)
 	submission_date = models.DateTimeField()
-	created_on = models.DateTimeField(default=datetime.datetime.now)
-	modified_on = models.DateTimeField(default=datetime.datetime.now)
+	created_on = models.DateTimeField(default=timezone.now)
+	modified_on = models.DateTimeField(default=timezone.now)
 	rim_data = JSONField(null=True, blank=True)
 
 	class Meta:

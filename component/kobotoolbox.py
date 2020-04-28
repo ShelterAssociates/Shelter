@@ -6,6 +6,8 @@ from collections import OrderedDict
 from itertools import chain
 from collections import Counter
 from master.models import SURVEYTYPE_CHOICES, Survey
+from django.shortcuts import get_object_or_404
+from graphs.models import *
 import itertools
 
 def survey_mapping(survey_type):
@@ -23,43 +25,33 @@ def survey_mapping(survey_type):
         return wrapper
     return real_decorator
 
-@survey_mapping(SURVEYTYPE_CHOICES[1][0])
+#@survey_mapping(SURVEYTYPE_CHOICES[1][0])
 def get_household_analysis_data(city, slum_code, fields, kobo_survey=''):
     '''Gets the kobotoolbox RHS data for selected questions
     '''
     household_field = 'Household_number'
     output = {}
+    slum = get_object_or_404(Slum, shelter_slum_code=slum_code)
+    household_data = HouseholdData.objects.filter(slum=slum)
+    records = map(lambda x:x.rhs_data, household_data)
+    grouped_records = itertools.groupby(sorted(records, key=lambda x:int(x['Household_number'])), key=lambda x:int(x["Household_number"]))
 
-    if kobo_survey:
-        #Setting up API call and header data
-        url = settings.KOBOCAT_FORM_URL + 'data/'+ kobo_survey +'?format=json&query={"slum_name":"'+slum_code+'"}&fields=["'+ '","'.join(fields + [household_field, '_submission_time'] ) + '"]'
+    for household, list_record in grouped_records:
+        record_sorted = list(list_record) #sorted(list(list_record), key=lambda x:x['_submission_time'], reverse=False)
+        household_no = int(household)
+        if len(record_sorted)>0:
+            record = record_sorted[0]
+        for field in fields:
+            if field != "" and field in record:
 
-        kobotoolbox_request = urllib2.Request(url)
-        kobotoolbox_request.add_header('User-agent', 'Mozilla 5.10')
-        kobotoolbox_request.add_header('Authorization', settings.KOBOCAT_TOKEN)
-
-        res = urllib2.urlopen(kobotoolbox_request)
-        #Read json data from kobotoolbox API
-        html = res.read()
-        records = json.loads(html)
-        grouped_records = itertools.groupby(sorted(records, key=lambda x:int(x['Household_number'])), key=lambda x:int(x["Household_number"]))
-
-        for household, list_record in grouped_records:
-            record_sorted = sorted(list(list_record), key=lambda x:x['_submission_time'], reverse=False)
-            household_no = int(household)
-            if len(record_sorted)>0:
-                record = record_sorted[0]
-            for field in fields:
-                if field != "" and field in record:
-
-                    data = record[field]
-                    for val in data.split():
-                        if field not in output:
-                            output[field] = {}
-                        if data not in output[field]:
-                            output[field][data]=[]
-                        if household_no not in output[field][data]:
-                            output[field][data].append(str(household_no))
+                data = record[field]
+                for val in data.split():
+                    if field not in output:
+                        output[field] = {}
+                    if data not in output[field]:
+                        output[field][data]=[]
+                    if household_no not in output[field][data]:
+                        output[field][data].append(str(household_no))
     return output
 
 @survey_mapping(SURVEYTYPE_CHOICES[1][0])
@@ -68,7 +60,7 @@ def get_kobo_RHS_list(city, slum_code,house_number, kobo_survey=''):
     output=OrderedDict()
     if kobo_survey:
         try:
-            url = settings.KOBOCAT_FORM_URL+'data/'+kobo_survey+'?format=json&query={"slum_name":"'+slum_code+'","Household_number":{ "$in":["'+str(house_number)+'","'+('000'.join(str(house_number)))[-4:]+'"]}}'
+            url = settings.KOBOCAT_FORM_URL+'data/'+kobo_survey+'?format=json&query={"slum_name":"'+slum_code+'","Household_number":{"$in":["'+str(house_number)+'","'+('000'+str(house_number))[-4:]+'"]}}'
         except Exception as e:
             print e
         req = urllib2.Request(url)
@@ -332,7 +324,7 @@ def get_kobo_FF_report_detail(city, slum_code,house_number, kobo_survey=''):
     output=OrderedDict()
     if kobo_survey:
         try:
-            url = settings.KOBOCAT_FORM_URL+'data/'+kobo_survey+'?format=json&query={"group_vq77l17/slum_name":"'+slum_code+'","group_vq77l17/Household_number":{"$in":["'+house_number+'","'+'000'.join(house_number)[-4:]+'"]}}'
+            url = settings.KOBOCAT_FORM_URL+'data/'+kobo_survey+'?format=json&query={"group_vq77l17/slum_name":"'+slum_code+'","group_vq77l17/Household_number":{"$in":["'+house_number+'","'+('000'+house_number)[-4:]+'"]}}'
         except Exception as e:
             print e
 
