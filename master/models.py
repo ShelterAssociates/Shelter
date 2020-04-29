@@ -80,7 +80,7 @@ class Survey(models.Model):
 
 class AdministrativeWard(models.Model):
     """Administrative Ward Database"""
-    city = models.ForeignKey(City,related_name='admin_ward')
+    city = models.ForeignKey(City)
     name = models.CharField(max_length=2048, default="")
     shape = models.PolygonField(srid=4326, default="")
     ward_no = models.CharField(max_length=2048, default="")
@@ -101,7 +101,7 @@ class AdministrativeWard(models.Model):
 
 class ElectoralWard(models.Model):
     """Electoral Ward Database"""
-    administrative_ward = models.ForeignKey(AdministrativeWard, blank=True, null=True,related_name='electoral_ward')
+    administrative_ward = models.ForeignKey(AdministrativeWard, blank=True, null=True)
     name = models.CharField(max_length=2048, default="")
     shape = models.PolygonField(srid=4326, default="")
     ward_no = models.CharField(max_length=2048, default="", null=True, blank=True)
@@ -124,7 +124,7 @@ ODF_CHOICES =(('',''), ('OD', 'OD'), ('ODF','ODF'),('ODF+','ODF+'),('ODF++','ODF
 
 class Slum(models.Model):
     """Slum Database"""
-    electoral_ward = models.ForeignKey(ElectoralWard, blank=True, null=True,related_name='slum_name')
+    electoral_ward = models.ForeignKey(ElectoralWard, blank=True, null=True)
     name = models.CharField(max_length=2048)
     shape = models.PolygonField(srid=4326)
     description = models.TextField(max_length=2048,blank=True,null=True)
@@ -298,7 +298,7 @@ class Rapid_Slum_Appraisal(models.Model):
         megabyte_limit = 3.0
         if filesize > megabyte_limit*1024*1024:
             raise ValidationError("Max file size is %sMB" % str(megabyte_limit))
-    slum_name = models.ForeignKey(Slum,related_name='R_S_A')
+    slum_name = models.ForeignKey(Slum)
     approximate_population=models.CharField(max_length=2048,blank=True, null=True)
     toilet_cost=models.CharField(max_length=2048,blank=True, null=True)
     toilet_seat_to_persons_ratio = models.CharField(max_length=2048,blank=True, null=True)

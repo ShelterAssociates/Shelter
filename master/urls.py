@@ -30,11 +30,8 @@ from master.views import index, SurveyListView, SurveyCreateView, \
 from django.contrib.auth import views as auth_views
 from django.conf import settings
 from django.conf.urls.static import static
-from . import views
 
 admin.autodiscover()
-
-
 
 urlpatterns = [
     url(r'^$', index, name='index'),
@@ -69,9 +66,7 @@ urlpatterns = [
     #Redirect user to new url
     url(r'^user_login/$', user_login, name="user_login"),
     #Using built in rest URLS for QGIS plugin login
-
     url('rest-auth/', include('rest_auth.urls')),
-
     #url(r'^sponsors/$',sponsors, name='sponsors'),
     #url(r'^password_reset/$', auth_views.password_reset, name='password_reset'),
     #url(r'^password_reset/done/$', auth_views.password_reset_done, name='password_reset_done'),

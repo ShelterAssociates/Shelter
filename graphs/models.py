@@ -101,7 +101,7 @@ class QOLScoreData(models.Model):
 
 class SlumCTBdataSplit(models.Model):
     """
-    Model for Slum rim-CTB datawhen
+    Model for Slum rim-CTB data
     """
     id = models.AutoField(primary_key=True)
     slum = models.ForeignKey(Slum)
