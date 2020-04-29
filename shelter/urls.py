@@ -20,6 +20,7 @@ from django.conf import settings
 from settings import *
 
 from master.views import slummap, city_wise_map, login_success, dashboard_view
+<<<<<<< HEAD
 
 from rest_framework import routers
 from master.views import slummap, city_wise_map, city_wise_map_base64, login_success, dashboard_view
@@ -39,6 +40,11 @@ router = routers.DefaultRouter()
 router.register(r'meta',meta)
 router.register(r'city',city)
 
+=======
+from rest_framework import urls
+from rest_auth import views
+admin.autodiscover()
+>>>>>>> parent of 578f8342... City Details API commit
 
 
 
