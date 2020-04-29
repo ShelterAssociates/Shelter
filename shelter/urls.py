@@ -18,35 +18,10 @@ from django.contrib.auth import views as auth_views
 from django.conf.urls.static import static
 from django.conf import settings
 from settings import *
-
-from master.views import slummap, city_wise_map, login_success, dashboard_view
-<<<<<<< HEAD
-
-from rest_framework import routers
 from master.views import slummap, city_wise_map, city_wise_map_base64, login_success, dashboard_view
 from rest_framework import urls
-from rest_framework import urls
-
 from rest_auth import views
 admin.autodiscover()
-
-from rest_framework import routers
-from rest_framework import viewsets
-from master.api import CityViewset as city
-from rest_framework import routers
-from component.api import MetadataViewSet as meta
-
-router = routers.DefaultRouter()
-router.register(r'meta',meta)
-router.register(r'city',city)
-
-=======
-from rest_framework import urls
-from rest_auth import views
-admin.autodiscover()
->>>>>>> parent of 578f8342... City Details API commit
-
-
 
 base64_pattern = r'city::(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?'
 urlpatterns = [
