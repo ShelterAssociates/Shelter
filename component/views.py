@@ -94,7 +94,7 @@ def get_component(request, slum_id):
             field = metad.code.split(':')
             if field[0] in rhs_analysis:
                 options = []
-                options = [rhs_analysis[field[0]][option] for option in field[1].split(',') if option in rhs_analysis[field[0]]]
+                options = [rhs_analysis[field[0]][option] for option in field[1].split('|,|') if option in rhs_analysis[field[0]]]
                 component['child'] = list(set(sum(options,[])))
         #Sponsor : Depending on superuser or sponsor render the data accordingly
         elif metad.type == 'S' and (metad.authenticate == False or not request.user.is_anonymous()) :
