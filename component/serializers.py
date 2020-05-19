@@ -18,21 +18,30 @@ class MetadataSerializer(serializers.ModelSerializer):
         model = Metadata
         fields = ['id','name','level','blob','type','count_of_component']
 
-class ComponentSerializer(serializers.ModelSerializer):
-    component = serializers.SerializerMethodField('component_list')
+class Metadata_Serializer(serializers.ModelSerializer):
 
-    def component_list(self, obj):
+    count_of_component = serializers.SerializerMethodField('component_count')
+    component_data = serializers.SerializerMethodField('child_function')
+
+    def component_count(self,obj):
         request_object = self.context['request']
         shelter_slum_id = request_object.query_params.get('slum_id')
-        shelter_component_id = request_object.query_params.get('component_id')
-        print(shelter_slum_id)
-        print(shelter_component_id)
         slum = Slum.objects.get(id=shelter_slum_id)
-        print(slum)
-        comp = slum.components.filter(id=shelter_component_id)
-        return comp
+        total_component_count = slum.components.filter(metadata_id=obj)
+        return total_component_count.count()
 
+    def child_function(self,param):
+        request_object = self.context['request']
+        shelter_slum_id = request_object.query_params.get('slum_id')
+        shelter_metadata_id = request_object.query_params.getlist('metadata_id_list')
+        slum = Slum.objects.get(id=shelter_slum_id)
+        comp = slum.components.filter(metadata_id=shelter_metadata_id)
+        return ComponentSerializer(comp, many=True).data
+    class Meta:
+        model = Metadata
+        fields = ['id','name','level','blob','type','count_of_component','component_data']
+
+class ComponentSerializer(serializers.ModelSerializer):
     class Meta:
         model = Component
-        fields = ['id','component']
-
+        fields = ['id','shape','housenumber']
