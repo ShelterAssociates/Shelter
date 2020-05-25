@@ -80,7 +80,7 @@ class Survey(models.Model):
 
 class AdministrativeWard(models.Model):
     """Administrative Ward Database"""
-    city = models.ForeignKey(City)
+    city = models.ForeignKey(City,related_name='admin_ward')
     name = models.CharField(max_length=2048, default="")
     shape = models.PolygonField(srid=4326, default="")
     ward_no = models.CharField(max_length=2048, default="")
@@ -101,7 +101,7 @@ class AdministrativeWard(models.Model):
 
 class ElectoralWard(models.Model):
     """Electoral Ward Database"""
-    administrative_ward = models.ForeignKey(AdministrativeWard, blank=True, null=True)
+    administrative_ward = models.ForeignKey(AdministrativeWard,related_name='electoral_ward',blank=True, null=True)
     name = models.CharField(max_length=2048, default="")
     shape = models.PolygonField(srid=4326, default="")
     ward_no = models.CharField(max_length=2048, default="", null=True, blank=True)
@@ -124,7 +124,7 @@ ODF_CHOICES =(('',''), ('OD', 'OD'), ('ODF','ODF'),('ODF+','ODF+'),('ODF++','ODF
 
 class Slum(models.Model):
     """Slum Database"""
-    electoral_ward = models.ForeignKey(ElectoralWard, blank=True, null=True)
+    electoral_ward = models.ForeignKey(ElectoralWard,related_name='slum_name',blank=True, null=True)
     name = models.CharField(max_length=2048)
     shape = models.PolygonField(srid=4326)
     description = models.TextField(max_length=2048,blank=True,null=True)
