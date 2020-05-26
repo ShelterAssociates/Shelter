@@ -73,4 +73,43 @@ def need_assessment():
 	for slum_name, df_slum in output:
 		df_slum.to_csv(path+'/'+str(slum_name).replace(' ','_')+'.csv', sep=',',encoding='utf-8', index=False,quoting=1)
 
-need_assessment()
+def sanitation():
+	global df
+	df = df.loc[df["Type of survey"] != "Follow-up survey"]
+	df = df.loc[df["Type of structure occupancy"] == "Occupied house"]
+	cols = df.columns.tolist()
+	df["Program"] = "Sanitation"
+	df["Id"] = df["_id"].astype(str) + 'S'
+	df["_submission_time"] = pd.to_datetime(df["_submission_time"]).dt.strftime('%Y-%m-%d')
+	df["Current place of defecation"] = ""
+	cols = ['_id', 'Program', "Id", "_submission_time", "slum_name", "Have you applied for an individual toilet under SBM?",
+			"Type of SBM toilets", "How many installments have you received?", "When did you receive your first installment?",
+			"When did you receive your second installment?", "When did you receive your third installment?",
+			"If built by contractor, how satisfied are you?", "Are you interested in an individual toilet?",
+			"If yes, why?", "If no, why?", "What kind of toilet would you like?", "Under what scheme would you like your toilet to be built?",
+			"Is there availability of drainage to connect to the toilet?"]
+	output = df[cols]
+
+	rename_value = {'_submission_time': 'Enrolment Date', '_id': 'Subject Id', 'slum_name': 'Slum',
+					'Have you applied for an individual toilet under SBM?':'Have you applied for an individual toilet under SBM?_1',
+					'Type of SBM toilets':'Type of SBM toilets ?','How many installments have you received?':'How many installments have you received ?',
+					'When did you receive your first installment?':'When did you receive your first SBM installment?',
+					'When did you receive your second installment?':'When did you receive your second SBM installment?',
+					'When did you receive your third installment?':'When did you receive your third SBM installment?',
+					'If built by contractor, how satisfied are you?':'If built by contractor, how satisfied are you?',
+					'Are you interested in an individual toilet?':'Are you interested in an individual toilet ?',
+					'If yes, why?':'If yes for individual toilet , why?',
+					'If no, why?':'If no for individual toilet , why?',
+					'What kind of toilet would you like?':'What kind of toilet would you like ?',
+					'Under what scheme would you like your toilet to be built?':'Under what scheme would you like your toilet to be built ?',
+					'Is there availability of drainage to connect to the toilet?':'Is there availability of drainage to connect it to the toilet?'
+					}
+	output = output.rename(columns=rename_value)
+	output = output.sort_values(['Slum'], ascending=(False))
+	output = output.replace(np.nan, '', regex=True)
+	path = base_path + "sanitation/"
+	output = output.groupby('Slum')
+	for slum_name, df_slum in output:
+		df_slum.to_csv(path+'/'+str(slum_name).replace(' ','_')+'.csv', sep=',',encoding='utf-8', index=False,quoting=1)
+
+sanitation()
