@@ -39,12 +39,12 @@ def need_assessment():
 		df['Type of water connection'].astype(str) == "Individual connection", '', df['Type of water connection'])
 	df["Water source final answer."] = df['Type of water connection']
 	df["Do you have a toilet at home?"] = np.where(df['Current_place_of_defecation'].isin(["01","02","03","04","05","06","07"]) ,'Yes','No')
-	household_toilet = {"05":"Own toilet", "07":"Toilet by SA", "04":"Toilet by any other agency", "01":"SBM (Installment)",
-						"02":"SBM (Contractor)","03	":"Toilet by SA", "06":"Toilet by any other agency"}
+	household_toilet = {5.0:"Own toilet", 7.0:"Toilet by SA", 4.0:"Toilet by any other agency", 1.0:"SBM (Installment)",
+						2.0:"SBM (Contractor)",3.0:"Toilet by SA", 6.0:"Toilet by any other agency"}
 	#df["Type of household toilet ?"] = np.where(df["Do you have a toilet at home?"].isin(["Yes"]), household_toilet[df['Current_place_of_defecation']]  ,'')
 	df["Type of household toilet ?"] = df['Current_place_of_defecation'].map(household_toilet)
-	cols=['_id','Encounter Type', "Id", "_submission_time", "Do you have individual water connection at home?",
-		  "Type of water connection ?", "Water source final answer.","slum_name", "Do you dispose segregated garbage?",
+	cols=['_id','Encounter Type', "Id", "_submission_time","slum_name", "Household number", "Do you have individual water connection at home?",
+		  "Type of water connection ?", "Water source final answer.","Do you dispose segregated garbage?",
 		  "Do you have a toilet at home?","Do you have electricity in the house?","If yes for electricity; Type of meter",
 		  "Does any household member have any of the construction skills given below?",
 		  "Does any member of the household go for open defecation?", "Type of household toilet ?",
@@ -71,7 +71,9 @@ def need_assessment():
 	path = base_path + "need_assessment/"
 	output=output.groupby('Slum')
 	for slum_name, df_slum in output:
-		df_slum.to_csv(path+'/'+str(slum_name).replace(' ','_')+'.csv', sep=',',encoding='utf-8', index=False,quoting=1)
+		df_slum.to_csv(path+'/'+str(slum_name).replace(' ','_')+'.csv', sep=';',encoding='utf-8', index=False,quoting=0)
+
+#need_assessment()
 
 def sanitation():
 	global df
@@ -81,15 +83,50 @@ def sanitation():
 	df["Program"] = "Sanitation"
 	df["Id"] = df["_id"].astype(str) + 'S'
 	df["_submission_time"] = pd.to_datetime(df["_submission_time"]).dt.strftime('%Y-%m-%d')
-	df["Current place of defecation"] = ""
-	cols = ['_id', 'Program', "Id", "_submission_time", "slum_name", "Have you applied for an individual toilet under SBM?",
+
+	no_reason = ["Financial problems", "Small house","Tenant issue", "Lack of willingness", "Satisfied with the CTBs",
+				 "Large family size", "Drainage related issues", "Others"]
+	yes_reason = ["For safety of female members", "Unsatisfied with CTBs",
+					  "For better convenience", "For elderly", "For handicapped", "For any member suffering from any illness",
+					  "For better health and hygiene", "Other"]
+	df = df.replace(np.nan, '', regex=True)
+	def convert_multi_select(list_data, value):
+		output = []
+		for data in list_data:
+			if data in value:
+				output.append(data)
+		return ','.join(output)
+
+	def no_individual(value):
+		return convert_multi_select(no_reason, value)
+
+	def yes_individual(value):
+		return convert_multi_select(yes_reason, value)
+
+	df["If yes, why?"] = df["If yes, why?"].apply(yes_individual)
+	df["If no, why?"] = df["If no, why?"].apply(no_individual)
+	current_place = {1.0:"SBM (Installment)", 2.0:"SBM (Contractor)",
+					 3.0:"Toilet by SA", 4.0:"Toilet by other NGO",
+					 5.0:"Own toilet", 6.0:"Toilet by other NGO",
+					 7.0:"Toilet by SA",
+					 9.0:"Use CTB", 10.0:"Shared toilet",
+					 11.0:"Public toilet outside slum", 12.0:"Open defecation",
+					 13.0:"Non-functional, hence CTB",
+					 14.0:"Group toilet", 15.0:"Use CTB of neighbouring slum", "":""}
+	current_place_map = lambda x: current_place[x]
+
+	df["Current place of defecation"] = df["Current_place_of_defecation"].map(current_place_map)
+
+	installment_number ={0.0:'0',1.0:'1',2.0:'2',3.0:'3'}
+	df["How many installments have you received?"] = df["How many installments have you received?"].map(installment_number)
+	cols = ['_id', 'Program', "Id", "_submission_time", "slum_name", "Household number", "Have you applied for an individual toilet under SBM?",
 			"Type of SBM toilets", "How many installments have you received?", "When did you receive your first installment?",
 			"When did you receive your second installment?", "When did you receive your third installment?",
 			"If built by contractor, how satisfied are you?", "Are you interested in an individual toilet?",
 			"If yes, why?", "If no, why?", "What kind of toilet would you like?", "Under what scheme would you like your toilet to be built?",
-			"Is there availability of drainage to connect to the toilet?"]
+			"Is there availability of drainage to connect to the toilet?","Current place of defecation"]
 	output = df[cols]
-
+	output = output.replace(np.nan, '', regex=True)
 	rename_value = {'_submission_time': 'Enrolment Date', '_id': 'Subject Id', 'slum_name': 'Slum',
 					'Have you applied for an individual toilet under SBM?':'Have you applied for an individual toilet under SBM?_1',
 					'Type of SBM toilets':'Type of SBM toilets ?','How many installments have you received?':'How many installments have you received ?',
