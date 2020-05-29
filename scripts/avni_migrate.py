@@ -8,29 +8,35 @@ def slum_registration():
 	global df
 	df=df.loc[df["Type of survey"]!="Follow-up survey"]
 	cols = df.columns.tolist()
+	df = df.replace('\n', '', regex=True)
 	df["Subject Type"]="Household"
 	df["City"]="Kolhapur"
 	df["Do you have addhar card?"] = np.where(df['Aadhar number']>0, 'Yes', 'No')
 	df["First Name"]=df["Household number"]
-	cols=['_id','Subject Type', 'First Name','City','admin_ward','slum_name','Name(s) of the surveyor(s)','Household number','Type of structure occupancy','Type of unoccupied house',
+	df["Date Of Registration"] = pd.to_datetime(df["_submission_time"]).dt.strftime('%Y-%m-%d')
+	cols=['_id','Subject Type', 'First Name','City','admin_ward','slum_name','Date Of Registration','Name(s) of the surveyor(s)','Household number','Type of structure occupancy','Type of unoccupied house',
 	'Parent household number','Full name of the head of the household','Enter the 10 digit mobile number','Do you have addhar card?', 'Aadhar number','Number of household members',
 	'Total number of male members (including children)','Total number of female members (including children)','Type of structure of the house',
 	'Ownership status of the house', 'House area in sq. ft.',]
 	output = df[cols]
-	rename_value={'City': 'City', 'Ownership status of the house': 'Ownership status of the house_1', 'Enter the 10 digit mobile number': 'Enter the 10 digit mobile number', 'Number of household members': 'Number of household members', 'House area in sq. ft.': 'House area in square feets.', 'Subject Type': 'Subject Type', 'Type of structure occupancy': 'Type of structure occupancy_1', 'Total number of female members (including children)': 'Total number of female members (including children)', 'Type of structure of the house': 'Type of structure of the house_1', 'Aadhar number': 'Aadhar number', 'Name(s) of the surveyor(s)': 'Name of the surveyor', 'Full name of the head of the household': 'Full name of the head of the household', 'Total number of male members (including children)': 'Total number of male members (including children)', 'Parent household number': 'Parent household number', 'slum_name': 'Slum', '_id': 'Id', 'admin_ward': 'Admin', 'Household number': 'Househhold number', 'Type of unoccupied house': 'Type of unoccupied house_1'}
+	rename_value={'City': 'City', 'Ownership status of the house': 'Ownership status of the house_1', 'Enter the 10 digit mobile number': 'Enter the 10 digit mobile number', 'Number of household members': 'Number of household members', 'House area in sq. ft.': 'House area in square feets.', 'Subject Type': 'Subject Type', 'Type of structure occupancy': 'Type of structure occupancy_1', 'Total number of female members (including children)': 'Total number of female members (including children)', 'Type of structure of the house': 'Type of structure of the house_1', 'Aadhar number': 'Aadhar number', 'Name(s) of the surveyor(s)': 'Name of the surveyor', 'Full name of the head of the household': 'Full name of the head of the household', 'Total number of male members (including children)': 'Total number of male members (including children)', 'Parent household number': 'Parent household number', 'slum_name': 'Slum', '_id': 'Id', 'admin_ward': 'Ward', 'Household number': 'Househhold number', 'Type of unoccupied house': 'Type of unoccupied house_1'}
 	output=output.rename(columns=rename_value)
 	output = output.sort_values(['Slum'],ascending = (False))
 	output = output.replace(np.nan,'',regex=True)
 	path = base_path + "slum_registration/"
+	output.to_csv(path + 'Kolhapur.csv', sep=',', encoding='utf-8', index=False, quoting=1)
 	output=output.groupby('Slum')
 	for slum_name, df_slum in output:
-		df_slum.to_csv(path+'/'+str(slum_name).replace(' ','_')+'.csv', sep=',',encoding='utf-8', index=False)
+		df_slum.to_csv(path+'/'+str(slum_name).replace(' ','_')+'.csv', sep=',',encoding='utf-8', index=False, quoting=1)
+
+#slum_registration()
 
 def need_assessment():
 	global df
 	df=df.loc[df["Type of survey"]!="Follow-up survey"]
 	df=df.loc[df["Type of structure occupancy"]=="Occupied house"]
 	cols = df.columns.tolist()
+	df = df.replace('\n', '', regex=True)
 	df["Encounter Type"]="Need Assessment"
 	df["Id"] = df["_id"].astype(str) + 'N'
 	df["_submission_time"] = pd.to_datetime(df["_submission_time"]).dt.strftime('%Y-%m-%d')
@@ -51,7 +57,14 @@ def need_assessment():
 		  "What is the toilet connected to?", "Reason for not using toilet" , "Status of toilet under SBM",
 		  "Who all use toilets in the household?","What was the cost incurred to build the toilet?"]
 	output = df[cols]
-	output["Does any household member have any of the construction skills given below?"] = np.where(output["Does any household member have any of the construction skills given below?"]!="Construction labour",output["Does any household member have any of the construction skills given below?"].replace(regex=[' '], value=','), output["Does any household member have any of the construction skills given below?"])
+	skills = ["Mason", "Plumber", "Carpenter", "Other", "Construction labour"]
+	def convert_multi_select(value):
+		output = []
+		for data in skills:
+			if data in value:
+				output.append(data)
+		return ','.join(output)
+	output["Does any household member have any of the construction skills given below?"] = output["Does any household member have any of the construction skills given below?"].apply(convert_multi_select)
 	rename_value={ '_submission_time':'Visit Date', '_id': 'Subject Id', 'slum_name':'Slum',
 				   'Do you dispose segregated garbage?':'Do you segregated wet and dry garbage at source?',
 				   'Facility of solid waste collection':'How do you dispose your solid waste ?',
@@ -69,9 +82,10 @@ def need_assessment():
 	output = output.sort_values(['Slum'],ascending = (False))
 	output = output.replace(np.nan,'',regex=True)
 	path = base_path + "need_assessment/"
+	output.to_csv(path + 'Kolhapur.csv', sep=',', encoding='utf-8', index=False, quoting=1)
 	output=output.groupby('Slum')
 	for slum_name, df_slum in output:
-		df_slum.to_csv(path+'/'+str(slum_name).replace(' ','_')+'.csv', sep=';',encoding='utf-8', index=False,quoting=0)
+		df_slum.to_csv(path+'/'+str(slum_name).replace(' ','_')+'.csv', sep=',',encoding='utf-8', index=False,quoting=1)
 
 #need_assessment()
 
@@ -79,7 +93,10 @@ def sanitation():
 	global df
 	df = df.loc[df["Type of survey"] != "Follow-up survey"]
 	df = df.loc[df["Type of structure occupancy"] == "Occupied house"]
+	df = df.loc[df["Current_place_of_defecation"] != 5.0]
+	df = df.loc[df["Current_place_of_defecation"] != 7.0]
 	cols = df.columns.tolist()
+	df = df.replace('\n', '', regex=True)
 	df["Program"] = "Sanitation"
 	df["Id"] = df["_id"].astype(str) + 'S'
 	df["_submission_time"] = pd.to_datetime(df["_submission_time"]).dt.strftime('%Y-%m-%d')
@@ -114,7 +131,6 @@ def sanitation():
 					 13.0:"Non-functional, hence CTB",
 					 14.0:"Group toilet", 15.0:"Use CTB of neighbouring slum", "":""}
 	current_place_map = lambda x: current_place[x]
-
 	df["Current place of defecation"] = df["Current_place_of_defecation"].map(current_place_map)
 
 	installment_number ={0.0:'0',1.0:'1',2.0:'2',3.0:'3'}
@@ -145,6 +161,7 @@ def sanitation():
 	output = output.sort_values(['Slum'], ascending=(False))
 	output = output.replace(np.nan, '', regex=True)
 	path = base_path + "sanitation/"
+	output.to_csv(path + 'Kolhapur.csv', sep=',', encoding='utf-8', index=False, quoting=1)
 	output = output.groupby('Slum')
 	for slum_name, df_slum in output:
 		df_slum.to_csv(path+'/'+str(slum_name).replace(' ','_')+'.csv', sep=',',encoding='utf-8', index=False,quoting=1)
