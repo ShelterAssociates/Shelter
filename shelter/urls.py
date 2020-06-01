@@ -25,6 +25,8 @@ from master.api import CityViewset as city
 from component.api import MetadataViewSet as meta
 from component.api import ComponentViewSet as compo
 from rest_framework import routers
+from django.contrib.auth.views import login
+from rest_framework.authtoken.views import obtain_auth_token
 admin.autodiscover()
 
 router = routers.DefaultRouter()
@@ -52,7 +54,7 @@ urlpatterns = [
                   url(r'^mastersheet/', include('mastersheet.urls')),
                   url(r'^graphs/', include('graphs.urls')),
                     #Setting URL for QGIS plugin login
-                  url(r'^api-auth/', include('rest_framework.urls', namespace='rest_framework')),
+                  url('api-token-auth/', obtain_auth_token, name='api_token_auth'), 
                     url('api/', include(router.urls))
 ]+static(settings.STATIC_URL, document_root=settings.STATIC_ROOT) + static(settings.MEDIA_URL,
                                                                                            document_root=settings.MEDIA_ROOT)
