@@ -12,6 +12,12 @@ def slum_registration():
 	df["Subject Type"]="Household"
 	df["City"]="Kolhapur"
 	df["Do you have addhar card?"] = np.where(df['Aadhar number']>0, 'Yes', 'No')
+	df["Household number"] = df["Household number"].map(str)
+	def household_number(value):
+		output=('000'+value)[-4:]
+		return output
+
+	df["Household number"] = df["Household number"].apply(household_number)
 	df["First Name"]=df["Household number"]
 	df["Date Of Registration"] = pd.to_datetime(df["_submission_time"]).dt.strftime('%Y-%m-%d')
 	cols=['_id','Subject Type', 'First Name','City','admin_ward','slum_name','Date Of Registration','Name(s) of the surveyor(s)','Household number','Type of structure occupancy','Type of unoccupied house',
@@ -19,7 +25,17 @@ def slum_registration():
 	'Total number of male members (including children)','Total number of female members (including children)','Type of structure of the house',
 	'Ownership status of the house', 'House area in sq. ft.',]
 	output = df[cols]
-	rename_value={'City': 'City', 'Ownership status of the house': 'Ownership status of the house_1', 'Enter the 10 digit mobile number': 'Enter the 10 digit mobile number', 'Number of household members': 'Number of household members', 'House area in sq. ft.': 'House area in square feets.', 'Subject Type': 'Subject Type', 'Type of structure occupancy': 'Type of structure occupancy_1', 'Total number of female members (including children)': 'Total number of female members (including children)', 'Type of structure of the house': 'Type of structure of the house_1', 'Aadhar number': 'Aadhar number', 'Name(s) of the surveyor(s)': 'Name of the surveyor', 'Full name of the head of the household': 'Full name of the head of the household', 'Total number of male members (including children)': 'Total number of male members (including children)', 'Parent household number': 'Parent household number', 'slum_name': 'Slum', '_id': 'Id', 'admin_ward': 'Ward', 'Household number': 'Househhold number', 'Type of unoccupied house': 'Type of unoccupied house_1'}
+	rename_value={'City': 'City', 'Ownership status of the house': 'Ownership status of the house_1',
+				  'Enter the 10 digit mobile number': 'Enter the 10 digit mobile number',
+				  'Number of household members': 'Number of household members',
+				  'House area in sq. ft.': 'House area in square feets.', 'Subject Type': 'Subject Type',
+				  'Type of structure occupancy': 'Type of structure occupancy_1',
+				  'Total number of female members (including children)': 'Total number of female members (including children)',
+				  'Type of structure of the house': 'Type of structure of the house_1', 'Aadhar number': 'Aadhar number',
+				  'Name(s) of the surveyor(s)': 'Name of the surveyor', 'Full name of the head of the household': 'Full name of the head of the household',
+				  'Total number of male members (including children)': 'Total number of male members (including children)',
+				  'Parent household number': 'Parent household number', 'slum_name': 'Slum', '_id': 'Id',
+				  'admin_ward': 'Ward', 'Household number': 'Househhold number', 'Type of unoccupied house': 'Type of unoccupied house_1'}
 	output=output.rename(columns=rename_value)
 	output = output.sort_values(['Slum'],ascending = (False))
 	output = output.replace(np.nan,'',regex=True)
@@ -40,11 +56,30 @@ def need_assessment():
 	df["Encounter Type"]="Need Assessment"
 	df["Id"] = df["_id"].astype(str) + 'N'
 	df["_submission_time"] = pd.to_datetime(df["_submission_time"]).dt.strftime('%Y-%m-%d')
-	df["Do you have individual water connection at home?"] = np.where(df['Type of water connection'].astype(str)=="Individual connection", 'Yes', 'No')
-	df["Type of water connection ?"] = np.where(
-		df['Type of water connection'].astype(str) == "Individual connection", '', df['Type of water connection'])
-	df["Water source final answer."] = df['Type of water connection']
-	df["Do you have a toilet at home?"] = np.where(df['Current_place_of_defecation'].isin(["01","02","03","04","05","06","07"]) ,'Yes','No')
+
+	def check_individual(value):
+		flag = "No"
+		if "Individual connection" in value:
+			flag="Yes"
+		return flag
+
+	df["Do you have individual water connection at home?"] = df['Type of water connection'].apply(check_individual)
+
+	water_type = ["Shared connection", "Water standpost", "Hand pump", "Water tanker", "Well","From other settlements",
+				  "Group connection", "Own borewell", "Bore well"]
+	def type_of_water_connection(value):
+		output=""
+		# v= value.replace('Individual connection', '')
+		# v=v.trim()
+		if "Individual connection" not in value:
+			for data in water_type:
+				if data in value:
+					output = data
+		return output
+
+	df["Type of water connection ?"] = df['Type of water connection'].apply(type_of_water_connection)
+	df["Water source final answer."] = np.where(df["Do you have individual water connection at home?"]=="Yes", "Individual connection", df["Type of water connection ?"])
+	df["Do you have a toilet at home?"] = np.where(df['Current_place_of_defecation'].isin(["01","02","03","04","05","06","07"]),'Yes','No')
 	household_toilet = {5.0:"Own toilet", 7.0:"Toilet by SA", 4.0:"Toilet by any other agency", 1.0:"SBM (Installment)",
 						2.0:"SBM (Contractor)",3.0:"Toilet by SA", 6.0:"Toilet by any other agency"}
 	#df["Type of household toilet ?"] = np.where(df["Do you have a toilet at home?"].isin(["Yes"]), household_toilet[df['Current_place_of_defecation']]  ,'')
