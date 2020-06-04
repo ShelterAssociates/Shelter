@@ -4,7 +4,7 @@ import numpy as np
 base_path = "/home/amar/Documents/projects/shelter/Implementation/Kolhapur/"
 df = pd.read_excel("/home/amar/Downloads/RHS_SBM_KMC.xlsx", sheet_name="RHS_SBM_KMC_v1")
 
-def slum_registration():
+def household_registration():
 	global df
 	df=df.loc[df["Type of survey"]!="Follow-up survey"]
 	cols = df.columns.tolist()
@@ -45,7 +45,7 @@ def slum_registration():
 	for slum_name, df_slum in output:
 		df_slum.to_csv(path+'/'+str(slum_name).replace(' ','_')+'.csv', sep=',',encoding='utf-8', index=False, quoting=1)
 
-#slum_registration()
+household_registration()
 
 def need_assessment():
 	global df
@@ -122,7 +122,7 @@ def need_assessment():
 	for slum_name, df_slum in output:
 		df_slum.to_csv(path+'/'+str(slum_name).replace(' ','_')+'.csv', sep=',',encoding='utf-8', index=False,quoting=1)
 
-#need_assessment()
+need_assessment()
 
 def sanitation():
 	global df
