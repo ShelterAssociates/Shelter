@@ -34,6 +34,7 @@ def get_household_analysis_data(city, slum_code, fields, kobo_survey=''):
     slum = get_object_or_404(Slum, shelter_slum_code=slum_code)
     household_data = HouseholdData.objects.filter(slum=slum)
     records = map(lambda x:x.rhs_data, household_data)
+    records = filter(lambda x: x!=None, records)
     grouped_records = itertools.groupby(sorted(records, key=lambda x:int(x['Household_number'])), key=lambda x:int(x["Household_number"]))
 
     for household, list_record in grouped_records:
