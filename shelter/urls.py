@@ -21,18 +21,17 @@ from settings import *
 from master.views import slummap, city_wise_map, city_wise_map_base64, login_success, dashboard_view
 from rest_framework import urls
 from rest_auth import views
-from master.api import CityViewset as city
-from component.api import MetadataViewSet as meta
-from component.api import ComponentViewSet as compo
+from master.api import CityViewset
+from component.api import MetadataViewSet, ComponentViewSet
 from rest_framework import routers
 from django.contrib.auth.views import login
 from rest_framework.authtoken.views import obtain_auth_token
 admin.autodiscover()
 
 router = routers.DefaultRouter()
-router.register(r'meta',meta)
-router.register(r'city',city)
-router.register(r'compo',compo)
+router.register(r'metadata', MetadataViewSet)
+router.register(r'city', CityViewset)
+router.register(r'components', ComponentViewSet)
 base64_pattern = r'city::(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?'
 urlpatterns = [
                   url(r'^$', slummap, name='slummap'),
