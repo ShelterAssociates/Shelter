@@ -1,11 +1,10 @@
 from rest_framework import serializers
+from drf_dynamic_fields import DynamicFieldsMixin
 from models import Metadata, Component
 from master.models import Slum
 
-
-
-class MetadataSerializer(serializers.ModelSerializer):
-
+class MetadataSerializer(DynamicFieldsMixin, serializers.ModelSerializer):
+    component_data = serializers.SerializerMethodField('get_component_details')
     count_of_component = serializers.SerializerMethodField('component_count')
 
     def component_count(self,obj):
@@ -14,12 +13,6 @@ class MetadataSerializer(serializers.ModelSerializer):
         slum = Slum.objects.get(id=shelter_slum_id)
         total_component_count = slum.components.filter(metadata_id=obj)
         return total_component_count.count()
-    class Meta:
-        model = Metadata
-        fields = ['id','name','level','blob','type','count_of_component']
-
-class MetadataDetailsSerializer(serializers.ModelSerializer):
-    component_data = serializers.SerializerMethodField('get_component_details')
 
     def get_component_details(self,param):
         request_object = self.context['request']
@@ -32,7 +25,7 @@ class MetadataDetailsSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Metadata
-        fields = ['id','name','level','blob','type','component_data']
+        fields = ['id','name','level','blob','type','component_data', 'count_of_component']
 
 class ComponentSerializer(serializers.ModelSerializer):
     class Meta:

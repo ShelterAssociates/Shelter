@@ -2,16 +2,19 @@
 from rest_framework import viewsets
 from rest_framework import exceptions
 from rest_framework.permissions import IsAuthenticated
-from .serializers import MetadataSerializer,MetadataDetailsSerializer
+from .serializers import MetadataSerializer
 from .models import Metadata
 
 class MetadataViewSet(viewsets.ModelViewSet):
-    queryset = Metadata.objects.filter(type = 'C')
-    permission_classes = (IsAuthenticated,)
-    serializer_class = MetadataSerializer
+    """
+        Returns a list ['id','name','level','blob','type','component_data', 'count_of_component'] of metadata's with component details.
 
-class ComponentViewSet(viewsets.ModelViewSet):
-    serializer_class = MetadataDetailsSerializer
+        input param - slum_id,
+                 metadata_id,
+                 fields(optional) : fields to be included,
+                 omit(optional) : fields to be omitted
+    """
+    serializer_class = MetadataSerializer
     permission_classes = (IsAuthenticated,)
     queryset = Metadata.objects.filter(type = 'C')
     
