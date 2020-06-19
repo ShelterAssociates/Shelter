@@ -1,4 +1,3 @@
-
 from rest_framework import viewsets
 from rest_framework import exceptions
 from rest_framework.permissions import IsAuthenticated
@@ -23,7 +22,7 @@ class MetadataViewSet(viewsets.ModelViewSet):
         shelter_metadata_id = self.request.query_params.get('metadata_id', None)
         slum_id = self.request.query_params.get('slum_id', None)
         if slum_id == None:
-            raise exceptions.NotFound("Missing slum_id, metadata_id filters.")
+            raise exceptions.NotFound("Missing slum_id filters.")
         if shelter_metadata_id:
             queryset = queryset.filter(id__in = shelter_metadata_id.split(','))
         return queryset
