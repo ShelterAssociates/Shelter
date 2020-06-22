@@ -1,12 +1,10 @@
 from rest_framework import serializers
-from models import City, AdministrativeWard, Slum, ElectoralWard, CityReference
-
+from .models import City, AdministrativeWard, Slum, ElectoralWard, CityReference
 
 class SlumSerializer(serializers.ModelSerializer):
     class Meta:
         model = Slum
         fields = ['name', 'id']
-
 
 class AdminWard(serializers.ModelSerializer):
     slum_name = serializers.SerializerMethodField('get_slum_names')
@@ -18,7 +16,6 @@ class AdminWard(serializers.ModelSerializer):
     class Meta:
         model = AdministrativeWard
         fields = ['name', 'id', 'slum_name']
-
 
 class CitySerializer(serializers.ModelSerializer):
     name = serializers.SerializerMethodField('get_city_names')

@@ -54,7 +54,7 @@ class KMLParser(object):
             for coordinate in coordinates:
                 if coordinate:
                     lst_coordinates.append(list(map(float, coordinate.split(',')[:2])))
-            print lst_coordinates, key
+            print(lst_coordinates, key)
             if key == POLYGON:
                 lst_coordinates = [lst_coordinates]
             elif key == POINT:
@@ -94,20 +94,20 @@ class KMLParser(object):
 
         for folder in folders:
           try:
-	    kml_name = str(folder.name).split('(')[0]
+            kml_name = str(folder.name).split('(')[0]
             kml_name = kml_name.replace(' ','')
             kml_folder[kml_name] = False
-    	    if kml_name in metadata_component:
-            	self.component_data = []
-            	for pm in folder.Placemark:
+            if kml_name in metadata_component:
+                self.component_data = []
+                for pm in folder.Placemark:
                     #Fetch household number from extended data
-		  try:
-                    (household_no, coordinates) = self.component_latlong(pm)
-                    self.component_data.append({'house_no':household_no, 'coordinates':coordinates})
-		  except Exception as ex:
-			raise Exception(" -> "+str(pm.name) +' ]] '+ str(ex))
-            	self.bulk_update_or_create(kml_name)
+                    try:
+                        (household_no, coordinates) = self.component_latlong(pm)
+                        self.component_data.append({'house_no':household_no, 'coordinates':coordinates})
+                    except Exception as ex:
+                        raise Exception(" -> "+str(pm.name) +' ]] '+ str(ex))
+                self.bulk_update_or_create(kml_name)
                 kml_folder[kml_name] = True
-	  except Exception as e:
-	 	raise Exception("[[ " + str(folder.name) +  str(e))
+          except Exception as e:
+            raise Exception("[[ " + str(folder.name) +  str(e))
         return kml_folder

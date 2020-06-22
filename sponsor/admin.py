@@ -147,7 +147,6 @@ class UserAdminCust(UserAdmin):
 			sponsor, created = Sponsor.objects.get_or_create(user=obj, defaults={'user':obj})
 
 	def response_change(self, request, obj):
-		print "Inside change"
 		if obj.groups.filter(name="sponsor").exists():
 			sponsor = Sponsor.objects.get(user = obj)
             # hardcoded url to be replaced with reverse url

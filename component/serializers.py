@@ -1,6 +1,6 @@
 from rest_framework import serializers
 from drf_dynamic_fields import DynamicFieldsMixin
-from models import Metadata, Component
+from .models import Metadata, Component
 from master.models import Slum
 
 class MetadataSerializer(DynamicFieldsMixin, serializers.ModelSerializer):

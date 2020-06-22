@@ -48,12 +48,10 @@ class InvoiceItemsInline(admin.TabularInline):
         js = ['js/copy_above.js']
 
     def copy_above(self, obj):
-        print 'hello there'
         return '<button type="button" onclick = "copy_this(this)" class="b glyphicon glyphicon-copy" ></button>'
     copy_above.allow_tags=True
 
     def save_formset(self, request, form, formset, change):
-        print 'Hello'
         super(InvoiceItemsInline, self).save_formset(self, request, form, formset, change)
         if formset.model == InvoiceItems:
             obj = formset.instance
@@ -79,7 +77,6 @@ class InvoiceAdmin(admin.ModelAdmin):
 
     def save_related(self,request, form, formset, change):        
         inst = formset[0].save(commit = False)
-        print inst
         for instance in inst:
             instance.created_by = request.user
             instance.modified_by = request.user
