@@ -12,7 +12,7 @@ from master.models import *
 import json
 from django.db.models import Q
 
-CARDS = {'Cards': {'General':[{'gen_avg_household_size':"Avg Household size"}, {'gen_tenement_density':"Tenement density (Huts/Hector)"},
+CARDS = {'Cards': {'General':[{'slum_count':'Slum count'},{'gen_avg_household_size':"Avg Household size"}, {'gen_tenement_density':"Tenement density (Huts/Hector)"},
                     {'household_owners_count':'Superstructure Ownership'}],
          'Waste': [{'waste_no_collection_facility_percentile':'Garbage Bin'},
                    {'waste_door_to_door_collection_facility_percentile':'Door to door waste collection'},
@@ -147,6 +147,7 @@ def all_key_takeaways(slum):
 def score_cards(ele):
     """To calculate aggregate level data for electoral, admin and city"""
     all_cards ={ }
+    slum_count = ele.values_list('slum_id', flat=True)
     aggrgated_data = ele.aggregate(Sum('occupied_household_count'),Sum('household_count'),
         Sum('total_road_area'),Sum('road_with_no_vehicle_access'),Sum('pucca_road_coverage'),Sum('kutcha_road_coverage'),
         Sum('gen_avg_household_size'),Sum('gen_tenement_density'),Sum('household_owners_count'),
@@ -193,6 +194,7 @@ def score_cards(ele):
                     cards[k].append(str(round((aggrgated_data['ctb_coverage__sum']/aggrgated_data['occupied_household_count__sum'])*100 if aggrgated_data['occupied_household_count__sum'] else 0,2))+" %")
                     all_cards.update(cards)
                 elif k == 'General':
+                    cards[k].append(str(len(slum_count)))
                     houses = aggrgated_data['household_count__sum'] if aggrgated_data['household_count__sum']  else 0
                     shops = aggrgated_data['get_shops_count__sum'] if aggrgated_data['get_shops_count__sum'] else 0 #this column contains shops count for slum
                     cards[k].append(str(round(aggrgated_data['gen_avg_household_size__sum']/aggrgated_data['occupied_household_count__sum']\
