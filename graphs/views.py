@@ -179,9 +179,9 @@ def score_cards(ele):
                     all_cards.update(cards)
                 elif k == 'Toilet':
                     all_users = aggrgated_data['occupied_household_count__sum'] if aggrgated_data['occupied_household_count__sum'] else 0
-		    own_toilet = aggrgated_data['individual_toilet_coverage__sum'] if aggrgated_data['individual_toilet_coverage__sum'] else 0
+                    own_toilet = aggrgated_data['individual_toilet_coverage__sum'] if aggrgated_data['individual_toilet_coverage__sum'] else 0
                     only_ctb_user = all_users - own_toilet
-		    ctb_seat_ratio = ("1:" + str(int((only_ctb_user * 5) / aggrgated_data['toilet_seat_to_person_ratio__sum'] if aggrgated_data['toilet_seat_to_person_ratio__sum'] else 0)))
+                    ctb_seat_ratio = ("1:" + str(int((only_ctb_user * 5) / aggrgated_data['toilet_seat_to_person_ratio__sum'] if aggrgated_data['toilet_seat_to_person_ratio__sum'] else 0)))
                     if ctb_seat_ratio == '1:0':
                         cards[k].append('NO CTB')
                     else : cards[k].append(ctb_seat_ratio)
