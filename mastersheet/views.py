@@ -12,13 +12,13 @@ from django.views.decorators.csrf import csrf_exempt
 import json
 import requests
 import pandas
-import urllib2
+from urllib import request as urllib2
 from django.conf import settings
 import collections
 from django.http import JsonResponse
 from mastersheet.daily_reporting_sync import ToiletConstructionSync, CommunityMobilizaitonSync
 from utils.utils_permission import apply_permissions_ajax
-from decorators import deco_city_permission
+from .decorators import deco_city_permission
 from collections import defaultdict
 import datetime
 import itertools
@@ -40,7 +40,7 @@ def give_details(request):
             {"Name of the slum": slum_code[0][3], "Electoral Ward": slum_code[0][2], "City Code": slum_code[0][1]})
 
     except Exception as e:
-        print e
+        print(e)
     return HttpResponse(json.dumps(slum_info_dict), content_type='application/json')
 
 # 'masterSheet()' is the principal view.
@@ -179,7 +179,7 @@ def masterSheet(request, slum_code=0, FF_code=0, RHS_code=0):
                 #y = community_mobilization_data[i]
                 for z in y.household_number:
                     new_activity_type = y.activity_type.name
- 		    z=str(int(z))
+                    z=str(int(z))
                     if z not in dummy_formdict.keys():
                         dummy_formdict[z] = {
                             "Household_number": z,
@@ -234,7 +234,7 @@ def masterSheet(request, slum_code=0, FF_code=0, RHS_code=0):
                 x['slum__name'] = slum_code[0][4]
                 x['ff_id'] = None
                 x['ff_xform_id_string'] = None
-		x['Household_number'] = str(int(x['Household_number']))
+                x['Household_number'] = str(int(x['Household_number']))
                 if flag_fetch_ff:
                     if key in temp_FF_keys:
                         if '_id' in temp_FF[x['Household_number']].keys():
@@ -294,7 +294,8 @@ def masterSheet(request, slum_code=0, FF_code=0, RHS_code=0):
                     # print 'not found - '+str(x['Household_number'])
                     pass
 
-    except Exception as e: print e
+    except Exception as e:
+        print(e)
         # raise
     return HttpResponse(json.dumps(formdict), content_type="application/json")
 
@@ -466,7 +467,7 @@ def define_columns(request):
         for i in range(len(activity_type_model)):
             formdict_new.append({"data": activity_type_model[i].name, "title": activity_type_model[i].name})
     except Exception as e:
-        print e
+        print(e)
     final_data['buttons']['Community Mobilization'] = range(activity_pre_len, len(formdict_new))
 
     material_type_model = MaterialType.objects.filter(display_flag=True).order_by('display_order')
@@ -477,7 +478,7 @@ def define_columns(request):
             formdict_new.append({"data": "vendor_type" + str(i.name), "title": "Name of " + str(i.name) + " vendor"})
             formdict_new.append({"data": "invoice_number" + str(i.name), "title": str(i.name) + " Invoice Number"})
     except Exception as e:
-        print e
+        print(e)
     final_data['buttons']['Accounts'] = range(vendor_pre_len, len(formdict_new))
     # print final_data['buttons']['Accounts'] , len(final_data['buttons']['Accounts'])
     final_data['data'] = formdict_new
@@ -676,7 +677,7 @@ def handle_uploaded_file(f, response, slum_code):
 
 
                                     except Exception as e:
-                                        print e
+                                        print(e)
                                         household_nums.append(int(i))
                                         VHID_instance = VendorHouseholdInvoiceDetail(
                                             vendor=Vendor.objects.get(name=str(m)),
@@ -701,7 +702,7 @@ def handle_uploaded_file(f, response, slum_code):
                             try:
                                 TC_instance[0].update_model(df_TC.loc[int(i), :])
                             except Exception as e:
-                                print e
+                                print(e)
                             response.append(("updated TC", i))
 
                         else:
@@ -803,7 +804,7 @@ def delete_selected_records(records):
                 objresponseDeleted = requests.delete(deleteURL, headers=headers)
                 print(' deleted for ' + str(r) + ' with response ' + str(objresponseDeleted))
         except Exception as e:
-            print "No record selected to delete."
+            print("No record selected to delete.")
 
 
 @apply_permissions_ajax('mastersheet.can_sync_toilet_status')

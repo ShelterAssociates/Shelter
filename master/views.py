@@ -4,7 +4,7 @@
 
 import json
 import psycopg2
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 from django.contrib.admin.views.decorators import staff_member_required
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.template import RequestContext, loader
@@ -43,8 +43,8 @@ from django.db.models import Avg
 def index(request):
 	"""Renders the index template in browser"""
 	template = loader.get_template('index.html')
-	context = RequestContext(request, {'site_url':'/'})
-	return HttpResponse(template.render(context))
+	context ={ 'site_url':'/'}
+	return render(request, 'index.html', context)
 
 class SurveyListView(ListView):
 	"""Renders the Survey View template in browser"""
@@ -75,20 +75,20 @@ class SurveyCreateView(FormView):
 			if kwargs['survey']:
 				self.survey = kwargs['survey']
 		except KeyError:
-			print 'Error'
+			print('Error')
 		return super(SurveyCreateView, self).dispatch(request, *args,
 													  **kwargs)
 
-	def get_form(self, form_class):
+	def get_form(self, form_class=None):
 		"""
 		Check if the user already saved contact details. If so, then show
 		the form populated with those details, to let user change them.
 		"""
 		try:
 		    survey = Survey.objects.get(id=self.survey)
-		    return form_class(instance=survey, **self.get_form_kwargs())
+		    return self.form_class(instance=survey, **self.get_form_kwargs())
 		except Survey.DoesNotExist:
-		    return form_class(**self.get_form_kwargs())
+		    return self.form_class(**self.get_form_kwargs())
 
 	def form_valid(self, form):
 		"""Actions to perform if form is valid"""
@@ -133,7 +133,7 @@ def rimdisplay(request):
 				R = Rapid_Slum_Appraisal.objects.get(pk=i)
 				R.delete()
 
- 	query = request.GET.get("q")
+	query = request.GET.get("q")
 	R = ""
 	RA = ""
 	if(query):
@@ -259,7 +259,7 @@ def vulnerabilityreport(request):
 # @xframe_options_exempt
 def slummap(request):
 	template = loader.get_template('slummapdisplay.html')
-	context = RequestContext(request, {})
+	context = {"request":request}
 	return HttpResponse(template.render(context))
 
 @csrf_exempt
@@ -338,7 +338,7 @@ def slummapdisplay(request,id):
 								  'drainage': sum(slums_drainage) / len(slums_drainage),
 								  'gutter': sum(slum_gutter) / len(slum_gutter)}
 			except Exception as e:
-				print e
+				print(e)
 		admin_dict['scores'] = section_scores
 		admin_dict["content"] = {}
 		city_main["content"].update({a.name: admin_dict})
@@ -382,7 +382,7 @@ def slummapdisplay(request,id):
 								 'drainage': sum(slums_drainage)/len(slums_drainage),
 								 'gutter': sum(slum_gutter)/len(slum_gutter)}
 			except Exception as e:
-				print e
+				print(e)
 		elctrol_dict['scores'] = section_scores
 		elctrol_dict["content"]= {}
 		city_main["content"][str(e.administrative_ward.name)]["content"].update({e.name : elctrol_dict })
@@ -418,7 +418,7 @@ def slummapdisplay(request,id):
 				[str(i.slum.electoral_ward.name)]['content'] \
 				[str(i.slum.name)].update({'scores': score_dict})
 		except Exception as e:
-			print e
+			print(e)
 	return HttpResponse(json.dumps(city_main),content_type='application/json')
 
 @csrf_exempt
@@ -596,7 +596,7 @@ def city_wise_map(request, key, slumname = None, flag=True):
 		city = City.objects.get(name__city_name=city)
 
 	template = loader.get_template('city_wise_map.html')
-        data={}
+	data={}
 	if slumname :
 		data['slum_name' ] = slumname
 	if city:
@@ -604,7 +604,8 @@ def city_wise_map(request, key, slumname = None, flag=True):
 		data['city_name'] = city.name.city_name
 	else:
 		data['error'] = "URL incorrect"
-	context = RequestContext(request, data)
+	data["request"] = request
+	context = data
 	return HttpResponse(template.render(context))
 
 def login_success(request):
@@ -647,7 +648,8 @@ def dashboard_view(request, key, slumname = None):
 		data['city_name'] = city.name.city_name
 	else:
 		data['error'] = "URL incorrect"
-	context = RequestContext(request, data)
+	data["request"] = request
+	context = data
 	return HttpResponse(template.render(context))
 
 

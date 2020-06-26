@@ -11,5 +11,5 @@ def has_group(user, group_name):
 		group =  Group.objects.get(name=group_name) 
 		return group in user.groups.all() 
 	except Exception as e:
-		print e
+		print(e)
 	return False

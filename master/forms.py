@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 """The Django Forms Page for master app"""
 
-import urllib2
+from urllib import request as urllib2
 import json
 import psycopg2
 from django import forms

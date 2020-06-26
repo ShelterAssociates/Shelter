@@ -10,7 +10,7 @@ from django.contrib.auth.models import User
 from itertools import groupby
 import json
 from collections import OrderedDict
-from kobotoolbox import *
+from .kobotoolbox import *
 
 from .forms import KMLUpload
 from .kmlparser import KMLParser
@@ -58,7 +58,7 @@ def get_component(request, slum_id):
     slum = get_object_or_404(Slum, pk=slum_id)
     sponsors=[]
     sponsor_slum_count = 0
-    if not request.user.is_anonymous():
+    if not request.user.is_anonymous:
        sponsors = request.user.sponsor_set.all().values_list('id',flat=True)
        #sponsor_slum_count = SponsorProjectDetails.objects.filter(slum = slum).count()
     #Fetch filter and sponsor metadata
@@ -99,7 +99,7 @@ def get_component(request, slum_id):
                 options = [rhs_analysis[field[0]][option] for option in field[1].split('|,|') if option in rhs_analysis[field[0]]]
                 component['child'] = list(set(sum(options,[])))
         #Sponsor : Depending on superuser or sponsor render the data accordingly
-        elif metad.type == 'S' and (metad.authenticate == False or not request.user.is_anonymous()) :
+        elif metad.type == 'S' and (metad.authenticate == False or not request.user.is_anonymous) :
             if  metad.code!= "":
                 sponsor_households = []
                 sponsor_households = SponsorProjectDetails.objects.filter(slum = slum, sponsor__id = int(metad.code)).values_list('household_code', flat=True)
