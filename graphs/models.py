@@ -8,8 +8,8 @@ from django.utils import timezone
 class HouseholdData(models.Model):
 
 	household_number = models.CharField(max_length=5)
-	slum = models.ForeignKey(Slum)
-	city = models.ForeignKey(City)
+	slum = models.ForeignKey(Slum, on_delete=models.DO_NOTHING)
+	city = models.ForeignKey(City, on_delete=models.DO_NOTHING)
 	submission_date = models.DateTimeField()
 	created_date = models.DateTimeField(default=timezone.now)
 	rhs_data = JSONField(null=True, blank=True)
@@ -24,14 +24,15 @@ class HouseholdData(models.Model):
 
 	def __str__(self):
 		return str(self.household_number) + ","+ str(self.slum)
+
 	def __unicode__(self):
 		return str(self.household_number) + "," + str(self.slum)
 
 class FollowupData(models.Model):
 
 	household_number = models.CharField(max_length=5, default = '')
-	slum = models.ForeignKey(Slum, default = '')
-	city = models.ForeignKey(City, default = '')
+	slum = models.ForeignKey(Slum, default = '', on_delete=models.DO_NOTHING)
+	city = models.ForeignKey(City, default = '', on_delete=models.DO_NOTHING)
 	submission_date = models.DateTimeField()
 	created_date = models.DateTimeField(default=timezone.now)
 	followup_data = JSONField(null=True, blank=True)
@@ -45,15 +46,15 @@ class FollowupData(models.Model):
 	def __str__(self):
 		return str(self.household_number) + ","+ str(self.slum)
 
-   	def __unicode__(self):
+	def __unicode__(self):
 		return str(self.household_number) + ","+ str(self.slum)
 
 class SlumData(models.Model):
 	"""
 	Slum level RIM data collection.
 	"""
-	slum = models.ForeignKey(Slum)
-	city = models.ForeignKey(City)
+	slum = models.ForeignKey(Slum, on_delete=models.DO_NOTHING)
+	city = models.ForeignKey(City, on_delete=models.DO_NOTHING)
 	submission_date = models.DateTimeField()
 	created_on = models.DateTimeField(default=timezone.now)
 	modified_on = models.DateTimeField(default=timezone.now)
@@ -73,8 +74,8 @@ class QOLScoreData(models.Model):
 	"""
 	Model to save quality of living scores
 	"""
-	slum = models.ForeignKey(Slum)
-	city = models.ForeignKey(City)
+	slum = models.ForeignKey(Slum, on_delete=models.DO_NOTHING)
+	city = models.ForeignKey(City, on_delete=models.DO_NOTHING)
 	created_date = models.DateTimeField(default=datetime.datetime.now)
 	modified_date = models.DateTimeField(default=datetime.datetime.now)
 	general = models.FloatField(default=None, blank=True, null=True)
@@ -104,8 +105,8 @@ class SlumCTBdataSplit(models.Model):
     Model for Slum rim-CTB data
     """
     id = models.AutoField(primary_key=True)
-    slum = models.ForeignKey(Slum)
-    city = models.ForeignKey(City)
+    slum = models.ForeignKey(Slum, on_delete=models.DO_NOTHING)
+    city = models.ForeignKey(City, on_delete=models.DO_NOTHING)
     ctb_id = models.IntegerField(null=True)
     electricity_in_ctb = models.TextField(blank=True, null=True)
     sewage_disposal_system = models.TextField(blank=True, null=True)
@@ -130,8 +131,8 @@ class SlumDataSplit(models.Model):
 	'''
 	Slum RIM data,section wise
 	'''
-	slum = models.ForeignKey(Slum)
-	city = models.ForeignKey(City)
+	slum = models.ForeignKey(Slum, on_delete=models.DO_NOTHING)
+	city = models.ForeignKey(City, on_delete=models.DO_NOTHING)
 	#General section
 	land_status = models.TextField(blank=True, null=True)
 	land_ownership = models.TextField(blank=True, null=True)
@@ -177,8 +178,8 @@ class DashboardData(models.Model):
    """
    Dashboard card data
    """
-   slum = models.ForeignKey(Slum)
-   city = models.ForeignKey(City)
+   slum = models.ForeignKey(Slum, on_delete=models.DO_NOTHING)
+   city = models.ForeignKey(City, on_delete=models.DO_NOTHING)
    created_on = models.DateTimeField(default=datetime.datetime.now)
    modified_on = models.DateTimeField(default=datetime.datetime.now)
    household_count = models.FloatField(blank= True,null=True)
