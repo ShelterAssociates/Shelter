@@ -40,7 +40,7 @@ class Migration(migrations.Migration):
                 ('district_code', models.CharField(max_length=2048)),
                 ('shape', django.contrib.gis.db.models.fields.PolygonField(srid=4326)),
                 ('created_on', models.DateTimeField(default=datetime.datetime(2016, 9, 30, 20, 32, 9, 517171))),
-                ('created_by', models.ForeignKey(to=settings.AUTH_USER_MODEL)),
+                ('created_by', models.ForeignKey(to=settings.AUTH_USER_MODEL, on_delete=models.DO_NOTHING)),
             ],
             options={
                 'verbose_name': 'City',
@@ -98,7 +98,7 @@ class Migration(migrations.Migration):
                 ('ward_no', models.CharField(max_length=2048, null=True, blank=True)),
                 ('ward_code', models.TextField(max_length=2048, null=True, blank=True)),
                 ('extra_info', models.CharField(max_length=2048, null=True, blank=True)),
-                ('administrative_ward', models.ForeignKey(to='master.AdministrativeWard')),
+                ('administrative_ward', models.ForeignKey(to='master.AdministrativeWard', on_delete=models.CASCADE)),
             ],
             options={
                 'verbose_name': 'Electoral Ward',
@@ -113,8 +113,8 @@ class Migration(migrations.Migration):
                 ('name', models.CharField(max_length=2048)),
                 ('lat_long', models.CharField(max_length=2048)),
                 ('created_on', models.DateTimeField(default=datetime.datetime(2016, 9, 30, 20, 32, 9, 525432))),
-                ('created_by', models.ForeignKey(to=settings.AUTH_USER_MODEL)),
-                ('drawable_component', models.ForeignKey(to='master.DrawableComponent')),
+                ('created_by', models.ForeignKey(to=settings.AUTH_USER_MODEL, on_delete=models.DO_NOTHING)),
+                ('drawable_component', models.ForeignKey(to='master.DrawableComponent', on_delete=models.CASCADE)),
             ],
             options={
                 'verbose_name': 'Plotted Shape',
@@ -207,7 +207,7 @@ class Migration(migrations.Migration):
                 ('shape', django.contrib.gis.db.models.fields.PolygonField(srid=4326, null=True, blank=True)),
                 ('description', models.TextField(max_length=2048, null=True, blank=True)),
                 ('shelter_slum_code', models.CharField(max_length=2048, null=True, blank=True)),
-                ('electoral_ward', models.ForeignKey(to='master.ElectoralWard')),
+                ('electoral_ward', models.ForeignKey(to='master.ElectoralWard', on_delete=models.CASCADE)),
             ],
             options={
                 'verbose_name': 'Slum',
@@ -224,7 +224,7 @@ class Migration(migrations.Migration):
                 ('analysis_threshold', models.IntegerField()),
                 ('kobotool_survey_id', models.CharField(max_length=2048)),
                 ('kobotool_survey_url', models.CharField(max_length=2048)),
-                ('city', models.ForeignKey(to='master.City')),
+                ('city', models.ForeignKey(to='master.City', on_delete=models.CASCADE)),
             ],
             options={
                 'verbose_name': 'Survey',
@@ -235,10 +235,10 @@ class Migration(migrations.Migration):
             name='UserRoleMaster',
             fields=[
                 ('id', models.AutoField(verbose_name='ID', serialize=False, auto_created=True, primary_key=True)),
-                ('city', models.ForeignKey(to='master.City')),
-                ('role_master', models.ForeignKey(to='master.RoleMaster')),
-                ('slum', models.ForeignKey(to='master.Slum')),
-                ('user', models.ForeignKey(to=settings.AUTH_USER_MODEL)),
+                ('city', models.ForeignKey(to='master.City', on_delete=models.DO_NOTHING)),
+                ('role_master', models.ForeignKey(to='master.RoleMaster', on_delete=models.CASCADE)),
+                ('slum', models.ForeignKey(to='master.Slum', on_delete=models.CASCADE)),
+                ('user', models.ForeignKey(to=settings.AUTH_USER_MODEL, on_delete=models.DO_NOTHING)),
             ],
             options={
                 'verbose_name': 'User Role Master',
@@ -252,7 +252,7 @@ class Migration(migrations.Migration):
                 ('title', models.CharField(max_length=2048)),
                 ('name', models.CharField(max_length=2048)),
                 ('telephone', models.CharField(max_length=2048)),
-                ('administrative_ward', models.ForeignKey(to='master.AdministrativeWard')),
+                ('administrative_ward', models.ForeignKey(to='master.AdministrativeWard', on_delete=models.CASCADE)),
             ],
             options={
                 'verbose_name': 'Ward Officer Contact',
@@ -262,26 +262,26 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='rapid_slum_appraisal',
             name='slum_name',
-            field=models.ForeignKey(to='master.Slum'),
+            field=models.ForeignKey(to='master.Slum', on_delete=models.CASCADE),
         ),
         migrations.AddField(
             model_name='electedrepresentative',
             name='electoral_ward',
-            field=models.ForeignKey(to='master.ElectoralWard'),
+            field=models.ForeignKey(to='master.ElectoralWard', on_delete=models.CASCADE),
         ),
         migrations.AddField(
             model_name='drawablecomponent',
             name='shape_code',
-            field=models.ForeignKey(to='master.ShapeCode'),
+            field=models.ForeignKey(to='master.ShapeCode', on_delete=models.CASCADE),
         ),
         migrations.AddField(
             model_name='city',
             name='name',
-            field=models.ForeignKey(to='master.CityReference'),
+            field=models.ForeignKey(to='master.CityReference', on_delete=models.CASCADE),
         ),
         migrations.AddField(
             model_name='administrativeward',
             name='city',
-            field=models.ForeignKey(to='master.City'),
+            field=models.ForeignKey(to='master.City', on_delete=models.CASCADE),
         ),
     ]

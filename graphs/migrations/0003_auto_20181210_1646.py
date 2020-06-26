@@ -18,7 +18,7 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='followupdata',
             name='city',
-            field=models.ForeignKey(default=b'', to='master.City'),
+            field=models.ForeignKey(default=b'', to='master.City', on_delete=models.DO_NOTHING),
         ),
         migrations.AddField(
             model_name='followupdata',
@@ -28,6 +28,6 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='followupdata',
             name='slum',
-            field=models.ForeignKey(default=b'', to='master.Slum'),
+            field=models.ForeignKey(default=b'', to='master.Slum', on_delete=models.DO_NOTHING),
         ),
     ]

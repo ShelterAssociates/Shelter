@@ -31,8 +31,8 @@ class Migration(migrations.Migration):
                 ('ctb_caretaker', models.TextField(null=True, blank=True)),
                 ('ctb_for_child', models.TextField(null=True, blank=True)),
                 ('cond_of_ctb_for_child', models.TextField(null=True, blank=True)),
-                ('city', models.ForeignKey(to='master.City')),
-                ('slum', models.ForeignKey(to='master.Slum')),
+                ('city', models.ForeignKey(to='master.City', on_delete=models.DO_NOTHING)),
+                ('slum', models.ForeignKey(to='master.Slum', on_delete=models.DO_NOTHING)),
             ],
         ),
         migrations.CreateModel(
@@ -65,8 +65,8 @@ class Migration(migrations.Migration):
                 ('is_the_drainage_gradient_adequ', models.TextField(null=True, blank=True)),
                 ('do_gutters_flood', models.TextField(null=True, blank=True)),
                 ('is_gutter_gradient_adequate', models.TextField(null=True, blank=True)),
-                ('city', models.ForeignKey(to='master.City')),
-                ('slum', models.ForeignKey(to='master.Slum')),
+                ('city', models.ForeignKey(to='master.City', on_delete=models.DO_NOTHING)),
+                ('slum', models.ForeignKey(to='master.Slum', on_delete=models.DO_NOTHING)),
             ],
         ),
         migrations.AddField(

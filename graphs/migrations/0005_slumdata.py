@@ -21,8 +21,8 @@ class Migration(migrations.Migration):
                 ('created_on', models.DateTimeField(default=datetime.datetime.now)),
                 ('modified_on', models.DateTimeField(default=datetime.datetime.now)),
                 ('rim_data', jsonfield.fields.JSONField(null=True, blank=True)),
-                ('city', models.ForeignKey(to='master.City')),
-                ('slum', models.ForeignKey(to='master.Slum')),
+                ('city', models.ForeignKey(to='master.City', on_delete=models.DO_NOTHING)),
+                ('slum', models.ForeignKey(to='master.Slum', on_delete=models.DO_NOTHING)),
             ],
             options={
                 'verbose_name': 'Slum data',

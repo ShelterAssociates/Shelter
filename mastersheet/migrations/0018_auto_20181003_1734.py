@@ -25,9 +25,9 @@ class Migration(migrations.Migration):
                 ('challan_number', models.CharField(max_length=100, null=True, blank=True)),
                 ('created_on', models.DateTimeField(default=datetime.datetime.now)),
                 ('modified_on', models.DateTimeField(default=datetime.datetime.now)),
-                ('created_by', models.ForeignKey(related_name='invoice_created_by', to=settings.AUTH_USER_MODEL)),
-                ('modified_by', models.ForeignKey(related_name='invoice_modified_by', to=settings.AUTH_USER_MODEL)),
-                ('vendor', models.ForeignKey(to='mastersheet.Vendor')),
+                ('created_by', models.ForeignKey(related_name='invoice_created_by', to=settings.AUTH_USER_MODEL, on_delete=models.DO_NOTHING)),
+                ('modified_by', models.ForeignKey(related_name='invoice_modified_by', to=settings.AUTH_USER_MODEL, on_delete=models.DO_NOTHING)),
+                ('vendor', models.ForeignKey(to='mastersheet.Vendor', on_delete=models.CASCADE)),
             ],
             options={
                 'verbose_name': 'Invoice',
@@ -46,8 +46,8 @@ class Migration(migrations.Migration):
                 ('total', models.FloatField(null=True, blank=True)),
                 ('created_on', models.DateTimeField(default=datetime.datetime.now)),
                 ('modified_on', models.DateTimeField(default=datetime.datetime.now)),
-                ('created_by', models.ForeignKey(related_name='invoiceitem_created_by', to=settings.AUTH_USER_MODEL)),
-                ('invoice', models.ForeignKey(to='mastersheet.Invoice')),
+                ('created_by', models.ForeignKey(related_name='invoiceitem_created_by', to=settings.AUTH_USER_MODEL, on_delete=models.DO_NOTHING)),
+                ('invoice', models.ForeignKey(to='mastersheet.Invoice', on_delete=models.CASCADE)),
             ],
             options={
                 'verbose_name': 'Invoice item',
@@ -72,17 +72,17 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='invoiceitems',
             name='material_type',
-            field=models.ForeignKey(to='mastersheet.MaterialType'),
+            field=models.ForeignKey(to='mastersheet.MaterialType', on_delete=models.CASCADE),
         ),
         migrations.AddField(
             model_name='invoiceitems',
             name='modified_by',
-            field=models.ForeignKey(related_name='invoiceitem_modified_by', to=settings.AUTH_USER_MODEL),
+            field=models.ForeignKey(related_name='invoiceitem_modified_by', to=settings.AUTH_USER_MODEL, on_delete=models.DO_NOTHING),
         ),
         migrations.AddField(
             model_name='invoiceitems',
             name='slum',
-            field=models.ForeignKey(to='master.Slum'),
+            field=models.ForeignKey(to='master.Slum', on_delete=models.CASCADE),
         ),
         migrations.AddField(
             model_name='invoice',

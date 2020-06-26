@@ -37,8 +37,8 @@ class Migration(migrations.Migration):
                 ('individual_toilet_coverage', models.FloatField(null=True, blank=True)),
                 ('open_defecation_coverage', models.FloatField(null=True, blank=True)),
                 ('ctb_coverage', models.FloatField(null=True, blank=True)),
-                ('city', models.ForeignKey(to='master.City')),
-                ('slum', models.ForeignKey(to='master.Slum')),
+                ('city', models.ForeignKey(to='master.City', on_delete=models.DO_NOTHING)),
+                ('slum', models.ForeignKey(to='master.Slum', on_delete=models.DO_NOTHING)),
             ],
             options={
                 'verbose_name': 'Dashboard data',

@@ -11,9 +11,6 @@ from django.db.models.signals import pre_save,post_save
 from django.dispatch import receiver
 from django.conf import settings
 
-
-
-
 class VendorType(models.Model):
     """
     All the type of vendors.
@@ -28,7 +25,7 @@ class VendorType(models.Model):
         verbose_name = 'Vendor type'
         verbose_name_plural = 'Vendor types'
 
-    def __unicode__(self):
+    def __str__(self):
         """Returns string representation of object"""
         return self.name
 
@@ -41,14 +38,14 @@ class Vendor(models.Model):
     email_address = models.CharField(max_length=512, null=True, blank=True)
     description = models.TextField(null=True, blank=True)
     gst_number = models.CharField(max_length=100)
-    city = models.ForeignKey(City)
+    city = models.ForeignKey(City, on_delete=models.CASCADE)
     created_date = models.DateTimeField(default=datetime.datetime.now)
 
     class Meta:
         verbose_name = 'Vendor'
         verbose_name_plural = 'Vendors'
 
-    def __unicode__(self):
+    def __str__(self):
         """Returns string representation of object"""
         return self.name 
 
@@ -56,8 +53,8 @@ class VendorHouseholdInvoiceDetail(models.Model):
     """
     Account invoice details with respective household numbers.
     """
-    vendor = models.ForeignKey(Vendor)
-    slum = models.ForeignKey(Slum)
+    vendor = models.ForeignKey(Vendor, on_delete=models.CASCADE)
+    slum = models.ForeignKey(Slum, on_delete=models.CASCADE)
     invoice_number = models.CharField(max_length=100)
     invoice_date = models.DateField()
     household_number = JSONField(null=True, blank=True)
@@ -70,11 +67,11 @@ class VendorHouseholdInvoiceDetail(models.Model):
         verbose_name = 'Vendor to household invoice detail'
         verbose_name_plural = 'Vendor to household invoice details'
 
-    def __unicode__(self):
+    def __str__(self):
         return self.vendor.name + ' - '+ self.slum.name + '(' + self.invoice_number + ')'
 
 class Invoice(models.Model):
-    vendor = models.ForeignKey(Vendor)
+    vendor = models.ForeignKey(Vendor, on_delete=models.CASCADE)
     invoice_date = models.DateField(null=True, blank=True)
     invoice_number = models.CharField(max_length=100,null=True, blank=True)
     challan_number = models.CharField(max_length=100,null=True, blank=True)
@@ -85,20 +82,18 @@ class Invoice(models.Model):
     final_total = models.FloatField(default = 0)
     paid = models.BooleanField(default=False)
     created_on = models.DateTimeField(default=datetime.datetime.now)
-    created_by = models.ForeignKey(User,related_name='invoice_created_by')
+    created_by = models.ForeignKey(User,related_name='invoice_created_by', on_delete=models.DO_NOTHING)
     modified_on = models.DateTimeField(default=datetime.datetime.now)
-    modified_by = models.ForeignKey(User, related_name='invoice_modified_by')
+    modified_by = models.ForeignKey(User, related_name='invoice_modified_by', on_delete=models.DO_NOTHING)
 
     class Meta:
         unique_together = ("vendor", "invoice_number")
         verbose_name = 'Invoice'
         verbose_name_plural = 'Invoices'
 
-    def __unicode__(self):
+    def __str__(self):
         """Returns string representation of object"""
         return self.vendor.name + '(' + self.invoice_number + ')' 
-    
-
 
 class MaterialType(models.Model):
     name = models.CharField(max_length=512)
@@ -112,7 +107,7 @@ class MaterialType(models.Model):
         verbose_name = 'Material Type'
         verbose_name_plural = 'Material Types'
 
-    def __unicode__(self):
+    def __str__(self):
         """Returns string representation of object"""
         return self.name
         
@@ -125,9 +120,9 @@ PHASE = (('1', 'Phase One'),
 
 
 class InvoiceItems(models.Model):
-    invoice = models.ForeignKey(Invoice)
-    material_type = models.ForeignKey(MaterialType)
-    slum = models.ForeignKey(Slum)
+    invoice = models.ForeignKey(Invoice, on_delete=models.CASCADE)
+    material_type = models.ForeignKey(MaterialType, on_delete=models.CASCADE)
+    slum = models.ForeignKey(Slum, on_delete=models.CASCADE)
     household_numbers = JSONField()
     phase = models.CharField(max_length=2, choices = PHASE, null=True, blank=True)
     quantity = models.FloatField(default = 0)
@@ -136,15 +131,15 @@ class InvoiceItems(models.Model):
     tax = models.FloatField(default = 0)
     total = models.FloatField(default = 0)
     created_on = models.DateTimeField(default=datetime.datetime.now)
-    created_by = models.ForeignKey(User, related_name='invoiceitem_created_by')
+    created_by = models.ForeignKey(User, related_name='invoiceitem_created_by', on_delete=models.DO_NOTHING)
     modified_on = models.DateTimeField(default=datetime.datetime.now)
-    modified_by = models.ForeignKey(User, related_name='invoiceitem_modified_by')
+    modified_by = models.ForeignKey(User, related_name='invoiceitem_modified_by', on_delete=models.DO_NOTHING)
 
     class Meta:
         verbose_name = 'Invoice item'
         verbose_name_plural = 'Invoice items'
 
-    def __unicode__(self):
+    def __str__(self):
         """Returns string representation of object"""
         return self.material_type.name
 
@@ -152,7 +147,7 @@ class SBMUpload(models.Model):
     """
     SBM upload detials
     """
-    slum = models.ForeignKey(Slum)
+    slum = models.ForeignKey(Slum, on_delete=models.CASCADE)
     household_number = models.CharField(max_length=5)
     name = models.CharField(max_length=512)
     application_id = models.CharField(max_length=512,null=True, blank=True)
@@ -171,9 +166,6 @@ class SBMUpload(models.Model):
         verbose_name = 'SBM application upload'
         verbose_name_plural = 'SBM application uploads'
 
-    def __unicode__(self):
-        return self.name
-
     def __str__(self):
         return self.household_number
 
@@ -189,7 +181,7 @@ class ToiletConstruction(models.Model):
     """
     Toilet construction track of dates at each level of construction.
     """
-    slum = models.ForeignKey(Slum)
+    slum = models.ForeignKey(Slum, on_delete=models.CASCADE)
     household_number = models.CharField(max_length=5)
     pocket = models.IntegerField(null=True, blank=True)
     agreement_date = models.DateField(null=True, blank=True)
@@ -225,16 +217,17 @@ class ToiletConstruction(models.Model):
 
     def __str__(self):
         return str(self.household_number) +", "+ str(self.slum)
+
     @staticmethod
     def get_status_display(z):
         return STATUS_CHOICES[int(z)-1][1]
+
     @staticmethod
     def check_bool(s):
         if str(s).lower() == 'yes' or str(s).lower() == "true":
             return True
         else:
             return False
-
 
     def update_model(self, df1):
         
@@ -280,11 +273,6 @@ class ToiletConstruction(models.Model):
             return None
         else:
             return s
-    
-
-
-
-
 
 class ActivityType(models.Model):
     """
@@ -299,16 +287,16 @@ class ActivityType(models.Model):
         verbose_name = 'Activity type'
         verbose_name_plural = 'Activity types'
 
-    def __unicode__(self):
+    def __str__(self):
         return self.name
 
 class CommunityMobilization(models.Model):
     """
     Track of household that were present for that particular mobilization activity.
     """
-    slum = models.ForeignKey(Slum)
+    slum = models.ForeignKey(Slum, on_delete=models.CASCADE)
     household_number = JSONField(null=True, blank=True)
-    activity_type = models.ForeignKey(ActivityType)
+    activity_type = models.ForeignKey(ActivityType, on_delete=models.CASCADE)
     activity_date = models.DateField(default=datetime.datetime.now)
 
     class Meta:
@@ -316,29 +304,29 @@ class CommunityMobilization(models.Model):
         verbose_name = 'Community mobilization'
         verbose_name_plural = 'Community mobilization'
 
-    def __unicode__(self):
+    def __str__(self):
         return self.slum.name + '-' + self.activity_type.name
 
 class KoboDDSyncTrack(models.Model):
     """
     Sync date track for each slum. The data will be pulled from kobotoolbox and accordingly date will be updated.
     """
-    slum = models.ForeignKey(Slum)
+    slum = models.ForeignKey(Slum, on_delete=models.CASCADE)
     sync_date = models.DateTimeField()
     created_on = models.DateTimeField(default=datetime.datetime.now)
-    created_by = models.ForeignKey(User)
+    created_by = models.ForeignKey(User, on_delete=models.DO_NOTHING)
 
     class Meta:
         unique_together = ("slum", "sync_date")
         verbose_name = 'KoBo daily reporting sync'
         verbose_name_plural = 'KoBo daily reporting sync'
 
-    def __unicode__(self):
+    def __str__(self):
         return self.slum.name + '-' + str(self.sync_date)
+
 @receiver(pre_save, sender=ToiletConstruction)
 def update_status(sender ,instance, **kwargs):
     #instance.status = STATUS_CHOICES[4][0]#Under Construction
-    print 'updating status'
     if instance.status != STATUS_CHOICES[6][0]:
         if instance.agreement_cancelled is None:
             instance.status = ""
@@ -346,8 +334,7 @@ def update_status(sender ,instance, **kwargs):
             instance.status = ""
         if instance.agreement_date:
             instance.status = STATUS_CHOICES[2][0]#material not given
-        
-        
+
         '''
             The method below is put in place because some unexpected data format ('Timestamp') was found with some
             agreement_date. The method covers inconsistencies only for agreement date. Requirement may arise in furture 
@@ -369,14 +356,9 @@ def update_status(sender ,instance, **kwargs):
             
         if instance.agreement_cancelled :
             instance.status = STATUS_CHOICES[1][0]#agreement cancelled
-
-    
-
     #if instance.p1_material_shifted_to is not None and instance.p2_material_shifted_to is not None instance.p3_material_shifted_to is not None instance.st_material_shifted_to is not None:
         #if len(instance.p1material_shifted_to) != 0 and len(instance.p2material_shifted_to) != 0 and len(instance.p3material_shifted_to) != 0 and len(instance.st_material_shifted_to) != 0:
             #instance.status = STATUS_CHOICES[1][0]#agreement cancelled
-
-
 
 @receiver(pre_save, sender=ToiletConstruction)
 def handle_shifted_material(sender ,instance, **kwargs):
@@ -385,7 +367,6 @@ def handle_shifted_material(sender ,instance, **kwargs):
     temp['defaults'] = {'agreement_cancelled' : False}
     temp['flag'] = False
 
-    
     if instance.p1_material_shifted_to is not None:
         flag = True
         try:
@@ -455,10 +436,6 @@ def handle_shifted_material(sender ,instance, **kwargs):
 
         TC_instance, is_created = ToiletConstruction.objects.update_or_create(**temp)
         TC_instance.save()
-        print is_created
-
-    
-
 
 @receiver(pre_save, sender = InvoiceItems)
 def check_duplicate_house(sender, instance, **kwargs):

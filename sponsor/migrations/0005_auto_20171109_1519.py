@@ -52,6 +52,6 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='sponsorprojectdetailssubfields',
             name='sponsor_project_details',
-            field=models.ForeignKey(to='sponsor.SponsorProjectDetails'),
+            field=models.ForeignKey(to='sponsor.SponsorProjectDetails', on_delete=models.CASCADE),
         ),
     ]

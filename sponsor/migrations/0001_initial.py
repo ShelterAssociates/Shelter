@@ -25,7 +25,7 @@ class Migration(migrations.Migration):
                 ('intro_date', models.DateTimeField(default=datetime.datetime(2017, 3, 15, 18, 14, 46, 84877))),
                 ('other_info', models.TextField(null=True, blank=True)),
                 ('logo', models.ImageField(null=True, upload_to=b'sponsor_logo/', blank=True)),
-                ('user', models.ForeignKey(to=settings.AUTH_USER_MODEL)),
+                ('user', models.ForeignKey(to=settings.AUTH_USER_MODEL, on_delete=models.DO_NOTHING)),
             ],
             options={
                 'verbose_name': 'Sponsor',
@@ -40,7 +40,7 @@ class Migration(migrations.Migration):
                 ('email_id', models.CharField(max_length=512)),
                 ('contact_no', models.CharField(max_length=256, null=True, blank=True)),
                 ('status', models.CharField(max_length=2, choices=[(b'0', b'InActive'), (b'1', b'Active')])),
-                ('sponsor', models.ForeignKey(to='sponsor.Sponsor')),
+                ('sponsor', models.ForeignKey(to='sponsor.Sponsor', on_delete=models.CASCADE)),
             ],
             options={
                 'verbose_name': 'Sponsor Contact',
@@ -60,7 +60,7 @@ class Migration(migrations.Migration):
                 ('funds_utilised', models.DecimalField(null=True, max_digits=10, decimal_places=2, blank=True)),
                 ('status', models.CharField(max_length=2, choices=[(b'1', b'Planned'), (b'2', b'Activated'), (b'3', b'Closed')])),
                 ('created_on', models.DateTimeField(default=datetime.datetime(2017, 3, 15, 18, 14, 46, 87019))),
-                ('created_by', models.ForeignKey(to=settings.AUTH_USER_MODEL)),
+                ('created_by', models.ForeignKey(to=settings.AUTH_USER_MODEL, on_delete=models.DO_NOTHING)),
             ],
             options={
                 'verbose_name': 'Sponsor Project',
@@ -72,9 +72,9 @@ class Migration(migrations.Migration):
             fields=[
                 ('id', models.AutoField(verbose_name='ID', serialize=False, auto_created=True, primary_key=True)),
                 ('household_code', jsonfield.fields.JSONField(null=True, blank=True)),
-                ('slum', models.ForeignKey(to='master.Slum')),
-                ('sponsor', models.ForeignKey(to='sponsor.Sponsor')),
-                ('sponsor_project', models.ForeignKey(to='sponsor.SponsorProject')),
+                ('slum', models.ForeignKey(to='master.Slum', on_delete=models.CASCADE)),
+                ('sponsor', models.ForeignKey(to='sponsor.Sponsor', on_delete=models.CASCADE)),
+                ('sponsor_project', models.ForeignKey(to='sponsor.SponsorProject', on_delete=models.CASCADE)),
             ],
             options={
                 'verbose_name': 'Sponsor Project Detail',

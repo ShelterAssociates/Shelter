@@ -27,12 +27,12 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='followupdata',
             name='household_data',
-            field=models.ForeignKey(default=b'', to='graphs.HouseholdData'),
+            field=models.ForeignKey(default=b'', to='graphs.HouseholdData', on_delete=models.DO_NOTHING),
         ),
         migrations.AddField(
             model_name='householddata',
             name='city',
-            field=models.ForeignKey(default='3', to='master.City'),
+            field=models.ForeignKey(default='3', to='master.City', on_delete=models.DO_NOTHING),
             preserve_default=False,
         ),
         migrations.AlterUniqueTogether(

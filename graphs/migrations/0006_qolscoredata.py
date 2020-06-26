@@ -35,8 +35,8 @@ class Migration(migrations.Migration):
                 ('str_n_ocup_percentile', models.FloatField(default=None, null=True, blank=True)),
                 ('toilet_percentile', models.FloatField(default=None, null=True, blank=True)),
                 ('totalscore_percentile', models.FloatField(default=None, null=True, blank=True)),
-                ('city', models.ForeignKey(to='master.City')),
-                ('slum', models.ForeignKey(to='master.Slum')),
+                ('city', models.ForeignKey(to='master.City', on_delete=models.DO_NOTHING)),
+                ('slum', models.ForeignKey(to='master.Slum', on_delete=models.DO_NOTHING)),
             ],
         ),
     ]

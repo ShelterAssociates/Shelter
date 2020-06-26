@@ -19,11 +19,11 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='electoralward',
             name='administrative_ward',
-            field=models.ForeignKey(blank=True, to='master.AdministrativeWard', null=True),
+            field=models.ForeignKey(blank=True, to='master.AdministrativeWard', null=True, on_delete=models.CASCADE),
         ),
         migrations.AlterField(
             model_name='slum',
             name='electoral_ward',
-            field=models.ForeignKey(blank=True, to='master.ElectoralWard', null=True),
+            field=models.ForeignKey(blank=True, to='master.ElectoralWard', null=True, on_delete=models.CASCADE),
         ),
     ]

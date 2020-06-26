@@ -42,7 +42,7 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='sponsorproject',
             name='sponsor',
-            field=models.ForeignKey(blank=True, to='sponsor.Sponsor', null=True),
+            field=models.ForeignKey(blank=True, to='sponsor.Sponsor', null=True, on_delete=models.CASCADE),
         ),
         migrations.AddField(
             model_name='sponsorprojectdetails',
@@ -76,6 +76,6 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='sponsorprojectmou',
             name='sponsor_project',
-            field=models.ForeignKey(to='sponsor.SponsorProject'),
+            field=models.ForeignKey(to='sponsor.SponsorProject', on_delete=models.CASCADE),
         ),
     ]

@@ -37,8 +37,8 @@ class Migration(migrations.Migration):
                 ('id', models.AutoField(verbose_name='ID', serialize=False, auto_created=True, primary_key=True)),
                 ('household_number', jsonfield.fields.JSONField(null=True, blank=True)),
                 ('activity_date', models.DateField()),
-                ('activity_type', models.ForeignKey(to='mastersheet.ActivityType')),
-                ('slum', models.ForeignKey(to='master.Slum')),
+                ('activity_type', models.ForeignKey(to='mastersheet.ActivityType', on_delete=models.CASCADE)),
+                ('slum', models.ForeignKey(to='master.Slum', on_delete=models.CASCADE)),
             ],
             options={
                 'verbose_name': 'Community mobilization',
@@ -54,7 +54,7 @@ class Migration(migrations.Migration):
                 ('application_id', models.CharField(max_length=512)),
                 ('photo_uploaded', models.ImageField(null=True, upload_to=b'SBM_upload/', blank=True)),
                 ('created_date', models.DateTimeField(default=datetime.datetime(2018, 1, 9, 16, 59, 32, 262981))),
-                ('slum', models.ForeignKey(to='master.Slum')),
+                ('slum', models.ForeignKey(to='master.Slum', on_delete=models.CASCADE)),
             ],
             options={
                 'verbose_name': 'SBM application upload',
@@ -76,7 +76,7 @@ class Migration(migrations.Migration):
                 ('status', models.CharField(max_length=2, choices=[(b'1', b'Completed'), (b'2', b''), (b'3', b'')])),
                 ('comment', models.TextField()),
                 ('material_shifted_to', models.CharField(max_length=5)),
-                ('slum', models.ForeignKey(to='master.Slum')),
+                ('slum', models.ForeignKey(to='master.Slum', on_delete=models.CASCADE)),
             ],
             options={
                 'verbose_name': 'Toilet construction progress',
@@ -93,7 +93,7 @@ class Migration(migrations.Migration):
                 ('description', models.TextField(null=True, blank=True)),
                 ('gst_number', models.CharField(max_length=100)),
                 ('created_date', models.DateTimeField(default=datetime.datetime(2018, 1, 9, 16, 59, 32, 260381))),
-                ('city', models.ForeignKey(to='master.City')),
+                ('city', models.ForeignKey(to='master.City', on_delete=models.CASCADE)),
             ],
             options={
                 'verbose_name': 'Vendor',
@@ -108,8 +108,8 @@ class Migration(migrations.Migration):
                 ('invoice_date', models.DateField()),
                 ('household_number', jsonfield.fields.JSONField(null=True, blank=True)),
                 ('created_date', models.DateTimeField(default=datetime.datetime(2018, 1, 9, 16, 59, 32, 262068))),
-                ('slum', models.ForeignKey(to='master.Slum')),
-                ('vendor', models.ForeignKey(to='mastersheet.Vendor')),
+                ('slum', models.ForeignKey(to='master.Slum', on_delete=models.CASCADE)),
+                ('vendor', models.ForeignKey(to='mastersheet.Vendor', on_delete=models.CASCADE)),
             ],
             options={
                 'verbose_name': 'Vendor to household invoice detail',
@@ -134,7 +134,7 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='vendor',
             name='vendor_type',
-            field=models.ForeignKey(to='mastersheet.VendorType'),
+            field=models.ForeignKey(to='mastersheet.VendorType', on_delete=models.CASCADE),
         ),
         migrations.AlterUniqueTogether(
             name='vendorhouseholdinvoicedetail',

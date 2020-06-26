@@ -19,8 +19,8 @@ class Migration(migrations.Migration):
                 ('id', models.AutoField(verbose_name='ID', serialize=False, auto_created=True, primary_key=True)),
                 ('sync_date', models.DateTimeField()),
                 ('created_on', models.DateTimeField(default=datetime.datetime.now)),
-                ('created_by', models.ForeignKey(to=settings.AUTH_USER_MODEL)),
-                ('slum', models.ForeignKey(to='master.Slum')),
+                ('created_by', models.ForeignKey(to=settings.AUTH_USER_MODEL, on_delete=models.DO_NOTHING)),
+                ('slum', models.ForeignKey(to='master.Slum', on_delete=models.CASCADE)),
             ],
         ),
         migrations.AlterField(

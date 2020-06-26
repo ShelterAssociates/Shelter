@@ -21,7 +21,7 @@ class Migration(migrations.Migration):
                 ('submission_date', models.DateTimeField()),
                 ('created_date', models.DateTimeField(default=datetime.datetime.now)),
                 ('followup_data', jsonfield.fields.JSONField(null=True, blank=True)),
-                ('slum', models.ForeignKey(to='master.Slum')),
+                ('slum', models.ForeignKey(to='master.Slum', on_delete=models.DO_NOTHING)),
             ],
             options={
                 'verbose_name': 'Followup data',
@@ -36,7 +36,7 @@ class Migration(migrations.Migration):
                 ('submission_date', models.DateTimeField()),
                 ('created_date', models.DateTimeField(default=datetime.datetime.now)),
                 ('rhs_data', jsonfield.fields.JSONField(null=True, blank=True)),
-                ('slum', models.ForeignKey(to='master.Slum')),
+                ('slum', models.ForeignKey(to='master.Slum', on_delete=models.DO_NOTHING)),
             ],
             options={
                 'verbose_name': 'Household data',

@@ -1,5 +1,5 @@
 import json
-import urllib2
+from urllib import request as urllib2
 from django.conf import settings
 import copy
 from collections import OrderedDict
@@ -63,7 +63,7 @@ def get_kobo_RHS_list(city, slum_code,house_number, kobo_survey=''):
         try:
             url = settings.KOBOCAT_FORM_URL+'data/'+kobo_survey+'?format=json&query={"slum_name":"'+slum_code+'","Household_number":{"$in":["'+str(house_number)+'","'+('000'+str(house_number))[-4:]+'"]}}'
         except Exception as e:
-            print e
+            print(e)
         req = urllib2.Request(url)
         req.add_header('Authorization', settings.KOBOCAT_TOKEN)
         resp = urllib2.urlopen(req)
@@ -278,7 +278,7 @@ def parse_RIM_answer_with_toilet(submission, data1):
 
     output = OrderedDict()
     for data in data1['children']:
-	if data['type'] == "group" and data['name'] in section.keys():
+        if data['type'] == "group" and data['name'] in section.keys():
             # Group wise get the entire list for questions
             sect_form_data = trav(data)
             # Find the list of keys available in the submission data
@@ -327,7 +327,7 @@ def get_kobo_FF_report_detail(city, slum_code,house_number, kobo_survey=''):
         try:
             url = settings.KOBOCAT_FORM_URL+'data/'+kobo_survey+'?format=json&query={"group_vq77l17/slum_name":"'+slum_code+'","group_vq77l17/Household_number":{"$in":["'+house_number+'","'+('000'+house_number)[-4:]+'"]}}'
         except Exception as e:
-            print e
+            print(e)
 
         req = urllib2.Request(url)
         req.add_header('Authorization', settings.KOBOCAT_TOKEN)

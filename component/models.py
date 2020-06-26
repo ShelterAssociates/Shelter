@@ -28,7 +28,7 @@ class Section(models.Model):
     name  = models.CharField(max_length=2048)
     order  = models.FloatField()
 
-    def __unicode__(self):
+    def __str__(self):
         """Returns string representation of object"""
         return self.name
 
@@ -45,7 +45,7 @@ class Metadata(models.Model):
     #     if filesize > megabyte_limit*1024*1024:
     #         raise ValidationError("Max file size is %sMB" % str(megabyte_limit))
     name = models.CharField(max_length=2048)
-    section = models.ForeignKey(Section)
+    section = models.ForeignKey(Section, on_delete=models.CASCADE)
     level  = models.CharField(max_length=1, choices=LEVEL_CHOICES) # slum/household
     type  = models.CharField(max_length=1, choices=META_TYPE_CHOICES) # component/filter
     display_type  = models.CharField(max_length=1, choices=DISPLAY_TYPE_CHOICES) #map/table
@@ -56,7 +56,7 @@ class Metadata(models.Model):
     icon = models.ImageField(upload_to=COMPONENT_ICON ,blank=True, null=True)
     code = models.CharField(max_length=512,blank=True,null=True)
 
-    def __unicode__(self):
+    def __str__(self):
         """Returns string representation of object"""
         return self.name
 
@@ -68,15 +68,14 @@ class Metadata(models.Model):
 # Create your models here.
 class Component(models.Model):
     """Drawable Component Database"""
-    metadata = models.ForeignKey(Metadata)
+    metadata = models.ForeignKey(Metadata, on_delete=models.CASCADE)
     housenumber = models.CharField(max_length=100)
     shape = models.GeometryField(srid=4326)
     content_type = models.ForeignKey(ContentType, default=ContentType.objects.get(model='slum').id, on_delete=models.CASCADE)
     object_id = models.PositiveIntegerField() #Fields for reverse relationship with slum and city table
     content_object = GenericForeignKey('content_type','object_id')
-    objects = models.GeoManager()
 
-    def __unicode__(self):
+    def __str__(self):
         """Returns string representation of object"""
         return self.content_type.model + ' - '+ self.metadata.name + ':'+ self.housenumber
 

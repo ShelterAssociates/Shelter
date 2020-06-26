@@ -24,13 +24,13 @@ class CityReference(models.Model):
     state_name = models.CharField(max_length=2048)
     state_code = models.CharField(max_length=2048)
 
-    def __unicode__(self):
+    def __str__(self):
         """Returns string representation of object"""
         return str(self.city_name)
 
 class City(models.Model):
     """Shelter City Database"""
-    name = models.ForeignKey(CityReference)
+    name = models.ForeignKey(CityReference, on_delete=models.CASCADE)
     city_code = models.CharField(max_length=2048)
     state_name = models.CharField(max_length=2048)
     state_code = models.CharField(max_length=2048)
@@ -39,14 +39,14 @@ class City(models.Model):
     shape = models.PolygonField(srid=4326)
     border_color = ColorField(default='#94BBFF')
     background_color = ColorField(default='#94BBFF')
-    created_by = models.ForeignKey(User)
+    created_by = models.ForeignKey(User, on_delete=models.DO_NOTHING)
     created_on = models.DateTimeField(default=datetime.datetime.now)
 
     components = GenericRelation(Component, related_query_name='component_city',object_id_field="object_id") #Fields for reverse relationship
 
-    def __unicode__(self):
+    def __str__(self):
         """Returns string representation of object"""
-        return str(self.name)
+        return str(self.name.city_name)
 
     class Meta:
         """Metadata for class City"""
@@ -62,14 +62,14 @@ class Survey(models.Model):
     """Shelter Survey Database"""
     name = models.CharField(max_length=2048)
     description = models.CharField(max_length=2048)
-    city = models.ForeignKey(City)
+    city = models.ForeignKey(City, on_delete=models.CASCADE)
     survey_type = models.CharField(max_length=2048,
                                    choices=SURVEYTYPE_CHOICES)
     analysis_threshold = models.IntegerField()
     kobotool_survey_id = models.CharField(max_length=2048)
     kobotool_survey_url = models.CharField(max_length=2048, null=True, blank=True)
 
-    def __unicode__(self):
+    def __str__(self):
         """Returns string representation of object"""
         return self.name
 
@@ -80,7 +80,7 @@ class Survey(models.Model):
 
 class AdministrativeWard(models.Model):
     """Administrative Ward Database"""
-    city = models.ForeignKey(City,related_name='admin_ward')
+    city = models.ForeignKey(City,related_name='admin_ward', on_delete=models.CASCADE)
     name = models.CharField(max_length=2048, default="")
     shape = models.PolygonField(srid=4326, default="")
     ward_no = models.CharField(max_length=2048, default="")
@@ -89,7 +89,7 @@ class AdministrativeWard(models.Model):
     border_color = ColorField(default='#BFFFD0')
     background_color = ColorField(default='#BFFFD0')
 
-    def __unicode__(self):
+    def __str__(self):
         """Returns string representation of object"""
         return self.name
 
@@ -101,7 +101,7 @@ class AdministrativeWard(models.Model):
 
 class ElectoralWard(models.Model):
     """Electoral Ward Database"""
-    administrative_ward = models.ForeignKey(AdministrativeWard,related_name='electoral_ward',blank=True, null=True)
+    administrative_ward = models.ForeignKey(AdministrativeWard,related_name='electoral_ward',blank=True, null=True, on_delete=models.CASCADE)
     name = models.CharField(max_length=2048, default="")
     shape = models.PolygonField(srid=4326, default="")
     ward_no = models.CharField(max_length=2048, default="", null=True, blank=True)
@@ -110,7 +110,7 @@ class ElectoralWard(models.Model):
     border_color = ColorField(default='#FFEFA1')
     background_color = ColorField(default='#FFEFA1')
 
-    def __unicode__(self):
+    def __str__(self):
         """Returns string representation of object"""
         return self.name
 
@@ -119,12 +119,11 @@ class ElectoralWard(models.Model):
         verbose_name = 'Electoral Ward'
         verbose_name_plural = 'Electoral Wards'
 
-
 ODF_CHOICES =(('',''), ('OD', 'OD'), ('ODF','ODF'),('ODF+','ODF+'),('ODF++','ODF++'))
 
 class Slum(models.Model):
     """Slum Database"""
-    electoral_ward = models.ForeignKey(ElectoralWard,related_name='slum_name',blank=True, null=True)
+    electoral_ward = models.ForeignKey(ElectoralWard,related_name='slum_name',blank=True, null=True, on_delete=models.CASCADE)
     name = models.CharField(max_length=2048)
     shape = models.PolygonField(srid=4326)
     description = models.TextField(max_length=2048,blank=True,null=True)
@@ -146,7 +145,7 @@ class Slum(models.Model):
             return True
         return False
 
-    def __unicode__(self):
+    def __str__(self):
         """Returns string representation of object"""
         return str(self.name)
 
@@ -158,13 +157,13 @@ class Slum(models.Model):
 
 class WardOfficeContact(models.Model):
     """Ward Office Contact Database"""
-    administrative_ward = models.ForeignKey(AdministrativeWard)
+    administrative_ward = models.ForeignKey(AdministrativeWard, on_delete=models.CASCADE)
     title = models.CharField(max_length=2048)
     name = models.CharField(max_length=2048)
     address_info = models.CharField(max_length=2048, default="")
     telephone = models.CharField(max_length=2048,blank=True,null=True)
 
-    def __unicode__(self):
+    def __str__(self):
         """Returns string representation of object"""
         return self.name
 
@@ -176,7 +175,7 @@ class WardOfficeContact(models.Model):
 
 class ElectedRepresentative(models.Model):
     """Elected Reresentative Database"""
-    electoral_ward = models.ForeignKey(ElectoralWard)
+    electoral_ward = models.ForeignKey(ElectoralWard, on_delete=models.CASCADE)
     name = models.CharField(max_length=2048)
     tel_nos = models.CharField(max_length=2048)
     address = models.CharField(max_length=2048)
@@ -184,7 +183,7 @@ class ElectedRepresentative(models.Model):
     additional_info = models.CharField(max_length=2048,blank=True,null=True)
     elected_rep_Party = models.CharField(max_length=2048)
 
-    def __unicode__(self):
+    def __str__(self):
         """Returns string representation of object"""
         return self.name
 
@@ -211,9 +210,9 @@ class DrawableComponent(models.Model):
     color = models.CharField(max_length=2048)
     extra = models.CharField(max_length=2048)
     maker_icon = models.CharField(max_length=2048)
-    shape_code = models.ForeignKey(ShapeCode)
+    shape_code = models.ForeignKey(ShapeCode, on_delete=models.CASCADE)
 
-    def __unicode__(self):
+    def __str__(self):
         """Returns string representation of object"""
         return self.name
 
@@ -228,11 +227,11 @@ class PlottedShape(models.Model):
     slum = models.CharField(max_length=2048)
     name = models.CharField(max_length=2048)
     lat_long = models.CharField(max_length=2048)
-    drawable_component = models.ForeignKey(DrawableComponent)
-    created_by = models.ForeignKey(User)
+    drawable_component = models.ForeignKey(DrawableComponent, on_delete=models.CASCADE)
+    created_by = models.ForeignKey(User, on_delete=models.DO_NOTHING)
     created_on = models.DateTimeField(default=datetime.datetime.now)
 
-    def __unicode__(self):
+    def __str__(self):
         """Returns string representation of object"""
         return self.name
 
@@ -265,10 +264,10 @@ class RoleMaster(models.Model):
 
 class UserRoleMaster(models.Model):
     """User Role Master Database"""
-    user = models.ForeignKey(User)
-    role_master = models.ForeignKey(RoleMaster)
-    city = models.ForeignKey(City)
-    slum = models.ForeignKey(Slum)
+    user = models.ForeignKey(User, on_delete=models.DO_NOTHING)
+    role_master = models.ForeignKey(RoleMaster, on_delete=models.CASCADE)
+    city = models.ForeignKey(City, on_delete=models.DO_NOTHING)
+    slum = models.ForeignKey(Slum, on_delete=models.CASCADE)
 
     class Meta:
         """Metadata for class UserRoleMaster"""
@@ -298,7 +297,7 @@ class Rapid_Slum_Appraisal(models.Model):
         megabyte_limit = 3.0
         if filesize > megabyte_limit*1024*1024:
             raise ValidationError("Max file size is %sMB" % str(megabyte_limit))
-    slum_name = models.ForeignKey(Slum)
+    slum_name = models.ForeignKey(Slum, on_delete=models.CASCADE)
     approximate_population=models.CharField(max_length=2048,blank=True, null=True)
     toilet_cost=models.CharField(max_length=2048,blank=True, null=True)
     toilet_seat_to_persons_ratio = models.CharField(max_length=2048,blank=True, null=True)
@@ -330,6 +329,9 @@ class Rapid_Slum_Appraisal(models.Model):
     percentage_with_individual_toilet = models.CharField(max_length=2048,blank=True, null=True)
     drainage_coverage = models.IntegerField(blank=True, null=True)
 
+    def __str__(self):
+        return (self.slum_name.name)
+
     class Meta:
         permissions = (
             ("can_generate_reports", "Can generate reports"),
@@ -344,5 +346,5 @@ class drainage(models.Model):
         megabyte_limit = 3.0
         if filesize > megabyte_limit*1024*1024:
             raise ValidationError("Max file size is %sMB" % str(megabyte_limit))
-    slum_name = models.ForeignKey(Slum)
+    slum_name = models.ForeignKey(Slum, on_delete=models.CASCADE)
     drainage_image = models.ImageField(upload_to=DRAINAGE_PHOTO,blank=True, null=True)

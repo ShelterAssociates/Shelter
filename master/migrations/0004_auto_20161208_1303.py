@@ -258,6 +258,6 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='drainage',
             name='slum_name',
-            field=models.ForeignKey(to='master.Slum'),
+            field=models.ForeignKey(to='master.Slum', on_delete=models.CASCADE),
         ),
     ]

@@ -18,13 +18,13 @@ class Sponsor(models.Model):
 	intro_date = models.DateField(default=datetime.now)
 	other_info = models.TextField(null=True, blank=True)
 	logo = models.ImageField(upload_to=LOGO_PATH, null=True, blank=True)
-	user = models.ForeignKey(User, limit_choices_to={'groups__name': "sponsor"})
+	user = models.ForeignKey(User, limit_choices_to={'groups__name': "sponsor"}, on_delete=models.DO_NOTHING)
 
 	class Meta:
 	 	verbose_name = 'Sponsor'
 	 	verbose_name_plural = 'Sponsors'
 
-	def __unicode__(self):
+	def __str__(self):
 		"""Returns string representation of object"""
 		return self.organization_name
 
@@ -45,12 +45,12 @@ class SponsorProject(models.Model):
 	end_date = models.DateField(null=True, blank=True)
 	funds_utilised = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
 	status = models.CharField(choices = PROJECTSTATUS_CHOICES, max_length=2)
-	created_by = models.ForeignKey(User)
+	created_by = models.ForeignKey(User, on_delete=models.DO_NOTHING)
 	created_on= models.DateField(default= datetime.now)
-	sponsor = models.ForeignKey(Sponsor, null=True, blank=True)
+	sponsor = models.ForeignKey(Sponsor, null=True, blank=True, on_delete=models.CASCADE)
 	#project_details = models.ManyToManyField(Sponsor, through='SponsorProjectDetails')
 
-	def __unicode__(self):
+	def __str__(self):
 		return self.name
 
 	class Meta:
@@ -59,7 +59,7 @@ class SponsorProject(models.Model):
 
 
 class ProjectDocuments(models.Model):
-	sponsor_project = models.ForeignKey(SponsorProject)
+	sponsor_project = models.ForeignKey(SponsorProject, on_delete=models.CASCADE)
 	document = models.FileField(upload_to=PROJECT_PATH)
 
 	def __unicode__(self):
@@ -73,10 +73,10 @@ class ProjectDocuments(models.Model):
 		verbose_name_plural = 'Project Documents'
 
 class ProjectImages(models.Model):
-	sponsor_project = models.ForeignKey(SponsorProject)
+	sponsor_project = models.ForeignKey(SponsorProject, on_delete=models.CASCADE)
 	image = models.ImageField(upload_to=PROJECT_PATH)
 
-	def __unicode__(self):
+	def __str__(self):
 		return self.image.url
 
 	class Meta:
@@ -98,22 +98,22 @@ def zip_path(instance, filename):
 	return os.path.join(ZIP_PATH, instance.sponsor_project.sponsor.organization_name, filename)
 
 class SponsorProjectDetails(models.Model):
-	sponsor = models.ForeignKey(Sponsor)
-	sponsor_project = models.ForeignKey(SponsorProject)
-	slum = models.ForeignKey(Slum)
+	sponsor = models.ForeignKey(Sponsor, on_delete=models.CASCADE)
+	sponsor_project = models.ForeignKey(SponsorProject, on_delete=models.CASCADE)
+	slum = models.ForeignKey(Slum, on_delete=models.CASCADE)
 	household_code = JSONField(null=True, blank=True)
 
 	class Meta:
 		unique_together = ("sponsor_project", "slum")
-	 	verbose_name = 'Sponsor Project Detail'
-	 	verbose_name_plural = 'Sponsor Project Details'
+		verbose_name = 'Sponsor Project Detail'
+		verbose_name_plural = 'Sponsor Project Details'
 
-	def __unicode__(self):
+	def __str__(self):
 		"""Returns string representation of object"""
 		return self.slum.name
 
 class SponsorProjectDetailsSubFields(models.Model):
-	sponsor_project_details = models.ForeignKey(SponsorProjectDetails)
+	sponsor_project_details = models.ForeignKey(SponsorProjectDetails, on_delete=models.CASCADE)
 	household_code = JSONField(null=True, blank=True)
 	quarter = models.CharField(choices=QUARTER_CHOICES, max_length=2)
 	status = models.CharField(choices=SPONSORSTATUS_CHOICES, max_length=2)
@@ -125,7 +125,7 @@ class SponsorProjectDetailsSubFields(models.Model):
 	 	verbose_name = 'Sponsor Project Detail Sub Field'
 	 	verbose_name_plural = 'Sponsor Project Detail Sub Fields'
 
-	def __unicode__(self):
+	def __str__(self):
 		"""Returns string representation of object"""
 		return self.sponsor_project_details.slum.name
 
@@ -161,7 +161,7 @@ def delete_file(sender, instance, *args, **kwargs):
 			os.remove(instance.zip_file.path)
 
 class SponsorProjectMOU(models.Model):
-	sponsor_project = models.ForeignKey(SponsorProject)
+	sponsor_project = models.ForeignKey(SponsorProject, on_delete=models.CASCADE)
 	quarter = models.CharField(choices=QUARTER_CHOICES, max_length=2)
 	fund_released = models.DecimalField(max_digits=10, decimal_places=2)
 	release_date = models.DateField(default=datetime.now)
@@ -170,14 +170,14 @@ class SponsorProjectMOU(models.Model):
 		verbose_name = "Sponsor project MOU"
 		verbose_name_plural = "Sponsor project MOU"
 
-	def __unicode__(self):
+	def __str__(self):
 		return self.sponsor.organization_name + ' ' + self.sponsor_project.name + ' ' + self.quarter
 
 STATUS_CHOICES = (('0','InActive'),
 	              ('1','Active'))
 
 class SponsorContact(models.Model):
-	sponsor = models.ForeignKey(Sponsor)
+	sponsor = models.ForeignKey(Sponsor, on_delete=models.CASCADE)
 	name = models.CharField(max_length=512)
 	email_id = models.CharField(max_length=512)
 	contact_no = models.CharField(max_length=256, null=True, blank=True)
@@ -187,6 +187,6 @@ class SponsorContact(models.Model):
 	 	verbose_name = 'Sponsor Contact'
 	 	verbose_name_plural = 'Sponsor Contacts'
 
-	def __unicode__(self):
+	def __str__(self):
 		"""Returns string representation of object"""
 		return self.name

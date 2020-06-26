@@ -64,11 +64,11 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='projectimages',
             name='sponsor_project',
-            field=models.ForeignKey(to='sponsor.SponsorProject'),
+            field=models.ForeignKey(to='sponsor.SponsorProject', on_delete=models.CASCADE),
         ),
         migrations.AddField(
             model_name='projectdocuments',
             name='sponsor_project',
-            field=models.ForeignKey(to='sponsor.SponsorProject'),
+            field=models.ForeignKey(to='sponsor.SponsorProject', on_delete=models.CASCADE),
         ),
     ]

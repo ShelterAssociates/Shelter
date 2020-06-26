@@ -73,27 +73,27 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='metadata',
             name='section',
-            field=models.ForeignKey(to='component.Section'),
+            field=models.ForeignKey(to='component.Section', on_delete=models.CASCADE),
         ),
         migrations.AddField(
             model_name='fact',
             name='metadata',
-            field=models.ForeignKey(to='component.Metadata'),
+            field=models.ForeignKey(to='component.Metadata', on_delete=models.CASCADE),
         ),
         migrations.AddField(
             model_name='fact',
             name='slum',
-            field=models.ForeignKey(to='master.Slum'),
+            field=models.ForeignKey(to='master.Slum', on_delete=models.CASCADE),
         ),
         migrations.AddField(
             model_name='component',
             name='metadata',
-            field=models.ForeignKey(to='component.Metadata'),
+            field=models.ForeignKey(to='component.Metadata', on_delete=models.CASCADE),
         ),
         migrations.AddField(
             model_name='component',
             name='slum',
-            field=models.ForeignKey(to='master.Slum'),
+            field=models.ForeignKey(to='master.Slum', on_delete=models.CASCADE),
         ),
         migrations.RunPython(loadfixture),
     ]

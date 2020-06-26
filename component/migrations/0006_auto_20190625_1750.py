@@ -35,7 +35,7 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='component',
             name='content_type',
-            field=models.ForeignKey(default=12, to='contenttypes.ContentType'),
+            field=models.ForeignKey(default=12, to='contenttypes.ContentType', on_delete=models.CASCADE),
         ),
         migrations.AddField(
             model_name='component',
