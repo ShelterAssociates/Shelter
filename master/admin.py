@@ -8,11 +8,11 @@ from master.models import CityReference, City, \
 from master.forms import CityFrom, AdministrativeWardFrom, ElectoralWardForm, SlumForm
 from django.contrib.auth.models import Group
 from django.utils.html import format_html
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 from django.conf.urls import include, url
 from django.http import HttpResponse
 import json
-from kmllevelparser import KMLLevelParser
+from .kmllevelparser import KMLLevelParser
 
 #Common filters for querying model depending on model type
 data_filter = {'CityReference': 'city_name__in',
@@ -254,6 +254,7 @@ class CityAdmin(BaseModelAdmin, UploadKMLBase):
     list_display = ('name','kml_upload_actions')
     model = City
     search_fields = ('name',)
+
     def save_model(self, request, obj, form, change):
         obj.created_by = request.user
         obj.save()

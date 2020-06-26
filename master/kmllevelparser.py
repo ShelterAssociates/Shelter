@@ -1,4 +1,4 @@
-from django.db.models import get_model
+from django.apps import apps
 from pykml import parser
 from django.contrib.gis.geos import GEOSGeometry
 from .models import *
@@ -21,7 +21,7 @@ class KMLLevelParser(object):
         except:
             self.folders = root.Folder.Document.Folder
 
-        self.parent_model = get_model('master', action_title)
+        self.parent_model = apps.get_model('master', action_title)
 
     def parse_placemark(self, placemark):
         ''' Get latlong and data from the placemark object
@@ -65,7 +65,7 @@ class KMLLevelParser(object):
         parent_filter[base_filter_data[self.action_title][0]] = self.city_id
         parent_model_data = self.parent_model.objects.filter(**parent_filter)
         if self.action_title in parse_link.keys():
-            child_model = get_model('master', parse_link[self.action_title])
+            child_model = apps.get_model('master', parse_link[self.action_title])
             child_filter = {}
             child_filter[base_filter_data[self.action_title][1]] = parent_model_data
             child_update = {}
@@ -121,14 +121,14 @@ class LinkingLevels(object):
     def linking(self):
         try:
             for parent_level,child_level in parse_link.items():
-                child_level_model = get_model('master', child_level)
+                child_level_model = apps.get_model('master', child_level)
                 filter_level = {}
                 filter_level[base_filter_data[child_level][0]] = self.city_id
                 update_level = {}
                 update_level[base_filter_data[parent_level][1]] = None
                 child_level_model.objects.filter(**filter_level).update(**update_level)
 
-                parent_level_model = get_model('master', parent_level)
+                parent_level_model = apps.get_model('master', parent_level)
                 parent_level_filter ={}
                 parent_level_filter[base_filter_data[parent_level][0]] = self.city_id
                 parent_level_objects = parent_level_model.objects.filter(**parent_level_filter)

@@ -3,7 +3,7 @@ from graphs.models import *
 import datetime
 from django.utils import timezone
 import pytz
-import urllib2
+from urllib import request as urllib2
 import json
 from django.conf import settings
 from itertools import chain

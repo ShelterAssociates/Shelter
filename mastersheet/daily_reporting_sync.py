@@ -11,14 +11,14 @@ t = ToiletConstructionSync(slum, user)
 """
 from django.conf import settings
 import datetime
-import urllib2
+from urllib import request as urllib2
 import json
 import re
 from dateutil.parser import parse
 from django.utils.dateparse import parse_datetime
 from django.utils import timezone
 from master.models import Survey, Slum, SURVEYTYPE_CHOICES
-from models import *
+from .models import *
 
 
 class DDSync(object):
@@ -54,8 +54,7 @@ class DDSync(object):
         return kobo_url
 
     def fetch_url_data(self, url):
-	print(url)
-	kobotoolbox_request = urllib2.Request(url)
+        kobotoolbox_request = urllib2.Request(url)
         kobotoolbox_request.add_header('User-agent', 'Mozilla 5.10')
         kobotoolbox_request.add_header('Authorization', settings.KOBOCAT_TOKEN)
 
@@ -81,7 +80,7 @@ class DDSync(object):
         try:
             KoboDDSyncTrack.objects.create(slum=self.slum,sync_date=sync_date,created_by=self.user)
         except Exception as e:
-            print "Error creating record" + str(e)
+            print("Error creating record" + str(e))
 
 class ToiletConstructionSync(DDSync):
 
@@ -107,7 +106,7 @@ class ToiletConstructionSync(DDSync):
             if ('group_ne3ao98/Where_the_individual_ilet_is_connected_to' in tmp_ff and tmp_ff['group_ne3ao98/Where_the_individual_ilet_is_connected_to'] in ['01', '03']):
                 update_data['toilet_connected_to'] = self.convert_datetime(tmp_ff['_submission_time'])
             if not tc.factsheet_done:
-	    	    update_data['factsheet_done'] = self.convert_datetime(tmp_ff['_submission_time'])
+                update_data['factsheet_done'] = self.convert_datetime(tmp_ff['_submission_time'])
             ToiletConstruction.objects.filter(**check_list).update(**update_data)
 
     def fetch_data(self):
