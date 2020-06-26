@@ -1,11 +1,11 @@
 {% extends "admin/base_site.html" %}
 {% load i18n %}
 {% block breadcrumbs %}
-{% load staticfiles %}
+{% load static %}
 <script src="{% static "js/common_cascading.js" %}"></script>
 
 <ol class="breadcrumb">
-    <li><a href="{% url 'index' %}">Home</a></li>
+    <li><a href="{% url 'master:index' %}">Home</a></li>
 </ol>
 {% endblock %}
 {% block sidebar %}
@@ -14,11 +14,11 @@
 {% block content %}
 <h3>Upload slum components</h3>
 <script>
-var city_url = "{% url 'cityList' %}";
-var administrative_url = "{% url 'administrativewardList' %}";
-var electoral_url = "{% url 'electoralWardList' %}";
-var slum_url = "{% url 'slumList' %}";
-var url = "{% url 'modelList' %}";
+var city_url = "{% url 'master:cityList' %}";
+var administrative_url = "{% url 'master:administrativewardList' %}";
+var electoral_url = "{% url 'master:electoralWardList' %}";
+var slum_url = "{% url 'master:slumList' %}";
+var url = "{% url 'master:modelList' %}";
 </script>
 {% if form.errors %}
     {% for field in form %}

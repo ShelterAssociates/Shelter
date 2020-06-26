@@ -1,12 +1,8 @@
-<html>
-<head>
 {% extends "admin/base_site.html" %}
 {% load i18n %}
-{% load staticfiles %}
-
-
+{% load static %}
 {% block breadcrumbs %}{% csrf_token %}
-
+<script src="{% static "admin/js/sorttable.js" %} "></script>
 <script>
 function fun(id)
 	{
@@ -25,43 +21,42 @@ function fun(id)
 		xhttp.send();
 	}
 </script>
-</head>
-<body>
-	<div align = "right" style = "margin-right:5%;"><a href="/admin/survey"><h2>Add New Survey </h2></a>
-	</div>
-	<div style = "margin-left:5%;margin-right:5%;">
+<ol class="breadcrumb">
+    <li><a href="{% url 'master:index' %}">Home</a></li>
+</ol>
+{% endblock %}
+{% block content %}
+<div align = "right" style = "margin-right:5%;">
+	<a href="/admin/survey"><h2>Add New Survey </h2></a>
+</div>
+<div style = "margin-left:5%;margin-right:5%;">
 	Filter Results : &nbsp;&nbsp;&nbsp;
 	<input type = "text" name = "searchbar" id = "sb1" placeholder = "Enter name">
 	<input type = "button" id = "sbar1" value = "&#x1f50e;" onClick = "location.href ='/admin/surveymapping/'+document.getElementById('sb1').value+'/'">
-	</div>
-	<br><br>
-	<table width = 90% style = "margin-left:5%; margin-right:5%;" class = "sortable" >
-		<th> Name </th><th> Description </th> <th> City </th><th> Type </th><th> Analysis Threshold </th> <th> KoboCat ID </th><th> KoboCat URL </th><th></th>
-        {% for surveyFields in object_list %}
-            <tr>
-            <td><a href = "/admin/survey/{{surveyFields.id}}">{{ surveyFields.name }}</a></td>
-            <td>{{ surveyFields.description }}</td>
-            <td>{{ surveyFields.city }}</td>
-            <td>{{ surveyFields.survey_type }}</td>
-            <td>{{ surveyFields.analysis_threshold }}</td>
-            <td>{{ surveyFields.kobotool_survey_id }}</td>
-            <td>{{ surveyFields.kobotool_survey_url }}</td>
-            <td><a href="/admin/deletesurvey/{{surveyFields.id}}" onclick="return confirm('Are you sure want to delete');"><img src = "{% static "images/binc.png" %}" height=20 width=20 ></img></a></td>
-            </tr>
-        {% endfor %}
-    </table>
+</div>
+<br><br>
+<table width = 90% style = "margin-left:5%; margin-right:5%;" class = "sortable" >
+	<th> Name </th><th> Description </th> <th> City </th><th> Type </th><th> Analysis Threshold </th> <th> KoboCat ID </th><th> KoboCat URL </th><th></th>
+	{% for surveyFields in object_list %}
+		<tr>
+		<td><a href = "/admin/survey/{{surveyFields.id}}">{{ surveyFields.name }}</a></td>
+		<td>{{ surveyFields.description }}</td>
+		<td>{{ surveyFields.city }}</td>
+		<td>{{ surveyFields.survey_type }}</td>
+		<td>{{ surveyFields.analysis_threshold }}</td>
+		<td>{{ surveyFields.kobotool_survey_id }}</td>
+		<td>{{ surveyFields.kobotool_survey_url }}</td>
+		<td><a href="/admin/deletesurvey/{{surveyFields.id}}" onclick="return confirm('Are you sure want to delete');"><img src = "{% static "images/binc.png" %}" height=20 width=20 ></img></a></td>
+		</tr>
+	{% endfor %}
+</table>
 {% if not object_list %}
 	<div align = "left" style = "margin-left:40%;">
-    		<br><br>
-    		No records found
-    	</div>
+		<br><br>No records found
+	</div>
 {% endif %}
-<script src="{% static "admin/js/sorttable.js" %} "></script>
-{% endblock %}
-{% block content %}
+
 {% endblock %}
 {% block sidebar %}
 {% endblock %}
-<script src="{% static "admin/js/jquery.js" %}"></script>
-</body>
-</html>
+
