@@ -54,7 +54,7 @@ class KMLParser(object):
             for coordinate in coordinates:
                 if coordinate:
                     lst_coordinates.append(list(map(float, coordinate.split(',')[:2])))
-            print(lst_coordinates, key)
+            #print(lst_coordinates, key)
             if key == POLYGON:
                 lst_coordinates = [lst_coordinates]
             elif key == POINT:
