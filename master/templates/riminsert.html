@@ -3,12 +3,12 @@
 
 {% block breadcrumbs %}
 
-{% load staticfiles %}
+{% load static %}
 <script>
 
 function cityList(){
 
-    var url = "{% url 'cityList' %}";
+    var url = "{% url 'master:cityList' %}";
 
     $.ajax({
 
@@ -56,7 +56,7 @@ function administrativewardList(){
 
     var id = $("#id_City option:selected").val();
 
-    var url = "{% url 'administrativewardList' %}";
+    var url = "{% url 'master:administrativewardList' %}";
 
     $.ajax({
 
@@ -99,7 +99,7 @@ function electoralWardList(){
 
     var id = $("#id_AdministrativeWard option:selected").val();
 
-    var url = "{% url 'electoralWardList' %}";
+    var url = "{% url 'master:electoralWardList' %}";
 
 
     $.ajax({
@@ -141,7 +141,7 @@ function slumList(){
     var Administrativewardname = $("#id_ElectoralWard option:selected").text();
     var id = $("#id_ElectoralWard option:selected").val();
 
-    var url = "{% url 'slumList' %}";
+    var url = "{% url 'master:slumList' %}";
     $.ajax({
 
         url : url,
@@ -181,7 +181,7 @@ function filllist(){
 
     var id = $('#id_slum_name').val();
 
-    var url = "{% url 'modelList' %}";
+    var url = "{% url 'master:modelList' %}";
 
     $.ajax({
         url : url,
@@ -275,8 +275,8 @@ $(document).ready(function(){
 
 </style>
 <ol class="breadcrumb">
-    <li><a href="{% url 'index' %}">Home</a></li>
-    <li><a href="{% url 'rimdisplay' %}">Rapid Infrastructure Mapping Form</a></li>
+    <li><a href="{% url 'master:index' %}">Home</a></li>
+    <li><a href="{% url 'master:rimdisplay' %}">Rapid Infrastructure Mapping Form</a></li>
  </ol>
 <div style = "margin-left:1%;margin-right: 1%;">
 	<h2>Rapid Infrastructure Mapping Form</h2>
@@ -886,7 +886,7 @@ $(document).ready(function(){
 				<!-- Button -->
 				<div class ="row">
 					<div class="col-md-12" align="center">
-						<a href="{% url 'rimdisplay' %}"style="text-decoration: none; color: #FFF" class="btn btn-primary" role="button">Back</a>
+						<a href="{% url 'master:rimdisplay' %}"style="text-decoration: none; color: #FFF" class="btn btn-primary" role="button">Back</a>
 						<button type="submit" class="btn btn-primary">
 							Submit
 						</button>

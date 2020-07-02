@@ -19,7 +19,7 @@ $(document).ready(function() {
     var csrf_token = document.getElementsByName("csrfmiddlewaretoken")[0].value;
 
     $.ajax({
-            url:"/mastersheet/columns",
+            url:"/mastersheet/columns/",
             type : "GET",
             dataType : "json",
             data : "",

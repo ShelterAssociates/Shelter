@@ -1,7 +1,7 @@
 {% extends "admin/base_site.html" %}
 {% load i18n %}
 {% block breadcrumbs %}
-{% load staticfiles %}
+{% load static %}
 <script>
 	$(document).ready(function() {
 		$('[data-toggle="tooltip"]').tooltip();
@@ -34,7 +34,7 @@
 
 
 <ol class="breadcrumb">
-    <li><a href="{% url 'index' %}">Home</a></li>
+    <li><a href="{% url 'master:index' %}">Home</a></li>
 </ol>
 
 <div style = "margin-left:1%;margin-right: 1%;">
@@ -57,9 +57,9 @@
 
 	<form  enctype="multipart/form-data" method="post" >
 		<div style="text-align:right;">
-			<a href="{% url 'riminsert' %}" style="text-decoration: none; color: #FFF;" class="btn btn-primary" role="button">Add New</a>&nbsp;
+			<a href="{% url 'master:riminsert' %}" style="text-decoration: none; color: #FFF;" class="btn btn-primary" role="button">Add New</a>&nbsp;
 			<button id ="delete" type="submit" class="btn btn-danger">Delete</button>&nbsp;
-            <a href="{% url 'sluminformation' %}" style="text-decoration: none; color: #FFF;" class="btn btn-primary" role="button">Back</a>&nbsp;&nbsp;
+            <a href="{% url 'master:index' %}" style="text-decoration: none; color: #FFF;" class="btn btn-primary" role="button">Back</a>&nbsp;&nbsp;
 		</div>
 		{% csrf_token %}
 		<br>
@@ -115,7 +115,7 @@
 						<input id={{i.id}} type="checkbox" name="selectcheckbox" value={{i.id}}>
 						</td>
 
-						<td ><a href="{% url 'rimedit' i.id %}" data-toggle="tooltip" title="edit"> {{ i.slum_name }} </a></td>
+						<td ><a href="{% url 'master:rimedit' i.id %}" data-toggle="tooltip" title="edit"> {{ i.slum_name }} </a></td>
 
 						<td > {{ i.approximate_population }} </td>
 						<td > {{ i.general_info_left_image }} </td>
