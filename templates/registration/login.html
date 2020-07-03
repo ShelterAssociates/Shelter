@@ -149,54 +149,53 @@ body {
 </script>
 <div class="login-card">
 <div class="text-center"><h1 id="site-name"><img src="/static/images/shelter_footer.png" height="100"/></h1></div>
-{% if form.errors and not form.non_field_errors %}
-<p class="errornote">
-{% if form.errors.items|length == 1 %}{% trans "Please correct the error below." %}{% else %}{% trans "Please correct the errors below." %}{% endif %}
-</p>
-{% endif %}
+    {% if form.errors and not form.non_field_errors %}
+        <p class="errornote">
+        {% if form.errors.items|length == 1 %}{% trans "Please correct the error below." %}{% else %}{% trans "Please correct the errors below." %}{% endif %}
+        </p>
+    {% endif %}
 
-{% if form.non_field_errors %}
-{% for error in form.non_field_errors %}
-<p class="errornote">
-    {{ error }}
-</p>
-{% endfor %}
-{% endif %}
+    {% if form.non_field_errors %}
+        {% for error in form.non_field_errors %}
+        <p class="errornote">
+            {{ error }}
+        </p>
+        {% endfor %}
+    {% endif %}
 
-<div id="content-main">
+    <div id="content-main">
+        {% if user.is_authenticated %}
+        <p class="errornote">
+        {% blocktrans trimmed %}
+            You are authenticated as {{ username }}, but are not authorized to
+            access this page. Would you like to login to a different account?
+        {% endblocktrans %}
+        </p>
+        {% endif %}
 
-{% if user.is_authenticated %}
-<p class="errornote">
-{% blocktrans trimmed %}
-    You are authenticated as {{ username }}, but are not authorized to
-    access this page. Would you like to login to a different account?
-{% endblocktrans %}
-</p>
-{% endif %}
-
-<form action="{{ app_path }}" method="post" id="login-form">{% csrf_token %}
-  <div class="form-row">
-    {{ form.username.errors }}
-    {{ form.username.label_tag }} {{ form.username }}
-  </div>
-  <div class="form-row">
-    {{ form.password.errors }}
-    {{ form.password.label_tag }} {{ form.password }}
-    <input type="hidden" name="next" value="{{ next }}">
-  </div>
-  {% url 'admin_password_reset' as password_reset_url %}
-  {% if password_reset_url %}
-  <div class="password-reset-link">
-    <a href="{{ password_reset_url }}">{% trans 'Forgotten your password or username?' %}</a>
-  </div>
-  {% endif %}
-  <div style="margin-top:10px;">
-    <input type="submit" class="btn btn-lg btn-primary btn-block" value="{% trans 'Log in' %}">
-  </div>
-</form>
-<div class="login-help" style="display:none;">
-      <a href="{% url 'password_reset' %}">Forgot Password</a>
-  </div>
-</div>
+        <form action="{{ app_path }}" method="post" id="login-form">{% csrf_token %}
+          <div class="form-row">
+            {{ form.username.errors }}
+            {{ form.username.label_tag }} {{ form.username }}
+          </div>
+          <div class="form-row">
+            {{ form.password.errors }}
+            {{ form.password.label_tag }} {{ form.password }}
+            <input type="hidden" name="next" value="{{ next }}">
+          </div>
+          {% url 'admin_password_reset' as password_reset_url %}
+          {% if password_reset_url %}
+          <div class="password-reset-link">
+            <a href="{{ password_reset_url }}">{% trans 'Forgotten your password or username?' %}</a>
+          </div>
+          {% endif %}
+          <div style="margin-top:10px;">
+            <input type="submit" class="btn btn-lg btn-primary btn-block" value="{% trans 'Log in' %}">
+          </div>
+        </form>
+        <div class="login-help" style="display:none;">
+              <a href="{% url 'password_reset' %}">Forgot Password</a>
+        </div>
     </div>
+</div>
 {% endblock %}
