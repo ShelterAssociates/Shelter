@@ -1027,7 +1027,7 @@ def report_table_cm(request):
                 report_table_data_cm[str(level_id)][key_for_datatable] += data[key_for_datatable]
             else:
                 report_table_data_cm[str(level_id)].update(data)
-    return HttpResponse(json.dumps(map(lambda x: report_table_data_cm[x], report_table_data_cm)),
+    return HttpResponse(json.dumps(list(map(lambda x: report_table_data_cm[x], report_table_data_cm))),
                         content_type="application/json")
 
 
@@ -1101,7 +1101,7 @@ def report_table_cm_activity_count(request):
             else:
                 report_table_data_cm_activity_count[str(level_id)].update(data)
     return HttpResponse(
-        json.dumps(map(lambda x: report_table_data_cm_activity_count[x], report_table_data_cm_activity_count)),
+        json.dumps(list(map(lambda x: report_table_data_cm_activity_count[x], report_table_data_cm_activity_count))),
         content_type="application/json")
 
 
@@ -1203,7 +1203,7 @@ def give_report_table_numbers_accounts(request):
                 str_tmp = str_tmp + k + ':' + str(v) + '<br/>'
             report_table_accounts_data[level].update({'total_p' + str(key_phase) + '_accounts': str_tmp})
 
-    return HttpResponse(json.dumps(map(lambda x: report_table_accounts_data[x], report_table_accounts_data)),
+    return HttpResponse(json.dumps(list(map(lambda x: report_table_accounts_data[x], report_table_accounts_data))),
                         content_type="application/json")
 
 
