@@ -10,7 +10,7 @@ from django.dispatch import receiver
 from django.conf import settings
 
 from master.models import Survey, Slum, Rapid_Slum_Appraisal
-import BeautifulSoup as Soup
+from bs4 import BeautifulSoup as Soup
 
 
 #@receiver(post_save, sender=Slum)
@@ -70,7 +70,7 @@ def Rapid_Slum_Appraisal_created_trigger(sender,instance, **kwargs):
     """Triggers the below code when image is updated"""
     try:
         this = Rapid_Slum_Appraisal.objects.get(id=instance.id)
-        print "Hi"
+        #print "Hi"
         try:
             if this.gutter_info_left_image.name != instance.gutter_info_left_image.name:
                 this.gutter_info_left_image.delete(save=False)                

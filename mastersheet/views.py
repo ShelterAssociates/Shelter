@@ -70,12 +70,12 @@ def masterSheet(request, slum_code=0, FF_code=0, RHS_code=0):
         if slum_code is not 0:
 	    
             if flag_fetch_rhs :
-                formdict = map(lambda x: x.rhs_data, filter(lambda x: x.rhs_data!=None, household_data))
+                formdict = list(map(lambda x: x.rhs_data, filter(lambda x: x.rhs_data!=None, household_data)))
             else:
-                formdict = map(lambda x:{'Household_number':x.household_number, '_id':x.rhs_data['_id'], '_xform_id_string':x.rhs_data['_xform_id_string']}, filter(lambda x:x.rhs_data!=None, household_data))
+                formdict = list(map(lambda x:{'Household_number':x.household_number, '_id':x.rhs_data['_id'], '_xform_id_string':x.rhs_data['_xform_id_string']}, filter(lambda x:x.rhs_data!=None, household_data)))
 
             if flag_fetch_ff:
-                formdict_family_factsheet = map(lambda x:(x.ff_data if x.ff_data else {'group_vq77l17/Household_number': 00 }),household_data)
+                formdict_family_factsheet = list(map(lambda x:(x.ff_data if x.ff_data else {'group_vq77l17/Household_number': 00 }),household_data))
 
                 # Family Factsheet - fetching data
                 # arranging data with respect to household numbers
@@ -281,7 +281,7 @@ def masterSheet(request, slum_code=0, FF_code=0, RHS_code=0):
                         if int(x['Household_number']) in funder.household_code:
                             x.update({'Funder': funder.sponsor.organization_name})
 
-            formdict = map(lambda x: dummy_formdict[x], dummy_formdict)
+            formdict = list(map(lambda x: dummy_formdict[x], dummy_formdict))
 
             for x in formdict:
                 try:
@@ -449,16 +449,16 @@ def define_columns(request):
 
     final_data = {}
     final_data['buttons'] = collections.OrderedDict()
-    final_data['buttons']['RHS'] = range(number_of_invisible_columns + 1,
-                                         number_of_invisible_columns + 1 + 18)  # range(14,32)#range(13,31)
-    final_data['buttons']['Follow-up'] = range(number_of_invisible_columns + 1 + 18,
-                                               number_of_invisible_columns + 1 + 18 + 18)  # range(32,50)#range(31,49)
-    final_data['buttons']['Family factsheet'] = range(number_of_invisible_columns + 1 + 18 + 18,
-                                                      number_of_invisible_columns + 1 + 18 + 18 + 7)  # range(50,57)#range(49,56)
-    final_data['buttons']['SBM'] = range(number_of_invisible_columns + 1 + 18 + 18 + 7,
-                                         number_of_invisible_columns + 1 + 18 + 18 + 7 + 10)  # range(57,67)#range(56,66)
-    final_data['buttons']['Construction status'] = range(number_of_invisible_columns + 1 + 18 + 18 + 7 + 10,
-                                                         number_of_invisible_columns + 1 + 18 + 18 + 7 + 10 + 15)  # range(67,82)#range(66,81)
+    final_data['buttons']['RHS'] = list(range(number_of_invisible_columns + 1,
+                                         number_of_invisible_columns + 1 + 18))  # range(14,32)#range(13,31)
+    final_data['buttons']['Follow-up'] = list(range(number_of_invisible_columns + 1 + 18,
+                                               number_of_invisible_columns + 1 + 18 + 18))  # range(32,50)#range(31,49)
+    final_data['buttons']['Family factsheet'] = list(range(number_of_invisible_columns + 1 + 18 + 18,
+                                                      number_of_invisible_columns + 1 + 18 + 18 + 7))  # range(50,57)#range(49,56)
+    final_data['buttons']['SBM'] = list(range(number_of_invisible_columns + 1 + 18 + 18 + 7,
+                                         number_of_invisible_columns + 1 + 18 + 18 + 7 + 10))  # range(57,67)#range(56,66)
+    final_data['buttons']['Construction status'] = list(range(number_of_invisible_columns + 1 + 18 + 18 + 7 + 10,
+                                                         number_of_invisible_columns + 1 + 18 + 18 + 7 + 10 + 15))  # range(67,82)#range(66,81)
     # We define the columns for community mobilization and vendor details in a dynamic way. The
     # reason being these columns are prone to updates and additions.
     activity_pre_len = len(formdict_new)
@@ -468,7 +468,7 @@ def define_columns(request):
             formdict_new.append({"data": activity_type_model[i].name, "title": activity_type_model[i].name})
     except Exception as e:
         print(e)
-    final_data['buttons']['Community Mobilization'] = range(activity_pre_len, len(formdict_new))
+    final_data['buttons']['Community Mobilization'] = list(range(activity_pre_len, len(formdict_new)))
 
     material_type_model = MaterialType.objects.filter(display_flag=True).order_by('display_order')
     vendor_pre_len = len(formdict_new)
@@ -479,7 +479,7 @@ def define_columns(request):
             formdict_new.append({"data": "invoice_number" + str(i.name), "title": str(i.name) + " Invoice Number"})
     except Exception as e:
         print(e)
-    final_data['buttons']['Accounts'] = range(vendor_pre_len, len(formdict_new))
+    final_data['buttons']['Accounts'] = list(range(vendor_pre_len, len(formdict_new)))
     # print final_data['buttons']['Accounts'] , len(final_data['buttons']['Accounts'])
     final_data['data'] = formdict_new
     return HttpResponse(json.dumps(final_data), content_type="application/json")
@@ -954,7 +954,7 @@ def give_report_table_numbers(request):  # view for toilet construction
         for level_id, data in tc.items():
             report_table_data[level_id].update(data)
 
-    return HttpResponse(json.dumps(map(lambda x: report_table_data[x], report_table_data)),
+    return HttpResponse(json.dumps(list(map(lambda x: report_table_data[x], report_table_data))),
                         content_type="application/json")
 
 
