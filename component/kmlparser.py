@@ -90,7 +90,7 @@ class KMLParser(object):
         metadata_component = Metadata.objects.filter(type='C').values_list('code', flat=True)
 
         if self.delete_flag:
-            self.object_type.components.delete()
+            self.object_type.components.all().delete()
 
         for folder in folders:
           try:
