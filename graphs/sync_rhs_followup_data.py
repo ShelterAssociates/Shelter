@@ -52,10 +52,10 @@ def fetch_labels_codes(rhs_data, form_code):
 					try:
 						string[string.index(num)] = name_label_data_dict[key][num]
 					except Exception as e:
-						print e
-						print num
-						print key
-						print string.index(num)
+						print(e)
+						print(num)
+						print(key)
+						print(string.index(num))
 				x[key_f] = ", ".join(string)
 
 	return rhs_data
@@ -84,11 +84,11 @@ def fetch_data(form_code, latest_date):
 			kobotoolbox_request = urllib2.Request(url)
 			kobotoolbox_request.add_header('User-agent', 'Mozilla 5.10')
 			kobotoolbox_request.add_header('Authorization', settings.KOBOCAT_TOKEN)
-			print "here aboves"
+			print("here aboves")
 			res = urllib2.urlopen(kobotoolbox_request)
 			html = res.read()
 			records.extend(json.loads(html))
-			print url
+			print(url)
 	return records
 
 def syn_rim_data(city_id):
@@ -182,7 +182,7 @@ def syn_rhs_followup_data(city_id, ff_flag=False, latest_flag=True):
 				latest_followup_date = latest_followup[0].submission_date
 
 			latest_date = latest_followup_date if latest_followup_date > latest_rhs_date else latest_rhs_date
-			print latest_date
+			print(latest_date)
 			if ff_flag:
 				sync_ff_data(city.id, latest_date)
 
@@ -192,11 +192,11 @@ def syn_rhs_followup_data(city_id, ff_flag=False, latest_flag=True):
 				rhs_data = fetch_data(form_code, latest_date)
 				data_with_lables = fetch_labels_codes(rhs_data, form_code)
 				total_records +=(len(data_with_lables))
-				print 'len of data_with_lables before = ' + str(len(data_with_lables))
+				print('len of data_with_lables before = ' + str(len(data_with_lables)))
 				data_with_lables = [x for x in data_with_lables if 'slum_name' in x.keys()]
 				data_with_lables = [x for x in data_with_lables if 'Type_of_structure_occupancy' in x.keys()]
 				data_with_lables = sorted(data_with_lables, key = lambda x:x['slum_name'])
-				print 'len of data_with_lables after = ' + str(len(data_with_lables))
+				print('len of data_with_lables after = ' + str(len(data_with_lables)))
 
 				print("Unoccupied Houses and locked Houses")
 				for key,list_records in groupby(data_with_lables, lambda x:x['slum_name']):
@@ -318,7 +318,7 @@ def syn_rhs_followup_data(city_id, ff_flag=False, latest_flag=True):
 									#print record['group_og5bx85/Type_of_survey']
 								except Exception as e:
 									# print "error in followup rhs"
-									print e
+									print(e)
 					
 					replaced_locked_houses.update({slum:temp_locked_houses_replaced})
 					double_houses.update({slum:temp_double_houses})
@@ -375,7 +375,7 @@ def syn_rhs_followup_data(city_id, ff_flag=False, latest_flag=True):
 										pass
 									only_followup +=1
 								except Exception as e:
-									print e
+									print(e)
 		
 def sync_ff_data(city_id, latest_date=''):
 	cities = City.objects.filter(id__in=[city_id])
@@ -421,7 +421,7 @@ def sync_ff_data(city_id, latest_date=''):
 								household_data.save()
 						except Exception as e:
 							#print no_rhs_but_ff.append(record['group_vq77l17/Household_number'] + " in" + str(slum) + " has a factesheet but no rhs/followup record")
-							print e
+							print(e)
 			
 
 	# print "unoccupied =" + str(count_u) + str(len(count_u))
