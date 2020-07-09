@@ -260,7 +260,7 @@ def syn_rhs_followup_data(city_id, ff_flag=False, latest_flag=True):
 							record.update({'group_oi8ts04/Current_place_of_defecation': record['group_oi8ts04/C4']})
 						if 'group_oi8ts04/C5' in record.keys():
 							record.update({'group_oi8ts04/Current_place_of_defecation': record['group_oi8ts04/C5']})
-					 	if record['Type_of_structure_occupancy'] == 'Occupied house':
+						if record['Type_of_structure_occupancy'] == 'Occupied house':
 							if 'group_og5bx85/Type_of_survey' in record and record['group_og5bx85/Type_of_survey'] == 'RHS':
 								f_data = {}
 								r_data = {}
