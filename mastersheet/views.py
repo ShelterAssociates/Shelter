@@ -1041,9 +1041,7 @@ def report_table_cm_activity_count(request):
         group_perm = Group.objects.all().values_list('name', flat=True)
     group_perm = map(lambda x: x.split(':')[-1], group_perm)
 
-    keys = Slum.objects.filter(id__in=keys,
-                               electoral_ward__administrative_ward__city__name__city_name__in=group_perm).values_list(
-        'id', flat=True)
+    keys = Slum.objects.filter(id__in=keys, electoral_ward__administrative_ward__city__name__city_name__in=group_perm).values_list('id', flat=True)
 
     start_date = tag_key_dict['startDate']
     end_date = tag_key_dict['endDate']
@@ -1084,6 +1082,7 @@ def report_table_cm_activity_count(request):
     }
     report_table_data_cm_activity_count = defaultdict(dict)
     activity_type = ActivityType.objects.all()
+
     for x in activity_type:
         key_for_datatable = "total_" + (x.name).replace(" ", "")
         filter_field = {'slum__id__in': keys, 'activity_date__range': [start_date, end_date]}

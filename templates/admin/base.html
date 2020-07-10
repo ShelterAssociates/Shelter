@@ -31,6 +31,12 @@
   gtag('config', 'UA-156545676-1');
 </script>
 {% block extrahead %}{% endblock %}
+{% block responsive %}
+    <meta name="viewport" content="user-scalable=no, width=device-width, initial-scale=1.0, maximum-scale=1.0">
+    <link rel="stylesheet" type="text/css" href="{% static "admin/css/responsive.css" %}">
+    {% if LANGUAGE_BIDI %}<link rel="stylesheet" type="text/css" href="{% static "admin/css/responsive_rtl.css" %}">{% endif %}
+{% endblock %}
+
 {% block blockbots %}<meta name="robots" content="NONE,NOARCHIVE" />{% endblock %}
 </head>
 {% load i18n %}
@@ -56,7 +62,7 @@
             <!-- END Left Menu -->
 
             <!-- Right Menu -->
-            <div class="nav navbar-nav navbar-right" style="margin-right:0px;">
+            <div class="nav navbar-nav navbar-right" style="margin-right:15px;margin-top:15px;">
                 {% block usertools %}
                 <div id="user-tools">
                     {% block welcome-msg %}

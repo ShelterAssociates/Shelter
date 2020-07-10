@@ -31,8 +31,8 @@ class MetadataInline(admin.TabularInline):
     """
     model = Metadata
     fk_name = 'section'
-    max_num = 1
-    extra = 1
+    min_num = 1
+    extra = 0
     can_delete = False
 
 class SectionAdmin(admin.ModelAdmin):
