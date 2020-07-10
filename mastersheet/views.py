@@ -220,7 +220,7 @@ def masterSheet(request, slum_code=0, FF_code=0, RHS_code=0):
                 dummy_formdict[str(i)].update(temp_daily_reporting[str(i)])
                	dummy_formdict[str(i)].update({'tc_id_' + str(i): temp_daily_reporting[str(i)]['id']})
 
-            for key, x in dummy_formdict.iteritems():
+            for key, x in dummy_formdict.items():
                 try:
                     if len(x['p1_material_shifted_to']) != 0 or len(x['p2_material_shifted_to']) != 0 or len(
                             x['p3_material_shifted_to']) != 0 or len(x['st_material_shifted_to']) != 0:
@@ -1262,13 +1262,13 @@ def accounts_excel_generation(request):
                 dict_of_dict[(j, i.slum)] = {i.material_type: i}
 
     i = 1
-    for k, v in dict_of_dict.iteritems():
+    for k, v in dict_of_dict.items():
         try:
             s = str(sponsor.filter(slum__id=1094, household_code__contains=k[0]).exclude(
                 sponsor__organization_name='SBM Toilets')[0].sponsor.organization_name)
         except Exception as e:
             s = 'Sponsor Error'
-        for inner_k, inner_v in v.iteritems():
+        for inner_k, inner_v in v.items():
             sheet1.write(i, 0, str(inner_v.invoice.invoice_date))
             sheet1.write(i, 1, inner_v.invoice.invoice_number)
             sheet1.write(i, 2, inner_v.invoice.vendor.name)
