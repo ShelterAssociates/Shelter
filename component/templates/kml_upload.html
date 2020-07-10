@@ -1,12 +1,8 @@
 {% extends "admin/base_site.html" %}
 {% load i18n %}
-{% block breadcrumbs %}
 {% load static %}
+{% block extrahead %}
 <script src="{% static "js/common_cascading.js" %}"></script>
-
-<ol class="breadcrumb">
-    <li><a href="{% url 'master:index' %}">Home</a></li>
-</ol>
 {% endblock %}
 {% block sidebar %}
 {% endblock %}
