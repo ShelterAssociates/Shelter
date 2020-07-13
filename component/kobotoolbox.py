@@ -146,7 +146,7 @@ def parse_RIM_data(submission, form_data):
                 if type(submission[0][sub_k]) == list:
                     count = len(submission[0][sub_k])
                     sub = submission[0][sub_k]
-                    sub_key.extend(sum([k.keys() for k in submission[0][sub_k]], []))
+                    sub_key.extend(sum([list(k.keys()) for k in submission[0][sub_k]], []))
                 else:
                     sub_key.append(sub_k)
             #Default values

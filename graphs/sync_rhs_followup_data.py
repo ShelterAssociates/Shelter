@@ -75,7 +75,7 @@ def fetch_data(form_code, latest_date):
 	slots = count_records['count'] / 30000
 	records = []
 	if int(count_records['count']) > 0 :
-		for x in range(slots+1):
+		for x in range(int(slots)+1):
 			start = x*30000
 			url = rhs_url
 			# if latest_date != '':
@@ -265,7 +265,7 @@ def syn_rhs_followup_data(city_id, ff_flag=False, latest_flag=True):
 								f_data = {}
 								r_data = {}
 								
-								for i in record.iteritems():	
+								for i in record.items():	
 									if 'group_oi8ts04' in i[0]:
 										f_data.update({i[0]:i[1]})
 									else:
@@ -347,7 +347,7 @@ def syn_rhs_followup_data(city_id, ff_flag=False, latest_flag=True):
 								count_o.append(record['Household_number'])
 								a.append(record['Household_number'])
 								f_data = {}
-								for i in record.iteritems():	
+								for i in record.items():	
 									if 'group_oi8ts04' in i[0]:
 										f_data.update({i[0]:i[1]})
 									
