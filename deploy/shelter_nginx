@@ -30,6 +30,14 @@ server {
     ssl_certificate_key /etc/letsencrypt/live/app.shelter-associates.org/privkey.pem; # managed by Certbot
 
     include /etc/letsencrypt/options-ssl-nginx.conf; # managed by Certbot
+    
+     location /static {
+	alias /srv/Shelter/static/;
+     }
+     
+     location /media {
+	alias /srv/Shelter/media/;
+     }
 
      client_max_body_size 4G;
 #    add_header X-Frame-Options ALLOW-FROM http://www.shelter-associates.org;
