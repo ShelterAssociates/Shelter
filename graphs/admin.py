@@ -9,6 +9,7 @@ class HouseholdDataAdmin(admin.ModelAdmin):
 	search_fields = ['slum','household_number', 'city','created_date', 'submission_date']
 	ordering = ['slum', 'household_number']
 	raw_id_fields = ['slum']
+	list_per_page = 10
 admin.site.register(HouseholdData, HouseholdDataAdmin)
 
 class FollowupDataAdmin(admin.ModelAdmin):
@@ -17,6 +18,7 @@ class FollowupDataAdmin(admin.ModelAdmin):
 	search_fields = [ 'household_number', 'slum', 'city','created_date', 'submission_date']
 	ordering = ['slum', 'household_number']
 	raw_id_fields = ['slum']
+	list_per_page = 10
 admin.site.register(FollowupData, FollowupDataAdmin)
 
 class RIMDataAdmin(admin.ModelAdmin):
