@@ -35,8 +35,10 @@ base64_pattern = r'city::(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/
 urlpatterns = [
                   url(r'^$', slummap, name='slummap'),
                   url(r'^home/', login_success, name='login_success'),
-                  url(r'^accounts/', admin.site.urls),
+
                   url(r'^accounts/', include('django.contrib.auth.urls')),
+                  url(r'^accounts/', admin.site.urls),
+
                   url(r'^(?P<key>{})$'.format(base64_pattern), city_wise_map_base64, name="city_map_base64"),
                   url(r'^(?P<key>{})/(?P<slumname>.*)$'.format(base64_pattern), city_wise_map_base64,
                            name="city_map_base64"),

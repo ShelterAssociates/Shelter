@@ -141,4 +141,4 @@ ADMIN_SITE_HEADER = "shelter Administration"
 
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend' 
 
-LOGIN_REDIRECT_URL = '/home'
+LOGIN_REDIRECT_URL = 'login_success'

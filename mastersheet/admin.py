@@ -48,7 +48,7 @@ class InvoiceItemsInline(admin.TabularInline):
         js = ['js/copy_above.js']
 
     def copy_above(self, obj):
-        return '<button type="button" onclick = "copy_this(this)" class="b glyphicon glyphicon-copy" ></button>'
+        return format_html('<button type="button" onclick = "copy_this(this)" class="btn-sm glyphicon glyphicon-copy" ></button>')
     copy_above.allow_tags=True
 
     def save_formset(self, request, form, formset, change):

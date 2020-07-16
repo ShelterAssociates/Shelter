@@ -29,8 +29,8 @@ def sponsors(request):
                              'slum_id': j.slum.id, 'count': len(j.household_code),
                              'cityname': str(cref.city_name),
                              'city_id': j.slum.electoral_ward.administrative_ward.city.id,
-                             'city_id_encrypted': "city::" + cipher.encrypt(
-                                 str(j.slum.electoral_ward.administrative_ward.city.id)),
+                             'city_id_encrypted': "city::" + str(cipher.encrypt(
+                                 str(j.slum.electoral_ward.administrative_ward.city.id))),
                              'project_type': TYPE_CHOICESdict[project_type_index],
                              'project_name': j.sponsor_project
                              })
@@ -61,8 +61,8 @@ def sponsors(request):
             'slum_id': i.slum.id,
             'cityname': str(i.slum.electoral_ward.administrative_ward.city.name.city_name),
             'city_id': i.slum.electoral_ward.administrative_ward.city.id,
-            'city_id_encrypted': "city::" + cipher.encrypt(
-                str(i.slum.electoral_ward.administrative_ward.city.id)),
+            'city_id_encrypted': "city::" + str(cipher.encrypt(
+                str(i.slum.electoral_ward.administrative_ward.city.id))),
             'subfields':i.sponsorprojectdetailssubfields_set.all()
         })
         slums_under_sponsor_array.append(slums_under_sponsor_dict)
