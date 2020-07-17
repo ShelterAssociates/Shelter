@@ -4,7 +4,6 @@ from master.models import *
 from django.contrib import admin
 from django.db.models.fields.related import ManyToOneRel
 from mastersheet.models import *
-from django.forms import extras
 
 class BaseForm(forms.Form):
     '''

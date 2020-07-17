@@ -5,7 +5,6 @@ from master.models import *
 from django.views.decorators.csrf import csrf_exempt
 import json
 from component.cipher import *
-import commands
 import zipfile
 import shutil
 import os
@@ -116,7 +115,7 @@ def sponsors(request):
         projects_under_sponsor_array.append(projects_under_sponsor_dict)
 
     for k in projects_under_sponsor_array:
-        print "number of households in " + str(k['project_Name']) + ":" + str(k['households_in_project'])
+        print ("number of households in " + str(k['project_Name']) + ":" + str(k['households_in_project']))
     # print projects_under_sponsor_array
 
     return render(request, 'sponsors.html', {'cities': slumnameArray, 'projects': projects_under_sponsor_array})
@@ -131,7 +130,6 @@ def create_zip(request, slumname):
     sponsored_slums = SponsorProjectDetails.objects.filter(slum=SlumObj).filter(sponsor=logged_sponsor)
 
     rp_slum_code = str(SlumObj.shelter_slum_code)
-    print  "here here"
     folder_name = '/home/shelter/Documents/Project/Shelter/media/' + str(request.user)
     if os.path.isfile('/home/shelter/Documents/Project/Shelter/media/'+str(request.user)+'.zip'):
 
@@ -147,10 +145,10 @@ def create_zip(request, slumname):
             key = cipher.encrypt(str(rp_slum_code) + '|' + str(household_code) + '|' + str(request.user.id))
             com = "sh /opt/BIRT/ReportEngine/genReport.sh -f PDF -o " + folder_name + "/household_code_" + str(
                 household_code) + ".pdf -p key=" + key + " /srv/Shelter/reports/FFReport.rptdesign"
-            print com
+            print(com)
             os.system(com)
             i = i + 1
-            print "os.system(com) executed. File no." + str(i) + " created"
+            print("os.system(com) executed. File no." + str(i) + " created")
 
         shutil.make_archive(folder_name, 'zip', folder_name)
 

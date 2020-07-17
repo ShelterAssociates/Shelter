@@ -15,7 +15,7 @@ all_slum_ids = set()
 slumid_cityid_list = {}
 
 all_city_id_list = sorted(City.objects.values_list('id',flat=True))
-print 'all city ids', all_city_id_list
+print('all city ids', all_city_id_list)
 
 def score_calculation(section_key):
     '''function calculates the score for single and multiselect questions'''
@@ -68,7 +68,7 @@ def score_calculation(section_key):
                                                         score_for = v1['choices'][db_data[k][k1].lower()]
                                                         freq_waste_coll_type[keyy]= score_for
                                                 except Exception as e:
-                                                    print 'single select waste exception is', e
+                                                    print('single select waste exception is', e)
                                                 ques_score[k1] = score
 
                                         if v1['calculate']['type'] == 'M':
@@ -96,7 +96,7 @@ def score_calculation(section_key):
                                             pass
                                 all_ctb_data.append([dummy_list, num_dict])
                         else:
-                            print 'k not in sction key', k
+                            print('k not in sction key', k)
                 for_each_slum = []
                 if section_key == "Toilet":
                     all_slums_list.append([all_ctb_data, slum__id])
@@ -248,7 +248,8 @@ def toilet_final(z):
                         total_wrk_seats =  men_fun + wm_fun + mix_fun
                 final_score_of_1_toilet = ctb_in_use * (sum(ctb_data[0].values()) + total_cost + total_wrk_seats)
                 toilet_scores.append(final_score_of_1_toilet)
-            else : print id
+            else :
+                print(id)
         final_score = round(sum(toilet_scores) / len(toilet_scores) if len(toilet_scores) != 0 else 0,2)
         if own_toilet_coverage <= 25:
             final_score += 10
@@ -276,38 +277,38 @@ def Rhs_data(slumid):
     db_data = (map(lambda x: x.rhs_data,get_rhs_data))
     SHC = len(get_rhs_data)    # Slums_Household_count  = SHC
     for i in db_data:
-	try:
-	     if i['Type_of_structure_occupancy']  == 'Occupied house':
-          	  if 'group_el9cl08/Facility_of_solid_waste_collection' in i:
-                	waste_data.append(i['group_el9cl08/Facility_of_solid_waste_collection'].lower())
-                  else:
-                	waste_data.append('None')
-           	  if 'group_el9cl08/Type_of_water_connection' in i:
-                	WCT.append(i['group_el9cl08/Type_of_water_connection'])
-           	  else:
-               		WCT.append('None')
-            	  if 'group_el9cl08/Ownership_status_of_the_house'in i:
-                	owner_state.append(i['group_el9cl08/Ownership_status_of_the_house'])
-           	  else:
-               		owner_state.append('Own house')
-            	  if 'group_el9cl08/House_area_in_sq_ft' in i:
-                	data = str(i['group_el9cl08/House_area_in_sq_ft'])
-			if data == "0-99":
-                    	   data_score = 1
-                	elif data == "101-199":
-                   	   data_score = 2
-               		elif data== "200-299":
-                   	   data_score = 3
-               		elif data== "300-399":
-                   	   data_score=4
-	                else:
-                     	   data_score = 5
-                  	gen_data.append(data_score)
-             else:
-                  hh_no.append( i['Household_number'])
+        try:
+            if i['Type_of_structure_occupancy']  == 'Occupied house':
+                if 'group_el9cl08/Facility_of_solid_waste_collection' in i:
+                    waste_data.append(i['group_el9cl08/Facility_of_solid_waste_collection'].lower())
+                else:
+                    waste_data.append('None')
+                if 'group_el9cl08/Type_of_water_connection' in i:
+                    WCT.append(i['group_el9cl08/Type_of_water_connection'])
+                else:
+                    WCT.append('None')
+                if 'group_el9cl08/Ownership_status_of_the_house'in i:
+                    owner_state.append(i['group_el9cl08/Ownership_status_of_the_house'])
+                else:
+                    owner_state.append('Own house')
+                if 'group_el9cl08/House_area_in_sq_ft' in i:
+                    data = str(i['group_el9cl08/House_area_in_sq_ft'])
+                    if data == "0-99":
+                        data_score = 1
+                    elif data == "101-199":
+                        data_score = 2
+                    elif data== "200-299":
+                        data_score = 3
+                    elif data== "300-399":
+                        data_score=4
+                    else:
+                        data_score = 5
+                    gen_data.append(data_score)
+                else:
+                      hh_no.append( i['Household_number'])
         except Exception as e:
-		print e
-	unoccupide_house[slumid] = hh_no
+            print(e)
+    unoccupide_house[slumid] = hh_no
     avg_house_area = 0 if (len(gen_data)<=0) else round((sum(gen_data)/len(gen_data)),2)
     owner_count = {i:owner_state.count(i) for i in owner_state}
     WCT_count = {i: WCT.count(i) for i in WCT}
@@ -522,7 +523,7 @@ def percentile_function():
                     else:
                         pass
     except Exception as e:
-        print 'Exception in percentile function', e
+        print('Exception in percentile function', e)
 
 def QOL_save_data(request):
     '''saving data to db'''
@@ -537,7 +538,7 @@ def QOL_save_data(request):
                                 'drainage':data['Drainage'],'gutter':data['Gutter'], 'toilet':data['Toilet'],
                                 'general':data['General'],'total_score':data['Total_score']})
             except Exception as e:
-                print e
+                print(e)
     percentile_function()
     return HttpResponse(json.dumps(result), content_type="application/json")
 
@@ -551,7 +552,7 @@ def single_select(db_data,k1, v1):
     if ans.lower() in v1['choices']:
         score = v1['choices'][ans.strip()]
     else:
-        print 'single select v1[choices]',k1, ans
+        print('single select v1[choices]',k1, ans)
     return score
 
 def multiselect(db_data,k1,v1):
@@ -569,7 +570,7 @@ def multiselect(db_data,k1,v1):
         if k1 == 'finish_of_the_road':
             score = { k1 : score}
     except Exception as e:
-        print 'exception in multi select ', ans, k1
+        print('exception in multi select ', ans, k1)
         score = {k1: 0}
     return score
 
@@ -594,7 +595,7 @@ def structure_occupancy(z):
                     score = 1 if (owner_status['Own house'] >= owner_status['Tenant']) else -1
                 dumy_di[id] = score
             except Exception as e:
-                print 'exception in structure n occup',e, owner_status
+                print('exception in structure n occup',e, owner_status)
     return  dumy_di
 
 def road_final(z):

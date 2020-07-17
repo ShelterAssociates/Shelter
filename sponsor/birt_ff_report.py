@@ -14,7 +14,7 @@ def report_exec(cmd):
     try:
         pass#os.system(cmd)
     except Exception as e:
-        print e
+        print(e)
     p = subprocess.Popen(cmd, shell = True,#[sys.executable, os.path.join(settings.BASE_DIR, 'sponsor', 'birt_ff_report.py')],
                                     stdout=subprocess.PIPE,
                                     stderr=subprocess.PIPE)
@@ -58,15 +58,15 @@ class FFReport(object):
             #print x,y
             #os.system(com)
         #print(datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
-	try:
-	    with futures.ThreadPoolExecutor(max_workers=3) as pool:
-                pool.map(report_exec, execute_command)
-            #p = Pool(2)
-	    #p.map(report_exec, execute_command)
-	    #p.close()
-	    #p.join()
-	except Exception as e:
-            print e
+        try:
+            with futures.ThreadPoolExecutor(max_workers=3) as pool:
+                    pool.map(report_exec, execute_command)
+                #p = Pool(2)
+            #p.map(report_exec, execute_command)
+            #p.close()
+            #p.join()
+        except Exception as e:
+            print(e)
         #print(datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
         shutil.make_archive(folder_name, 'zip',folder_name)
         delete_command = "rm -rf " + folder_name
