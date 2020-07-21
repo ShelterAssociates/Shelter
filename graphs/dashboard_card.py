@@ -2,7 +2,7 @@
 Script to get aggregated data.
 """
 from graphs.models import *
-from analyse_data import *
+from .analyse_data import *
 from master.models import *
 from django.http import HttpResponse
 
@@ -171,4 +171,4 @@ def dashboard_data_Save(city):
             # dashboard_data.save_rim_gen()
             # dashboard_data.call_rim_ctb()
         except Exception as e:
-            print 'Exception in dashboard_data_save',(e)
+            print('Exception in dashboard_data_save',(e))
