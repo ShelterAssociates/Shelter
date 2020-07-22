@@ -577,7 +577,7 @@ def familyrportgenerate(request):
 	if project_details:
 		cipher = AESCipher()
 		key = cipher.encrypt(str(rp_slum_code) + '|' + str(houseno) + '|' +  str(request.user.id))
-		string = settings.BIRT_REPORT_URL + "Birt/frameset?__format=pdf&__report=FFReport.rptdesign&key=" + urllib.quote_plus(key)
+		string = settings.BIRT_REPORT_URL + "Birt/frameset?__format=pdf&__report=FFReport.rptdesign&key=" + urllib.parse.quote_plus(key)
 		data = {'string': string}
 	else:
 		data = {'error':'Not authorized'}
