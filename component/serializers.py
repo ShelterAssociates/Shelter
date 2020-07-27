@@ -2,6 +2,7 @@ from rest_framework import serializers
 from drf_dynamic_fields import DynamicFieldsMixin
 from .models import Metadata, Component
 from master.models import Slum
+from geojson_serializer.serializers import geojson_serializer
 
 class MetadataSerializer(DynamicFieldsMixin, serializers.ModelSerializer):
     component_data = serializers.SerializerMethodField('get_component_details')
@@ -27,7 +28,10 @@ class MetadataSerializer(DynamicFieldsMixin, serializers.ModelSerializer):
         model = Metadata
         fields = ['id','name','level','blob','type','component_data', 'count_of_component']
 
+
+@geojson_serializer('shape')
 class ComponentSerializer(serializers.ModelSerializer):
+
     class Meta:
         model = Component
         fields = ['id','shape','housenumber']
