@@ -2,3 +2,6 @@
 local_settings.py
 ENV
 .DS_Store
+node_modules
+package-lock.json
+
