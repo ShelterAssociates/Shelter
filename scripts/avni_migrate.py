@@ -3,7 +3,11 @@ import numpy as np
 
 base_path = "/home/amar/Documents/projects/shelter/Implementation/Pune/"
 df = pd.read_excel("/home/amar/Downloads/RHS_SBM_PMC_v1.xlsx", sheet_name="RHS_SBM_PMC_v1")
-
+slum={"272538750302" : "Lohagaon Viman Nagar, Yamuna Nagar Pune S.N.199 - Nagar Raod ward",
+	  "272538750303" : "SanjayPark Zopadpatti - Nagar Road ward",
+	  "272538750305" : "Weikfield Ramwadi Pune S.N.30, Nagar Road ward",
+	  "272538750406" : "Panchsheel Nagar Yerwada Pune S.N. 154  - Yerawad Kalas Dhanori",
+	  "272538754114" : "Vikas Nagar, Ghorpadi - Dhole Patil Road"}
 def household_registration():
 	global df
 	df=df.loc[df["Type of survey"]!="Follow-up survey"]
@@ -14,6 +18,13 @@ def household_registration():
 	df['Gender']=""
 	df["Do you have addhar card?"] = np.where(df['Aadhar number']>0, 'Yes', 'No')
 	df["Household number"] = df["Household number"].map(str)
+	def slum_name(value):
+		slum_text = value
+		if value in slum.keys():
+			slum_text = slum[value]
+		return slum_text
+
+	df["slum_name"] = df["slum_name"].apply(slum_name)
 	def household_number(value):
 		output=('000'+value)[-4:]
 		return output
@@ -46,7 +57,7 @@ def household_registration():
 	for slum_name, df_slum in output:
 		df_slum.to_csv(path+'/'+str(slum_name).replace(' ','_').replace('/','')+'.csv', sep=',',encoding='utf-8', index=False, quoting=1)
 
-#household_registration()
+household_registration()
 
 def need_assessment():
 	global df
@@ -342,4 +353,4 @@ def sanitation_encounter():
 		df_slum.to_csv(path + '/' + str(slum_name).replace(' ', '_').replace('/','') + '.csv', sep=',', encoding='utf-8', index=False,
 					   quoting=1)
 
-sanitation_encounter()
+#sanitation_encounter()
