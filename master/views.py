@@ -591,9 +591,9 @@ def city_wise_map(request, key, slumname = None, flag=True):
 		city = key.split('::')[1]
 		city = get_object_or_404(City, name__city_name=city)
 	else:
-		#cipher = AESCipher()
-		city = key.split('::')[1]#cipher.decrypt(key.split('::')[1])
-		city = City.objects.get(name__city_name=city)
+		cipher = AESCipher()
+		city = cipher.decrypt(key.split('::')[1])
+		city = City.objects.get(name__id=city)
 
 	template = loader.get_template('city_wise_map.html')
 	data={}
