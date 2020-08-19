@@ -31,7 +31,7 @@ router = routers.DefaultRouter()
 router.register(r'metadata', MetadataViewSet)
 router.register(r'city', CityViewset)
 
-base64_pattern = r'city::(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?'
+base64_pattern = r'city::(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)'
 urlpatterns = [
                   url(r'^$', slummap, name='slummap'),
                   url(r'^home/', login_success, name='login_success'),
