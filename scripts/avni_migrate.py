@@ -7,7 +7,18 @@ slum={"272538750302" : "Lohagaon Viman Nagar, Yamuna Nagar Pune S.N.199 - Nagar 
 	  "272538750303" : "SanjayPark Zopadpatti - Nagar Road ward",
 	  "272538750305" : "Weikfield Ramwadi Pune S.N.30, Nagar Road ward",
 	  "272538750406" : "Panchsheel Nagar Yerwada Pune S.N. 154  - Yerawad Kalas Dhanori",
-	  "272538754114" : "Vikas Nagar, Ghorpadi - Dhole Patil Road"}
+	  "272538754114" : "Vikas Nagar, Ghorpadi - Dhole Patil Road"
+	  }
+
+def split_files(df, path):
+	NUMBER_OF_SPLITS = 10
+	block=int(len(df)/10)
+	for i in range(0, NUMBER_OF_SPLITS):
+		end= (i+1)*block
+		if i == NUMBER_OF_SPLITS-1:
+			end=len(df)
+		df.iloc[i*block:end,:].to_csv(path+"out"+str(i)+".csv", sep=',', encoding='utf-8', index=False, quoting=1)
+
 def household_registration():
 	global df
 	df=df.loc[df["Type of survey"]!="Follow-up survey"]
@@ -21,6 +32,7 @@ def household_registration():
 	def slum_name(value):
 		slum_text = value
 		if value in slum.keys():
+			print(value)
 			slum_text = slum[value]
 		return slum_text
 
@@ -59,6 +71,7 @@ def household_registration():
 
 #household_registration()
 
+#Function not used. Need assessment is now split into multiple encounter like sanitation, water, waste, etc.
 def need_assessment():
 	global df
 	df=df.loc[df["Type of survey"]!="Follow-up survey"]
@@ -136,6 +149,7 @@ def need_assessment():
 
 #need_assessment()
 
+#Function not used. As sanitation program is been converted to direct encounter
 def sanitation():
 	global df
 	df = df.loc[df["Type of survey"] != "Follow-up survey"]
@@ -213,8 +227,6 @@ def sanitation():
 	for slum_name, df_slum in output:
 		df_slum.to_csv(path+'/'+str(slum_name).replace(' ','_')+'.csv', sep=',',encoding='utf-8', index=False,quoting=1)
 
-#sanitation()
-
 def sanitation_encounter():
 	global df
 	df=df.loc[df["Type of survey"]!="Follow-up survey"]
@@ -265,6 +277,7 @@ def sanitation_encounter():
 					 14.0: "Group toilet", 15.0: "Use CTB of neighbouring slum", "": ""}
 	current_place_map = lambda x: current_place[x]
 	df["Current place of defecation"] = df["Current_place_of_defecation"].map(current_place_map)
+	df["Final current place of defecation"] = df["Current place of defecation"]
 
 	installment_number = {0.0: '0', 1.0: '1', 2.0: '2', 3.0: '3'}
 	df["How many installments have you received?"] = df["How many installments have you received?"].map(
@@ -292,11 +305,17 @@ def sanitation_encounter():
 
 	df["Type of water connection ?"] = df['Type of water connection'].apply(type_of_water_connection)
 	df["Water source final answer."] = np.where(df["Do you have individual water connection at home?"]=="Yes", "Individual connection", df["Type of water connection ?"])
-	df["Do you have a toilet at home?"] = np.where(df['Current_place_of_defecation'].isin(["01","02","03","04","05","06","07"]),'Yes','No')
+	df["Do you have a toilet at home?"] = np.where(df['Current_place_of_defecation'].isin([1.0,2.0,3.0,4.0,5.0,6.0,7.0]),'Yes','No')
 	household_toilet = {5.0:"Own toilet", 7.0:"Toilet by SA", 4.0:"Toilet by any other agency", 1.0:"SBM (Installment)",
 						2.0:"SBM (Contractor)",3.0:"Toilet by SA", 6.0:"Toilet by any other agency"}
 	#df["Type of household toilet ?"] = np.where(df["Do you have a toilet at home?"].isin(["Yes"]), household_toilet[df['Current_place_of_defecation']]  ,'')
 	df["Type of household toilet ?"] = df['Current_place_of_defecation'].map(household_toilet)
+	def final_cpod(row):
+		str_value = row["Final current place of defecation"]
+		if row["Do you have a toilet at home?"] == "Yes" and row["Status of toilet under SBM"] == "Completed, connected and in use":
+			str_value = row["Type of household toilet ?"]
+		return str_value
+	df["Final current place of defecation"] = df.apply(lambda row : final_cpod(row), axis=1)
 	cols=['_id','Encounter Type', "Id", "_submission_time","slum_name", "Household number",
 		  "Do you have a toilet at home?",
 		  "Does any household member have any of the construction skills given below?",
@@ -307,7 +326,7 @@ def sanitation_encounter():
 		  "When did you receive your second installment?", "When did you receive your third installment?",
 		  "If built by contractor, how satisfied are you?", "Are you interested in an individual toilet?",
 		  "If yes, why?", "If no, why?", "What kind of toilet would you like?", "Under what scheme would you like your toilet to be built?",
-		  "Is there availability of drainage to connect to the toilet?","Current place of defecation"]
+		  "Is there availability of drainage to connect to the toilet?","Current place of defecation", "Final current place of defecation"]
 	#"Do you have electricity in the house?","If yes for electricity; Type of meter","Do you have individual water connection at home?",
 	#	  "Type of water connection ?", "Water source final answer.", "Do you dispose segregated garbage?",
 	output = df[cols]
@@ -354,12 +373,14 @@ def sanitation_encounter():
 	output = output.replace(np.nan, '', regex=True)
 	path = base_path + "sanitation_encounter/"
 	output.to_csv(path + 'Pune.csv', sep=',', encoding='utf-8', index=False, quoting=1)
+	split_files(output, path)
 	output = output.groupby('Slum')
 	for slum_name, df_slum in output:
 		df_slum.to_csv(path + '/' + str(slum_name).replace(' ', '_').replace('/','') + '.csv', sep=',', encoding='utf-8', index=False,
 					   quoting=1)
 
-#sanitation_encounter()
+
+sanitation_encounter()
 
 def sanitation_encounter_pune_sbm():
 	df = pd.read_excel("/home/amar/Downloads/PMC_SBM_Survey.xlsx", sheet_name="PMC_SBM_Survey")
@@ -429,4 +450,4 @@ def sanitation_encounter_pune_sbm():
 					   quoting=1)
 
 
-sanitation_encounter_pune_sbm()
+#sanitation_encounter_pune_sbm()
