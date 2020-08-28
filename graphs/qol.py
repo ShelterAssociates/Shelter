@@ -15,7 +15,6 @@ all_slum_ids = set()
 slumid_cityid_list = {}
 
 all_city_id_list = sorted(City.objects.values_list('id',flat=True))
-print('all city ids', all_city_id_list)
 
 def score_calculation(section_key):
     '''function calculates the score for single and multiselect questions'''
