@@ -76,7 +76,6 @@ class KMLParser(object):
         for component in self.component_data:
             coordinates = component['coordinates']
             key = key_no =str(component['house_no'])
-            start_time = datetime.datetime.now()
             for index, pnt in enumerate(coordinates):
                 val = {'shape':pnt}
                 #Create or update in component
