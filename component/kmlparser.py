@@ -1,7 +1,7 @@
 from pykml import parser
 from .models import Component, Metadata
 from django.contrib.gis.geos import GEOSGeometry
-
+from django.contrib.contenttypes.models import ContentType
 POINT = 'Point'
 POLYGON = 'Polygon'
 LINESTRING = 'LineString'
@@ -68,15 +68,27 @@ class KMLParser(object):
     def bulk_update_or_create(self, metadata_code):
         '''update or create records in the table accordingly
         '''
+        metadata = Metadata.objects.get(code=metadata_code, type='C')
+        temp_component = self.object_type.components.filter(metadata = metadata).values('id','housenumber')
+        temp_component = {x['housenumber']:x['id'] for x in temp_component}
+        content_type = ContentType.objects.filter(model=self.object_type.__class__.__name__.lower())[0]
+        create_bulk = []
         for component in self.component_data:
             coordinates = component['coordinates']
-            metadata = Metadata.objects.get(code = metadata_code, type='C')
-            key = key_no =component['house_no']
+            key = key_no =str(component['house_no'])
+            start_time = datetime.datetime.now()
             for index, pnt in enumerate(coordinates):
                 val = {'shape':pnt}
                 #Create or update in component
-                obj, created = self.object_type.components.update_or_create(housenumber=key_no, metadata = metadata, defaults=val)
-                key_no = str(key) + '.'+str(index+1)
+                #obj, created = self.object_type.components.update_or_create(housenumber=key_no, metadata = metadata, defaults=val)
+                #Below code is the replacement for above code as it takes time to execute
+                if key_no in temp_component.keys():
+                    updated = Component.objects.filter(id=temp_component[key_no]).update(**val)
+                else:
+                    create_bulk.append(Component(housenumber=key_no, object_id=self.object_type.id, content_type=content_type, metadata = metadata, shape=pnt))
+                key_no = key + '.'+str(index+1)
+        if len(create_bulk) > 0:
+            Component.objects.bulk_create(create_bulk)
 
     def other_components(self):
         ''' Iterate through each document folder and process the data
@@ -104,6 +116,7 @@ class KMLParser(object):
                     try:
                         (household_no, coordinates) = self.component_latlong(pm)
                         self.component_data.append({'house_no':household_no, 'coordinates':coordinates})
+
                     except Exception as ex:
                         raise Exception(" -> "+str(pm.name) +' ]] '+ str(ex))
                 self.bulk_update_or_create(kml_name)
