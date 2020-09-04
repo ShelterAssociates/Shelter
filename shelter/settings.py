@@ -68,6 +68,7 @@ ADMIN_VIEW_PERMISSION_MODELS = [
 ]
 
 MIDDLEWARE = (
+    'django.middleware.gzip.GZipMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
