@@ -7,7 +7,27 @@ slum={"272538750302" : "Lohagaon Viman Nagar, Yamuna Nagar Pune S.N.199 - Nagar 
 	  "272538750303" : "SanjayPark Zopadpatti - Nagar Road ward",
 	  "272538750305" : "Weikfield Ramwadi Pune S.N.30, Nagar Road ward",
 	  "272538750406" : "Panchsheel Nagar Yerwada Pune S.N. 154  - Yerawad Kalas Dhanori",
-	  "272538754114" : "Vikas Nagar, Ghorpadi - Dhole Patil Road"
+	  "272538754114" : "Vikas Nagar, Ghorpadi - Dhole Patil Road",
+	  "Tukai Matanagar, Kale Padal,Hadapsar":"Tukai Nagar, Kale Padal, Hadapsar",
+	  "Hanumannagar,Ghorapadi": "Hanuman Nagar,Ghorapadi",
+	  "Ekbote colony Ghorpade Peth 296":"Ekbote colony, Ghorpadi Peth 296",
+	  "Ekbote Colony, Ghorpade Peth S.N.365": "Ekbote Colony, Ghorpadi Peth 365",
+	  "Chatrapati Shivaji Stadiam,S.N. 226,227, Mangalwar Peth":"Chatrapati Shivaji Stadiam,S.N. 226,227",
+	  "Chaitraban":"Chaitraban Bibwewadi, Dhankwadi",
+	  "Ambedkar Nagar Near Sundarabai Marathi School old Mundhwa Road":"Ambedkar Nagar Near Sundarabai Marathi School",
+	  "Lohagaon Viman Nagar, Yamuna Nagar Pune S.N.199 - Nagar Raod ward":"Lohagaon Viman Nagar, Yamuna Nagar Pune S.N.199",
+	  "Lumbini Nagar": "Lumbini Nagar, Private Road",
+	  "Rajiv Gandhi, Shankar Math, Hadapsar":"Rajiv Gandhi, Shankar Math, Hadpsar",
+	  "In-aam Nagar": "In-Aam Nagar, Tadiwala Road",
+	  "Rajewadi, Nana Peth ":"Rajewadi Nana Peth, 732 - 895",
+	  "Mirekar Vasti Shankar Math, Hadapsar":"Mirekar Vasti, Tupe Patil, Hadapsar",
+	  "SanjayPark Zopadpatti - Nagar Road ward":"SanjayPark Zopadpatti",
+	  "Ambedkar Nagar, Near Nala, Laxmi Nagar Parvati":"Ambedkar Nagar, Near nala, Laxminagar, Parvati",
+	  "Dhavale Vasti, Bharat Forge":"Dhawale Vasti",
+	  "Khilare Plot, Erandwana S.N. 42/A":"Khilare Plot Erandwana S. N. 42/A",
+	  "Sanjay Gandhi Vasahat Karve Nagar S.N. 32/33":"Sanjay Gandhi Vasahat Karve Nagar S.N. 39/2",
+	  "Unnati Nagar, Hadapsar":"Unnati Nagar, Hadapsar",
+	  "Milindnagar, Ghorapadi":"Milind Nagar, Ghorpadi"
 	  }
 
 def split_files(df, path):
