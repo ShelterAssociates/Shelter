@@ -4,8 +4,8 @@ from .forms import VendorHouseholdInvoiceDetailForm, SBMUploadForm, ToiletConstr
 import datetime
 from django.contrib.auth.models import User
 from django.utils.html import format_html
-
-
+from django.contrib import messages
+from django.core.exceptions import ValidationError
 
 # class CustomButton():
 #     class Media:
@@ -77,20 +77,28 @@ class InvoiceAdmin(admin.ModelAdmin):
 
     def save_related(self,request, form, formset, change):        
         inst = formset[0].save(commit = False)
-        for instance in inst:
-            instance.created_by = request.user
-            instance.modified_by = request.user
-            instance.save()
+        try:
+            for instance in inst:
+                errors=[]
+                instance.created_by = request.user
+                instance.modified_by = request.user
+                instance.save()
+        except Exception as e:
+            messages.add_message(request, messages.ERROR, str(e))
+            return
         super(InvoiceAdmin, self).save_related(request, form, formset, change)
     
     def save_model(self, request, obj, form, change):
         user = User.objects.get(pk = request.user.id)
-        if not obj.pk :
-            obj.created_by = user
-            obj.created_on = datetime.datetime.now()
-        obj.modified_by = user
-        obj.modified_on = datetime.datetime.now()
-        obj.save()
+        try:
+            if not obj.pk :
+                obj.created_by = user
+                obj.created_on = datetime.datetime.now()
+            obj.modified_by = user
+            obj.modified_on = datetime.datetime.now()
+            obj.save()
+        except Exception as e:
+            return
         super(InvoiceAdmin, self).save_model(request, obj, form, change)
 
     def vendor_type_name(self, obj):
