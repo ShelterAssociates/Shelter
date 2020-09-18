@@ -79,7 +79,6 @@ class InvoiceAdmin(admin.ModelAdmin):
         inst = formset[0].save(commit = False)
         try:
             for instance in inst:
-                errors=[]
                 instance.created_by = request.user
                 instance.modified_by = request.user
                 instance.save()
