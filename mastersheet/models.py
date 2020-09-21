@@ -449,7 +449,7 @@ def check_duplicate_house(sender, instance, **kwargs):
         if record.material_type == instance.material_type:
             common_households = list(set(record.household_numbers).intersection(instance.household_numbers))
             if len(common_households) != 0:
-                errors.append("household numbers "+str(common_households)+ " are repeated in " +str(record.invoice)+ " and "+str(instance.invoice))
+                errors.append("Slum : "+ str(record.slum) +"("+ str(record.slum.id) +"), household numbers "+str(common_households)+ " are repeated in " +str(record.invoice)+ " and "+str(instance.invoice))
                     #raise Exception("household numbers "+str(common_households)+ " are repeated in " +str(record.invoice)+ " and "+str(instance.invoice))
                     #messages.error(request, "household numbers "+str(common_households)+ " are repeated in " +str(record.vendor.name)+ " and "+instance.vendor.name)
     
