@@ -5,7 +5,7 @@
 {% csrf_token %}
 
 <ol class="breadcrumb">
-    <li><a href="{% url 'index' %}">Home</a></li>
+    <li><a href="{% url 'master:index' %}">Home</a></li>
 </ol>
 <script type="text/javascript">
 function administrativewardList(){
@@ -16,7 +16,7 @@ function administrativewardList(){
 
     var id = $("#id_City option:selected").val();
 
-    var url = "{% url 'administrativewardList' %}";
+    var url = "{% url 'master:administrativewardList' %}";
 
     $.ajax({
 
@@ -56,7 +56,7 @@ function electoralWardList(){
 
     var id = $("#id_AdministrativeWard option:selected").val();
 
-    var url = "{% url 'electoralWardList' %}";
+    var url = "{% url 'master:electoralWardList' %}";
 
 
     $.ajax({
@@ -99,7 +99,7 @@ function slumList(){
     var Administrativewardname = $("#id_ElectoralWard option:selected").text();
     var id = $("#id_ElectoralWard option:selected").val();
 
-    var url = "{% url 'slumList' %}";
+    var url = "{% url 'master:slumList' %}";
     $.ajax({
 
         url : url,
@@ -135,7 +135,7 @@ function slumList(){
 
 function cityList(){
 
-    var url = "{% url 'cityList' %}";
+    var url = "{% url 'master:cityList' %}";
 
     $.ajax({
 
@@ -171,7 +171,7 @@ function cityList(){
 
 function formList(){
 
-    var url = "{% url 'formList' %}";
+    var url = "{% url 'master:formList' %}";
 
     $.ajax({
 
@@ -263,7 +263,7 @@ $(document).ready(function(){
         var Sid = $("#id_Slum option:selected").val();
         var Cid = $("#id_City option:selected").val();
         var Fid = $("#id_form option:selected").text();
-        var url = "{% url 'rimreportgenerate' %}";
+        var url = "{% url 'master:rimreportgenerate' %}";
 
         $.ajax({
 
@@ -291,7 +291,7 @@ $(document).ready(function(){
         var Sid = $("#id_Slum option:selected").val();
         var Cid = $("#id_City option:selected").val();
         var Fid = $("#id_form option:selected").text();
-        var url = "{% url 'drainagereportgenerate' %}";
+        var url = "{% url 'master:drainagereportgenerate' %}";
 
         $.ajax({
 
@@ -321,7 +321,7 @@ $(document).ready(function(){
         var Fid = $("#id_form option:selected").text();
         var HouseNo = $('#HouseNo').val();
 
-        var url = "{% url 'familyrportgenerate' %}";
+        var url = "{% url 'master:familyrportgenerate' %}";
 
         $.ajax({
 
