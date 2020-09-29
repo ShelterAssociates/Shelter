@@ -9,77 +9,8 @@ from time import time
 from datetime import timedelta
 import dateutil.parser
 
-final_rhs_data = {"_notes": [], # Note // Comment if any ?
-            "group_el9cl08/Number_of_household_members": "", # Number of household members
-            "group_oi8ts04/OD1": "",
-            "_bamboo_dataset_id":"",
-            "_tags": [],
-            "group_oi8ts04/Have_you_applied_for_individua":"",
-            "_xform_id_string": "",
-            "meta/instanceID":"",
-            "end": "",
-            "Enter_household_number_again":"", # Househhold number
-            "group_oi8ts04/Current_place_of_defecation": "",
-            "start": "",
-            "_geolocation": [],
-            "group_el9cl08/Type_of_structure_of_the_house":"", # Type of structure of the house_1
-            "_status": "",
-            "formhub/uuid": "",
-            "meta/deprecatedID": "",
-            "Name_s_of_the_surveyor_s": "", # Name of the surveyor
-            "Household_number": "", # First name
-            "group_el9cl08/Type_of_water_connection": "",
-            "_uuid": "",
-            "group_el9cl08/Facility_of_solid_waste_collection": "",
-            "group_el9cl08/Ownership_status_of_the_house": "", # Ownership status of the house_1
-            "_submitted_by": "",
-            "group_el9cl08/Does_any_household_m_n_skills_given_below": "",
-            "Date_of_survey": "", # Date of Survey
-            "admin_ward": "",
-            "slum_name": "",
-            "group_el9cl08/House_area_in_sq_ft": "", # House area in sq.ft.
-            "group_oi8ts04/C3": "",
-            "group_oi8ts04/C2": "",
-            "__version__": "",
-            "group_og5bx85/Type_of_survey": "RHS",
-            "_submission_time": "",
-            "group_og5bx85/Full_name_of_the_head_of_the_household": "", # Full name of the head of the household
-            "_attachments": [],
-            "group_el9cl08/Do_you_have_any_girl_child_chi": "", # Do you have any girl child / children under the age of 18?
-            "Type_of_structure_occupancy": "", # Type of structure occupancy_1
-            "group_oi8ts04/Are_you_interested_in_an_indiv": "",
-            "_id": int ,
-            "group_oi8ts04/If_no_why": "",
-            "Type_of_unoccupied_house":"", # Type of unoccupied house_1
-            "Parent_household_number": "", # Parent household number
-            "Plus code of the house":"",
-            "Name of surveyor who updated the data":"",
-            "If shop, type of occupancy ?":"",
-            "Type of shop":"",
-            "If tenant, write name of owner.":"",
-            "Enter the 10 digit mobile number":"",
-            "Do you have addhar card?":"",
-            "Aadhar number":"",
-            "Relation of aadhar card holder with head of the family.":"",
-            "Photo of Adhar card":"",
-            "What is your native place (village / town / city) ?":"",
-            "What is your native state?":"",
-            "Colour of ration card":"",
-            "Photo of ration card,":"",
-            "Do you have a Zopadpatti card ?":"",
-            "Write Zopadpatti card number":"",
-            "Zopadpatti card number (text)":"",
-            "Total number of male members (including children)":"",
-            "Total number of female members (including children)":"",
-            "Total number of third gender members (including children)":"",
-            "Number of children under 5 yrs.":"",
-            "Number of persons above 60 yrs.":"",
-            "How many ? ( Count )":"",
-            "Is any family member physically / mentally challenged?":"",
-            "Is there any widow woman in the household?":"",
-            "Is there any seperated woman in the household ?":"",
-           " Number of rooms ?":"",
-        }
+direct_encountes =['Sanitation','Property tax','Water','Waste','Electricity','Daily Mobilization Activity']
+program_encounters =['Daily Reporting','Family factsheet']
 
 class avni_sync():
     def __init__(self):
@@ -111,110 +42,207 @@ class avni_sync():
     def lastModifiedDateTime(self):
         # get latest submission date from household table and pass it to url
         last_submission_date = HouseholdData.objects.latest('submission_date')
-        latest_date = last_submission_date.submission_date + timedelta(days=1)
+        latest_date = last_submission_date.submission_date + timedelta(days=5)
         iso_format_next = latest_date.strftime('%Y-%m-%dT00:00:00.000Z')
         return( iso_format_next )
 
-    def create_registrationdata_url(self):
-        latest_date = self.lastModifiedDateTime()
-        household_path = 'api/subjects?lastModifiedDateTime=' + latest_date + '&subjectType=Household'
-        result = requests.get(self.base_url + household_path,
-                         headers= {'AUTH-TOKEN':self.get_cognito_token() })
-        get_page_count = json.loads(result.text)['totalPages']
-        return (get_page_count, household_path)
+    def create_final_rhs_data(self,a, b):
+        change_keys = {'Enter_household_number_again': 'Househhold number',#'_notes': 'Note',
+               'Name_s_of_the_surveyor_s': 'Name of the surveyor',
+               'Household_number': 'First name',
+               'group_el9cl08/Ownership_status_of_the_house': 'Ownership status of the house_1',
+               'Date_of_survey': 'Date of Survey',
+               'group_el9cl08/House_area_in_sq_ft':'House area in square feets.',
+               'group_og5bx85/Full_name_of_the_head_of_the_household':'Full name of the head of the household',
+               'group_el9cl08/Number_of_household_members':'Number of household members',
+               'Type_of_unoccupied_house': 'Type of unoccupied house_1',
+               'group_el9cl08/Type_of_structure_of_the_house': 'Type of structure of the house_1',
+               'Parent_household_number': 'Parent household number',
+               'Type_of_structure_occupancy': 'Type of structure occupancy_1',
+               'group_el9cl08/Do_you_have_any_girl_child_chi':'Do you have any girl child/children under the age of 18?_'}
+        for k, v in change_keys.items():
+            if k in a.keys():
+                a[k] = b[v]
+                b.pop(v)
+                a.update(b)
+            elif v in b.keys():
+                a[k] = b[v]
+                b.pop(v)
+                a.update(b)
+            else:pass
+        return a
 
-    def access_registrtation_data(self):
-        totalPages,path = self.create_registrationdata_url()
-        for i in range(totalPages)[1:2]:
-            send_request = requests.get(self.base_url+ path +'&'+ str(i),headers={'AUTH-TOKEN':self.get_cognito_token()})
-            household_data = json.loads(send_request.text)['content']
-            for j in household_data[1:5]:
-                rhs_data = j['observations']
-                household_number = str(int(rhs_data['First name']))
-                created_date = j['Registration date']
-                submission_date = (j['audit']['Last modified at']) # use last modf date
-                slum_name = j['location']['Slum']
-                for k,v in final_rhs_data.items():
-                    if k == '_notes' and 'Note' in rhs_data:
-                        final_rhs_data[k] = rhs_data['Note']
-                    elif k == 'Enter_household_number_again' and 'Househhold number' in rhs_data:
-                        final_rhs_data[k] = rhs_data['Househhold number']
-                    elif k == 'Name_s_of_the_surveyor_s' and 'Name of the surveyor' in rhs_data:
-                        final_rhs_data[k] = rhs_data['Name of the surveyor']
-                    elif k == "Household_number" and 'First name' in rhs_data:
-                        final_rhs_data[k] = rhs_data['First name']
-                    elif k == 'group_el9cl08 / Ownership_status_of_the_house' and 'Ownership status of the house_1' in rhs_data:
-                        final_rhs_data[k] = rhs_data['Ownership status of the house_1']
-                    elif k == 'Date_of_survey' and 'Date of Survey' in rhs_data:
-                        final_rhs_data[k] = rhs_data['Date of Survey']
-                    elif k == 'group_el9cl08/House_area_in_sq_ft' and 'House area in sq.ft.' in rhs_data:
-                        final_rhs_data[k] = rhs_data['House area in sq.ft.']
-                    elif k == 'group_og5bx85/Full_name_of_the_head_of_the_household' and 'Full name of the head of the household' in rhs_data:
-                        final_rhs_data[k] = rhs_data['Full name of the head of the household']
-                    elif k == 'group_el9cl08/Number_of_household_members' and 'Number of household members' in rhs_data:
-                        final_rhs_data[k] = rhs_data['Number of household members']
-                    elif k == 'Type_of_unoccupied_house' and 'Type of unoccupied house_1' in rhs_data:
-                        final_rhs_data[k] = rhs_data['Type of unoccupied house_1']
-                    elif k == 'group_el9cl08 / Type_of_structure_of_the_house' and ' Type of structure of the house_1' in rhs_data:
-                        final_rhs_data[k] = rhs_data[' Type of structure of the house_1']
-                    elif k == "Parent_household_number" and 'Parent household number' in rhs_data:
-                        final_rhs_data[k] = rhs_data['Parent household number']
-                    elif k == 'Type_of_structure_occupancy' and 'Type of structure occupancy_1' in rhs_data:
-                        final_rhs_data[k] = rhs_data['Type of structure occupancy_1']
-                    elif k == 'group_el9cl08/Do_you_have_any_girl_child_chi' and 'Do you have any girl child / children under the age of 18?' in rhs_data:
-                        final_rhs_data[k] = rhs_data['Do you have any girl child / children under the age of 18?']
-                    elif k in final_rhs_data and k in rhs_data:
-                        final_rhs_data[k] = rhs_data[k]
-                    else:
-                        pass
-                        # print(k,' not present in reocrd')
-                try:
-                    slum = Slum.objects.filter(name=slum_name).values_list('id','electoral_ward_id__administrative_ward__city__id')[0]
-                    if slum :
-                        slum_id, city_id = slum[0],slum[1]
-                        # check_record = HouseholdData.objects.filter(household_number=household_number,city_id=city_id,slum_id=slum_id)
-                        # if check_record:
-                        #     pass
-                        #     # get_record = HouseholdData.objects.get(household_number=household_number,city_id=city_id,slum_id=slum_id)
-                        #     # get_record.submission_date = submission_date
-                        #     # get_record.rhs_data = str(final_rhs_data)
-                        #     # get_record.created_date = created_date
-                        #     # get_record.save()
-                        #     # print('record saved for',slum_name, household_number)
-                        # else:
-                        #     create_record = HouseholdData(household_number=household_number,slum_id=slum_id, city_id=city_id,
-                        #             submission_date=submission_date,rhs_data=str(final_rhs_data),created_date=created_date)
-                        #     create_record.save()
-                        #     print('record created for ',household_number)
-                except Exception as e:
-                    print('4', e,slum_name, household_number)
+    def create_final_ff_data(self, a, b):
+        change_keys = {
+            "Note": 'Note',
+            "group_im2th52/Number_of_Children_under_5_years_of_age": "Number of Children under 5 years of age",
+            "group_ne3ao98/Cost_of_upgradation_in_Rs": 'Cost of upgradation',
+            "group_oh4zf84/Duration_of_stay_in_settlement_in_Years": "Duration of stay in this current settlement (in Years)",
+            "group_oh4zf84/Ownership_status": "Ownership status of the house_1",
+            "group_im2th52/Number_of_earning_members": "Number of earning members",
+            "group_im2th52/Occupation_s_of_earning_membe": "Occupation(s) of earning members",
+            "Family_Photo": "Family Photo",
+            "group_ne3ao98/Who_has_built_your_toilet": "Who has built your toilet ?",
+            "group_im2th52/Approximate_monthly_family_income_in_Rs": "Approximate monthly family income (in Rs.)",
+            "group_vq77l17/Household_number": "Househhold number",
+            "group_im2th52/Total_family_members": "Total family members",
+            "group_oh4zf84/Type_of_house": "Type of house*",
+            "group_im2th52Number_of_members_over_60_years_of_age": "Number of members over 60 years of age",
+            "group_ne3ao98/Where_the_individual_ilet_is_connected_to": "Where the individual toilet is connected ?",
+            "group_vq77l17/Settlement_address": "Settlement address",
+            "group_ne3ao98/Have_you_upgraded_yo_ng_individual_toilet": "Have you upgraded your toilet/bathroom/house while constructing individual toilet?",
+            "group_im2th52/Number_of_disabled_members": " Number of Disabled members",
+            "group_oh4zf84/Duration_of_stay_in_the_city_in_Years": "Duration of stay in the city (in Years)",
+            "group_im2th52/Number_of_Male_members": "'Number of Male members",
+            "group_oh4zf84/Name_of_the_family_head": "Name of the family head",
+            "Toilet_Photo": "Toilet Photo",
+            "group_ne3ao98/Use_of_toilet": "Use of toilet",
+            "group_im2th52/Number_of_Girl_children_between_0_18_yrs": "Number of Girl children between 0-18 yrs",
+            "group_im2th52/Number_of_Female_members": "Number of Female members"
+            }
+        for k, v in change_keys.items():
+            if k in a.keys():
+                a[k] = b[v]
+                b.pop(v)
+                a.update(b)
+            elif v in b.keys():
+                a[k] = b[v]
+                b.pop(v)
+                a.update(b)
+            else:pass
+        return a
 
-    def create_encounterData_url(self):  #need to run for every encounter type
-        encounter_path = 'api/encounters?lastModifiedDateTime=2020-07-01T00:00:00.000Z&encounter%20type=Water'
-        result = requests.get(self.base_url + encounter_path,
-                              headers={'AUTH-TOKEN': self.get_cognito_token()})
-        get_page_count = json.loads(result.text)['totalPages']
-        return (get_page_count,encounter_path)
+    # def create_registrationdata_url(self):
+    #     latest_date = self.lastModifiedDateTime()
+    #     household_path = 'api/subjects?lastModifiedDateTime=' + latest_date + '&subjectType=Household'
+    #     result = requests.get(self.base_url + household_path,headers= {'AUTH-TOKEN':self.get_cognito_token() })
+    #     get_page_count = json.loads(result.text)['totalPages']
+    #     return (get_page_count, household_path)
 
     def create_programEncounter_url(self):  #need to run for every program encounter type
-        programEncounters_path = 'api/programEncounters?lastModifiedDateTime=2018-02-01T00:00:00.000Z&encounter%20type=Sanitation' #works
-        result = requests.get(self.base_url + programEncounters_path,
-                              headers={'AUTH-TOKEN': self.get_cognito_token()})
+        latest_date = self.lastModifiedDateTime()
+        # programEncounters_path = 'api/programEncounters?lastModifiedDateTime=' +latest_date +'&encounter%20type=Daily Mobilization Activity Encounter' #works
+        # programEncounters_path = 'api/programEncounters?lastModifiedDateTime=' +latest_date +'&encounter%20type=Family factsheet form' #works
+        programEncounters_path = 'api/programEncounters?lastModifiedDateTime=' +latest_date +'&encounter%20type=Family factsheet form'
+        result = requests.get(self.base_url + programEncounters_path,headers={'AUTH-TOKEN': self.get_cognito_token()})
         get_page_count = json.loads(result.text)['totalPages']
         return (get_page_count, programEncounters_path)
 
-    def create_enrolmentData_url(self):  #need to run for every enrolment type
-        # registration_with_id= 'api/subject/d65afb9f-d025-4982-af04-addbbee0216f' #(require uuid of any registration record)
-        # programEncounter_with_id = 'api/programEncounter/' #(require uuid of any programEncounter record)
-        # directEncounter_with_id = 'api/encounter/e92ec2d8-6e04-465d-80f1-f19bba4b7ee1' # (require uuid of any directEncounter record)
-        # programEnrolment_with_id = 'api/enrolment/8' #(require uuid of any enrolment record)
-        enrolments_path = 'api/enrolments?lastModifiedDateTime=2018-02-01T00:00:00.000Z&program=Property Tax' #works
-        result = requests.get(self.base_url + enrolments_path, headers={'AUTH-TOKEN': self.get_cognito_token()})
-        get_page_count = json.loads(result.text)['totalPages']
-        return (get_page_count, enrolments_path)
+    def saveDailyReportingData(self,data):
+        pass
 
+    def saveProgramEncounterData(self, encounter_ids,slum_name, city_name):
+        for i in encounter_ids:
+            send_request = requests.get(self.base_url + 'api/programEncounter/' + i,headers={'AUTH-TOKEN': self.get_cognito_token()})
+            get_data = json.loads(send_request.text)
+            if 'Encounter type' in get_data.keys():
+                if get_data['Encounter type'] == 'Family factsheet':
+                    self.saveFamilyFactsheetData(get_data['observations'],slum_name, city_name)
+                elif get_data['Encounter type'] == 'Daily Reporting':
+                    self.saveDailyReportingData(get_data['observations'])
+                else : pass
 
-# def send_request(request):
-#     a = avni_sync()
-#     z = a.access_registrtation_data()
-#     return HttpResponse(json.dumps(z))
+    def saveFamilyFactsheetData(self, data,slum_name, city_name):
+        final_ff_data = {}
+        HH = str(data["Househhold number"])
+        try:
+            slum = Slum.objects.filter(name= slum_name).values_list('id', 'electoral_ward_id__administrative_ward__city__id')[0]
+            slum_id, city_id = slum[0],slum[1]
+        except Exception as e:
+            print(slum_name,e)
+        try:
+            check_record = HouseholdData.objects.get(household_number=HH,city_id=city_id,slum_id=slum_id)
+            ff_data = check_record.ff_data
+            if ff_data == None:
+                ff_data = {}
+                final_ff_data = self.create_final_ff_data(ff_data,data)
+                update_record = HouseholdData.objects.update_or_create(household_number=HH,city_id=city_id,slum_id=slum_id,
+                defaults= {'ff_data' : str(final_ff_data)})
+                print('FF record updated for',slum_name, type(data['Househhold number']))
+        except Exception as e:
+            print(e,HH)
+
+    # def saveEnrolmentData(self,id,household_number,slum_name):
+    #     enrolementId, HH,slum = id,household_number,slum_name
+    #     # if len(enrolment_id) > 0:
+    #     #     for i in enrolment_id:
+    #     send_request = requests.get(self.base_url + 'api/enrolment/' + 'c5835e47-964d-4929-9193-7bfff6df35c2' ,headers={'AUTH-TOKEN': self.get_cognito_token()})
+    #     text = json.loads(send_request.text)
+    #     program_encounter_ids = text['encounters']
+    #     self.saveProgramEncounterData(program_encounter_ids,household_number,slum_name)
+    #
+    def save_registrtation_data(self,HH_data):
+        final_rhs_data ={}
+        rhs_from_avni = HH_data['observations']
+        household_number = str(int(rhs_from_avni['First name']))
+        created_date = HH_data['Registration date']
+        submission_date = (HH_data['audit']['Last modified at'])  # use last modf date
+        slum_name = HH_data['location']['Slum']
+        try:
+            slum = Slum.objects.filter(name=slum_name).values_list('id','electoral_ward_id__administrative_ward__city__id')[0]
+            slum_id, city_id = slum[0],slum[1]
+            check_record = HouseholdData.objects.filter(household_number=household_number,city_id=city_id,slum_id=slum_id)
+        except Exception as e:
+            print(e)
+
+        if check_record:
+            rhs_data = check_record.values_list('rhs_data',flat=True)
+            print(rhs_data)
+        #     if rhs_data == None:
+        #         rhs_data ={}
+        #     final_rhs_data = self.create_final_rhs_data(rhs_data, rhs_from_avni)
+        #     check_record.update(submission_date=submission_date, rhs_data=str(final_rhs_data),
+        #                         created_date=created_date)
+        #     print('Household record updated for', slum_name, household_number)
+        # else :
+        #     rhs_data = {}
+        #     final_rhs_data = self.create_final_rhs_data(rhs_data, rhs_from_avni)
+        #     update_record = HouseholdData.objects.create(household_number=household_number, slum_id=slum_id,
+        #                                                  city_id=city_id, submission_date=submission_date,
+        #                                                  rhs_data=str(final_rhs_data), created_date=created_date)
+        #     print('Household record created for', slum_name, household_number)
+
+    # def saveDirectEncountersData(self,encounter_ids):
+    #     for k in encounter_ids:
+    #         try:
+    #             send_request1 = requests.get(self.base_url + 'api/encounter/' + k,headers={'AUTH-TOKEN': self.get_cognito_token()})
+    #             # text1 = json.loads(send_request1.text)
+    #         except Exception as e:
+    #             print(e)
+    #
+    # def create_encounterData_url(self):  #need to run for every encounter type
+    #     latest_date = self.lastModifiedDateTime()
+    #     encounter_path = 'api/subjects?lastModifiedDateTime=' + latest_date +'&encounter%20type=Water'
+    #     result = requests.get(self.base_url + encounter_path,
+    #                           headers={'AUTH-TOKEN': self.get_cognito_token()})
+    #     get_page_count = json.loads(result.text)['totalPages']
+    #     return (get_page_count,encounter_path)
+    #
+    # def create_enrolmentData_url(self):  #need to run for every enrolment type
+    #     latest_date = self.lastModifiedDateTime()
+    #     # registration_with_id= 'api/subject/d65afb9f-d025-4982-af04-addbbee0216f' #(require uuid of any registration record)
+    #     # programEncounter_with_id = 'api/programEncounter/' #(require uuid of any programEncounter record)
+    #     # directEncounter_with_id = 'api/encounter/e92ec2d8-6e04-465d-80f1-f19bba4b7ee1' # (require uuid of any directEncounter record)
+    #     # programEnrolment_with_id = 'api/enrolment/8' #(require uuid of any enrolment record)
+    #     enrolments_path = 'api/enrolments?lastModifiedDateTime=' + latest_date +'&program=Property Tax' #works
+    #     result = requests.get(self.base_url + enrolments_path, headers={'AUTH-TOKEN': self.get_cognito_token()})
+    #     get_page_count = json.loads(result.text)['totalPages']
+    #     return (get_page_count, enrolments_path)
+
+    def access_program_encounter_data(self):
+        totalPages, enc_path = self.create_programEncounter_url()
+        for i in range(totalPages)[0:1]:
+            send_request = requests.get(self.base_url + enc_path + '&' + str(i),headers={'AUTH-TOKEN': self.get_cognito_token()})
+            data = json.loads(send_request.text)['content']
+            for j in data[4:5]:
+                encounter_data = j['observations']
+                enrolment_id = j['Enrolment ID']
+                send_request1 = requests.get(self.base_url + 'api/enrolment/' + enrolment_id,headers={'AUTH-TOKEN': self.get_cognito_token()})
+                text =  json.loads(send_request1.text)
+                subject_id = text['Subject ID']
+                encount_ids = text['encounters']
+                send_request2 = requests.get(self.base_url + 'api/subject/' + subject_id ,headers={'AUTH-TOKEN': self.get_cognito_token()})
+                get_HH_data = json.loads(send_request2.text)
+                self.save_registrtation_data(get_HH_data)
+                # self.saveProgramEncounterData(encount_ids, get_HH_data['location']['Slum'], get_HH_data['location']['City'])
+
