@@ -60,19 +60,14 @@ class avni_sync():
                'Parent_household_number': 'Parent household number',
                'Type_of_structure_occupancy': 'Type of structure occupancy_1',
                'group_el9cl08/Do_you_have_any_girl_child_chi':'Do you have any girl child/children under the age of 18?_'}
+        a.update(b)
         for k, v in change_keys.items():
-            if k in a.keys():
+            if k in a.keys() and v in b.keys():
                 a[k] = b[v]
-                b.pop(v)
-                a.update(b)
-            elif v in b.keys():
-                a[k] = b[v]
-                b.pop(v)
-                a.update(b)
-            else:pass
+                a.pop(v)
         return a
 
-    def create_final_ff_data(self, a, b):
+    def create_final_ff_data(self,a,b):
         change_keys = {
             "Note": 'Note',
             "group_im2th52/Number_of_Children_under_5_years_of_age": "Number of Children under 5 years of age",
@@ -91,25 +86,20 @@ class avni_sync():
             "group_ne3ao98/Where_the_individual_ilet_is_connected_to": "Where the individual toilet is connected ?",
             "group_vq77l17/Settlement_address": "Settlement address",
             "group_ne3ao98/Have_you_upgraded_yo_ng_individual_toilet": "Have you upgraded your toilet/bathroom/house while constructing individual toilet?",
-            "group_im2th52/Number_of_disabled_members": " Number of Disabled members",
+            "group_im2th52/Number_of_disabled_members": "Number of Disabled members",
             "group_oh4zf84/Duration_of_stay_in_the_city_in_Years": "Duration of stay in the city (in Years)",
-            "group_im2th52/Number_of_Male_members": "'Number of Male members",
+            "group_im2th52/Number_of_Male_members": "Number of Male members",
             "group_oh4zf84/Name_of_the_family_head": "Name of the family head",
             "Toilet_Photo": "Toilet Photo",
             "group_ne3ao98/Use_of_toilet": "Use of toilet",
             "group_im2th52/Number_of_Girl_children_between_0_18_yrs": "Number of Girl children between 0-18 yrs",
             "group_im2th52/Number_of_Female_members": "Number of Female members"
             }
+        a.update(b)
         for k, v in change_keys.items():
-            if k in a.keys():
-                a[k] = b[v]
-                b.pop(v)
-                a.update(b)
-            elif v in b.keys():
-                a[k] = b[v]
-                b.pop(v)
-                a.update(b)
-            else:pass
+            if k in a.keys() and v in b.keys():
+                a[k]=b[v]
+                a.pop(v)
         return a
 
     # def create_registrationdata_url(self):
@@ -137,28 +127,27 @@ class avni_sync():
             get_data = json.loads(send_request.text)
             if 'Encounter type' in get_data.keys():
                 if get_data['Encounter type'] == 'Family factsheet':
-                    self.saveFamilyFactsheetData(get_data['observations'],slum_name, city_name)
+                    self.saveFamilyFactsheetData(get_data['observations'],slum_name)
                 elif get_data['Encounter type'] == 'Daily Reporting':
                     self.saveDailyReportingData(get_data['observations'])
                 else : pass
 
-    def saveFamilyFactsheetData(self, data,slum_name, city_name):
+    def saveFamilyFactsheetData(self, data,slum_name):
         final_ff_data = {}
         HH = str(data["Househhold number"])
         try:
             slum = Slum.objects.filter(name= slum_name).values_list('id', 'electoral_ward_id__administrative_ward__city__id')[0]
             slum_id, city_id = slum[0],slum[1]
-        except Exception as e:
-            print(slum_name,e)
-        try:
-            check_record = HouseholdData.objects.get(household_number=HH,city_id=city_id,slum_id=slum_id)
-            ff_data = check_record.ff_data
-            if ff_data == None:
-                ff_data = {}
+            check_record = HouseholdData.objects.filter(household_number=HH,city_id=city_id,slum_id=slum_id)
+            if check_record:
+                ff_data = check_record.values_list('ff_data',flat= True)[0]
+                if ff_data == None or len(ff_data) == 0:
+                    ff_data = {}
                 final_ff_data = self.create_final_ff_data(ff_data,data)
-                update_record = HouseholdData.objects.update_or_create(household_number=HH,city_id=city_id,slum_id=slum_id,
-                defaults= {'ff_data' : str(final_ff_data)})
-                print('FF record updated for',slum_name, type(data['Househhold number']))
+                check_record.update(ff_data = final_ff_data )
+                print('FF record updated for',slum_name, HH)
+            else :
+                print('record not found')
         except Exception as e:
             print(e,HH)
 
@@ -170,7 +159,7 @@ class avni_sync():
     #     text = json.loads(send_request.text)
     #     program_encounter_ids = text['encounters']
     #     self.saveProgramEncounterData(program_encounter_ids,household_number,slum_name)
-    #
+
     def save_registrtation_data(self,HH_data):
         final_rhs_data ={}
         rhs_from_avni = HH_data['observations']
@@ -182,25 +171,21 @@ class avni_sync():
             slum = Slum.objects.filter(name=slum_name).values_list('id','electoral_ward_id__administrative_ward__city__id')[0]
             slum_id, city_id = slum[0],slum[1]
             check_record = HouseholdData.objects.filter(household_number=household_number,city_id=city_id,slum_id=slum_id)
+            rhs_data = check_record.values_list('rhs_data',flat=True)[0]
+            if len(rhs_data) == 0:
+                rhs_data ={}
+            final_rhs_data = self.create_final_rhs_data(rhs_data, rhs_from_avni)
+            check_record.update(submission_date=submission_date, rhs_data=final_rhs_data,
+                                created_date=created_date)
+            print('Household record updated for', slum_name, household_number)
+        except Exception as e :
+            rhs_data = {}
+            final_rhs_data = self.create_final_rhs_data(rhs_data, rhs_from_avni)
+            update_record = HouseholdData.objects.create(household_number=household_number, slum_id=slum_id,
+            city_id=city_id, submission_date=submission_date,rhs_data=final_rhs_data, created_date=created_date)
+            print('Household record created for', slum_name, household_number)
         except Exception as e:
-            print(e)
-
-        if check_record:
-            rhs_data = check_record.values_list('rhs_data',flat=True)
-            print(rhs_data)
-        #     if rhs_data == None:
-        #         rhs_data ={}
-        #     final_rhs_data = self.create_final_rhs_data(rhs_data, rhs_from_avni)
-        #     check_record.update(submission_date=submission_date, rhs_data=str(final_rhs_data),
-        #                         created_date=created_date)
-        #     print('Household record updated for', slum_name, household_number)
-        # else :
-        #     rhs_data = {}
-        #     final_rhs_data = self.create_final_rhs_data(rhs_data, rhs_from_avni)
-        #     update_record = HouseholdData.objects.create(household_number=household_number, slum_id=slum_id,
-        #                                                  city_id=city_id, submission_date=submission_date,
-        #                                                  rhs_data=str(final_rhs_data), created_date=created_date)
-        #     print('Household record created for', slum_name, household_number)
+            print('second exception',e)
 
     # def saveDirectEncountersData(self,encounter_ids):
     #     for k in encounter_ids:
@@ -228,13 +213,13 @@ class avni_sync():
     #     result = requests.get(self.base_url + enrolments_path, headers={'AUTH-TOKEN': self.get_cognito_token()})
     #     get_page_count = json.loads(result.text)['totalPages']
     #     return (get_page_count, enrolments_path)
-
+    @timing
     def access_program_encounter_data(self):
         totalPages, enc_path = self.create_programEncounter_url()
         for i in range(totalPages)[0:1]:
             send_request = requests.get(self.base_url + enc_path + '&' + str(i),headers={'AUTH-TOKEN': self.get_cognito_token()})
             data = json.loads(send_request.text)['content']
-            for j in data[4:5]:
+            for j in data:
                 encounter_data = j['observations']
                 enrolment_id = j['Enrolment ID']
                 send_request1 = requests.get(self.base_url + 'api/enrolment/' + enrolment_id,headers={'AUTH-TOKEN': self.get_cognito_token()})
@@ -244,5 +229,4 @@ class avni_sync():
                 send_request2 = requests.get(self.base_url + 'api/subject/' + subject_id ,headers={'AUTH-TOKEN': self.get_cognito_token()})
                 get_HH_data = json.loads(send_request2.text)
                 self.save_registrtation_data(get_HH_data)
-                # self.saveProgramEncounterData(encount_ids, get_HH_data['location']['Slum'], get_HH_data['location']['City'])
-
+                self.saveProgramEncounterData(encount_ids, get_HH_data['location']['Slum'], get_HH_data['location']['City'])
