@@ -46,7 +46,7 @@ class avni_sync():
         iso_format_next = latest_date.strftime('%Y-%m-%dT00:00:00.000Z')
         return( iso_format_next )
 
-    def create_final_rhs_data(self,a, b):
+    def create_final_rhs_data(self,a,b):
         change_keys = {'Enter_household_number_again': 'Househhold number',#'_notes': 'Note',
                'Name_s_of_the_surveyor_s': 'Name of the surveyor',
                'Household_number': 'First name',
@@ -62,7 +62,7 @@ class avni_sync():
                'group_el9cl08/Do_you_have_any_girl_child_chi':'Do you have any girl child/children under the age of 18?_'}
         a.update(b)
         for k, v in change_keys.items():
-            if k in a.keys() and v in b.keys():
+            if k in a.keys() or v in b.keys():
                 a[k] = b[v]
                 a.pop(v)
         return a
@@ -97,11 +97,10 @@ class avni_sync():
             }
         a.update(b)
         for k, v in change_keys.items():
-            if k in a.keys() and v in b.keys():
+            if k in a.keys() or v in b.keys():
                 a[k]=b[v]
                 a.pop(v)
         return a
-
     # def create_registrationdata_url(self):
     #     latest_date = self.lastModifiedDateTime()
     #     household_path = 'api/subjects?lastModifiedDateTime=' + latest_date + '&subjectType=Household'
@@ -118,8 +117,10 @@ class avni_sync():
         get_page_count = json.loads(result.text)['totalPages']
         return (get_page_count, programEncounters_path)
 
-    def saveDailyReportingData(self,data):
+    def saveDailyReportingData(self,data,slum_name):
         pass
+        # print(data)
+
 
     def saveProgramEncounterData(self, encounter_ids,slum_name, city_name):
         for i in encounter_ids:
@@ -129,7 +130,7 @@ class avni_sync():
                 if get_data['Encounter type'] == 'Family factsheet':
                     self.saveFamilyFactsheetData(get_data['observations'],slum_name)
                 elif get_data['Encounter type'] == 'Daily Reporting':
-                    self.saveDailyReportingData(get_data['observations'])
+                    self.saveDailyReportingData(get_data['observations'],slum_name)
                 else : pass
 
     def saveFamilyFactsheetData(self, data,slum_name):
@@ -171,19 +172,19 @@ class avni_sync():
             slum = Slum.objects.filter(name=slum_name).values_list('id','electoral_ward_id__administrative_ward__city__id')[0]
             slum_id, city_id = slum[0],slum[1]
             check_record = HouseholdData.objects.filter(household_number=household_number,city_id=city_id,slum_id=slum_id)
+            if not check_record:
+                rhs_data = {}
+                final_rhs_data = self.create_final_rhs_data(rhs_data, rhs_from_avni)
+                update_record = HouseholdData.objects.create(household_number=household_number, slum_id=slum_id,
+                city_id=city_id, submission_date=submission_date,rhs_data=final_rhs_data, created_date=created_date)
+                print('Household record created for', slum_name, household_number)
             rhs_data = check_record.values_list('rhs_data',flat=True)[0]
-            if len(rhs_data) == 0:
+            if rhs_data == None or len(rhs_data) == 0:
                 rhs_data ={}
             final_rhs_data = self.create_final_rhs_data(rhs_data, rhs_from_avni)
             check_record.update(submission_date=submission_date, rhs_data=final_rhs_data,
                                 created_date=created_date)
             print('Household record updated for', slum_name, household_number)
-        except Exception as e :
-            rhs_data = {}
-            final_rhs_data = self.create_final_rhs_data(rhs_data, rhs_from_avni)
-            update_record = HouseholdData.objects.create(household_number=household_number, slum_id=slum_id,
-            city_id=city_id, submission_date=submission_date,rhs_data=final_rhs_data, created_date=created_date)
-            print('Household record created for', slum_name, household_number)
         except Exception as e:
             print('second exception',e)
 
@@ -213,13 +214,13 @@ class avni_sync():
     #     result = requests.get(self.base_url + enrolments_path, headers={'AUTH-TOKEN': self.get_cognito_token()})
     #     get_page_count = json.loads(result.text)['totalPages']
     #     return (get_page_count, enrolments_path)
-    @timing
+    # @timing
     def access_program_encounter_data(self):
         totalPages, enc_path = self.create_programEncounter_url()
-        for i in range(totalPages)[0:1]:
+        for i in range(totalPages)[1:2]:
             send_request = requests.get(self.base_url + enc_path + '&' + str(i),headers={'AUTH-TOKEN': self.get_cognito_token()})
             data = json.loads(send_request.text)['content']
-            for j in data:
+            for j in data[2:3]:
                 encounter_data = j['observations']
                 enrolment_id = j['Enrolment ID']
                 send_request1 = requests.get(self.base_url + 'api/enrolment/' + enrolment_id,headers={'AUTH-TOKEN': self.get_cognito_token()})
@@ -228,5 +229,11 @@ class avni_sync():
                 encount_ids = text['encounters']
                 send_request2 = requests.get(self.base_url + 'api/subject/' + subject_id ,headers={'AUTH-TOKEN': self.get_cognito_token()})
                 get_HH_data = json.loads(send_request2.text)
-                self.save_registrtation_data(get_HH_data)
+                # print(get_HH_data['location']['Slum'])
+                # self.save_registrtation_data(get_HH_data)
                 self.saveProgramEncounterData(encount_ids, get_HH_data['location']['Slum'], get_HH_data['location']['City'])
+
+def get_fun_call(request):
+    a = avni_sync()
+    b = a.access_program_encounter_data()
+    return HttpResponse(json.dumps('b'))
