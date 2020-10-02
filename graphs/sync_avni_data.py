@@ -217,10 +217,10 @@ class avni_sync():
     # @timing
     def access_program_encounter_data(self):
         totalPages, enc_path = self.create_programEncounter_url()
-        for i in range(totalPages)[1:2]:
+        for i in range(totalPages):
             send_request = requests.get(self.base_url + enc_path + '&' + str(i),headers={'AUTH-TOKEN': self.get_cognito_token()})
             data = json.loads(send_request.text)['content']
-            for j in data[2:3]:
+            for j in data:
                 encounter_data = j['observations']
                 enrolment_id = j['Enrolment ID']
                 send_request1 = requests.get(self.base_url + 'api/enrolment/' + enrolment_id,headers={'AUTH-TOKEN': self.get_cognito_token()})
@@ -229,11 +229,33 @@ class avni_sync():
                 encount_ids = text['encounters']
                 send_request2 = requests.get(self.base_url + 'api/subject/' + subject_id ,headers={'AUTH-TOKEN': self.get_cognito_token()})
                 get_HH_data = json.loads(send_request2.text)
-                # print(get_HH_data['location']['Slum'])
-                # self.save_registrtation_data(get_HH_data)
+                print(get_HH_data['location']['Slum'])
+                self.save_registrtation_data(get_HH_data)
                 self.saveProgramEncounterData(encount_ids, get_HH_data['location']['Slum'], get_HH_data['location']['City'])
 
-def get_fun_call(request):
-    a = avni_sync()
-    b = a.access_program_encounter_data()
-    return HttpResponse(json.dumps('b'))
+    def shiftNativePlaceDataToFF(self):
+        getData = HouseholdData.objects.filter(slum_id=1675).values_list('household_number', 'rhs_data', 'ff_data')
+        for i in getData:
+            try:
+                HH_number = i[0]
+                occupation = i[2]['group_im2th52/Occupation_s_of_earning_membe'] if i[2][
+                    'group_im2th52/Occupation_s_of_earning_membe'] else 0
+                useOfToilet = i[2]['group_ne3ao98/Use_of_toilet'] if i[2]['group_ne3ao98/Use_of_toilet'] else 0
+                NativePlace = i[1]['What is your native place (village, town, city) ?'] if i[1][
+                    'What is your native place (village, town, city) ?'] else None
+                occupation_string = ','.join(i for i in occupation)
+                toiletUse = ','.join(i for i in useOfToilet)
+                newToiletUse = {'group_ne3ao98/Use_of_toilet': toiletUse}
+                newFF = {'group_oh4zf84/Name_of_Native_villa_district_and_state': NativePlace}
+                Occupation_str = {'group_im2th52/Occupation_s_of_earning_membe': occupation_string}
+                if i[2]:
+                    i[2].update(newToiletUse)
+                    i[2].update(Occupation_str)
+                    i[2].update(newFF)
+                    getRecord = HouseholdData.objects.filter(slum_id=1675, household_number=i[0])
+                    getRecord.update(ff_data=i[2])
+                    print('Updated FF data for', HH_number)
+                else:
+                    print('No FF data for', HH_number)
+            except Exception as e:
+                print(e, HH_number)
