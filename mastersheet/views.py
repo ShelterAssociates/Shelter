@@ -68,7 +68,6 @@ def masterSheet(request, slum_code=0, FF_code=0, RHS_code=0):
 #        followup_data_true = FollowupData.objects.filter(slum=slum_code[0][0],flag_followup_in_rhs = True)
 
         if slum_code is not 0:
-	    
             if flag_fetch_rhs :
                 formdict = map(lambda x: x.rhs_data, filter(lambda x: x.rhs_data!=None, household_data))
             else:
@@ -76,7 +75,6 @@ def masterSheet(request, slum_code=0, FF_code=0, RHS_code=0):
 
             if flag_fetch_ff:
                 formdict_family_factsheet = map(lambda x:(x.ff_data if x.ff_data else {'group_vq77l17/Household_number': 00 }),household_data)
-
                 # Family Factsheet - fetching data
                 # arranging data with respect to household numbers
                 temp_FF = {str(int(obj_FF['group_vq77l17/Household_number'])): obj_FF for obj_FF in formdict_family_factsheet}
@@ -151,9 +149,8 @@ def masterSheet(request, slum_code=0, FF_code=0, RHS_code=0):
             # Vendor and Accounts - fetching data
             vendor = VendorHouseholdInvoiceDetail.objects.filter(slum__id=slum_code[0][0])
             invoices = InvoiceItems.objects.filter(slum__id=slum_code[0][0])
-
+            #
             dummy_formdict = {str(int(x['Household_number'])): x for x in formdict}
-
             for y in invoices:
                 for z in y.household_numbers:
                     if str(z) not in dummy_formdict.keys():
@@ -235,6 +232,7 @@ def masterSheet(request, slum_code=0, FF_code=0, RHS_code=0):
                 x['ff_id'] = None
                 x['ff_xform_id_string'] = None
                 x['Household_number'] = str(int(x['Household_number']))
+
                 if flag_fetch_ff:
                     if key in temp_FF_keys:
                         if '_id' in temp_FF[x['Household_number']].keys():
@@ -279,10 +277,11 @@ def masterSheet(request, slum_code=0, FF_code=0, RHS_code=0):
                 if len(slum_funder) != 0:
                     for funder in slum_funder:
                         if int(x['Household_number']) in funder.household_code:
-                            x.update({'Funder': funder.sponsor.organization_name})
+                            sponsor_id = funder.sponsor.id
+                            project_name = SponsorProject.objects.filter(id =sponsor_id).values_list('name',flat=True)[0]
+                            x.update({'Funder':project_name})# funder.sponsor.organization_name})
 
             formdict = list(map(lambda x: dummy_formdict[x], dummy_formdict))
-
             for x in formdict:
                 try:
                     if x['current place of defecation'] in ['SBM (Installment)', 'Own toilet'] and len(x['agreement_date_str']) > 1:
@@ -293,7 +292,7 @@ def masterSheet(request, slum_code=0, FF_code=0, RHS_code=0):
                 except Exception as e:
                     # print 'not found - '+str(x['Household_number'])
                     pass
-
+        # print(formdict_family_factsheet)
     except Exception as e:
         print(e)
         # raise
@@ -433,7 +432,7 @@ def define_columns(request):
         {"data": "p2_material_shifted_to", "title": "Phase two material shifted to"},  ##63
         {"data": "p3_material_shifted_to", "title": "Phase three material shifted to"},  ##64
         {"data": "st_material_shifted_to", "title": "Septick tank shifted to"},  ##65
-        {"data": "Funder", "title": "Funder"},  # 67#66
+        {"data": "Funder", "title": "Funder (Project Name)"},  # 67#66
         {"data": "status", "title": "Final Status"},  ##67
         {"data": "pocket", "title": "Pocket"},
         {"data": "comment", "title": "Comment"},
