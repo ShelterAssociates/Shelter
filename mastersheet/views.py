@@ -48,9 +48,9 @@ def give_details(request):
 # Also, it retrieves the data of accounts and SBM. This view bundles them in a single object
 # to be displayed to the front end.
 
-@csrf_exempt
-@apply_permissions_ajax('mastersheet.can_view_mastersheet')
-@deco_city_permission
+# @csrf_exempt
+# @apply_permissions_ajax('mastersheet.can_view_mastersheet')
+# @deco_city_permission
 def masterSheet(request, slum_code=0, FF_code=0, RHS_code=0):
     flag_fetch_rhs = 'show_rhs' in request.GET
     flag_fetch_ff = 'show_ff' in request.GET
@@ -69,165 +69,178 @@ def masterSheet(request, slum_code=0, FF_code=0, RHS_code=0):
 
         if slum_code is not 0:
             if flag_fetch_rhs :
-                formdict = map(lambda x: x.rhs_data, filter(lambda x: x.rhs_data!=None, household_data))
+                try:
+                    formdict = map(lambda x: x.rhs_data, filter(lambda x: x.rhs_data!=None, household_data))
+                    formdict = list(map(lambda x: x.rhs_data, filter(lambda x: x.rhs_data!=None, household_data)))
+                except Exception as e:
+                    print(e,'in rhs')
             else:
-                formdict = map(lambda x:{'Household_number':x.household_number, '_id':x.rhs_data['_id'], '_xform_id_string':x.rhs_data['_xform_id_string']}, filter(lambda x:x.rhs_data!=None, household_data))
+                try:
+                    formdict = list(map(lambda x:{'Household_number':x.household_number},filter(lambda x: x.rhs_data!=None, household_data)))
+                    formdict = map(lambda x:{'Household_number':x.household_number, '_id':x.rhs_data['_id'], '_xform_id_string':x.rhs_data['_xform_id_string']}, filter(lambda x:x.rhs_data!=None, household_data))
+                except Exception as e:
+                    print(e)
 
             if flag_fetch_ff:
-                formdict_family_factsheet = map(lambda x:(x.ff_data if x.ff_data else {'group_vq77l17/Household_number': 00 }),household_data)
+                try:
+                    formdict_family_factsheet = list(map(lambda x:(x.ff_data if x.ff_data else {'group_vq77l17/Household_number': 00 }),household_data))
+                    formdict_family_factsheet = map(lambda x:(x.ff_data if x.ff_data else {'group_vq77l17/Household_number': 00 }),household_data)
                 # Family Factsheet - fetching data
                 # arranging data with respect to household numbers
+                except Exception as e:
+                    print(e,'in ff')
                 temp_FF = {str(int(obj_FF['group_vq77l17/Household_number'])): obj_FF for obj_FF in formdict_family_factsheet}
                 temp_FF_keys = temp_FF.keys() # list of household numbers
 
-            # Daily Reporting - fetching data
-            toilet_reconstruction_fields = ['slum', 'slum__name', 'household_number', 'agreement_date_str',
-                                            'agreement_cancelled',
-                                            'septic_tank_date_str', 'phase_one_material_date_str',
-                                            'phase_two_material_date_str', 'phase_three_material_date_str',
-                                            'completion_date_str', 'status', 'comment', 'pocket',
-                                            'p1_material_shifted_to',
-                                            'p2_material_shifted_to', 'p3_material_shifted_to',
-                                            'st_material_shifted_to',
-                                            'id']
-
-            daily_reporting_data = ToiletConstruction.objects.extra(
-                select={'phase_one_material_date_str': "to_char(phase_one_material_date, 'YYYY-MM-DD ')",
-                        'phase_two_material_date_str': "to_char(phase_two_material_date, 'YYYY-MM-DD ')",
-                        'phase_three_material_date_str': "to_char(phase_three_material_date, 'YYYY-MM-DD ')",
-                        'septic_tank_date_str': "to_char(septic_tank_date, 'YYYY-MM-DD ')",
-                        'agreement_date_str': "to_char(agreement_date, 'YYYY-MM-DD ')",
-                        'completion_date_str': "to_char(completion_date, 'YYYY-MM-DD ')"}).filter(
-                slum__id=slum_code[0][0])
-
-            daily_reporting_data = daily_reporting_data.values(*toilet_reconstruction_fields)
-
-            for i in daily_reporting_data:
-                if i['status'] is not None:
-                    if i['status'].strip() != "":
-                        i['status'] = ToiletConstruction.get_status_display(i['status'])
-                        i['delay_flag'] = ''
-                if i['agreement_date_str'] != None and i['status'] != 'Agreement cancel':
-                    if i['phase_one_material_date_str'] == None and is_delayed(i['agreement_date_str']):
-                        i['delay_flag'] = '#f9a4a4'  # phase one delayed
-                    if i['phase_two_material_date_str'] == None and is_delayed(i['phase_one_material_date_str']):
-                        i['delay_flag'] = '#f2f29f'  # phase two delayed
-                    if i['phase_one_material_date_str'] != i['phase_three_material_date_str']:
-                        if i['phase_three_material_date_str'] == None and is_delayed(i['phase_two_material_date_str']):
-                            i['delay_flag'] = '#aaf9a4'
-                        if i['completion_date_str'] == None and is_delayed(i['phase_three_material_date_str']):
-                            i['delay_flag'] = '#aaa4f4'
-                    else:
-                        if i['completion_date_str'] == None and is_delayed(i['phase_two_material_date_str']):
-                            i['delay_flag'] = '#aaa4f4'
-            temp_daily_reporting = {str(int(obj_DR['household_number'])): obj_DR for obj_DR in daily_reporting_data}
-            temp_DR_keys = temp_daily_reporting.keys()
-
-            # SBM - fetching data
-            sbm_fields = ['slum', 'slum__name', 'household_number', 'name', 'application_id', 'photo_uploaded',
-                          'created_date_str', 'id', 'phone_number', 'aadhar_number', 'photo_verified', 'photo_approved',
-                          'application_verified', 'application_approved', 'sbm_comment']
-            sbm_data = SBMUpload.objects.extra(
-                select={'created_date_str': "to_char(created_date, 'YYYY-MM-DD ')"}).filter(
-                slum__id=slum_code[0][0])
-
-            sbm_data = sbm_data.values(*sbm_fields)
-
-            temp_sbm = {str(obj_DR['household_number']): obj_DR for obj_DR in sbm_data}
-            temp_sbm_keys = temp_sbm.keys()
-
-            # Community Mobilization - fetching data
-            community_mobilization_fields = ['slum', 'slum__name', 'household_number', 'activity_type',
-                                             'activity_date_str',
-                                             'id']
-            community_mobilization_data = CommunityMobilization.objects.extra(
-                select={'activity_date_str': "to_char(activity_date, 'YYYY-MM-DD ')"}).filter(
-                slum__id=slum_code[0][0])
-            #community_mobilization_data1 = community_mobilization_data.values(*community_mobilization_fields)
-            #community_mobilization_data_list = list(community_mobilization_data1)
-
-            # Vendor and Accounts - fetching data
-            vendor = VendorHouseholdInvoiceDetail.objects.filter(slum__id=slum_code[0][0])
-            invoices = InvoiceItems.objects.filter(slum__id=slum_code[0][0])
+            # # Daily Reporting - fetching data
+            # toilet_reconstruction_fields = ['slum', 'slum__name', 'household_number', 'agreement_date_str',
+            #                                 'agreement_cancelled',
+            #                                 'septic_tank_date_str', 'phase_one_material_date_str',
+            #                                 'phase_two_material_date_str', 'phase_three_material_date_str',
+            #                                 'completion_date_str', 'status', 'comment', 'pocket',
+            #                                 'p1_material_shifted_to',
+            #                                 'p2_material_shifted_to', 'p3_material_shifted_to',
+            #                                 'st_material_shifted_to',
+            #                                 'id']
             #
+            # daily_reporting_data = ToiletConstruction.objects.extra(
+            #     select={'phase_one_material_date_str': "to_char(phase_one_material_date, 'YYYY-MM-DD ')",
+            #             'phase_two_material_date_str': "to_char(phase_two_material_date, 'YYYY-MM-DD ')",
+            #             'phase_three_material_date_str': "to_char(phase_three_material_date, 'YYYY-MM-DD ')",
+            #             'septic_tank_date_str': "to_char(septic_tank_date, 'YYYY-MM-DD ')",
+            #             'agreement_date_str': "to_char(agreement_date, 'YYYY-MM-DD ')",
+            #             'completion_date_str': "to_char(completion_date, 'YYYY-MM-DD ')"}).filter(
+            #     slum__id=slum_code[0][0])
+            #
+            # daily_reporting_data = daily_reporting_data.values(*toilet_reconstruction_fields)
+            #
+            # for i in daily_reporting_data:
+            #     if i['status'] is not None:
+            #         if i['status'].strip() != "":
+            #             i['status'] = ToiletConstruction.get_status_display(i['status'])
+            #             i['delay_flag'] = ''
+            #     if i['agreement_date_str'] != None and i['status'] != 'Agreement cancel':
+            #         if i['phase_one_material_date_str'] == None and is_delayed(i['agreement_date_str']):
+            #             i['delay_flag'] = '#f9a4a4'  # phase one delayed
+            #         if i['phase_two_material_date_str'] == None and is_delayed(i['phase_one_material_date_str']):
+            #             i['delay_flag'] = '#f2f29f'  # phase two delayed
+            #         if i['phase_one_material_date_str'] != i['phase_three_material_date_str']:
+            #             if i['phase_three_material_date_str'] == None and is_delayed(i['phase_two_material_date_str']):
+            #                 i['delay_flag'] = '#aaf9a4'
+            #             if i['completion_date_str'] == None and is_delayed(i['phase_three_material_date_str']):
+            #                 i['delay_flag'] = '#aaa4f4'
+            #         else:
+            #             if i['completion_date_str'] == None and is_delayed(i['phase_two_material_date_str']):
+            #                 i['delay_flag'] = '#aaa4f4'
+            # temp_daily_reporting = {str(int(obj_DR['household_number'])): obj_DR for obj_DR in daily_reporting_data}
+            # temp_DR_keys = temp_daily_reporting.keys()
+            #
+            # # SBM - fetching data
+            # sbm_fields = ['slum', 'slum__name', 'household_number', 'name', 'application_id', 'photo_uploaded',
+            #               'created_date_str', 'id', 'phone_number', 'aadhar_number', 'photo_verified', 'photo_approved',
+            #               'application_verified', 'application_approved', 'sbm_comment']
+            # sbm_data = SBMUpload.objects.extra(
+            #     select={'created_date_str': "to_char(created_date, 'YYYY-MM-DD ')"}).filter(
+            #     slum__id=slum_code[0][0])
+            #
+            # sbm_data = sbm_data.values(*sbm_fields)
+            #
+            # temp_sbm = {str(obj_DR['household_number']): obj_DR for obj_DR in sbm_data}
+            # temp_sbm_keys = temp_sbm.keys()
+            #
+            # # Community Mobilization - fetching data
+            # community_mobilization_fields = ['slum', 'slum__name', 'household_number', 'activity_type',
+            #                                  'activity_date_str',
+            #                                  'id']
+            # community_mobilization_data = CommunityMobilization.objects.extra(
+            #     select={'activity_date_str': "to_char(activity_date, 'YYYY-MM-DD ')"}).filter(
+            #     slum__id=slum_code[0][0])
+            # #community_mobilization_data1 = community_mobilization_data.values(*community_mobilization_fields)
+            # #community_mobilization_data_list = list(community_mobilization_data1)
+            #
+            # # Vendor and Accounts - fetching data
+            # vendor = VendorHouseholdInvoiceDetail.objects.filter(slum__id=slum_code[0][0])
+            # invoices = InvoiceItems.objects.filter(slum__id=slum_code[0][0])
+
             dummy_formdict = {str(int(x['Household_number'])): x for x in formdict}
-            for y in invoices:
-                for z in y.household_numbers:
-                    if str(z) not in dummy_formdict.keys():
-                        dummy_formdict[str(z)] = {
-                            "Household_number": str(z),
-                            "_id": "",
-                            "ff_id": "",
-                            "ff_xform_id_string": "",
-                            "_xform_id_string": "",
-                            "_attachments": "",
-                            "no_rhs_flag": "#eba6fc"
-                        }
-                    vendor_name = "vendor_type" + str(y.material_type)
-                    invoice_number = "invoice_number" + str(y.material_type)
-                    dummy_formdict[str(z)].update({
-                        vendor_name: y.invoice.vendor.name,
-                        invoice_number: y.invoice.invoice_number,
-                        str(y.material_type) + " Invoice Number" + "_id": y.invoice.id,
-                        "Name of " + str(y.material_type) + " vendor" + "_id": y.invoice.id
-                    })
 
-            for y in community_mobilization_data:
-                #y = community_mobilization_data[i]
-                for z in y.household_number:
-                    new_activity_type = y.activity_type.name
-                    z=str(int(z))
-                    if z not in dummy_formdict.keys():
-                        dummy_formdict[z] = {
-                            "Household_number": z,
-                            "_id": "",
-                            "ff_id": "",
-                            "ff_xform_id_string": "",
-                            "_xform_id_string": "",
-                            "_attachments": "",
-                            "no_rhs_flag": "#eba6fc"
-                        }
-                    dummy_formdict[z].update({new_activity_type: y.activity_date_str, str(new_activity_type) + "_id": y.id})
-
-            for i in temp_sbm_keys:
-                if str(i) not in dummy_formdict.keys():
-                    dummy_formdict[str(i)] = {
-                        "Household_number": i,
-                        "_id": "",
-                        "ff_id": "",
-                        "ff_xform_id_string": "",
-                        "_xform_id_string": "",
-                        "_attachments": "",
-                        "no_rhs_flag": "#eba6fc"
-                    }
-                dummy_formdict[str(i)].update(temp_sbm[str(i)])
-                dummy_formdict[str(i)].update({'sbm_id_' + str(i): temp_sbm[str(i)]['id']})
-
-            for i in temp_DR_keys:
-                if str(i) not in dummy_formdict.keys():
-                    dummy_formdict[str(i)] = {
-                        "Household_number": i,
-                        "_id": "",
-                        "ff_id": "",
-                        "ff_xform_id_string": "",
-                        "_xform_id_string": "",
-                        "_attachments": "",
-                        "no_rhs_flag": "#eba6fc"
-                    }
-                dummy_formdict[str(i)].update(temp_daily_reporting[str(i)])
-               	dummy_formdict[str(i)].update({'tc_id_' + str(i): temp_daily_reporting[str(i)]['id']})
+            # for y in invoices:
+            #     for z in y.household_numbers:
+            #         if str(z) not in dummy_formdict.keys():
+            #             dummy_formdict[str(z)] = {
+            #                 "Household_number": str(z),
+            #                 "_id": "",
+            #                 "ff_id": "",
+            #                 "ff_xform_id_string": "",
+            #                 "_xform_id_string": "",
+            #                 "_attachments": "",
+            #                 "no_rhs_flag": "#eba6fc"
+            #             }
+            #         vendor_name = "vendor_type" + str(y.material_type)
+            #         invoice_number = "invoice_number" + str(y.material_type)
+            #         dummy_formdict[str(z)].update({
+            #             vendor_name: y.invoice.vendor.name,
+            #             invoice_number: y.invoice.invoice_number,
+            #             str(y.material_type) + " Invoice Number" + "_id": y.invoice.id,
+            #             "Name of " + str(y.material_type) + " vendor" + "_id": y.invoice.id
+            #         })
+            #
+            # for y in community_mobilization_data:
+            #     #y = community_mobilization_data[i]
+            #     for z in y.household_number:
+            #         new_activity_type = y.activity_type.name
+            #         z=str(int(z))
+            #         if z not in dummy_formdict.keys():
+            #             dummy_formdict[z] = {
+            #                 "Household_number": z,
+            #                 "_id": "",
+            #                 "ff_id": "",
+            #                 "ff_xform_id_string": "",
+            #                 "_xform_id_string": "",
+            #                 "_attachments": "",
+            #                 "no_rhs_flag": "#eba6fc"
+            #             }
+            #         dummy_formdict[z].update({new_activity_type: y.activity_date_str, str(new_activity_type) + "_id": y.id})
+            #
+            # for i in temp_sbm_keys:
+            #     if str(i) not in dummy_formdict.keys():
+            #         dummy_formdict[str(i)] = {
+            #             "Household_number": i,
+            #             "_id": "",
+            #             "ff_id": "",
+            #             "ff_xform_id_string": "",
+            #             "_xform_id_string": "",
+            #             "_attachments": "",
+            #             "no_rhs_flag": "#eba6fc"
+            #         }
+            #     dummy_formdict[str(i)].update(temp_sbm[str(i)])
+            #     dummy_formdict[str(i)].update({'sbm_id_' + str(i): temp_sbm[str(i)]['id']})
+            #
+            # for i in temp_DR_keys:
+            #     if str(i) not in dummy_formdict.keys():
+            #         dummy_formdict[str(i)] = {
+            #             "Household_number": i,
+            #             "_id": "",
+            #             "ff_id": "",
+            #             "ff_xform_id_string": "",
+            #             "_xform_id_string": "",
+            #             "_attachments": "",
+            #             "no_rhs_flag": "#eba6fc"
+            #         }
+            #     dummy_formdict[str(i)].update(temp_daily_reporting[str(i)])
+            #    	dummy_formdict[str(i)].update({'tc_id_' + str(i): temp_daily_reporting[str(i)]['id']})
 
             for key, x in dummy_formdict.items():
-                try:
-                    if len(x['p1_material_shifted_to']) != 0 or len(x['p2_material_shifted_to']) != 0 or len(
-                            x['p3_material_shifted_to']) != 0 or len(x['st_material_shifted_to']) != 0:
-                        x['material_shifts'] = '#f9cb9f'
-                    else:
-                        x['material_shifts'] = None
-                except Exception as e:
-                    x['material_shifts'] = None
+                # try:
+                #     if len(x['p1_material_shifted_to']) != 0 or len(x['p2_material_shifted_to']) != 0 or len(
+                #             x['p3_material_shifted_to']) != 0 or len(x['st_material_shifted_to']) != 0:
+                #         x['material_shifts'] = '#f9cb9f'
+                #     else:
+                #         x['material_shifts'] = None
+                # except Exception as e:
+                #     x['material_shifts'] = None
 
-                temp = x['_id']
+                temp = x['_id'] if '_id' in x else 0
                 x['slum__name'] = slum_code[0][4]
                 x['ff_id'] = None
                 x['ff_xform_id_string'] = None
@@ -238,10 +251,14 @@ def masterSheet(request, slum_code=0, FF_code=0, RHS_code=0):
                         if '_id' in temp_FF[x['Household_number']].keys():
                             ff_id = temp_FF[x['Household_number']]['_id']
                             del (temp_FF[x['Household_number']]['_id'])
+                        else :
+                            ff_id = temp_FF[x['Household_number']]
 
                         if '_xform_id_string' in temp_FF[x['Household_number']].keys():
                             ff_xform_id_string = temp_FF[x['Household_number']]['_xform_id_string']
                             del (temp_FF[x['Household_number']]['_xform_id_string'])
+                        else :
+                            ff_xform_id_string = None
 
                         x.update(temp_FF[x['Household_number']])
                         x['OnfieldFactsheet'] = 'Yes'
@@ -256,43 +273,50 @@ def masterSheet(request, slum_code=0, FF_code=0, RHS_code=0):
                     if 'Family_Photo' in x.keys():
                         x.update({'family_photo_url': PATH + '/' + x['Family_Photo']})
 
-                x.update({'rhs_url': settings.BASE_URL + str('shelter/forms/') + str(x['_xform_id_string']) + str('/instance#/') + str(x['_id'])})
-                x.update({'ff_url': settings.BASE_URL + str('shelter/forms/') + str(x['ff_xform_id_string']) + str('/instance#/') + str(x["ff_id"])})
+                if x['ff_id'] != None :
+                    x.update({'toilet_photo_url': x['ff_id']['Toilet_Photo']})
+                    x.update({'family_photo_url': x['ff_id']['Family_Photo']})
 
-                cod_data = followup_data_false.filter(household_number = int(key)).order_by('-submission_date').first()
-
-                if 'group_oi8ts04/Current_place_of_defecation' in x:
-                    x.update({'current place of defecation' :x['group_oi8ts04/Current_place_of_defecation']})
-
-                if 'status' in x and x['status'] == 'Completed':
-                    x.update({'current place of defecation': 'Toilet by SA'})
-
-                if cod_data and 'group_oi8ts04/Current_place_of_defecation' in cod_data.followup_data :
-                    data = cod_data.followup_data['group_oi8ts04/Current_place_of_defecation']
-                    x.update({'current place of defecation':data})
-
-                if cod_data and 'status' in x and x['status'] == 'Completed':
-                    x.update({'current place of defecation': 'Toilet by SA'})
-
+                if '_xform_id_string' in x.keys():
+                    x.update({'rhs_url': settings.BASE_URL + str('shelter/forms/') + str(x['_xform_id_string']) + str('/instance#/') + str(x['_id'])})
+                else :
+                    pass
+                if 'ff_xform_id_string' in x.keys():
+                    x.update({'ff_url': settings.BASE_URL + str('shelter/forms/') + str(x['ff_xform_id_string']) + str('/instance#/') + str(x["ff_id"])})
+                else :
+                    pass
+                # cod_data = followup_data_false.filter(household_number = int(key)).order_by('-submission_date').first()
+                #
+                # if 'group_oi8ts04/Current_place_of_defecation' in x:
+                #     x.update({'current place of defecation' :x['group_oi8ts04/Current_place_of_defecation']})
+                #
+                # if 'status' in x and x['status'] == 'Completed':
+                #     x.update({'current place of defecation': 'Toilet by SA'})
+                #
+                # if cod_data and 'group_oi8ts04/Current_place_of_defecation' in cod_data.followup_data :
+                #     data = cod_data.followup_data['group_oi8ts04/Current_place_of_defecation']
+                #     x.update({'current place of defecation':data})
+                #
+                # if cod_data and 'status' in x and x['status'] == 'Completed':
+                #     x.update({'current place of defecation': 'Toilet by SA'})
+                #oject
                 if len(slum_funder) != 0:
                     for funder in slum_funder:
                         if int(x['Household_number']) in funder.household_code:
-                            sponsor_id = funder.sponsor.id
-                            project_name = SponsorProject.objects.filter(id =sponsor_id).values_list('name',flat=True)[0]
-                            x.update({'Funder':project_name})# funder.sponsor.organization_name})
+                            x.update({'Funder': funder.sponsor_project.name}) #funder.sponsor.organization_name})
 
             formdict = list(map(lambda x: dummy_formdict[x], dummy_formdict))
-            for x in formdict:
-                try:
-                    if x['current place of defecation'] in ['SBM (Installment)', 'Own toilet'] and len(x['agreement_date_str']) > 1:
-                        x['incorrect_cpod'] = 'incorrect_cpod'
-
-                    if x['group_oi8ts04/Current_place_of_defecation'] == 'Own toilet' and x['status'] == 'Completed':
-                            x['incorrect_cpod'] = 'incorrect_cpod'
-                except Exception as e:
-                    # print 'not found - '+str(x['Household_number'])
-                    pass
-        # print(formdict_family_factsheet)
+            # for x in formdict:
+            #     try:
+            #         if x['current place of defecation'] in ['SBM (Installment)', 'Own toilet'] and len(x['agreement_date_str']) > 1:
+            #             x['incorrect_cpod'] = 'incorrect_cpod'
+            #
+            #         if x['group_oi8ts04/Current_place_of_defecation'] == 'Own toilet' and x['status'] == 'Completed':
+            #                 x['incorrect_cpod'] = 'incorrect_cpod'
+            #     except Exception as e:
+            #         # print 'not found - '+str(x['Household_number'])
+            #         pass
+        # print(formdict)
     except Exception as e:
         print(e)
         # raise
