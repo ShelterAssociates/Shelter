@@ -140,7 +140,7 @@
 												No of households :{{zipfile.household_code|length}}
 												{% if zipfile.zip_file %}
 
-												<font style="font-style:italic;">(Click <a href = "{{zipfile.zip_file.url}}">here</a>  to download all factsheet)</font>
+												<font class="hide" style="font-style:italic;">(Click <a href = "{{zipfile.zip_file.url}}">here</a>  to download all factsheet)</font>
 												{%else%}
 													(In Progress...)
 												{%endif%}
@@ -163,7 +163,7 @@
 								Households Impacted : {{entry.households_in_project}}<br> Slums Impacted : {{ entry.slums_in_project|length}}<br>
 								{% for doc in entry.documents %}
 								{{doc.url}}
-									<a target='blank' href = "{{doc}}"> {{doc.givename}}</a><br/>
+									<a target='blank' href = "{{doc.document.url}}"> {{doc.givename}}</a><br/>
 
 								{%endfor%}
 							</div>
