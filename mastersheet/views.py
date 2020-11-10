@@ -48,9 +48,9 @@ def give_details(request):
 # Also, it retrieves the data of accounts and SBM. This view bundles them in a single object
 # to be displayed to the front end.
 
-# @csrf_exempt
-# @apply_permissions_ajax('mastersheet.can_view_mastersheet')
-# @deco_city_permission
+@csrf_exempt
+@apply_permissions_ajax('mastersheet.can_view_mastersheet')
+@deco_city_permission
 def masterSheet(request, slum_code=0, FF_code=0, RHS_code=0):
     flag_fetch_rhs = 'show_rhs' in request.GET
     flag_fetch_ff = 'show_ff' in request.GET
@@ -65,7 +65,7 @@ def masterSheet(request, slum_code=0, FF_code=0, RHS_code=0):
 
         household_data = HouseholdData.objects.filter(slum__id=slum_code[0][0])
         followup_data_false = FollowupData.objects.filter(slum=slum_code[0][0],flag_followup_in_rhs = False)
-#        followup_data_true = FollowupData.objects.filter(slum=slum_code[0][0],flag_followup_in_rhs = True)
+        #        followup_data_true = FollowupData.objects.filter(slum=slum_code[0][0],flag_followup_in_rhs = True)
 
         if slum_code is not 0:
             if flag_fetch_rhs :
@@ -177,7 +177,7 @@ def masterSheet(request, slum_code=0, FF_code=0, RHS_code=0):
                         str(y.material_type) + " Invoice Number" + "_id": y.invoice.id,
                         "Name of " + str(y.material_type) + " vendor" + "_id": y.invoice.id
                     })
-            #
+
             for y in community_mobilization_data:
                 #y = community_mobilization_data[i]
                 for z in y.household_number:
@@ -233,7 +233,7 @@ def masterSheet(request, slum_code=0, FF_code=0, RHS_code=0):
                 except Exception as e:
                     x['material_shifts'] = None
 
-                temp = x['_id'] if '_id' in x else 0
+                temp = x['_id'] if '_id' in x else None
                 x['slum__name'] = slum_code[0][4]
                 x['ff_id'] = None
                 x['ff_xform_id_string'] = None
@@ -267,8 +267,10 @@ def masterSheet(request, slum_code=0, FF_code=0, RHS_code=0):
                         x.update({'family_photo_url': PATH + '/' + x['Family_Photo']})
 
                 if x['ff_id'] != None :
-                    x.update({'toilet_photo_url': x['ff_id']['Toilet_Photo']})
-                    x.update({'family_photo_url': x['ff_id']['Family_Photo']})
+                    x.update({'toilet_photo_url': x['Toilet_Photo']})
+                    x.update({'family_photo_url': x['Family_Photo']})
+                    if x['Toilet_Photo'] != None:
+                        x.update({'current place of defecation': 'Toilet by SA'})
 
                 if '_xform_id_string' in x.keys():
                     x.update({'rhs_url': settings.BASE_URL + str('shelter/forms/') + str(x['_xform_id_string']) + str('/instance#/') + str(x['_id'])})
@@ -279,6 +281,12 @@ def masterSheet(request, slum_code=0, FF_code=0, RHS_code=0):
                 else :
                     pass
 
+                if 'group_oi8ts04/Current_place_of_defecation' in x:
+                    x.update({'current place of defecation': x['group_oi8ts04/Current_place_of_defecation']})
+
+                if 'status' in x and x['status'] == 'Completed':
+                    x.update({'current place of defecation': 'Toilet by SA'})
+
                 cod_data = followup_data_false.filter(household_number = int(key)).order_by('-submission_date').first()
 
                 if cod_data:
@@ -287,12 +295,6 @@ def masterSheet(request, slum_code=0, FF_code=0, RHS_code=0):
                         x.update({'current place of defecation':data})
                     if 'status' in x and x['status'] == 'Completed':
                         x.update({'current place of defecation': 'Toilet by SA'})
-
-                if 'group_oi8ts04/Current_place_of_defecation' in x:
-                    x.update({'current place of defecation' :x['group_oi8ts04/Current_place_of_defecation']})
-
-                if 'status' in x and x['status'] == 'Completed':
-                    x.update({'current place of defecation': 'Toilet by SA'})
 
                 if len(slum_funder) != 0:
                     for funder in slum_funder:
@@ -308,6 +310,7 @@ def masterSheet(request, slum_code=0, FF_code=0, RHS_code=0):
                     if x['group_oi8ts04/Current_place_of_defecation'] == 'Own toilet' and x['status'] == 'Completed':
                             x['incorrect_cpod'] = 'incorrect_cpod'
                 except Exception as e:
+                    pass
                     print ('not found - '+str(x['Household_number']))
     except Exception as e:
         print(e)
@@ -400,9 +403,10 @@ def define_columns(request):
         {"data": "group_oi8ts04/What_was_the_cost_in_to_build_the_toilet",
          "title": "What was the cost incurred to build the toilet?"},
         {"data": "current place of defecation", "title": "Current place of defecation"},
+        # {"data": "group_rz72p62/Which_Community_Toilet_Blocks", "title": "Which CTB"},
 
         {"data": "group_oi8ts04/Is_there_availabilit_onnect_to_the_toilets",
-         "title": "Is there availability of drainage to connect to the toilet?"},
+         "title": "Is there availability of drainage to connect to the toilet?"}, # 30 new
         {"data": "group_oi8ts04/Are_you_interested_in_an_indiv",
          "title": "Are you interested in an individual toilet?"},  # 30
         {"data": "group_oi8ts04/What_kind_of_toilet_would_you_likes", "title": "What kind of toilet would you like?"},
