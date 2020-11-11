@@ -400,18 +400,54 @@ def sanitation_encounter():
 					   quoting=1)
 
 
-sanitation_encounter()
+#sanitation_encounter()
 
 def sanitation_encounter_pune_sbm():
-	df = pd.read_excel("/home/amar/Downloads/PMC_SBM_Survey.xlsx", sheet_name="PMC_SBM_Survey")
-	df = df.loc[df["Type of survey"] != "Follow-up survey"]
-	df = df.loc[df["Type of House occupancy"] == "Occupied house"]
-	cols = df.columns.tolist()
-	df = df.replace('\n', '', regex=True)
-	df["Encounter Type"] = "Sanitation"
-	df["Id"] = df["_id"].astype(str) + 'S'
-	df["_submission_time"] = pd.to_datetime(df["_submission_time"]).dt.strftime('%Y-%m-%d')
-	cols=['_id','Encounter Type', "Id", "_submission_time","slum_name", "Household number",
+	global df
+	df_sbm = pd.read_excel("/home/amar/Downloads/PMC_SBM_Survey.xlsx", sheet_name="PMC_SBM_Survey")
+	df = df.loc[df["Type of survey"]!="Follow-up survey"]
+	def slum_name(value):
+		slum_text = value
+		if value in slum.keys():
+			#print(value)
+			slum_text = slum[value]
+		return slum_text
+
+	df["slum_name"] = df["slum_name"].apply(slum_name)
+	#df = df.loc[df["Type of House occupancy"]=="Occupied house"]
+	#cols = df.columns.tolist()
+	#print(cols)
+	#df = df.replace('\n', '', regex=True)
+	#df["Encounter Type"] = "Sanitation"
+	#df["Id"] = df["_id"].astype(str) + 'S'
+	#df["_submission_time"] = pd.to_datetime(df["_submission_time"]).dt.strftime('%Y-%m-%d')
+	df_sbm["Encounter Type"] = "Sanitation"
+	#df_sbm = df_sbm.loc[df_sbm["Type of House occupancy"]=="Occupied house"]
+	cols = df_sbm.columns.tolist()
+	print(cols)
+
+	df_sbm["slum_name"] = df_sbm["slum_name"].apply(slum_name)
+	s={}
+	t=[]
+	#df_sbm = df_sbm.loc[df_sbm["Type of House occupancy"] == "Occupied house"]
+	def convert_registration_id(data):
+		slum = data["slum_name"]
+		household_number = ('000'+ str(data['Household Number']))[-4:]
+		df_temp = df.loc[(df['slum_name'] == slum) & ( df['Household number'] == household_number)]
+		if slum not in s.keys():
+			s[slum] =[]
+		t.append(len(df_temp))
+		s[slum].append(len(df_temp))
+		#df.loc[(df['column_name'] >= A) & (df['column_name'] <= B)]
+		return 0
+	df_sbm["_ids"] = df_sbm.apply(lambda x: convert_registration_id(x), axis=1)
+	from collections import Counter
+	for key in s.keys():
+		print(key, Counter(s[key]))
+	print(Counter(t))
+
+	'''
+	cols=['_id','Encounter Type', "_ids", "Id", "_submission_time","slum_name", "Household number",
 		  "Do you have a toilet at home?",
 		  "Does any household member have any of the construction skills given below?",
 		  "Does any member of the household go for open defecation?", "Type of household toilet ?",
@@ -433,7 +469,7 @@ def sanitation_encounter_pune_sbm():
 				output.append(data)
 		return ','.join(output)
 	output["Does any household member have any of the construction skills given below?"] = output["Does any household member have any of the construction skills given below?"].apply(convert_multi_select)
-	rename_value={ '_submission_time':'Visit Date', '_id': 'Subject Id', 'slum_name':'Slum',
+	rename_value={ '_submission_time':'Visit Date', '_ids': 'Subject Id', 'slum_name':'Slum',
 				   'Does any household member have any of the construction skills given below?':'Does any household member have any of the construction skills given below ?',
 				   'Does any member of the household go for open defecation?':'Does any member of the household go for open defecation ?',
 				   'What is the toilet connected to?':'Where the individual toilet is connected to ?',
@@ -468,6 +504,6 @@ def sanitation_encounter_pune_sbm():
 		df_slum.to_csv(path + '/' + str(slum_name).replace(' ', '_').replace('/', '') + '.csv', sep=',',
 					   encoding='utf-8', index=False,
 					   quoting=1)
+	'''
 
-
-#sanitation_encounter_pune_sbm()
+sanitation_encounter_pune_sbm()

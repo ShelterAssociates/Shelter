@@ -324,6 +324,27 @@ def get_kobo_FF_report_detail(city, slum_code,house_number, kobo_survey=''):
     """Method which fetches family factsheet data from kobotoolbox using the API's. Data contain only answers decrypted."""
     output=OrderedDict()
     if kobo_survey:
+        householdData = HouseholdData.objects.filter(slum__shelter_slum_code = slum_code, household_number = str(house_number))
+        if len(householdData) > 0 and householdData[0].ff_data:
+            output = householdData[0].ff_data
+            for key in list(output):
+                split_key = key.split('/')
+                if len(split_key) > 1:
+                    output[split_key[-1:][0]] = output[key]
+                    output.pop(key)
+            if "_attachments" in output:
+                for photo in output["_attachments"]:
+                    if 'Toilet_Photo' in output and output["Toilet_Photo"] in photo["filename"]:
+                        output["Toilet_Photo"] = settings.BASE_URL + photo["download_url"]
+                    if 'Family_Photo' in output and output["Family_Photo"] in photo["filename"]:
+                        output["Family_Photo"] = settings.BASE_URL + photo["download_url"]
+    return output
+
+@survey_mapping(SURVEYTYPE_CHOICES[3][0])
+def get_kobo_FF_report_detail1(city, slum_code,house_number, kobo_survey=''):
+    """Method which fetches family factsheet data from kobotoolbox using the API's. Data contain only answers decrypted."""
+    output=OrderedDict()
+    if kobo_survey:
         try:
             url = settings.KOBOCAT_FORM_URL+'data/'+kobo_survey+'?format=json&query={"group_vq77l17/slum_name":"'+slum_code+'","group_vq77l17/Household_number":{"$in":["'+house_number+'","'+('000'+house_number)[-4:]+'"]}}'
         except Exception as e:
