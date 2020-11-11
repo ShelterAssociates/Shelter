@@ -71,13 +71,17 @@ def masterSheet(request, slum_code=0, FF_code=0, RHS_code=0):
             if flag_fetch_rhs :
                 formdict = list(map(lambda x: x.rhs_data, filter(lambda x: x.rhs_data!=None, household_data)))
             else:
-                formdict = list(map(lambda x:{'Household_number':x.household_number, '_id':x.rhs_data['_id'], '_xform_id_string':x.rhs_data['_xform_id_string']}, filter(lambda x:x.rhs_data!=None, household_data)))
+                formdict = list(map(lambda x:{'Household_number':x.household_number, '_id':x.rhs_data['_id'] if '_id' in x.rhs_data else None,
+                '_xform_id_string':x.rhs_data['_xform_id_string'] if '_xform_id_string' in x.rhs_data else None}, filter(lambda x:x.rhs_data!=None, household_data)))
 
             if flag_fetch_ff:
-                formdict_family_factsheet = map(lambda x: (x.ff_data if x.ff_data else {'group_vq77l17/Household_number': 00}), household_data)
-                # formdict_family_factsheet = map(lambda x:(x.ff_data if x.ff_data else {'group_vq77l17/Household_number': 00 }),household_data)
+                try:
+                    formdict_family_factsheet = list(map(lambda x:(x.ff_data if x.ff_data else {'group_vq77l17/Household_number': 00 }),household_data))
+                    # formdict_family_factsheet = map(lambda x:(x.ff_data if x.ff_data else {'group_vq77l17/Household_number': 00 }),household_data)
                 # Family Factsheet - fetching data
                 # arranging data with respect to household numbers
+                except Exception as e:
+                    print(e,'in ff')
                 temp_FF = {str(int(obj_FF['group_vq77l17/Household_number'])): obj_FF for obj_FF in formdict_family_factsheet}
                 temp_FF_keys = temp_FF.keys() # list of household numbers
 
@@ -124,7 +128,7 @@ def masterSheet(request, slum_code=0, FF_code=0, RHS_code=0):
             temp_daily_reporting = {str(int(obj_DR['household_number'])): obj_DR for obj_DR in daily_reporting_data}
             temp_DR_keys = temp_daily_reporting.keys()
 
-            # SBM - fetching data
+            # # SBM - fetching data
             sbm_fields = ['slum', 'slum__name', 'household_number', 'name', 'application_id', 'photo_uploaded',
                           'created_date_str', 'id', 'phone_number', 'aadhar_number', 'photo_verified', 'photo_approved',
                           'application_verified', 'application_approved', 'sbm_comment']
@@ -137,21 +141,22 @@ def masterSheet(request, slum_code=0, FF_code=0, RHS_code=0):
             temp_sbm = {str(obj_DR['household_number']): obj_DR for obj_DR in sbm_data}
             temp_sbm_keys = temp_sbm.keys()
 
-            # Community Mobilization - fetching data
+            # # Community Mobilization - fetching data
             community_mobilization_fields = ['slum', 'slum__name', 'household_number', 'activity_type',
                                              'activity_date_str',
                                              'id']
             community_mobilization_data = CommunityMobilization.objects.extra(
                 select={'activity_date_str': "to_char(activity_date, 'YYYY-MM-DD ')"}).filter(
                 slum__id=slum_code[0][0])
-            #community_mobilization_data1 = community_mobilization_data.values(*community_mobilization_fields)
-            #community_mobilization_data_list = list(community_mobilization_data1)
+            community_mobilization_data1 = community_mobilization_data.values(*community_mobilization_fields)
+            community_mobilization_data_list = list(community_mobilization_data1)
 
             # Vendor and Accounts - fetching data
             vendor = VendorHouseholdInvoiceDetail.objects.filter(slum__id=slum_code[0][0])
             invoices = InvoiceItems.objects.filter(slum__id=slum_code[0][0])
-            #
+
             dummy_formdict = {str(int(x['Household_number'])): x for x in formdict}
+
             for y in invoices:
                 for z in y.household_numbers:
                     if str(z) not in dummy_formdict.keys():
@@ -239,12 +244,14 @@ def masterSheet(request, slum_code=0, FF_code=0, RHS_code=0):
                         if '_id' in temp_FF[x['Household_number']].keys():
                             ff_id = temp_FF[x['Household_number']]['_id']
                             del (temp_FF[x['Household_number']]['_id'])
-                        else : ff_id = temp_FF[x['Household_number']]
+                        else :
+                            ff_id = temp_FF[x['Household_number']]
 
                         if '_xform_id_string' in temp_FF[x['Household_number']].keys():
                             ff_xform_id_string = temp_FF[x['Household_number']]['_xform_id_string']
                             del (temp_FF[x['Household_number']]['_xform_id_string'])
-                        else : ff_xform_id_string = None
+                        else :
+                            ff_xform_id_string = None
 
                         x.update(temp_FF[x['Household_number']])
                         x['OnfieldFactsheet'] = 'Yes'
@@ -292,7 +299,7 @@ def masterSheet(request, slum_code=0, FF_code=0, RHS_code=0):
                 if len(slum_funder) != 0:
                     for funder in slum_funder:
                         if int(x['Household_number']) in funder.household_code:
-                            x.update({'Funder':funder.sponsor.organization_name})
+                            x.update({'Funder': funder.sponsor_project.name}) #funder.sponsor.organization_name})
 
             formdict = list(map(lambda x: dummy_formdict[x], dummy_formdict))
             for x in formdict:
@@ -303,11 +310,10 @@ def masterSheet(request, slum_code=0, FF_code=0, RHS_code=0):
                     if x['group_oi8ts04/Current_place_of_defecation'] == 'Own toilet' and x['status'] == 'Completed':
                             x['incorrect_cpod'] = 'incorrect_cpod'
                 except Exception as e:
-                    # print 'not found - '+str(x['Household_number'])
                     pass
+                    print ('not found - '+str(x['Household_number']))
     except Exception as e:
         print(e)
-        # raise
     return HttpResponse(json.dumps(formdict), content_type="application/json")
 
 def to_date(s):
