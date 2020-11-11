@@ -496,10 +496,6 @@ class avni_sync():
             else : pass
 
 # call functions depending on required data to be saved
-def func_calls(request):
-    a = avni_sync()
-    a.fetch_program_encounter_data()
-    return HttpResponse(json.dumps('Hi'))
     # a.fetch_program_encounter_data() # save program encounter data and registration data
     # a.save_direct_encounter_data() # save direct encounter data (eg. sanitation, water etc)
     # a.SaveDailyMobilizationData() # save daily mobilization data
