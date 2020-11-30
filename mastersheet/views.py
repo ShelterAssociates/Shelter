@@ -54,18 +54,20 @@ def give_details(request):
 def masterSheet(request, slum_code=0, FF_code=0, RHS_code=0):
     flag_fetch_rhs = 'show_rhs' in request.GET
     flag_fetch_ff = 'show_ff' in request.GET
+
     try:
         formdict = []
         formdict_family_factsheet = []
         slum_code = Slum.objects.filter(pk=int(request.GET['slumname'])).values_list("id", "shelter_slum_code",
                                                                                      "electoral_ward__administrative_ward__city__id",
                                                                                      "electoral_ward__name", "name")
+
         slum_funder = SponsorProjectDetails.objects.filter(slum__name=str(slum_code[0][4])).exclude(sponsor__id=10)
         form_ids = Survey.objects.filter(city__id=int(slum_code[0][2]))
 
         household_data = HouseholdData.objects.filter(slum__id=slum_code[0][0])
         followup_data_false = FollowupData.objects.filter(slum=slum_code[0][0],flag_followup_in_rhs = False)
-        #        followup_data_true = FollowupData.objects.filter(slum=slum_code[0][0],flag_followup_in_rhs = True)
+        # followup_data_true = FollowupData.objects.filter(slum=slum_code[0][0],flag_followup_in_rhs = True)
 
         if slum_code is not 0:
             if flag_fetch_rhs :
@@ -148,8 +150,10 @@ def masterSheet(request, slum_code=0, FF_code=0, RHS_code=0):
             community_mobilization_data = CommunityMobilization.objects.extra(
                 select={'activity_date_str': "to_char(activity_date, 'YYYY-MM-DD ')"}).filter(
                 slum__id=slum_code[0][0])
-            community_mobilization_data1 = community_mobilization_data.values(*community_mobilization_fields)
-            community_mobilization_data_list = list(community_mobilization_data1)
+            # community_mobilization_data1 = community_mobilization_data.values(*community_mobilization_fields)
+            # community_mobilization_data_list = list(community_mobilization_data1)
+            community_mobilization_data_avni = list(CommunityMobilizationActivityAttendance.objects.filter(
+                slum_id=slum_code[0][0]))
 
             # Vendor and Accounts - fetching data
             vendor = VendorHouseholdInvoiceDetail.objects.filter(slum__id=slum_code[0][0])
@@ -178,11 +182,28 @@ def masterSheet(request, slum_code=0, FF_code=0, RHS_code=0):
                         "Name of " + str(y.material_type) + " vendor" + "_id": y.invoice.id
                     })
 
+            for y in community_mobilization_data_avni:
+                new_activity_type = y.activity_type.name
+                if y.household_number in dummy_formdict.keys():
+                    dummy_formdict[str(y.household_number)].update({new_activity_type: str(y.date_of_activity), str(new_activity_type) + "_id": y.id})
+                else :
+                    dummy_formdict[str(int(y.household_number)) ] = {
+                        "Household_number": str(int(y.household_number)),
+                        "_id": "",
+                        "ff_id": "",
+                        "ff_xform_id_string": "",
+                        "_xform_id_string": "",
+                        "_attachments": "",
+                        "no_rhs_flag": "#eba6fc"
+                    }
+                    dummy_formdict[str(int(y.household_number))].update({new_activity_type: str(y.date_of_activity), str(new_activity_type) + "_id": y.id})
+                    print(dummy_formdict[str(int(y.household_number))])
+
             for y in community_mobilization_data:
                 #y = community_mobilization_data[i]
                 for z in y.household_number:
                     new_activity_type = y.activity_type.name
-                    z=str(int(z))
+                    z = str(int(z))
                     if z not in dummy_formdict.keys():
                         dummy_formdict[z] = {
                             "Household_number": z,
@@ -311,7 +332,7 @@ def masterSheet(request, slum_code=0, FF_code=0, RHS_code=0):
                             x['incorrect_cpod'] = 'incorrect_cpod'
                 except Exception as e:
                     pass
-                    print ('not found - '+str(x['Household_number']))
+                    # print ('not found - '+str(x['Household_number']))
     except Exception as e:
         print(e)
     return HttpResponse(json.dumps(formdict), content_type="application/json")
@@ -455,7 +476,6 @@ def define_columns(request):
         {"data": "status", "title": "Final Status"},  ##67
         {"data": "pocket", "title": "Pocket"},
         {"data": "comment", "title": "Comment"},
-
         # Append community mobilization here #
 
         # Append vendor type here #
@@ -652,7 +672,6 @@ def handle_uploaded_file(f, response, slum_code):
                                             response.append(("updated ComMob", i))
                                         ComMob_instance.household_number = temp
                                         ComMob_instance.save()
-
 
                                     except Exception as e:
                                         household_nums.append(int(i))
