@@ -2,6 +2,7 @@ from django.db import models
 from django.contrib.auth.models import User
 from django.contrib import messages
 from master.models import City, Slum
+from graphs.models import *
 from jsonfield import JSONField
 import datetime
 from datetime import date
@@ -210,6 +211,7 @@ class ToiletConstruction(models.Model):
             ("can_view_mastersheet_report", "Can view mastersheet report"),
             ("can_export_mastersheet_report", "Can export mastersheet report"),
 
+
         )
         unique_together = ("slum", "household_number")
         verbose_name = 'Toilet construction progress'
@@ -306,6 +308,23 @@ class CommunityMobilization(models.Model):
 
     def __str__(self):
         return self.slum.name + '-' + self.activity_type.name
+
+class CommunityMobilizationActivityAttendance(models.Model):
+
+    '''Details of mobilization activities attended by household members '''
+    activity_type = models.ForeignKey(ActivityType,on_delete=models.CASCADE)
+    date_of_activity = models.DateTimeField()
+    household_number = models.CharField(max_length=10)
+    slum = models.ForeignKey(Slum, on_delete=models.CASCADE)
+    city = models.ForeignKey(City, on_delete= models.CASCADE)
+    males_attended_activity = models.IntegerField()
+    females_attended_activity = models.IntegerField()
+    other_gender_attended_activity = models.IntegerField()
+    girls_attended_activity = models.IntegerField()
+    boys_attended_activity = models.IntegerField()
+
+    def __str__(self):
+        return str(self.activity_type) + '-' + self.household_number
 
 class KoboDDSyncTrack(models.Model):
     """
