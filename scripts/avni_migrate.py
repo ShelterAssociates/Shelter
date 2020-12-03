@@ -27,7 +27,11 @@ slum={"272538750302" : "Lohagaon Viman Nagar, Yamuna Nagar Pune S.N.199 - Nagar 
 	  "Khilare Plot, Erandwana S.N. 42/A":"Khilare Plot Erandwana S. N. 42/A",
 	  "Sanjay Gandhi Vasahat Karve Nagar S.N. 32/33":"Sanjay Gandhi Vasahat Karve Nagar S.N. 39/2",
 	  "Unnati Nagar, Hadapsar":"Unnati Nagar, Hadapsar",
-	  "Milindnagar, Ghorapadi":"Milind Nagar, Ghorpadi"
+	  "Milindnagar, Ghorapadi":"Milind Nagar, Ghorpadi",
+	  "Manjari Phata/Gosavi Vasti, Vitthal Nagar, Hadapsar":"Gosavi Vasti, Hadapsar",
+	  "Weikfield Ramwadi Pune S.N.30, Nagar Road ward":"Weikfield Ramwadi Pune S.N.30",
+	  "Vikas Nagar, Ghorpadi":"Vikas Nagar, Ghorpadi - Dhole Patil Road",
+	  "Bhau Patil Chawl, Bopodi S.N. 53/54" : "Bhau Patil Padal, Bopodi S.N. 37A/38"
 	  }
 
 def split_files(df, path):
@@ -417,47 +421,45 @@ def sanitation_encounter_pune_sbm():
 	#df = df.loc[df["Type of House occupancy"]=="Occupied house"]
 	#cols = df.columns.tolist()
 	#print(cols)
-	#df = df.replace('\n', '', regex=True)
+	df_sbm = df_sbm.replace('\n', '', regex=True)
 	#df["Encounter Type"] = "Sanitation"
-	#df["Id"] = df["_id"].astype(str) + 'S'
-	#df["_submission_time"] = pd.to_datetime(df["_submission_time"]).dt.strftime('%Y-%m-%d')
+	df_sbm["Id"] = df_sbm["_id"].astype(str) + 'S'
+	df_sbm["_submission_time"] = pd.to_datetime(df_sbm["_submission_time"]).dt.strftime('%Y-%m-%d')
 	df_sbm["Encounter Type"] = "Sanitation"
 	#df_sbm = df_sbm.loc[df_sbm["Type of House occupancy"]=="Occupied house"]
 	cols = df_sbm.columns.tolist()
 	print(cols)
 
 	df_sbm["slum_name"] = df_sbm["slum_name"].apply(slum_name)
-	s={}
-	t=[]
+	# s={}
+	# t=[]
 	#df_sbm = df_sbm.loc[df_sbm["Type of House occupancy"] == "Occupied house"]
 	def convert_registration_id(data):
 		slum = data["slum_name"]
 		household_number = ('000'+ str(data['Household Number']))[-4:]
-		df_temp = df.loc[(df['slum_name'] == slum) & ( df['Household number'] == household_number)]
-		if slum not in s.keys():
-			s[slum] =[]
-		t.append(len(df_temp))
-		s[slum].append(len(df_temp))
-		#df.loc[(df['column_name'] >= A) & (df['column_name'] <= B)]
+		df_temp = df.loc[(df['slum_name'] == slum) & ( df['Household number'].astype(int) == int(household_number))]
+		# if slum not in s.keys():
+		# 	s[slum] =[]
+		# t.append(len(df_temp))
+		# s[slum].append(len(df_temp))
+		if len(df_temp)>0:
+			return df_temp.iloc[0]['_id']
 		return 0
-	df_sbm["_ids"] = df_sbm.apply(lambda x: convert_registration_id(x), axis=1)
-	from collections import Counter
-	for key in s.keys():
-		print(key, Counter(s[key]))
-	print(Counter(t))
+	df_sbm["Subject Id"] = df_sbm.apply(lambda x: convert_registration_id(x), axis=1)
+	print(df_sbm)
+	# from collections import Counter
+	# for key in s.keys():
+	#  	print(key, Counter(s[key]))
+	# print(Counter(t))
 
 	'''
-	cols=['_id','Encounter Type', "_ids", "Id", "_submission_time","slum_name", "Household number",
-		  "Do you have a toilet at home?",
-		  "Does any household member have any of the construction skills given below?",
-		  "Does any member of the household go for open defecation?", "Type of household toilet ?",
-		  "What is the toilet connected to?", "Reason for not using toilet" , "Status of toilet under SBM",
-		  "Who all use toilets in the household?","What was the cost incurred to build the toilet?","Have you applied for an individual toilet under SBM?",
-		  "Type of SBM toilets", "How many installments have you received?", "When did you receive your first installment?",
-		  "When did you receive your second installment?", "When did you receive your third installment?",
-		  "If built by contractor, how satisfied are you?", "Are you interested in an individual toilet?",
-		  "If yes, why?", "If no, why?", "What kind of toilet would you like?", "Under what scheme would you like your toilet to be built?",
-		  "Is there availability of drainage to connect to the toilet?","Current place of defecation"]
+	cols=['_id','Encounter Type', "Subject Id", "Id", "_submission_time","slum_name", "Household number",
+		  "Type of House occupancy", "Name of head of household", "Type of household Toilet",
+		  "Is drainage connection available for toilet?", "Are you interested in household toilet?",
+		  "If built by contractor, how satisfied are you?", "Is the toilet connected to the drainage network?",
+		  "Use of household toilet", "Reason for not in use", "Is drainage connection available for toilet?",
+		  "Is the toilet connected to the drainage network?"]
+		  
 	#"Do you have electricity in the house?","If yes for electricity; Type of meter","Do you have individual water connection at home?",
 	#	  "Type of water connection ?", "Water source final answer.", "Do you dispose segregated garbage?",
 	output = df[cols]
@@ -469,7 +471,7 @@ def sanitation_encounter_pune_sbm():
 				output.append(data)
 		return ','.join(output)
 	output["Does any household member have any of the construction skills given below?"] = output["Does any household member have any of the construction skills given below?"].apply(convert_multi_select)
-	rename_value={ '_submission_time':'Visit Date', '_ids': 'Subject Id', 'slum_name':'Slum',
+	rename_value={ '_submission_time':'Visit Date', 'slum_name':'Slum',
 				   'Does any household member have any of the construction skills given below?':'Does any household member have any of the construction skills given below ?',
 				   'Does any member of the household go for open defecation?':'Does any member of the household go for open defecation ?',
 				   'What is the toilet connected to?':'Where the individual toilet is connected to ?',
@@ -478,10 +480,6 @@ def sanitation_encounter_pune_sbm():
 				   'What was the cost incurred to build the toilet?':'What was the cost incurred to build the toilet?',
 				   'Have you applied for an individual toilet under SBM?': 'Have you applied for an individual toilet under SBM?_1',
 				   'Type of SBM toilets': 'Type of SBM toilets ?',
-				   'How many installments have you received?': 'How many installments have you received ?',
-				   'When did you receive your first installment?': 'When did you receive your first SBM installment?',
-				   'When did you receive your second installment?': 'When did you receive your second SBM installment?',
-				   'When did you receive your third installment?': 'When did you receive your third SBM installment?',
 				   'If built by contractor, how satisfied are you?': 'If built by contractor, how satisfied are you?',
 				   'Are you interested in an individual toilet?': 'Are you interested in an individual toilet ?',
 				   'If yes, why?': 'If yes for individual toilet , why?',
