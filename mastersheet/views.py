@@ -1008,8 +1008,7 @@ def report_table_cm(request):
         group_perm = Group.objects.all().values_list('name', flat=True)
     group_perm = map(lambda x: x.split(':')[-1], group_perm)
 
-    keys = Slum.objects.filter(id__in=keys,
-                               electoral_ward__administrative_ward__city__name__city_name__in=group_perm).values_list(
+    keys = Slum.objects.filter(id__in=keys,electoral_ward__administrative_ward__city__name__city_name__in=group_perm).values_list(
         'id', flat=True)
 
     start_date = tag_key_dict['startDate']
@@ -1054,9 +1053,14 @@ def report_table_cm(request):
     for x in activity_type:
         key_for_datatable = "total_" + (x.name).replace(" ", "")
         filter_field = {'slum__id__in': keys, 'activity_date__range': [start_date, end_date]}
+        filter_field_new = {'slum_id__in': keys, 'date_of_activity__range': [start_date, end_date]}
         count_field = {key_for_datatable: Length('household_number')}
 
         y = x.communitymobilization_set.filter(**filter_field) \
+            .annotate(**level_data[tag]).values('level', 'level_id', 'city_name') \
+            .annotate(**count_field).order_by('city_name')
+
+        yy = x.communitymobilizationactivityattendance_set.filter(**filter_field_new) \
             .annotate(**level_data[tag]).values('level', 'level_id', 'city_name') \
             .annotate(**count_field).order_by('city_name')
 
@@ -1067,6 +1071,15 @@ def report_table_cm(request):
                 report_table_data_cm[str(level_id)][key_for_datatable] += data[key_for_datatable]
             else:
                 report_table_data_cm[str(level_id)].update(data)
+
+        for data in yy:
+            level_id = data['level_id']
+            if str(level_id) in report_table_data_cm.keys() and key_for_datatable in report_table_data_cm[
+                str(level_id)].keys():
+                report_table_data_cm[str(level_id)][key_for_datatable] += data[key_for_datatable]
+            else:
+                report_table_data_cm[str(level_id)].update(data)
+
     return HttpResponse(json.dumps(list(map(lambda x: report_table_data_cm[x], report_table_data_cm))),
                         content_type="application/json")
 
@@ -1126,9 +1139,14 @@ def report_table_cm_activity_count(request):
     for x in activity_type:
         key_for_datatable = "total_" + (x.name).replace(" ", "")
         filter_field = {'slum__id__in': keys, 'activity_date__range': [start_date, end_date]}
+        filter_field_new = {'slum_id__in': keys, 'date_of_activity__range': [start_date, end_date]}
         count_field = {key_for_datatable: Count('activity_type')}
 
         y = x.communitymobilization_set.filter(**filter_field) \
+            .annotate(**level_data[tag]).values('level', 'level_id', 'city_name') \
+            .annotate(**count_field).order_by('city_name')
+
+        yy = x.communitymobilizationactivityattendance_set.filter(**filter_field_new) \
             .annotate(**level_data[tag]).values('level', 'level_id', 'city_name') \
             .annotate(**count_field).order_by('city_name')
 
@@ -1139,6 +1157,15 @@ def report_table_cm_activity_count(request):
                 report_table_data_cm_activity_count[str(level_id)][key_for_datatable] += data[key_for_datatable]
             else:
                 report_table_data_cm_activity_count[str(level_id)].update(data)
+
+        for data in yy:
+            level_id = data['level_id']
+            if str(level_id) in report_table_data_cm_activity_count.keys() and key_for_datatable in \
+                    report_table_data_cm_activity_count[str(level_id)].keys():
+                report_table_data_cm_activity_count[str(level_id)][key_for_datatable] += data[key_for_datatable]
+            else:
+                report_table_data_cm_activity_count[str(level_id)].update(data)
+
     return HttpResponse(
         json.dumps(list(map(lambda x: report_table_data_cm_activity_count[x], report_table_data_cm_activity_count))),
         content_type="application/json")
