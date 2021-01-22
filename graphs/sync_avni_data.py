@@ -1,6 +1,7 @@
 from django.conf import settings
 import requests
 import json
+import time
 import subprocess
 import dateparser
 from django.http import HttpResponse
@@ -10,6 +11,7 @@ from functools import wraps
 from time import time
 from datetime import timedelta,datetime
 import dateutil.parser
+import itertools
 
 direct_encountes =['Sanitation','Property tax','Water','Waste','Electricity','Daily Mobilization Activity']
 program_encounters =['Daily Reporting','Family factsheet']
@@ -51,8 +53,8 @@ class avni_sync():
         last_submission_date = HouseholdData.objects.latest('submission_date')
         latest_date = last_submission_date.submission_date + timedelta(days=1)
         iso_format_next = latest_date.strftime('%Y-%m-%dT00:00:00.000Z')
-        iso = "2020-07-01T00:00:00.000Z"
-        return(iso)
+        # iso = "2021-01-01T00:00:00.000Z"
+        return(iso_format_next)
 
     def map_rhs_key(self,a,b):
         change_keys = {'Enter_household_number_again': 'Househhold number','_notes': 'Note',
@@ -208,7 +210,9 @@ class avni_sync():
     def getHouseholdNumberFromEnrolmentID(self,enrol_id):
         send_request1 = requests.get(self.base_url + 'api/enrolment/' + enrol_id,headers={'AUTH-TOKEN': self.get_cognito_token()})
         RHS = json.loads(send_request1.text)
-        self.get_household_details(RHS['Subject ID'])
+        if 'Subject ID' in RHS:
+            self.get_household_details(RHS['Subject ID'])
+        else :pass
         return (self.slum,self.HH)
 
     def create_registrationdata_url(self): #checked
@@ -246,7 +250,7 @@ class avni_sync():
                                     created_date=created_date)
                 print('Household record updated for', slum_name, household_number)
         except Exception as e:
-            print('second exception',e)
+            print('second exception',slum_name,e)
 
     def SaveRhsData(self): # checked
         pages,path = self.create_registrationdata_url()
@@ -312,6 +316,7 @@ class avni_sync():
 
     def SaveCommunityMobilizationData(self):  #checked
         pages, path = self.create_mobilization_activity_url()
+        print(pages)
         for i in range(pages):
             send_request = requests.get(self.base_url + path + '&' + str(i),headers={'AUTH-TOKEN': self.get_cognito_token()})
             data = json.loads(send_request.text)['content']
@@ -320,7 +325,8 @@ class avni_sync():
                     self.get_household_details(j['Subject ID'])
                     self.CommunityMobilizationActivityData(j['observations'], self.slum, self.HH)
                 else:
-                    print('No data')
+                    pass
+                    # print('No data')
 
     def SaveFamilyFactsheetData(self):#checked
         latest_date = self.lastModifiedDateTime()
@@ -381,13 +387,20 @@ class avni_sync():
 
     def get_max_date(self,dates_list):
         max = 0
-        for i in dates_list:
-            d = dates_list[0]
-            if d > dates_list[dates_list.index(i) + 1]:
-                max = d
-            else:
-                max = dates_list[dates_list.index(i)]
+        for a, b in itertools.combinations(dates_list, 2):
+            if a > b:
+                max = a
+            else :
+                max= b
         return max
+
+    def str_to_int(self,data):
+        a = []
+        b = ''
+        for i in data:
+            if i.isdigit():
+                a.append(i)
+        return int(b.join(a))
 
     def DailyReportingData(self, data, slum, HH): #checked
         slum_id, city_id =self.get_city_slum_ids(slum)
@@ -402,72 +415,75 @@ class avni_sync():
         for j in phase_two_materials:
             if j in data:
                 phase_two_material_dates.append(dateparser.parse(data[j]).replace(tzinfo=None))
-        try:
-            agreement_cancelled = True if ('Date on which agreement is cancelled' in data and data['Date on which agreement is cancelled'] != None) else False
-            if 'Date on which septic tank is given' in data :
-                septic_tank_date = dateparser.parse(data['Date on which septic tank is given']).date()
-            else :septic_tank_date = None
-            if len(phase_one_material_dates) > 0:
-                phase_one_material_date = self.get_max_date(phase_one_material_dates)
-            else :phase_one_material_date = None
-            if len(phase_two_material_dates) > 0 :
-                phase_two_material_date = self.get_max_date(phase_two_material_dates)
-            else : phase_two_material_date = None
-            if 'Date on which door is given' in data :
-                phase_three_material_date = dateparser.parse(data['Date on which door is given']).date()
-            else :phase_three_material_date = None
-            if 'Date on which toilet construction is complete' in data :
-                completion_date = dateparser.parse(data['Date on which toilet construction is complete']).date()
-            else :completion_date= None
-            if 'House numbers of houses where PHASE 1 material bricks, sand and cement is given' in data :
-                p1_material_shifted_to = dateparser.parse(data['House numbers of houses where PHASE 1 material bricks, sand and cement is given']).date()
-            else :p1_material_shifted_to = None
-            if 'House numbers of houses where PHASE 2 material Hardware is given' in data :
-                p2_material_shifted_to = dateparser.parse(data['House numbers of houses where PHASE 2 material Hardware is given']).date()
-            else :p2_material_shifted_to= None
-            if  'House numbers where material is shifted - 3rd Phase' in data :
-                p3_material_shifted_to = dateparser.parse(data['House numbers where material is shifted - 3rd Phase']).date()
-            else:p3_material_shifted_to = None
-            if 'House numbers of houses where Septic Tank is given' in data :
-                st_material_shifted_to = dateparser.parse(data['House numbers of houses where Septic Tank is given']).date()
-            else:st_material_shifted_to= None
-            if 'Date on whcih toilet is connected to drainage line' in data :
-                toilet_connected_to = dateparser.parse(data['Date on whcih toilet is connected to drainage line']).date()
-            else:toilet_connected_to= None
-            if 'Whether toilet is in use or not?' in data :
-                toilet_in_use = data['Whether toilet is in use or not?']
-            else:toilet_in_use = None
-            if 'Date on which toilet construction is complete' in data and toilet_in_use == 'Yes':
-                use_of_toilet = dateparser.parse(data['Date on which toilet construction is complete']).date()
-            else :  use_of_toilet = None
-            check_record = ToiletConstruction.objects.filter(household_number=HH, slum_id= slum_id)
-            if 'Date of agreement' in data:
+        # try:
+        agreement_cancelled = True if ('Date on which agreement is cancelled' in data and data['Date on which agreement is cancelled'] != None) else False
+        if 'Date of agreement' in data :
+            agreement_date = dateparser.parse(data['Date of agreement']).date()
+        else:agreement_date = None
+        if 'Date on which septic tank is given' in data and data['Date on which septic tank is given']!= None or 0 :
+            septic_tank_date = dateparser.parse(data['Date on which septic tank is given']).date()
+        else :septic_tank_date = None
+        if len(phase_one_material_dates) > 0:
+            phase_one_material_date = self.get_max_date(phase_one_material_dates)
+        else :phase_one_material_date = None
+        if len(phase_two_material_dates) > 0 :
+            phase_two_material_date = self.get_max_date(phase_two_material_dates)
+        else : phase_two_material_date = None
+        if 'Date on which door is given' in data and data['Date on which door is given']!= None:
+            phase_three_material_date = dateparser.parse(data['Date on which door is given']).date()
+        else :phase_three_material_date = None
+        if 'Date on which toilet construction is complete' in data and data['Date on which toilet construction is complete']!= None:
+            completion_date = dateparser.parse(data['Date on which toilet construction is complete']).date()
+        else :completion_date= None
+        if 'House numbers of houses where PHASE 1 material bricks, sand and cement is given' in data :
+            p1_material_shifted_to = self.str_to_int(data['House numbers of houses where PHASE 1 material bricks, sand and cement is given'])
+        else :p1_material_shifted_to = None
+        if 'House numbers of houses where PHASE 2 material Hardware is given' in data :
+            p2_material_shifted_to = self.str_to_int(data['House numbers of houses where PHASE 2 material Hardware is given'])
+        else :p2_material_shifted_to= None
+        if 'House numbers where material is shifted - 3rd Phase' in data :
+            p3_material_shifted_to = self.str_to_int(data['House numbers where material is shifted - 3rd Phase'])
+        else:p3_material_shifted_to = None
+        if 'House numbers of houses where Septic Tank is given' in data :
+            st_material_shifted_to = self.str_to_int(data['House numbers of houses where Septic Tank is given'])
+        else:st_material_shifted_to= None
+        if 'Date on whcih toilet is connected to drainage line' in data and data['Date on whcih toilet is connected to drainage line'] != None:
+            toilet_connected_to = self.str_to_int(data['Date on whcih toilet is connected to drainage line'])
+        else:toilet_connected_to= None
+        if 'Whether toilet is in use or not?' in data :
+            toilet_in_use = data['Whether toilet is in use or not?']
+        else:toilet_in_use = None
+        if 'Date on which toilet construction is complete' in data and data['Date on which toilet construction is complete'] != None and toilet_in_use == 'Yes':
+            use_of_toilet = dateparser.parse(data['Date on which toilet construction is complete']).date()
+        else :  use_of_toilet = None
+        check_record = ToiletConstruction.objects.filter(household_number=HH, slum_id= slum_id)
+        if 'Date of agreement' in data:
                 if not check_record:
                     create = ToiletConstruction.objects.create(household_number=HH, slum_id = slum_id,
-                    agreement_date = dateparser.parse(data['Date of agreement']).date(),
-                    agreement_cancelled= agreement_cancelled,septic_tank_date=septic_tank_date,
-                    phase_one_material_date = phase_one_material_date,phase_two_material_date= phase_two_material_date,
-                    phase_three_material_date =phase_three_material_date,completion_date=completion_date,
-                    p1_material_shifted_to=p1_material_shifted_to,p2_material_shifted_to=p2_material_shifted_to,
-                    p3_material_shifted_to=p3_material_shifted_to,st_material_shifted_to=st_material_shifted_to,
-                    toilet_connected_to=toilet_connected_to,use_of_toilet= use_of_toilet)
-                    print('Construction status created for', HH, slum_id)
-                else :
-                    check_record.update(agreement_date = dateparser.parse(data['Date of agreement']).date(),
+                    agreement_date = agreement_date,
                     agreement_cancelled=agreement_cancelled, septic_tank_date=septic_tank_date,
-                    phase_one_material_date=phase_one_material_date,
-                    phase_two_material_date=phase_two_material_date,
+                    phase_one_material_date=phase_one_material_date,phase_two_material_date=phase_two_material_date,
                     phase_three_material_date=phase_three_material_date,
-                    completion_date=completion_date,
-                    p1_material_shifted_to=p1_material_shifted_to,
+                    completion_date=completion_date,p1_material_shifted_to=p1_material_shifted_to,
                     p2_material_shifted_to=p2_material_shifted_to,
                     p3_material_shifted_to=p3_material_shifted_to,
                     st_material_shifted_to=st_material_shifted_to,
-                    toilet_connected_to=toilet_connected_to, use_of_toilet=use_of_toilet)
+                    toilet_connected_to=toilet_connected_to,
+                    use_of_toilet=use_of_toilet)
+                    print('Construction status created for', HH, slum_id)
+                else :
+                    check_record.update(agreement_date = agreement_date,
+                    agreement_cancelled=agreement_cancelled,septic_tank_date=septic_tank_date,
+                    phase_one_material_date=phase_one_material_date ,phase_two_material_date=phase_two_material_date ,
+                    phase_three_material_date=phase_three_material_date ,completion_date=completion_date ,
+                    p1_material_shifted_to=p1_material_shifted_to,p2_material_shifted_to=p2_material_shifted_to ,
+                    p3_material_shifted_to=p3_material_shifted_to ,
+                    st_material_shifted_to=st_material_shifted_to ,
+                    toilet_connected_to=toilet_connected_to,
+                    use_of_toilet=use_of_toilet)
                     print('Construction status updated for', HH, slum_id)
-            else:pass
-        except Exception as e:
-            print(e,HH)
+        # except Exception as e:
+        #     print(e,HH)
 
     def SanitationEncounterData(self):  # checked
         latest_date = self.lastModifiedDateTime()
@@ -595,55 +611,54 @@ class avni_sync():
             print(e)
 
     def SaveDataFromIds(self):
-        IdList =['8d09d5c1-7477-4613-8372-bc4b9a29126d','4a2b7118-3615-404c-94d2-b65eb517a2f0','47d533f2-ee34-49ef-88f6-17f3e6416b0c','2e21f8fe-57d3-4f50-b067-26d61f0e080b','09c43a10-1732-419a-9bf7-49941166bd13','021f151b-ce50-437b-91e9-4c352be35b1d','eb6dc377-70cc-4ae7-a50d-e58db29318d1','878e9f66-e465-4757-88e7-a6b7734f87f5','a7ae7f23-bb08-440d-ab8f-92419085e284','9a5400c1-43bf-45b9-9c1f-9aefb5e27abd','01cd8c81-e3cf-43b7-b647-4a992a70ea1a','6affd2a8-49b8-4d30-b35a-a0bc6933188f','92a95f68-3fd9-46e1-b91b-cefbc1d1fbc6','77a70f04-6fd2-422a-aac8-22e79245d180','050f52d3-ff09-48b5-997b-1106a3be6656','fe189546-43f9-4da8-96bc-6086da494387','679a8c8a-9e1a-4f07-98a9-8f2eff45babd','06c467c3-a014-450a-858b-a5f7dbb485e4','a0a81829-5c2a-495f-8185-604c5df50a5c','1447ceea-2ef2-46c8-87fc-fcdd2c50d662','3f8b06a2-4c38-415b-a5d5-2ca148497de7','b9a40c05-aa9f-4321-ac45-fb07e4376f7f','250329f2-e2aa-4679-8731-96b831a05aa5','30c009a8-3e0b-4d5d-845d-152898218459','726e70a2-234c-461c-b148-5e6ce1ff82c8','70c34c89-df76-45d0-94c4-bb549ea630f1','ef818f08-bbf5-412e-9097-856f136672f5','5cfaf01a-5175-4774-920c-34d1031a6c20','5538e0b8-74ac-4835-9e15-688f48634ece','bd307a06-c6a3-4b7a-b08e-3a541e38f05f','1f81abfe-d03e-428f-b287-de36e082d6d4','d7867e0d-ab52-4f6b-9cac-3b177afb8402','ac161816-9e55-4a35-b92c-264864ea6861','ba16bd54-d1af-4480-b2da-a09799d5e1c0','2192dd15-a3fd-4f06-b600-e5ecc96e462c','4b40ea9d-8a59-4bdf-877c-3bc238c02cd8','c08cfb06-ebb6-4ea1-96bc-8cf238c2456a','8f70e592-ef05-4769-888d-a3fd723c211e','a832fb57-608b-4adb-a60c-a04192affdb0','c3867093-1b8f-433a-9a94-16b41caf304d','37e0a2c8-f7a9-4a4c-a652-07c6325a1e4d','bd3b0300-3e2d-43d0-b6f3-7a9f6b827c6c','001f588c-1842-4571-8435-551bdd7355c7','56ebcbde-ae15-48e5-a416-a505206f93f4','c8474788-cddd-4bd4-8d96-9538ef69aaa2','173ef256-75a0-4c6d-94a5-566e1772c962','1f6826fe-fca1-410c-a91f-d807e47e0ba4','d10120c4-498a-4ce7-8c5b-843f636fcde0','b21e35bd-59b3-4ed2-ae14-2072c4a4aef0','488d62f5-f678-4093-9b21-6943bbd72afd','b1a04304-47c9-4c31-a8ff-9c09531d5648','1323ad1c-0c3e-4c8e-a4ce-75138b50eaaf','c7af4a6c-09fe-4aa1-9349-91bac2980ab2','cfb3fb2f-4685-4756-84e0-262e9ef05143','bba64b45-88bf-45df-83f9-8b14581871b3','dfa07e9a-c6b2-4073-abf9-4af436a0455b','f9894d6b-3bb7-4e25-ac38-2455578f40ce','0a797f6b-0718-4aff-aef5-ecd5609344b0','e19108bf-997a-43c1-9bfe-2a0bfbd563d4','52e5d164-b143-49b9-9a12-777a62108256','dcbad24c-5d1b-4cde-af20-92ceea1ce320','8a557d06-cf53-486e-8c53-308cb7e6755e','5c35cddb-d37a-40ab-a131-1809f219df59','cdebdb1b-db25-4464-a1d9-23669a1c28c9','06687172-1a60-4f16-93ed-ae6772036737','d66396ea-6b6e-4358-a7f9-9193587c1156','a13bc71d-c057-4f66-94ed-cb26b79e9260','b3ab185b-8742-4084-b73b-dec3e2acb313','606bf068-3bcb-476e-ae49-aeb59b973009','b85ede87-02cf-4d5f-bc56-19450a448998','5310c531-6e49-491a-9697-6e949879c160','a3377ab3-48bd-4472-89a9-911c323ccf02','07dce9d7-31b4-4ed4-a596-79f8b3476630','4c25d040-889f-4177-864b-8e9ef1471441','38409170-73c1-4588-93dc-f7b718fc5648','ae86efd3-520c-4cbe-879a-2029bbd28c27','50ee1ae7-f8ca-448e-8f45-422588287754','55cd6350-d3eb-49bd-8667-009e6938b235','6c15a21e-a51a-4a8c-8381-4730f6a3772b','8052f15b-bef8-46f7-9fe3-2291068d163c','0959907b-416f-466e-ab60-65c4cf6b6c9a','c4edc6ee-961f-4c14-b506-e2b45d9e0ac1','ac00c25b-b17b-4a7f-9552-ffb424ded0b4','7c0e2a11-f6f8-4010-b354-0bc07d59aecb','66f443ae-7690-45e5-ad28-8d68cd8a5362','027407b7-eb2d-4986-a551-6425f946f668','fdfca3f4-84f1-44ef-b239-f754a5c85200','daa2a813-6259-4398-83b9-302b6e938202','620a018a-51e8-4a97-b896-dafffcb8362e','b772bb64-f991-4850-888f-0f3ea767dc2d','73ae9e25-d632-4213-845a-6933e84ab893','19e5437c-1f97-4aba-8ae2-a68de68fdf13','a5678f05-8377-48d7-90f3-e590c71e09af','b4e8e9b7-6cc7-45eb-918e-5fa1ceb92024','ceeb4935-98a5-40df-9f9c-7b1894a35534','33883027-9404-4b35-bd19-c9366d455a38','25301886-5edb-44b0-9a2b-18aa4d0f5d87','248f9fb2-e565-49bf-a10f-41e7c10b7247','0e96c73f-bafb-4aa9-b31f-473f91fdfa5f','7ca1b678-dab3-4058-88e7-4f2fa33b42dc','9093d29b-4fdf-456d-8931-b43d69aa4024','0962b67b-26cd-4c63-9d7c-1454145bd589','05a12170-94e9-4417-a23f-2e85666e2047','e2afe1c3-1bc9-4e49-a2cc-4525d8197302','25ec514f-0350-461e-880f-919a7dbf51ee','40299431-3226-47ce-ba2f-7b09472345da','2bb419a5-c335-4181-a624-2aba3edf23af','cb957e53-4315-48c8-8a4f-455f32b88e79','b7250a6b-2645-4402-bb0f-a47f379a827c','2ebedaab-f01e-4493-a77b-fbbe1887b376','96316df3-1ff9-49d6-854d-0a2ac70e940b','d528dd86-297d-4c48-b104-b93e31f2ed4c','852c71a2-6d8f-47b6-8e46-73c7dd779650','f185b0c1-3b23-4fce-b875-9dbedd3bcaf6','c1bb8045-a6f1-4019-9993-36865c61f24e','2d308ce1-81f2-4f73-b6d0-d7cc44e0f508','b4054755-6148-4dd4-a2a6-0297202e31d9','a8bbd995-42ac-4221-8035-6520bacbaaad','04375688-7563-4d51-be3f-380fff8f1333','49c5f6c6-668f-4874-8da7-f759d833e7a1','8091ec0a-a548-4fee-bc0f-55506483b045','07e56a10-558d-4696-a973-4e5e96428a5b','4f4c9f74-a8b4-49c4-a112-ab4a07a45b5d','ceabf28c-3fe7-447f-80e0-d41a88ce3151','db2ab94a-576d-48a9-88de-730d2f0eb406','4db8372a-2072-4c9e-80c0-d092a9a99efe','267d3593-48b8-4143-aa70-fbea75138ecb','d834333a-6cd9-43e6-a8ee-0e4d27544e5c','b5202e49-ea64-4066-a9a6-37de12bdb935','2ab2a626-820d-467b-a298-8dea2f66b200','fd45ffa0-11b5-48e2-a133-07aff6d0b33c','d9b7172e-16bc-4334-b8ed-b6cb48f87e30','86c443ce-432f-4da2-9d8c-1c0d22d4e8b0','70fb1f82-db0e-4cb6-8da2-ea3bfdfe3b2e','b03ddd51-941f-4e1c-981b-6421e880737c']
-        for i in IdList[0:2]:
-            # try :
-            RequestProgramEncounter = requests.get(self.base_url + 'api/programEncounter/' + i ,headers={'AUTH-TOKEN': self.get_cognito_token()})
-            RequestEncounter= requests.get(self.base_url + 'api/encounter/' + i ,headers={'AUTH-TOKEN': self.get_cognito_token()})
-            RequestHouseholdRegistration = requests.get(self.base_url + 'api/subject/' + i ,headers={'AUTH-TOKEN': self.get_cognito_token()})
-            if RequestProgramEncounter.status_code == 200:
-                data = json.loads(RequestProgramEncounter.text)
-                slum_name,HH = self.getHouseholdNumberFromEnrolmentID(data['Enrolment ID'])
-                if data['Encounter type'] == 'Family factsheet':
-                    self.FamilyFactsheetData(data,slum_name,HH)
-                if data['Encounter type'] == 'Daily Reporting':
-                    if 'Date of agreement' in data['observations']:
-                        self.DailyReportingData(data['observations'],slum_name,HH)
-            elif RequestEncounter.status_code == 200:
-                data = json.loads(RequestEncounter.text)
-                if data['Encounter type'] == 'Sanitation':
-                    sanitation = self.map_sanitation_keys(data['observations']) # sanitation data
-                    sanitation.update({'Last_modified_date': data['audit']['Last modified at']})
-                    self.update_rhs_data(data['Subject ID'],sanitation)# sanitation data
-                    self.followup_data_sanitation(data['Subject ID'],sanitation) # sanitation data
-                if data['Encounter type'] == 'Waste':
-                    waste = self.map_waste_keys(data['observations'])  # waste  data
-                    waste.update({'Last_modified_date': data['audit']['Last modified at']})
-                    self.update_rhs_data(data['Subject ID'], waste)  # waste  data
-                    self.update_rhs_data(data['Subject ID'], waste)  # waste  data
-                if data['Encounter type'] == 'Water':
-                    water = self.map_water_keys(data['observations'])  # water  data
-                    water.update({'Last_modified_date': data['audit']['Last modified at']})
-                    self.update_rhs_data(data['Subject ID'], water) # water  data
-                if data['Encounter type'] == 'Property tax':
-                    tax = data['observations'] # tax  data
-                    tax.update({'Last_modified_date': data['audit']['Last modified at']})
-                    self.update_rhs_data(data['Subject ID'], tax)  # tax  data
-                if data['Encounter type'] == 'Electricity':
-                    electricity = data['observations']  # electricity  data
-                    electricity.update({'Last_modified_date': data['audit']['Last modified at']})
-                    self.update_rhs_data(data['Subject ID'], electricity)  # electricity data
-                if data['Encounter type'] == 'Daily Mobilization Activity':
-                    self.get_household_details(data['Subject ID'])
-                    self.CommunityMobilizationActivityData(data['observations'],self.slum,self.HH) #CommunityMobilization
-            elif RequestHouseholdRegistration.status_code == 200:
-                data = json.loads(RequestHouseholdRegistration.text)
-                print(RequestHouseholdRegistration.url)
-                self.registrtation_data(data)
-            else:
-                print(i,'uuid is not accesible')
-            # except Exception as e:
-            #     print(e)
+        IdList =['320ceb68-0173-48f4-8fd1-fea9efeb6260','18798202-c123-469c-ad72-eee6328c3988']
+        for i in IdList:
+            try :
+                RequestProgramEncounter = requests.get(self.base_url + 'api/programEncounter/' + i ,headers={'AUTH-TOKEN': self.get_cognito_token()})
+                RequestEncounter= requests.get(self.base_url + 'api/encounter/' + i ,headers={'AUTH-TOKEN': self.get_cognito_token()})
+                RequestHouseholdRegistration = requests.get(self.base_url + 'api/subject/' + i ,headers={'AUTH-TOKEN': self.get_cognito_token()})
+                if RequestProgramEncounter.status_code == 200:
+                    data = json.loads(RequestProgramEncounter.text)
+                    slum_name,HH = self.getHouseholdNumberFromEnrolmentID(data['Enrolment ID'])
+                    if data['Encounter type'] == 'Family factsheet':
+                        self.FamilyFactsheetData(data,slum_name,HH)
+                    if data['Encounter type'] == 'Daily Reporting' or 'Household Level Daily Reporting':
+                        if 'Date of agreement' in data['observations']:
+                            self.DailyReportingData(data['observations'],slum_name,HH)
+                elif RequestEncounter.status_code == 200:
+                    data = json.loads(RequestEncounter.text)
+                    if data['Encounter type'] == 'Sanitation':
+                        sanitation = self.map_sanitation_keys(data['observations']) # sanitation data
+                        sanitation.update({'Last_modified_date': data['audit']['Last modified at']})
+                        self.update_rhs_data(data['Subject ID'],sanitation)# sanitation data
+                        self.followup_data_sanitation(data['Subject ID'],sanitation) # sanitation data
+                    if data['Encounter type'] == 'Waste':
+                        waste = self.map_waste_keys(data['observations'])  # waste  data
+                        waste.update({'Last_modified_date': data['audit']['Last modified at']})
+                        self.update_rhs_data(data['Subject ID'], waste)  # waste  data
+                        self.update_rhs_data(data['Subject ID'], waste)  # waste  data
+                    if data['Encounter type'] == 'Water':
+                        water = self.map_water_keys(data['observations'])  # water  data
+                        water.update({'Last_modified_date': data['audit']['Last modified at']})
+                        self.update_rhs_data(data['Subject ID'], water) # water  data
+                    if data['Encounter type'] == 'Property tax':
+                        tax = data['observations'] # tax  data
+                        tax.update({'Last_modified_date': data['audit']['Last modified at']})
+                        self.update_rhs_data(data['Subject ID'], tax)  # tax  data
+                    if data['Encounter type'] == 'Electricity':
+                        electricity = data['observations']  # electricity  data
+                        electricity.update({'Last_modified_date': data['audit']['Last modified at']})
+                        self.update_rhs_data(data['Subject ID'], electricity)  # electricity data
+                    if data['Encounter type'] == 'Daily Mobilization Activity':
+                        self.get_household_details(data['Subject ID'])
+                        self.CommunityMobilizationActivityData(data['observations'],self.slum,self.HH) #CommunityMobilization
+                elif RequestHouseholdRegistration.status_code == 200:
+                    data = json.loads(RequestHouseholdRegistration.text)
+                    self.registrtation_data(data)
+                else:
+                    print(i,'uuid is not accesible')
+            except Exception as e:
+                print(e)
 
     # def set_mobile_number(self):
     #     get = HouseholdData.objects.all().filter(slum_id=1675)
@@ -742,5 +757,3 @@ class avni_sync():
 #     a.SaveDailyReportingdata()
 #     a.SaveCommunityMobilizationData()
 #     a.SaveFamilyFactsheetData()
-
-
