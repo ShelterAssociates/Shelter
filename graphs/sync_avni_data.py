@@ -415,49 +415,49 @@ class avni_sync():
         for j in phase_two_materials:
             if j in data:
                 phase_two_material_dates.append(dateparser.parse(data[j]).replace(tzinfo=None))
-        # try:
-        agreement_cancelled = True if ('Date on which agreement is cancelled' in data and data['Date on which agreement is cancelled'] != None) else False
-        if 'Date of agreement' in data :
-            agreement_date = dateparser.parse(data['Date of agreement']).date()
-        else:agreement_date = None
-        if 'Date on which septic tank is given' in data and data['Date on which septic tank is given']!= None or 0 :
-            septic_tank_date = dateparser.parse(data['Date on which septic tank is given']).date()
-        else :septic_tank_date = None
-        if len(phase_one_material_dates) > 0:
-            phase_one_material_date = self.get_max_date(phase_one_material_dates)
-        else :phase_one_material_date = None
-        if len(phase_two_material_dates) > 0 :
-            phase_two_material_date = self.get_max_date(phase_two_material_dates)
-        else : phase_two_material_date = None
-        if 'Date on which door is given' in data and data['Date on which door is given']!= None:
-            phase_three_material_date = dateparser.parse(data['Date on which door is given']).date()
-        else :phase_three_material_date = None
-        if 'Date on which toilet construction is complete' in data and data['Date on which toilet construction is complete']!= None:
-            completion_date = dateparser.parse(data['Date on which toilet construction is complete']).date()
-        else :completion_date= None
-        if 'House numbers of houses where PHASE 1 material bricks, sand and cement is given' in data :
-            p1_material_shifted_to = self.str_to_int(data['House numbers of houses where PHASE 1 material bricks, sand and cement is given'])
-        else :p1_material_shifted_to = None
-        if 'House numbers of houses where PHASE 2 material Hardware is given' in data :
-            p2_material_shifted_to = self.str_to_int(data['House numbers of houses where PHASE 2 material Hardware is given'])
-        else :p2_material_shifted_to= None
-        if 'House numbers where material is shifted - 3rd Phase' in data :
-            p3_material_shifted_to = self.str_to_int(data['House numbers where material is shifted - 3rd Phase'])
-        else:p3_material_shifted_to = None
-        if 'House numbers of houses where Septic Tank is given' in data :
-            st_material_shifted_to = self.str_to_int(data['House numbers of houses where Septic Tank is given'])
-        else:st_material_shifted_to= None
-        if 'Date on whcih toilet is connected to drainage line' in data and data['Date on whcih toilet is connected to drainage line'] != None:
-            toilet_connected_to = self.str_to_int(data['Date on whcih toilet is connected to drainage line'])
-        else:toilet_connected_to= None
-        if 'Whether toilet is in use or not?' in data :
-            toilet_in_use = data['Whether toilet is in use or not?']
-        else:toilet_in_use = None
-        if 'Date on which toilet construction is complete' in data and data['Date on which toilet construction is complete'] != None and toilet_in_use == 'Yes':
-            use_of_toilet = dateparser.parse(data['Date on which toilet construction is complete']).date()
-        else :  use_of_toilet = None
-        check_record = ToiletConstruction.objects.filter(household_number=HH, slum_id= slum_id)
-        if 'Date of agreement' in data:
+        try:
+            agreement_cancelled = True if ('Date on which agreement is cancelled' in data and data['Date on which agreement is cancelled'] != None) else False
+            if 'Date of agreement' in data :
+                agreement_date = dateparser.parse(data['Date of agreement']).date()
+            else:agreement_date = None
+            if 'Date on which septic tank is given' in data and data['Date on which septic tank is given']!= None or 0 :
+                septic_tank_date = dateparser.parse(data['Date on which septic tank is given']).date()
+            else :septic_tank_date = None
+            if len(phase_one_material_dates) > 0:
+                phase_one_material_date = self.get_max_date(phase_one_material_dates)
+            else :phase_one_material_date = None
+            if len(phase_two_material_dates) > 0 :
+                phase_two_material_date = self.get_max_date(phase_two_material_dates)
+            else : phase_two_material_date = None
+            if 'Date on which door is given' in data and data['Date on which door is given']!= None:
+                phase_three_material_date = dateparser.parse(data['Date on which door is given']).date()
+            else :phase_three_material_date = None
+            if 'Date on which toilet construction is complete' in data and data['Date on which toilet construction is complete']!= None:
+                completion_date = dateparser.parse(data['Date on which toilet construction is complete']).date()
+            else :completion_date= None
+            if 'House numbers of houses where PHASE 1 material bricks, sand and cement is given' in data :
+                p1_material_shifted_to = self.str_to_int(data['House numbers of houses where PHASE 1 material bricks, sand and cement is given'])
+            else :p1_material_shifted_to = None
+            if 'House numbers of houses where PHASE 2 material Hardware is given' in data :
+                p2_material_shifted_to = self.str_to_int(data['House numbers of houses where PHASE 2 material Hardware is given'])
+            else :p2_material_shifted_to= None
+            if 'House numbers where material is shifted - 3rd Phase' in data :
+                p3_material_shifted_to = self.str_to_int(data['House numbers where material is shifted - 3rd Phase'])
+            else:p3_material_shifted_to = None
+            if 'House numbers of houses where Septic Tank is given' in data :
+                st_material_shifted_to = self.str_to_int(data['House numbers of houses where Septic Tank is given'])
+            else:st_material_shifted_to= None
+            if 'Date on whcih toilet is connected to drainage line' in data and data['Date on whcih toilet is connected to drainage line'] != None:
+                toilet_connected_to = self.str_to_int(data['Date on whcih toilet is connected to drainage line'])
+            else:toilet_connected_to= None
+            if 'Whether toilet is in use or not?' in data :
+                toilet_in_use = data['Whether toilet is in use or not?']
+            else:toilet_in_use = None
+            if 'Date on which toilet construction is complete' in data and data['Date on which toilet construction is complete'] != None and toilet_in_use == 'Yes':
+                use_of_toilet = dateparser.parse(data['Date on which toilet construction is complete']).date()
+            else :  use_of_toilet = None
+            check_record = ToiletConstruction.objects.filter(household_number=HH, slum_id= slum_id)
+            if 'Date of agreement' in data:
                 if not check_record:
                     create = ToiletConstruction.objects.create(household_number=HH, slum_id = slum_id,
                     agreement_date = agreement_date,
@@ -482,8 +482,8 @@ class avni_sync():
                     toilet_connected_to=toilet_connected_to,
                     use_of_toilet=use_of_toilet)
                     print('Construction status updated for', HH, slum_id)
-        # except Exception as e:
-        #     print(e,HH)
+        except Exception as e:
+            print(e,HH)
 
     def SanitationEncounterData(self):  # checked
         latest_date = self.lastModifiedDateTime()
