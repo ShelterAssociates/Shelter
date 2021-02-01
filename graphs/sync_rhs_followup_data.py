@@ -225,7 +225,6 @@ def syn_rhs_followup_data(city_id, ff_flag=False, latest_flag=True):
 								a.append(record['Household_number'])
 							try:
 								household_data = HouseholdData(
-
 								household_number = str(int(record['Household_number'])),
 								slum = slum,
 								city = city,
@@ -236,16 +235,13 @@ def syn_rhs_followup_data(city_id, ff_flag=False, latest_flag=True):
 								rhs_and_followup_updated +=1
 							except Exception as e:
 								pass 
-
 				print("Occupied Houses")
 				for key,list_records in groupby(data_with_lables, lambda x:x['slum_name']):
-
 					temp_locked_houses_replaced = []
 					temp_double_houses = []
 					try:
 						slum = Slum.objects.get(shelter_slum_code = key)
 					except:
-						#print key 
 						slum = Slum.objects.get(shelter_slum_code = 272537891001)
 					list_records = list(list_records)
 					#print(str(len(list_records)))
