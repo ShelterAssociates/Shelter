@@ -126,7 +126,9 @@ var BaseShape = (function(){
         set: function (child) {
             let par_child = null;
             if(this.type != 'C'){
+		try{
                 par_child = this.parse_filter(child);
+		}catch(err){}
             }
             else{
                 par_child = this.parse_component(child);
