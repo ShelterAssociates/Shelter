@@ -446,13 +446,13 @@ def sanitation_encounter_pune_sbm():
 			return df_temp.iloc[0]['_id']
 		return 0
 	df_sbm["Subject Id"] = df_sbm.apply(lambda x: convert_registration_id(x), axis=1)
-	print(df_sbm)
+	#print(df_sbm)
 	# from collections import Counter
 	# for key in s.keys():
 	#  	print(key, Counter(s[key]))
 	# print(Counter(t))
 
-	'''
+
 	cols=['_id','Encounter Type', "Subject Id", "Id", "_submission_time","slum_name", "Household number",
 		  "Type of House occupancy", "Name of head of household", "Type of household Toilet",
 		  "Is drainage connection available for toilet?", "Are you interested in household toilet?",
@@ -470,12 +470,12 @@ def sanitation_encounter_pune_sbm():
 			if data in value:
 				output.append(data)
 		return ','.join(output)
-	output["Does any household member have any of the construction skills given below?"] = output["Does any household member have any of the construction skills given below?"].apply(convert_multi_select)
+	#output["Does any household member have any of the construction skills given below?"] = output["Does any household member have any of the construction skills given below?"].apply(convert_multi_select)
 	rename_value={ '_submission_time':'Visit Date', 'slum_name':'Slum',
-				   'Does any household member have any of the construction skills given below?':'Does any household member have any of the construction skills given below ?',
+				   #'Does any household member have any of the construction skills given below?':'Does any household member have any of the construction skills given below ?',
 				   'Does any member of the household go for open defecation?':'Does any member of the household go for open defecation ?',
 				   'What is the toilet connected to?':'Where the individual toilet is connected to ?',
-				   'Reason for not using toilet':'Reason for not using toilet ?',
+				   'Reason for not in use':'Reason for not using toilet ?',
 				   'Status of toilet under SBM':'Status of toilet under SBM ?',
 				   'What was the cost incurred to build the toilet?':'What was the cost incurred to build the toilet?',
 				   'Have you applied for an individual toilet under SBM?': 'Have you applied for an individual toilet under SBM?_1',
@@ -495,13 +495,12 @@ def sanitation_encounter_pune_sbm():
 	output = output.rename(columns=rename_value)
 	output = output.sort_values(['Slum'], ascending=(False))
 	output = output.replace(np.nan, '', regex=True)
-	path = base_path + "sanitation_encounter/"
+	path = base_path + "sbm_sanitation_encounter/"
 	output.to_csv(path + 'Pune.csv', sep=',', encoding='utf-8', index=False, quoting=1)
 	output = output.groupby('Slum')
 	for slum_name, df_slum in output:
 		df_slum.to_csv(path + '/' + str(slum_name).replace(' ', '_').replace('/', '') + '.csv', sep=',',
 					   encoding='utf-8', index=False,
 					   quoting=1)
-	'''
 
 sanitation_encounter_pune_sbm()
