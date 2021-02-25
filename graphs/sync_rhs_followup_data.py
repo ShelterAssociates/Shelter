@@ -146,7 +146,7 @@ def syn_rim_data(city_id):
 				else:
 					print ("RIM ERROR:: Slum name missing for "+ str(record["_id"]))
 
-def syn_rhs_followup_data(city_id, ff_flag=False, latest_flag=True):
+def syn_rhs_followup_data(city_id, ff_flag=False, latest_flag=True, start_date=datetime.datetime.now()):
 	count_o = []
 	count_u = []
 	count_l = []
@@ -182,16 +182,17 @@ def syn_rhs_followup_data(city_id, ff_flag=False, latest_flag=True):
 				latest_followup_date = latest_followup[0].submission_date
 
 			latest_date = latest_followup_date if latest_followup_date > latest_rhs_date else latest_rhs_date
+			if not latest_flag:
+				latest_date = start_date
 			print(latest_date)
 			if ff_flag:
 				sync_ff_data(city.id, latest_date)
-
 			if True:#city.id == 1: #3,4 done
 				#print timezone.localtime(latest_date)
 				# url = build_url()
 				rhs_data = fetch_data(form_code, latest_date)
 				data_with_lables = fetch_labels_codes(rhs_data, form_code)
-				total_records +=(len(data_with_lables))
+				total_records +=(len(data_with_lables)) 
 				print('len of data_with_lables before = ' + str(len(data_with_lables)))
 				data_with_lables = [x for x in data_with_lables if 'slum_name' in x.keys()]
 				data_with_lables = [x for x in data_with_lables if 'Type_of_structure_occupancy' in x.keys()]
@@ -225,7 +226,6 @@ def syn_rhs_followup_data(city_id, ff_flag=False, latest_flag=True):
 								a.append(record['Household_number'])
 							try:
 								household_data = HouseholdData(
-
 								household_number = str(int(record['Household_number'])),
 								slum = slum,
 								city = city,
@@ -236,16 +236,13 @@ def syn_rhs_followup_data(city_id, ff_flag=False, latest_flag=True):
 								rhs_and_followup_updated +=1
 							except Exception as e:
 								pass 
-
 				print("Occupied Houses")
 				for key,list_records in groupby(data_with_lables, lambda x:x['slum_name']):
-
 					temp_locked_houses_replaced = []
 					temp_double_houses = []
 					try:
 						slum = Slum.objects.get(shelter_slum_code = key)
 					except:
-						#print key 
 						slum = Slum.objects.get(shelter_slum_code = 272537891001)
 					list_records = list(list_records)
 					#print(str(len(list_records)))

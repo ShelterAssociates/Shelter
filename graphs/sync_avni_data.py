@@ -1,6 +1,7 @@
 from django.conf import settings
 import requests
 import json
+import time
 import subprocess
 import dateparser
 from django.http import HttpResponse
@@ -10,6 +11,7 @@ from functools import wraps
 from time import time
 from datetime import timedelta,datetime
 import dateutil.parser
+import itertools
 
 direct_encountes =['Sanitation','Property tax','Water','Waste','Electricity','Daily Mobilization Activity']
 program_encounters =['Daily Reporting','Family factsheet']
@@ -51,8 +53,8 @@ class avni_sync():
         last_submission_date = HouseholdData.objects.latest('submission_date')
         latest_date = last_submission_date.submission_date + timedelta(days=1)
         iso_format_next = latest_date.strftime('%Y-%m-%dT00:00:00.000Z')
-        iso = "2020-11-20T00:00:00.000Z"
-        return(iso)
+        # iso = "2021-01-01T00:00:00.000Z"
+        return(iso_format_next)
 
     def map_rhs_key(self,a,b):
         change_keys = {'Enter_household_number_again': 'Househhold number','_notes': 'Note',
@@ -154,6 +156,7 @@ class avni_sync():
             'group_oi8ts04/Under_what_scheme_wo_r_toilet_to_be_built': 'Under what scheme would you like your toilet to be built ?',
             'group_oi8ts04/If_yes_why': 'If yes for individual toilet , why?',
             'group_oi8ts04/If_no_why': 'If no for individual toilet , why?',
+            'group_rz72p62/Which_Community_Toilet_Blocks': 'Which CTB do your family members use ?',
             'group_el9cl08/Does_any_household_m_n_skills_given_below': 'Does any household member have any of the construction skills given below ?'}
         a ={}
         a.update(s)
@@ -162,9 +165,9 @@ class avni_sync():
                 if k in a.keys() or v in s.keys():
                     a[k] = s[v]
                     a.pop(v)
-                if 'Current place of defecation' in a :
-                    a.pop('Current place of defecation')
-                else: pass
+                # if 'Current place of defecation' in a :
+                #     a.pop('Current place of defecation')
+                # else: pass
             except Exception as e:
                 print(e)
         return a
@@ -207,7 +210,9 @@ class avni_sync():
     def getHouseholdNumberFromEnrolmentID(self,enrol_id):
         send_request1 = requests.get(self.base_url + 'api/enrolment/' + enrol_id,headers={'AUTH-TOKEN': self.get_cognito_token()})
         RHS = json.loads(send_request1.text)
-        self.get_household_details(RHS['Subject ID'])
+        if 'Subject ID' in RHS:
+            self.get_household_details(RHS['Subject ID'])
+        else :pass
         return (self.slum,self.HH)
 
     def create_registrationdata_url(self): #checked
@@ -231,6 +236,7 @@ class avni_sync():
             if not check_record:
                 rhs_data = {}
                 final_rhs_data = self.map_rhs_key(rhs_data, rhs_from_avni)
+                final_rhs_data.update({'rhs_uuid': HH_data['ID']})
                 update_record = HouseholdData.objects.create(household_number=household_number, slum_id=slum_id,
                 city_id= city_id, submission_date=submission_date,rhs_data=final_rhs_data, created_date=created_date)
                 print('Household record created for', slum_name, household_number)
@@ -239,18 +245,19 @@ class avni_sync():
                 if rhs_data == None or len(rhs_data) == 0:
                     rhs_data ={}
                 final_rhs_data = self.map_rhs_key(rhs_data, rhs_from_avni)
+                final_rhs_data.update({'rhs_uuid': HH_data['ID']})
                 check_record.update(submission_date=submission_date, rhs_data=final_rhs_data,
                                     created_date=created_date)
                 print('Household record updated for', slum_name, household_number)
         except Exception as e:
-            print('second exception',e)
+            print('second exception',slum_name,e)
 
     def SaveRhsData(self): # checked
         pages,path = self.create_registrationdata_url()
-        for i in range(pages)[0:1]:
+        for i in range(pages):
             send_request = requests.get(self.base_url + path + '&' + str(i),headers={'AUTH-TOKEN': self.get_cognito_token()})
             get_HH_data = json.loads(send_request.text)['content']
-            for i in get_HH_data[0:2]:
+            for i in get_HH_data:
                 self.registrtation_data(i)
 
     def update_rhs_data(self,subject_id,encounter_data): #checked
@@ -280,23 +287,23 @@ class avni_sync():
                       'Samiti meeting5': 'Samitee meeting 5'}  # "Workshop for Women","Workshop for Boys","Workshop for Girls"}
         try:
             slum_id, city_id = self.get_city_slum_ids(slum_name)
-            check = CommunityMobilizationActivityAttendance.objects.filter(slum=slum_id, city=city_id,
-                                                                           household_number=HH)
             if data['Type of Activity'] in activities:
                 activity = ActivityType.objects.filter(name=activities[data['Type of Activity']]).values_list('key', flat=True)[0]
             else:
                 activity = ActivityType.objects.filter(name=data['Type of Activity']).values_list('key', flat=True)[0]
+            check = CommunityMobilizationActivityAttendance.objects.filter(slum=slum_id, city=city_id,household_number=HH,
+                                                                           activity_type_id = activity)
             if not check:
                 save = CommunityMobilizationActivityAttendance.objects.create(slum_id=slum_id, city_id=city_id,
-                date_of_activity=data['Date of the activity conducted'],activity_type_id=activity,household_number=HH,
+                date_of_activity=dateparser.parse(data['Date of the activity conducted']).date(),activity_type_id=activity,household_number=HH,
                 males_attended_activity=data['Number of Men present'] if 'Number of Men present' in data else 0,
                 females_attended_activity=data['Number of Women present'] if 'Number of Women present' in data else 0,
                 other_gender_attended_activity=data['Number of Other gender members present'] if 'Number of Other gender members present' in data else 0,
                 girls_attended_activity=data['Number of Girls present'] if 'Number of Girls present' in data else 0,
                 boys_attended_activity=data['Number of Boys present'] if 'Number of Boys present' in data else 0)
-                print('record created for', HH)
+                print('record created for', HH,slum_name)
             else:
-                update = check.update(date_of_activity=data['Date of the activity conducted'],
+                update = check.update(date_of_activity=dateparser.parse(data['Date of the activity conducted']).date(),
                 activity_type_id=activity, household_number=HH,
                 males_attended_activity=data['Number of Men present'] if 'Number of Men present' in data else 0,
                 females_attended_activity=data['Number of Women present'] if 'Number of Women present' in data else 0,
@@ -309,27 +316,28 @@ class avni_sync():
 
     def SaveCommunityMobilizationData(self):  #checked
         pages, path = self.create_mobilization_activity_url()
-        for i in range(pages)[0:1]:
+        print(pages)
+        for i in range(pages):
             send_request = requests.get(self.base_url + path + '&' + str(i),headers={'AUTH-TOKEN': self.get_cognito_token()})
             data = json.loads(send_request.text)['content']
-            for j in data[1:2]:
-                print(j)
+            for j in data:
                 if len(j['observations']) > 0:
                     self.get_household_details(j['Subject ID'])
                     self.CommunityMobilizationActivityData(j['observations'], self.slum, self.HH)
                 else:
-                    print('No data')
+                    pass
+                    # print('No data')
 
     def SaveFamilyFactsheetData(self):#checked
         latest_date = self.lastModifiedDateTime()
         programEncounters_path = 'api/programEncounters?lastModifiedDateTime=' + latest_date + '&encounterType=Family factsheet'
         result = requests.get(self.base_url + programEncounters_path, headers={'AUTH-TOKEN': self.get_cognito_token()})
         get_page_count = json.loads(result.text)['totalPages']
-        for i in range(get_page_count)[0:1]:
+        for i in range(get_page_count):
             send_request = requests.get(self.base_url + programEncounters_path + '&' + str(i),
                                         headers={'AUTH-TOKEN': self.get_cognito_token()})
             data = json.loads(send_request.text)['content']
-            for j in data[0:1]:
+            for j in data:
                 slum, HH = self.getHouseholdNumberFromEnrolmentID(j['Enrolment ID'])
                 self.FamilyFactsheetData(j, slum, HH)
 
@@ -337,12 +345,15 @@ class avni_sync():
         try:
             slum_id, city_id =self.get_city_slum_ids(slum_name)
             check_record = HouseholdData.objects.filter(household_number=HH, city_id=city_id, slum_id=slum_id)
+            factsheetDate = ToiletConstruction.objects.filter(household_number=HH,slum_id=slum_id)
             if check_record:
                 ff_data = check_record.values_list('ff_data', flat=True)[0]
                 if ff_data == None or len(ff_data) == 0:
                     ff_data = {}
                 final_ff_data = self.map_ff_keys(ff_data, data['observations'])
+                final_ff_data.update({'ff_uuid': data['ID']})
                 check_record.update(ff_data=final_ff_data)
+                factsheetDate.update(factsheet_done = dateparser.parse(data['Encounter datetime']))
                 print('FF record updated for', slum_name, HH)
             else:
                 ff_data = {}
@@ -355,7 +366,9 @@ class avni_sync():
                 self.registrtation_data(get_HH_data)
                 get_reocrd = HouseholdData.objects.filter( household_number = HH, slum_id = slum_id, city_id= city_id)
                 final_ff_data = self.map_ff_keys(ff_data, data['observations'])
+                final_ff_data.update({'ff_uuid': data['ID']})
                 get_reocrd.update(ff_data = final_ff_data)
+                factsheetDate.update(factsheet_done=dateparser.parse(data['Encounter datetime']))
                 print('FF record updated for', slum_name, HH)
         except Exception as e:
             print(e)
@@ -374,13 +387,20 @@ class avni_sync():
 
     def get_max_date(self,dates_list):
         max = 0
-        for i in dates_list:
-            d = dates_list[0]
-            if d > dates_list[dates_list.index(i) + 1]:
-                max = d
-            else:
-                max = dates_list[dates_list.index(i)]
+        for a, b in itertools.combinations(dates_list, 2):
+            if a > b:
+                max = a
+            else :
+                max= b
         return max
+
+    def str_to_int(self,data):
+        a = []
+        b = ''
+        for i in data:
+            if i.isdigit():
+                a.append(i)
+        return int(b.join(a))
 
     def DailyReportingData(self, data, slum, HH): #checked
         slum_id, city_id =self.get_city_slum_ids(slum)
@@ -396,53 +416,72 @@ class avni_sync():
             if j in data:
                 phase_two_material_dates.append(dateparser.parse(data[j]).replace(tzinfo=None))
         try:
+            agreement_cancelled = True if ('Date on which agreement is cancelled' in data and data['Date on which agreement is cancelled'] != None) else False
+            if 'Date of agreement' in data :
+                agreement_date = dateparser.parse(data['Date of agreement']).date()
+            else:agreement_date = None
+            if 'Date on which septic tank is given' in data and data['Date on which septic tank is given']!= None or 0 :
+                septic_tank_date = dateparser.parse(data['Date on which septic tank is given']).date()
+            else :septic_tank_date = None
+            if len(phase_one_material_dates) > 0:
+                phase_one_material_date = self.get_max_date(phase_one_material_dates)
+            else :phase_one_material_date = None
+            if len(phase_two_material_dates) > 0 :
+                phase_two_material_date = self.get_max_date(phase_two_material_dates)
+            else : phase_two_material_date = None
+            if 'Date on which door is given' in data and data['Date on which door is given']!= None:
+                phase_three_material_date = dateparser.parse(data['Date on which door is given']).date()
+            else :phase_three_material_date = None
+            if 'Date on which toilet construction is complete' in data and data['Date on which toilet construction is complete']!= None:
+                completion_date = dateparser.parse(data['Date on which toilet construction is complete']).date()
+            else :completion_date= None
+            if 'House numbers of houses where PHASE 1 material bricks, sand and cement is given' in data :
+                p1_material_shifted_to = self.str_to_int(data['House numbers of houses where PHASE 1 material bricks, sand and cement is given'])
+            else :p1_material_shifted_to = None
+            if 'House numbers of houses where PHASE 2 material Hardware is given' in data :
+                p2_material_shifted_to = self.str_to_int(data['House numbers of houses where PHASE 2 material Hardware is given'])
+            else :p2_material_shifted_to= None
+            if 'House numbers where material is shifted - 3rd Phase' in data :
+                p3_material_shifted_to = self.str_to_int(data['House numbers where material is shifted - 3rd Phase'])
+            else:p3_material_shifted_to = None
+            if 'House numbers of houses where Septic Tank is given' in data :
+                st_material_shifted_to = self.str_to_int(data['House numbers of houses where Septic Tank is given'])
+            else:st_material_shifted_to= None
+            if 'Date on whcih toilet is connected to drainage line' in data and data['Date on whcih toilet is connected to drainage line'] != None:
+                toilet_connected_to = self.str_to_int(data['Date on whcih toilet is connected to drainage line'])
+            else:toilet_connected_to= None
+            if 'Whether toilet is in use or not?' in data :
+                toilet_in_use = data['Whether toilet is in use or not?']
+            else:toilet_in_use = None
+            if 'Date on which toilet construction is complete' in data and data['Date on which toilet construction is complete'] != None and toilet_in_use == 'Yes':
+                use_of_toilet = dateparser.parse(data['Date on which toilet construction is complete']).date()
+            else :  use_of_toilet = None
             check_record = ToiletConstruction.objects.filter(household_number=HH, slum_id= slum_id)
-            if not check_record:
-                create = ToiletConstruction.objects.create(household_number=HH, slum_id = slum_id,
-                agreement_date = dateparser.parse(data['Date of agreement']).date(),
-                agreement_cancelled=True if ('Date on which agreement is cancelled' in data and data['Date on which agreement is cancelled'] != None) else False,
-                septic_tank_date=dateparser.parse(data['Date on which septic tank is given']).date() if 'Date on which septic tank is given' in data else None,
-                phase_one_material_date=self.get_max_date(phase_one_material_dates),phase_two_material_date=self.get_max_date(phase_two_material_dates),
-                phase_three_material_date=dateparser.parse(data['Date on which door is given']).date() if 'Date on which door is given' in data else None,
-                completion_date=dateparser.parse(data['Date on which toilet construction is complete']).date() if 'Date on which toilet construction is complete' in data else None,
-                p1_material_shifted_to=dateparser.parse(data['House numbers of houses where PHASE 1 material bricks, sand and cement is given']).date() if
-                'House numbers of houses where PHASE 1 material bricks, sand and cement is given' in data else None,
-                p2_material_shifted_to=dateparser.parse(data['House numbers of houses where PHASE 2 material Hardware is given']).date() if
-                'House numbers of houses where PHASE 2 material Hardware is given' in data else None,
-                p3_material_shifted_to=dateparser.parse(data['House numbers where material is shifted - 3rd Phase']).date() if
-                'House numbers where material is shifted - 3rd Phase' in data else None,
-                st_material_shifted_to=dateparser.parse(data['House numbers of houses where Septic Tank is given']).date() if
-                'House numbers of houses where Septic Tank is given' in data else None,
-                toilet_connected_to=dateparser.parse(data['Date on whcih toilet is connected to drainage line']).date() if
-                'Date on whcih toilet is connected to drainage line' in data else None,
-                use_of_toilet=dateparser.parse(data['Date on which toilet construction is complete']).date() if ('Date on which toilet construction is complete' in data and
-                data['Whether toilet is in use or not?'] == 'Yes') else None)
-                # pocket = j['pocket'] if 'pocket' in j else None,
-                # status = j['status'] if 'status' in j else None,
-                # comment = j['comment'] if 'comment' in j else None,
-                # factsheet_done = j['factsheet_done'] if 'factsheet_done' in j else None )
-                print('Construction status created for', HH, slum_id)
-            else :
-                check_record.update(agreement_date = dateparser.parse(data['Date of agreement']).date(),
-                agreement_cancelled = True if ('Date on which agreement is cancelled' in data and data['Date on which agreement is cancelled']!= None) else False,
-                septic_tank_date=dateparser.parse(data['Date on which septic tank is given']).date() if 'Date on which septic tank is given' in data else None,
-                phase_one_material_date=self.get_max_date(phase_one_material_dates),
-                phase_two_material_date=self.get_max_date(phase_two_material_dates),
-                phase_three_material_date=dateparser.parse(data['Date on which door is given']).date() if 'Date on which door is given' in data else None,
-                completion_date = dateparser.parse(data['Date on which toilet construction is complete']).date() if 'Date on which toilet construction is complete' in data else None,
-                p1_material_shifted_to=dateparser.parse(data['House numbers of houses where PHASE 1 material bricks, sand and cement is given']).date() if
-                'House numbers of houses where PHASE 1 material bricks, sand and cement is given' in data else None,
-                p2_material_shifted_to=dateparser.parse(data['House numbers of houses where PHASE 2 material Hardware is given']).date() if
-                'House numbers of houses where PHASE 2 material Hardware is given' in data else None,
-                p3_material_shifted_to=dateparser.parse(data['House numbers where material is shifted - 3rd Phase']).date() if
-                'House numbers where material is shifted - 3rd Phase' in data else None,
-                st_material_shifted_to=dateparser.parse(data['House numbers of houses where Septic Tank is given']).date() if
-                'House numbers of houses where Septic Tank is given' in data else None,
-                toilet_connected_to=dateparser.parse(data['Date on whcih toilet is connected to drainage line']).date() if
-                'Date on whcih toilet is connected to drainage line' in data else None,
-                use_of_toilet = dateparser.parse(data['Date on which toilet construction is complete']).date() if (
-                'Date on which toilet construction is complete' in data and data['Whether toilet is in use or not?'] == 'Yes') else None)
-                print('Construction status updated for', HH, slum_id)
+            if 'Date of agreement' in data:
+                if not check_record:
+                    create = ToiletConstruction.objects.create(household_number=HH, slum_id = slum_id,
+                    agreement_date = agreement_date,
+                    agreement_cancelled=agreement_cancelled, septic_tank_date=septic_tank_date,
+                    phase_one_material_date=phase_one_material_date,phase_two_material_date=phase_two_material_date,
+                    phase_three_material_date=phase_three_material_date,
+                    completion_date=completion_date,p1_material_shifted_to=p1_material_shifted_to,
+                    p2_material_shifted_to=p2_material_shifted_to,
+                    p3_material_shifted_to=p3_material_shifted_to,
+                    st_material_shifted_to=st_material_shifted_to,
+                    toilet_connected_to=toilet_connected_to,
+                    use_of_toilet=use_of_toilet)
+                    print('Construction status created for', HH, slum_id)
+                else :
+                    check_record.update(agreement_date = agreement_date,
+                    agreement_cancelled=agreement_cancelled,septic_tank_date=septic_tank_date,
+                    phase_one_material_date=phase_one_material_date ,phase_two_material_date=phase_two_material_date ,
+                    phase_three_material_date=phase_three_material_date ,completion_date=completion_date ,
+                    p1_material_shifted_to=p1_material_shifted_to,p2_material_shifted_to=p2_material_shifted_to ,
+                    p3_material_shifted_to=p3_material_shifted_to ,
+                    st_material_shifted_to=st_material_shifted_to ,
+                    toilet_connected_to=toilet_connected_to,
+                    use_of_toilet=use_of_toilet)
+                    print('Construction status updated for', HH, slum_id)
         except Exception as e:
             print(e,HH)
 
@@ -467,15 +506,16 @@ class avni_sync():
                 for i in get_record:
                     get_followup_data = i.followup_data
                     get_followup_data.update(sanitation_data)
-                    get_followup_data.update(followup_data = get_followup_data, submission_date = dateparser.parse(self.SubmissionDate))
+                    get_record.update(followup_data = get_followup_data, submission_date = dateparser.parse(self.SubmissionDate))
                     print('followup record updated for', self.HH,self.slum)
         except Exception as e:
             print(e,self.HH)
 
     def SaveFollowupData(self): # checked
         pages,path = self.SanitationEncounterData()
+        print(pages)
         try:
-            for i in range(pages)[0:1]:
+            for i in range(pages):
                 send_request = requests.get(self.base_url + path + '&' + str(i),headers={'AUTH-TOKEN': self.get_cognito_token()})
                 data = json.loads(send_request.text)['content']
                 for j in data:
@@ -497,10 +537,10 @@ class avni_sync():
     def SaveWaterData(self): # checked
         pages,path = self.WaterEncounterData()
         try:
-            for i in range(pages)[0:1]:
+            for i in range(pages):
                 send_request = requests.get(self.base_url + path + '&' + str(i),headers={'AUTH-TOKEN': self.get_cognito_token()})
                 data = json.loads(send_request.text)['content']
-                for j in data[0:1]:
+                for j in data:
                     water_data = self.map_water_keys(j['observations'])
                     water_data.update({'Last_modified_date': j['audit']['Last modified at']})
                     self.update_rhs_data(j['Subject ID'], water_data)
@@ -518,10 +558,10 @@ class avni_sync():
     def SaveWasteData(self): # checked
         pages,path = self.WasteEncounterData()
         try:
-            for i in range(pages)[0:1]:
+            for i in range(pages):
                 send_request = requests.get(self.base_url + path + '&' + str(i),headers={'AUTH-TOKEN': self.get_cognito_token()})
                 data = json.loads(send_request.text)['content']
-                for j in data[0:1]:
+                for j in data:
                     waste_data = self.map_waste_keys(j['observations'])
                     waste_data.update({'Last_modified_date': j['audit']['Last modified at']})
                     self.update_rhs_data(j['Subject ID'], waste_data)
@@ -539,10 +579,10 @@ class avni_sync():
     def SavePropertyTaxData(self): # checked
         pages,path = self.PropertyTaxEncounterData()
         try:
-            for i in range(pages)[0:1]:
+            for i in range(pages):
                 send_request = requests.get(self.base_url + path + '&' + str(i),headers={'AUTH-TOKEN': self.get_cognito_token()})
                 data = json.loads(send_request.text)['content']
-                for j in data[0:1]:
+                for j in data:
                     tax_data  = j['observations']
                     tax_data.update({'Last_modified_date': j['audit']['Last modified at']})
                     self.update_rhs_data(j['Subject ID'], tax_data)
@@ -569,6 +609,88 @@ class avni_sync():
                     self.update_rhs_data(j['Subject ID'],electricity_data)
         except Exception as e:
             print(e)
+
+    def SaveDataFromIds(self):
+        IdList =['320ceb68-0173-48f4-8fd1-fea9efeb6260','18798202-c123-469c-ad72-eee6328c3988']
+        for i in IdList:
+            try :
+                RequestProgramEncounter = requests.get(self.base_url + 'api/programEncounter/' + i ,headers={'AUTH-TOKEN': self.get_cognito_token()})
+                RequestEncounter= requests.get(self.base_url + 'api/encounter/' + i ,headers={'AUTH-TOKEN': self.get_cognito_token()})
+                RequestHouseholdRegistration = requests.get(self.base_url + 'api/subject/' + i ,headers={'AUTH-TOKEN': self.get_cognito_token()})
+                if RequestProgramEncounter.status_code == 200:
+                    data = json.loads(RequestProgramEncounter.text)
+                    slum_name,HH = self.getHouseholdNumberFromEnrolmentID(data['Enrolment ID'])
+                    if data['Encounter type'] == 'Family factsheet':
+                        self.FamilyFactsheetData(data,slum_name,HH)
+                    if data['Encounter type'] == 'Daily Reporting' or 'Household Level Daily Reporting':
+                        if 'Date of agreement' in data['observations']:
+                            self.DailyReportingData(data['observations'],slum_name,HH)
+                elif RequestEncounter.status_code == 200:
+                    data = json.loads(RequestEncounter.text)
+                    if data['Encounter type'] == 'Sanitation':
+                        sanitation = self.map_sanitation_keys(data['observations']) # sanitation data
+                        sanitation.update({'Last_modified_date': data['audit']['Last modified at']})
+                        self.update_rhs_data(data['Subject ID'],sanitation)# sanitation data
+                        self.followup_data_sanitation(data['Subject ID'],sanitation) # sanitation data
+                    if data['Encounter type'] == 'Waste':
+                        waste = self.map_waste_keys(data['observations'])  # waste  data
+                        waste.update({'Last_modified_date': data['audit']['Last modified at']})
+                        self.update_rhs_data(data['Subject ID'], waste)  # waste  data
+                        self.update_rhs_data(data['Subject ID'], waste)  # waste  data
+                    if data['Encounter type'] == 'Water':
+                        water = self.map_water_keys(data['observations'])  # water  data
+                        water.update({'Last_modified_date': data['audit']['Last modified at']})
+                        self.update_rhs_data(data['Subject ID'], water) # water  data
+                    if data['Encounter type'] == 'Property tax':
+                        tax = data['observations'] # tax  data
+                        tax.update({'Last_modified_date': data['audit']['Last modified at']})
+                        self.update_rhs_data(data['Subject ID'], tax)  # tax  data
+                    if data['Encounter type'] == 'Electricity':
+                        electricity = data['observations']  # electricity  data
+                        electricity.update({'Last_modified_date': data['audit']['Last modified at']})
+                        self.update_rhs_data(data['Subject ID'], electricity)  # electricity data
+                    if data['Encounter type'] == 'Daily Mobilization Activity':
+                        self.get_household_details(data['Subject ID'])
+                        self.CommunityMobilizationActivityData(data['observations'],self.slum,self.HH) #CommunityMobilization
+                elif RequestHouseholdRegistration.status_code == 200:
+                    data = json.loads(RequestHouseholdRegistration.text)
+                    self.registrtation_data(data)
+                else:
+                    print(i,'uuid is not accesible')
+            except Exception as e:
+                print(e)
+
+    # def set_mobile_number(self):
+    #     get = HouseholdData.objects.all().filter(slum_id=1675)
+    #     get_data = get.values('household_number','rhs_data')
+    #     for i in get_data:
+    #         HH = i['household_number']
+    #         rhs = i['rhs_data']
+    #         for k,v in rhs.items():
+    #             if k == 'Enter the 10 digit mobile number':
+    #                 rhs.update({'group_el9cl08/Enter_the_10_digit_mobile_number' : v})
+    #                 rhs.pop(k)
+    #             if k == 'Aadhar number' :
+    #                 rhs.update({'group_el9cl08/Aadhar_number' :v})
+    #                 rhs.pop(k)
+    #         a = HouseholdData.objects.filter(slum_id=1675,household_number =HH)
+    #         a.update(rhs_data= rhs)
+    #         print('rhs updated for',HH)
+    #
+    # def changeListToStrInFfData(self):
+    #
+    #     getData = HouseholdData.objects.filter(slum_id=1675)
+    #     for i in getData:
+    #         ff  = getData.filter(household_number=i.household_number)
+    #         getff = ff.values_list('ff_data', flat=True)[0]
+    #         if type(getff['group_ne3ao98/Use_of_toilet']) == list:
+    #             useOfToilte = getff['group_ne3ao98/Use_of_toilet']
+    #             useOfToilte = ','.join(i for i in useOfToilte)
+    #             getff['group_ne3ao98/Use_of_toilet']= useOfToilte
+    #             ff.update(ff_data = getff)
+    #             print('updated for',i.household_number)
+    #         elif type(useOfToilte) == str:pass
+    #         else : pass
 
     # def programEncounter_api_call(self):
     #     latest_date = self.lastModifiedDateTime()
@@ -622,71 +744,10 @@ class avni_sync():
     #             add_place = {'group_oh4zf84/Name_of_Native_villa_district_and_state':NativePlace}
     #             ff_data.update(add_place)
     #             print('Updated FF data for', HH)
-    #
-    # def SaveDataFromIds(self):
-    #     IdList = ['21be9308-fa85-40d6-bec8-ae33dd0d80c9','a05d701c-5477-44c3-b3df-2f30ab9c9c24',
-    #               '22aa9844-bdc5-4f99-8ed1-81a4d345329c','2bc3ced1-0961-4005-a8b9-5fb27e9b3e11',
-    #               'b4f0df53-de9a-44f0-96da-b85761ab422d','a6f929a8-a693-4b7a-bf86-32c6453ac527',
-    #               '82d647bb-2fe2-4128-bec2-1079f9ad50e3'] # Sanitation data
-    #     slum_name ='Ambedkar vasahat, R K Colony' # set slum name here
-    #     for i in IdList[0:1]:
-    #         try :
-    #             RequestProgramEncounter = requests.get(self.base_url + 'api/programEncounter/' + i ,headers={'AUTH-TOKEN': self.get_cognito_token()})
-    #             RequestEncounter= requests.get(self.base_url + 'api/encounter/' + i ,headers={'AUTH-TOKEN': self.get_cognito_token()})
-    #             RequestEnrolment = requests.get(self.base_url + 'api/enrolment/' + i ,headers={'AUTH-TOKEN': self.get_cognito_token()})
-    #             RequestHouseholdRegistration = requests.get(self.base_url + 'api/subject/' + i ,headers={'AUTH-TOKEN': self.get_cognito_token()})
-    #             if RequestProgramEncounter.status_code == 200:
-    #                 # print(RequestProgramEncounter.status_code)
-    #                 self.saveProgramEncounterData([i],slum_name)
-    #             elif RequestEncounter.status_code == 200:
-    #                 data =json.loads(RequestEncounter.text)
-    #                 sanitation = self.map_sanitation_keys(data['observations'])
-    #                 self.update_rhs_data(data['Subject ID'],sanitation)
-    #                 self.save_followup_data(data['Subject ID'],sanitation)
-    #             elif RequestEnrolment.status_code == 200:
-    #                 self.access_enrolment_data()
-    #             elif RequestHouseholdRegistration.status_code == 200:
-    #                 self.registrtation_data(json.loads(RequestHouseholdRegistration.text))
-    #             else:
-    #                 print(i,'uuid is not accesible')
-    #         except Exception as e:
-    #             print(e)
-    #
-    # def set_mobile_number(self):
-    #     get = HouseholdData.objects.all().filter(slum_id=1675)
-    #     get_data = get.values('household_number','rhs_data')
-    #     for i in get_data:
-    #         HH = i['household_number']
-    #         rhs = i['rhs_data']
-    #         for k,v in rhs.items():
-    #             if k == 'Enter the 10 digit mobile number':
-    #                 rhs.update({'group_el9cl08/Enter_the_10_digit_mobile_number' : v})
-    #                 rhs.pop(k)
-    #             if k == 'Aadhar number' :
-    #                 rhs.update({'group_el9cl08/Aadhar_number' :v})
-    #                 rhs.pop(k)
-    #         a = HouseholdData.objects.filter(slum_id=1675,household_number =HH)
-    #         a.update(rhs_data= rhs)
-    #         print('rhs updated for',HH)
-    #
-    # def changeListToStrInFfData(self):
-    #
-    #     getData = HouseholdData.objects.filter(slum_id=1675)
-    #     for i in getData:
-    #         ff  = getData.filter(household_number=i.household_number)
-    #         getff = ff.values_list('ff_data', flat=True)[0]
-    #         if type(getff['group_ne3ao98/Use_of_toilet']) == list:
-    #             useOfToilte = getff['group_ne3ao98/Use_of_toilet']
-    #             useOfToilte = ','.join(i for i in useOfToilte)
-    #             getff['group_ne3ao98/Use_of_toilet']= useOfToilte
-    #             ff.update(ff_data = getff)
-    #             print('updated for',i.household_number)
-    #         elif type(useOfToilte) == str:pass
-    #         else : pass
-
 
 # call functions depending on required data to be saved
 #     a = avni_sync()
+#     a.SaveDataFromIds
 #     a.SaveRhsData()
 #     a.SaveWasteData()
 #     a.SaveWaterData()
@@ -696,5 +757,3 @@ class avni_sync():
 #     a.SaveDailyReportingdata()
 #     a.SaveCommunityMobilizationData()
 #     a.SaveFamilyFactsheetData()
-
-

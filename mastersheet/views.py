@@ -197,7 +197,6 @@ def masterSheet(request, slum_code=0, FF_code=0, RHS_code=0):
                         "no_rhs_flag": "#eba6fc"
                     }
                     dummy_formdict[str(int(y.household_number))].update({new_activity_type: str(y.date_of_activity), str(new_activity_type) + "_id": y.id})
-                    print(dummy_formdict[str(int(y.household_number))])
 
             for y in community_mobilization_data:
                 #y = community_mobilization_data[i]
@@ -286,21 +285,23 @@ def masterSheet(request, slum_code=0, FF_code=0, RHS_code=0):
                         x.update({'toilet_photo_url': PATH + '/' + x['Toilet_Photo']})
                     if 'Family_Photo' in x.keys():
                         x.update({'family_photo_url': PATH + '/' + x['Family_Photo']})
-
-                if x['ff_id'] != None :
-                    x.update({'toilet_photo_url': x['Toilet_Photo']})
-                    x.update({'family_photo_url': x['Family_Photo']})
-                    if x['Toilet_Photo'] != None:
-                        x.update({'current place of defecation': 'Toilet by SA'})
+                else:
+                    if 'Toilet_Photo' and 'ff_uuid' in x.keys():
+                        ff_url = settings.AVNI_URL + '/#/app/subject/viewProgramEncounter?uuid=' + str(x['ff_uuid'])
+                        x.update({'toilet_photo_url': ff_url if ff_url else x['Toilet_Photo']})
+                        x.update({'family_photo_url': ff_url if ff_url else x['Family_Photo']})
 
                 if '_xform_id_string' in x.keys():
                     x.update({'rhs_url': settings.BASE_URL + str('shelter/forms/') + str(x['_xform_id_string']) + str('/instance#/') + str(x['_id'])})
-                else :
-                    pass
+                elif 'rhs_uuid' in x.keys() :
+                    x.update({'rhs_url':settings.AVNI_URL + '#/app/subject?uuid=' + str(x['rhs_uuid'])})
+                else:pass
+
                 if 'ff_xform_id_string' in x.keys():
                     x.update({'ff_url': settings.BASE_URL + str('shelter/forms/') + str(x['ff_xform_id_string']) + str('/instance#/') + str(x["ff_id"])})
-                else :
-                    pass
+                elif 'ff_id' in x.keys():
+                    x.update({'ff_url': settings.AVNI_URL + '/#/app/subject/viewProgramEncounter?uuid=' + str(x['ff_uuid'])})
+                else:pass
 
                 if 'group_oi8ts04/Current_place_of_defecation' in x:
                     x.update({'current place of defecation': x['group_oi8ts04/Current_place_of_defecation']})
@@ -332,6 +333,7 @@ def masterSheet(request, slum_code=0, FF_code=0, RHS_code=0):
                             x['incorrect_cpod'] = 'incorrect_cpod'
                 except Exception as e:
                     pass
+        # print(formdict)
                     # print ('not found - '+str(x['Household_number']))
     except Exception as e:
         print(e)
@@ -423,8 +425,8 @@ def define_columns(request):
         {"data": "group_oi8ts04/Status_of_toilet_under_SBM", "title": "Status of toilet under SBM?"},
         {"data": "group_oi8ts04/What_was_the_cost_in_to_build_the_toilet",
          "title": "What was the cost incurred to build the toilet?"},
-        {"data": "current place of defecation", "title": "Current place of defecation"},
-        # {"data": "group_rz72p62/Which_Community_Toilet_Blocks", "title": "Which CTB"},
+        {"data": "group_oi8ts04/Current_place_of_defecation", "title": "Current place of defecation"},
+        {"data": "group_rz72p62/Which_Community_Toilet_Blocks", "title": "Which CTB"}, #29
 
         {"data": "group_oi8ts04/Is_there_availabilit_onnect_to_the_toilets",
          "title": "Is there availability of drainage to connect to the toilet?"}, # 30 new
@@ -490,13 +492,13 @@ def define_columns(request):
     final_data['buttons']['RHS'] = list(range(number_of_invisible_columns + 1,
                                          number_of_invisible_columns + 1 + 18))  # range(14,32)#range(13,31)
     final_data['buttons']['Follow-up'] = list(range(number_of_invisible_columns + 1 + 18,
-                                               number_of_invisible_columns + 1 + 18 + 18))  # range(32,50)#range(31,49)
-    final_data['buttons']['Family factsheet'] = list(range(number_of_invisible_columns + 1 + 18 + 18,
-                                                      number_of_invisible_columns + 1 + 18 + 18 + 7))  # range(50,57)#range(49,56)
-    final_data['buttons']['SBM'] = list(range(number_of_invisible_columns + 1 + 18 + 18 + 7,
-                                         number_of_invisible_columns + 1 + 18 + 18 + 7 + 10))  # range(57,67)#range(56,66)
-    final_data['buttons']['Construction status'] = list(range(number_of_invisible_columns + 1 + 18 + 18 + 7 + 10,
-                                                         number_of_invisible_columns + 1 + 18 + 18 + 7 + 10 + 15))  # range(67,82)#range(66,81)
+                                               number_of_invisible_columns + 1 + 18 + 19))  # range(32,50)#range(31,49)
+    final_data['buttons']['Family factsheet'] = list(range(number_of_invisible_columns + 1 + 18 + 19,
+                                                      number_of_invisible_columns + 1 + 18 + 19 + 7))  # range(50,57)#range(49,56)
+    final_data['buttons']['SBM'] = list(range(number_of_invisible_columns + 1 + 18 + 19 + 7,
+                                         number_of_invisible_columns + 1 + 18 + 19 + 7 + 10))  # range(57,67)#range(56,66)
+    final_data['buttons']['Construction status'] = list(range(number_of_invisible_columns + 1 + 18 + 19 + 7 + 10,
+                                                         number_of_invisible_columns + 1 + 18 + 19 + 7 + 10 + 15))  # range(67,82)#range(66,81)
     # We define the columns for community mobilization and vendor details in a dynamic way. The
     # reason being these columns are prone to updates and additions.
     activity_pre_len = len(formdict_new)
@@ -878,6 +880,7 @@ def sync_kobo_data(request):
             data['msg'] = "Data successfully synced for slum - " + slum.name
             data['msg'] += "\nTotal records updated : " + str(t_data[0] + c_data[0])
     except Exception as e:
+
         data['flag'] = False
         data['msg'] = "Error occurred while sync from kobo. Please contact administrator." + str(e)
     return HttpResponse(json.dumps(data), content_type="application/json")
@@ -1005,8 +1008,7 @@ def report_table_cm(request):
         group_perm = Group.objects.all().values_list('name', flat=True)
     group_perm = map(lambda x: x.split(':')[-1], group_perm)
 
-    keys = Slum.objects.filter(id__in=keys,
-                               electoral_ward__administrative_ward__city__name__city_name__in=group_perm).values_list(
+    keys = Slum.objects.filter(id__in=keys,electoral_ward__administrative_ward__city__name__city_name__in=group_perm).values_list(
         'id', flat=True)
 
     start_date = tag_key_dict['startDate']
@@ -1051,9 +1053,14 @@ def report_table_cm(request):
     for x in activity_type:
         key_for_datatable = "total_" + (x.name).replace(" ", "")
         filter_field = {'slum__id__in': keys, 'activity_date__range': [start_date, end_date]}
+        filter_field_new = {'slum_id__in': keys, 'date_of_activity__range': [start_date, end_date]}
         count_field = {key_for_datatable: Length('household_number')}
 
         y = x.communitymobilization_set.filter(**filter_field) \
+            .annotate(**level_data[tag]).values('level', 'level_id', 'city_name') \
+            .annotate(**count_field).order_by('city_name')
+
+        yy = x.communitymobilizationactivityattendance_set.filter(**filter_field_new) \
             .annotate(**level_data[tag]).values('level', 'level_id', 'city_name') \
             .annotate(**count_field).order_by('city_name')
 
@@ -1064,6 +1071,15 @@ def report_table_cm(request):
                 report_table_data_cm[str(level_id)][key_for_datatable] += data[key_for_datatable]
             else:
                 report_table_data_cm[str(level_id)].update(data)
+
+        for data in yy:
+            level_id = data['level_id']
+            if str(level_id) in report_table_data_cm.keys() and key_for_datatable in report_table_data_cm[
+                str(level_id)].keys():
+                report_table_data_cm[str(level_id)][key_for_datatable] += data[key_for_datatable]
+            else:
+                report_table_data_cm[str(level_id)].update(data)
+
     return HttpResponse(json.dumps(list(map(lambda x: report_table_data_cm[x], report_table_data_cm))),
                         content_type="application/json")
 
@@ -1123,9 +1139,14 @@ def report_table_cm_activity_count(request):
     for x in activity_type:
         key_for_datatable = "total_" + (x.name).replace(" ", "")
         filter_field = {'slum__id__in': keys, 'activity_date__range': [start_date, end_date]}
+        filter_field_new = {'slum_id__in': keys, 'date_of_activity__range': [start_date, end_date]}
         count_field = {key_for_datatable: Count('activity_type')}
 
         y = x.communitymobilization_set.filter(**filter_field) \
+            .annotate(**level_data[tag]).values('level', 'level_id', 'city_name') \
+            .annotate(**count_field).order_by('city_name')
+
+        yy = x.communitymobilizationactivityattendance_set.filter(**filter_field_new) \
             .annotate(**level_data[tag]).values('level', 'level_id', 'city_name') \
             .annotate(**count_field).order_by('city_name')
 
@@ -1136,6 +1157,15 @@ def report_table_cm_activity_count(request):
                 report_table_data_cm_activity_count[str(level_id)][key_for_datatable] += data[key_for_datatable]
             else:
                 report_table_data_cm_activity_count[str(level_id)].update(data)
+
+        for data in yy:
+            level_id = data['level_id']
+            if str(level_id) in report_table_data_cm_activity_count.keys() and key_for_datatable in \
+                    report_table_data_cm_activity_count[str(level_id)].keys():
+                report_table_data_cm_activity_count[str(level_id)][key_for_datatable] += data[key_for_datatable]
+            else:
+                report_table_data_cm_activity_count[str(level_id)].update(data)
+
     return HttpResponse(
         json.dumps(list(map(lambda x: report_table_data_cm_activity_count[x], report_table_data_cm_activity_count))),
         content_type="application/json")
@@ -1258,6 +1288,7 @@ def accounts_excel_generation(request):
         start_date = datetime.datetime.strptime(request.POST.get('account_start_date'), "%d-%m-%Y").date()
         end_date = datetime.datetime.strptime(request.POST.get('account_end_date'), "%d-%m-%Y").date()
     wb = Workbook()
+    print(slum_id)
     sheet1 = wb.add_sheet('Sheet1')
     sheet1.write(0, 0, 'Date')
     sheet1.write(0, 1, 'Invoice No')
