@@ -6,24 +6,21 @@ from django.contrib.auth.decorators import user_passes_test, permission_required
 from django.contrib.admin.views.decorators import staff_member_required
 from django.conf import settings
 from django.contrib.auth.models import User
-
 from itertools import groupby
 import json
 from collections import OrderedDict
 from .kobotoolbox import *
-
 from .forms import KMLUpload
 from .kmlparser import KMLParser
 from .models import Metadata
-
-
 from .cipher import *
 from master.models import Slum, Rapid_Slum_Appraisal, drainage
 from sponsor.models import SponsorProjectDetails
+from graphs.sync_avni_data import *
 from utils.utils_permission import apply_permissions_ajax, access_right, deco_rhs_permission
 from django.core.exceptions import PermissionDenied
 
-#@staff_member_required
+@staff_member_required
 @permission_required('component.can_upload_KML', raise_exception=True)
 def kml_upload(request):
     context_data = {}
@@ -50,7 +47,7 @@ def kml_upload(request):
     return render(request, 'kml_upload.html', context_data)
 
 #@user_passes_test(lambda u: u.is_superuser)
-@access_right
+# @access_right
 def get_component(request, slum_id):
     '''Get component/filter/sponsor data for the selected slum.
        Here sponsor data is fetch according to user role access rights
@@ -68,10 +65,10 @@ def get_component(request, slum_id):
         #Fetch RHS data from kobotoolbox
         fields_code = metadata.filter(type='F').exclude(code="").values_list('code', flat=True)
         fields = list(set([str(x.split(':')[0]) for x in fields_code]))
-        rhs_analysis = get_household_analysis_data(slum.electoral_ward.administrative_ward.city.id, slum.shelter_slum_code, fields)
+        rhs_analysis = get_household_analysis_data(slum.electoral_ward.administrative_ward.city.id,slum.id, fields)
+        # print('rhs', rhs_analysis.keys())
     except Exception as e:
         pass
-
     lstcomponent = []
     sponsor_houses = []
     #Iterate through each filter and assign answers to child if available
@@ -86,11 +83,16 @@ def get_component(request, slum_id):
         component['blob'] = metad.blob
         component['icon'] = str(metad.icon.url) if metad.icon else ""
         component['child'] = []
+        com_list =[]
         #Component
         if metad.type == 'C':
+            if metad.name == 'Shops':
+                for comp in slum.components.filter(metadata=metad):
+                    com_list.append(comp.housenumber)
             #Fetch component for selected filter and slum , assign it finally to child
             for comp in slum.components.filter(metadata=metad):
                 component['child'].append({'housenumber':comp.housenumber, 'shape':json.loads(comp.shape.json)})
+            # print(len(com_list),com_list)
         #Filter
         elif metad.type == 'F' and metad.code != "":
             field = metad.code.split(':')
@@ -98,7 +100,7 @@ def get_component(request, slum_id):
                 options = []
                 options = [rhs_analysis[field[0]][option] for option in field[1].split('|,|') if option in rhs_analysis[field[0]]]
                 component['child'] = list(set(sum(options,[])))
-        #Sponsor : Depending on superuser or sponsor render the data accordingly
+        # # Sponsor : Depending on superuser or sponsor render the data accordingly
         elif metad.type == 'S' and (metad.authenticate == False or not request.user.is_anonymous) :
             if  metad.code!= "":
                 sponsor_households = []
@@ -117,8 +119,8 @@ def get_component(request, slum_id):
         if len(component['child']) > 0:
             component['count']=len(component['child'])
             lstcomponent.append(component)
-    #sponsor_houses = sponsor_houses.pop(0)
-    #lstcomponent = sorted(lstcomponent, key=lambda x:x['section_order'])
+    # sponsor_houses = sponsor_houses.pop(0)
+    lstcomponent = sorted(lstcomponent, key=lambda x:x['section_order'])
     dtcomponent = OrderedDict()
     #Ordering the filter/components/sponsors according to the section they below to.
     for key, comp in  groupby(lstcomponent, key=lambda x:x['section']):
@@ -128,10 +130,44 @@ def get_component(request, slum_id):
             dtcomponent[key][c['name']] = c
     return HttpResponse(json.dumps(dtcomponent),content_type='application/json')
 
-@deco_rhs_permission
+def format_data(rhs_data):
+    new_rhs = {}
+    remove_list = ['Name_s_of_the_surveyor_s', 'Date_of_survey', '_xform_id_string', 'meta/instanceID', 'end', 'start',
+    'Enter_household_number_again','_geolocation', 'meta/deprecatedID', '_uuid', '_submitted_by', 'admin_ward', '_status',
+    'formhub/uuid', '__version__','_submission_time', '_id', '_notes', '_bamboo_dataset_id', '_tags', 'slum_name', '_attachments',
+    'OD1', 'C1', 'C2', 'C3','Household_number', '_validation_status']
+
+    seq = {'group_el9cl08/Number_of_household_members': 'Number of household members',
+     'group_oi8ts04/Have_you_applied_for_individua': 'Have you applied for an individual toilet under SBM?',
+     'group_oi8ts04/Current_place_of_defecation': 'Current place of defecation',
+     'group_el9cl08/Type_of_structure_of_the_house': 'Type of structure of the house',
+     'group_oi8ts04/What_is_the_toilet_connected_to': 'What is the toilet connected to',
+     'Household_number': 'Household number',
+     'group_el9cl08/Type_of_water_connection': 'Type of water connection',
+     'group_el9cl08/Facility_of_solid_waste_collection': 'Facility of solid waste collection',
+     'group_el9cl08/Ownership_status_of_the_house': 'Ownership status of the house',
+     'group_el9cl08/Does_any_household_m_n_skills_given_below': 'Does any household member have any of the construction skills given below?',
+     'group_el9cl08/Enter_the_10_digit_mobile_number':'Mobile number',
+     'group_el9cl08/House_area_in_sq_ft': 'House area in sq. ft.','group_og5bx85/Type_of_survey': 'Type of survey',
+     'group_og5bx85/Full_name_of_the_head_of_the_household': 'Full name of the head of the household',
+     'group_el9cl08/Do_you_have_any_girl_child_chi': 'Do you have any girl child/children under the age of 18?',
+     'Type_of_structure_occupancy': 'Type of structure of the house',
+     'group_oi8ts04/Are_you_interested_in_an_indiv': 'Are you interested in an individual toilet?'
+     }
+    for i in remove_list:
+        if i in rhs_data:
+            rhs_data.pop(i)
+    for k, v in seq.items():
+        try:
+            new_rhs[v] = rhs_data[k]
+        except Exception as e:pass
+    return new_rhs
+
+# @deco_rhs_permission
 def get_kobo_RHS_data(request, slum_id,house_num):
      output = {}
-     slum = get_object_or_404(Slum, pk=slum_id)
+     slum = get_object_or_404(Slum, id=slum_id)
+     HH_data = get_object_or_404(HouseholdData,slum_id=slum_id, household_number=house_num)
      project_details = False
      if request.user.is_superuser or request.user.groups.filter(name='ulb').exists():
          project_details = True
@@ -140,16 +176,21 @@ def get_kobo_RHS_data(request, slum_id,house_num):
          project_details = SponsorProjectDetails.objects.filter(slum=slum, sponsor__user=request.user, household_code__contains=int(house_num)).exists()
      if request.user.groups.filter(name='ulb').exists():
          project_details = False
-     #if 'admin_ward' in output:
+     if request.user.is_staff :
+         rhs_data = HH_data.rhs_data
+         mapped_rhs= format_data(rhs_data)
+
+     # if 'admin_ward' in output:
+     output.update(mapped_rhs)
      output['admin_ward'] = slum.electoral_ward.administrative_ward.name
      output['slum_name'] = slum.name
      output['house_no'] = house_num
-
+     # output['Household_details']= json.dumps(rhs_data)
      output['FFReport'] = project_details
      return HttpResponse(json.dumps(output),content_type='application/json')
 
 #@user_passes_test(lambda u: u.is_superuser)
-@access_right
+# @access_right
 def get_kobo_RIM_data(request, slum_id):
 
     slum = get_object_or_404(Slum, pk=slum_id)
