@@ -31,7 +31,7 @@ def get_household_analysis_data(city, slum_code, fields, kobo_survey=''):
     '''
     household_field = 'Household_number'
     output = {}
-    slum = get_object_or_404(Slum, shelter_slum_code=slum_code)
+    slum = get_object_or_404(Slum, id=slum_code)
     household_data = HouseholdData.objects.filter(slum=slum)
     records = map(lambda x:x.rhs_data, household_data)
     records = filter(lambda x: x!=None, records)
@@ -44,50 +44,90 @@ def get_household_analysis_data(city, slum_code, fields, kobo_survey=''):
             record = record_sorted[0]
         for field in fields:
             if field != "" and field in record:
-
-                data = record[field]
-                for val in data.split():
-                    if field not in output:
-                        output[field] = {}
-                    if data not in output[field]:
-                        output[field][data]=[]
-                    if household_no not in output[field][data]:
-                        output[field][data].append(str(household_no))
+                if field == 'group_el9cl08/Ownership_status_of_the_house' in record and record['Type_of_structure_occupancy'] == 'Shop': pass
+                elif 'group_el9cl08/Type_of_structure_of_the_house' in record and record['Type_of_structure_occupancy'] == 'Shop':pass
+                elif 'Type_of_structure_occupancy' in record and record['Type_of_structure_occupancy'] == 'Shop':pass
+                else:
+                    data = record[field]
+                    for val in data.split():
+                        if field not in output:
+                            output[field] = {}
+                        if data not in output[field]:
+                            output[field][data]=[]
+                        if household_no not in output[field][data]:
+                            output[field][data].append(str(household_no))
+                
     return output
 
+def format_data(rhs_data):
+    new_rhs = {}
+    remove_list = ['Name_s_of_the_surveyor_s', 'Date_of_survey', '_xform_id_string', 'meta/instanceID', 'end', 'start',
+    'Enter_household_number_again','_geolocation', 'meta/deprecatedID', '_uuid', '_submitted_by', 'admin_ward', '_status',
+    'formhub/uuid', '__version__','_submission_time', '_id', '_notes', '_bamboo_dataset_id', '_tags', 'slum_name', '_attachments',
+    'OD1', 'C1', 'C2', 'C3','Household_number', '_validation_status']
+
+    seq = {'group_el9cl08/Number_of_household_members': 'Number of household members',
+     'group_oi8ts04/Have_you_applied_for_individua': 'Have you applied for an individual toilet under SBM?',
+     'group_oi8ts04/Current_place_of_defecation': 'Current place of defecation',
+     'group_el9cl08/Type_of_structure_of_the_house': 'Type of structure of the house',
+     'group_oi8ts04/What_is_the_toilet_connected_to': 'What is the toilet connected to',
+     'Household_number': 'Household number',
+     'group_el9cl08/Type_of_water_connection': 'Type of water connection',
+     'group_el9cl08/Facility_of_solid_waste_collection': 'Facility of solid waste collection',
+     'group_el9cl08/Ownership_status_of_the_house': 'Ownership status of the house',
+     'group_el9cl08/Does_any_household_m_n_skills_given_below': 'Does any household member have any of the construction skills given below?',
+     'group_el9cl08/Enter_the_10_digit_mobile_number':'Mobile number',
+     'group_el9cl08/House_area_in_sq_ft': 'House area in sq. ft.','group_og5bx85/Type_of_survey': 'Type of survey',
+     'group_og5bx85/Full_name_of_the_head_of_the_household': 'Full name of the head of the household',
+     'group_el9cl08/Do_you_have_any_girl_child_chi': 'Do you have any girl child/children under the age of 18?',
+     'Type_of_structure_occupancy': 'Type of structure of the house',
+     'group_oi8ts04/Are_you_interested_in_an_indiv': 'Are you interested in an individual toilet?'
+     }
+    for i in remove_list:
+        if i in rhs_data:
+            rhs_data.pop(i)
+    for k, v in seq.items():
+        try:
+            new_rhs[v] = rhs_data[k]
+        except Exception as e:pass
+    return new_rhs
+
 @survey_mapping(SURVEYTYPE_CHOICES[1][0])
-def get_kobo_RHS_list(city, slum_code,house_number, kobo_survey=''):
+def get_kobo_RHS_list(city, slum, house_number, kobo_survey=''):
     """Method which fetches RHS data using the Kobo Toolbox API. Data contains question and answer decrypted. """
     output=OrderedDict()
-    if kobo_survey:
-        try:
-            url = settings.KOBOCAT_FORM_URL+'data/'+kobo_survey+'?format=json&query={"slum_name":"'+slum_code+'","Household_number":{"$in":["'+str(house_number)+'","'+('000'+str(house_number))[-4:]+'"]}}'
-        except Exception as e:
-            print(e)
-        req = urllib2.Request(url)
-        req.add_header('Authorization', settings.KOBOCAT_TOKEN)
-        resp = urllib2.urlopen(req)
-        content = resp.read()
-        submission = json.loads(content)
+    household_data = HouseholdData.objects.filter(slum=slum,household_number=house_number).order_by('submission_date')
+    if len(household_data)>0:
+        output = format_data(household_data[0].rhs_data)
+    #if kobo_survey:
+        #try:
+        #    url = settings.KOBOCAT_FORM_URL+'data/'+kobo_survey+'?format=json&query={"slum_name":"'+slum_code+'","Household_number":{"$in":["'+str(house_number)+'","'+('000'+str(house_number))[-4:]+'"]}}'
+        #except Exception as e:
+        #    print(e)
+        #req = urllib2.Request(url)
+        #req.add_header('Authorization', settings.KOBOCAT_TOKEN)
+        #resp = urllib2.urlopen(req)
+        #content = resp.read()
+        #submission = json.loads(content)
 
-        url1 = settings.KOBOCAT_FORM_URL+'forms/'+kobo_survey+'/form.json'
-        req1 = urllib2.Request(url1)
-        req1.add_header('Authorization', settings.KOBOCAT_TOKEN)
-        resp1 = urllib2.urlopen(req1)
-        content1 = resp1.read()
-        data1 = json.loads(content1)
+        #url1 = settings.KOBOCAT_FORM_URL+'forms/'+kobo_survey+'/form.json'
+        #req1 = urllib2.Request(url1)
+        #req1.add_header('Authorization', settings.KOBOCAT_TOKEN)
+        #resp1 = urllib2.urlopen(req1)
+        #content1 = resp1.read()
+        #data1 = json.loads(content1)
 
-        output = OrderedDict()
-        if len(submission) > 0:
-            for data in data1['children']:
-                if data['type'] == "group":
-                    sect_form_data = trav(data)
-                    sub_key = [ str(k) for k in submission[0].keys() if data['name'] in k]
-                    for sect_form in sect_form_data:
-                        key = [x for x in sub_key if x.endswith(sect_form['name'])]
-                        if len(key)>0 and 'label' in sect_form:
-                            ans = fetch_answer(sect_form, key, submission[0])
-                            output[sect_form['label']]  = ans
+        #output = OrderedDict()
+        #if len(submission) > 0:
+        #    for data in data1['children']:
+        #        if data['type'] == "group":
+        #            sect_form_data = trav(data)
+        #            sub_key = [ str(k) for k in submission[0].keys() if data['name'] in k]
+        #            for sect_form in sect_form_data:
+        #                key = [x for x in sub_key if x.endswith(sect_form['name'])]
+        #                if len(key)>0 and 'label' in sect_form:
+        #                    ans = fetch_answer(sect_form, key, submission[0])
+        #                    output[sect_form['label']]  = ans
     return output
 
 @survey_mapping(SURVEYTYPE_CHOICES[0][0])
@@ -324,7 +364,7 @@ def get_kobo_FF_report_detail(city, slum_code,house_number, kobo_survey=''):
     """Method which fetches family factsheet data from kobotoolbox using the API's. Data contain only answers decrypted."""
     output=OrderedDict()
     if kobo_survey:
-        householdData = HouseholdData.objects.filter(slum__shelter_slum_code = slum_code, household_number = str(house_number))
+        householdData = HouseholdData.objects.filter(slum__shelter_slum_code = slum_code, household_number = str(house_number)).exclude(ff_data=None)
         if len(householdData) > 0 and householdData[0].ff_data:
             output = householdData[0].ff_data
             for key in list(output):

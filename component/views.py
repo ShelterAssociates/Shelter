@@ -167,21 +167,17 @@ def format_data(rhs_data):
 def get_kobo_RHS_data(request, slum_id,house_num):
      output = {}
      slum = get_object_or_404(Slum, id=slum_id)
-     HH_data = get_object_or_404(HouseholdData,slum_id=slum_id, household_number=house_num)
      project_details = False
      if request.user.is_superuser or request.user.groups.filter(name='ulb').exists():
          project_details = True
-         output = get_kobo_RHS_list(slum.electoral_ward.administrative_ward.city.id, slum.shelter_slum_code, house_num)
+         output = get_kobo_RHS_list(slum.electoral_ward.administrative_ward.city.id, slum, house_num)
      elif request.user.groups.filter(name='sponsor').exists():
          project_details = SponsorProjectDetails.objects.filter(slum=slum, sponsor__user=request.user, household_code__contains=int(house_num)).exists()
      if request.user.groups.filter(name='ulb').exists():
          project_details = False
-     if request.user.is_staff :
-         rhs_data = HH_data.rhs_data
-         mapped_rhs= format_data(rhs_data)
-
-     # if 'admin_ward' in output:
-     output.update(mapped_rhs)
+     
+     if project_details:
+          project_details = project_details = SponsorProjectDetails.objects.filter(slum=slum,  household_code__contains=int(house_num)).exists()
      output['admin_ward'] = slum.electoral_ward.administrative_ward.name
      output['slum_name'] = slum.name
      output['house_no'] = house_num
