@@ -375,9 +375,9 @@ def get_kobo_FF_report_detail(city, slum_code,house_number, kobo_survey=''):
             if "_attachments" in output:
                 for photo in output["_attachments"]:
                     if 'Toilet_Photo' in output and output["Toilet_Photo"] in photo["filename"]:
-                        output["Toilet_Photo"] = settings.BASE_URL + photo["download_url"]
+                        output["Toilet_Photo"] = settings.BASE_URL +'media/original?media_file=' + photo["filename"]
                     if 'Family_Photo' in output and output["Family_Photo"] in photo["filename"]:
-                        output["Family_Photo"] = settings.BASE_URL + photo["download_url"]
+                        output["Family_Photo"] = settings.BASE_URL +'media/original?media_file=' + photo["filename"]
     return output
 
 @survey_mapping(SURVEYTYPE_CHOICES[3][0])
