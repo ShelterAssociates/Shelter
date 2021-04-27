@@ -9,6 +9,7 @@ from master.models import SURVEYTYPE_CHOICES, Survey
 from django.shortcuts import get_object_or_404
 from graphs.models import *
 import itertools
+from graphs.sync_avni_data import *
 
 def survey_mapping(survey_type):
     def real_decorator(function):
@@ -367,6 +368,7 @@ def get_kobo_FF_report_detail(city, slum_code,house_number, kobo_survey=''):
         householdData = HouseholdData.objects.filter(slum__shelter_slum_code = slum_code, household_number = str(house_number)).exclude(ff_data=None)
         if len(householdData) > 0 and householdData[0].ff_data:
             output = householdData[0].ff_data
+            a = avni_sync()
             for key in list(output):
                 split_key = key.split('/')
                 if len(split_key) > 1:
@@ -378,6 +380,13 @@ def get_kobo_FF_report_detail(city, slum_code,house_number, kobo_survey=''):
                         output["Toilet_Photo"] = settings.BASE_URL +'media/original?media_file=' + photo["filename"]
                     if 'Family_Photo' in output and output["Family_Photo"] in photo["filename"]:
                         output["Family_Photo"] = settings.BASE_URL +'media/original?media_file=' + photo["filename"]
+            else:
+                if 'Toilet_Photo' in output :
+                    toilet_image_url = a.get_image(output['Toilet_Photo'])
+                    output["Toilet_Photo"] = toilet_image_url
+                if 'Family_Photo' in output :
+                    family_image_url = a.get_image(output['Family_Photo'])
+                    output["Family_Photo"] = family_image_url
     return output
 
 @survey_mapping(SURVEYTYPE_CHOICES[3][0])
