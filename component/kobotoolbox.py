@@ -50,13 +50,13 @@ def get_household_analysis_data(city, slum_code, fields, kobo_survey=''):
                 elif 'Type_of_structure_occupancy' in record and record['Type_of_structure_occupancy'] == 'Shop':pass
                 else:
                     data = record[field]
-                    for val in data.split():
+                    for val in data if type(data)==list else data.split(','):
                         if field not in output:
                             output[field] = {}
-                        if data not in output[field]:
-                            output[field][data]=[]
-                        if household_no not in output[field][data]:
-                            output[field][data].append(str(household_no))
+                        if val not in output[field]:
+                            output[field][val]=[]
+                        if household_no not in output[field][val]:
+                            output[field][val].append(str(household_no))
                 
     return output
 
