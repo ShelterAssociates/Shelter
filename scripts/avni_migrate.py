@@ -422,12 +422,6 @@ def water_encounter():
 		return slum_text
 
 	df["slum_name"] = df["slum_name"].apply(slum_name)
-	# no_reason = ["Financial problems", "Small house", "Tenant issue", "Lack of willingness", "Satisfied with the CTBs",
-	# 			 "Large family size", "Drainage related issues", "Others"]
-	# yes_reason = ["For safety of female members", "Unsatisfied with CTBs",
-	# 			  "For better convenience", "For elderly", "For handicapped",
-	# 			  "For any member suffering from any illness",
-	# 			  "For better health and hygiene", "Other"]
 	df = df.replace(np.nan, '', regex=True)
 
 	def convert_multi_select(list_data, value):
@@ -465,19 +459,8 @@ def water_encounter():
 		  "Type of water connection ?",
 		  "Do you have individual water connection at home?",
 		  "Water source final answer."]
-		 # "If from other settlment, write name of the settlment",
-		  #"If individual water connection, type of water meter?",
-		  #"Water supply comment"
 
 	output = df[cols]
-	# def convert_multi_select(value):
-	# 	output = []
-	# 	for data in skills:
-	# 		if data in value:
-	# 			output.append(data)
-	# 	return ','.join(output)
-	# output["Does any household member have any of the construction skills given below?"] = output["Does any household member have any of the construction skills given below?"].apply(convert_multi_select)
-
 	rename_value={ '_submission_time':'Visit Date', '_id': 'Subject Id', 'slum_name':'Slum',
 				   'Type of water connection':'Type of water connection ?',
 				   'Do you have individual water connection at home?':'Do you have individual water connection at home?',
@@ -522,12 +505,6 @@ def waste_encounter():
 		return slum_text
 
 	df["slum_name"] = df["slum_name"].apply(slum_name)
-	# no_reason = ["Financial problems", "Small house", "Tenant issue", "Lack of willingness", "Satisfied with the CTBs",
-	# 			 "Large family size", "Drainage related issues", "Others"]
-	# yes_reason = ["For safety of female members", "Unsatisfied with CTBs",
-	# 			  "For better convenience", "For elderly", "For handicapped",
-	# 			  "For any member suffering from any illness",
-	# 			  "For better health and hygiene", "Other"]
 	df = df.replace(np.nan, '', regex=True)
 
 	def convert_multi_select(list_data, value):
@@ -564,20 +541,8 @@ def waste_encounter():
 		  "Facility of solid waste collection",
 		  "Are you willing to compost wet waste at home?",
 		  "Do you dispose segregated garbage?"]
-		  #"Water source final answer."
-		 # "If from other settlment, write name of the settlment",
-		  #"If individual water connection, type of water meter?",
-		  #"Water supply comment"
 
 	output = df[cols]
-	# def convert_multi_select(value):
-	# 	output = []
-	# 	for data in skills:
-	# 		if data in value:
-	# 			output.append(data)
-	# 	return ','.join(output)
-	# output["Does any household member have any of the construction skills given below?"] = output["Does any household member have any of the construction skills given below?"].apply(convert_multi_select)
-
 	rename_value={ '_submission_time':'Visit Date', '_id': 'Subject Id', 'slum_name':'Slum',
 				   'Facility of solid waste collection': 'How do you dispose your solid waste ?',
 				   'Are you willing to compost wet waste at home ?': 'Are you willing to compost wet waste at home ?',
