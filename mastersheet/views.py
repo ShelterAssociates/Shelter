@@ -354,13 +354,8 @@ def masterSheet(request, slum_code=0, FF_code=0, RHS_code=0):
                             x['incorrect_cpod'] = 'incorrect_cpod'
                 except Exception as e:
                     pass
-                    #print ('not found - '+str(x['Household_number']))
     except Exception as e:
         print(e)
-    #print(len(list(occupide_house_count)))
-    # print(formdictt)
-   # print(len(list(formdict)))
-    #print(formdict[0:5])
     return HttpResponse(json.dumps(formdict), content_type="application/json")
 
 def to_date(s):
