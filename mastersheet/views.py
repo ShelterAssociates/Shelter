@@ -57,21 +57,36 @@ def masterSheet(request, slum_code=0, FF_code=0, RHS_code=0):
 
     try:
         formdict = []
+        temp_formdict = []
         formdict_family_factsheet = []
         slum_code = Slum.objects.filter(pk=int(request.GET['slumname'])).values_list("id", "shelter_slum_code",
-                                                                                     "electoral_ward__administrative_ward__city__id",
-                                                                                     "electoral_ward__name", "name")
+                                                         "electoral_ward__administrative_ward__city__id",
+                                                         "electoral_ward__name", "name")
 
         slum_funder = SponsorProjectDetails.objects.filter(slum__name=str(slum_code[0][4])).exclude(sponsor__id=10)
         form_ids = Survey.objects.filter(city__id=int(slum_code[0][2]))
 
         household_data = HouseholdData.objects.filter(slum__id=slum_code[0][0])
-        followup_data_false = FollowupData.objects.filter(slum=slum_code[0][0],flag_followup_in_rhs = False)
+        followup_data_false = FollowupData.objects.filter(slum=slum_code[0][0])#,flag_followup_in_rhs = False)
         # followup_data_true = FollowupData.objects.filter(slum=slum_code[0][0],flag_followup_in_rhs = True)
 
         if slum_code is not 0:
             if flag_fetch_rhs :
                 formdict = list(map(lambda x: x.rhs_data, filter(lambda x: x.rhs_data!=None, household_data)))
+                for i in formdict:
+                       if i['Type_of_structure_occupancy'] == 'Locked house':
+                           list_of_keys= ['Household_number', 'Date_of_survey', 'Name_s_of_the_surveyor_s', 'Type_of_structure_occupancy']
+                           temp_dict = {}
+                           for cust_key in list_of_keys:
+                               if cust_key in i:
+                                   temp_dict[cust_key] = i[cust_key]
+                           #print(temp_dict)
+                           temp_formdict.append(temp_dict)
+                       else:
+                            temp_formdict.append(i)
+
+                formdict = temp_formdict
+
             else:
                 formdict = list(map(lambda x:{'Household_number':x.household_number, '_id':x.rhs_data['_id'] if '_id' in x.rhs_data else None,
                 '_xform_id_string':x.rhs_data['_xform_id_string'] if '_xform_id_string' in x.rhs_data else None}, filter(lambda x:x.rhs_data!=None, household_data)))
@@ -310,13 +325,19 @@ def masterSheet(request, slum_code=0, FF_code=0, RHS_code=0):
                     x.update({'current place of defecation': 'Toilet by SA'})
 
                 cod_data = followup_data_false.filter(household_number = int(key)).order_by('-submission_date').first()
+                # print(cod_data.followup_data.keys())
 
                 if cod_data:
+                    if 'group_oi8ts04/Which_Community_Toil_r_family_members_use' in cod_data.followup_data:
+                        data1 = cod_data.followup_data['group_oi8ts04/Which_Community_Toil_r_family_members_use']
+                        x.update({'group_oi8ts04/Which_Community_Toil_r_family_members_use': data1})
                     if 'group_oi8ts04/Current_place_of_defecation' in cod_data.followup_data:
                         data = cod_data.followup_data['group_oi8ts04/Current_place_of_defecation']
                         x.update({'current place of defecation':data})
                     if 'status' in x and x['status'] == 'Completed':
                         x.update({'current place of defecation': 'Toilet by SA'})
+                        x.update({'group_oi8ts04/Status_of_toilet_under_SBM': ''})
+                        x.update({'group_oi8ts04/Which_Community_Toil_r_family_members_use':''})
 
                 if len(slum_funder) != 0:
                     for funder in slum_funder:
@@ -333,10 +354,13 @@ def masterSheet(request, slum_code=0, FF_code=0, RHS_code=0):
                             x['incorrect_cpod'] = 'incorrect_cpod'
                 except Exception as e:
                     pass
-        # print(formdict)
-                    # print ('not found - '+str(x['Household_number']))
+                    #print ('not found - '+str(x['Household_number']))
     except Exception as e:
         print(e)
+    #print(len(list(occupide_house_count)))
+    # print(formdictt)
+   # print(len(list(formdict)))
+    #print(formdict[0:5])
     return HttpResponse(json.dumps(formdict), content_type="application/json")
 
 def to_date(s):
@@ -425,8 +449,8 @@ def define_columns(request):
         {"data": "group_oi8ts04/Status_of_toilet_under_SBM", "title": "Status of toilet under SBM?"},
         {"data": "group_oi8ts04/What_was_the_cost_in_to_build_the_toilet",
          "title": "What was the cost incurred to build the toilet?"},
-        {"data": "group_oi8ts04/Current_place_of_defecation", "title": "Current place of defecation"},
-        {"data": "group_rz72p62/Which_Community_Toilet_Blocks", "title": "Which CTB"}, #29
+        {"data": "current place of defecation", "title": "Current place of defecation"},
+        {"data": "group_oi8ts04/Which_Community_Toil_r_family_members_use", "title": "Which CTB"}, #29
 
         {"data": "group_oi8ts04/Is_there_availabilit_onnect_to_the_toilets",
          "title": "Is there availability of drainage to connect to the toilet?"}, # 30 new
@@ -880,7 +904,6 @@ def sync_kobo_data(request):
             data['msg'] = "Data successfully synced for slum - " + slum.name
             data['msg'] += "\nTotal records updated : " + str(t_data[0] + c_data[0])
     except Exception as e:
-
         data['flag'] = False
         data['msg'] = "Error occurred while sync from kobo. Please contact administrator." + str(e)
     return HttpResponse(json.dumps(data), content_type="application/json")
@@ -889,7 +912,6 @@ def sync_kobo_data(request):
 @permission_required('mastersheet.can_view_mastersheet_report', raise_exception=True)
 def render_report(request):
     return render(request, 'mastersheet_report.html')
-
 
 @apply_permissions_ajax('mastersheet.can_view_mastersheet_report')
 def create_report(request):
@@ -933,8 +955,9 @@ def give_report_table_numbers(request):  # view for toilet construction
     group_perm = map(lambda x: x.split(':')[-1], group_perm)
 
     keys = Slum.objects.filter(id__in=keys,
-                               electoral_ward__administrative_ward__city__name__city_name__in=group_perm).values_list(
-        'id', flat=True)
+    electoral_ward__administrative_ward__city__name__city_name__in=group_perm).values_list('id', flat=True)
+    #slumFunderCount =SponsorProjectDetails.objects.filter().values('sponsor__organization_name')
+    #SponsorProjectDetails.objects.filter().values('sponsor_project__name').count()
 
     start_date = tag_key_dict['startDate']
     end_date = tag_key_dict['endDate']
@@ -951,6 +974,7 @@ def give_report_table_numbers(request):  # view for toilet construction
                 'completion_date': 'total_c', 'septic_tank_date': 'total_st',
                 'use_of_toilet': 'use_of_toilet', 'toilet_connected_to': 'toilet_connected_to',
                 'factsheet_done': 'factsheet_done'}
+                    #,'pocket':'pocket','name': 'factsheet_assign'
 
     level_data = {
         'city':
@@ -980,7 +1004,9 @@ def give_report_table_numbers(request):  # view for toilet construction
     }
     report_table_data = defaultdict(dict)
     for query_field in query_on.keys():
-        if query_field in ['factsheet_done', 'use_of_toilet', 'toilet_connected_to']:
+        if query_field in ['agreement_date', 'phase_one_material_date','phase_two_material_date','phase_three_material_date',
+        'completion_date', 'septic_tank_date','use_of_toilet','toilet_connected_to', 'factsheet_done']:
+            #['pocket','factsheet_done', 'use_of_toilet', 'toilet_connected_to','completion_date']:
             filter_field = {'slum__id__in': keys, 'completion_date__range': [start_date, end_date],
                             query_field + '__isnull': False}
         else:
@@ -993,10 +1019,14 @@ def give_report_table_numbers(request):  # view for toilet construction
         tc = {obj_ad['level_id']: obj_ad for obj_ad in tc}
         for level_id, data in tc.items():
             report_table_data[level_id].update(data)
+            #print(type(report_table_data),len(report_table_data))
+     #for cust_obj in report_table_data:
+         #report_table_data[cust_obj]['factsheet_assign'] = 4
+        #print(report_table_data[cust_obj])
+    #print(report_table_data)
 
     return HttpResponse(json.dumps(list(map(lambda x: report_table_data[x], report_table_data))),
                         content_type="application/json")
-
 
 @csrf_exempt
 def report_table_cm(request):
@@ -1049,22 +1079,22 @@ def report_table_cm(request):
             }
     }
     report_table_data_cm = defaultdict(dict)
+    all_activities = []
+    data = {}
     activity_type = ActivityType.objects.all()
     for x in activity_type:
         key_for_datatable = "total_" + (x.name).replace(" ", "")
         filter_field = {'slum__id__in': keys, 'activity_date__range': [start_date, end_date]}
         filter_field_new = {'slum_id__in': keys, 'date_of_activity__range': [start_date, end_date]}
-        count_field = {key_for_datatable: Length('household_number')}
+        # count_field = {key_for_datatable: len('household_number')}
 
         y = x.communitymobilization_set.filter(**filter_field) \
-            .annotate(**level_data[tag]).values('level', 'level_id', 'city_name') \
-            .annotate(**count_field).order_by('city_name')
-
-        yy = x.communitymobilizationactivityattendance_set.filter(**filter_field_new) \
-            .annotate(**level_data[tag]).values('level', 'level_id', 'city_name') \
-            .annotate(**count_field).order_by('city_name')
+            .annotate(**level_data[tag]).values('level', 'level_id', 'city_name','household_number')
+            # .annotate(**count_field).order_by('city_name')
 
         for data in y:
+            data.update({key_for_datatable : len(data['household_number'])})
+            data.pop('household_number')
             level_id = data['level_id']
             if str(level_id) in report_table_data_cm.keys() and key_for_datatable in report_table_data_cm[
                 str(level_id)].keys():
@@ -1072,17 +1102,25 @@ def report_table_cm(request):
             else:
                 report_table_data_cm[str(level_id)].update(data)
 
-        for data in yy:
-            level_id = data['level_id']
-            if str(level_id) in report_table_data_cm.keys() and key_for_datatable in report_table_data_cm[
-                str(level_id)].keys():
-                report_table_data_cm[str(level_id)][key_for_datatable] += data[key_for_datatable]
-            else:
-                report_table_data_cm[str(level_id)].update(data)
+        new = x.communitymobilizationactivityattendance_set.filter(**filter_field_new)
+        a = new.annotate(**level_data[tag]).values('level', 'level_id', 'city_name').order_by('city_name')
+        household_count = {key_for_datatable: a.count()}
+        for k,v in household_count.items():
+            if v >0:
+                all_activities.append(household_count)
+
+        if len(a)>0:
+            for i in a[0:1]:
+                level_id = i['level_id']
+                i.update(household_count)
+                data = i
+            new_dict ={str(level_id):data}
+            for j in all_activities:
+                data.update(j)
+            report_table_data_cm.update(new_dict)
 
     return HttpResponse(json.dumps(list(map(lambda x: report_table_data_cm[x], report_table_data_cm))),
                         content_type="application/json")
-
 
 @csrf_exempt
 def report_table_cm_activity_count(request):
@@ -1143,11 +1181,7 @@ def report_table_cm_activity_count(request):
         count_field = {key_for_datatable: Count('activity_type')}
 
         y = x.communitymobilization_set.filter(**filter_field) \
-            .annotate(**level_data[tag]).values('level', 'level_id', 'city_name') \
-            .annotate(**count_field).order_by('city_name')
-
-        yy = x.communitymobilizationactivityattendance_set.filter(**filter_field_new) \
-            .annotate(**level_data[tag]).values('level', 'level_id', 'city_name') \
+            .annotate(**level_data[tag]).values('level','level_id','city_name') \
             .annotate(**count_field).order_by('city_name')
 
         for data in y:
@@ -1158,7 +1192,13 @@ def report_table_cm_activity_count(request):
             else:
                 report_table_data_cm_activity_count[str(level_id)].update(data)
 
-        for data in yy:
+        new = x.communitymobilizationactivityattendance_set.filter(**filter_field_new)\
+            .annotate(**level_data[tag]).values('level', 'level_id', 'city_name')\
+            .annotate(**count_field).order_by('city_name')
+        for i in new:
+            i.update({key_for_datatable : 1})
+
+        for data in new:
             level_id = data['level_id']
             if str(level_id) in report_table_data_cm_activity_count.keys() and key_for_datatable in \
                     report_table_data_cm_activity_count[str(level_id)].keys():
@@ -1166,8 +1206,7 @@ def report_table_cm_activity_count(request):
             else:
                 report_table_data_cm_activity_count[str(level_id)].update(data)
 
-    return HttpResponse(
-        json.dumps(list(map(lambda x: report_table_data_cm_activity_count[x], report_table_data_cm_activity_count))),
+    return HttpResponse(json.dumps(list(map(lambda x: report_table_data_cm_activity_count[x], report_table_data_cm_activity_count))),
         content_type="application/json")
 
 
