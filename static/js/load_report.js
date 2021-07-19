@@ -11,6 +11,7 @@
 	var delta = 30 * 1000 * 60 * 60 * 24;
 	var todayTime = new Date();
 	var aMonthAgo = todayTime.getTime() - delta ;
+	var change = 0;
 	var aMonthAgoTime = new Date(aMonthAgo);
 	var btn_default = [];
 	var total_counts = [{
@@ -76,6 +77,37 @@
 						"aggregated_city_name":0, 
 
 	}];
+
+	function changeDateAfter(d){
+		var y = parseInt(d.slice(0,4));
+		var m_c = parseInt(d.slice(5,7));
+		var m = '04'
+		var d = '01'
+		if (parseInt(m) > m_c){
+			var y1 = y - 1;
+			return (y1+'-'+m+'-'+d);
+		} else{
+			return (y+'-'+m+'-'+d);
+		}
+
+	}
+
+
+	function StartDate(date){
+		var yyyy = date.getFullYear();
+		var mm_c = date.getMonth();
+		var mm = '04';
+		var dd = '01';
+		if (parseInt(mm) > mm_c){
+			var yyyy1 = yyyy - 1;
+			return (yyyy1+'-'+mm+'-'+dd);
+		} else if (parseInt(mm) == mm_c) {
+			return (yyyy+'-'+mm+'-'+dd);
+		} else { 
+			return (yyyy+'-'+mm+'-'+dd);
+		}
+		//return (yyyy+'-'+mm+'-'+dd);
+	}
 
 	function changeDateFormat(date){
 	    var yyyy = date.getFullYear();
@@ -673,9 +705,13 @@
 
 	$(document).ready(function() {
 		todayDate = changeDateFormat(todayTime);
-		aMonthAgoDate = changeDateFormat(aMonthAgoTime);
-		$("#startDate").val(aMonthAgoDate);
-		$("#endDate").val( todayDate);
+		startDate = StartDate(todayTime);
+		$("#startDate").val(startDate);
+		$("#endDate").val(todayDate);
+		$("#endDate").change(function(){
+			change = changeDateAfter(document.getElementById("endDate").value);
+			$("#startDate").val(change);
+		});
 		$.ajax({
 			url : '/mastersheet/show/report/',
 			type : "GET",
@@ -718,3 +754,4 @@
 		
 		
 	});
+	alert
