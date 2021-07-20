@@ -65,14 +65,13 @@ def masterSheet(request, slum_code=0, FF_code=0, RHS_code=0):
 
         slum_funder = SponsorProjectDetails.objects.filter(slum__name=str(slum_code[0][4])).exclude(sponsor__id=10)
         form_ids = Survey.objects.filter(city__id=int(slum_code[0][2]))
-
         household_data = HouseholdData.objects.filter(slum__id=slum_code[0][0])
         followup_data_false = FollowupData.objects.filter(slum=slum_code[0][0])#,flag_followup_in_rhs = False)
         # followup_data_true = FollowupData.objects.filter(slum=slum_code[0][0],flag_followup_in_rhs = True)
 
         if slum_code is not 0:
-            if flag_fetch_rhs :
-                formdict = list(map(lambda x: x.rhs_data, filter(lambda x: x.rhs_data!=None, household_data)))
+            if flag_fetch_rhs:
+                formdict = list(map(lambda x: x.rhs_data, filter(lambda x: x.rhs_data!= None, household_data)))
                 for i in formdict:
                        if i['Type_of_structure_occupancy'] == 'Locked house':
                            list_of_keys= ['Household_number', 'Date_of_survey', 'Name_s_of_the_surveyor_s', 'Type_of_structure_occupancy']
@@ -354,6 +353,7 @@ def masterSheet(request, slum_code=0, FF_code=0, RHS_code=0):
                             x['incorrect_cpod'] = 'incorrect_cpod'
                 except Exception as e:
                     pass
+                    #print ('not found - '+str(x['Household_number']))
     except Exception as e:
         print(e)
     return HttpResponse(json.dumps(formdict), content_type="application/json")
@@ -951,12 +951,8 @@ def give_report_table_numbers(request):  # view for toilet construction
 
     keys = Slum.objects.filter(id__in=keys,
     electoral_ward__administrative_ward__city__name__city_name__in=group_perm).values_list('id', flat=True)
-    #slumFunderCount =SponsorProjectDetails.objects.filter().values('sponsor__organization_name')
-    #SponsorProjectDetails.objects.filter().values('sponsor_project__name').count()
-
     start_date = tag_key_dict['startDate']
     end_date = tag_key_dict['endDate']
-
     if start_date == None or end_date == None:
         start_date = datetime.datetime(2001, 1, 1).date()
         end_date = datetime.datetime.today().date()
@@ -968,8 +964,7 @@ def give_report_table_numbers(request):  # view for toilet construction
                 'phase_two_material_date': 'total_p2', 'phase_three_material_date': 'total_p3',
                 'completion_date': 'total_c', 'septic_tank_date': 'total_st',
                 'use_of_toilet': 'use_of_toilet', 'toilet_connected_to': 'toilet_connected_to',
-                'factsheet_done': 'factsheet_done'}
-                    #,'pocket':'pocket','name': 'factsheet_assign'
+                'factsheet_done': 'factsheet_done','status': 'factAssign'}
 
     level_data = {
         'city':
@@ -1000,8 +995,7 @@ def give_report_table_numbers(request):  # view for toilet construction
     report_table_data = defaultdict(dict)
     for query_field in query_on.keys():
         if query_field in ['agreement_date', 'phase_one_material_date','phase_two_material_date','phase_three_material_date',
-        'completion_date', 'septic_tank_date','use_of_toilet','toilet_connected_to', 'factsheet_done']:
-            #['pocket','factsheet_done', 'use_of_toilet', 'toilet_connected_to','completion_date']:
+        'completion_date', 'septic_tank_date','use_of_toilet','toilet_connected_to', 'factsheet_done','status']:
             filter_field = {'slum__id__in': keys, 'completion_date__range': [start_date, end_date],
                             query_field + '__isnull': False}
         else:
@@ -1014,12 +1008,47 @@ def give_report_table_numbers(request):  # view for toilet construction
         tc = {obj_ad['level_id']: obj_ad for obj_ad in tc}
         for level_id, data in tc.items():
             report_table_data[level_id].update(data)
-            #print(type(report_table_data),len(report_table_data))
-     #for cust_obj in report_table_data:
-         #report_table_data[cust_obj]['factsheet_assign'] = 4
-        #print(report_table_data[cust_obj])
-    #print(report_table_data)
-
+        T_Housenum = ToiletConstruction.objects.filter(**filter_field) \
+                .annotate(**level_data[tag]).values('level', 'level_id','city_name','household_number')
+        HouseNumDict={}
+        for t in T_Housenum:
+            l1= [v for k,v in t.items()]
+            lst1=int(l1[0])  #HouseHold_number
+            lst2=l1[3]  #Slum_id
+            if lst2 in HouseNumDict:  #if slum_id in HouseNumDict
+                Home = HouseNumDict[lst2]
+                Home.append(lst1)   #append housenumber in that slum_id
+                HouseNumDict[lst2]=Home
+            else:
+                HouseNumDict[lst2]=[lst1]
+        listt_Household_code = []
+        Spsr_Housecode = SponsorProjectDetails.objects.filter(slum__id__in=keys) \
+             .annotate(**level_data[tag]).values('level', 'level_id','city_name','household_code')
+        for t in Spsr_Housecode:
+            l2 = [v for k, v in t.items()]
+            listt_Household_code.append([l2[0], l2[3]])   #0-Housenumber , 3-slum_id
+        final_dict={}
+        for k,v in HouseNumDict.items():   #key values pair of slum_id with respective housenumbers list
+            s_id=k  #int   slum_id  TC
+            house_num=v #list    Housenumber  TC
+            for h_n in house_num:
+                for cust_x in listt_Household_code:      #[housenum, slum_d] Sponsor
+                    x1= cust_x[0]    #housenum Sponsor
+                    x2= cust_x[1]    #slum_id  Sponsor
+                    if s_id == x2:    #if slum_id of TC == Slum_id of sponsor
+                        if h_n in x1 and s_id in final_dict:  #if TC housenum in sponsor housenum and TC slum_id in finalList
+                            final_dict[s_id]+=1    #append count to that slum_id
+                        else:
+                            final_dict[s_id]=0
+    for cust_obj in report_table_data:
+        report_table_data[cust_obj]['factAssign']= 0
+        status = SponsorProjectDetails.objects.filter(slum__id=report_table_data[cust_obj]['level_id']) \
+                             .annotate(**level_data[tag]).values('level', 'level_id', 'city_name')
+        for k,v in final_dict.items():
+            for s in status:
+                NewSlum= s['level_id']
+                if k==NewSlum:
+                    report_table_data[cust_obj]['factAssign']=v
     return HttpResponse(json.dumps(list(map(lambda x: report_table_data[x], report_table_data))),
                         content_type="application/json")
 

@@ -24,7 +24,6 @@
         $(function() {
             $( ".datepicker" ).datepicker({
 
-              
               format: 'dd-mm-yyyy',
               todayHighlight: true,
               autoclose: true,
@@ -40,6 +39,10 @@
 {%endblock%}
 
 {% block content %}
+
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+</head>
 
 <div class="overlay">
     <div id="loading-img"></div>
@@ -72,7 +75,6 @@
         {%endif%}
         <input type="hidden" class="hide" id="slum_code" value="{{slum_code}}"/>
 
-        
     </form>
 
     
@@ -214,9 +216,8 @@
 </div>
 
 </div>
-       
 
-        
+        <div style="overflow-x:auto;">
         <table id="example" class="display" width="100%" cellspacing="0">
         </table>
 
