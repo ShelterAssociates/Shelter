@@ -78,9 +78,9 @@
 
 	}];
 
-	function changeDateAfter(d){
-		var y = parseInt(d.slice(0,4));
-		var m_c = parseInt(d.slice(5,7));
+	function changeDateAfter(date){
+		var y = date.getFullYear();
+		var m_c = date.getMonth();
 		var m = '04'
 		var d = '01'
 		if (parseInt(m) > m_c){
@@ -709,8 +709,10 @@
 		$("#startDate").val(startDate);
 		$("#endDate").val(todayDate);
 		$("#endDate").change(function(){
-			change = changeDateAfter(document.getElementById("endDate").value);
+			var date1 = new Date(document.getElementById('endDate').value);
+			change = changeDateAfter(date1);
 			$("#startDate").val(change);
+			
 		});
 		$.ajax({
 			url : '/mastersheet/show/report/',
