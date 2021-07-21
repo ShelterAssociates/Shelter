@@ -386,11 +386,6 @@ def sanitation_encounter():
 				   'Under what scheme would you like your toilet to be built?': 'Under what scheme would you like your toilet to be built ?',
 				   'Is there availability of drainage to connect to the toilet?': 'Is there availability of drainage to connect it to the toilet?'
 				   }
-	#'Do you dispose segregated garbage?':'Do you segregated wet and dry garbage at source?',
-	#'Facility of solid waste collection':'How do you dispose your solid waste ?',
-    #'Do you have electricity in the house?':'Do you have electricity in the house ?',
-    #'If yes for electricity; Type of meter':'If yes for electricity ,  type of meter ?',
-	#'Who all use toilets in the household?':'Who all use toilets in the household ?',
 
 	output = df[cols]
 	output = output.replace(np.nan, '', regex=True)
@@ -405,7 +400,6 @@ def sanitation_encounter():
 		df_slum.to_csv(path + '/' + 'sanitation_' + str(slum_name).replace(' ', '_').replace('/','') + '.csv', sep=',', encoding='utf-8', index=False,
 					   quoting=1)
 
-#sanitation_encounter()
 def water_encounter():
 	global df
 	df=df.loc[df["Type of survey"]=="RHS"]
@@ -549,7 +543,6 @@ def waste_encounter():
 				   'Do you dispose segregated garbage?': 'Do you segregated wet and dry garbage at source?'
 				   }
 
-
 	output = df[cols]
 	output = output.replace(np.nan, '', regex=True)
 	output = output.rename(columns=rename_value)
@@ -557,6 +550,82 @@ def waste_encounter():
 	output = output.replace(np.nan, '', regex=True)
 	path = base_path + "waste_encounter/"
 	output.to_csv(path + 'Waste_NMMC.csv', sep=',', encoding='utf-8', index=False, quoting=1)
+	split_files(output, path)
+	output = output.groupby('Slum')
+	for slum_name, df_slum in output:
+		df_slum.to_csv(path + '/' + str(slum_name).replace(' ', '_').replace('/','') + '.csv', sep=',', encoding='utf-8',
+		index=False, quoting=1)
+
+def electricity_encounter():
+	global df
+	df=df.loc[df["Type of survey"]=="RHS"]
+	df=df.loc[df["Type of structure occupancy"]=="Occupied house"]
+	cols = df.columns.tolist()
+	df = df.replace('\n', '', regex=True)
+	df["Encounter Type"]="Electricity"
+	df["Id"] = df["_id"].astype(str) + 'E'
+	df["_submission_time"] = pd.to_datetime(df["_submission_time"]).dt.strftime('%Y-%m-%d')
+	def slum_name(value):
+		slum_text = value
+		if value in slum.keys():
+			slum_text = slum[value]
+		return slum_text
+
+	df["slum_name"] = df["slum_name"].apply(slum_name)
+	df = df.replace(np.nan, '', regex=True)
+
+	def convert_multi_select(list_data, value):
+		output = []
+		for data in list_data:
+			if data in value:
+				output.append(data)
+		return ','.join(output)
+
+	def check_individual(value):
+		flag = "No"
+		if "Borrowed meter" in value:
+			flag="Yes"
+		return flag
+
+	df["If yes for electricity ,  type of meter ?"] = df['If yes for electricity; Type of meter'].apply(check_individual)
+	df["If yes for lending electricity with other houses , write those household numbers (seperated with comma)."] = df['If yes then which write house numbers (seperated with comma)'].apply(check_individual)
+
+	Electricity_type = ["No meter","Own meter"]
+
+	def Type_of_meter(value):
+		output=""
+		v= value.replace('Borrowed meter', '')
+		v=v.strip()
+		if "Borrowed meter" not in value:
+			for data in Electricity_type:
+				if data in value:
+					output = data
+		return output
+	df["If yes for electricity ,  type of meter ?"] = df['If yes for electricity; Type of meter'].apply(Type_of_meter)
+	df["Do you have electricity in the house ?"] = np.where(df["Do you have electricity in the house?"]=="Yes", "Borrowed meter", df["If yes for electricity ,  type of meter ?"])
+	df["Do you lend electricity to any house ?"] = np.where(df["Do you lend electricity to any house?"]=="Yes", "Borrowed meter", df["If yes for electricity ,  type of meter ?"])
+	df["If yes for lending electricity with other houses , write those household numbers (seperated with comma)."] = df['If yes then which write house numbers (seperated with comma)'].apply(Type_of_meter)
+
+	cols=['_id','Encounter Type', "Id", "_submission_time","slum_name", "Household number",
+		  "Do you have electricity in the house?",
+		  "If yes for electricity; Type of meter",
+		  "Do you lend electricity to any house?",
+		  "If yes then which write house numbers (seperated with comma)"]
+
+	output = df[cols]
+	rename_value={ '_submission_time':'Visit Date', '_id': 'Subject Id', 'slum_name':'Slum',
+				   'Do you have electricity in the house?': 'Do you have electricity in the house ?',
+				   'If yes for electricity; Type of meter': 'If yes for electricity ,  type of meter ?',
+				   'Do you lend electricity to any house?': 'Do you lend electricity to any house ?',
+				   'If yes then which write house numbers (seperated with comma)':'If yes for lending electricity with other houses , write those household numbers (seperated with comma).'
+				   }
+	output = df[cols]
+	output = output.replace(np.nan, '', regex=True)
+	output = output.rename(columns=rename_value)
+	output = output.sort_values(['Slum'], ascending=(False))
+	output = output.replace(np.nan, '', regex=True)
+	path = base_path + "electricity_encounter/"
+	output.to_csv(path + 'Electricity_NMMC.csv', sep=',', encoding='utf-8', index=False, quoting=1)
 	split_files(output, path)
 	output = output.groupby('Slum')
 	for slum_name, df_slum in output:
@@ -660,4 +729,3 @@ def sanitation_encounter_pune_sbm():
 					   quoting=1)
 	'''
 
-# sanitation_encounter_pune_sbm()
