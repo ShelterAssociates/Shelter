@@ -646,7 +646,6 @@ def sanitation_encounter_pune_sbm():
 	df["slum_name"] = df["slum_name"].apply(slum_name)
 	#df = df.loc[df["Type of House occupancy"]=="Occupied house"]
 	#cols = df.columns.tolist()
-	#print(cols)
 	df_sbm = df_sbm.replace('\n', '', regex=True)
 	#df["Encounter Type"] = "Sanitation"
 	df_sbm["Id"] = df_sbm["_id"].astype(str) + 'S'
@@ -654,7 +653,6 @@ def sanitation_encounter_pune_sbm():
 	df_sbm["Encounter Type"] = "Sanitation"
 	#df_sbm = df_sbm.loc[df_sbm["Type of House occupancy"]=="Occupied house"]
 	cols = df_sbm.columns.tolist()
-	print(cols)
 
 	df_sbm["slum_name"] = df_sbm["slum_name"].apply(slum_name)
 	# s={}
@@ -672,60 +670,3 @@ def sanitation_encounter_pune_sbm():
 			return df_temp.iloc[0]['_id']
 		return 0
 	df_sbm["Subject Id"] = df_sbm.apply(lambda x: convert_registration_id(x), axis=1)
-	print(df_sbm)
-	# from collections import Counter
-	# for key in s.keys():
-	#  	print(key, Counter(s[key]))
-	# print(Counter(t))
-
-	'''
-	cols=['_id','Encounter Type', "Subject Id", "Id", "_submission_time","slum_name", "Household number",
-		  "Type of House occupancy", "Name of head of household", "Type of household Toilet",
-		  "Is drainage connection available for toilet?", "Are you interested in household toilet?",
-		  "If built by contractor, how satisfied are you?", "Is the toilet connected to the drainage network?",
-		  "Use of household toilet", "Reason for not in use", "Is drainage connection available for toilet?",
-		  "Is the toilet connected to the drainage network?"]
-		  
-	#"Do you have electricity in the house?","If yes for electricity; Type of meter","Do you have individual water connection at home?",
-	#	  "Type of water connection ?", "Water source final answer.", "Do you dispose segregated garbage?",
-	output = df[cols]
-	skills = ["Mason", "Plumber", "Carpenter", "Other", "Construction labour"]
-	def convert_multi_select(value):
-		output = []
-		for data in skills:
-			if data in value:
-				output.append(data)
-		return ','.join(output)
-	output["Does any household member have any of the construction skills given below?"] = output["Does any household member have any of the construction skills given below?"].apply(convert_multi_select)
-	rename_value={ '_submission_time':'Visit Date', 'slum_name':'Slum',
-				   'Does any household member have any of the construction skills given below?':'Does any household member have any of the construction skills given below ?',
-				   'Does any member of the household go for open defecation?':'Does any member of the household go for open defecation ?',
-				   'What is the toilet connected to?':'Where the individual toilet is connected to ?',
-				   'Reason for not using toilet':'Reason for not using toilet ?',
-				   'Status of toilet under SBM':'Status of toilet under SBM ?',
-				   'What was the cost incurred to build the toilet?':'What was the cost incurred to build the toilet?',
-				   'Have you applied for an individual toilet under SBM?': 'Have you applied for an individual toilet under SBM?_1',
-				   'Type of SBM toilets': 'Type of SBM toilets ?',
-				   'If built by contractor, how satisfied are you?': 'If built by contractor, how satisfied are you?',
-				   'Are you interested in an individual toilet?': 'Are you interested in an individual toilet ?',
-				   'If yes, why?': 'If yes for individual toilet , why?',
-				   'If no, why?': 'If no for individual toilet , why?',
-				   'What kind of toilet would you like?': 'What kind of toilet would you like ?',
-				   'Under what scheme would you like your toilet to be built?': 'Under what scheme would you like your toilet to be built ?',
-				   'Is there availability of drainage to connect to the toilet?': 'Is there availability of drainage to connect it to the toilet?'
-				   }
-
-	output = df[cols]
-	output = output.replace(np.nan, '', regex=True)
-	output = output.rename(columns=rename_value)
-	output = output.sort_values(['Slum'], ascending=(False))
-	output = output.replace(np.nan, '', regex=True)
-	path = base_path + "sanitation_encounter/"
-	output.to_csv(path + 'Pune.csv', sep=',', encoding='utf-8', index=False, quoting=1)
-	output = output.groupby('Slum')
-	for slum_name, df_slum in output:
-		df_slum.to_csv(path + '/' + str(slum_name).replace(' ', '_').replace('/', '') + '.csv', sep=',',
-					   encoding='utf-8', index=False,
-					   quoting=1)
-	'''
-
