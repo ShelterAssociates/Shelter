@@ -13,20 +13,22 @@
 	var aMonthAgo = todayTime.getTime() - delta ;
 	var change = 0;
 	var aMonthAgoTime = new Date(aMonthAgo);
+	var thisYear = new Date();
+	var aprilOfYear = new Date(thisYear.setMonth(03,01));
 	var btn_default = [];
 	var total_counts = [{
 							'aggregated_total_ad':0, 
 							'aggregated_total_p1':0,
 							'aggregated_total_p2':0,
 							'aggregated_total_p3':0,
+							'aggregated_total_st':0,
 							'aggregated_total_c':0,
 							'aggregated_use_of_toilet':0,
 							'aggregated_toilet_connected_to':0,
-							'aggregated_factsheet_done':0
-
+							'aggregated_factsheet_done':0,
+							'aggregated_factsheet_assign':0
 						}];
 	var total_counts_cm_activity_count = [{
-
 						"aggregated_total_Awarenesssong":0,
 						"aggregated_total_CornerMeeting":0, 
 						"aggregated_total_FGDwithBoys":0,
@@ -48,8 +50,7 @@
 						"aggregated_total_WorkshopwithChildren":0,
 						"aggregated_total_WorkshopforWomen":0, 
 						"aggregated_total_WorkshopwithMen":0, 
-						"aggregated_city_name":0, 
-
+						"aggregated_city_name":0,
 	}];
 	var total_counts_cm = [{
 
@@ -199,11 +200,12 @@
 							'aggregated_total_p1':0,
 							'aggregated_total_p2':0,
 							'aggregated_total_p3':0,
+							'aggregated_total_st':0,
 							'aggregated_total_c':0,
 							'aggregated_use_of_toilet':0,
 							'aggregated_toilet_connected_to':0,
-							'aggregated_factsheet_done':0
-
+							'aggregated_factsheet_done':0,
+							'aggregated_factsheet_assign':0
 						}];
 
 		total_counts_cm_activity_count = [{
@@ -275,10 +277,12 @@
 								{"data": "aggregated_total_p1", "title": "Phase 1 material given"},
 								{"data": "aggregated_total_p2", "title": "Phase 2 material given"},
 								{"data": "aggregated_total_p3", "title": "Phase 3 material given"},
+								{"data": "aggregated_total_st", "title": "Septic tank given"},
 								{"data": "aggregated_total_c", "title": "Completed"},
 								{"data": "aggregated_use_of_toilet", "title": "Use of toilet"},
 								{"data": "aggregated_toilet_connected_to", "title": "Toilet connected to"},
-								{"data": "aggregated_factsheet_done", "title": "Factsheet done"}
+								{"data": "aggregated_factsheet_done", "title": "Factsheet done"},
+								{"data": "aggregated_factsheet_assign", "title": "Factsheet Assign"}
 							]
 			});
 		}
@@ -349,6 +353,9 @@
 							if(typeof data[i]['total_p3'] != 'undefined'){
 								total_counts[0]['aggregated_total_p3'] += data[i]['total_p3'];
 							}
+							if(typeof data[i]['total_st'] != 'undefined'){
+								total_counts[0]['aggregated_total_st'] += data[i]['total_st'];
+							}
 							if(typeof data[i]['total_c'] != 'undefined'){
 								total_counts[0]['aggregated_total_c'] += data[i]['total_c'];
 							}
@@ -357,6 +364,9 @@
 							}
 							if(typeof data[i]['factsheet_done'] != 'undefined'){
 								total_counts[0]['aggregated_factsheet_done'] += data[i]['factsheet_done'];
+							}
+							if(typeof data[i]['factAssign'] != 'undefined'){
+								total_counts[0]['aggregated_factsheet_assign'] += data[i]['factAssign'];
 							}
 							if(typeof data[i]['toilet_connected_to'] != 'undefined'){
 								total_counts[0]['aggregated_toilet_connected_to'] += data[i]['toilet_connected_to'];
@@ -374,14 +384,16 @@
 				"columnDefs": [{"defaultContent": "-","targets": "_all"},{"footer":true},],
 				"columns":[
 							{"data": "level", "title": "Name"},
-							{"data": "total_ad", "title": "Agreement Done"},
+							{"data": "total_ad", "title": "Agreement Done Date"},
 							{"data": "total_p1", "title": "Phase 1 material given"},
 							{"data": "total_p2", "title": "Phase 2 material given"},
 							{"data": "total_p3", "title": "Phase 3 material given"},
+							{"data": "total_st", "title": "Septic tanks given"},
 							{"data": "total_c", "title": "Completed"},
 							{"data": "use_of_toilet", "title": "Use of toilet"},
 							{"data": "toilet_connected_to", "title": "Toilet connected to"},
 							{"data": "factsheet_done", "title": "Factsheet done"},
+							{"data": "factAssign", "title": "Factsheet Assign"},
 							{"data": "city_name", "title": "City name"}
 						]
 			});
