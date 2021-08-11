@@ -234,9 +234,9 @@ class DashboardData(models.Model):
    def __unicode__(self):
 	   return str(self.slum)
 
-
+# Model for covid data 
 class CovidData(models.Model):
-	household_number = models.IntegerField(null = True, verbose_name="House Numbar")
+	household_number = models.IntegerField(null = True, verbose_name="House Number")
 	slum = models.ForeignKey(Slum, on_delete=models.CASCADE)
 	city = models.IntegerField(null = True)
 

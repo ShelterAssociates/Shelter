@@ -45,7 +45,6 @@ class avni_sync():
         command_data = subprocess.Popen(['node', 'graphs/avni/token.js',self.poolId, self.clientId, settings.AVNI_USERNAME, settings.AVNI_PASSWORD], stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
         stdout, stderr = command_data.communicate()
         self.token = stdout.decode("utf-8").replace('\n','')
-        #print(self.token)
         return self.token
 
     def get_city_slum_ids(self,slum_name):
@@ -61,15 +60,10 @@ class avni_sync():
         iso_format_next = latest_date.strftime('%Y-%m-%dT00:00:00.000Z')
         iso = "2021-06-09T00:00:00.000Z"
 
-            
-        # print(last_submission_date)
-        # print(iso_format_next)
-        #return(iso)
         return(iso)
 
     def get_image(self,image_link):
         path = 'https://app.avniproject.org/media/signedUrl?url='
-        # image_link ='https://prod-user-media.s3.ap-south-1.amazonaws.com/shelter/c27714d6-3a51-4721-8bd3-029ffe2bc8bd.jpg'
         request_1 = requests.get( path + image_link, headers={'AUTH-TOKEN': self.get_cognito_token()})
         print(request_1.status_code)
         return request_1.text
@@ -234,20 +228,14 @@ class avni_sync():
             return(b,c)
         else:pass
 
-    def Covid_data(self):
-        send_request = requests.get('https://app.avniproject.org/api/subjects?lastModifiedDateTime=195672d5-00fc-4414-9171-1214b3cc32ee',headers={'AUTH-TOKEN': self.get_cognito_token()})
-        print(send_request.status_code, send_request.text)
-        get_HH_data = json.loads(send_request.text)['content']
-
     def create_registrationdata_url(self): #checked
         latest_date = self.lastModifiedDateTime()
         household_path = 'api/subjects?lastModifiedDateTime=' + latest_date  + '&subjectType=Household'
         result = requests.get(self.base_url + household_path,headers= {'AUTH-TOKEN':self.get_cognito_token() })
         get_text = json.loads(result.text)['content']
         pages =  json.loads(result.text)['totalPages']
-        #print(result.status_code,result.text)
+
         return (pages,household_path)
-        #return (0, 0)  # (pages,household_path)
 
     def registrtation_data(self,HH_data): #checked
         final_rhs_data ={}
@@ -281,8 +269,7 @@ class avni_sync():
     def SaveRhsData(self): # checked
         pages,path = self.create_registrationdata_url()
         for i in range(pages):
-            send_request = requests.get(self.base_url + path + '&' + 'page=' + str(i),headers={'AUTH-TOKEN': self.get_cognito_token()})
-            #print(send_request.url)
+            send_request = requests.get(self.base_url + path + '&page=' + str(i),headers={'AUTH-TOKEN': self.get_cognito_token()})
             get_HH_data = json.loads(send_request.text)['content']
             for i in get_HH_data:
                 self.registrtation_data(i)
@@ -343,9 +330,8 @@ class avni_sync():
 
     def SaveCommunityMobilizationData(self):  #checked
         pages, path = self.create_mobilization_activity_url()
-#        print(pages)
         for i in range(pages):
-            send_request = requests.get(self.base_url + path + '&' + 'page=' + str(i),headers={'AUTH-TOKEN': self.get_cognito_token()})
+            send_request = requests.get(self.base_url + path + '&page=' + str(i),headers={'AUTH-TOKEN': self.get_cognito_token()})
             data = json.loads(send_request.text)['content']
             for j in data:
                 if len(j['observations']) > 0:
@@ -353,21 +339,20 @@ class avni_sync():
                     self.CommunityMobilizationActivityData(j['observations'], self.slum, self.HH)
                 else:
                     pass
-                    # print('No data')
+
 
     def SaveFamilyFactsheetData(self):#checked
         latest_date = self.lastModifiedDateTime()
         programEncounters_path = 'api/programEncounters?lastModifiedDateTime=' + latest_date + '&encounterType=Family factsheet'
         result = requests.get(self.base_url + programEncounters_path, headers={'AUTH-TOKEN': self.get_cognito_token()})
-        #print(result.status_code,result.text)
         get_page_count = json.loads(result.text)['totalPages']
         for i in range(get_page_count):
-            send_request = requests.get(self.base_url + programEncounters_path + '&' + 'page=' + str(i),
+            send_request = requests.get(self.base_url + programEncounters_path + '&page=' + str(i),
                                         headers={'AUTH-TOKEN': self.get_cognito_token()})
             data = json.loads(send_request.text)['content']
-            #print(len(data))
+
             for j in data:
-                 #print(j)
+
                  a,slum, HH,d = self.get_household_details(j['Subject ID'])
                  self.FamilyFactsheetData(j, slum, HH)
 
@@ -432,16 +417,16 @@ class avni_sync():
         latest_date = self.lastModifiedDateTime()
         programEncounters_path = 'api/programEncounters?lastModifiedDateTime=' + latest_date +'&encounterType=Daily Reporting'
         result = requests.get(self.base_url + programEncounters_path, headers={'AUTH-TOKEN': self.get_cognito_token()})
-        #print(result.status_code)
+
         get_page_count = json.loads(result.text)['totalPages']
         for i in range(get_page_count):
-            send_request = requests.get(self.base_url + programEncounters_path + '&' + 'page=' + str(i),headers={'AUTH-TOKEN': self.get_cognito_token()})
-            #print(send_request.status_code)
+            send_request = requests.get(self.base_url + programEncounters_path + '&page=' + str(i),headers={'AUTH-TOKEN': self.get_cognito_token()})
+
             data = json.loads(send_request.text)['content']
             for j in data:
-                #print(j) 
+
                 a,slum_id,HH,d = self.get_household_details(j['Subject ID'])
-                #print(slum_id,HH,a,d)
+
                 self.DailyReportingData(j['observations'],slum_id,HH)
 
     def get_max_date(self,dates_list):
@@ -615,7 +600,7 @@ class avni_sync():
     #    print(pages)
         try:
             for i in range(pages):
-                send_request = requests.get(self.base_url + path + '&'+ 'page=' + str(i),headers={'AUTH-TOKEN': self.get_cognito_token()})
+                send_request = requests.get(self.base_url + path + '&page=' + str(i),headers={'AUTH-TOKEN': self.get_cognito_token()})
                 data = json.loads(send_request.text)['content']
                 if len(data) > 0:
                     for j in data:
@@ -639,7 +624,7 @@ class avni_sync():
         pages,path = self.WaterEncounterData()
         try:
             for i in range(pages):
-                send_request = requests.get(self.base_url + path + '&' + 'page=' + str(i),headers={'AUTH-TOKEN': self.get_cognito_token()})
+                send_request = requests.get(self.base_url + path + '&page=' + str(i),headers={'AUTH-TOKEN': self.get_cognito_token()})
                 data = json.loads(send_request.text)['content']
                 for j in data:
                     water_data = self.map_water_keys(j['observations'])
@@ -660,7 +645,7 @@ class avni_sync():
         pages,path = self.WasteEncounterData()
         try:
             for i in range(pages):
-                send_request = requests.get(self.base_url + path + '&' + 'page=' + str(i),headers={'AUTH-TOKEN': self.get_cognito_token()})
+                send_request = requests.get(self.base_url + path + '&page=' + str(i),headers={'AUTH-TOKEN': self.get_cognito_token()})
                 data = json.loads(send_request.text)['content']
                 for j in data:
                     waste_data = self.map_waste_keys(j['observations'])
@@ -681,7 +666,7 @@ class avni_sync():
         pages,path = self.PropertyTaxEncounterData()
         try:
             for i in range(pages):
-                send_request = requests.get(self.base_url + path + '&' + 'page=' + str(i),headers={'AUTH-TOKEN': self.get_cognito_token()})
+                send_request = requests.get(self.base_url + path + '&page=' + str(i),headers={'AUTH-TOKEN': self.get_cognito_token()})
                 data = json.loads(send_request.text)['content']
                 for j in data:
                     tax_data  = j['observations']
@@ -702,7 +687,7 @@ class avni_sync():
         pages,path = self.ElectricityEncounterData()
         try:
             for i in range(pages):
-                send_request = requests.get(self.base_url + path + '&' + 'page=' + str(i),headers={'AUTH-TOKEN': self.get_cognito_token()})
+                send_request = requests.get(self.base_url + path + '&page=' + str(i),headers={'AUTH-TOKEN': self.get_cognito_token()})
                 data = json.loads(send_request.text)['content']
                 for j in data:
                     electricity_data = j['observations']
@@ -712,18 +697,15 @@ class avni_sync():
             print(e)
 
     def SaveDataFromIds(self):
-        #IdList = ['15f5d922-34da-4a69-86f4-0c0de21a51bc','409f9475-72c8-4b2c-ac91-1ac7f18fd4b3']
+        
         IdList=['245d77b2-b742-4720-8b86-8a1b3d4bdb20']
-        #'0190e69f-d414-41db-9b3c-eac8cf089aeb','5d853fd8-bff0-4cd8-beba-7de0771148c4']
-        #'fbe45d19-0780-4070-88ed-8a257100b6ac','8590aba6-8606-4fba-ae21-f56311a80982','1a7c214f-9bfd-48b6-b7a3-ccd9cd519c70','100ec66f-51b0-47d5-8e7d-cdf9af20868b','8b6ac627-cf05-46ac-bba5-7d1ad3eff43e','8b6ac627-cf05-46ac-bba5-7d1ad3eff43e']
         for i in IdList:
             try :
                 RequestProgramEncounter = requests.get(self.base_url + 'api/programEncounter/' + i ,headers={'AUTH-TOKEN': self.get_cognito_token()})
                 RequestEncounter= requests.get(self.base_url + 'api/encounter/' + i ,headers={'AUTH-TOKEN': self.get_cognito_token()})
                 RequestHouseholdRegistration = requests.get(self.base_url + 'api/subject/' + i ,headers={'AUTH-TOKEN': self.get_cognito_token()})
-                #print(RequestEncounter,RequestHouseholdRegistration)
+
                 print(RequestHouseholdRegistration.status_code)
-                #print(RequestProgramEncounter.url, RequestProgramEncounter.status_code)
                 if RequestProgramEncounter.status_code == 200:
                     data = json.loads(RequestProgramEncounter.text)
                     a,slum_name,HH,d = self.get_household_details(data['Subject ID'])
@@ -731,7 +713,6 @@ class avni_sync():
                         self.FamilyFactsheetData(data,slum_name,HH)
                     if data['Encounter type'] == 'Daily Reporting' or 'Household Level Daily Reporting':
                         if data['observations']!= None:
-                            #print(data['observations'])
                             self.DailyReportingData(data['observations'],slum_name,HH)
                 elif RequestEncounter.status_code == 200:
                     data = json.loads(RequestEncounter.text)
@@ -769,92 +750,6 @@ class avni_sync():
             except Exception as e:
                 print(e)
 
-    # def set_mobile_number(self):
-    #     get = HouseholdData.objects.all().filter(slum_id=1675)
-    #     get_data = get.values('household_number','rhs_data')
-    #     for i in get_data:
-    #         HH = i['household_number']
-    #         rhs = i['rhs_data']
-    #         for k,v in rhs.items():
-    #             if k == 'Enter the 10 digit mobile number':
-    #                 rhs.update({'group_el9cl08/Enter_the_10_digit_mobile_number' : v})
-    #                 rhs.pop(k)
-    #             if k == 'Aadhar number' :
-    #                 rhs.update({'group_el9cl08/Aadhar_number' :v})
-    #                 rhs.pop(k)
-    #         a = HouseholdData.objects.filter(slum_id=1675,household_number =HH)
-    #         a.update(rhs_data= rhs)
-    #         print('rhs updated for',HH)
-    #
-    # def changeListToStrInFfData(self):
-    #
-    #     getData = HouseholdData.objects.filter(slum_id=1675)
-    #     for i in getData:
-    #         ff  = getData.filter(household_number=i.household_number)
-    #         getff = ff.values_list('ff_data', flat=True)[0]
-    #         if type(getff['group_ne3ao98/Use_of_toilet']) == list:
-    #             useOfToilte = getff['group_ne3ao98/Use_of_toilet']
-    #             useOfToilte = ','.join(i for i in useOfToilte)
-    #             getff['group_ne3ao98/Use_of_toilet']= useOfToilte
-    #             ff.update(ff_data = getff)
-    #             print('updated for',i.household_number)
-    #         elif type(useOfToilte) == str:pass
-    #         else : pass
-
-    # def programEncounter_api_call(self):
-    #     latest_date = self.lastModifiedDateTime()
-    #     # programEncounters_path = 'api/programEncounters?lastModifiedDateTime=' + latest_date +'&encounterType=Family factsheet'
-    #     programEncounters_path = 'api/programEncounters?lastModifiedDateTime=' + latest_date +'&encounterType=Daily Reporting'
-    #     result = requests.get(self.base_url + programEncounters_path,headers={'AUTH-TOKEN': self.get_cognito_token()})
-    #     get_page_count = json.loads(result.text)['totalPages']
-    #     return (get_page_count, programEncounters_path)
-    #
-    # def saveProgramEncounterData(self, encounter_ids,slum_name):
-    #     for i in encounter_ids:
-    #         send_request = requests.get(self.base_url + 'api/programEncounter/' + i,headers={'AUTH-TOKEN': self.get_cognito_token()})
-    #         get_data = json.loads(send_request.text)
-    #         if 'Encounter type' in get_data.keys():
-    #             if get_data['Encounter type'] == 'Family factsheet':
-    #                 self.saveFamilyFactsheetData(get_data['observations'],slum_name)
-    #             elif get_data['Encounter type'] == 'Daily Reporting':
-    #                 HH = self.getHouseholdNumberFromEnrolmentID(get_data['Enrolment ID'])
-    #                 self.saveDailyReportingData(get_data['observations'],slum_name,HH) #
-    #             else : pass
-    #
-    # def fetch_program_encounter_data(self):
-    #     totalPages, enc_path = self.programEncounter_api_call()
-    #     for i in range(totalPages):
-    #         send_request = requests.get(self.base_url + enc_path + '&' + str(i),headers={'AUTH-TOKEN': self.get_cognito_token()})
-    #         data = json.loads(send_request.text)['content']
-    #         for j in data:
-    #             if j['Encounter type'] == 'Daily Reporting':
-    #                 HH,slum = self.getHouseholdNumberFromEnrolmentID(j['Enrolment ID'])
-    #                 self.saveDailyReportingData(j['observations'],slum,HH)
-    #             encounter_data = j['observations']
-    #             enrolment_id = j['Enrolment ID']
-    #             send_request1 = requests.get(self.base_url + 'api/enrolment/' + enrolment_id,headers={'AUTH-TOKEN': self.get_cognito_token()})
-    #             text =  json.loads(send_request1.text)
-    #             subject_id = text['Subject ID']
-    #             encount_ids = text['encounters']
-    #             send_request2 = requests.get(self.base_url + 'api/subject/' + subject_id ,headers={'AUTH-TOKEN': self.get_cognito_token()})
-    #             get_HH_data = json.loads(send_request2.text)
-    #             self.registrtation_data(get_HH_data)
-    #             self.saveProgramEncounterData(encount_ids, get_HH_data['location']['Slum'])
-    #
-    # def ShiftNativePlaceDataToFF(self,rhs_data,slum_id):
-    #     HH = str(int(rhs_data['Household_number']))
-    #     NativePlace = rhs_data['What is your native place (village, town, city) ?']
-    #     check_record = HouseholdData.objects.filter(slum_id = slum_id, household_number= HH )
-    #     if check_record:
-    #         ff_data = check_record.values_list('ff_data',flat=True)[0]
-    #         if ff_data and 'group_oh4zf84/Name_of_Native_villa_district_and_state' in ff_data.keys():
-    #             print(HH, 'key present')
-    #         else:
-    #             add_place = {'group_oh4zf84/Name_of_Native_villa_district_and_state':NativePlace}
-    #             ff_data.update(add_place)
-    #             print('Updated FF data for', HH)
-
-
     # methods for covid data >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
     
     def create_coviddata_url(self):  # checked
@@ -871,18 +766,17 @@ class avni_sync():
         count = 0
         pages,path = self.create_coviddata_url()
         
-        for i in range(pages):
+        for i in range(pages)[26:30]:
 
-            send_request = requests.get(self.base_url + path + '&' + 'page='+str(i) ,headers={'AUTH-TOKEN': self.get_cognito_token()})
+            send_request = requests.get(self.base_url + path + '&page='+str(i) ,headers={'AUTH-TOKEN': self.get_cognito_token()})
 
             get_HH_data = json.loads(send_request.text)['content']
             
             for j in get_HH_data:
                 if count<20:
                     if j['Voided'] == False:
-            
+                                    
                         self.RegistrationCovidData(j)
-                        record += 1
                 else:
                     break
   
@@ -1025,12 +919,103 @@ class avni_sync():
                                                             headers={'AUTH-TOKEN': self.get_cognito_token()})
             if RequestHouseholdRegistration.status_code == 200:
                 data = json.loads(RequestHouseholdRegistration.text)
-                
+                dct[i] = data['observations']['First name']
                 return (int(data['observations']['First name']))
            
                         
             else:
                 return 'error'
+
+
+
+
+    # def set_mobile_number(self):
+    #     get = HouseholdData.objects.all().filter(slum_id=1675)
+    #     get_data = get.values('household_number','rhs_data')
+    #     for i in get_data:
+    #         HH = i['household_number']
+    #         rhs = i['rhs_data']
+    #         for k,v in rhs.items():
+    #             if k == 'Enter the 10 digit mobile number':
+    #                 rhs.update({'group_el9cl08/Enter_the_10_digit_mobile_number' : v})
+    #                 rhs.pop(k)
+    #             if k == 'Aadhar number' :
+    #                 rhs.update({'group_el9cl08/Aadhar_number' :v})
+    #                 rhs.pop(k)
+    #         a = HouseholdData.objects.filter(slum_id=1675,household_number =HH)
+    #         a.update(rhs_data= rhs)
+    #         print('rhs updated for',HH)
+    #
+    # def changeListToStrInFfData(self):
+    #
+    #     getData = HouseholdData.objects.filter(slum_id=1675)
+    #     for i in getData:
+    #         ff  = getData.filter(household_number=i.household_number)
+    #         getff = ff.values_list('ff_data', flat=True)[0]
+    #         if type(getff['group_ne3ao98/Use_of_toilet']) == list:
+    #             useOfToilte = getff['group_ne3ao98/Use_of_toilet']
+    #             useOfToilte = ','.join(i for i in useOfToilte)
+    #             getff['group_ne3ao98/Use_of_toilet']= useOfToilte
+    #             ff.update(ff_data = getff)
+    #             print('updated for',i.household_number)
+    #         elif type(useOfToilte) == str:pass
+    #         else : pass
+
+    # def programEncounter_api_call(self):
+    #     latest_date = self.lastModifiedDateTime()
+    #     # programEncounters_path = 'api/programEncounters?lastModifiedDateTime=' + latest_date +'&encounterType=Family factsheet'
+    #     programEncounters_path = 'api/programEncounters?lastModifiedDateTime=' + latest_date +'&encounterType=Daily Reporting'
+    #     result = requests.get(self.base_url + programEncounters_path,headers={'AUTH-TOKEN': self.get_cognito_token()})
+    #     get_page_count = json.loads(result.text)['totalPages']
+    #     return (get_page_count, programEncounters_path)
+    #
+    # def saveProgramEncounterData(self, encounter_ids,slum_name):
+    #     for i in encounter_ids:
+    #         send_request = requests.get(self.base_url + 'api/programEncounter/' + i,headers={'AUTH-TOKEN': self.get_cognito_token()})
+    #         get_data = json.loads(send_request.text)
+    #         if 'Encounter type' in get_data.keys():
+    #             if get_data['Encounter type'] == 'Family factsheet':
+    #                 self.saveFamilyFactsheetData(get_data['observations'],slum_name)
+    #             elif get_data['Encounter type'] == 'Daily Reporting':
+    #                 HH = self.getHouseholdNumberFromEnrolmentID(get_data['Enrolment ID'])
+    #                 self.saveDailyReportingData(get_data['observations'],slum_name,HH) #
+    #             else : pass
+    #
+    # def fetch_program_encounter_data(self):
+    #     totalPages, enc_path = self.programEncounter_api_call()
+    #     for i in range(totalPages):
+    #         send_request = requests.get(self.base_url + enc_path + '&' + str(i),headers={'AUTH-TOKEN': self.get_cognito_token()})
+    #         data = json.loads(send_request.text)['content']
+    #         for j in data:
+    #             if j['Encounter type'] == 'Daily Reporting':
+    #                 HH,slum = self.getHouseholdNumberFromEnrolmentID(j['Enrolment ID'])
+    #                 self.saveDailyReportingData(j['observations'],slum,HH)
+    #             encounter_data = j['observations']
+    #             enrolment_id = j['Enrolment ID']
+    #             send_request1 = requests.get(self.base_url + 'api/enrolment/' + enrolment_id,headers={'AUTH-TOKEN': self.get_cognito_token()})
+    #             text =  json.loads(send_request1.text)
+    #             subject_id = text['Subject ID']
+    #             encount_ids = text['encounters']
+    #             send_request2 = requests.get(self.base_url + 'api/subject/' + subject_id ,headers={'AUTH-TOKEN': self.get_cognito_token()})
+    #             get_HH_data = json.loads(send_request2.text)
+    #             self.registrtation_data(get_HH_data)
+    #             self.saveProgramEncounterData(encount_ids, get_HH_data['location']['Slum'])
+    #
+    # def ShiftNativePlaceDataToFF(self,rhs_data,slum_id):
+    #     HH = str(int(rhs_data['Household_number']))
+    #     NativePlace = rhs_data['What is your native place (village, town, city) ?']
+    #     check_record = HouseholdData.objects.filter(slum_id = slum_id, household_number= HH )
+    #     if check_record:
+    #         ff_data = check_record.values_list('ff_data',flat=True)[0]
+    #         if ff_data and 'group_oh4zf84/Name_of_Native_villa_district_and_state' in ff_data.keys():
+    #             print(HH, 'key present')
+    #         else:
+    #             add_place = {'group_oh4zf84/Name_of_Native_villa_district_and_state':NativePlace}
+    #             ff_data.update(add_place)
+    #             print('Updated FF data for', HH)
+
+
+    
 
     
     
