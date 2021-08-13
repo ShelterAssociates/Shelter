@@ -246,12 +246,12 @@ class CovidData(models.Model):
 	date_of_survey = models.DateField(null=True, verbose_name="Date Of Survey")
 	last_modified_date = models.DateField(null=True, verbose_name='Last Modified Date')
 
-	Family_member_name = models.CharField(max_length=100, verbose_name='Family member name', null=True)
+	family_member_name = models.CharField(max_length=100, verbose_name='Family member name', null=True)
 	gender = models.CharField(max_length=100, verbose_name='Gender', null=True)
 	age = models.IntegerField(null=True, verbose_name='Age')
-	Addhar_number = models.CharField(max_length=100, verbose_name='Addhar number', null=True)
-	Do_you_have_any_other_disease = models.CharField(max_length=100, verbose_name='Do you have any other disease', null=True)
-	If_any_then_which_disease = models.CharField(max_length=100, verbose_name='If any then which disease', null=True)
+	aadhar_number = models.CharField(max_length=100, verbose_name='Addhar number', null=True)
+	do_you_have_any_other_disease = models.CharField(max_length=100, verbose_name='Do you have any other disease', null=True)
+	if_any_then_which_disease = models.CharField(max_length=100, verbose_name='If any then which disease', null=True)
 	preganant_or_lactating_mother = models.CharField(max_length=100,
 													 verbose_name='are you pregnant or lactating mother?', null=True)
 	registered_for_covid_vaccination = models.CharField(max_length=100,
@@ -263,8 +263,8 @@ class CovidData(models.Model):
 	take_second_dose = models.CharField(max_length=100, verbose_name='Did you take second dose?', null=True)
 	second_dose_date = models.DateField(null=True, verbose_name='Date of second dose?')
 	corona_infected = models.CharField(max_length=100, verbose_name='Have you even been infected with corona?', null=True)
-	If_corona_infected_days = models.CharField(max_length=100, verbose_name='If corona infected, how many days it had been since infection?', null=True)
+	if_corona_infected_days = models.CharField(max_length=100, verbose_name='If corona infected, how many days it had been since infection?', null=True)
 	willing_to_vaccinated = models.CharField(max_length=100, verbose_name='Are you willing to get vaccinated?', null=True)
-	If_not_why = models.TextField(verbose_name='If not, why?', null=True)
-	Note = models.TextField(verbose_name='Note', null=True)
+	if_not_why = models.TextField(verbose_name='If not, why?', null=True)
+	note = models.TextField(verbose_name='Note', null=True)
 

@@ -228,13 +228,18 @@ class avni_sync():
             return(b,c)
         else:pass
 
-    def create_registrationdata_url(self): #checked
+    def create_registrationdata_url(self, flag): #checked
         latest_date = self.lastModifiedDateTime()
-        household_path = 'api/subjects?lastModifiedDateTime=' + latest_date  + '&subjectType=Household'
-        result = requests.get(self.base_url + household_path,headers= {'AUTH-TOKEN':self.get_cognito_token() })
+        
+        if flag == 'covid':      # for covid data 
+            household_path = 'api/subjects?lastModifiedDateTime=' + latest_date + '&subjectType=Covid Survey'
+            result = requests.get(self.base_url + household_path, headers={'AUTH-TOKEN': self.get_cognito_token()})
+        else:           # for household data
+            household_path = 'api/subjects?lastModifiedDateTime=' + latest_date  + '&subjectType=Household'
+            result = requests.get(self.base_url + household_path,headers= {'AUTH-TOKEN':self.get_cognito_token() })
+
         get_text = json.loads(result.text)['content']
         pages =  json.loads(result.text)['totalPages']
-
         return (pages,household_path)
 
     def registrtation_data(self,HH_data): #checked
@@ -266,13 +271,29 @@ class avni_sync():
         except Exception as e:
             print('second exception',slum_name,e)
 
-    def SaveRhsData(self): # checked
-        pages,path = self.create_registrationdata_url()
-        for i in range(pages):
-            send_request = requests.get(self.base_url + path + '&page=' + str(i),headers={'AUTH-TOKEN': self.get_cognito_token()})
-            get_HH_data = json.loads(send_request.text)['content']
-            for i in get_HH_data:
-                self.registrtation_data(i)
+
+    def SaveRhsData(self, flag = None): # checked
+        pages,path = self.create_registrationdata_url(flag)
+
+        if flag == 'covid':   # for covid data 
+            count = 0
+            for i in range(pages):
+                send_request = requests.get(self.base_url + path + '&page='+str(i) ,headers={'AUTH-TOKEN': self.get_cognito_token()})
+                get_covid_data = json.loads(send_request.text)['content']
+                for j in get_covid_data:
+                    if count<20:
+                        if j['Voided'] == False:
+                            self.RegistrationCovidData(j)
+                    else:
+                        break
+        else:                                #   for RHS data 
+            for i in range(pages):
+                send_request = requests.get(self.base_url + path + '&page=' + str(i),headers={'AUTH-TOKEN': self.get_cognito_token()})
+                get_HH_data = json.loads(send_request.text)['content']
+                for i in get_HH_data:
+                    if i['Voided'] == False:
+                        self.registrtation_data(i)
+
 
     def update_rhs_data(self,subject_id,encounter_data): #checked
         self.get_household_details(subject_id)
@@ -335,8 +356,9 @@ class avni_sync():
             data = json.loads(send_request.text)['content']
             for j in data:
                 if len(j['observations']) > 0:
-                    self.get_household_details(j['Subject ID'])
-                    self.CommunityMobilizationActivityData(j['observations'], self.slum, self.HH)
+                    if j['Voided'] == False:
+                        self.get_household_details(j['Subject ID'])
+                        self.CommunityMobilizationActivityData(j['observations'], self.slum, self.HH)
                 else:
                     pass
 
@@ -352,9 +374,9 @@ class avni_sync():
             data = json.loads(send_request.text)['content']
 
             for j in data:
-
-                 a,slum, HH,d = self.get_household_details(j['Subject ID'])
-                 self.FamilyFactsheetData(j, slum, HH)
+                if j['Voided'] == False:
+                    a,slum, HH,d = self.get_household_details(j['Subject ID'])
+                    self.FamilyFactsheetData(j, slum, HH)
 
     def FamilyFactsheetData(self, data, slum_name, HH): #checked
         try:
@@ -424,10 +446,9 @@ class avni_sync():
 
             data = json.loads(send_request.text)['content']
             for j in data:
-
-                a,slum_id,HH,d = self.get_household_details(j['Subject ID'])
-
-                self.DailyReportingData(j['observations'],slum_id,HH)
+                if j['Voided'] == False:
+                    a,slum_id,HH,d = self.get_household_details(j['Subject ID'])
+                    self.DailyReportingData(j['observations'],slum_id,HH)
 
     def get_max_date(self,dates_list):
         max = None
@@ -585,29 +606,30 @@ class avni_sync():
                 create_record = FollowupData.objects.create(household_number=self.HH, slum_id=slum_id,
                 city_id=city_id, submission_date=self.SubmissionDate, followup_data = sanitation_data,
                 created_date = self.get_HH_data['audit']['Created at'],flag_followup_in_rhs=False)
-  #              print('followup record created for', self.HH)
+
             else:
                 for i in get_record:
                     get_followup_data = i.followup_data
                     get_followup_data.update(sanitation_data)
                     get_record.update(followup_data = get_followup_data, submission_date = dateparser.parse(self.SubmissionDate))
-   #                 print('followup record updated for', self.HH,self.slum)
+
         except Exception as e:
             print(e,self.HH)
 
     def SaveFollowupData(self): # checked
         pages,path = self.SanitationEncounterData()
-    #    print(pages)
+
         try:
             for i in range(pages):
                 send_request = requests.get(self.base_url + path + '&page=' + str(i),headers={'AUTH-TOKEN': self.get_cognito_token()})
                 data = json.loads(send_request.text)['content']
                 if len(data) > 0:
                     for j in data:
-                        sanitation_data = self.map_sanitation_keys(j['observations'])
-                        sanitation_data.update({'submission_date': j['audit']['Last modified at']})
-                        self.update_rhs_data(j['Subject ID'], sanitation_data)
-                        self.followup_data_sanitation(j['Subject ID'], sanitation_data)
+                        if j['Voided'] == False:
+                            sanitation_data = self.map_sanitation_keys(j['observations'])
+                            sanitation_data.update({'submission_date': j['audit']['Last modified at']})
+                            self.update_rhs_data(j['Subject ID'], sanitation_data)
+                            self.followup_data_sanitation(j['Subject ID'], sanitation_data)
                 else: print('No data')
         except Exception as e:
             print(e)
@@ -627,9 +649,10 @@ class avni_sync():
                 send_request = requests.get(self.base_url + path + '&page=' + str(i),headers={'AUTH-TOKEN': self.get_cognito_token()})
                 data = json.loads(send_request.text)['content']
                 for j in data:
-                    water_data = self.map_water_keys(j['observations'])
-                    water_data.update({'Last_modified_date': j['audit']['Last modified at']})
-                    self.update_rhs_data(j['Subject ID'], water_data)
+                    if j['Voided'] == False:
+                        water_data = self.map_water_keys(j['observations'])
+                        water_data.update({'Last_modified_date': j['audit']['Last modified at']})
+                        self.update_rhs_data(j['Subject ID'], water_data)
         except Exception as e:
             print(e)
 
@@ -648,9 +671,10 @@ class avni_sync():
                 send_request = requests.get(self.base_url + path + '&page=' + str(i),headers={'AUTH-TOKEN': self.get_cognito_token()})
                 data = json.loads(send_request.text)['content']
                 for j in data:
-                    waste_data = self.map_waste_keys(j['observations'])
-                    waste_data.update({'Last_modified_date': j['audit']['Last modified at']})
-                    self.update_rhs_data(j['Subject ID'], waste_data)
+                    if j['Voided'] == False:
+                        waste_data = self.map_waste_keys(j['observations'])
+                        waste_data.update({'Last_modified_date': j['audit']['Last modified at']})
+                        self.update_rhs_data(j['Subject ID'], waste_data)
         except Exception as e:
             print(e)
 
@@ -669,9 +693,10 @@ class avni_sync():
                 send_request = requests.get(self.base_url + path + '&page=' + str(i),headers={'AUTH-TOKEN': self.get_cognito_token()})
                 data = json.loads(send_request.text)['content']
                 for j in data:
-                    tax_data  = j['observations']
-                    tax_data.update({'Last_modified_date': j['audit']['Last modified at']})
-                    self.update_rhs_data(j['Subject ID'], tax_data)
+                    if j['Voided'] == False:
+                        tax_data  = j['observations']
+                        tax_data.update({'Last_modified_date': j['audit']['Last modified at']})
+                        self.update_rhs_data(j['Subject ID'], tax_data)
         except Exception as e:
             print(e)
 
@@ -690,9 +715,10 @@ class avni_sync():
                 send_request = requests.get(self.base_url + path + '&page=' + str(i),headers={'AUTH-TOKEN': self.get_cognito_token()})
                 data = json.loads(send_request.text)['content']
                 for j in data:
-                    electricity_data = j['observations']
-                    electricity_data.update({'Last_modified_date': j['audit']['Last modified at']})
-                    self.update_rhs_data(j['Subject ID'],electricity_data)
+                    if j['Voided'] == False:
+                        electricity_data = j['observations']
+                        electricity_data.update({'Last_modified_date': j['audit']['Last modified at']})
+                        self.update_rhs_data(j['Subject ID'],electricity_data)
         except Exception as e:
             print(e)
 
@@ -744,53 +770,26 @@ class avni_sync():
                 elif RequestHouseholdRegistration.status_code == 200:
                     data = json.loads(RequestHouseholdRegistration.text)
                     self.registrtation_data(data)
-                    print(data)
+
                 else:
                     print(i,'uuid is not accesible')
             except Exception as e:
                 print(e)
 
     # methods for covid data >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-    
-    def create_coviddata_url(self):  # checked
-
-        latest_date = self.lastModifiedDateTime()
-        household_path = 'api/subjects?lastModifiedDateTime=' + latest_date + '&subjectType=Covid Survey'
-        result = requests.get(self.base_url + household_path, headers={'AUTH-TOKEN': self.get_cognito_token()})
-        get_text = json.loads(result.text)['content']
-        pages = json.loads(result.text)['totalPages']      
-        return (pages, household_path)
 
     
     def SaveCovidData(self): # checked
-        count = 0
-        pages,path = self.create_coviddata_url()
-        
-        for i in range(pages)[26:30]:
-
-            send_request = requests.get(self.base_url + path + '&page='+str(i) ,headers={'AUTH-TOKEN': self.get_cognito_token()})
-
-            get_HH_data = json.loads(send_request.text)['content']
-            
-            for j in get_HH_data:
-                if count<20:
-                    if j['Voided'] == False:
-                                    
-                        self.RegistrationCovidData(j)
-                else:
-                    break
-  
-
-    
+        self.SaveRhsData('covid')
 
     def ProcessCovidData(self, HH_data):
 
         covid_uuid = HH_data['ID']
         slum_name = HH_data['location']['Slum']
-        city_name = HH_data['location']['City']
+        slum_id, city_id =self.get_city_slum_ids(slum_name)
         audit = HH_data['audit']
-        date_of_survey = audit['Created at'][:10]
-        last_modified_date = audit['Last modified at'][:10]
+        date_of_survey = dateparser.parse(audit['Created at']).date()
+        last_modified_date = dateparser.parse(audit['Last modified at']).date()
 
         details = {}
 
@@ -846,26 +845,17 @@ class avni_sync():
         observation['date_of_survey'] = date_of_survey
         observation['last_modified_date'] = last_modified_date
 
-        slum_id_ = Slum.objects.filter(name = slum_name).values_list('id')[0][0]
-        city_id_ = CityReference.objects.filter(city_name = city_name).values_list('id')[0][0]
-        
         observation['Covid_uuid'] = covid_uuid
-
-        observation['city_id'] = city_id_;
+        observation['city_id'] = city_id;
 
         del observation['First name']
 
         if observation['Date of first dose.'] != None:
-            d = observation['Date of first dose.'][:10]
-            del observation['Date of first dose.']
-            observation['Date of first dose.'] = d   
+            observation['Date of first dose.'] = dateparser.parse(observation['Date of first dose.']).date()
 
         if observation['Date of second dose.'] != None:
-            d = observation['Date of second dose.'][:10]
-            del observation['Date of second dose.']
-            observation['Date of second dose.'] = d
-            
-        return (observation,slum_id_)
+            observation['Date of second dose.'] = dateparser.parse(observation['Date of second dose.']).date()
+        return (observation,slum_id)
 
     def RegistrationCovidData(self, HH_data):  # checked
        
@@ -875,7 +865,7 @@ class avni_sync():
             household_number1 = 9999
                   
         final_dict, self.slum = self.ProcessCovidData(HH_data)
-        
+
         try:
             c = CovidData(household_number=household_number1,
                            slum=Slum.objects.get(id = self.slum),
@@ -884,11 +874,11 @@ class avni_sync():
                            surveyor_name=final_dict['Name of the surveyor'],
                            date_of_survey=final_dict['date_of_survey'],
                            last_modified_date=final_dict['last_modified_date'],
-                           Family_member_name=final_dict['Family member name'],
+                           family_member_name=final_dict['Family member name'],
                            gender=final_dict['Gender'], age=final_dict['Age'],
-                           Addhar_number=final_dict['Aadhar number'],
-                           Do_you_have_any_other_disease=final_dict['Do you have any other disease'],
-                           If_any_then_which_disease=final_dict['If any then which disease'],
+                           aadhar_number=final_dict['Aadhar number'],
+                           do_you_have_any_other_disease=final_dict['Do you have any other disease'],
+                           if_any_then_which_disease=final_dict['If any then which disease'],
                            preganant_or_lactating_mother=final_dict['Are you pregnant or lactating mother?'],
                            registered_for_covid_vaccination=final_dict['Have you registered for covid vaccination?'],
                            registered_phone_number=final_dict['Registered Phone Number'],
@@ -898,10 +888,10 @@ class avni_sync():
                            take_second_dose=final_dict['Have you taken second dose?'],
                            second_dose_date=final_dict['Date of second dose.'],
                            corona_infected=final_dict['Have you even been infected with corona?'],
-                           If_corona_infected_days=final_dict[
+                           if_corona_infected_days=final_dict[
                                'If corona infected, how many days it had been since infection?'],
                            willing_to_vaccinated=final_dict['Are you willing to get vaccinated?'],
-                           If_not_why=final_dict['If not willing to take vaccine, why?'], Note=final_dict['Note'])
+                           if_not_why=final_dict['If not willing to take vaccine, why?'], note=final_dict['Note'])
 
             c.save()
             print("Record save successfully")
