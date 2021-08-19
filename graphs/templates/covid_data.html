@@ -1,0 +1,68 @@
+{%extends "admin/base_site.html"%}
+{% load static %}
+{% load custom_tags %}
+{% block extrahead%}
+
+<link rel = "stylesheet" type="text/css" href = "{% static "css/jquery.dataTables.min.css" %}">
+<link rel = "stylesheet" type="text/css" href = "{% static "css/ui.fancytree.min.css" %}">
+<link rel = "stylesheet" type="text/css" href = "{% static "css/master_report_stylesheet.css" %}">
+
+
+<script src = "{% static "js/jquery.dataTables.min.js" %}"></script>
+<script src = "{% static "js/dataTables.buttons.min.js" %}"></script>
+<script src = "{% static "js/buttons.html5.min.js" %}"></script>
+<script src = "{% static "js/jszip.min.js" %}"></script>
+<script src = "{% static "js/jquery.fancytree-all-deps.min.js" %}"></script>
+<script src = "{% static "js/load_covid_report.js" %}"></script>
+
+
+{% endblock %}
+{% block content %}
+<div class="overlay">
+    <div id="loading-img"></div>
+</div>
+<input id="export_mastersheet" type="hidden" value="{{perms.mastersheet.can_export_mastersheet_record}}"/>
+<div id = "show_dropdown" class = "show_dropdown display_line">
+	<button class="btn  btn-default toggle-button btn btn-info" type="button" onclick="showDropdown()">
+       <span class="topic-dropdown-text " >Everything</span>
+       <span class="caret"></span>
+    </button> 
+    <div id = "drop_tree" class="topic-dropdown-container" >
+    	<div >
+           <input type="text" id="filter_nodes" class = "display_line" onkeyup = "find_node()" placeholder="Type here to search">
+        </div>
+    	<div id = "city_list"></div>
+    	<button class="btn btn-sm btn-primary" style="margin: 5px 0px 0px 0px;" onclick = "closeFunction()">Close</button>		
+    </div>
+</div>
+<div class = "display_line">
+	<form class = " form-group form-inline form-horizontal display_line" id = "date_form">{% csrf_token %}
+	    <label>Start Date :<input class = "interval display_line" type = "date" id = "startDate" name="date" placeholder = "Start date"></label>
+	    <label>End Date :<input class = "interval display_line" type = "date" id = "endDate" name="date" placeholder = "End date"></label>
+	</form> 
+</div>   
+<div  id = "applyButton display_line">
+    <button class="btn btn-primary display_line" onclick = "changeDatatableLevel()">Apply</button>
+</div>
+
+
+
+
+<div id = "radioForm" class="radio display_line" >
+  <label><input id = "slum" type="radio" name="optradio"  value = "slum" onclick="changeDatatableLevel()">Slum</label>
+  <label><input id = "electoral_ward" type="radio" name="optradio" onclick="changeDatatableLevel()">Electoral ward</label>
+  <label><input id = "admin_ward" type="radio" name="optradio" onclick="changeDatatableLevel()">Administrative ward</label>
+  <label><input id = "city" value = 'city' type="radio" name="optradio" onclick="changeDatatableLevel()" checked>City</label>
+</div>
+ {% if request.user|has_group:"Account" == True %}
+<div>
+  
+  <h2>COVID Data</h2>
+  <div id = "report_table_covid_div"><!--Comparative data between accounts and toilet construction-->
+    <table id="report_table_covid" class="display" width="100%" cellspacing="0"></table>
+  </div>
+
+</div>
+{%endif%} 
+{%endblock%}
+

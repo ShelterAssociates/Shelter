@@ -192,7 +192,6 @@
 		nodesForLevel['keys'] = temp;
 	 	tag_key_dict = nodesForLevel;
 		load_report_table();
-
 	}
 	function load_report_table(){
 		total_counts = [{

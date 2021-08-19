@@ -1,4 +1,5 @@
 from __future__ import division
+from re import S
 from django.shortcuts import render
 from django.conf import settings
 from django.contrib.auth.decorators import login_required
@@ -11,6 +12,17 @@ from graphs.models import *
 from master.models import *
 import json
 from django.db.models import Q
+
+
+from django.views.decorators.csrf import csrf_exempt
+from utils.utils_permission import apply_permissions_ajax
+from django.db.models import Count, F
+from django.contrib.auth.models import Group
+from collections import defaultdict
+from mastersheet.models import *
+
+
+
 
 CARDS = {'Cards': {'General':[{'slum_count':'Slum count'},{'gen_avg_household_size':"Avg Household size"}, {'gen_tenement_density':"Tenement density (Huts/Hector)"},
                     {'household_owners_count':'Superstructure Ownership'}],
@@ -425,3 +437,248 @@ def dashboard_all_cards(request,key):
 
     result = get_data(key)
     return HttpResponse(json.dumps(result), content_type='application/json')
+
+
+def covid_data(request):
+    
+    return render(request, 'covid_data.html')
+
+
+@csrf_exempt
+@apply_permissions_ajax('mastersheet.can_view_mastersheet_report')
+def give_report_covid_data(request):  # view for covid data
+    tag_key_dict = json.loads(request.body)
+ 
+    tag = tag_key_dict['tag']     # tag => city
+    
+    keys = tag_key_dict['keys']    # key => slum_id
+  
+    group_perm = request.user.groups.values_list('name', flat=True)
+    if request.user.is_superuser:
+        group_perm = Group.objects.all().values_list('name', flat=True)
+    group_perm = map(lambda x: x.split(':')[-1], group_perm)
+
+    keys = Slum.objects.filter(id__in=keys,
+                                electoral_ward__administrative_ward__city__name__city_name__in=group_perm).values_list(
+         'id', flat=True) # keys => slum_id
+  
+    
+    start_date = tag_key_dict['startDate']
+    end_date = tag_key_dict['endDate']
+
+    if start_date == None or end_date == None:
+        start_date = datetime.datetime(2001, 1, 1).date()
+        end_date = datetime.datetime.today().date()
+    else:
+        start_date = datetime.datetime.strptime(tag_key_dict['startDate'], "%Y-%m-%d").date()
+        end_date = datetime.datetime.strptime(tag_key_dict['endDate'], "%Y-%m-%d").date()
+
+
+    query_on = {'household_number': 'total_hh_m'}
+ 
+    level_data = {
+        'city':
+            {
+                'city_name': F('slum__electoral_ward__administrative_ward__city__name__city_name'),
+                'level': F('slum__electoral_ward__administrative_ward__city__name__city_name'),
+                'level_id': F('slum__electoral_ward__administrative_ward__city__id')
+            },
+        'admin_ward':
+            {
+                'city_name': F('slum__electoral_ward__administrative_ward__city__name__city_name'),
+                'level': F('slum__electoral_ward__administrative_ward__name'),
+                'level_id': F('slum__electoral_ward__administrative_ward__id')
+            },
+        'electoral_ward':
+            {
+                'city_name': F('slum__electoral_ward__administrative_ward__city__name__city_name'),
+                'level': F('slum__electoral_ward__name'),
+                'level_id': F('slum__electoral_ward__id')
+            },
+        'slum':
+            {
+                'city_name': F('slum__electoral_ward__administrative_ward__city__name__city_name'),
+                'level': F('slum__name'),
+                'level_id': F('slum__id')
+            }
+    }
+
+    report_table_data = defaultdict(dict)
+    
+    for query_field in query_on.keys():
+        if query_field in ['household_number']:
+            filter_field = {'slum__id__in': keys, 'date_of_survey__range': [start_date, end_date],
+                            query_field + '__isnull': False}
+        else:
+            filter_field = {'slum__id__in': keys, query_field + '__range': [start_date, end_date]}
+        count_field = {query_on[query_field]: Count('level_id')}
+        
+        tc = CovidData.objects.filter(**filter_field)\
+            .exclude(household_number = 9999) \
+            .annotate(**level_data[tag]).values('level', 'level_id', 'city_name', 'city')\
+            .annotate(**count_field).distinct().order_by('city_name')
+        
+
+        tc = {obj_ad['level_id']: obj_ad for obj_ad in tc}
+        for level_id, data in tc.items():
+            report_table_data[level_id].update(data)
+
+        h_num = dict()
+        tm = CovidData.objects.filter(**filter_field) \
+            .exclude(household_number = 9999) \
+            .annotate(**level_data[tag]).values('level_id','household_number', 'slum', 'city').distinct()
+   
+        for i in tm:
+            
+            if 'total_sw_hh' in report_table_data[i['level_id']]:
+                report_table_data[i['level_id']]['total_sw_hh'] += 1
+            else:
+                report_table_data[i['level_id']]['total_sw_hh'] = 1
+            
+            h = HouseholdData.objects.filter(household_number = i['household_number'], slum__id = i['slum'], city__id = i['city']).values_list('rhs_data')
+            
+            for j in h:
+                h_oc = j[0]["Type_of_structure_occupancy"]
+
+                if h_oc == 'Occupied house':
+                    if 'total_oc_hh' in report_table_data[i['level_id']]:
+                        report_table_data[i['level_id']]['total_oc_hh'] += 1
+                    else:
+                        report_table_data[i['level_id']]['total_oc_hh'] = 1
+        
+        for t in tc:
+
+            report_table_data[t]['2_dose_done_18_44'] = 0    # for second dose done in age between 18 to 44
+            report_table_data[t]['1_dose_done_18_44'] = 0    # for second dose done in age between 18 to 44
+            report_table_data[t]['total_intrested_18_44'] = 0   # for total intrested in age between 18 to 44
+            report_table_data[t]['total_n_intrested_18_44'] = 0  # for total not intrested in age between 18 to 44
+            report_table_data[t]['total_1_dose_45'] = 0           # for first dose done  age 45+
+            report_table_data[t]['total_2_dose_45'] = 0           # for second dose done age 45+
+            report_table_data[t]['total_intrested_45'] = 0        # for total intrested age 45+
+            report_table_data[t]['total_n_intrested_45'] = 0
+            report_table_data[t]['total_intrested'] = 0
+            report_table_data[t]['total_n_intrested'] = 0
+            report_table_data[t]['total_1_dose_elg_18_44'] = 0
+            report_table_data[t]['total_1_dose_elg_abv_45'] = 0
+
+            report_table_data[t]['total_hh'] = 0      # for Total Household
+            report_table_data[t]['pr'] = 0            # for Percentage
+            l = tc[t]['level_id']
+            sw_hh = report_table_data[t]['total_sw_hh']
+            oc_hh = report_table_data[t]['total_oc_hh']
+            
+            if tag  == 'city':
+                th_ = HouseholdData.objects.filter(slum__electoral_ward__administrative_ward__city__id = l).values('household_number')
+            elif tag == 'admin_ward':
+                th_ = HouseholdData.objects.filter(slum__electoral_ward__administrative_ward__id = l).values('household_number')
+            elif tag == 'electoral_ward':
+                th_ = HouseholdData.objects.filter(slum__electoral_ward__id = l).values('household_number')
+            elif tag == 'slum':
+                th_ = HouseholdData.objects.filter(slum__id = l).values('household_number')
+            
+            report_table_data[t]['total_hh']+= len(th_)
+
+            per = (sw_hh/oc_hh)*100
+            pr = "{:.3f}".format(per)
+            report_table_data[t]['pr'] = pr
+
+        
+        
+        # for age columns
+
+        ag_m = CovidData.objects.filter(**filter_field) \
+            .exclude(household_number = 9999) \
+            .annotate(**level_data[tag]).values('level_id','household_number', 'slum', 'city', 'age', 'id')
+        
+        for i in ag_m:
+            ag = i['age']
+            if ag is not None:
+                if ag < 18:
+                    if 'total_blw_18' in report_table_data[i['level_id']]:
+                        report_table_data[i['level_id']]['total_blw_18'] += 1
+                    else:
+                        report_table_data[i['level_id']]['total_blw_18'] = 1
+                
+                elif ag < 45:
+                    if 'total_18_44' in report_table_data[i['level_id']]:
+                        report_table_data[i['level_id']]['total_18_44'] += 1
+                    else:
+                        report_table_data[i['level_id']]['total_18_44'] = 1
+
+                    id_ = i['id']
+                    ag_d = CovidData.objects.filter(id = id_).values_list('take_first_dose', 'take_second_dose', 'willing_to_vaccinated')
+                    first_dose = ag_d[0][0]
+                    sec_dose = ag_d[0][1]
+                    intrested = ag_d[0][2]
+
+                    if first_dose == 'Yes':
+                        report_table_data[i['level_id']]['1_dose_done_18_44'] += 1
+                        
+                    else:
+                        report_table_data[t]['total_1_dose_elg_18_44'] += 1
+
+                    if sec_dose == 'Yes':
+                        report_table_data[i['level_id']]['2_dose_done_18_44'] += 1
+                    
+
+
+                    if intrested == 'Yes':
+                        if first_dose == 'Yes' or sec_dose == 'Yes':
+                            pass
+                        else:
+                            report_table_data[i['level_id']]['total_intrested_18_44'] += 1
+                            report_table_data[i['level_id']]['total_intrested'] += 1
+                    else:
+                        if first_dose == 'Yes' or sec_dose == 'Yes':
+                            report_table_data[i['level_id']]['total_intrested_18_44'] -= 1
+                            report_table_data[i['level_id']]['total_intrested'] -= 1
+
+                            report_table_data[t]['total_n_intrested_18_44'] += 1
+                            report_table_data[t]['total_n_intrested'] += 1
+                        else:
+                            report_table_data[t]['total_n_intrested_18_44'] += 1
+                            report_table_data[t]['total_n_intrested'] += 1
+                
+                elif ag >= 45:
+                    if 'total_abv_45' in report_table_data[i['level_id']]:
+                        report_table_data[i['level_id']]['total_abv_45'] += 1
+                    else:
+                        report_table_data[i['level_id']]['total_abv_45'] = 1
+
+                    id_ = i['id']
+                    ag_d = CovidData.objects.filter(id = id_).values_list('take_first_dose', 'take_second_dose', 'willing_to_vaccinated')
+                    first_dose = ag_d[0][0]
+                    sec_dose = ag_d[0][1]
+                    intrested = ag_d[0][2]
+                
+
+                    if first_dose == 'Yes':
+                        report_table_data[i['level_id']]['total_1_dose_45'] += 1
+                    else:
+                        report_table_data[t]['total_1_dose_elg_abv_45'] += 1
+            
+                    
+                    if sec_dose == 'Yes':
+                        report_table_data[i['level_id']]['total_2_dose_45'] += 1
+
+                    if intrested == 'Yes':
+                        if first_dose == 'Yes' or sec_dose == 'Yes':
+                            pass
+                        else:
+                            report_table_data[i['level_id']]['total_intrested_45'] += 1
+                            report_table_data[i['level_id']]['total_intrested'] += 1                
+                    else:
+                        if first_dose == 'Yes' or sec_dose == 'Yes':
+                            report_table_data[i['level_id']]['total_intrested_45'] -= 1
+                            report_table_data[i['level_id']]['total_intrested'] -= 1
+
+                            report_table_data[t]['total_n_intrested_45'] += 1
+                            report_table_data[t]['total_n_intrested'] += 1
+                        else:
+                            report_table_data[t]['total_n_intrested_45'] += 1
+                            report_table_data[t]['total_n_intrested'] += 1
+
+
+    return HttpResponse(json.dumps(list(map(lambda x: report_table_data[x], report_table_data))),
+                        content_type="application/json")
+
