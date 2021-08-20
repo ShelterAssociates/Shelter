@@ -129,8 +129,15 @@
 	}
 
 	function load_report_covid(){
+
+		btn_default = [
+			{
+				extend: 'excel',
+				text: 'Excel',
+			}
+	   ];
 		if($("#export_mastersheet").val()=="False"){
-			btn_default=[];
+
 		}
 		tag_key_dict['startDate'] = $("#startDate").val();
 		tag_key_dict['endDate'] = $("#endDate").val();

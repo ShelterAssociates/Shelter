@@ -4,15 +4,20 @@ from django.shortcuts import render
 from django.conf import settings
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import get_object_or_404
-from django.http import HttpResponse
+from django.http import HttpResponse 
 from itertools import groupby
 from django.db.models import Avg,Sum,Count
 from collections import OrderedDict
 from graphs.models import *
 from master.models import *
 import json
+
 from django.db.models import Q
 
+import csv
+
+
+from sponsor.models import *
 
 from django.views.decorators.csrf import csrf_exempt
 from utils.utils_permission import apply_permissions_ajax
@@ -439,6 +444,7 @@ def dashboard_all_cards(request,key):
     return HttpResponse(json.dumps(result), content_type='application/json')
 
 
+
 def covid_data(request):
     
     return render(request, 'covid_data.html')
@@ -682,3 +688,101 @@ def give_report_covid_data(request):  # view for covid data
     return HttpResponse(json.dumps(list(map(lambda x: report_table_data[x], report_table_data))),
                         content_type="application/json")
 
+
+# for tase to generate csv file
+
+def factsheetData(request):
+
+    return render(request, 'factsheet_data.html')
+
+def factsheetDataDownload(request):         #     function for city wise factsheet data download.
+    
+    if request.method == 'POST':
+        c_id = request.POST.get('City')
+        startdate = request.POST.get('startdate')
+        enddate = request.POST.get('enddate')
+    
+    a, city_name = cityWiseQuery(c_id, startdate, enddate)
+
+    filename = city_name+'.csv'
+    
+    response = HttpResponse(content_type='text/csv')
+    response['Content-Disposition']  =  'attachment; filename='+filename
+
+    writer = csv.DictWriter(response, ['Household_number', 'Slum Name', 'Total_family_members', 'Male_members', 'Female_members', 'Below 5 years', 'Between_0_to_18', 'Above 60 years', 'disable_members', 'Toilet Connected To.', 'Have You Upgraded ?', 'Cost Of Upgradetion?', 'Sponsor Name'])
+    writer.writeheader()
+    writer.writerows(a)
+
+    return response
+
+def cityWiseQuery(city_id, startdate, enddate):
+    all=[]
+    city = CityReference.objects.filter(id = City.objects.filter(id = city_id).values_list('name_id')[0][0]).values_list('city_name')[0][0]
+
+    construction_pocket = ToiletConstruction.objects.filter(slum__electoral_ward__administrative_ward__city__id = city_id, completion_date__range= [startdate, enddate])
+
+    household_list = HouseholdData.objects.filter(city_id = city_id).values_list('household_number',flat= True)
+    fff_data = HouseholdData.objects.filter(ff_data__isnull=False,city_id =city_id)
+
+    family_factsheet_available = fff_data.values_list('household_number',flat= True)
+
+
+    for i in fff_data:
+        for j in construction_pocket :
+            if i.household_number == j.household_number and i.slum_id == j.slum_id :
+                family_data = {}
+                family_data.update({'Household_number': i.household_number})
+
+                sp = SponsorProjectDetails.objects.filter(slum_id = i.slum_id).values_list('household_code', 'sponsor_id')
+                sp_name = ""
+                for i1 in sp:
+                    if int(i.household_number) in i1[0]:
+                        sp_name = Sponsor.objects.filter(id = i1[1]).values_list('organization_name', flat=True)[0]
+                        break
+
+                if sp_name == "":
+                    family_data.update({'Sponsor Name': "Funder Not Assign"})
+                else:
+                    family_data.update({'Sponsor Name': sp_name})
+
+                slum_name = Slum.objects.filter(id = i.slum_id).values_list('name',flat = True)[0]
+
+                
+                family_data.update({'Slum Name': slum_name})
+                ff_keys = i.ff_data.keys()
+                if 'group_im2th52/Total_family_members' in ff_keys:
+                    family_data.update({'Total_family_members': i.ff_data['group_im2th52/Total_family_members']})
+
+                if 'group_im2th52/Number_of_members_over_60_years_of_age' in ff_keys:
+                    family_data.update({'Above 60 years': i.ff_data['group_im2th52/Number_of_members_over_60_years_of_age']})
+                elif 'group_im2th52Number_of_members_over_60_years_of_age' in ff_keys:
+                    family_data.update({'Above 60 years': i.ff_data['group_im2th52Number_of_members_over_60_years_of_age']})
+
+                if 'group_im2th52/Number_of_disabled_members' in ff_keys:
+                    family_data.update({'disable_members': i.ff_data['group_im2th52/Number_of_disabled_members']})
+
+                if 'group_im2th52/Number_of_Male_members' in ff_keys:
+                    family_data.update({'Male_members': i.ff_data['group_im2th52/Number_of_Male_members']})
+
+                if 'group_im2th52/Number_of_Female_members' in ff_keys:
+                    family_data.update({'Female_members': i.ff_data['group_im2th52/Number_of_Female_members']})
+
+                if 'group_im2th52/Number_of_Girl_children_between_0_18_yrs' in ff_keys:
+                    family_data.update({'Between_0_to_18': i.ff_data['group_im2th52/Number_of_Girl_children_between_0_18_yrs']})
+
+                if 'group_im2th52/Number_of_Children_under_5_years_of_age' in ff_keys:
+                    family_data.update({'Below 5 years': i.ff_data['group_im2th52/Number_of_Children_under_5_years_of_age']})
+                
+                if 'group_ne3ao98/Have_you_upgraded_yo_ng_individual_toilet' in ff_keys:
+                    family_data.update({'Have You Upgraded ?': i.ff_data['group_ne3ao98/Have_you_upgraded_yo_ng_individual_toilet']})
+                
+                if 'group_ne3ao98/Cost_of_upgradation_in_Rs' in ff_keys:
+                    family_data.update({'Cost Of Upgradetion?': i.ff_data['group_ne3ao98/Cost_of_upgradation_in_Rs']})
+                
+                if 'group_ne3ao98/Where_the_individual_ilet_is_connected_to' in ff_keys:
+                    family_data.update({'Toilet Connected To.': i.ff_data['group_ne3ao98/Where_the_individual_ilet_is_connected_to']})
+                
+                all.append(family_data)
+
+
+    return all, city

@@ -1,0 +1,57 @@
+{%extends "admin/base_site.html"%}
+{% load static %}
+{% load custom_tags %}
+{% block extrahead%}
+
+<script src = "{% static "js/load_data.js" %}"></script>
+
+{% endblock %}
+
+
+{% block content %}
+<style>
+    form{
+        text-align: center;
+    }
+</style>
+
+<div>
+    <form method="post" action="{% url  'factsheetDataDownload' %}">
+        {% csrf_token %}
+        <table>
+            <tr>
+                <td>
+                    <label >Select City : </label>
+                </td>
+                <td>
+                    <select name="City" id="id_City">
+                        <option value="0">---select---</option>
+                        <option value="4">Kolhapur</option>
+                        <option value="2">Sangli</option>
+                        <option value="3">PCMC</option>
+                        <option value="13">Pune District</option>
+                        <option value="8">Thane</option>
+                        <option value="6">Navi Mumbai</option>
+                        <option value="1">Pune</option>
+                        <option value="14">Panvel</option>
+                    </select>
+                </td>
+            </tr>
+            <tr>
+                <td><label>Start Date :</label></td>
+                <td><input class = "interval display_line" type = "date" id = "startDate" name="startdate" placeholder = "Start date"></td>
+            </tr>
+            <tr>
+                <td><label>End Date :</label></td>
+                <td><input class = "interval display_line" type = "date" id = "endDate" name="enddate" placeholder = "End date"></td>
+            </tr>
+            <tr>
+                <td>
+                    <input type = 'submit' >
+                </td>
+            </tr>
+                
+        </table>
+    </form>
+</div>
+{%endblock%}
