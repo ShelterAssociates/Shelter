@@ -444,6 +444,7 @@ def dashboard_all_cards(request,key):
     return HttpResponse(json.dumps(result), content_type='application/json')
 
 
+
 def covid_data(request):
     
     return render(request, 'covid_data.html')
