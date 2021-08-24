@@ -16,7 +16,6 @@ import dateutil.parser
 import itertools
 
 
-
 direct_encountes =['Sanitation','Property tax','Water','Waste','Electricity','Daily Mobilization Activity']
 program_encounters =['Daily Reporting','Family factsheet']
 
@@ -55,17 +54,17 @@ class avni_sync():
         # get latest submission
         # date from household table and pass it to url
         last_submission_date = HouseholdData.objects.latest('submission_date')
-        latest_date = last_submission_date.submission_date + timedelta(days=1)
-        #today = datetime.today()+ timedelta(days= -1)
-        iso_format_next = latest_date.strftime('%Y-%m-%dT00:00:00.000Z')
-        iso = "2021-06-09T00:00:00.000Z"
-
-        return(iso)
+        #latest_date = last_submission_date.submission_date + timedelta(days=1)
+        today = datetime.today() #+ timedelta(days= -1)
+        latest_date = today.strftime('%Y-%m-%dT00:00:00.000Z')
+        iso = "2021-08-22T00:00:00.000Z"
+        return(latest_date)
+        #return(iso)
 
     def get_image(self,image_link):
         path = 'https://app.avniproject.org/media/signedUrl?url='
         request_1 = requests.get( path + image_link, headers={'AUTH-TOKEN': self.get_cognito_token()})
-        print(request_1.status_code)
+        #print(request_1.status_code)
         return request_1.text
 
     def map_rhs_key(self,a,b):
@@ -403,8 +402,8 @@ class avni_sync():
                     if data['observations']['Use of toilet'] != None:
                         use_of_toilet = factsheet_done_date
                 else: use_of_toilet = None
-                factsheetDate.update(factsheet_done = factsheet_done_date,toilet_connected_to =toilet_connected_to,
-                                     use_of_toilet = use_of_toilet )
+                #factsheetDate.update(factsheet_done = factsheet_done_date,toilet_connected_to =toilet_connected_to,
+                               #      use_of_toilet = use_of_toilet )
                 print('FF record updated for', slum_name, HH)
             else:
                 ff_data = {}
@@ -429,8 +428,8 @@ class avni_sync():
                     if data['observations']['Use of toilet'] != None:
                         use_of_toilet = factsheet_done_date
                 else: use_of_toilet = None
-                factsheetDate.update(factsheet_done = factsheet_done_date,toilet_connected_to =toilet_connected_to,
-                                     use_of_toilet = use_of_toilet)
+                #factsheetDate.update(factsheet_done = factsheet_done_date,toilet_connected_to =toilet_connected_to,
+                 #                    use_of_toilet = use_of_toilet)
                 print('FF record updated for', slum_name, HH)
         except Exception as e:
             print(e)
@@ -724,13 +723,13 @@ class avni_sync():
 
     def SaveDataFromIds(self):
         
-        IdList=['245d77b2-b742-4720-8b86-8a1b3d4bdb20']
+        IdList=['ff01ddee-57e5-4e5e-ae61-10bfe1f50dae','1f688383-0972-4cb1-9075-8604ae78a9c9']
+#'cb4b3352-df75-437a-ad8f-1cf83ad39754','5c892e8c-123c-45b5-a003-c7e5d267cb8f','123be2dc-6047-4082-8f69-c54ba6115b58','fa3b841d-5894-4e9f-b31b-70159ac2ba5e','79454bf4-7e52-4b78-a223-8158630b10b6','248fac67-e5f7-4ca0-9b00-f1cdea81d3c9','7a7db578-6303-4972-942b-3b0f828fc074','d04ab3fa-3428-41d8-b426-14a1546e62e7','3180e7f2-dd5c-4ee7-be4c-4ff11edba97c','e0819ac6-a2d5-4229-b954-0cb0f5e65f64','cfc67cc0-9297-4e90-80e0-be9bb4aee1b4','1905550b-6bab-4939-8a52-fe4e3a97cbcd','5c8ffd59-79e6-4676-9c50-ba8bbec7974b','e71ca862-4182-4646-b951-2b7e3bddbe28','0342d7a8-3377-4946-a6e8-c7161c055945','b17bc42f-1cd9-4193-aab5-5933f630a30e','65ccf558-02d6-4cee-9b7c-82b2afbc2332','1fb89df8-4603-4201-b993-03b2e5beec27','2f750752-21f4-416b-8246-8e36ae4afddd','a4d123fc-02e4-4707-bd57-11f35357c99f','efcc50b1-fabe-4378-925c-dc9945d586e1','ab610c8b-77a7-4b4e-a4f1-3f79647bd0f6','a4f9a355-6ee0-42cb-bb4e-be2d5ffc5878','90e28c39-7ee4-4d01-9edb-972e7852dd90','3d734073-7562-4bf9-b5ca-aa3bdedd5f3b','d793e14c-f7b4-4ff7-9893-b14310b05ce9','7de3a02c-f159-440a-98ce-ac22de1d9d6b','187c5394-c1dd-4e7a-bcf1-e9713db45d47','d6ff1202-110d-40f6-b3bd-cd1d464f78b3','e0b25a03-cee1-45f8-8688-381f7dfb2a7f','45795617-4fbf-41ec-aaca-40d80b54c30b','0b2405bd-1a59-46c5-b20e-a6469c1dfc3b','e8064409-d87e-4856-a227-d7c9c0560937','cca1d574-da0d-4810-8803-2ca05e8be49d','d1074ac8-7c86-441f-92cc-bb0c3f66173c','976c4bea-510b-4d67-af98-79d8881b8b41','b0f46d28-3373-4c85-9817-de2a06a19d6b','6936b1da-2eab-43b8-8c74-e72621e2e5cf','4b49468e-a274-4ac2-a53c-8796ff624461','2481991d-57c3-49a1-800a-39eb845c582e','ef524439-6785-493e-a6ff-a23e812b2b7e','60a94bc3-1148-4697-b669-69d584ac89fa','c6fd0d1d-ecb1-4017-ad56-f186b4c9bf4a','9462520e-33ea-4346-9853-d3b3579da0f9','b54b770e-9839-490e-81e3-7eba945e5906','c8a1048f-e916-49be-a49a-be0d63a3b722','41533ff5-c1ec-48d6-a005-498fcabd8892','51e1d5bb-0a23-4ea1-809c-4f41620052e3','d756c36d-54cf-4afd-8e73-5fe1e2e6d7b1','a9b2ae0c-f05b-4334-b784-20ef98c8b6c2','8ff64b60-cbec-4890-9435-77e1c470ab12','e3e55c7a-75da-46ff-9eac-cd3505066da0','c3680aee-bda6-4173-80a2-d6025f154b7c','4e191c26-2bae-40d5-a935-a99e768179e0','0c7476bc-d6d3-4868-85eb-284d7036445d','61eab44d-57fb-447b-823c-38fa67ddca58','34f84a48-e870-4b22-99de-78e162d47db1','945d577e-dcc7-4c3c-9088-9d3b6a4dbf19','f311b62c-3b66-42dd-b87b-6b3b907e3d2e','b3563493-1495-42aa-9961-9a4198f9b17b','e0daf6f8-433a-4101-9e5d-29f362042575','d8a3a5f3-d700-4a87-a1af-6ee074b4a0b6','1fb2da32-307b-4352-b550-7eb3117c590b','bca42c5c-8d51-4a94-bd37-731b5a9199c0','32e44656-a36a-44ce-98a4-e8b991fb5dd0','40cd3c6b-de33-47bf-99ba-9b29f22e1c45','3b4df49b-6228-4a59-a03d-4fb29ca0afb5','7f013b5f-480b-43fa-aa80-0b62b2e3135e','aecfe378-2e1d-42e7-8132-68dc02a4597a','6b33b3d6-f3f0-4c25-98e7-6d76dfaebc53','1ac2fae3-26d4-45db-87ff-b86f75d1cfaa','b73e9a3f-43e4-4104-8dbe-447e6daefffd','90104b51-2dee-420c-bd22-e954b35b5261','8948f54e-bc63-4ec8-beb3-dee329e12831','196e4a9c-82ce-4598-9927-9bb528ba1ba1','b3e3f431-8235-435d-bfaf-83ebea401368','302f155a-188c-44ce-bd57-1909b29b9bda','c93104ed-824c-4493-9ca9-3fa3c5e8cfb8','e689ea70-42ac-4d68-8a33-62e0e59d8905','06a833e9-7dbc-4901-99d6-999866b2a4a4','5f3f2b34-d299-4f5f-b30a-59a86a9ab5e1','bb5e8f82-b66b-4ba8-b7f2-8ac2470568e8','175f5dcc-949d-4f54-96e4-508a155971db','1b3e5719-51ef-4c9b-b682-651aca5b36b0','f9fcdba2-88d1-4c8f-9606-80c5c112e799','01a5f355-f740-4f00-824a-6af079312a74','87552e09-a211-4943-99b9-ddf4857d749f','098f156e-fd05-4f86-9943-7e4c2d414f23','fdda4996-6104-49cf-952e-3fc4aa87305a','9a99ce63-35e7-4623-9f5b-25af397d249e','2306a51d-b69a-4109-940f-db60d27db4fc','d65aa44d-9529-46d7-9ca5-d2ba48efc988','3e967058-7b10-4078-be81-d9480fb5b53f','eee010d6-d257-4eb6-bc73-9d1dd4f59d56','92a69ac3-58e0-4ecf-b532-04c81bf7cbd1','350b0733-ef1c-4350-9c44-cdd06b1b5a26','65d97502-87ca-4b37-ad8e-a6a70254f230','d3193c63-a2fb-4c18-98b5-ad6f15e3caf5','600a7de1-148c-4533-9c63-52b77b11ed69','f3ab750f-e9f4-4c04-aa88-e69cb5cf3cef','c3ac2adc-8153-44aa-952a-f4f20f579f2e','e5b52f2b-3ad4-481d-bff7-f7f4bb7da5a6','fe2c177a-5686-454c-be31-9d6e6d91b5d0','ac2e2e13-8cbb-4292-b5d0-8c8b6ef8276d','5eebee48-bb47-409f-8c08-47e1b6970afa','2033be83-747b-4018-b712-87892da9066a','180d0497-efa9-47b0-bdba-07e9976c613c','522e9365-126f-42bb-888f-56f0a69fec70','c65c27bf-aa83-4a10-9b6d-0ef36fb11841','12cfd08b-64f4-4c22-a977-386275eb78be','75f529a2-34c4-4570-8b9d-301301977a32','61241e1e-2252-4dda-943e-79d4bbb3e126','0368f151-d420-4639-88fe-b101e75f5a5a','ed69c318-d972-4503-b412-b3a577f24ce3','a79b58af-ed83-4fee-972a-b1ee1fcf4aa4','f16afdd5-888b-471c-a6ec-80355e64562f','da47a005-fdaf-4730-9870-7332500ecf21','c0f92cf7-611a-443a-9586-988d9b0614e3','4ea4c47a-98e9-4807-9502-a9a484cd4b1c','bc618cda-c18c-4067-9b56-15260045be07','d98c5381-cf06-40dc-8f8e-4cbade4dad82','407b074e-9290-4933-a88d-4563256d8a1a','e2a698f8-6dec-4eed-b113-c8c8b18752bb','62c9fae4-1244-46dc-87c9-f17403c59b1b','00daf6f6-a08e-4f67-885a-b08d20f6e4ba','aafacd53-2914-4dc4-99da-ec07448a0596','a994cdab-197d-4fe6-9ced-3b46f7d4dba0','0845cb07-8925-4e81-a976-6b65c7b4131f','f28634dc-3bbc-48cf-9dda-19409e2b1150','ebf24d9a-5574-4f22-9dd5-cfaa60448c71','ec89adce-37ba-40be-b6c3-bf63c672559b','3becceb2-76f5-4b6b-b943-78f5aef72347','c6217683-42b6-4ab5-8215-ef0acec622cf','3c34453a-d4d9-4a1b-ac08-4f08729665cd','4b42f858-fed8-4b71-aac9-69e47632b73e','9c606d7d-d7a7-40cc-a543-e9920db0f235','c0c3b6f0-3eda-4fbd-810a-59a07e21a6da','05d47439-c431-412e-8119-fe2126b6b22d','1620dbbf-92a6-4a3f-b10c-1bdd2814e4ab','53b568bb-c1e3-4f4a-9699-d73625a23f61','4b778b8e-8e47-45e3-b0c0-0774c515921d','ea498980-0d80-4af7-af7d-8252764e73a1','6f388f76-8001-4c94-9e20-b962790ce42c','36b7685c-e45d-4e3e-a3d3-38fe84b83fc9','28be0587-805d-43fd-898c-92f743e50f0d']
         for i in IdList:
             try :
                 RequestProgramEncounter = requests.get(self.base_url + 'api/programEncounter/' + i ,headers={'AUTH-TOKEN': self.get_cognito_token()})
                 RequestEncounter= requests.get(self.base_url + 'api/encounter/' + i ,headers={'AUTH-TOKEN': self.get_cognito_token()})
                 RequestHouseholdRegistration = requests.get(self.base_url + 'api/subject/' + i ,headers={'AUTH-TOKEN': self.get_cognito_token()})
-
                 print(RequestHouseholdRegistration.status_code)
                 if RequestProgramEncounter.status_code == 200:
                     data = json.loads(RequestProgramEncounter.text)
@@ -769,8 +768,11 @@ class avni_sync():
                         self.CommunityMobilizationActivityData(data['observations'],self.slum,self.HH) #CommunityMobilization
                 elif RequestHouseholdRegistration.status_code == 200:
                     data = json.loads(RequestHouseholdRegistration.text)
-                    self.registrtation_data(data)
-
+                    #print(data)
+                    if data['Subject type'] =='Household':
+                       self.registrtation_data(data)
+                    if data['Subject type'] == 'Covid Survey':
+                       self.RegistrationCovidData(data)
                 else:
                     print(i,'uuid is not accesible')
             except Exception as e:
@@ -894,7 +896,7 @@ class avni_sync():
                            if_not_why=final_dict['If not willing to take vaccine, why?'], note=final_dict['Note'])
 
             c.save()
-            print("Record save successfully")
+            print("Record save successfully",self.slum)
 
         except Exception as e:
             print(e)
