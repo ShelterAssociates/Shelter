@@ -724,7 +724,7 @@ class avni_sync():
 
     def SaveDataFromIds(self):
         
-        IdList=['245d77b2-b742-4720-8b86-8a1b3d4bdb20']
+        IdList=['be748b4f-47f4-49d5-8632-8641de937ef8']
         for i in IdList:
             try :
                 RequestProgramEncounter = requests.get(self.base_url + 'api/programEncounter/' + i ,headers={'AUTH-TOKEN': self.get_cognito_token()})
@@ -858,7 +858,8 @@ class avni_sync():
         return (observation,slum_id)
 
     def RegistrationCovidData(self, HH_data):  # checked
-       
+        slum_name1 = HH_data['location']['Slum']
+
         if len(HH_data['Groups']) > 0:
             household_number1 = self.SaveCovidDataFromIds1(HH_data['Groups'])
         else:
@@ -894,7 +895,7 @@ class avni_sync():
                            if_not_why=final_dict['If not willing to take vaccine, why?'], note=final_dict['Note'])
 
             c.save()
-            print("Record save successfully")
+            print("Record for "+ slum_name1 + " and household number ", household_number," save successfully")
 
         except Exception as e:
             print(e)
@@ -909,7 +910,16 @@ class avni_sync():
                                                             headers={'AUTH-TOKEN': self.get_cognito_token()})
             if RequestHouseholdRegistration.status_code == 200:
                 data = json.loads(RequestHouseholdRegistration.text)
+
+                s_id = Slum.objects.filter(name = data['location']['Slum']).values_list('id', flat = True)[0]
+                cn_id = CityReference.objects.filter(city_name = data['location']['City']).values_list('id', flat = True)[0]
+                c_id = City.objects.filter(name_id = cn_id).values_list('id', flat = True)[0]
+
                 dct[i] = data['observations']['First name']
+                record_f = HouseholdData.objects.filter(slum_id = s_id, city_id = c_id, household_number =str(int(data['observations']['First name']))).exists()
+                if record_f == False:
+                    self.registrtation_data(data)
+                
                 return (int(data['observations']['First name']))
            
                         
