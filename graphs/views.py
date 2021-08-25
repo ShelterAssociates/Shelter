@@ -533,7 +533,6 @@ def give_report_covid_data(request):  # view for covid data
         tm = CovidData.objects.filter(**filter_field) \
             .exclude(household_number = 9999) \
             .annotate(**level_data[tag]).values('level_id','household_number', 'slum', 'city').distinct()
-   
         for i in tm:
             
             if 'total_sw_hh' in report_table_data[i['level_id']]:
@@ -542,15 +541,22 @@ def give_report_covid_data(request):  # view for covid data
                 report_table_data[i['level_id']]['total_sw_hh'] = 1
             
             h = HouseholdData.objects.filter(household_number = i['household_number'], slum__id = i['slum'], city__id = i['city']).values_list('rhs_data')
-            
             for j in h:
                 h_oc = j[0]["Type_of_structure_occupancy"]
+                
 
                 if h_oc == 'Occupied house':
+
                     if 'total_oc_hh' in report_table_data[i['level_id']]:
                         report_table_data[i['level_id']]['total_oc_hh'] += 1
                     else:
                         report_table_data[i['level_id']]['total_oc_hh'] = 1
+            
+            if 'total_oc_hh' in report_table_data[i['level_id']]:
+                pass
+            else:
+                report_table_data[i['level_id']]['total_oc_hh'] = 0
+
         
         for t in tc:
 
@@ -566,6 +572,10 @@ def give_report_covid_data(request):  # view for covid data
             report_table_data[t]['total_n_intrested'] = 0
             report_table_data[t]['total_1_dose_elg_18_44'] = 0
             report_table_data[t]['total_1_dose_elg_abv_45'] = 0
+
+            report_table_data[t]['total_blw_18'] = 0
+            report_table_data[t]['total_18_44'] = 0
+            report_table_data[t]['total_abv_45'] = 0
 
             report_table_data[t]['total_hh'] = 0      # for Total Household
             report_table_data[t]['pr'] = 0            # for Percentage
@@ -584,9 +594,12 @@ def give_report_covid_data(request):  # view for covid data
             
             report_table_data[t]['total_hh']+= len(th_)
 
-            per = (sw_hh/oc_hh)*100
-            pr = "{:.3f}".format(per)
-            report_table_data[t]['pr'] = pr
+            if oc_hh > 0:
+                per = (sw_hh/oc_hh)*100
+                pr = "{:.3f}".format(per)
+                report_table_data[t]['pr'] = pr
+            else:
+                report_table_data[t]['pr'] = 0
 
         
         
@@ -600,16 +613,10 @@ def give_report_covid_data(request):  # view for covid data
             ag = i['age']
             if ag is not None:
                 if ag < 18:
-                    if 'total_blw_18' in report_table_data[i['level_id']]:
-                        report_table_data[i['level_id']]['total_blw_18'] += 1
-                    else:
-                        report_table_data[i['level_id']]['total_blw_18'] = 1
+                    report_table_data[i['level_id']]['total_blw_18'] += 1
                 
                 elif ag < 45:
-                    if 'total_18_44' in report_table_data[i['level_id']]:
-                        report_table_data[i['level_id']]['total_18_44'] += 1
-                    else:
-                        report_table_data[i['level_id']]['total_18_44'] = 1
+                    report_table_data[i['level_id']]['total_18_44'] += 1
 
                     id_ = i['id']
                     ag_d = CovidData.objects.filter(id = id_).values_list('take_first_dose', 'take_second_dose', 'willing_to_vaccinated')
@@ -646,10 +653,8 @@ def give_report_covid_data(request):  # view for covid data
                             report_table_data[t]['total_n_intrested'] += 1
                 
                 elif ag >= 45:
-                    if 'total_abv_45' in report_table_data[i['level_id']]:
-                        report_table_data[i['level_id']]['total_abv_45'] += 1
-                    else:
-                        report_table_data[i['level_id']]['total_abv_45'] = 1
+                    report_table_data[i['level_id']]['total_abv_45'] += 1
+
 
                     id_ = i['id']
                     ag_d = CovidData.objects.filter(id = id_).values_list('take_first_dose', 'take_second_dose', 'willing_to_vaccinated')
