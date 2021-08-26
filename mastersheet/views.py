@@ -964,7 +964,7 @@ def give_report_table_numbers(request):  # view for toilet construction
                 'phase_two_material_date': 'total_p2', 'phase_three_material_date': 'total_p3',
                 'completion_date': 'total_c', 'septic_tank_date': 'total_st',
                 'use_of_toilet': 'use_of_toilet', 'toilet_connected_to': 'toilet_connected_to',
-                'factsheet_done': 'factsheet_done','status': 'factAssign'}
+                'factsheet_done': 'factsheet_done'}
 
     level_data = {
         'city':
@@ -995,8 +995,8 @@ def give_report_table_numbers(request):  # view for toilet construction
     report_table_data = defaultdict(dict)
     for query_field in query_on.keys():
         if query_field in ['agreement_date', 'phase_one_material_date','phase_two_material_date','phase_three_material_date',
-        'completion_date', 'septic_tank_date','use_of_toilet','toilet_connected_to', 'factsheet_done','status']:
-            filter_field = {'slum__id__in': keys, 'completion_date__range': [start_date, end_date],
+        'completion_date', 'septic_tank_date','use_of_toilet','toilet_connected_to', 'factsheet_done']:
+            filter_field = {'slum__id__in': keys, 'agreement_date__range': [start_date, end_date],
                             query_field + '__isnull': False}
         else:
             filter_field = {'slum__id__in': keys, query_field + '__range': [start_date, end_date]}
@@ -1008,49 +1008,46 @@ def give_report_table_numbers(request):  # view for toilet construction
         tc = {obj_ad['level_id']: obj_ad for obj_ad in tc}
         for level_id, data in tc.items():
             report_table_data[level_id].update(data)
-        T_Housenum = ToiletConstruction.objects.filter(**filter_field) \
-                .annotate(**level_data[tag]).values('level', 'level_id','city_name','household_number')
-        HouseNumDict={}
-        for t in T_Housenum:
-            l1= [v for k,v in t.items()]
-            lst1=int(l1[0])  #HouseHold_number
-            lst2=l1[3]  #Slum_id
-            if lst2 in HouseNumDict:  #if slum_id in HouseNumDict
-                Home = HouseNumDict[lst2]
-                Home.append(lst1)   #append housenumber in that slum_id
-                HouseNumDict[lst2]=Home
-            else:
-                HouseNumDict[lst2]=[lst1]
-        listt_Household_code = []
-        Spsr_Housecode = SponsorProjectDetails.objects.filter(slum__id__in=keys) \
-             .annotate(**level_data[tag]).values('level', 'level_id','city_name','household_code')
-        for t in Spsr_Housecode:
-            l2 = [v for k, v in t.items()]
-            listt_Household_code.append([l2[0], l2[3]])   #0-Housenumber , 3-slum_id
-        final_dict={}
-        for k,v in HouseNumDict.items():   #key values pair of slum_id with respective housenumbers list
-            s_id=k  #int   slum_id  TC
-            house_num=v #list    Housenumber  TC
-            for h_n in house_num:
-                for cust_x in listt_Household_code:      #[housenum, slum_d] Sponsor
-                    x1= cust_x[0]    #housenum Sponsor
-                    x2= cust_x[1]    #slum_id  Sponsor
-                    if s_id == x2:    #if slum_id of TC == Slum_id of sponsor
-                        if h_n in x1 and s_id in final_dict:  #if TC housenum in sponsor housenum and TC slum_id in finalList
-                            final_dict[s_id]+=1    #append count to that slum_id
-                        else:
-                            final_dict[s_id]=0
-    for cust_obj in report_table_data:
-        report_table_data[cust_obj]['factAssign']= 0
-        status = SponsorProjectDetails.objects.filter(slum__id=report_table_data[cust_obj]['level_id']) \
-                             .annotate(**level_data[tag]).values('level', 'level_id', 'city_name')
-        for k,v in final_dict.items():
-            for s in status:
-                NewSlum= s['level_id']
-                if k==NewSlum:
-                    report_table_data[cust_obj]['factAssign']=v
+
+        if query_field == 'factsheet_done':
+
+            for t in tc:
+                l = tc[t]['level_id']
+                report_table_data[l]['factAssign'] = 0
+
+                if tag  == 'city':
+                    T_Housenum = ToiletConstruction.objects.filter(slum__electoral_ward__administrative_ward__city__id = l, agreement_date__range =  [start_date, end_date], factsheet_done__isnull = False ).values_list('household_number', flat = True)
+
+                    Spsr_Housecode = SponsorProjectDetails.objects.filter(slum__electoral_ward__administrative_ward__city__id =l).values_list( 'household_code', flat = True)
+
+                elif tag == 'admin_ward':
+                    T_Housenum = ToiletConstruction.objects.filter(slum__electoral_ward__administrative_ward__id = l, agreement_date__range =  [start_date, end_date], factsheet_done__isnull = False).values_list('household_number', flat = True)
+
+                    Spsr_Housecode = SponsorProjectDetails.objects.filter(slum__electoral_ward__administrative_ward__id =l).values_list('household_code', flat = True)
+                elif tag == 'electoral_ward':
+                    T_Housenum = ToiletConstruction.objects.filter(slum__electoral_ward__id = l, agreement_date__range =  [start_date, end_date], factsheet_done__isnull = False).values_list('household_number', flat = True)
+
+                    Spsr_Housecode = SponsorProjectDetails.objects.filter(slum__electoral_ward__id =l).values_list('household_code', flat = True)
+                elif tag == 'slum':
+                    T_Housenum = ToiletConstruction.objects.filter(slum__id = l, agreement_date__range =  [start_date, end_date], factsheet_done__isnull = False).values_list('household_number', flat = True)
+
+                    Spsr_Housecode = SponsorProjectDetails.objects.filter(slum__id =l).values_list('household_code', flat = True)
+
+                factsheet_count = 0
+                h_list = []
+                for household_num in T_Housenum:
+                    for housecode_list in Spsr_Housecode:
+                        if int(household_num) in housecode_list and household_num not in h_list:
+                            factsheet_count += 1
+                            h_list.append(household_num)
+                            break
+                
+                report_table_data[l]['factAssign'] = factsheet_count
+                
+        
     return HttpResponse(json.dumps(list(map(lambda x: report_table_data[x], report_table_data))),
                         content_type="application/json")
+
 
 @csrf_exempt
 def report_table_cm(request):
