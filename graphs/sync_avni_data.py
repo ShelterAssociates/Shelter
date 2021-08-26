@@ -911,9 +911,8 @@ class avni_sync():
             if RequestHouseholdRegistration.status_code == 200:
                 data = json.loads(RequestHouseholdRegistration.text)
 
-                s_id = Slum.objects.filter(name = data['location']['Slum']).values_list('id', flat = True)[0]
-                cn_id = CityReference.objects.filter(city_name = data['location']['City']).values_list('id', flat = True)[0]
-                c_id = City.objects.filter(name_id = cn_id).values_list('id', flat = True)[0]
+                slum_name = HH_data['location']['Slum']
+                s_id, c_id =self.get_city_slum_ids(slum_name)
 
                 dct[i] = data['observations']['First name']
                 record_f = HouseholdData.objects.filter(slum_id = s_id, city_id = c_id, household_number =str(int(data['observations']['First name']))).exists()
