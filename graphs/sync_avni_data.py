@@ -16,7 +16,6 @@ import dateutil.parser
 import itertools
 
 
-
 direct_encountes =['Sanitation','Property tax','Water','Waste','Electricity','Daily Mobilization Activity']
 program_encounters =['Daily Reporting','Family factsheet']
 
@@ -55,17 +54,17 @@ class avni_sync():
         # get latest submission
         # date from household table and pass it to url
         last_submission_date = HouseholdData.objects.latest('submission_date')
-        latest_date = last_submission_date.submission_date + timedelta(days=1)
-        #today = datetime.today()+ timedelta(days= -1)
-        iso_format_next = latest_date.strftime('%Y-%m-%dT00:00:00.000Z')
-        iso = "2021-06-09T00:00:00.000Z"
-
+        #latest_date = last_submission_date.submission_date + timedelta(days=1)
+        today = datetime.today() #+ timedelta(days= -1)
+        latest_date = today.strftime('%Y-%m-%dT00:00:00.000Z')
+        iso = "2021-09-02T00:00:00.000Z"
+        #return(latest_date)
         return(iso)
 
     def get_image(self,image_link):
         path = 'https://app.avniproject.org/media/signedUrl?url='
         request_1 = requests.get( path + image_link, headers={'AUTH-TOKEN': self.get_cognito_token()})
-        print(request_1.status_code)
+        #print(request_1.status_code)
         return request_1.text
 
     def map_rhs_key(self,a,b):
@@ -403,8 +402,8 @@ class avni_sync():
                     if data['observations']['Use of toilet'] != None:
                         use_of_toilet = factsheet_done_date
                 else: use_of_toilet = None
-                factsheetDate.update(factsheet_done = factsheet_done_date,toilet_connected_to =toilet_connected_to,
-                                     use_of_toilet = use_of_toilet )
+                #factsheetDate.update(factsheet_done = factsheet_done_date,toilet_connected_to =toilet_connected_to,
+                               #      use_of_toilet = use_of_toilet )
                 print('FF record updated for', slum_name, HH)
             else:
                 ff_data = {}
@@ -429,8 +428,8 @@ class avni_sync():
                     if data['observations']['Use of toilet'] != None:
                         use_of_toilet = factsheet_done_date
                 else: use_of_toilet = None
-                factsheetDate.update(factsheet_done = factsheet_done_date,toilet_connected_to =toilet_connected_to,
-                                     use_of_toilet = use_of_toilet)
+                #factsheetDate.update(factsheet_done = factsheet_done_date,toilet_connected_to =toilet_connected_to,
+                 #                    use_of_toilet = use_of_toilet)
                 print('FF record updated for', slum_name, HH)
         except Exception as e:
             print(e)
@@ -724,14 +723,14 @@ class avni_sync():
 
     def SaveDataFromIds(self):
         
-        IdList=['be748b4f-47f4-49d5-8632-8641de937ef8']
+        IdList=['a1e9680a-aa36-4347-be66-b721a00fcf65','e3e58091-521a-4ce7-ae1e-f863a7365eee','b25263ed-f0bc-4beb-92e3-3f8e19dc6fb9','df7e92f9-66a7-434d-bd21-ffcb7ccf7e66','d09026c0-38a6-47ca-97f9-73dd9fd4fd78','ef5e68b0-3dad-4302-ba65-d624e1fba492','c2f6409c-720d-4adb-8865-fe4cdc3e8722','a974cf56-70ad-4a3f-94ab-7e7c0e612a06','5630496b-da01-4f25-a58f-a94561dd7759','f1a1cbea-8145-46a0-a40a-cf812d23441d','fb2922a0-050c-4529-9896-e253718e23da','fa7c7979-7ef4-430b-bf33-c8a8ae7ee941','dbeb4a23-f0ee-432f-a579-0e7a6dc384f0','2b168265-05c7-4647-83ef-18aeb212f5e5','ad324ec1-388b-4f67-8cec-f345fc7c6a1d','ea8fdb65-d1da-4d15-ae69-d46526243e1d','c6894344-cbf1-4717-b9e1-8b687eda2256','aea530a2-f34f-4bb9-a2f8-1ad97db2089b','99167815-5e24-4b8b-b331-42da724714ef','432a4018-6a92-4a23-accc-2b1bdea1fd00','186588f1-ad8d-4064-958c-935b8e501624','07ab1910-2976-4b6a-a338-81e7d9e32a76','4a753c0d-8300-46e5-9207-a9bdf89a4d5f','c2c9eaf9-0c64-489f-8338-6de5c367d3fe','de7cf879-2e0d-42f6-b506-89a8d17383e3','a8ff419f-4bb9-4063-bb61-c3264e19cb23','0985aa47-5302-4dfe-ba48-701b7278f1c0','62e6af24-0491-4df1-853f-2ae56f187625','29049004-afdd-4ae3-b961-64fe0b72e8ff','1b9a39ea-f857-4d85-a050-1b99f8380882','8ff9b1e4-c505-45f4-b92b-f0903c8d5e84','1ad613b0-20f8-4582-9b73-8412dc6da45a','3fa8f7a1-6121-4a2d-95ed-0d25f817fa23']
+#'831fa651-f707-40fc-9676-20a9791f2b20','85e59616-c8f7-4287-a1ae-5303d497e0a6','d7198b98-f78e-402f-9f58-28f7615e441f','b283536f-f2dc-4f02-80d1-73599f186b61','409f9475-72c8-4b2c-ac91-1ac7f18fd4b3','0e714d51-49b5-4c37-b1c6-f3dcb89768cc','d853db6d-f3ca-4d7e-b1c8-1fff9fcab4cb','64cba1f1-d28e-47fa-b8a9-ef4bd996b0b0','563e4c66-2712-4dfa-a37e-fdf874153cb4','7fcad2ae-44e5-4af5-a02d-3235cfebfbaa','a84765e5-517e-446d-9ea7-2a4874da1d96','e5a468f1-7abb-45ea-865d-8e29e8461b85','fb9dd8e0-1d6a-4416-9858-27b19f8f24ac','e8fc7575-1f27-480e-92cb-c64c8f26335a','eb81a814-58dd-4381-bcbd-416b7ca1c57f','9c60cc88-e58e-430f-8139-3fc6d7bbd6e6','19b42010-467d-4ff7-8add-dfca858fad9d','2c1c7935-e21b-4f9e-aeeb-255db896d0f0','ef1c5814-7329-43c6-a258-630deceac590','22f1cd6c-ff4d-424a-8b9a-9b984682407e','02e2171a-707a-4b25-9c75-84bf5fba2d56','5db70986-2219-4030-9578-d526e64940bc','063a6623-dd35-4e77-9acb-8211568e0a32','a08243a8-c966-46ec-a7ac-c92ca9eba94e','1bd7b433-cc7b-4a6f-8b3a-91cf79591a12','b83c2cd8-f0f9-4f84-9416-5e70f3e04d81','3e3b5f1a-1e9f-491b-a86d-df36d404d73c','4c9aae3a-c095-4026-a406-bb637f6ee38a','0567e3a9-cc9f-49f5-868f-d1a87ee01e42']
         for i in IdList:
             try :
                 RequestProgramEncounter = requests.get(self.base_url + 'api/programEncounter/' + i ,headers={'AUTH-TOKEN': self.get_cognito_token()})
                 RequestEncounter= requests.get(self.base_url + 'api/encounter/' + i ,headers={'AUTH-TOKEN': self.get_cognito_token()})
                 RequestHouseholdRegistration = requests.get(self.base_url + 'api/subject/' + i ,headers={'AUTH-TOKEN': self.get_cognito_token()})
-
-                print(RequestHouseholdRegistration.status_code)
+#                print(RequestHouseholdRegistration.status_code)
                 if RequestProgramEncounter.status_code == 200:
                     data = json.loads(RequestProgramEncounter.text)
                     a,slum_name,HH,d = self.get_household_details(data['Subject ID'])
@@ -769,7 +768,10 @@ class avni_sync():
                         self.CommunityMobilizationActivityData(data['observations'],self.slum,self.HH) #CommunityMobilization
                 elif RequestHouseholdRegistration.status_code == 200:
                     data = json.loads(RequestHouseholdRegistration.text)
-                    self.registrtation_data(data)
+                    if data['Subject type']=='Household':
+                        self.registrtation_data(data)
+                    if data['Subject type']=='Covid Survey':
+                        self.RegistrationCovidData(data)
 
                 else:
                     print(i,'uuid is not accesible')
@@ -858,8 +860,7 @@ class avni_sync():
         return (observation,slum_id)
 
     def RegistrationCovidData(self, HH_data):  # checked
-        slum_name1 = HH_data['location']['Slum']
-
+       
         if len(HH_data['Groups']) > 0:
             household_number1 = self.SaveCovidDataFromIds1(HH_data['Groups'])
         else:
@@ -895,7 +896,7 @@ class avni_sync():
                            if_not_why=final_dict['If not willing to take vaccine, why?'], note=final_dict['Note'])
 
             c.save()
-            print("Record for "+ slum_name1 + " and household number ", household_number," save successfully")
+            print("Record save successfully",self.slum)
 
         except Exception as e:
             print(e)
@@ -910,18 +911,11 @@ class avni_sync():
                                                             headers={'AUTH-TOKEN': self.get_cognito_token()})
             if RequestHouseholdRegistration.status_code == 200:
                 data = json.loads(RequestHouseholdRegistration.text)
-
-                slum_name = HH_data['location']['Slum']
-                s_id, c_id =self.get_city_slum_ids(slum_name)
-
+#                 slum_name = HH_data['location']['Slum']
+#                 s_id, c_id =self.get_city_slum_ids(slum_name)
                 dct[i] = data['observations']['First name']
-                record_f = HouseholdData.objects.filter(slum_id = s_id, city_id = c_id, household_number =str(int(data['observations']['First name']))).exists()
-                if record_f == False:
-                    self.registrtation_data(data)
-                
                 return (int(data['observations']['First name']))
-           
-                        
+                           
             else:
                 return 'error'
 
