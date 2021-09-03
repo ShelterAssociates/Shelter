@@ -294,11 +294,17 @@ def masterSheet(request, slum_code=0, FF_code=0, RHS_code=0):
                         x['ff_xform_id_string'] = ff_xform_id_string
 
                 if '_attachments' in x.keys() and len(x['_attachments']) != 0:
-                    PATH = settings.BASE_URL + '/'.join(x['_attachments'][0]['download_url'].split('/')[:-1])
+
+                    PATH = settings.BASE_URL  + 'media/original?media_file='
+                    
                     if 'Toilet_Photo' in x.keys():
-                        x.update({'toilet_photo_url': PATH + '/' + x['Toilet_Photo']})
+                        url = PATH + "%2F".join(x['_attachments'][0]["filename"].split('/')[:-1])
+                        x.update({'toilet_photo_url': url +  '%2F' + x['Toilet_Photo']})
+
                     if 'Family_Photo' in x.keys():
-                        x.update({'family_photo_url': PATH + '/' + x['Family_Photo']})
+                        url = PATH + "%2F".join(x['_attachments'][1]["filename"].split('/')[:-1])
+                        x.update({'family_photo_url': url +  '%2F' + x['Family_Photo']})
+                        
                 else:
                     if 'Toilet_Photo' and 'ff_uuid' in x.keys():
                         ff_url = settings.AVNI_URL + '/#/app/subject/viewProgramEncounter?uuid=' + str(x['ff_uuid'])
