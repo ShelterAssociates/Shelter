@@ -524,15 +524,13 @@ class avni_sync():
             #    use_of_toilet = dateparser.parse(data['Date on which toilet construction is complete']).date()
             #else :  use_of_toilet = None
             if completion_date != None:
-                 status = 6
+                 status = 6 #completed
             elif (phase_one_material_date != None or phase_two_material_date !=None or phase_three_material_date != None):
-                 status= 5
-            elif (phase_one_material_date!=None  and (phase_two_material_date ==None or phase_three_material_date == None)):
-                 status= 3
+                 status= 5 #under construction
             elif (agreement_date!= None and (phase_one_material_date == None and phase_two_material_dates == None and phase_three_material_date == None)):
-                 status= 1
+                 status= 3 #material not given
             elif agreement_cancelled == True:
-                 status = 2
+                 status = 2 #agreement cancle
             else: status =None            
             check_record = ToiletConstruction.objects.filter(household_number=HH, slum_id= slum_id)
             if len(data) > 1 :
