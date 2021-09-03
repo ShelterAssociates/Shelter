@@ -911,10 +911,11 @@ class avni_sync():
                                                             headers={'AUTH-TOKEN': self.get_cognito_token()})
             if RequestHouseholdRegistration.status_code == 200:
                 data = json.loads(RequestHouseholdRegistration.text)
+#                 slum_name = HH_data['location']['Slum']
+#                 s_id, c_id =self.get_city_slum_ids(slum_name)
                 dct[i] = data['observations']['First name']
                 return (int(data['observations']['First name']))
-           
-                        
+                           
             else:
                 return 'error'
 
