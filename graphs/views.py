@@ -563,13 +563,10 @@ def give_report_covid_data(request):  # view for covid data
             report_table_data[t]['2_dose_done_18_44'] = 0    # for second dose done in age between 18 to 44
             report_table_data[t]['1_dose_done_18_44'] = 0    # for second dose done in age between 18 to 44
             report_table_data[t]['total_intrested_18_44'] = 0   # for total intrested in age between 18 to 44
-            report_table_data[t]['total_n_intrested_18_44'] = 0  # for total not intrested in age between 18 to 44
             report_table_data[t]['total_1_dose_45'] = 0           # for first dose done  age 45+
             report_table_data[t]['total_2_dose_45'] = 0           # for second dose done age 45+
             report_table_data[t]['total_intrested_45'] = 0        # for total intrested age 45+
-            report_table_data[t]['total_n_intrested_45'] = 0
             report_table_data[t]['total_intrested'] = 0
-            report_table_data[t]['total_n_intrested'] = 0
             report_table_data[t]['total_1_dose_elg_18_44'] = 0
             report_table_data[t]['total_1_dose_elg_abv_45'] = 0
 
@@ -619,58 +616,58 @@ def give_report_covid_data(request):  # view for covid data
                     report_table_data[i['level_id']]['total_18_44'] += 1
 
                     id_ = i['id']
-                    ag_d = CovidData.objects.filter(id = id_).values_list('take_first_dose', 'take_second_dose', 'willing_to_vaccinated')
+                    ag_d = CovidData.objects.filter(id = id_).values_list('take_first_dose', 'take_second_dose', 'willing_to_vaccinated' ,'registered_for_covid_vaccination')
                     first_dose = ag_d[0][0]
                     sec_dose = ag_d[0][1]
                     intrested = ag_d[0][2]
+                    reg_vaccination = ag_d[0][3]
+
 
                     if first_dose == 'Yes':
-                        report_table_data[i['level_id']]['1_dose_done_18_44'] += 1
+                        if sec_dose == 'Yes':
+                            report_table_data[i['level_id']]['2_dose_done_18_44'] += 1
+                        else:
+                            report_table_data[i['level_id']]['1_dose_done_18_44'] += 1
                         
                     else:
-                        report_table_data[t]['total_1_dose_elg_18_44'] += 1
-
-                    if sec_dose == 'Yes':
-                        report_table_data[i['level_id']]['2_dose_done_18_44'] += 1
+                        report_table_data[i['level_id']]['total_1_dose_elg_18_44'] += 1
                     
 
 
                     if intrested == 'Yes':
-                        if first_dose == 'Yes' or sec_dose == 'Yes':
+                        if first_dose == 'Yes':
                             pass
                         else:
                             report_table_data[i['level_id']]['total_intrested_18_44'] += 1
                             report_table_data[i['level_id']]['total_intrested'] += 1
-                    else:
-                        if first_dose == 'Yes' or sec_dose == 'Yes':
-                            report_table_data[i['level_id']]['total_intrested_18_44'] -= 1
-                            report_table_data[i['level_id']]['total_intrested'] -= 1
-
-                            report_table_data[t]['total_n_intrested_18_44'] += 1
-                            report_table_data[t]['total_n_intrested'] += 1
-                        else:
-                            report_table_data[t]['total_n_intrested_18_44'] += 1
-                            report_table_data[t]['total_n_intrested'] += 1
+                    
+                    elif intrested == None:
+                        if reg_vaccination == 'Yes':
+                            if first_dose == 'No':
+                                report_table_data[i['level_id']]['total_intrested_18_44'] += 1
+                                report_table_data[i['level_id']]['total_intrested'] += 1
+                        
+                        
                 
                 elif ag >= 45:
                     report_table_data[i['level_id']]['total_abv_45'] += 1
 
 
                     id_ = i['id']
-                    ag_d = CovidData.objects.filter(id = id_).values_list('take_first_dose', 'take_second_dose', 'willing_to_vaccinated')
+                    ag_d = CovidData.objects.filter(id = id_).values_list('take_first_dose', 'take_second_dose', 'willing_to_vaccinated','registered_for_covid_vaccination')
                     first_dose = ag_d[0][0]
                     sec_dose = ag_d[0][1]
                     intrested = ag_d[0][2]
+                    reg_vaccination = ag_d[0][3]
                 
 
                     if first_dose == 'Yes':
-                        report_table_data[i['level_id']]['total_1_dose_45'] += 1
+                        if sec_dose == 'Yes':
+                            report_table_data[i['level_id']]['total_2_dose_45'] += 1
+                        else:
+                            report_table_data[i['level_id']]['total_1_dose_45'] += 1
                     else:
-                        report_table_data[t]['total_1_dose_elg_abv_45'] += 1
-            
-                    
-                    if sec_dose == 'Yes':
-                        report_table_data[i['level_id']]['total_2_dose_45'] += 1
+                        report_table_data[i['level_id']]['total_1_dose_elg_abv_45'] += 1
 
                     if intrested == 'Yes':
                         if first_dose == 'Yes' or sec_dose == 'Yes':
@@ -678,16 +675,12 @@ def give_report_covid_data(request):  # view for covid data
                         else:
                             report_table_data[i['level_id']]['total_intrested_45'] += 1
                             report_table_data[i['level_id']]['total_intrested'] += 1                
-                    else:
-                        if first_dose == 'Yes' or sec_dose == 'Yes':
-                            report_table_data[i['level_id']]['total_intrested_45'] -= 1
-                            report_table_data[i['level_id']]['total_intrested'] -= 1
-
-                            report_table_data[t]['total_n_intrested_45'] += 1
-                            report_table_data[t]['total_n_intrested'] += 1
-                        else:
-                            report_table_data[t]['total_n_intrested_45'] += 1
-                            report_table_data[t]['total_n_intrested'] += 1
+                    
+                    elif intrested == None:
+                        if reg_vaccination == 'Yes':
+                            if first_dose == 'No':
+                                report_table_data[i['level_id']]['total_intrested_45'] += 1
+                                report_table_data[i['level_id']]['total_intrested'] += 1 
 
 
     return HttpResponse(json.dumps(list(map(lambda x: report_table_data[x], report_table_data))),
@@ -738,11 +731,11 @@ def cityWiseQuery(city_id, startdate, enddate):
                 family_data = {}
                 family_data.update({'Household_number': i.household_number})
 
-                sp = SponsorProjectDetails.objects.filter(slum_id = i.slum_id).values_list('household_code', 'sponsor_id')
+                sp = SponsorProjectDetails.objects.filter(slum_id = i.slum_id).exclude(sponsor_id = 10).values_list('household_code', 'sponsor_project_id')
                 sp_name = ""
                 for i1 in sp:
                     if int(i.household_number) in i1[0]:
-                        sp_name = Sponsor.objects.filter(id = i1[1]).values_list('organization_name', flat=True)[0]
+                        sp_name = SponsorProject.objects.filter(id = i1[1]).values_list('name', flat=True)[0]
                         break
 
                 if sp_name == "":
