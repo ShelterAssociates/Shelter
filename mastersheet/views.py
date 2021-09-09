@@ -295,15 +295,24 @@ def masterSheet(request, slum_code=0, FF_code=0, RHS_code=0):
 
                 if '_attachments' in x.keys() and len(x['_attachments']) != 0:
 
-                    PATH = settings.BASE_URL  + 'media/original?media_file='
-                    
-                    if 'Toilet_Photo' in x.keys():
-                        url = PATH + "%2F".join(x['_attachments'][0]["filename"].split('/')[:-1])
-                        x.update({'toilet_photo_url': url +  '%2F' + x['Toilet_Photo']})
+                    if 'media/original?media_file=' in  x['_attachments'][0]["filename"]:
+                        PATH = settings.BASE_URL  + 'media/original?media_file='
+                        
+                        if 'Toilet_Photo' in x.keys():
+                            url = PATH + "%2F".join(x['_attachments'][0]["filename"].split('/')[:-1])
+                            x.update({'toilet_photo_url': url +  '%2F' + x['Toilet_Photo']})
 
-                    if 'Family_Photo' in x.keys():
-                        url = PATH + "%2F".join(x['_attachments'][1]["filename"].split('/')[:-1])
-                        x.update({'family_photo_url': url +  '%2F' + x['Family_Photo']})
+                        if 'Family_Photo' in x.keys():
+                            url = PATH + "%2F".join(x['_attachments'][1]["filename"].split('/')[:-1])
+                            x.update({'family_photo_url': url +  '%2F' + x['Family_Photo']})
+
+                    else:
+                        PATH = settings.BASE_URL + 'media/medium?media_file=shelter/attachments'
+
+                        if 'Toilet_Photo' in x.keys():
+                            x.update({'toilet_photo_url': PATH + '/' + x['Toilet_Photo']})
+                        if 'Family_Photo' in x.keys():
+                            x.update({'family_photo_url': PATH + '/' + x['Family_Photo']})
                         
                 else:
                     if 'Toilet_Photo' and 'ff_uuid' in x.keys():
@@ -1022,20 +1031,20 @@ def give_report_table_numbers(request):  # view for toilet construction
                 report_table_data[l]['factAssign'] = 0
 
                 if tag  == 'city':
-                    T_Housenum = ToiletConstruction.objects.filter(slum__electoral_ward__administrative_ward__city__id = l, agreement_date__range =  [start_date, end_date], factsheet_done__isnull = False ).values_list('household_number', flat = True)
+                    T_Housenum = ToiletConstruction.objects.filter(slum__electoral_ward__administrative_ward__city__id = l, completion_date__range =  [start_date, end_date], factsheet_done__isnull = False ).values_list('household_number', flat = True)
 
                     Spsr_Housecode = SponsorProjectDetails.objects.filter(slum__electoral_ward__administrative_ward__city__id =l).values_list( 'household_code', flat = True)
 
                 elif tag == 'admin_ward':
-                    T_Housenum = ToiletConstruction.objects.filter(slum__electoral_ward__administrative_ward__id = l, agreement_date__range =  [start_date, end_date], factsheet_done__isnull = False).values_list('household_number', flat = True)
+                    T_Housenum = ToiletConstruction.objects.filter(slum__electoral_ward__administrative_ward__id = l, completion_date__range =  [start_date, end_date], factsheet_done__isnull = False).values_list('household_number', flat = True)
 
                     Spsr_Housecode = SponsorProjectDetails.objects.filter(slum__electoral_ward__administrative_ward__id =l).values_list('household_code', flat = True)
                 elif tag == 'electoral_ward':
-                    T_Housenum = ToiletConstruction.objects.filter(slum__electoral_ward__id = l, agreement_date__range =  [start_date, end_date], factsheet_done__isnull = False).values_list('household_number', flat = True)
+                    T_Housenum = ToiletConstruction.objects.filter(slum__electoral_ward__id = l, completion_date__range =  [start_date, end_date], factsheet_done__isnull = False).values_list('household_number', flat = True)
 
                     Spsr_Housecode = SponsorProjectDetails.objects.filter(slum__electoral_ward__id =l).values_list('household_code', flat = True)
                 elif tag == 'slum':
-                    T_Housenum = ToiletConstruction.objects.filter(slum__id = l, agreement_date__range =  [start_date, end_date], factsheet_done__isnull = False).values_list('household_number', flat = True)
+                    T_Housenum = ToiletConstruction.objects.filter(slum__id = l, completion_date__range =  [start_date, end_date], factsheet_done__isnull = False).values_list('household_number', flat = True)
 
                     Spsr_Housecode = SponsorProjectDetails.objects.filter(slum__id =l).values_list('household_code', flat = True)
 
