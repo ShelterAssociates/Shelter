@@ -387,8 +387,7 @@ class avni_sync():
                 if ff_data == None or len(ff_data) == 0:
                     ff_data = {}
                 ff_data = check_record.values_list('ff_data', flat=True)[0]
-                if ff_data == None or len(ff_data) == 0:
-                    ff_data = {}
+
                 final_ff_data = self.map_ff_keys(ff_data, data['observations'])
                 final_ff_data.update({'ff_uuid': data['ID']})
                 check_record.update(ff_data=final_ff_data)
@@ -402,8 +401,8 @@ class avni_sync():
                     if data['observations']['Use of toilet'] != None:
                         use_of_toilet = factsheet_done_date
                 else: use_of_toilet = None
-                #factsheetDate.update(factsheet_done = factsheet_done_date,toilet_connected_to =toilet_connected_to,
-                               #      use_of_toilet = use_of_toilet )
+                factsheetDate.update(factsheet_done = factsheet_done_date,toilet_connected_to =toilet_connected_to,
+                                    use_of_toilet = use_of_toilet )
                 print('FF record updated for', slum_name, HH)
             else:
                 ff_data = {}
@@ -428,8 +427,8 @@ class avni_sync():
                     if data['observations']['Use of toilet'] != None:
                         use_of_toilet = factsheet_done_date
                 else: use_of_toilet = None
-                #factsheetDate.update(factsheet_done = factsheet_done_date,toilet_connected_to =toilet_connected_to,
-                 #                    use_of_toilet = use_of_toilet)
+                factsheetDate.update(factsheet_done = factsheet_done_date,toilet_connected_to =toilet_connected_to,
+                                    use_of_toilet = use_of_toilet)
                 print('FF record updated for', slum_name, HH)
         except Exception as e:
             print(e)
@@ -721,7 +720,8 @@ class avni_sync():
 
     def SaveDataFromIds(self):
         
-        IdList=['93f6fcd2-72ab-40ea-9f26-584f5f11e00c', 'db85bfba-7dee-48ae-90be-8199f547e6df', '7c5c21ac-4ae9-4d8f-82f0-3e57a2f3539b', 'a3e42d1e-6120-483d-a222-b9018407c957', 'b509194e-ab8a-4513-859f-a04e6d738d81', 'f436356a-f2b2-4614-8abf-a8b41810f9d7', '7f75b760-6cac-4255-9862-1e99d799a60a', '53afa3c5-a6ce-411a-8393-ba964541ed0e', 'c5fb9e9d-3c54-4126-a617-04bd237232a1', '54be841f-29b5-4bdd-a6eb-696cd57d5f34', 'f591a337-9bbf-4559-9bff-f96a4d3e10fa', '00eb1124-5524-477e-a095-16eaab131152', '3ed6259d-4bd2-4401-a9ad-2988bbbe492a', '52265308-185b-4d13-a1ce-ad41b164fa53', '19c1645f-a549-4ba4-8f5b-fa88c35de091', 'fbae136e-cc61-4a02-abe5-b875a5ed42f0', '332986dc-1635-4fda-997c-44cfe3278191', '6ee4b4de-e748-431b-bbb8-0d8d7e6a0753', 'edca2b5d-8f79-4e8f-b8d3-431a591092c4', '7a6b85a4-c17d-4489-a808-ac2aca224962', 'f4203c0f-4a1c-48ff-982b-4e2ce0a94425', 'de6009dd-3c66-4059-bd3a-59ff828755b6', 'e3896992-fd99-4f1e-a0f9-9c5ba84c5d6e', 'a131a010-6032-4ac4-b15d-b931bbd17eff', '902e0bd8-0ccc-4254-a332-eb05becb22e2', '5a61fde6-6061-4ce6-b40c-610a35b00079', '769c9646-b6db-4515-b0af-ccd2d39f36ad', 'bdd56b86-5217-4598-9c8b-175565a1cba2', '4c1145d6-dda5-401c-a4fd-1c23bafe565b', 'e30635c6-b0f3-4121-ac73-5e4d90f2abd7', '60c5187d-bc8b-450f-95a9-9a65f954a5e6', 'ef9d3fbb-cd21-4095-8289-8fe4350e9204', 'a1b9670d-4c45-4abd-9d38-7f1b4a2eaee0', '10b353bc-9350-4636-b7c6-b9eb67445daa', 'd09e3b4d-97c4-4837-8ef7-192643cff1ea', 'e0145528-e8f1-4e63-827f-9d41f16d416d', '5bb2b84b-d489-4af6-9789-435d8d2235c4', '1842a549-99d0-452c-ae11-26d908dd5a90', '1af8e8f8-8b77-42dd-81d6-d10f681c8ce8', '5503847a-2f9f-48d3-94fd-74b053a86a35', 'c08edc87-83c8-4854-bc1f-8ab78baa1e9d', '951d380e-c502-449f-9d42-6d6b41a46008', '384e146b-d8b2-48e6-a5e2-12d3c45474f7', '07f91ae7-9aaf-47b1-a34d-7cac40fa7fdf', '290dc321-4ef7-495a-a111-73bc415e8130', 'bf366c66-2244-467e-9ae3-200c041ce269', '4b494643-64fc-49b3-aee0-62be18b146d0', 'b286c719-2913-40e1-a5f1-8e857c4608f9', 'dfa3a0b9-d993-486b-b297-e82ff8892c72', '30644062-534f-41ad-b51a-72f25e3376c5', '7173c0f5-5083-4709-a877-c5468905e192', 'b9b22146-7297-480e-b4cb-74f37b03be63', 'e52cf438-f2e9-40d9-b3c2-e3aa0d725b82', '4aaa6de0-f2e5-4542-85b3-90175ba0309d', '60dc1ca4-6914-43eb-bf38-97626c73b8f6', 'ebeecd97-abcd-48e9-a49d-bb49ae210387', '6c74745b-6054-46f7-bca9-ef08b3643523', 'a7b78536-6c82-4da9-b23f-71b7479be162', 'd847417b-80a9-443a-8a4a-46a778ad9e96', '3ffeaa86-7e77-4e5b-b31e-4e6d83231536', '277d4c76-a3d0-4f2d-8b6e-d0309669c248', 'f9cbc6ea-09cd-4781-8f7c-49367e72d188', '9f5c1035-b104-41d6-8468-70d5f40bf086', '130f316a-dcb3-43c9-9293-4fe9dca09303', '3ff0770f-4da4-4b53-8e41-bb273aba536f', '321dc1b9-62f7-4fe8-85b6-ac767a74f82f', '6d880671-6c3d-4713-8b46-f0debdd40fcf', 'd080634d-bb48-4f34-90a7-e8a271147a84', 'ad21e6a1-6e75-48b2-90f4-adc4ced48531', 'c12ecb8d-34dc-4686-b156-383b1bd97d9d', 'b56f9ea9-7833-4ef6-814b-5d827503c6c1', 'ed674bc9-a892-444f-94b1-8236a5547e7f', '100a3282-8482-412c-a7be-9650cc0ef504', '50979f4f-84c2-4213-9a1e-154cdd5d7b37', '71c5e083-1132-4bbd-b7b3-a86f197b0ef9', 'e2c4f1b7-0c7d-4911-b631-1884d291d329', '36537891-eec9-4e4a-8bfb-83fe0308959e', '7cf77ec7-804b-4ead-ae17-60353bd726a1', '534f75c1-0a00-411e-ad95-734f1f4b8e39', '8f03edae-8852-4ff0-9a8a-d42f8ede616e', '0c69f89c-354d-4bb7-b2de-43aab08640ca', '4c2fa432-5f75-4c50-b629-1aa1854c7986', '378d6ea9-3398-4a34-afed-9de2a05402d8', '415c04eb-f939-4949-9617-e09154555ee9', '69c7d9b7-4008-43f5-b0b8-5ef3fc4e54fb', 'a772be57-725a-4116-a9a8-9540d85a914b', '2ac6dd8f-e8c1-4e3e-a2f0-55c31cfd994b', 'b94296ef-87c6-442c-824c-542c8f2a5572', '6952221c-e16f-40e6-b342-be4b3fcedfc3', '2eb73eb2-6905-41ee-b339-e8b3bde79623', '9513ad35-8b28-4761-8be5-8203b1cac7d5', '020edfd0-37ed-4eb3-aa25-0e8371858a79', '73f34c30-fe08-4a79-bd50-4bb367d2cf8b', '69c124cf-7d66-4b39-9db7-2edfea707dc3', 'f2d12399-182e-481f-964f-529d91d5973f', '1dbf26c0-9dc7-4cb7-a4cb-f9f2441a41c0', '205c6d19-fdb8-440b-aca3-0fd1774bcaba', '56acced3-fa21-441c-b0eb-54fabd00351c', '2c6352c9-f7e8-49eb-844e-1dc6fd9b8da6']
+        IdList = ['427940d5-c5d7-43d5-9e4a-1ff523b1f449']
+
         for i in IdList:
             try :
                 RequestProgramEncounter = requests.get(self.base_url + 'api/programEncounter/' + i ,headers={'AUTH-TOKEN': self.get_cognito_token()})
@@ -731,9 +731,11 @@ class avni_sync():
                 if RequestProgramEncounter.status_code == 200:
                     data = json.loads(RequestProgramEncounter.text)
                     a,slum_name,HH,d = self.get_household_details(data['Subject ID'])
+
                     if data['Encounter type'] == 'Family factsheet':
                         self.FamilyFactsheetData(data,slum_name,HH)
-                    if data['Encounter type'] == 'Daily Reporting' or 'Household Level Daily Reporting':
+
+                    elif data['Encounter type'] == 'Daily Reporting' or data['Encounter type'] == 'Household Level Daily Reporting':
                         if data['observations']!= None:
                             self.DailyReportingData(data['observations'],slum_name,HH)
                 elif RequestEncounter.status_code == 200:
