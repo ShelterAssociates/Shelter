@@ -1033,20 +1033,20 @@ def give_report_table_numbers(request):  # view for toilet construction
                 if tag  == 'city':
                     T_Housenum = ToiletConstruction.objects.filter(slum__electoral_ward__administrative_ward__city__id = l, completion_date__range =  [start_date, end_date], factsheet_done__isnull = False ).values_list('household_number', flat = True)
 
-                    Spsr_Housecode = SponsorProjectDetails.objects.filter(slum__electoral_ward__administrative_ward__city__id =l).values_list( 'household_code', flat = True)
+                    Spsr_Housecode = SponsorProjectDetails.objects.filter(slum__electoral_ward__administrative_ward__city__id =l).exclude(sponsor__id=10).values_list( 'household_code', flat = True)
 
                 elif tag == 'admin_ward':
                     T_Housenum = ToiletConstruction.objects.filter(slum__electoral_ward__administrative_ward__id = l, completion_date__range =  [start_date, end_date], factsheet_done__isnull = False).values_list('household_number', flat = True)
 
-                    Spsr_Housecode = SponsorProjectDetails.objects.filter(slum__electoral_ward__administrative_ward__id =l).values_list('household_code', flat = True)
+                    Spsr_Housecode = SponsorProjectDetails.objects.filter(slum__electoral_ward__administrative_ward__id =l).exclude(sponsor__id=10).values_list('household_code', flat = True)
                 elif tag == 'electoral_ward':
                     T_Housenum = ToiletConstruction.objects.filter(slum__electoral_ward__id = l, completion_date__range =  [start_date, end_date], factsheet_done__isnull = False).values_list('household_number', flat = True)
 
-                    Spsr_Housecode = SponsorProjectDetails.objects.filter(slum__electoral_ward__id =l).values_list('household_code', flat = True)
+                    Spsr_Housecode = SponsorProjectDetails.objects.filter(slum__electoral_ward__id =l).exclude(sponsor__id=10).values_list('household_code', flat = True)
                 elif tag == 'slum':
                     T_Housenum = ToiletConstruction.objects.filter(slum__id = l, completion_date__range =  [start_date, end_date], factsheet_done__isnull = False).values_list('household_number', flat = True)
 
-                    Spsr_Housecode = SponsorProjectDetails.objects.filter(slum__id =l).values_list('household_code', flat = True)
+                    Spsr_Housecode = SponsorProjectDetails.objects.filter(slum__id =l).exclude(sponsor__id=10).values_list('household_code', flat = True)
 
                 factsheet_count = 0
                 h_list = []
