@@ -378,6 +378,7 @@ class avni_sync():
                     self.FamilyFactsheetData(j, slum, HH)
 
     def FamilyFactsheetData(self, data, slum_name, HH): #checked
+
         try:
             slum_id, city_id =self.get_city_slum_ids(slum_name)
             check_record = HouseholdData.objects.filter(household_number=HH, city_id=city_id, slum_id=slum_id)
@@ -386,7 +387,8 @@ class avni_sync():
                 ff_data = check_record.values_list('ff_data', flat=True)[0]
                 if ff_data == None or len(ff_data) == 0:
                     ff_data = {}
-                ff_data = check_record.values_list('ff_data', flat=True)[0]
+                else:
+                    ff_data = check_record.values_list('ff_data', flat=True)[0]
 
                 final_ff_data = self.map_ff_keys(ff_data, data['observations'])
                 final_ff_data.update({'ff_uuid': data['ID']})
@@ -427,6 +429,7 @@ class avni_sync():
                     if data['observations']['Use of toilet'] != None:
                         use_of_toilet = factsheet_done_date
                 else: use_of_toilet = None
+
                 factsheetDate.update(factsheet_done = factsheet_done_date,toilet_connected_to =toilet_connected_to,
                                     use_of_toilet = use_of_toilet)
                 print('FF record updated for', slum_name, HH)
@@ -720,7 +723,7 @@ class avni_sync():
 
     def SaveDataFromIds(self):
         
-        IdList = ['427940d5-c5d7-43d5-9e4a-1ff523b1f449']
+        IdList = ['108b7126-f64e-46d8-8df2-d503a848a6cb', 'af863165-71af-4e05-91df-5d88782804b2', '8a507ccd-8c62-40e6-b9d4-d59a52361c08', '2974bb93-14aa-483f-adb0-d3e84077b6a0', 'ab527bef-9708-46e9-94ff-5d580ea7ecd2', 'b05a2f27-4b49-4915-b5af-789700c50bb7', '9c0adfaa-6f9d-4ad1-85b7-f4f262cab387']
 
         for i in IdList:
             try :
