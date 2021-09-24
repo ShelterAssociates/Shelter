@@ -28,6 +28,7 @@ from xlwt import Workbook
 from mastersheet.models import *
 from graphs.models import *
 from django.core import serializers
+from django.contrib.postgres.aggregates import ArrayAgg
 
 # The views in this file correspond to the mastersheet functionality of shelter app.
 def give_details(request):
@@ -1115,22 +1116,25 @@ def report_table_cm(request):
             }
     }
     report_table_data_cm = defaultdict(dict)
-    all_activities = []
-    data = {}
     activity_type = ActivityType.objects.all()
     for x in activity_type:
         key_for_datatable = "total_" + (x.name).replace(" ", "")
         filter_field = {'slum__id__in': keys, 'activity_date__range': [start_date, end_date]}
         filter_field_new = {'slum_id__in': keys, 'date_of_activity__range': [start_date, end_date]}
-        # count_field = {key_for_datatable: len('household_number')}
+        count_field = {key_for_datatable: ArrayAgg('household_number')}
+        count_field1 = {key_for_datatable: Count('household_number')}
 
         y = x.communitymobilization_set.filter(**filter_field) \
-            .annotate(**level_data[tag]).values('level', 'level_id', 'city_name','household_number')
-            # .annotate(**count_field).order_by('city_name')
+            .annotate(**level_data[tag]).values('level', 'level_id', 'city_name')\
+            .annotate(**count_field).order_by('city_name')
 
-        for data in y:
-            data.update({key_for_datatable : len(data['household_number'])})
-            data.pop('household_number')
+        yy = x.communitymobilizationactivityattendance_set.filter(**filter_field_new) \
+            .annotate(**level_data[tag]).values('level', 'level_id', 'city_name') \
+            .annotate(**count_field1).order_by('city_name')
+
+
+        for data in yy:
+
             level_id = data['level_id']
             if str(level_id) in report_table_data_cm.keys() and key_for_datatable in report_table_data_cm[
                 str(level_id)].keys():
@@ -1138,22 +1142,19 @@ def report_table_cm(request):
             else:
                 report_table_data_cm[str(level_id)].update(data)
 
-        new = x.communitymobilizationactivityattendance_set.filter(**filter_field_new)
-        a = new.annotate(**level_data[tag]).values('level', 'level_id', 'city_name').order_by('city_name')
-        household_count = {key_for_datatable: a.count()}
-        for k,v in household_count.items():
-            if v >0:
-                all_activities.append(household_count)
+        for data in y:
+            cnt = []
+            for i in data[key_for_datatable]:
+                cnt += i
 
-        if len(a)>0:
-            for i in a[0:1]:
-                level_id = i['level_id']
-                i.update(household_count)
-                data = i
-            new_dict ={str(level_id):data}
-            for j in all_activities:
-                data.update(j)
-            report_table_data_cm.update(new_dict)
+            level_id = data['level_id']
+            if str(level_id) in report_table_data_cm.keys() and key_for_datatable in report_table_data_cm[
+                str(level_id)].keys():
+                report_table_data_cm[str(level_id)][key_for_datatable] += len(cnt)
+            else:
+                data[key_for_datatable] = len(cnt)
+                report_table_data_cm[str(level_id)].update(data)
+
 
     return HttpResponse(json.dumps(list(map(lambda x: report_table_data_cm[x], report_table_data_cm))),
                         content_type="application/json")
@@ -1220,6 +1221,10 @@ def report_table_cm_activity_count(request):
             .annotate(**level_data[tag]).values('level','level_id','city_name') \
             .annotate(**count_field).order_by('city_name')
 
+        yy = x.communitymobilizationactivityattendance_set.filter(**filter_field_new) \
+            .annotate(**level_data[tag]).values('level', 'level_id', 'city_name')\
+            .annotate(**count_field).order_by('city_name', 'date_of_activity')
+
         for data in y:
             level_id = data['level_id']
             if str(level_id) in report_table_data_cm_activity_count.keys() and key_for_datatable in \
@@ -1228,18 +1233,13 @@ def report_table_cm_activity_count(request):
             else:
                 report_table_data_cm_activity_count[str(level_id)].update(data)
 
-        new = x.communitymobilizationactivityattendance_set.filter(**filter_field_new)\
-            .annotate(**level_data[tag]).values('level', 'level_id', 'city_name')\
-            .annotate(**count_field).order_by('city_name')
-        for i in new:
-            i.update({key_for_datatable : 1})
-
-        for data in new:
+        for data in yy:
             level_id = data['level_id']
             if str(level_id) in report_table_data_cm_activity_count.keys() and key_for_datatable in \
                     report_table_data_cm_activity_count[str(level_id)].keys():
-                report_table_data_cm_activity_count[str(level_id)][key_for_datatable] += data[key_for_datatable]
+                report_table_data_cm_activity_count[str(level_id)][key_for_datatable] += 1
             else:
+                data[key_for_datatable] = 1
                 report_table_data_cm_activity_count[str(level_id)].update(data)
 
     return HttpResponse(json.dumps(list(map(lambda x: report_table_data_cm_activity_count[x], report_table_data_cm_activity_count))),

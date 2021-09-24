@@ -707,7 +707,7 @@ def factsheetDataDownload(request):         #     function for city wise factshe
     response = HttpResponse(content_type='text/csv')
     response['Content-Disposition']  =  'attachment; filename='+filename
 
-    writer = csv.DictWriter(response, ['Household_number', 'Slum Name', 'Total_family_members', 'Male_members', 'Female_members', 'Below 5 years', 'Between_0_to_18', 'Above 60 years', 'disable_members', 'Toilet Connected To.', 'Have You Upgraded ?', 'Cost Of Upgradetion?', 'Sponsor Name'])
+    writer = csv.DictWriter(response, ['Slum Name', 'Household_number', 'Name As Per RHS',  'Name As Per Factsheet', 'Ownership Status As Per Factsheet', 'Application id', 'Aadhar Number', 'Phone Number', 'Total_family_members', 'Male_members', 'Female_members', 'Below 5 years', 'Between_0_to_18', 'Above 60 years', 'disable_members', 'Toilet Connected To.', 'Have You Upgraded ?', 'Cost Of Upgradetion?', 'Sponsor Name'])
     writer.writeheader()
     writer.writerows(a)
 
@@ -745,6 +745,22 @@ def cityWiseQuery(city_id, startdate, enddate):
 
                 slum_name = Slum.objects.filter(id = i.slum_id).values_list('name',flat = True)[0]
 
+                data1 =  SBMUpload.objects.filter(household_number = i.household_number, slum__id = i.slum_id).values_list('name', 'application_id', 'aadhar_number', 'phone_number')
+
+                
+                household_list = HouseholdData.objects.filter(household_number = i.household_number, slum__id = i.slum_id).values_list('rhs_data',flat= True)
+                family_data.update({'Name As Per RHS': household_list[0]['group_og5bx85/Full_name_of_the_head_of_the_household']})
+                
+
+                if data1.exists() == True:
+                    data = data1.values_list('application_id', 'aadhar_number', 'phone_number')
+                    if data[0][0] != 'nan':
+                        family_data.update({'Application id': data[0][0]})
+                    if data[0][1] != 'nan':
+                        family_data.update({'Aadhar Number': data[0][1]})
+                    if data[0][2] != 'nan':
+                        family_data.update({'Phone Number': data[0][2]})
+
                 
                 family_data.update({'Slum Name': slum_name})
                 ff_keys = i.ff_data.keys()
@@ -779,6 +795,14 @@ def cityWiseQuery(city_id, startdate, enddate):
                 
                 if 'group_ne3ao98/Where_the_individual_ilet_is_connected_to' in ff_keys:
                     family_data.update({'Toilet Connected To.': i.ff_data['group_ne3ao98/Where_the_individual_ilet_is_connected_to']})
+                
+                if 'group_oh4zf84/Name_of_the_family_head' in ff_keys:
+                    family_data.update({'Name As Per Factsheet': i.ff_data['group_oh4zf84/Name_of_the_family_head']})
+
+                if 'group_oh4zf84/Ownership_status' in ff_keys:
+                    family_data.update({'Ownership Status As Per Factsheet': i.ff_data['group_oh4zf84/Ownership_status']})
+
+                 
                 
                 all.append(family_data)
 

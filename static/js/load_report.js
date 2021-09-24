@@ -49,7 +49,17 @@
 						"aggregated_total_WorkshopforGirls":0,
 						"aggregated_total_WorkshopwithChildren":0,
 						"aggregated_total_WorkshopforWomen":0, 
-						"aggregated_total_WorkshopwithMen":0, 
+						"aggregated_total_WorkshopwithMen":0,
+						"aggregated_total_Maze":0,
+						"aggregated_total_SocialSong":0,
+						"aggregated_total_Zigsaw":0,
+						"aggregated_total_PuppetShow":0,
+						"aggregated_total_FlipChart":0,
+						"aggregated_total_Transectwalk":0,
+						"aggregated_total_Communitymeeting":0,
+						"aggregated_total_MixWorkshop":0,
+						"aggregated_total_Competition":0,
+						"aggregated_total_ChalataBolata":0, 
 						"aggregated_city_name":0,
 	}];
 	var total_counts_cm = [{
@@ -74,7 +84,17 @@
 						"aggregated_total_WorkshopforGirls":0,
 						"aggregated_total_WorkshopwithChildren":0,
 						"aggregated_total_WorkshopforWomen":0, 
-						"aggregated_total_WorkshopwithMen":0, 
+						"aggregated_total_WorkshopwithMen":0,
+						"aggregated_total_Maze":0,
+						"aggregated_total_SocialSong":0,
+						"aggregated_total_Zigsaw":0,
+						"aggregated_total_PuppetShow":0,
+						"aggregated_total_FlipChart":0,
+						"aggregated_total_Transectwalk":0,
+						"aggregated_total_Communitymeeting":0,
+						"aggregated_total_MixWorkshop":0,
+						"aggregated_total_Competition":0,
+						"aggregated_total_ChalataBolata":0, 
 						"aggregated_city_name":0, 
 
 	}];
@@ -229,7 +249,17 @@
 						"aggregated_total_WorkshopforGirls":0,
 						"aggregated_total_WorkshopwithChildren":0,
 						"aggregated_total_WorkshopforWomen":0, 
-						"aggregated_total_WorkshopwithMen":0, 
+						"aggregated_total_WorkshopwithMen":0,
+						"aggregated_total_Maze":0,
+						"aggregated_total_SocialSong":0,
+						"aggregated_total_Zigsaw":0,
+						"aggregated_total_PuppetShow":0,
+						"aggregated_total_FlipChart":0,
+						"aggregated_total_Transectwalk":0,
+						"aggregated_total_Communitymeeting":0,
+						"aggregated_total_MixWorkshop":0,
+						"aggregated_total_Competition":0,
+						"aggregated_total_ChalataBolata":0, 
 						"aggregated_city_name":0, 
 
 	}];
@@ -255,7 +285,17 @@
 						"aggregated_total_WorkshopforGirls":0,
 						"aggregated_total_WorkshopwithChildren":0,
 						"aggregated_total_WorkshopforWomen":0, 
-						"aggregated_total_WorkshopwithMen":0, 
+						"aggregated_total_WorkshopwithMen":0,
+						"aggregated_total_Maze":0,
+						"aggregated_total_SocialSong":0,
+						"aggregated_total_Zigsaw":0,
+						"aggregated_total_PuppetShow":0,
+						"aggregated_total_FlipChart":0,
+						"aggregated_total_Transectwalk":0,
+						"aggregated_total_Communitymeeting":0,
+						"aggregated_total_MixWorkshop":0,
+						"aggregated_total_Competition":0,
+						"aggregated_total_ChalataBolata":0, 
 						"aggregated_city_name":0, 
 
 		}];
@@ -427,6 +467,16 @@
 							{"data": "aggregated_total_WorkshopwithChildren", "title": "Workshop with Children"},
 							{"data": "aggregated_total_WorkshopforWomen", "title": "Workshop for Women"},
 							{"data": "aggregated_total_WorkshopwithMen", "title": "Workshop with Men"},
+							{"data": "aggregated_total_Maze", "title": "Maze"},
+							{"data": "aggregated_total_SocialSong", "title": "Social Song"},
+							{"data": "aggregated_total_Zigsaw", "title": "Zigsaw"},
+							{"data": "aggregated_total_PuppetShow", "title": "Puppet Show"},
+							{"data": "aggregated_total_FlipChart", "title": "Flip Chart"},
+							{"data": "aggregated_total_Transectwalk", "title": "Transect walk"},
+							{"data": "aggregated_total_Communitymeeting", "title": "Community meeting"},
+							{"data": "aggregated_total_MixWorkshop", "title": "Mix Workshop"},
+							{"data": "aggregated_total_Competition", "title": "Competition"},
+							{"data": "aggregated_total_ChalataBolata", "title": "Chalata Bolata"},
 						],
 					"scrollX": true
 			});
@@ -459,6 +509,16 @@
 							{"data": "aggregated_total_WorkshopwithChildren", "title": "Workshop with Children"},
 							{"data": "aggregated_total_WorkshopforWomen", "title": "Workshop for Women"},
 							{"data": "aggregated_total_WorkshopwithMen", "title": "Workshop with Men"},
+							{"data": "aggregated_total_Maze", "title": "Maze"},
+							{"data": "aggregated_total_SocialSong", "title": "Social Song"},
+							{"data": "aggregated_total_Zigsaw", "title": "Zigsaw"},
+							{"data": "aggregated_total_PuppetShow", "title": "Puppet Show"},
+							{"data": "aggregated_total_FlipChart", "title": "Flip Chart"},
+							{"data": "aggregated_total_Transectwalk", "title": "Transect walk"},
+							{"data": "aggregated_total_Communitymeeting", "title": "Community meeting"},
+							{"data": "aggregated_total_MixWorkshop", "title": "Mix Workshop"},
+							{"data": "aggregated_total_Competition", "title": "Competition"},
+							{"data": "aggregated_total_ChalataBolata", "title": "Chalata Bolata"},
 						],
 					"scrollX": true
 			});
@@ -547,7 +607,36 @@
 							if(data[i].hasOwnProperty('total_WorkshopwithMen')){
 								total_counts_cm_activity_count[0]['aggregated_total_WorkshopwithMen'] += data[i]['total_WorkshopwithMen'];
 							}
-							
+							if(data[i].hasOwnProperty('total_Maze')){
+								total_counts_cm_activity_count[0]['aggregated_total_Maze'] += data[i]['total_Maze'];
+							}
+							if(data[i].hasOwnProperty('total_SocialSong')){
+								total_counts_cm_activity_count[0]['aggregated_total_SocialSong'] += data[i]['total_SocialSong'];
+							}
+							if(data[i].hasOwnProperty('total_Zigsaw')){
+								total_counts_cm_activity_count[0]['aggregated_total_Zigsaw'] += data[i]['total_Zigsaw'];
+							}
+							if(data[i].hasOwnProperty('total_PuppetShow')){
+								total_counts_cm_activity_count[0]['aggregated_total_PuppetShow'] += data[i]['total_PuppetShow'];
+							}
+							if(data[i].hasOwnProperty('total_FlipChart')){
+								total_counts_cm_activity_count[0]['aggregated_total_FlipChart'] += data[i]['total_FlipChart'];
+							}
+							if(data[i].hasOwnProperty('total_Transectwalk')){
+								total_counts_cm_activity_count[0]['aggregated_total_Transectwalk'] += data[i]['total_Transectwalk'];
+							}
+							if(data[i].hasOwnProperty('total_Communitymeeting')){
+								total_counts_cm_activity_count[0]['aggregated_total_Communitymeeting'] += data[i]['total_Communitymeeting'];
+							}
+							if(data[i].hasOwnProperty('total_MixWorkshop')){
+								total_counts_cm_activity_count[0]['aggregated_total_MixWorkshop'] += data[i]['total_MixWorkshop'];
+							}
+							if(data[i].hasOwnProperty('total_Competition')){
+								total_counts_cm_activity_count[0]['aggregated_total_Competition'] += data[i]['total_Competition'];
+							}
+							if(data[i].hasOwnProperty('total_ChalataBolata')){
+								total_counts_cm_activity_count[0]['aggregated_total_ChalataBolata'] += data[i]['total_ChalataBolata'];
+							}
 						}
 						report_table_cm_activity_count_aggregated.row(0).data(total_counts_cm_activity_count[0]);
 						return data;
@@ -580,6 +669,16 @@
 						{"data": "total_WorkshopwithChildren", "title": "Workshop with Children"},
 						{"data": "total_WorkshopforWomen", "title": "Workshop for Women"},
 						{"data": "total_WorkshopwithMen", "title": "Workshop with Men"},
+						{"data": "total_Maze", "title": "Maze"},
+						{"data": "total_SocialSong", "title": "Social Song"},
+						{"data": "total_Zigsaw", "title": "Zigsaw"},
+						{"data": "total_PuppetShow", "title": "Puppet Show"},
+						{"data": "total_FlipChart", "title": "Flip Chart"},
+						{"data": "total_Transectwalk", "title": "Transect walk"},
+						{"data": "total_Communitymeeting", "title": "Community meeting"},
+						{"data": "total_MixWorkshop", "title": "Mix Workshop"},
+						{"data": "total_Competition", "title": "Competition"},
+						{"data": "total_ChalataBolata", "title": "Chalata Bolata"},
 						{"data": "city_name", "title": "City name"}
 						
 					],
@@ -670,6 +769,36 @@
 							if(data[i].hasOwnProperty('total_WorkshopwithMen')){
 								total_counts_cm[0]['aggregated_total_WorkshopwithMen'] += data[i]['total_WorkshopwithMen'];
 							}
+							if(data[i].hasOwnProperty('total_Maze')){
+								total_counts_cm[0]['aggregated_total_Maze'] += data[i]['total_Maze'];
+							}
+							if(data[i].hasOwnProperty('total_SocialSong')){
+								total_counts_cm[0]['aggregated_total_SocialSong'] += data[i]['total_SocialSong'];
+							}
+							if(data[i].hasOwnProperty('total_Zigsaw')){
+								total_counts_cm[0]['aggregated_total_Zigsaw'] += data[i]['total_Zigsaw'];
+							}
+							if(data[i].hasOwnProperty('total_PuppetShow')){
+								total_counts_cm[0]['aggregated_total_PuppetShow'] += data[i]['total_PuppetShow'];
+							}
+							if(data[i].hasOwnProperty('total_FlipChart')){
+								total_counts_cm[0]['aggregated_total_FlipChart'] += data[i]['total_FlipChart'];
+							}
+							if(data[i].hasOwnProperty('total_Transectwalk')){
+								total_counts_cm[0]['aggregated_total_Transectwalk'] += data[i]['total_Transectwalk'];
+							}
+							if(data[i].hasOwnProperty('total_Communitymeeting')){
+								total_counts_cm[0]['aggregated_total_Communitymeeting'] += data[i]['total_Communitymeeting'];
+							}
+							if(data[i].hasOwnProperty('total_MixWorkshop')){
+								total_counts_cm[0]['aggregated_total_MixWorkshop'] += data[i]['total_MixWorkshop'];
+							}
+							if(data[i].hasOwnProperty('total_Competition')){
+								total_counts_cm[0]['aggregated_total_Competition'] += data[i]['total_Competition'];
+							}
+							if(data[i].hasOwnProperty('total_ChalataBolata')){
+								total_counts_cm[0]['aggregated_total_ChalataBolata'] += data[i]['total_ChalataBolata'];
+							}
 							
 						}
 						report_table_cm_aggregated.row(0).data(total_counts_cm[0]);
@@ -703,6 +832,16 @@
 						{"data": "total_WorkshopwithChildren", "title": "Workshop with Children"},
 						{"data": "total_WorkshopforWomen", "title": "Workshop for Women"},
 						{"data": "total_WorkshopwithMen", "title": "Workshop with Men"},
+						{"data": "total_Maze", "title": "Maze"},
+						{"data": "total_SocialSong", "title": "Social Song"},
+						{"data": "total_Zigsaw", "title": "Zigsaw"},
+						{"data": "total_PuppetShow", "title": "Puppet Show"},
+						{"data": "total_FlipChart", "title": "Flip Chart"},
+						{"data": "total_Transectwalk", "title": "Transect walk"},
+						{"data": "total_Communitymeeting", "title": "Community meeting"},
+						{"data": "total_MixWorkshop", "title": "Mix Workshop"},
+						{"data": "total_Competition", "title": "Competition"},
+						{"data": "total_ChalataBolata", "title": "Chalata Bolata"},
 						{"data": "city_name", "title": "City name"}
 						
 					],
