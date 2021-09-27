@@ -1012,7 +1012,7 @@ def give_report_table_numbers(request):  # view for toilet construction
     for query_field in query_on.keys():
         if query_field in ['agreement_date', 'phase_one_material_date','phase_two_material_date','phase_three_material_date',
         'completion_date', 'septic_tank_date','use_of_toilet','toilet_connected_to', 'factsheet_done']:
-            filter_field = {'slum__id__in': keys, 'phase_one_material_date__range': [start_date, end_date],
+            filter_field = {'slum__id__in': keys, 'agreement_date__range': [start_date, end_date],
                             query_field + '__isnull': False}
         else:
             filter_field = {'slum__id__in': keys, query_field + '__range': [start_date, end_date]}
