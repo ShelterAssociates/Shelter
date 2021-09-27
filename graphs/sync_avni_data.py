@@ -316,6 +316,7 @@ class avni_sync():
         return (get_page_count, programEncounters_path)
 
     def CommunityMobilizationActivityData(self, data, slum_name, HH):  #checked
+
         activities = {'Samiti meeting1': 'Samitee meeting 1', 'Samiti meeting2': 'Samitee meeting 2',
                       'Samiti meeting3': 'Samitee meeting 3', 'Samiti meeting4': 'Samitee meeting 4',
                       'Samiti meeting5': 'Samitee meeting 5'}  # "Workshop for Women","Workshop for Boys","Workshop for Girls"}
@@ -723,7 +724,7 @@ class avni_sync():
 
     def SaveDataFromIds(self):
         
-        IdList = ['108b7126-f64e-46d8-8df2-d503a848a6cb', 'af863165-71af-4e05-91df-5d88782804b2', '8a507ccd-8c62-40e6-b9d4-d59a52361c08', '2974bb93-14aa-483f-adb0-d3e84077b6a0', 'ab527bef-9708-46e9-94ff-5d580ea7ecd2', 'b05a2f27-4b49-4915-b5af-789700c50bb7', '9c0adfaa-6f9d-4ad1-85b7-f4f262cab387']
+        IdList = ['1cf97063-034e-4756-b2ac-38e567877818']
 
         for i in IdList:
             try :
@@ -795,71 +796,54 @@ class avni_sync():
         date_of_survey = dateparser.parse(audit['Created at']).date()
         last_modified_date = dateparser.parse(audit['Last modified at']).date()
 
-        details = {}
-
-        lst = ['Aadhar number', 'Name of the surveyor', 'Family member name', 'Age',
-               'Are you pregnant or lactating mother?', 'Have you registered for covid vaccination?',
-               'Have you taken first dose?', 'Date of first dose.', 'Have you taken second dose?',
-               'Date of second dose.', 'Have you even been infected with corona?',
-               'If corona infected, how many days it had been since infection?',
-               'Are you willing to get vaccinated?', 'If not willing to take vaccine, why?', 'Note', 'Do you have any other disease',
-               'If any then which disease', 'Registered Phone Number', 'Which of the below vaccine taken?']
         observation = HH_data['observations']
-        if 'Gender(लिंग)' in observation:
-            details['Gender'] = observation['Gender(लिंग)']
-            del observation['Gender(लिंग)']
-        if 'Age (पूर्ण वय (वर्ष))' in observation:
-            details['Age'] = observation['Age (पूर्ण वय (वर्ष))']
-            del observation['Age (पूर्ण वय (वर्ष))']
 
-        for i in lst:
-            if i == 'Date of second dose.':
-                if 'Second dose date.' in observation:
-                    temp = observation['Second dose date.']
-                    del observation['Second dose date.']
-                    observation['Date of second dose.'] = temp
-            if i == 'Do you have any other disease':
-                if 'Do you have any disease?' in observation:
-                    temp = observation['Do you have any disease?'][0]
-                    del observation['Do you have any disease?']
-                    observation['Do you have any other disease'] = temp
-
-            if i in observation:
-                if observation[i] == 'हो':
-                    del observation[i]
-                    observation[i] = 'Yes'
-                elif observation[i] == 'नाही':
-                    del observation[i]
-                    observation[i] = 'No'
-                elif observation[i] == 'कोविशिल्ट':
-                    del observation[i]
-                    observation[i] = 'Covishield'
-                elif observation[i] == 'कोवॅक्सिन':
-                    del observation[i]
-                    observation[i] = 'Covaxin'
-                elif observation[i] == 'स्पुतनिक':
-                    del observation[i]
-                    observation[i] = 'Sputnik V'
-                elif observation[i] == 'माहित नाही':
-                    del observation[i]
-                    observation[i] = "Don't Know"
-            else:
-                observation[i] = None
-        observation.update(details)
+        for i in observation.keys():
+            if i == 'Gender_n':
+                observation['Gender'] = observation['Gender_n']
+                del observation['Gender_n']
+            elif i == 'Mobile number used for vaccination registration':
+                observation['Registered Phone Number'] = observation['Mobile number used for vaccination registration']['phoneNumber']
+                del observation['Mobile number used for vaccination registration']
+            elif i == 'Do you have any disease?':
+                temp = " ".join(observation['Do you have any disease?'])
+                observation['Do you have any disease?'] = temp
+            elif i == 'Have you registered for covid vaccination?':
+                observation['Have you registered for covid vaccination?'] = observation['Have you registered for covid vaccination?'].capitalize()
+            elif i == 'Have you even been infected with corona?':
+                observation['Have you even been infected with corona?'] = observation['Have you even been infected with corona?'].capitalize()
+            elif i == 'Have you taken first dose?':
+                observation['Have you taken first dose?'] = observation['Have you taken first dose?'].capitalize()
+            elif i == 'Have you taken second dose?':
+                observation['Have you taken second dose?'] = observation['Have you taken second dose?'].capitalize()
+                
         observation['date_of_survey'] = date_of_survey
         observation['last_modified_date'] = last_modified_date
 
         observation['Covid_uuid'] = covid_uuid
-        observation['city_id'] = city_id;
+        observation['city_id'] = city_id
+        observation['slum_id'] = slum_id
 
-        del observation['First name']
+        lst = ['Aadhar number', 'Name of the surveyor', 'Family member name', 'Persons age',
+               'Are you pregnant or lactating mother?', 'Have you registered for covid vaccination?',
+               'Have you taken first dose?', 'Date of first dose.', 'Have you taken second dose?',
+               'Second dose date.', 'Have you even been infected with corona?',
+               'If corona infected, how many days it had been since infection?',
+               'Are you willing to get vaccinated?', 'If not willing to take vaccine, why?', 'Note', 'Do you have any disease?',
+               'If yes for other disease, please mention here', 'Registered Phone Number', 'Which of the below vaccine taken?']
 
-        if observation['Date of first dose.'] != None:
+        for i in lst:
+            if i not in observation:
+                observation[i] = None
+
+        if observation['Date of first dose.'] != None :
             observation['Date of first dose.'] = dateparser.parse(observation['Date of first dose.']).date()
+        if observation['Second dose date.'] != None:
+            observation['Second dose date.'] = dateparser.parse(observation['Second dose date.']).date()
+        
 
-        if observation['Date of second dose.'] != None:
-            observation['Date of second dose.'] = dateparser.parse(observation['Date of second dose.']).date()
-        return (observation,slum_id)
+        del observation['First name']        
+        return (observation)
 
     def RegistrationCovidData(self, HH_data):  # checked
        
@@ -867,8 +851,10 @@ class avni_sync():
             household_number1 = self.SaveCovidDataFromIds1(HH_data['Groups'])
         else:
             household_number1 = 9999
+
                   
-        final_dict, self.slum = self.ProcessCovidData(HH_data)
+        final_dict = self.ProcessCovidData(HH_data)
+        self.slum = final_dict['slum_id']
 
         try:
             if CovidData.objects.filter(covid_uuid=final_dict['Covid_uuid']).exists() == False:
@@ -881,10 +867,10 @@ class avni_sync():
                             date_of_survey=final_dict['date_of_survey'],
                             last_modified_date=final_dict['last_modified_date'],
                             family_member_name=final_dict['Family member name'],
-                            gender=final_dict['Gender'], age=final_dict['Age'],
+                            gender=final_dict['Gender'], age=final_dict['Persons age'],
                             aadhar_number=final_dict['Aadhar number'],
-                            do_you_have_any_other_disease=final_dict['Do you have any other disease'],
-                            if_any_then_which_disease=final_dict['If any then which disease'],
+                            do_you_have_any_other_disease=final_dict['Do you have any disease?'],
+                            if_any_then_which_disease=final_dict['If yes for other disease, please mention here'],
                             preganant_or_lactating_mother=final_dict['Are you pregnant or lactating mother?'],
                             registered_for_covid_vaccination=final_dict['Have you registered for covid vaccination?'],
                             registered_phone_number=final_dict['Registered Phone Number'],
@@ -892,7 +878,7 @@ class avni_sync():
                             first_dose_date=final_dict['Date of first dose.'],
                             vaccine_name=final_dict['Which of the below vaccine taken?'],
                             take_second_dose=final_dict['Have you taken second dose?'],
-                            second_dose_date=final_dict['Date of second dose.'],
+                            second_dose_date=final_dict['Second dose date.'],
                             corona_infected=final_dict['Have you even been infected with corona?'],
                             if_corona_infected_days=final_dict[
                                 'If corona infected, how many days it had been since infection?'],
@@ -912,10 +898,10 @@ class avni_sync():
                             date_of_survey=final_dict['date_of_survey'],
                             last_modified_date=final_dict['last_modified_date'],
                             family_member_name=final_dict['Family member name'],
-                            gender=final_dict['Gender'], age=final_dict['Age'],
+                            gender=final_dict['Gender'], age=final_dict['Persons age'],
                             aadhar_number=final_dict['Aadhar number'],
-                            do_you_have_any_other_disease=final_dict['Do you have any other disease'],
-                            if_any_then_which_disease=final_dict['If any then which disease'],
+                            do_you_have_any_other_disease=final_dict['Do you have any disease?'],
+                            if_any_then_which_disease=final_dict['If yes for other disease, please mention here'],
                             preganant_or_lactating_mother=final_dict['Are you pregnant or lactating mother?'],
                             registered_for_covid_vaccination=final_dict['Have you registered for covid vaccination?'],
                             registered_phone_number=final_dict['Registered Phone Number'],
@@ -923,7 +909,7 @@ class avni_sync():
                             first_dose_date=final_dict['Date of first dose.'],
                             vaccine_name=final_dict['Which of the below vaccine taken?'],
                             take_second_dose=final_dict['Have you taken second dose?'],
-                            second_dose_date=final_dict['Date of second dose.'],
+                            second_dose_date=final_dict['Second dose date.'],
                             corona_infected=final_dict['Have you even been infected with corona?'],
                             if_corona_infected_days=final_dict[
                                 'If corona infected, how many days it had been since infection?'],
