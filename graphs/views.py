@@ -749,9 +749,11 @@ def cityWiseQuery(city_id, startdate, enddate):
 
                 
                 household_list = HouseholdData.objects.filter(household_number = i.household_number, slum__id = i.slum_id).values_list('rhs_data',flat= True)
-                family_data.update({'Name As Per RHS': household_list[0]['group_og5bx85/Full_name_of_the_head_of_the_household']})
-                
 
+                if  len(household_list) > 0:
+                    if household_list[0] is not None and  household_list[0]['Type_of_structure_occupancy'] == 'Occupied house':
+                        family_data.update({'Name As Per RHS': household_list[0]['group_og5bx85/Full_name_of_the_head_of_the_household']})
+                
                 if data1.exists() == True:
                     data = data1.values_list('application_id', 'aadhar_number', 'phone_number')
                     if data[0][0] != 'nan':

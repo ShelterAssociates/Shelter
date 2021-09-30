@@ -200,3 +200,19 @@ class CommunityMobilizationAdmin(BaseAdmin):
 admin.site.register(CommunityMobilization, CommunityMobilizationAdmin)
 
 admin.site.register(KoboDDSyncTrack)
+
+class CommunityMobilizationActivityAttendanceAdmin(BaseAdmin):
+    list_display = ('slum_name','household_number', 'activity_type_name','date_of_activity', 'males_attended_activity', 'females_attended_activity', 'other_gender_attended_activity', 'girls_attended_activity', 'boys_attended_activity')
+    search_fields = ['slum__name','household_number', 'activity_type__name','date_of_activity']
+    raw_id_fields = ['slum']
+
+    def activity_type_name(self, obj):
+        return obj.activity_type.name
+
+    def slum_name(self, obj):
+        return obj.slum.name
+    
+
+    list_per_page = 20
+
+admin.site.register(CommunityMobilizationActivityAttendance, CommunityMobilizationActivityAttendanceAdmin)
