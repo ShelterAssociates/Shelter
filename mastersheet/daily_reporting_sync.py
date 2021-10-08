@@ -50,10 +50,11 @@ class DDSync(object):
         kobo_url = settings.KOBOCAT_FORM_URL + 'data/'+str(self.survey_id)
         kobo_url += '?format=json&query={"slum_name":"'+self.slum.shelter_slum_code +'"'
         kobo_url += ',"Was_any_Community_Mobilisation":"1" ' if community_mobilization_flag else ''
-        kobo_url += ',"_submission_time":{"$gt":"%s"} }'
+        kobo_url += ',"_submission_time":{"$gt":"%s"}}'
         return kobo_url
 
     def fetch_url_data(self, url):
+        url = url.replace(" ",'')
         kobotoolbox_request = urllib2.Request(url)
         kobotoolbox_request.add_header('User-agent', 'Mozilla 5.10')
         kobotoolbox_request.add_header('Authorization', settings.KOBOCAT_TOKEN)
