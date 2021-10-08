@@ -454,12 +454,15 @@ class avni_sync():
 
     def get_max_date(self,dates_list):
         max = None
-        for a, b in itertools.combinations(dates_list, 2):
-            if a > b:
-                max = a
-            else :
-                max= b
-        return max
+        if len(dates_list) > 1:
+            for a, b in itertools.combinations(dates_list, 2):
+                if a > b:
+                    max = a
+                else :
+                    max= b
+            return max
+        
+        return dates_list[0]
 
     def str_to_int(self,data):
         a = []
@@ -731,7 +734,7 @@ class avni_sync():
                 RequestProgramEncounter = requests.get(self.base_url + 'api/programEncounter/' + i ,headers={'AUTH-TOKEN': self.get_cognito_token()})
                 RequestEncounter= requests.get(self.base_url + 'api/encounter/' + i ,headers={'AUTH-TOKEN': self.get_cognito_token()})
                 RequestHouseholdRegistration = requests.get(self.base_url + 'api/subject/' + i ,headers={'AUTH-TOKEN': self.get_cognito_token()})
-#                print(RequestHouseholdRegistration.status_code)
+
                 if RequestProgramEncounter.status_code == 200:
                     data = json.loads(RequestProgramEncounter.text)
                     a,slum_name,HH,d = self.get_household_details(data['Subject ID'])
