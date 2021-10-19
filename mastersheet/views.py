@@ -215,20 +215,21 @@ def masterSheet(request, slum_code=0, FF_code=0, RHS_code=0):
 
             for y in community_mobilization_data:
                 #y = community_mobilization_data[i]
-                for z in y.household_number:
-                    new_activity_type = y.activity_type.name
-                    z = str(int(z))
-                    if z not in dummy_formdict.keys():
-                        dummy_formdict[z] = {
-                            "Household_number": z,
-                            "_id": "",
-                            "ff_id": "",
-                            "ff_xform_id_string": "",
-                            "_xform_id_string": "",
-                            "_attachments": "",
-                            "no_rhs_flag": "#eba6fc"
-                        }
-                    dummy_formdict[z].update({new_activity_type: y.activity_date_str, str(new_activity_type) + "_id": y.id})
+                if y.household_number != None:
+                    for z in y.household_number:
+                        new_activity_type = y.activity_type.name
+                        z = str(int(z))
+                        if z not in dummy_formdict.keys():
+                            dummy_formdict[z] = {
+                                "Household_number": z,
+                                "_id": "",
+                                "ff_id": "",
+                                "ff_xform_id_string": "",
+                                "_xform_id_string": "",
+                                "_attachments": "",
+                                "no_rhs_flag": "#eba6fc"
+                            }
+                        dummy_formdict[z].update({new_activity_type: y.activity_date_str, str(new_activity_type) + "_id": y.id})
 
             for i in temp_sbm_keys:
                 if str(i) not in dummy_formdict.keys():
@@ -356,8 +357,9 @@ def masterSheet(request, slum_code=0, FF_code=0, RHS_code=0):
 
                 if len(slum_funder) != 0:
                     for funder in slum_funder:
-                        if int(x['Household_number']) in funder.household_code:
-                            x.update({'Funder': funder.sponsor_project.name}) #funder.sponsor.organization_name})
+                        if funder.household_code != None:
+                            if int(x['Household_number']) in funder.household_code:
+                                x.update({'Funder': funder.sponsor_project.name}) #funder.sponsor.organization_name})
 
             formdict = list(map(lambda x: dummy_formdict[x], dummy_formdict))
             for x in formdict:
@@ -1053,10 +1055,11 @@ def give_report_table_numbers(request):  # view for toilet construction
                 h_list = []
                 for household_num in T_Housenum:
                     for housecode_list in Spsr_Housecode:
-                        if int(household_num) in housecode_list and household_num not in h_list:
-                            factsheet_count += 1
-                            h_list.append(household_num)
-                            break
+                        if housecode_list != None:
+                            if int(household_num) in housecode_list and household_num not in h_list:
+                                factsheet_count += 1
+                                h_list.append(household_num)
+                                break
                 
                 report_table_data[l]['factAssign'] = factsheet_count
                 
