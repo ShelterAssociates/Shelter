@@ -734,9 +734,10 @@ def cityWiseQuery(city_id, startdate, enddate):
                 sp = SponsorProjectDetails.objects.filter(slum_id = i.slum_id).exclude(sponsor_id = 10).values_list('household_code', 'sponsor_project_id')
                 sp_name = ""
                 for i1 in sp:
-                    if int(i.household_number) in i1[0]:
-                        sp_name = SponsorProject.objects.filter(id = i1[1]).values_list('name', flat=True)[0]
-                        break
+                    if i1[0] is not None:
+                        if int(i.household_number) in i1[0]:
+                            sp_name = SponsorProject.objects.filter(id = i1[1]).values_list('name', flat=True)[0]
+                            break
 
                 if sp_name == "":
                     family_data.update({'Sponsor Name': "Funder Not Assign"})
