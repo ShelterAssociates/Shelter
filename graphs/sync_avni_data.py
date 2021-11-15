@@ -396,23 +396,21 @@ class avni_sync():
                 check_record.update(ff_data=final_ff_data)
                 factsheet_done_date = dateparser.parse(data['audit']['Last modified at']).date()
                 if 'Where the individual toilet is connected ?' in data['observations']:
-                    ans = data['observations']['Where the individual toilet is connected ?']
-                    if ans != 'Not connected':
+                    if data['observations']['Where the individual toilet is connected ?']  != 'Not connected':
                         toilet_connected_to = factsheet_done_date
-                else : toilet_connected_to = None
+                    else :
+                        toilet_connected_to = None
                 if 'Use of toilet' in data['observations']:
                     if data['observations']['Use of toilet'] != None:
                         use_of_toilet = factsheet_done_date
-                else: use_of_toilet = None
+                    else:
+                        use_of_toilet = None
                 factsheetDate.update(factsheet_done = factsheet_done_date,toilet_connected_to =toilet_connected_to,
                                     use_of_toilet = use_of_toilet )
                 print('FF record updated for', slum_name, HH)
             else:
                 ff_data = {}
-                Enrol_id = data['Enrolment ID']
-                request = requests.get(self.base_url + 'api/enrolment/' + Enrol_id,
-                                    headers={'AUTH-TOKEN': self.get_cognito_token()})
-                subject_id = json.loads(request.text)['Subject ID']
+                subject_id = data['Subject ID']
                 send_request2 = requests.get(self.base_url + 'api/subject/' + subject_id ,headers={'AUTH-TOKEN': self.get_cognito_token()})
                 get_HH_data = json.loads(send_request2.text)
                 self.registrtation_data(get_HH_data)
@@ -422,14 +420,15 @@ class avni_sync():
                 get_reocrd.update(ff_data = final_ff_data)
                 factsheet_done_date = dateparser.parse(data['audit']['Last modified at']).date()
                 if 'Where the individual toilet is connected ?' in data['observations']:
-                    ans = data['observations']['Where the individual toilet is connected ?']
-                    if ans != 'Not connected':
+                    if data['observations']['Where the individual toilet is connected ?'] != 'Not connected':
                         toilet_connected_to = factsheet_done_date
-                else : toilet_connected_to = None
+                    else :
+                        toilet_connected_to = None
                 if 'Use of toilet' in data['observations']:
                     if data['observations']['Use of toilet'] != None:
                         use_of_toilet = factsheet_done_date
-                else: use_of_toilet = None
+                    else:
+                        use_of_toilet = None
 
                 factsheetDate.update(factsheet_done = factsheet_done_date,toilet_connected_to =toilet_connected_to,
                                     use_of_toilet = use_of_toilet)
@@ -556,19 +555,56 @@ class avni_sync():
                     st_material_shifted_to=st_material_shifted_to)
                     print('Construction status created for', HH, slum_id)
                 else :
-                    check_record.update(agreement_date = agreement_date,
-                    agreement_cancelled=agreement_cancelled,
-                    septic_tank_date=septic_tank_date,
-                    phase_one_material_date=phase_one_material_date ,
-                    phase_two_material_date=phase_two_material_date ,
-                    phase_three_material_date=phase_three_material_date ,
-                    completion_date=completion_date ,
-                    status=status,
-                    p1_material_shifted_to=p1_material_shifted_to,
-                    p2_material_shifted_to=p2_material_shifted_to ,
-                    p3_material_shifted_to=p3_material_shifted_to ,
-                    st_material_shifted_to=st_material_shifted_to )
-                    print('Construction status updated for', HH, slum_id)
+                    val = check_record.values()[0]
+                    if val['agreement_cancelled'] == True and agreement_cancelled != True:
+
+                        check_record.update(agreement_date = agreement_date,
+                        agreement_cancelled=agreement_cancelled,
+                        septic_tank_date=septic_tank_date,
+                        phase_one_material_date=phase_one_material_date ,
+                        phase_two_material_date=phase_two_material_date ,
+                        phase_three_material_date=phase_three_material_date ,
+                        completion_date=completion_date ,
+                        status=status,
+                        p1_material_shifted_to=p1_material_shifted_to,
+                        p2_material_shifted_to=p2_material_shifted_to ,
+                        p3_material_shifted_to=p3_material_shifted_to ,
+                        st_material_shifted_to=st_material_shifted_to )
+                        print('Construction status updated for', HH, slum_id)
+                    else:
+                        id_ = val['id']
+                        obj = ToiletConstruction.objects.get(pk = id_)
+
+                        for k, v in val.items():
+                            if v is None:
+                                if k == 'agreement_date':
+                                    obj.agreement_date = agreement_date
+                                elif k == 'septic_tank_date':
+                                    obj.septic_tank_date = septic_tank_date
+                                elif k == 'phase_one_material_date':
+                                    obj.phase_one_material_date = phase_one_material_date
+                                elif k == 'phase_two_material_date':
+                                    obj.phase_two_material_date = phase_two_material_date
+                                elif k == 'phase_three_material_date':
+                                    obj.phase_three_material_date = phase_three_material_date
+                                elif k == 'completion_date':
+                                    obj.completion_date = completion_date
+                                elif k == 'p1_material_shifted_to':
+                                    obj.p1_material_shifted_to = p1_material_shifted_to
+                                elif k == 'p2_material_shifted_to':
+                                    obj.p2_material_shifted_to = p2_material_shifted_to
+                                elif k == 'p3_material_shifted_to':
+                                    obj.p3_material_shifted_to = p3_material_shifted_to
+                                elif k == 'st_material_shifted_to':
+                                    obj.st_material_shifted_to = st_material_shifted_to
+                                elif k == 'status':
+                                    obj.status = status       
+                            elif k == 'agreement_cancelled' and v != agreement_cancelled:
+                                    obj.agreement_cancelled = agreement_cancelled
+                            elif k == 'status':
+                                    obj.status = status
+                        obj.save()
+                        print('Construction status updated for', HH, slum_id)
         except Exception as e:
             print(e,HH)    
      
@@ -727,7 +763,7 @@ class avni_sync():
 
     def SaveDataFromIds(self):
         
-        IdList = ['1cf97063-034e-4756-b2ac-38e567877818']
+        IdList =  ['a2a037da-259d-4019-ae9b-f5a4ec55aad1']#'cda4ce0e-f05c-4b49-ac6e-ed160eba1940']
 
         for i in IdList:
             try :
