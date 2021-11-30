@@ -367,13 +367,25 @@ class avni_sync():
                 if i in data['observations'] and data['observations'][i] != '0':
                     temp = data['observations'][i]
                     temp_lst = temp.split(',')
+                    temp_lst = [i for i in temp_lst if i != ""]
                     household_list += temp_lst
+            household_list = list(set(household_list))
 
             check = CommunityMobilization.objects.filter(slum=slum_id, activity_date = date_of_activity, activity_type_id = activity)
             if not check:
                 save = CommunityMobilization.objects.create(slum_id=slum_id, household_number = household_list, activity_type_id = activity, activity_date = date_of_activity)
                 print('record created for',slum_name)
-
+            else:
+                hh_lst = check.values_list('household_number', flat = True)[0]
+                hh_lst = list(set(hh_lst))
+                hh_lst = [i for i in hh_lst if i != ""]
+                if len(hh_lst) == len(household_list):
+                    if sorted(hh_lst) == sorted(household_list):
+                        pass
+                else:
+                    save = CommunityMobilization.objects.create(slum_id=slum_id, household_number = household_list, activity_type_id = activity, activity_date = date_of_activity)
+                    print('record created for',slum_name)
+                    
         except Exception as e:
             print(e, data['ID'])
 
@@ -789,7 +801,7 @@ class avni_sync():
 
     def SaveDataFromIds(self):
         
-        IdList =  ['a2a037da-259d-4019-ae9b-f5a4ec55aad1']#'cda4ce0e-f05c-4b49-ac6e-ed160eba1940']
+        IdList =  ['1e607658-6f68-4aa9-aea9-73f9c470c733']#'cda4ce0e-f05c-4b49-ac6e-ed160eba1940']
 
         for i in IdList:
             try :
