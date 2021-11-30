@@ -74,15 +74,15 @@ def masterSheet(request, slum_code=0, FF_code=0, RHS_code=0):
             if flag_fetch_rhs:
                 formdict = list(map(lambda x: x.rhs_data, filter(lambda x: x.rhs_data!= None, household_data)))
                 for i in formdict:
-                       if i['Type_of_structure_occupancy'] == 'Locked house':
+                        if i['Type_of_structure_occupancy'] in ['Locked house','Unoccupied house']:
                            list_of_keys= ['Household_number', 'Date_of_survey', 'Name_s_of_the_surveyor_s', 'Type_of_structure_occupancy']
                            temp_dict = {}
                            for cust_key in list_of_keys:
                                if cust_key in i:
                                    temp_dict[cust_key] = i[cust_key]
-                           #print(temp_dict)
+
                            temp_formdict.append(temp_dict)
-                       else:
+                        else:
                             temp_formdict.append(i)
 
                 formdict = temp_formdict
@@ -216,6 +216,7 @@ def masterSheet(request, slum_code=0, FF_code=0, RHS_code=0):
             for y in community_mobilization_data:
                 #y = community_mobilization_data[i]
                 if y.household_number != None:
+                    y.household_number = [i for i in y.household_number if i != ""]
                     for z in y.household_number:
                         new_activity_type = y.activity_type.name
                         z = str(int(z))
