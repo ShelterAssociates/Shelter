@@ -310,10 +310,11 @@ class avni_sync():
 
     def create_mobilization_activity_url(self):  #checked
         latest_date = self.lastModifiedDateTime()
-        programEncounters_path = 'api/encounters?lastModifiedDateTime=' + latest_date + '&encounterType=' + 'Daily Mobilization Activity'
-        result = requests.get(self.base_url + programEncounters_path, headers={'AUTH-TOKEN': self.get_cognito_token()})
-        get_page_count = json.loads(result.text)['totalPages']
-        return (get_page_count, programEncounters_path)
+        mobilization_url_path = 'api/subjects?lastModifiedDateTime=' + latest_date  + '&subjectType=New_Mobilization_Form'
+        result = requests.get(self.base_url + mobilization_url_path,headers= {'AUTH-TOKEN':self.get_cognito_token() })
+        get_text = json.loads(result.text)['content']
+        pages =  json.loads(result.text)['totalPages']
+        return (pages, mobilization_url_path)
 
     def CommunityMobilizationActivityData(self, data, slum_name, HH):  #checked
 
@@ -349,16 +350,41 @@ class avni_sync():
         except Exception as e:
             print(e, HH)
 
+    def CommunityMobilizationData(self,data):  #checked
+    
+        try:
+            slum_name = data['location']['Slum']
+            date_of_activity=dateparser.parse(data['observations']['Date of Survey']).date()
+            slum_id, city_id = self.get_city_slum_ids(slum_name)
+            activity = ActivityType.objects.filter(name=data['observations']['Type of Activity']).values_list('key', flat=True)[0]
+            
+            l = ['Household numbers for which activity attended by girls', 
+                'Household numbers for which activity attended by boys', 
+                'Household numbers for which activity attended by female members',
+                'Household numbers for which activity attended by male members']
+            household_list = []
+            for i in l:
+                if i in data['observations'] and data['observations'][i] != '0':
+                    temp = data['observations'][i]
+                    temp_lst = temp.split(',')
+                    household_list += temp_lst
+
+            check = CommunityMobilization.objects.filter(slum=slum_id, activity_date = date_of_activity, activity_type_id = activity)
+            if not check:
+                save = CommunityMobilization.objects.create(slum_id=slum_id, household_number = household_list, activity_type_id = activity, activity_date = date_of_activity)
+                print('record created for',slum_name)
+
+        except Exception as e:
+            print(e, data['ID'])
+
     def SaveCommunityMobilizationData(self):  #checked
         pages, path = self.create_mobilization_activity_url()
         for i in range(pages):
             send_request = requests.get(self.base_url + path + '&page=' + str(i),headers={'AUTH-TOKEN': self.get_cognito_token()})
             data = json.loads(send_request.text)['content']
             for j in data:
-                if len(j['observations']) > 0:
-                    if j['Voided'] == False:
-                        self.get_household_details(j['Subject ID'])
-                        self.CommunityMobilizationActivityData(j['observations'], self.slum, self.HH)
+                if j['Voided'] == False:
+                    self.CommunityMobilizationData(j)
                 else:
                     pass
 
@@ -374,7 +400,7 @@ class avni_sync():
             data = json.loads(send_request.text)['content']
 
             for j in data:
-                if j['Voided'] == False:
+                if j['Voided'] == False and j['observations'] != {}:
                     a,slum, HH,d = self.get_household_details(j['Subject ID'])
                     self.FamilyFactsheetData(j, slum, HH)
 
@@ -447,7 +473,7 @@ class avni_sync():
 
             data = json.loads(send_request.text)['content']
             for j in data:
-                if j['Voided'] == False:
+                if j['Voided'] == False and j['observations'] != {}:
                     a,slum_id,HH,d = self.get_household_details(j['Subject ID'])
                     self.DailyReportingData(j['observations'],slum_id,HH)
 
@@ -814,6 +840,9 @@ class avni_sync():
                         self.registrtation_data(data)
                     if data['Subject type']=='Covid Survey':
                         self.RegistrationCovidData(data)
+                    if data['Subject type']=='New_Mobilization_Form':
+                        if data['Voided'] == False:
+                            self.CommunityMobilizationData(data)
 
                 else:
                     print(i,'uuid is not accesible')
