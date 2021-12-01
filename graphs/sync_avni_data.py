@@ -354,6 +354,7 @@ class avni_sync():
     
         try:
             slum_name = data['location']['Slum']
+            activity_name = data['observations']['Type of Activity']
             date_of_activity=dateparser.parse(data['observations']['Date of Survey']).date()
             slum_id, city_id = self.get_city_slum_ids(slum_name)
             activity = ActivityType.objects.filter(name=data['observations']['Type of Activity']).values_list('key', flat=True)[0]
@@ -379,13 +380,20 @@ class avni_sync():
                 hh_lst = check.values_list('household_number', flat = True)[0]
                 hh_lst = list(set(hh_lst))
                 hh_lst = [i for i in hh_lst if i != ""]
-                if len(hh_lst) == len(household_list):
-                    if sorted(hh_lst) == sorted(household_list):
-                        pass
+                flag = False
+                for i in household_list:
+                    if i not in hh_lst:
+                        flag = True
+                        break
+                    else:
+                        continue
+                if flag:
+                    household_list  = list(set(household_list + hh_lst))
+                    check.update(household_number = household_list)
+                    print('record updated for',slum_name, date_of_activity, activity_name)
                 else:
-                    save = CommunityMobilization.objects.create(slum_id=slum_id, household_number = household_list, activity_type_id = activity, activity_date = date_of_activity)
-                    print('record created for',slum_name)
-                    
+                    print("Record Already Present For", slum_name)
+
         except Exception as e:
             print(e, data['ID'])
 
