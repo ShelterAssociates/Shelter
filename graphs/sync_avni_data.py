@@ -57,7 +57,7 @@ class avni_sync():
         #latest_date = last_submission_date.submission_date + timedelta(days=1)
         today = datetime.today() #+ timedelta(days= -1)
         latest_date = today.strftime('%Y-%m-%dT00:00:00.000Z')
-        iso = "2021-09-02T00:00:00.000Z"
+        iso = "2021-12-05T00:00:00.000Z"
         #return(latest_date)
         return(iso)
 
@@ -565,6 +565,11 @@ class avni_sync():
             if 'House numbers of houses where Septic Tank is given' in data :
                 st_material_shifted_to = self.str_to_int(data['House numbers of houses where Septic Tank is given'])
             else:st_material_shifted_to= None
+            
+            if data['Comment if any ?']:
+                comment_ = data['Comment if any ?']
+            else:
+                comment_ = None
             #if 'Date on whcih toilet is connected to drainage line' in data and data['Date on whcih toilet is connected to drainage line'] != None:
             #    toilet_connected_to = dateparser.parse(data['Date on whcih toilet is connected to drainage line']).date()
             #else:toilet_connected_to= None
@@ -598,61 +603,27 @@ class avni_sync():
                     p1_material_shifted_to=p1_material_shifted_to,
                     p2_material_shifted_to=p2_material_shifted_to,
                     p3_material_shifted_to=p3_material_shifted_to,
-                    st_material_shifted_to=st_material_shifted_to)
+                    st_material_shifted_to=st_material_shifted_to,
+                    comment = comment_)
                     print('Construction status created for', HH, slum_id)
                 else :
-                    val = check_record.values()[0]
-                    if val['agreement_cancelled'] == True and agreement_cancelled != True:
+                    check_record.update(agreement_date = agreement_date,
+                    agreement_cancelled=agreement_cancelled,
+                    septic_tank_date=septic_tank_date,
+                    phase_one_material_date=phase_one_material_date ,
+                    phase_two_material_date=phase_two_material_date ,
+                    phase_three_material_date=phase_three_material_date ,
+                    completion_date=completion_date ,
+                    status = status,
+                    p1_material_shifted_to=p1_material_shifted_to,
+                    p2_material_shifted_to=p2_material_shifted_to ,
+                    p3_material_shifted_to=p3_material_shifted_to ,
+                    st_material_shifted_to=st_material_shifted_to,
+                    comment = comment_)
 
-                        check_record.update(agreement_date = agreement_date,
-                        agreement_cancelled=agreement_cancelled,
-                        septic_tank_date=septic_tank_date,
-                        phase_one_material_date=phase_one_material_date ,
-                        phase_two_material_date=phase_two_material_date ,
-                        phase_three_material_date=phase_three_material_date ,
-                        completion_date=completion_date ,
-                        status=status,
-                        p1_material_shifted_to=p1_material_shifted_to,
-                        p2_material_shifted_to=p2_material_shifted_to ,
-                        p3_material_shifted_to=p3_material_shifted_to ,
-                        st_material_shifted_to=st_material_shifted_to )
-                        print('Construction status updated for', HH, slum_id)
-                    else:
-                        id_ = val['id']
-                        obj = ToiletConstruction.objects.get(pk = id_)
-
-                        for k, v in val.items():
-                            if v is None:
-                                if k == 'agreement_date':
-                                    obj.agreement_date = agreement_date
-                                elif k == 'septic_tank_date':
-                                    obj.septic_tank_date = septic_tank_date
-                                elif k == 'phase_one_material_date':
-                                    obj.phase_one_material_date = phase_one_material_date
-                                elif k == 'phase_two_material_date':
-                                    obj.phase_two_material_date = phase_two_material_date
-                                elif k == 'phase_three_material_date':
-                                    obj.phase_three_material_date = phase_three_material_date
-                                elif k == 'completion_date':
-                                    obj.completion_date = completion_date
-                                elif k == 'p1_material_shifted_to':
-                                    obj.p1_material_shifted_to = p1_material_shifted_to
-                                elif k == 'p2_material_shifted_to':
-                                    obj.p2_material_shifted_to = p2_material_shifted_to
-                                elif k == 'p3_material_shifted_to':
-                                    obj.p3_material_shifted_to = p3_material_shifted_to
-                                elif k == 'st_material_shifted_to':
-                                    obj.st_material_shifted_to = st_material_shifted_to
-                                elif k == 'status':
-                                    obj.status = status       
-                            elif k == 'agreement_cancelled' and v != agreement_cancelled:
-                                    obj.agreement_cancelled = agreement_cancelled
-                            elif k == 'status':
-                                    obj.status = status
-                        obj.save()
-                        print('Construction status updated for', HH, slum_id)
+                    print('Construction status updated for', HH, slum_id)
         except Exception as e:
-            print(e,HH)    
+            print(e,HH)  
      
     def update_construction_status(self,slum_id):
 
@@ -809,7 +780,7 @@ class avni_sync():
 
     def SaveDataFromIds(self):
         
-        IdList =  ['1e607658-6f68-4aa9-aea9-73f9c470c733']#'cda4ce0e-f05c-4b49-ac6e-ed160eba1940']
+        IdList =  ['e80a39f5-901f-40b9-8883-245888f5ad92']#'cda4ce0e-f05c-4b49-ac6e-ed160eba1940']
 
         for i in IdList:
             try :
