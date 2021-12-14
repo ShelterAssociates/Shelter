@@ -35,13 +35,13 @@ class RHSData(object):
                 if i.household_number in followup_households_list:
                     houses_occupide_in_followup.append(i)
 
-        total_occupide_houses = len(occupide_house_count) + len(houses_occupide_in_followup)
+        total_occupide_houses = len(list(occupide_house_count)) + len(houses_occupide_in_followup)
         return total_occupide_houses
 
     def ownership_status(self):
         owner_count =filter(lambda x: 'group_el9cl08/Ownership_status_of_the_house' in x.rhs_data and x.rhs_data[
             'group_el9cl08/Ownership_status_of_the_house'] == 'Own house', self.household_data)
-        return len(owner_count)
+        return len(list(owner_count))
 
     #toilet section
     def toilet_constructed(self):
@@ -154,7 +154,7 @@ class RHSData(object):
     def get_waste_facility(self, facility):
         waste_facility_count = filter(lambda x: 'group_el9cl08/Facility_of_solid_waste_collection' in x.rhs_data and
                     x.rhs_data['group_el9cl08/Facility_of_solid_waste_collection'] == facility,self.household_data)
-        return len(waste_facility_count)
+        return len(list(waste_facility_count))
 
     def get_perc_of_waste_collection(self, facility ='Door to door waste collection'):
         """
@@ -169,7 +169,7 @@ class RHSData(object):
     def get_water_coverage(self, type):
         water_facility_count = filter(lambda x: 'group_el9cl08/Type_of_water_connection' in x.rhs_data and x.rhs_data[
             'group_el9cl08/Type_of_water_connection'] == type, self.household_data)
-        return len(water_facility_count)
+        return len(list(water_facility_count))
 
     def get_perc_of_water_coverage(self, type='Individual connection'):
         """
