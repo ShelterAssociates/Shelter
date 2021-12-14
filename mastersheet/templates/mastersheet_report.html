@@ -54,12 +54,18 @@
   <label><input id = "admin_ward" type="radio" name="optradio" onclick="changeDatatableLevel()">Administrative ward</label>
   <label><input id = "city" value = 'city' type="radio" name="optradio" onclick="changeDatatableLevel()" checked>City</label>
 </div>
-{% if request.user|has_group:"Account" == True %}
+{% if request.user|has_group:"Account" == True and  not request.user.is_superuser %}
 <div>
   
-  <h2>Accounts - Comparative Data</h2>
-  <div id = "report_table_accounts_div"><!--Comparative data between accounts and toilet construction-->
-    <table id="report_table_accounts" class="display" width="100%" cellspacing="0"></table>
+  <div id = "tc">
+    <h2>Toilet Construction</h2>
+    <h3>Household Counts</h3>
+  </div>
+  <table id="report_table" class="display" width="100%" cellspacing="0"></table> 
+    
+  <h3>Household Counts - aggregated</h3>
+  <div id = "report_table_aggregated_div">
+    <table id="report_table_aggregated" class="display" width="100%" cellspacing="0"></table>
   </div>
 
 </div>
@@ -76,7 +82,6 @@
   <div id = "report_table_aggregated_div">
     <table id="report_table_aggregated" class="display" width="100%" cellspacing="0"></table>
   </div>
-
   <div id = "cm">
     <h2>Community Mobilization</h2>
     <h3>Household counts</h3>

@@ -93,6 +93,9 @@ $(document).ready(function() {
                     columns_defs['data'][tmp_DR[i]]['render']= function ( data, type, row,meta ) {
                         if(typeof data != 'undefined') {
                             url_daily_reporting = String("/accounts/mastersheet/communitymobilization/") + row[columns_defs['data'][meta.col]['title']+"_id"] + String("/");
+                            if (data.length > 11){
+                                url_daily_reporting = String("/accounts/mastersheet/communitymobilizationactivityattendance/") + row[columns_defs['data'][meta.col]['title']+"_id"] + String("/");
+                            }
                             if(type === 'display'){
                                         data = '<a href = "#" onclick="window.open(\''+url_daily_reporting+'\', \'_blank\', \'width=850,height=750\');">' + data + "</a>";
                             }

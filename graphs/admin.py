@@ -29,3 +29,13 @@ class RIMDataAdmin(admin.ModelAdmin):
 	raw_id_fields = ['slum']
 
 admin.site.register(SlumData, RIMDataAdmin)
+
+class CovidDataAdmin(admin.ModelAdmin):
+	list_filter = ['slum__electoral_ward__administrative_ward__city', 'date_of_survey']
+	list_display = ('household_number','family_member_name', 'covid_uuid' ,'slum','date_of_survey','last_modified_date')
+	search_fields = ['slum','household_number', 'city','date_of_survey', 'last_modified_date']
+	ordering = ['slum', 'household_number']
+	raw_id_fields = ['slum']
+	list_per_page = 10
+
+admin.site.register(CovidData, CovidDataAdmin)

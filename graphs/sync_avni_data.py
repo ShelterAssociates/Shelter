@@ -16,7 +16,6 @@ import dateutil.parser
 import itertools
 
 
-
 direct_encountes =['Sanitation','Property tax','Water','Waste','Electricity','Daily Mobilization Activity']
 program_encounters =['Daily Reporting','Family factsheet']
 
@@ -55,17 +54,17 @@ class avni_sync():
         # get latest submission
         # date from household table and pass it to url
         last_submission_date = HouseholdData.objects.latest('submission_date')
-        latest_date = last_submission_date.submission_date + timedelta(days=1)
-        #today = datetime.today()+ timedelta(days= -1)
-        iso_format_next = latest_date.strftime('%Y-%m-%dT00:00:00.000Z')
-        iso = "2021-06-09T00:00:00.000Z"
-
+        #latest_date = last_submission_date.submission_date + timedelta(days=1)
+        today = datetime.today() #+ timedelta(days= -1)
+        latest_date = today.strftime('%Y-%m-%dT00:00:00.000Z')
+        iso = "2021-12-05T00:00:00.000Z"
+        #return(latest_date)
         return(iso)
 
     def get_image(self,image_link):
         path = 'https://app.avniproject.org/media/signedUrl?url='
         request_1 = requests.get( path + image_link, headers={'AUTH-TOKEN': self.get_cognito_token()})
-        print(request_1.status_code)
+        #print(request_1.status_code)
         return request_1.text
 
     def map_rhs_key(self,a,b):
@@ -311,12 +310,14 @@ class avni_sync():
 
     def create_mobilization_activity_url(self):  #checked
         latest_date = self.lastModifiedDateTime()
-        programEncounters_path = 'api/encounters?lastModifiedDateTime=' + latest_date + '&encounterType=' + 'Daily Mobilization Activity'
-        result = requests.get(self.base_url + programEncounters_path, headers={'AUTH-TOKEN': self.get_cognito_token()})
-        get_page_count = json.loads(result.text)['totalPages']
-        return (get_page_count, programEncounters_path)
+        mobilization_url_path = 'api/subjects?lastModifiedDateTime=' + latest_date  + '&subjectType=New_Mobilization_Form'
+        result = requests.get(self.base_url + mobilization_url_path,headers= {'AUTH-TOKEN':self.get_cognito_token() })
+        get_text = json.loads(result.text)['content']
+        pages =  json.loads(result.text)['totalPages']
+        return (pages, mobilization_url_path)
 
     def CommunityMobilizationActivityData(self, data, slum_name, HH):  #checked
+
         activities = {'Samiti meeting1': 'Samitee meeting 1', 'Samiti meeting2': 'Samitee meeting 2',
                       'Samiti meeting3': 'Samitee meeting 3', 'Samiti meeting4': 'Samitee meeting 4',
                       'Samiti meeting5': 'Samitee meeting 5'}  # "Workshop for Women","Workshop for Boys","Workshop for Girls"}
@@ -349,16 +350,61 @@ class avni_sync():
         except Exception as e:
             print(e, HH)
 
+    def CommunityMobilizationData(self,data):  #checked
+    
+        try:
+            slum_name = data['location']['Slum']
+            activity_name = data['observations']['Type of Activity']
+            date_of_activity=dateparser.parse(data['observations']['Date of Survey']).date()
+            slum_id, city_id = self.get_city_slum_ids(slum_name)
+            activity = ActivityType.objects.filter(name=data['observations']['Type of Activity']).values_list('key', flat=True)[0]
+            
+            l = ['Household numbers for which activity attended by girls', 
+                'Household numbers for which activity attended by boys', 
+                'Household numbers for which activity attended by female members',
+                'Household numbers for which activity attended by male members']
+            household_list = []
+            for i in l:
+                if i in data['observations'] and data['observations'][i] != '0':
+                    temp = data['observations'][i]
+                    temp_lst = temp.split(',')
+                    temp_lst = [i for i in temp_lst if i != ""]
+                    household_list += temp_lst
+            household_list = list(set(household_list))
+
+            check = CommunityMobilization.objects.filter(slum=slum_id, activity_date = date_of_activity, activity_type_id = activity)
+            if not check:
+                save = CommunityMobilization.objects.create(slum_id=slum_id, household_number = household_list, activity_type_id = activity, activity_date = date_of_activity)
+                print('record created for',slum_name)
+            else:
+                hh_lst = check.values_list('household_number', flat = True)[0]
+                hh_lst = list(set(hh_lst))
+                hh_lst = [i for i in hh_lst if i != ""]
+                flag = False
+                for i in household_list:
+                    if i not in hh_lst:
+                        flag = True
+                        break
+                    else:
+                        continue
+                if flag:
+                    household_list  = list(set(household_list + hh_lst))
+                    check.update(household_number = household_list)
+                    print('record updated for',slum_name, date_of_activity, activity_name)
+                else:
+                    print("Record Already Present For", slum_name)
+
+        except Exception as e:
+            print(e, data['ID'])
+
     def SaveCommunityMobilizationData(self):  #checked
         pages, path = self.create_mobilization_activity_url()
         for i in range(pages):
             send_request = requests.get(self.base_url + path + '&page=' + str(i),headers={'AUTH-TOKEN': self.get_cognito_token()})
             data = json.loads(send_request.text)['content']
             for j in data:
-                if len(j['observations']) > 0:
-                    if j['Voided'] == False:
-                        self.get_household_details(j['Subject ID'])
-                        self.CommunityMobilizationActivityData(j['observations'], self.slum, self.HH)
+                if j['Voided'] == False:
+                    self.CommunityMobilizationData(j)
                 else:
                     pass
 
@@ -374,11 +420,12 @@ class avni_sync():
             data = json.loads(send_request.text)['content']
 
             for j in data:
-                if j['Voided'] == False:
+                if j['Voided'] == False and j['observations'] != {}:
                     a,slum, HH,d = self.get_household_details(j['Subject ID'])
                     self.FamilyFactsheetData(j, slum, HH)
 
     def FamilyFactsheetData(self, data, slum_name, HH): #checked
+
         try:
             slum_id, city_id =self.get_city_slum_ids(slum_name)
             check_record = HouseholdData.objects.filter(household_number=HH, city_id=city_id, slum_id=slum_id)
@@ -387,31 +434,29 @@ class avni_sync():
                 ff_data = check_record.values_list('ff_data', flat=True)[0]
                 if ff_data == None or len(ff_data) == 0:
                     ff_data = {}
-                ff_data = check_record.values_list('ff_data', flat=True)[0]
-                if ff_data == None or len(ff_data) == 0:
-                    ff_data = {}
+                else:
+                    ff_data = check_record.values_list('ff_data', flat=True)[0]
+
                 final_ff_data = self.map_ff_keys(ff_data, data['observations'])
                 final_ff_data.update({'ff_uuid': data['ID']})
                 check_record.update(ff_data=final_ff_data)
                 factsheet_done_date = dateparser.parse(data['audit']['Last modified at']).date()
                 if 'Where the individual toilet is connected ?' in data['observations']:
-                    ans = data['observations']['Where the individual toilet is connected ?']
-                    if ans != 'Not connected':
+                    if data['observations']['Where the individual toilet is connected ?']  != 'Not connected':
                         toilet_connected_to = factsheet_done_date
-                else : toilet_connected_to = None
+                    else :
+                        toilet_connected_to = None
                 if 'Use of toilet' in data['observations']:
                     if data['observations']['Use of toilet'] != None:
                         use_of_toilet = factsheet_done_date
-                else: use_of_toilet = None
+                    else:
+                        use_of_toilet = None
                 factsheetDate.update(factsheet_done = factsheet_done_date,toilet_connected_to =toilet_connected_to,
-                                     use_of_toilet = use_of_toilet )
+                                    use_of_toilet = use_of_toilet )
                 print('FF record updated for', slum_name, HH)
             else:
                 ff_data = {}
-                Enrol_id = data['Enrolment ID']
-                request = requests.get(self.base_url + 'api/enrolment/' + Enrol_id,
-                                    headers={'AUTH-TOKEN': self.get_cognito_token()})
-                subject_id = json.loads(request.text)['Subject ID']
+                subject_id = data['Subject ID']
                 send_request2 = requests.get(self.base_url + 'api/subject/' + subject_id ,headers={'AUTH-TOKEN': self.get_cognito_token()})
                 get_HH_data = json.loads(send_request2.text)
                 self.registrtation_data(get_HH_data)
@@ -421,16 +466,18 @@ class avni_sync():
                 get_reocrd.update(ff_data = final_ff_data)
                 factsheet_done_date = dateparser.parse(data['audit']['Last modified at']).date()
                 if 'Where the individual toilet is connected ?' in data['observations']:
-                    ans = data['observations']['Where the individual toilet is connected ?']
-                    if ans != 'Not connected':
+                    if data['observations']['Where the individual toilet is connected ?'] != 'Not connected':
                         toilet_connected_to = factsheet_done_date
-                else : toilet_connected_to = None
+                    else :
+                        toilet_connected_to = None
                 if 'Use of toilet' in data['observations']:
                     if data['observations']['Use of toilet'] != None:
                         use_of_toilet = factsheet_done_date
-                else: use_of_toilet = None
+                    else:
+                        use_of_toilet = None
+
                 factsheetDate.update(factsheet_done = factsheet_done_date,toilet_connected_to =toilet_connected_to,
-                                     use_of_toilet = use_of_toilet)
+                                    use_of_toilet = use_of_toilet)
                 print('FF record updated for', slum_name, HH)
         except Exception as e:
             print(e)
@@ -446,18 +493,21 @@ class avni_sync():
 
             data = json.loads(send_request.text)['content']
             for j in data:
-                if j['Voided'] == False:
+                if j['Voided'] == False and j['observations'] != {}:
                     a,slum_id,HH,d = self.get_household_details(j['Subject ID'])
                     self.DailyReportingData(j['observations'],slum_id,HH)
 
     def get_max_date(self,dates_list):
         max = None
-        for a, b in itertools.combinations(dates_list, 2):
-            if a > b:
-                max = a
-            else :
-                max= b
-        return max
+        if len(dates_list) > 1:
+            for a, b in itertools.combinations(dates_list, 2):
+                if a > b:
+                    max = a
+                else :
+                    max= b
+            return max
+        
+        return dates_list[0]
 
     def str_to_int(self,data):
         a = []
@@ -515,6 +565,11 @@ class avni_sync():
             if 'House numbers of houses where Septic Tank is given' in data :
                 st_material_shifted_to = self.str_to_int(data['House numbers of houses where Septic Tank is given'])
             else:st_material_shifted_to= None
+            
+            if data['Comment if any ?']:
+                comment_ = data['Comment if any ?']
+            else:
+                comment_ = None
             #if 'Date on whcih toilet is connected to drainage line' in data and data['Date on whcih toilet is connected to drainage line'] != None:
             #    toilet_connected_to = dateparser.parse(data['Date on whcih toilet is connected to drainage line']).date()
             #else:toilet_connected_to= None
@@ -525,15 +580,13 @@ class avni_sync():
             #    use_of_toilet = dateparser.parse(data['Date on which toilet construction is complete']).date()
             #else :  use_of_toilet = None
             if completion_date != None:
-                 status = 6
+                 status = 6 #completed
             elif (phase_one_material_date != None or phase_two_material_date !=None or phase_three_material_date != None):
-                 status= 5
-            elif (phase_one_material_date!=None  and (phase_two_material_date ==None or phase_three_material_date == None)):
-                 status= 3
+                 status= 5 #under construction
             elif (agreement_date!= None and (phase_one_material_date == None and phase_two_material_dates == None and phase_three_material_date == None)):
-                 status= 1
+                 status= 3 #material not given
             elif agreement_cancelled == True:
-                 status = 2
+                 status = 2 #agreement cancle
             else: status =None            
             check_record = ToiletConstruction.objects.filter(household_number=HH, slum_id= slum_id)
             if len(data) > 1 :
@@ -550,7 +603,8 @@ class avni_sync():
                     p1_material_shifted_to=p1_material_shifted_to,
                     p2_material_shifted_to=p2_material_shifted_to,
                     p3_material_shifted_to=p3_material_shifted_to,
-                    st_material_shifted_to=st_material_shifted_to)
+                    st_material_shifted_to=st_material_shifted_to,
+                    comment = comment_)
                     print('Construction status created for', HH, slum_id)
                 else :
                     check_record.update(agreement_date = agreement_date,
@@ -560,14 +614,16 @@ class avni_sync():
                     phase_two_material_date=phase_two_material_date ,
                     phase_three_material_date=phase_three_material_date ,
                     completion_date=completion_date ,
-                    status=status,
+                    status = status,
                     p1_material_shifted_to=p1_material_shifted_to,
                     p2_material_shifted_to=p2_material_shifted_to ,
                     p3_material_shifted_to=p3_material_shifted_to ,
-                    st_material_shifted_to=st_material_shifted_to )
+                    st_material_shifted_to=st_material_shifted_to,
+                    comment = comment_)
+
                     print('Construction status updated for', HH, slum_id)
         except Exception as e:
-            print(e,HH)    
+            print(e,HH)  
      
     def update_construction_status(self,slum_id):
 
@@ -724,20 +780,22 @@ class avni_sync():
 
     def SaveDataFromIds(self):
         
-        IdList=['245d77b2-b742-4720-8b86-8a1b3d4bdb20']
+        IdList =  ['e80a39f5-901f-40b9-8883-245888f5ad92']#'cda4ce0e-f05c-4b49-ac6e-ed160eba1940']
+
         for i in IdList:
             try :
                 RequestProgramEncounter = requests.get(self.base_url + 'api/programEncounter/' + i ,headers={'AUTH-TOKEN': self.get_cognito_token()})
                 RequestEncounter= requests.get(self.base_url + 'api/encounter/' + i ,headers={'AUTH-TOKEN': self.get_cognito_token()})
                 RequestHouseholdRegistration = requests.get(self.base_url + 'api/subject/' + i ,headers={'AUTH-TOKEN': self.get_cognito_token()})
 
-                print(RequestHouseholdRegistration.status_code)
                 if RequestProgramEncounter.status_code == 200:
                     data = json.loads(RequestProgramEncounter.text)
                     a,slum_name,HH,d = self.get_household_details(data['Subject ID'])
+
                     if data['Encounter type'] == 'Family factsheet':
                         self.FamilyFactsheetData(data,slum_name,HH)
-                    if data['Encounter type'] == 'Daily Reporting' or 'Household Level Daily Reporting':
+
+                    elif data['Encounter type'] == 'Daily Reporting' or data['Encounter type'] == 'Household Level Daily Reporting':
                         if data['observations']!= None:
                             self.DailyReportingData(data['observations'],slum_name,HH)
                 elif RequestEncounter.status_code == 200:
@@ -769,7 +827,13 @@ class avni_sync():
                         self.CommunityMobilizationActivityData(data['observations'],self.slum,self.HH) #CommunityMobilization
                 elif RequestHouseholdRegistration.status_code == 200:
                     data = json.loads(RequestHouseholdRegistration.text)
-                    self.registrtation_data(data)
+                    if data['Subject type']=='Household':
+                        self.registrtation_data(data)
+                    if data['Subject type']=='Covid Survey':
+                        self.RegistrationCovidData(data)
+                    if data['Subject type']=='New_Mobilization_Form':
+                        if data['Voided'] == False:
+                            self.CommunityMobilizationData(data)
 
                 else:
                     print(i,'uuid is not accesible')
@@ -791,71 +855,54 @@ class avni_sync():
         date_of_survey = dateparser.parse(audit['Created at']).date()
         last_modified_date = dateparser.parse(audit['Last modified at']).date()
 
-        details = {}
-
-        lst = ['Aadhar number', 'Name of the surveyor', 'Family member name', 'Age',
-               'Are you pregnant or lactating mother?', 'Have you registered for covid vaccination?',
-               'Have you taken first dose?', 'Date of first dose.', 'Have you taken second dose?',
-               'Date of second dose.', 'Have you even been infected with corona?',
-               'If corona infected, how many days it had been since infection?',
-               'Are you willing to get vaccinated?', 'If not willing to take vaccine, why?', 'Note', 'Do you have any other disease',
-               'If any then which disease', 'Registered Phone Number', 'Which of the below vaccine taken?']
         observation = HH_data['observations']
-        if 'Gender(लिंग)' in observation:
-            details['Gender'] = observation['Gender(लिंग)']
-            del observation['Gender(लिंग)']
-        if 'Age (पूर्ण वय (वर्ष))' in observation:
-            details['Age'] = observation['Age (पूर्ण वय (वर्ष))']
-            del observation['Age (पूर्ण वय (वर्ष))']
 
-        for i in lst:
-            if i == 'Date of second dose.':
-                if 'Second dose date.' in observation:
-                    temp = observation['Second dose date.']
-                    del observation['Second dose date.']
-                    observation['Date of second dose.'] = temp
-            if i == 'Do you have any other disease':
-                if 'Do you have any disease?' in observation:
-                    temp = observation['Do you have any disease?'][0]
-                    del observation['Do you have any disease?']
-                    observation['Do you have any other disease'] = temp
-
-            if i in observation:
-                if observation[i] == 'हो':
-                    del observation[i]
-                    observation[i] = 'Yes'
-                elif observation[i] == 'नाही':
-                    del observation[i]
-                    observation[i] = 'No'
-                elif observation[i] == 'कोविशिल्ट':
-                    del observation[i]
-                    observation[i] = 'Covishield'
-                elif observation[i] == 'कोवॅक्सिन':
-                    del observation[i]
-                    observation[i] = 'Covaxin'
-                elif observation[i] == 'स्पुतनिक':
-                    del observation[i]
-                    observation[i] = 'Sputnik V'
-                elif observation[i] == 'माहित नाही':
-                    del observation[i]
-                    observation[i] = "Don't Know"
-            else:
-                observation[i] = None
-        observation.update(details)
+        for i in observation.keys():
+            if i == 'Gender_n':
+                observation['Gender'] = observation['Gender_n']
+                del observation['Gender_n']
+            elif i == 'Mobile number used for vaccination registration':
+                observation['Registered Phone Number'] = observation['Mobile number used for vaccination registration']['phoneNumber']
+                del observation['Mobile number used for vaccination registration']
+            elif i == 'Do you have any disease?':
+                temp = " ".join(observation['Do you have any disease?'])
+                observation['Do you have any disease?'] = temp
+            elif i == 'Have you registered for covid vaccination?':
+                observation['Have you registered for covid vaccination?'] = observation['Have you registered for covid vaccination?'].capitalize()
+            elif i == 'Have you even been infected with corona?':
+                observation['Have you even been infected with corona?'] = observation['Have you even been infected with corona?'].capitalize()
+            elif i == 'Have you taken first dose?':
+                observation['Have you taken first dose?'] = observation['Have you taken first dose?'].capitalize()
+            elif i == 'Have you taken second dose?':
+                observation['Have you taken second dose?'] = observation['Have you taken second dose?'].capitalize()
+                
         observation['date_of_survey'] = date_of_survey
         observation['last_modified_date'] = last_modified_date
 
         observation['Covid_uuid'] = covid_uuid
-        observation['city_id'] = city_id;
+        observation['city_id'] = city_id
+        observation['slum_id'] = slum_id
 
-        del observation['First name']
+        lst = ['Aadhar number', 'Name of the surveyor', 'Family member name', 'Persons age',
+               'Are you pregnant or lactating mother?', 'Have you registered for covid vaccination?',
+               'Have you taken first dose?', 'Date of first dose.', 'Have you taken second dose?',
+               'Second dose date.', 'Have you even been infected with corona?',
+               'If corona infected, how many days it had been since infection?',
+               'Are you willing to get vaccinated?', 'If not willing to take vaccine, why?', 'Note', 'Do you have any disease?',
+               'If yes for other disease, please mention here', 'Registered Phone Number', 'Which of the below vaccine taken?']
 
-        if observation['Date of first dose.'] != None:
+        for i in lst:
+            if i not in observation:
+                observation[i] = None
+
+        if observation['Date of first dose.'] != None :
             observation['Date of first dose.'] = dateparser.parse(observation['Date of first dose.']).date()
+        if observation['Second dose date.'] != None:
+            observation['Second dose date.'] = dateparser.parse(observation['Second dose date.']).date()
+        
 
-        if observation['Date of second dose.'] != None:
-            observation['Date of second dose.'] = dateparser.parse(observation['Date of second dose.']).date()
-        return (observation,slum_id)
+        del observation['First name']        
+        return (observation)
 
     def RegistrationCovidData(self, HH_data):  # checked
        
@@ -863,38 +910,77 @@ class avni_sync():
             household_number1 = self.SaveCovidDataFromIds1(HH_data['Groups'])
         else:
             household_number1 = 9999
+
                   
-        final_dict, self.slum = self.ProcessCovidData(HH_data)
+        final_dict = self.ProcessCovidData(HH_data)
+        self.slum = final_dict['slum_id']
 
         try:
-            c = CovidData(household_number=household_number1,
-                           slum=Slum.objects.get(id = self.slum),
-                           city = final_dict['city_id'],
-                           covid_uuid=final_dict['Covid_uuid'],
-                           surveyor_name=final_dict['Name of the surveyor'],
-                           date_of_survey=final_dict['date_of_survey'],
-                           last_modified_date=final_dict['last_modified_date'],
-                           family_member_name=final_dict['Family member name'],
-                           gender=final_dict['Gender'], age=final_dict['Age'],
-                           aadhar_number=final_dict['Aadhar number'],
-                           do_you_have_any_other_disease=final_dict['Do you have any other disease'],
-                           if_any_then_which_disease=final_dict['If any then which disease'],
-                           preganant_or_lactating_mother=final_dict['Are you pregnant or lactating mother?'],
-                           registered_for_covid_vaccination=final_dict['Have you registered for covid vaccination?'],
-                           registered_phone_number=final_dict['Registered Phone Number'],
-                           take_first_dose=final_dict['Have you taken first dose?'],
-                           first_dose_date=final_dict['Date of first dose.'],
-                           vaccine_name=final_dict['Which of the below vaccine taken?'],
-                           take_second_dose=final_dict['Have you taken second dose?'],
-                           second_dose_date=final_dict['Date of second dose.'],
-                           corona_infected=final_dict['Have you even been infected with corona?'],
-                           if_corona_infected_days=final_dict[
-                               'If corona infected, how many days it had been since infection?'],
-                           willing_to_vaccinated=final_dict['Are you willing to get vaccinated?'],
-                           if_not_why=final_dict['If not willing to take vaccine, why?'], note=final_dict['Note'])
+            if CovidData.objects.filter(covid_uuid=final_dict['Covid_uuid']).exists() == False:
 
-            c.save()
-            print("Record save successfully")
+                c = CovidData(household_number=household_number1,
+                            slum=Slum.objects.get(id = self.slum),
+                            city = final_dict['city_id'],
+                            covid_uuid=final_dict['Covid_uuid'],
+                            surveyor_name=final_dict['Name of the surveyor'],
+                            date_of_survey=final_dict['date_of_survey'],
+                            last_modified_date=final_dict['last_modified_date'],
+                            family_member_name=final_dict['Family member name'],
+                            gender=final_dict['Gender'], age=final_dict['Persons age'],
+                            aadhar_number=final_dict['Aadhar number'],
+                            do_you_have_any_other_disease=final_dict['Do you have any disease?'],
+                            if_any_then_which_disease=final_dict['If yes for other disease, please mention here'],
+                            preganant_or_lactating_mother=final_dict['Are you pregnant or lactating mother?'],
+                            registered_for_covid_vaccination=final_dict['Have you registered for covid vaccination?'],
+                            registered_phone_number=final_dict['Registered Phone Number'],
+                            take_first_dose=final_dict['Have you taken first dose?'],
+                            first_dose_date=final_dict['Date of first dose.'],
+                            vaccine_name=final_dict['Which of the below vaccine taken?'],
+                            take_second_dose=final_dict['Have you taken second dose?'],
+                            second_dose_date=final_dict['Second dose date.'],
+                            corona_infected=final_dict['Have you even been infected with corona?'],
+                            if_corona_infected_days=final_dict[
+                                'If corona infected, how many days it had been since infection?'],
+                            willing_to_vaccinated=final_dict['Are you willing to get vaccinated?'],
+                            if_not_why=final_dict['If not willing to take vaccine, why?'], note=final_dict['Note'])
+                
+                c.save()
+                print("Record save successfully",self.slum)
+            
+            elif CovidData.objects.filter(covid_uuid=final_dict['Covid_uuid'], last_modified_date=final_dict['last_modified_date']).exists() == False:
+
+                c = CovidData(household_number=household_number1,
+                            slum=Slum.objects.get(id = self.slum),
+                            city = final_dict['city_id'],
+                            covid_uuid=final_dict['Covid_uuid'],
+                            surveyor_name=final_dict['Name of the surveyor'],
+                            date_of_survey=final_dict['date_of_survey'],
+                            last_modified_date=final_dict['last_modified_date'],
+                            family_member_name=final_dict['Family member name'],
+                            gender=final_dict['Gender'], age=final_dict['Persons age'],
+                            aadhar_number=final_dict['Aadhar number'],
+                            do_you_have_any_other_disease=final_dict['Do you have any disease?'],
+                            if_any_then_which_disease=final_dict['If yes for other disease, please mention here'],
+                            preganant_or_lactating_mother=final_dict['Are you pregnant or lactating mother?'],
+                            registered_for_covid_vaccination=final_dict['Have you registered for covid vaccination?'],
+                            registered_phone_number=final_dict['Registered Phone Number'],
+                            take_first_dose=final_dict['Have you taken first dose?'],
+                            first_dose_date=final_dict['Date of first dose.'],
+                            vaccine_name=final_dict['Which of the below vaccine taken?'],
+                            take_second_dose=final_dict['Have you taken second dose?'],
+                            second_dose_date=final_dict['Second dose date.'],
+                            corona_infected=final_dict['Have you even been infected with corona?'],
+                            if_corona_infected_days=final_dict[
+                                'If corona infected, how many days it had been since infection?'],
+                            willing_to_vaccinated=final_dict['Are you willing to get vaccinated?'],
+                            if_not_why=final_dict['If not willing to take vaccine, why?'], note=final_dict['Note'])
+            
+
+                c.save()
+                print("Record save successfully",self.slum)
+            
+            else:
+                print("Record Already Present")
 
         except Exception as e:
             print(e)
@@ -909,10 +995,18 @@ class avni_sync():
                                                             headers={'AUTH-TOKEN': self.get_cognito_token()})
             if RequestHouseholdRegistration.status_code == 200:
                 data = json.loads(RequestHouseholdRegistration.text)
+
+                slum_name = data['location']['Slum']
+                s_id, c_id =self.get_city_slum_ids(slum_name)
+
                 dct[i] = data['observations']['First name']
+                record_f = HouseholdData.objects.filter(slum_id = s_id, city_id = c_id, household_number =str(int(data['observations']['First name']))).exists()
+                
+                if record_f == False:
+                    self.registrtation_data(data)
+
                 return (int(data['observations']['First name']))
-           
-                        
+                           
             else:
                 return 'error'
 

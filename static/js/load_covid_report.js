@@ -129,8 +129,15 @@
 	}
 
 	function load_report_covid(){
+
+		btn_default = [
+			{
+				extend: 'excel',
+				text: 'Excel',
+			}
+	   ];
 		if($("#export_mastersheet").val()=="False"){
-			btn_default=[];
+
 		}
 		tag_key_dict['startDate'] = $("#startDate").val();
 		tag_key_dict['endDate'] = $("#endDate").val();
@@ -173,14 +180,11 @@
 						{"data": "1_dose_done_18_44", "title": "1st dose taken"},
 						{"data": "2_dose_done_18_44", "title": "2nd dose taken"},
 						{"data": "total_intrested_18_44", "title": "interested"},
-						{"data": "total_n_intrested_18_44", "title": "Not Interested"},
 						{"data": "total_abv_45", "title": "No. of people in 45+"},
 						{"data": "total_1_dose_45", "title": "1st dose taken "},
 						{"data": "total_2_dose_45", "title": "2nd dose taken"},
 						{"data": "total_intrested_45", "title": "interested"},
-						{"data": "total_n_intrested_45", "title": "Not Interested"},
 						{"data": "total_intrested", "title": "Total interested"},
-						{"data": "total_n_intrested", "title": "Total Not Interested"},
 						{"data": "total_1_dose_elg_18_44", "title": "No. of people eligible for 1st dose: 18-44"},
 						{"data": "total_1_dose_elg_abv_45", "title": "No. of people eligible for 1st dose: 45+"},
 						{"data": "city_name", "title":"City Name"}

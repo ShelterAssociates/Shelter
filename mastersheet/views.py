@@ -28,6 +28,7 @@ from xlwt import Workbook
 from mastersheet.models import *
 from graphs.models import *
 from django.core import serializers
+from django.contrib.postgres.aggregates import ArrayAgg
 
 # The views in this file correspond to the mastersheet functionality of shelter app.
 def give_details(request):
@@ -73,15 +74,15 @@ def masterSheet(request, slum_code=0, FF_code=0, RHS_code=0):
             if flag_fetch_rhs:
                 formdict = list(map(lambda x: x.rhs_data, filter(lambda x: x.rhs_data!= None, household_data)))
                 for i in formdict:
-                       if i['Type_of_structure_occupancy'] == 'Locked house':
+                        if i['Type_of_structure_occupancy'] in ['Locked house','Unoccupied house']:
                            list_of_keys= ['Household_number', 'Date_of_survey', 'Name_s_of_the_surveyor_s', 'Type_of_structure_occupancy']
                            temp_dict = {}
                            for cust_key in list_of_keys:
                                if cust_key in i:
                                    temp_dict[cust_key] = i[cust_key]
-                           #print(temp_dict)
+
                            temp_formdict.append(temp_dict)
-                       else:
+                        else:
                             temp_formdict.append(i)
 
                 formdict = temp_formdict
@@ -214,20 +215,22 @@ def masterSheet(request, slum_code=0, FF_code=0, RHS_code=0):
 
             for y in community_mobilization_data:
                 #y = community_mobilization_data[i]
-                for z in y.household_number:
-                    new_activity_type = y.activity_type.name
-                    z = str(int(z))
-                    if z not in dummy_formdict.keys():
-                        dummy_formdict[z] = {
-                            "Household_number": z,
-                            "_id": "",
-                            "ff_id": "",
-                            "ff_xform_id_string": "",
-                            "_xform_id_string": "",
-                            "_attachments": "",
-                            "no_rhs_flag": "#eba6fc"
-                        }
-                    dummy_formdict[z].update({new_activity_type: y.activity_date_str, str(new_activity_type) + "_id": y.id})
+                if y.household_number != None:
+                    y.household_number = [i for i in y.household_number if i != ""]
+                    for z in y.household_number:
+                        new_activity_type = y.activity_type.name
+                        z = str(int(z))
+                        if z not in dummy_formdict.keys():
+                            dummy_formdict[z] = {
+                                "Household_number": z,
+                                "_id": "",
+                                "ff_id": "",
+                                "ff_xform_id_string": "",
+                                "_xform_id_string": "",
+                                "_attachments": "",
+                                "no_rhs_flag": "#eba6fc"
+                            }
+                        dummy_formdict[z].update({new_activity_type: y.activity_date_str, str(new_activity_type) + "_id": y.id})
 
             for i in temp_sbm_keys:
                 if str(i) not in dummy_formdict.keys():
@@ -294,11 +297,26 @@ def masterSheet(request, slum_code=0, FF_code=0, RHS_code=0):
                         x['ff_xform_id_string'] = ff_xform_id_string
 
                 if '_attachments' in x.keys() and len(x['_attachments']) != 0:
-                    PATH = settings.BASE_URL + '/'.join(x['_attachments'][0]['download_url'].split('/')[:-1])
-                    if 'Toilet_Photo' in x.keys():
-                        x.update({'toilet_photo_url': PATH + '/' + x['Toilet_Photo']})
-                    if 'Family_Photo' in x.keys():
-                        x.update({'family_photo_url': PATH + '/' + x['Family_Photo']})
+
+                    if 'media/original?media_file=' in  x['_attachments'][0]["filename"]:
+                        PATH = settings.BASE_URL  + 'media/original?media_file='
+                        
+                        if 'Toilet_Photo' in x.keys():
+                            url = PATH + "%2F".join(x['_attachments'][0]["filename"].split('/')[:-1])
+                            x.update({'toilet_photo_url': url +  '%2F' + x['Toilet_Photo']})
+
+                        if 'Family_Photo' in x.keys():
+                            url = PATH + "%2F".join(x['_attachments'][1]["filename"].split('/')[:-1])
+                            x.update({'family_photo_url': url +  '%2F' + x['Family_Photo']})
+
+                    else:
+                        PATH = settings.BASE_URL + 'media/medium?media_file=shelter/attachments'
+
+                        if 'Toilet_Photo' in x.keys():
+                            x.update({'toilet_photo_url': PATH + '/' + x['Toilet_Photo']})
+                        if 'Family_Photo' in x.keys():
+                            x.update({'family_photo_url': PATH + '/' + x['Family_Photo']})
+                        
                 else:
                     if 'Toilet_Photo' and 'ff_uuid' in x.keys():
                         ff_url = settings.AVNI_URL + '/#/app/subject/viewProgramEncounter?uuid=' + str(x['ff_uuid'])
@@ -340,8 +358,9 @@ def masterSheet(request, slum_code=0, FF_code=0, RHS_code=0):
 
                 if len(slum_funder) != 0:
                     for funder in slum_funder:
-                        if int(x['Household_number']) in funder.household_code:
-                            x.update({'Funder': funder.sponsor_project.name}) #funder.sponsor.organization_name})
+                        if funder.household_code != None:
+                            if int(x['Household_number']) in funder.household_code:
+                                x.update({'Funder': funder.sponsor_project.name}) #funder.sponsor.organization_name})
 
             formdict = list(map(lambda x: dummy_formdict[x], dummy_formdict))
             for x in formdict:
@@ -964,7 +983,7 @@ def give_report_table_numbers(request):  # view for toilet construction
                 'phase_two_material_date': 'total_p2', 'phase_three_material_date': 'total_p3',
                 'completion_date': 'total_c', 'septic_tank_date': 'total_st',
                 'use_of_toilet': 'use_of_toilet', 'toilet_connected_to': 'toilet_connected_to',
-                'factsheet_done': 'factsheet_done','status': 'factAssign'}
+                'factsheet_done': 'factsheet_done'}
 
     level_data = {
         'city':
@@ -995,8 +1014,8 @@ def give_report_table_numbers(request):  # view for toilet construction
     report_table_data = defaultdict(dict)
     for query_field in query_on.keys():
         if query_field in ['agreement_date', 'phase_one_material_date','phase_two_material_date','phase_three_material_date',
-        'completion_date', 'septic_tank_date','use_of_toilet','toilet_connected_to', 'factsheet_done','status']:
-            filter_field = {'slum__id__in': keys, 'completion_date__range': [start_date, end_date],
+        'completion_date', 'septic_tank_date','use_of_toilet','toilet_connected_to', 'factsheet_done']:
+            filter_field = {'slum__id__in': keys, 'agreement_date__range': [start_date, end_date],
                             query_field + '__isnull': False}
         else:
             filter_field = {'slum__id__in': keys, query_field + '__range': [start_date, end_date]}
@@ -1008,49 +1027,47 @@ def give_report_table_numbers(request):  # view for toilet construction
         tc = {obj_ad['level_id']: obj_ad for obj_ad in tc}
         for level_id, data in tc.items():
             report_table_data[level_id].update(data)
-        T_Housenum = ToiletConstruction.objects.filter(**filter_field) \
-                .annotate(**level_data[tag]).values('level', 'level_id','city_name','household_number')
-        HouseNumDict={}
-        for t in T_Housenum:
-            l1= [v for k,v in t.items()]
-            lst1=int(l1[0])  #HouseHold_number
-            lst2=l1[3]  #Slum_id
-            if lst2 in HouseNumDict:  #if slum_id in HouseNumDict
-                Home = HouseNumDict[lst2]
-                Home.append(lst1)   #append housenumber in that slum_id
-                HouseNumDict[lst2]=Home
-            else:
-                HouseNumDict[lst2]=[lst1]
-        listt_Household_code = []
-        Spsr_Housecode = SponsorProjectDetails.objects.filter(slum__id__in=keys) \
-             .annotate(**level_data[tag]).values('level', 'level_id','city_name','household_code')
-        for t in Spsr_Housecode:
-            l2 = [v for k, v in t.items()]
-            listt_Household_code.append([l2[0], l2[3]])   #0-Housenumber , 3-slum_id
-        final_dict={}
-        for k,v in HouseNumDict.items():   #key values pair of slum_id with respective housenumbers list
-            s_id=k  #int   slum_id  TC
-            house_num=v #list    Housenumber  TC
-            for h_n in house_num:
-                for cust_x in listt_Household_code:      #[housenum, slum_d] Sponsor
-                    x1= cust_x[0]    #housenum Sponsor
-                    x2= cust_x[1]    #slum_id  Sponsor
-                    if s_id == x2:    #if slum_id of TC == Slum_id of sponsor
-                        if h_n in x1 and s_id in final_dict:  #if TC housenum in sponsor housenum and TC slum_id in finalList
-                            final_dict[s_id]+=1    #append count to that slum_id
-                        else:
-                            final_dict[s_id]=0
-    for cust_obj in report_table_data:
-        report_table_data[cust_obj]['factAssign']= 0
-        status = SponsorProjectDetails.objects.filter(slum__id=report_table_data[cust_obj]['level_id']) \
-                             .annotate(**level_data[tag]).values('level', 'level_id', 'city_name')
-        for k,v in final_dict.items():
-            for s in status:
-                NewSlum= s['level_id']
-                if k==NewSlum:
-                    report_table_data[cust_obj]['factAssign']=v
+
+        if query_field == 'factsheet_done':
+
+            for t in tc:
+                l = tc[t]['level_id']
+                report_table_data[l]['factAssign'] = 0
+
+                if tag  == 'city':
+                    T_Housenum = ToiletConstruction.objects.filter(slum__electoral_ward__administrative_ward__city__id = l, completion_date__range =  [start_date, end_date], factsheet_done__isnull = False ).values_list('household_number', flat = True)
+
+                    Spsr_Housecode = SponsorProjectDetails.objects.filter(slum__electoral_ward__administrative_ward__city__id =l).exclude(sponsor__id=10).values_list( 'household_code', flat = True)
+
+                elif tag == 'admin_ward':
+                    T_Housenum = ToiletConstruction.objects.filter(slum__electoral_ward__administrative_ward__id = l, completion_date__range =  [start_date, end_date], factsheet_done__isnull = False).values_list('household_number', flat = True)
+
+                    Spsr_Housecode = SponsorProjectDetails.objects.filter(slum__electoral_ward__administrative_ward__id =l).exclude(sponsor__id=10).values_list('household_code', flat = True)
+                elif tag == 'electoral_ward':
+                    T_Housenum = ToiletConstruction.objects.filter(slum__electoral_ward__id = l, completion_date__range =  [start_date, end_date], factsheet_done__isnull = False).values_list('household_number', flat = True)
+
+                    Spsr_Housecode = SponsorProjectDetails.objects.filter(slum__electoral_ward__id =l).exclude(sponsor__id=10).values_list('household_code', flat = True)
+                elif tag == 'slum':
+                    T_Housenum = ToiletConstruction.objects.filter(slum__id = l, completion_date__range =  [start_date, end_date], factsheet_done__isnull = False).values_list('household_number', flat = True)
+
+                    Spsr_Housecode = SponsorProjectDetails.objects.filter(slum__id =l).exclude(sponsor__id=10).values_list('household_code', flat = True)
+
+                factsheet_count = 0
+                h_list = []
+                for household_num in T_Housenum:
+                    for housecode_list in Spsr_Housecode:
+                        if housecode_list != None:
+                            if int(household_num) in housecode_list and household_num not in h_list:
+                                factsheet_count += 1
+                                h_list.append(household_num)
+                                break
+                
+                report_table_data[l]['factAssign'] = factsheet_count
+                
+        
     return HttpResponse(json.dumps(list(map(lambda x: report_table_data[x], report_table_data))),
                         content_type="application/json")
+
 
 @csrf_exempt
 def report_table_cm(request):
@@ -1103,22 +1120,25 @@ def report_table_cm(request):
             }
     }
     report_table_data_cm = defaultdict(dict)
-    all_activities = []
-    data = {}
     activity_type = ActivityType.objects.all()
     for x in activity_type:
         key_for_datatable = "total_" + (x.name).replace(" ", "")
         filter_field = {'slum__id__in': keys, 'activity_date__range': [start_date, end_date]}
         filter_field_new = {'slum_id__in': keys, 'date_of_activity__range': [start_date, end_date]}
-        # count_field = {key_for_datatable: len('household_number')}
+        count_field = {key_for_datatable: ArrayAgg('household_number')}
+        count_field1 = {key_for_datatable: Count('household_number')}
 
         y = x.communitymobilization_set.filter(**filter_field) \
-            .annotate(**level_data[tag]).values('level', 'level_id', 'city_name','household_number')
-            # .annotate(**count_field).order_by('city_name')
+            .annotate(**level_data[tag]).values('level', 'level_id', 'city_name')\
+            .annotate(**count_field).order_by('city_name')
 
-        for data in y:
-            data.update({key_for_datatable : len(data['household_number'])})
-            data.pop('household_number')
+        yy = x.communitymobilizationactivityattendance_set.filter(**filter_field_new) \
+            .annotate(**level_data[tag]).values('level', 'level_id', 'city_name') \
+            .annotate(**count_field1).order_by('city_name')
+
+
+        for data in yy:
+
             level_id = data['level_id']
             if str(level_id) in report_table_data_cm.keys() and key_for_datatable in report_table_data_cm[
                 str(level_id)].keys():
@@ -1126,22 +1146,19 @@ def report_table_cm(request):
             else:
                 report_table_data_cm[str(level_id)].update(data)
 
-        new = x.communitymobilizationactivityattendance_set.filter(**filter_field_new)
-        a = new.annotate(**level_data[tag]).values('level', 'level_id', 'city_name').order_by('city_name')
-        household_count = {key_for_datatable: a.count()}
-        for k,v in household_count.items():
-            if v >0:
-                all_activities.append(household_count)
+        for data in y:
+            cnt = []
+            for i in data[key_for_datatable]:
+                cnt += i
 
-        if len(a)>0:
-            for i in a[0:1]:
-                level_id = i['level_id']
-                i.update(household_count)
-                data = i
-            new_dict ={str(level_id):data}
-            for j in all_activities:
-                data.update(j)
-            report_table_data_cm.update(new_dict)
+            level_id = data['level_id']
+            if str(level_id) in report_table_data_cm.keys() and key_for_datatable in report_table_data_cm[
+                str(level_id)].keys():
+                report_table_data_cm[str(level_id)][key_for_datatable] += len(cnt)
+            else:
+                data[key_for_datatable] = len(cnt)
+                report_table_data_cm[str(level_id)].update(data)
+
 
     return HttpResponse(json.dumps(list(map(lambda x: report_table_data_cm[x], report_table_data_cm))),
                         content_type="application/json")
@@ -1208,6 +1225,10 @@ def report_table_cm_activity_count(request):
             .annotate(**level_data[tag]).values('level','level_id','city_name') \
             .annotate(**count_field).order_by('city_name')
 
+        yy = x.communitymobilizationactivityattendance_set.filter(**filter_field_new) \
+            .annotate(**level_data[tag]).values('level', 'level_id', 'city_name')\
+            .annotate(**count_field).order_by('city_name', 'date_of_activity')
+
         for data in y:
             level_id = data['level_id']
             if str(level_id) in report_table_data_cm_activity_count.keys() and key_for_datatable in \
@@ -1216,18 +1237,13 @@ def report_table_cm_activity_count(request):
             else:
                 report_table_data_cm_activity_count[str(level_id)].update(data)
 
-        new = x.communitymobilizationactivityattendance_set.filter(**filter_field_new)\
-            .annotate(**level_data[tag]).values('level', 'level_id', 'city_name')\
-            .annotate(**count_field).order_by('city_name')
-        for i in new:
-            i.update({key_for_datatable : 1})
-
-        for data in new:
+        for data in yy:
             level_id = data['level_id']
             if str(level_id) in report_table_data_cm_activity_count.keys() and key_for_datatable in \
                     report_table_data_cm_activity_count[str(level_id)].keys():
-                report_table_data_cm_activity_count[str(level_id)][key_for_datatable] += data[key_for_datatable]
+                report_table_data_cm_activity_count[str(level_id)][key_for_datatable] += 1
             else:
+                data[key_for_datatable] = 1
                 report_table_data_cm_activity_count[str(level_id)].update(data)
 
     return HttpResponse(json.dumps(list(map(lambda x: report_table_data_cm_activity_count[x], report_table_data_cm_activity_count))),
