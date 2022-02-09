@@ -30,6 +30,7 @@ from graphs.models import *
 from django.core import serializers
 from django.contrib.postgres.aggregates import ArrayAgg
 
+
 # The views in this file correspond to the mastersheet functionality of shelter app.
 def give_details(request):
     slum_info_dict = {}
@@ -43,6 +44,7 @@ def give_details(request):
     except Exception as e:
         print(e)
     return HttpResponse(json.dumps(slum_info_dict), content_type='application/json')
+
 
 # 'masterSheet()' is the principal view.
 # It collects the data from newest version of RHS form and family factsheets
@@ -61,46 +63,53 @@ def masterSheet(request, slum_code=0, FF_code=0, RHS_code=0):
         temp_formdict = []
         formdict_family_factsheet = []
         slum_code = Slum.objects.filter(pk=int(request.GET['slumname'])).values_list("id", "shelter_slum_code",
-                                                         "electoral_ward__administrative_ward__city__id",
-                                                         "electoral_ward__name", "name")
+                                                                                     "electoral_ward__administrative_ward__city__id",
+                                                                                     "electoral_ward__name", "name")
 
         slum_funder = SponsorProjectDetails.objects.filter(slum__name=str(slum_code[0][4])).exclude(sponsor__id=10)
         form_ids = Survey.objects.filter(city__id=int(slum_code[0][2]))
         household_data = HouseholdData.objects.filter(slum__id=slum_code[0][0])
-        followup_data_false = FollowupData.objects.filter(slum=slum_code[0][0])#,flag_followup_in_rhs = False)
+        followup_data_false = FollowupData.objects.filter(slum=slum_code[0][0])  # ,flag_followup_in_rhs = False)
         # followup_data_true = FollowupData.objects.filter(slum=slum_code[0][0],flag_followup_in_rhs = True)
 
         if slum_code is not 0:
             if flag_fetch_rhs:
-                formdict = list(map(lambda x: x.rhs_data, filter(lambda x: x.rhs_data!= None, household_data)))
+                formdict = list(map(lambda x: x.rhs_data, filter(lambda x: x.rhs_data != None, household_data)))
                 for i in formdict:
-                        if i['Type_of_structure_occupancy'] in ['Locked house','Unoccupied house']:
-                           list_of_keys= ['Household_number', 'Date_of_survey', 'Name_s_of_the_surveyor_s', 'Type_of_structure_occupancy']
-                           temp_dict = {}
-                           for cust_key in list_of_keys:
-                               if cust_key in i:
-                                   temp_dict[cust_key] = i[cust_key]
+                    if i['Type_of_structure_occupancy'] in ['Locked house', 'Unoccupied house']:
+                        list_of_keys = ['Household_number', 'Date_of_survey', 'Name_s_of_the_surveyor_s',
+                                        'Type_of_structure_occupancy']
+                        temp_dict = {}
+                        for cust_key in list_of_keys:
+                            if cust_key in i:
+                                temp_dict[cust_key] = i[cust_key]
 
-                           temp_formdict.append(temp_dict)
-                        else:
-                            temp_formdict.append(i)
+                        temp_formdict.append(temp_dict)
+                    else:
+                        temp_formdict.append(i)
 
                 formdict = temp_formdict
 
             else:
-                formdict = list(map(lambda x:{'Household_number':x.household_number, '_id':x.rhs_data['_id'] if '_id' in x.rhs_data else None,
-                '_xform_id_string':x.rhs_data['_xform_id_string'] if '_xform_id_string' in x.rhs_data else None}, filter(lambda x:x.rhs_data!=None, household_data)))
+                formdict = list(map(lambda x: {'Household_number': x.household_number,
+                                               '_id': x.rhs_data['_id'] if '_id' in x.rhs_data else None,
+                                               '_xform_id_string': x.rhs_data[
+                                                   '_xform_id_string'] if '_xform_id_string' in x.rhs_data else None},
+                                    filter(lambda x: x.rhs_data != None, household_data)))
 
             if flag_fetch_ff:
                 try:
-                    formdict_family_factsheet = list(map(lambda x:(x.ff_data if x.ff_data else {'group_vq77l17/Household_number': 00 }),household_data))
+                    formdict_family_factsheet = list(
+                        map(lambda x: (x.ff_data if x.ff_data else {'group_vq77l17/Household_number': 00}),
+                            household_data))
                     # formdict_family_factsheet = map(lambda x:(x.ff_data if x.ff_data else {'group_vq77l17/Household_number': 00 }),household_data)
                 # Family Factsheet - fetching data
                 # arranging data with respect to household numbers
                 except Exception as e:
-                    print(e,'in ff')
-                temp_FF = {str(int(obj_FF['group_vq77l17/Household_number'])): obj_FF for obj_FF in formdict_family_factsheet}
-                temp_FF_keys = temp_FF.keys() # list of household numbers
+                    print(e, 'in ff')
+                temp_FF = {str(int(obj_FF['group_vq77l17/Household_number'])): obj_FF for obj_FF in
+                           formdict_family_factsheet}
+                temp_FF_keys = temp_FF.keys()  # list of household numbers
 
             # Daily Reporting - fetching data
             toilet_reconstruction_fields = ['slum', 'slum__name', 'household_number', 'agreement_date_str',
@@ -200,9 +209,10 @@ def masterSheet(request, slum_code=0, FF_code=0, RHS_code=0):
             for y in community_mobilization_data_avni:
                 new_activity_type = y.activity_type.name
                 if y.household_number in dummy_formdict.keys():
-                    dummy_formdict[str(y.household_number)].update({new_activity_type: str(y.date_of_activity), str(new_activity_type) + "_id": y.id})
-                else :
-                    dummy_formdict[str(int(y.household_number)) ] = {
+                    dummy_formdict[str(y.household_number)].update(
+                        {new_activity_type: str(y.date_of_activity), str(new_activity_type) + "_id": y.id})
+                else:
+                    dummy_formdict[str(int(y.household_number))] = {
                         "Household_number": str(int(y.household_number)),
                         "_id": "",
                         "ff_id": "",
@@ -211,10 +221,11 @@ def masterSheet(request, slum_code=0, FF_code=0, RHS_code=0):
                         "_attachments": "",
                         "no_rhs_flag": "#eba6fc"
                     }
-                    dummy_formdict[str(int(y.household_number))].update({new_activity_type: str(y.date_of_activity), str(new_activity_type) + "_id": y.id})
+                    dummy_formdict[str(int(y.household_number))].update(
+                        {new_activity_type: str(y.date_of_activity), str(new_activity_type) + "_id": y.id})
 
             for y in community_mobilization_data:
-                #y = community_mobilization_data[i]
+                # y = community_mobilization_data[i]
                 if y.household_number != None:
                     y.household_number = [i for i in y.household_number if i != ""]
                     for z in y.household_number:
@@ -230,7 +241,8 @@ def masterSheet(request, slum_code=0, FF_code=0, RHS_code=0):
                                 "_attachments": "",
                                 "no_rhs_flag": "#eba6fc"
                             }
-                        dummy_formdict[z].update({new_activity_type: y.activity_date_str, str(new_activity_type) + "_id": y.id})
+                        dummy_formdict[z].update(
+                            {new_activity_type: y.activity_date_str, str(new_activity_type) + "_id": y.id})
 
             for i in temp_sbm_keys:
                 if str(i) not in dummy_formdict.keys():
@@ -258,7 +270,7 @@ def masterSheet(request, slum_code=0, FF_code=0, RHS_code=0):
                         "no_rhs_flag": "#eba6fc"
                     }
                 dummy_formdict[str(i)].update(temp_daily_reporting[str(i)])
-               	dummy_formdict[str(i)].update({'tc_id_' + str(i): temp_daily_reporting[str(i)]['id']})
+                dummy_formdict[str(i)].update({'tc_id_' + str(i): temp_daily_reporting[str(i)]['id']})
 
             for key, x in dummy_formdict.items():
                 try:
@@ -281,13 +293,13 @@ def masterSheet(request, slum_code=0, FF_code=0, RHS_code=0):
                         if '_id' in temp_FF[x['Household_number']].keys():
                             ff_id = temp_FF[x['Household_number']]['_id']
                             del (temp_FF[x['Household_number']]['_id'])
-                        else :
+                        else:
                             ff_id = temp_FF[x['Household_number']]
 
                         if '_xform_id_string' in temp_FF[x['Household_number']].keys():
                             ff_xform_id_string = temp_FF[x['Household_number']]['_xform_id_string']
                             del (temp_FF[x['Household_number']]['_xform_id_string'])
-                        else :
+                        else:
                             ff_xform_id_string = None
 
                         x.update(temp_FF[x['Household_number']])
@@ -298,16 +310,16 @@ def masterSheet(request, slum_code=0, FF_code=0, RHS_code=0):
 
                 if '_attachments' in x.keys() and len(x['_attachments']) != 0:
 
-                    if 'media/original?media_file=' in  x['_attachments'][0]["filename"]:
-                        PATH = settings.BASE_URL  + 'media/original?media_file='
-                        
+                    if 'media/original?media_file=' in x['_attachments'][0]["filename"]:
+                        PATH = settings.BASE_URL + 'media/original?media_file='
+
                         if 'Toilet_Photo' in x.keys():
                             url = PATH + "%2F".join(x['_attachments'][0]["filename"].split('/')[:-1])
-                            x.update({'toilet_photo_url': url +  '%2F' + x['Toilet_Photo']})
+                            x.update({'toilet_photo_url': url + '%2F' + x['Toilet_Photo']})
 
                         if 'Family_Photo' in x.keys():
                             url = PATH + "%2F".join(x['_attachments'][1]["filename"].split('/')[:-1])
-                            x.update({'family_photo_url': url +  '%2F' + x['Family_Photo']})
+                            x.update({'family_photo_url': url + '%2F' + x['Family_Photo']})
 
                     else:
                         PATH = settings.BASE_URL + 'media/medium?media_file=shelter/attachments'
@@ -316,7 +328,7 @@ def masterSheet(request, slum_code=0, FF_code=0, RHS_code=0):
                             x.update({'toilet_photo_url': PATH + '/' + x['Toilet_Photo']})
                         if 'Family_Photo' in x.keys():
                             x.update({'family_photo_url': PATH + '/' + x['Family_Photo']})
-                        
+
                 else:
                     if 'Toilet_Photo' and 'ff_uuid' in x.keys():
                         ff_url = settings.AVNI_URL + '/#/app/subject/viewProgramEncounter?uuid=' + str(x['ff_uuid'])
@@ -324,16 +336,21 @@ def masterSheet(request, slum_code=0, FF_code=0, RHS_code=0):
                         x.update({'family_photo_url': ff_url if ff_url else x['Family_Photo']})
 
                 if '_xform_id_string' in x.keys():
-                    x.update({'rhs_url': settings.BASE_URL + str('shelter/forms/') + str(x['_xform_id_string']) + str('/instance#/') + str(x['_id'])})
-                elif 'rhs_uuid' in x.keys() :
-                    x.update({'rhs_url':settings.AVNI_URL + '#/app/subject?uuid=' + str(x['rhs_uuid'])})
-                else:pass
+                    x.update({'rhs_url': settings.BASE_URL + str('shelter/forms/') + str(x['_xform_id_string']) + str(
+                        '/instance#/') + str(x['_id'])})
+                elif 'rhs_uuid' in x.keys():
+                    x.update({'rhs_url': settings.AVNI_URL + '#/app/subject?uuid=' + str(x['rhs_uuid'])})
+                else:
+                    pass
 
                 if 'ff_xform_id_string' in x.keys():
-                    x.update({'ff_url': settings.BASE_URL + str('shelter/forms/') + str(x['ff_xform_id_string']) + str('/instance#/') + str(x["ff_id"])})
+                    x.update({'ff_url': settings.BASE_URL + str('shelter/forms/') + str(x['ff_xform_id_string']) + str(
+                        '/instance#/') + str(x["ff_id"])})
                 elif 'ff_id' in x.keys():
-                    x.update({'ff_url': settings.AVNI_URL + '/#/app/subject/viewProgramEncounter?uuid=' + str(x['ff_uuid'])})
-                else:pass
+                    x.update(
+                        {'ff_url': settings.AVNI_URL + '/#/app/subject/viewProgramEncounter?uuid=' + str(x['ff_uuid'])})
+                else:
+                    pass
 
                 if 'group_oi8ts04/Current_place_of_defecation' in x:
                     x.update({'current place of defecation': x['group_oi8ts04/Current_place_of_defecation']})
@@ -341,7 +358,7 @@ def masterSheet(request, slum_code=0, FF_code=0, RHS_code=0):
                 if 'status' in x and x['status'] == 'Completed':
                     x.update({'current place of defecation': 'Toilet by SA'})
 
-                cod_data = followup_data_false.filter(household_number = int(key)).order_by('-submission_date').first()
+                cod_data = followup_data_false.filter(household_number=int(key)).order_by('-submission_date').first()
                 # print(cod_data.followup_data.keys())
 
                 if cod_data:
@@ -350,32 +367,34 @@ def masterSheet(request, slum_code=0, FF_code=0, RHS_code=0):
                         x.update({'group_oi8ts04/Which_Community_Toil_r_family_members_use': data1})
                     if 'group_oi8ts04/Current_place_of_defecation' in cod_data.followup_data:
                         data = cod_data.followup_data['group_oi8ts04/Current_place_of_defecation']
-                        x.update({'current place of defecation':data})
+                        x.update({'current place of defecation': data})
                     if 'status' in x and x['status'] == 'Completed':
                         x.update({'current place of defecation': 'Toilet by SA'})
                         x.update({'group_oi8ts04/Status_of_toilet_under_SBM': ''})
-                        x.update({'group_oi8ts04/Which_Community_Toil_r_family_members_use':''})
+                        x.update({'group_oi8ts04/Which_Community_Toil_r_family_members_use': ''})
 
                 if len(slum_funder) != 0:
                     for funder in slum_funder:
                         if funder.household_code != None:
                             if int(x['Household_number']) in funder.household_code:
-                                x.update({'Funder': funder.sponsor_project.name}) #funder.sponsor.organization_name})
+                                x.update({'Funder': funder.sponsor_project.name})  # funder.sponsor.organization_name})
 
             formdict = list(map(lambda x: dummy_formdict[x], dummy_formdict))
             for x in formdict:
                 try:
-                    if x['current place of defecation'] in ['SBM (Installment)', 'Own toilet'] and len(x['agreement_date_str']) > 1:
+                    if x['current place of defecation'] in ['SBM (Installment)', 'Own toilet'] and len(
+                            x['agreement_date_str']) > 1:
                         x['incorrect_cpod'] = 'incorrect_cpod'
 
                     if x['group_oi8ts04/Current_place_of_defecation'] == 'Own toilet' and x['status'] == 'Completed':
-                            x['incorrect_cpod'] = 'incorrect_cpod'
+                        x['incorrect_cpod'] = 'incorrect_cpod'
                 except Exception as e:
                     pass
-                    #print ('not found - '+str(x['Household_number']))
+                    # print ('not found - '+str(x['Household_number']))
     except Exception as e:
         print(e)
     return HttpResponse(json.dumps(formdict), content_type="application/json")
+
 
 def to_date(s):
     if s != None:
@@ -383,12 +402,14 @@ def to_date(s):
     else:
         return None
 
+
 def is_delayed(s):
     if (s and len(s) != 0):
         if (datetime.date.today() - to_date(s)).days > 8:
             return True
     else:
         return False
+
 
 def trav(node):
     # Traverse up till the child node and add to list
@@ -464,10 +485,10 @@ def define_columns(request):
         {"data": "group_oi8ts04/What_was_the_cost_in_to_build_the_toilet",
          "title": "What was the cost incurred to build the toilet?"},
         {"data": "current place of defecation", "title": "Current place of defecation"},
-        {"data": "group_oi8ts04/Which_Community_Toil_r_family_members_use", "title": "Which CTB"}, #29
+        {"data": "group_oi8ts04/Which_Community_Toil_r_family_members_use", "title": "Which CTB"},  # 29
 
         {"data": "group_oi8ts04/Is_there_availabilit_onnect_to_the_toilets",
-         "title": "Is there availability of drainage to connect to the toilet?"}, # 30 new
+         "title": "Is there availability of drainage to connect to the toilet?"},  # 30 new
         {"data": "group_oi8ts04/Are_you_interested_in_an_indiv",
          "title": "Are you interested in an individual toilet?"},  # 30
         {"data": "group_oi8ts04/What_kind_of_toilet_would_you_likes", "title": "What kind of toilet would you like?"},
@@ -528,15 +549,15 @@ def define_columns(request):
     final_data = {}
     final_data['buttons'] = collections.OrderedDict()
     final_data['buttons']['RHS'] = list(range(number_of_invisible_columns + 1,
-                                         number_of_invisible_columns + 1 + 18))  # range(14,32)#range(13,31)
+                                              number_of_invisible_columns + 1 + 18))  # range(14,32)#range(13,31)
     final_data['buttons']['Follow-up'] = list(range(number_of_invisible_columns + 1 + 18,
-                                               number_of_invisible_columns + 1 + 18 + 19))  # range(32,50)#range(31,49)
+                                                    number_of_invisible_columns + 1 + 18 + 19))  # range(32,50)#range(31,49)
     final_data['buttons']['Family factsheet'] = list(range(number_of_invisible_columns + 1 + 18 + 19,
-                                                      number_of_invisible_columns + 1 + 18 + 19 + 7))  # range(50,57)#range(49,56)
+                                                           number_of_invisible_columns + 1 + 18 + 19 + 7))  # range(50,57)#range(49,56)
     final_data['buttons']['SBM'] = list(range(number_of_invisible_columns + 1 + 18 + 19 + 7,
-                                         number_of_invisible_columns + 1 + 18 + 19 + 7 + 10))  # range(57,67)#range(56,66)
+                                              number_of_invisible_columns + 1 + 18 + 19 + 7 + 10))  # range(57,67)#range(56,66)
     final_data['buttons']['Construction status'] = list(range(number_of_invisible_columns + 1 + 18 + 19 + 7 + 10,
-                                                         number_of_invisible_columns + 1 + 18 + 19 + 7 + 10 + 15))  # range(67,82)#range(66,81)
+                                                              number_of_invisible_columns + 1 + 18 + 19 + 7 + 10 + 15))  # range(67,82)#range(66,81)
     # We define the columns for community mobilization and vendor details in a dynamic way. The
     # reason being these columns are prone to updates and additions.
     activity_pre_len = len(formdict_new)
@@ -570,6 +591,7 @@ def renderMastersheet(request):
     file_form1 = file_form()
     return render(request, 'masterSheet.html',
                   {'form': slum_search_field, 'form_account': account_slum_search_field, 'file_form': file_form1})
+
 
 @csrf_exempt
 @apply_permissions_ajax('mastersheet.can_upload_mastersheet')
@@ -859,6 +881,7 @@ def delete_selected(request):
 
     return HttpResponse(json.dumps(response), content_type="application/json")
 
+
 def delete_selected_records(records):
     """
     Method to delete selected records. CALLED from delete_selected
@@ -927,6 +950,7 @@ def sync_kobo_data(request):
 def render_report(request):
     return render(request, 'mastersheet_report.html')
 
+
 @apply_permissions_ajax('mastersheet.can_view_mastersheet_report')
 def create_report(request):
     '''
@@ -969,7 +993,8 @@ def give_report_table_numbers(request):  # view for toilet construction
     group_perm = map(lambda x: x.split(':')[-1], group_perm)
 
     keys = Slum.objects.filter(id__in=keys,
-    electoral_ward__administrative_ward__city__name__city_name__in=group_perm).values_list('id', flat=True)
+                               electoral_ward__administrative_ward__city__name__city_name__in=group_perm).values_list(
+        'id', flat=True)
     start_date = tag_key_dict['startDate']
     end_date = tag_key_dict['endDate']
     if start_date == None or end_date == None:
@@ -1013,8 +1038,10 @@ def give_report_table_numbers(request):  # view for toilet construction
     }
     report_table_data = defaultdict(dict)
     for query_field in query_on.keys():
-        if query_field in ['agreement_date', 'phase_one_material_date','phase_two_material_date','phase_three_material_date',
-        'completion_date', 'septic_tank_date','use_of_toilet','toilet_connected_to', 'factsheet_done']:
+        if query_field in ['agreement_date', 'phase_one_material_date', 'phase_two_material_date',
+                           'phase_three_material_date',
+                           'completion_date', 'septic_tank_date', 'use_of_toilet', 'toilet_connected_to',
+                           'factsheet_done']:
             filter_field = {'slum__id__in': keys, 'agreement_date__range': [start_date, end_date],
                             query_field + '__isnull': False}
         else:
@@ -1034,23 +1061,41 @@ def give_report_table_numbers(request):  # view for toilet construction
                 l = tc[t]['level_id']
                 report_table_data[l]['factAssign'] = 0
 
-                if tag  == 'city':
-                    T_Housenum = ToiletConstruction.objects.filter(slum__electoral_ward__administrative_ward__city__id = l, completion_date__range =  [start_date, end_date], factsheet_done__isnull = False ).values_list('household_number', flat = True)
+                if tag == 'city':
+                    T_Housenum = ToiletConstruction.objects.filter(
+                        slum__electoral_ward__administrative_ward__city__id=l,
+                        completion_date__range=[start_date, end_date], factsheet_done__isnull=False).values_list(
+                        'household_number', flat=True)
 
-                    Spsr_Housecode = SponsorProjectDetails.objects.filter(slum__electoral_ward__administrative_ward__city__id =l).exclude(sponsor__id=10).values_list( 'household_code', flat = True)
+                    Spsr_Housecode = SponsorProjectDetails.objects.filter(
+                        slum__electoral_ward__administrative_ward__city__id=l).exclude(sponsor__id=10).values_list(
+                        'household_code', flat=True)
 
                 elif tag == 'admin_ward':
-                    T_Housenum = ToiletConstruction.objects.filter(slum__electoral_ward__administrative_ward__id = l, completion_date__range =  [start_date, end_date], factsheet_done__isnull = False).values_list('household_number', flat = True)
+                    T_Housenum = ToiletConstruction.objects.filter(slum__electoral_ward__administrative_ward__id=l,
+                                                                   completion_date__range=[start_date, end_date],
+                                                                   factsheet_done__isnull=False).values_list(
+                        'household_number', flat=True)
 
-                    Spsr_Housecode = SponsorProjectDetails.objects.filter(slum__electoral_ward__administrative_ward__id =l).exclude(sponsor__id=10).values_list('household_code', flat = True)
+                    Spsr_Housecode = SponsorProjectDetails.objects.filter(
+                        slum__electoral_ward__administrative_ward__id=l).exclude(sponsor__id=10).values_list(
+                        'household_code', flat=True)
                 elif tag == 'electoral_ward':
-                    T_Housenum = ToiletConstruction.objects.filter(slum__electoral_ward__id = l, completion_date__range =  [start_date, end_date], factsheet_done__isnull = False).values_list('household_number', flat = True)
+                    T_Housenum = ToiletConstruction.objects.filter(slum__electoral_ward__id=l,
+                                                                   completion_date__range=[start_date, end_date],
+                                                                   factsheet_done__isnull=False).values_list(
+                        'household_number', flat=True)
 
-                    Spsr_Housecode = SponsorProjectDetails.objects.filter(slum__electoral_ward__id =l).exclude(sponsor__id=10).values_list('household_code', flat = True)
+                    Spsr_Housecode = SponsorProjectDetails.objects.filter(slum__electoral_ward__id=l).exclude(
+                        sponsor__id=10).values_list('household_code', flat=True)
                 elif tag == 'slum':
-                    T_Housenum = ToiletConstruction.objects.filter(slum__id = l, completion_date__range =  [start_date, end_date], factsheet_done__isnull = False).values_list('household_number', flat = True)
+                    T_Housenum = ToiletConstruction.objects.filter(slum__id=l,
+                                                                   completion_date__range=[start_date, end_date],
+                                                                   factsheet_done__isnull=False).values_list(
+                        'household_number', flat=True)
 
-                    Spsr_Housecode = SponsorProjectDetails.objects.filter(slum__id =l).exclude(sponsor__id=10).values_list('household_code', flat = True)
+                    Spsr_Housecode = SponsorProjectDetails.objects.filter(slum__id=l).exclude(
+                        sponsor__id=10).values_list('household_code', flat=True)
 
                 factsheet_count = 0
                 h_list = []
@@ -1061,10 +1106,9 @@ def give_report_table_numbers(request):  # view for toilet construction
                                 factsheet_count += 1
                                 h_list.append(household_num)
                                 break
-                
+
                 report_table_data[l]['factAssign'] = factsheet_count
-                
-        
+
     return HttpResponse(json.dumps(list(map(lambda x: report_table_data[x], report_table_data))),
                         content_type="application/json")
 
@@ -1079,7 +1123,8 @@ def report_table_cm(request):
         group_perm = Group.objects.all().values_list('name', flat=True)
     group_perm = map(lambda x: x.split(':')[-1], group_perm)
 
-    keys = Slum.objects.filter(id__in=keys,electoral_ward__administrative_ward__city__name__city_name__in=group_perm).values_list(
+    keys = Slum.objects.filter(id__in=keys,
+                               electoral_ward__administrative_ward__city__name__city_name__in=group_perm).values_list(
         'id', flat=True)
 
     start_date = tag_key_dict['startDate']
@@ -1129,13 +1174,12 @@ def report_table_cm(request):
         count_field1 = {key_for_datatable: Count('household_number')}
 
         y = x.communitymobilization_set.filter(**filter_field) \
-            .annotate(**level_data[tag]).values('level', 'level_id', 'city_name')\
+            .annotate(**level_data[tag]).values('level', 'level_id', 'city_name') \
             .annotate(**count_field).order_by('city_name')
 
         yy = x.communitymobilizationactivityattendance_set.filter(**filter_field_new) \
             .annotate(**level_data[tag]).values('level', 'level_id', 'city_name') \
             .annotate(**count_field1).order_by('city_name')
-
 
         for data in yy:
 
@@ -1149,7 +1193,8 @@ def report_table_cm(request):
         for data in y:
             cnt = []
             for i in data[key_for_datatable]:
-                cnt += i
+                if i:
+                    cnt += i
 
             level_id = data['level_id']
             if str(level_id) in report_table_data_cm.keys() and key_for_datatable in report_table_data_cm[
@@ -1159,9 +1204,9 @@ def report_table_cm(request):
                 data[key_for_datatable] = len(cnt)
                 report_table_data_cm[str(level_id)].update(data)
 
-
     return HttpResponse(json.dumps(list(map(lambda x: report_table_data_cm[x], report_table_data_cm))),
                         content_type="application/json")
+
 
 @csrf_exempt
 def report_table_cm_activity_count(request):
@@ -1173,7 +1218,9 @@ def report_table_cm_activity_count(request):
         group_perm = Group.objects.all().values_list('name', flat=True)
     group_perm = map(lambda x: x.split(':')[-1], group_perm)
 
-    keys = Slum.objects.filter(id__in=keys, electoral_ward__administrative_ward__city__name__city_name__in=group_perm).values_list('id', flat=True)
+    keys = Slum.objects.filter(id__in=keys,
+                               electoral_ward__administrative_ward__city__name__city_name__in=group_perm).values_list(
+        'id', flat=True)
 
     start_date = tag_key_dict['startDate']
     end_date = tag_key_dict['endDate']
@@ -1222,11 +1269,11 @@ def report_table_cm_activity_count(request):
         count_field = {key_for_datatable: Count('activity_type')}
 
         y = x.communitymobilization_set.filter(**filter_field) \
-            .annotate(**level_data[tag]).values('level','level_id','city_name') \
+            .annotate(**level_data[tag]).values('level', 'level_id', 'city_name') \
             .annotate(**count_field).order_by('city_name')
 
         yy = x.communitymobilizationactivityattendance_set.filter(**filter_field_new) \
-            .annotate(**level_data[tag]).values('level', 'level_id', 'city_name')\
+            .annotate(**level_data[tag]).values('level', 'level_id', 'city_name') \
             .annotate(**count_field).order_by('city_name', 'date_of_activity')
 
         for data in y:
@@ -1246,7 +1293,8 @@ def report_table_cm_activity_count(request):
                 data[key_for_datatable] = 1
                 report_table_data_cm_activity_count[str(level_id)].update(data)
 
-    return HttpResponse(json.dumps(list(map(lambda x: report_table_data_cm_activity_count[x], report_table_data_cm_activity_count))),
+    return HttpResponse(
+        json.dumps(list(map(lambda x: report_table_data_cm_activity_count[x], report_table_data_cm_activity_count))),
         content_type="application/json")
 
 
