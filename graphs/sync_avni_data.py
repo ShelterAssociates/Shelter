@@ -57,7 +57,7 @@ class avni_sync():
         # latest_date = last_submission_date.submission_date + timedelta(days=1)
         today = datetime.today()  # + timedelta(days= -1)
         latest_date = today.strftime('%Y-%m-%dT00:00:00.000Z')
-        iso = "2022-02-01T00:00:00.000Z"
+        iso = "2022-03-08T00:00:00.000Z"
         # return(latest_date)
         return iso
 
@@ -239,7 +239,7 @@ class avni_sync():
             send_request = requests.get(self.base_url + path + '&page=' + str(i), headers={'AUTH-TOKEN': self.get_cognito_token()})
             get_HH_data = json.loads(send_request.text)['content']
             for i in get_HH_data:
-                if not i['Voided']:
+                if not ((i['Voided']) or (i['location']['City'] != 'PCMC')):
                     self.registrtation_data(i)
 
     def update_rhs_data(self, subject_id, encounter_data):  # checked
@@ -1017,6 +1017,62 @@ class avni_sync():
 
             else:
                 return 'error'
+
+
+    def sync_json_data(self):
+        with open('/home/shelter/Desktop/json file for call/sanitation_data.json', 'r') as f:
+            l = []
+            count = 1
+            data = json.load(f)
+            for sanitation in data[:5000]:
+                try:
+                    hh_uuid = sanitation['Household_uuid']
+                    hh_number = str(int(sanitation['household_number']))
+                    slum_name = sanitation['slum']
+                    hh_created_date = sanitation['HH_created_date']
+                    hh_last_modefied_date = sanitation['HH_last_modified_date']
+                    lst_mod_date = sanitation['Last_modified_date']
+                    san_uuid = sanitation['Sanitation_encounter_uuid']
+                    empty_keys = [k for k, v in sanitation.items() if not v]
+                    del_lst1 = ['household_number','slum', 'ward', 'Last_modified_date', 'Sanitation_encounter_uuid', 'Household_uuid', 'HH_last_modified_date', 'HH_created_date']
+                    del_lst = del_lst1 + empty_keys
+                    for j in del_lst:
+                        del sanitation[j]
+
+                    sanitation.update({'Last_modified_date': lst_mod_date})
+                    slum_id, city_id = self.get_city_slum_ids(slum_name)
+
+
+                    hh_details = HouseholdData.objects.filter(slum_id__name=slum_name, household_number=hh_number)
+                    if not hh_details:
+                        self.get_household_details(hh_uuid)
+                        print('Record not found for', hh_number)
+                        self.registrtation_data(self.get_HH_data)
+
+                    get_rhs_data = hh_details.values_list('rhs_data', flat=True)[0]
+                    get_rhs_data.update(sanitation)
+                    hh_details.update(rhs_data=get_rhs_data)
+                    print(count, 'rhs record updated for', hh_number, slum_name)
+
+                    get_record = FollowupData.objects.filter(household_number = hh_number, slum_id__name = slum_name)
+                    if len(get_record) <= 0:
+                        create_record = FollowupData.objects.create(household_number = hh_number, slum_id = slum_id,
+                                                        city_id = city_id, submission_date = hh_created_date,
+                                                        followup_data = sanitation,
+                                                        created_date = hh_last_modefied_date,
+                                                        flag_followup_in_rhs = False)
+                    else:
+                        for i in get_record:
+                            get_followup_data = i.followup_data
+                            get_followup_data.update(sanitation)
+                            get_record.update(followup_data=get_followup_data, submission_date=dateparser.parse(lst_mod_date))
+                            print(count, "Follow-Up Record Updated", hh_number, slum_name)
+                    count += 1
+                except Exception as e:
+                    if slum_name not in l:
+                        l.append(slum_name)
+                    print(e, hh_number, "sanitation_uuid = " + san_uuid)
+            print(l)
 
     # def set_mobile_number(self):
     #     get = HouseholdData.objects.all().filter(slum_id=1675)
