@@ -57,7 +57,7 @@ class avni_sync():
         # latest_date = last_submission_date.submission_date + timedelta(days=1)
         today = datetime.today()  # + timedelta(days= -1)
         latest_date = today.strftime('%Y-%m-%dT00:00:00.000Z')
-        iso = "2022-03-08T00:00:00.000Z"
+        iso = "2022-04-12T00:00:00.000Z"
         # return(latest_date)
         return iso
 
@@ -1018,13 +1018,13 @@ class avni_sync():
             else:
                 return 'error'
 
+    # methods for sync encounter data through json file.
 
-    def sync_json_data(self):
+    def sync_sanitation_data(self):
         with open('/home/shelter/Desktop/json file for call/sanitation_data.json', 'r') as f:
-            l = []
             count = 1
             data = json.load(f)
-            for sanitation in data[:5000]:
+            for sanitation in data:
                 try:
                     hh_uuid = sanitation['Household_uuid']
                     hh_number = str(int(sanitation['household_number']))
@@ -1069,10 +1069,185 @@ class avni_sync():
                             print(count, "Follow-Up Record Updated", hh_number, slum_name)
                     count += 1
                 except Exception as e:
-                    if slum_name not in l:
-                        l.append(slum_name)
                     print(e, hh_number, "sanitation_uuid = " + san_uuid)
-            print(l)
+
+    def sync_water_data(self):
+        with open('/home/shelter/Desktop/json_file_for_call/water_data.json', 'r') as f:
+            count = 1
+            data = json.load(f)
+            for water in data[:5000]:
+                try:
+                    if water["group_el9cl08/Type_of_water_connection"]:
+                        hh_uuid = water['Household_uuid']
+                        hh_number = str(int(water['household_number']))
+                        slum_name = water['slum']
+                        hh_created_date = water['HH_created_date']
+                        hh_last_modefied_date = water['HH_last_modified_date']
+                        lst_mod_date = water['Last_modified_date']
+                        water_uuid = water['water_encounter_uuid']
+                        empty_keys = [k for k, v in water.items() if not v]
+                        del_lst1 = ['household_number','slum', 'ward', 'Last_modified_date', 'Household_uuid', 'HH_last_modified_date', 'HH_created_date']
+                        del_lst = del_lst1 + empty_keys
+                        for j in del_lst:
+                            del water[j]
+
+                        water.update({'Last_modified_date': lst_mod_date})
+                        slum_id, city_id = self.get_city_slum_ids(slum_name)
+
+                        hh_details = HouseholdData.objects.filter(slum_id__name=slum_name, household_number=hh_number)
+                        if not hh_details:
+                            self.get_household_details(hh_uuid)
+                            print('Record not found for', hh_number)
+                            self.registrtation_data(self.get_HH_data)
+
+                        get_rhs_data = hh_details.values_list('rhs_data', flat=True)[0]
+                        get_rhs_data.update(water)
+                        hh_details.update(rhs_data=get_rhs_data)
+                        print(count, 'rhs record updated for', hh_number, slum_name)
+                        count += 1
+                    else:
+                        pass
+                except Exception as e:
+                    print(e, hh_number, "water uuid = " + water_uuid)
+
+
+
+    def sync_waste_data(self):
+        with open('/home/shelter/Desktop/json_file_for_call/waste_data.json', 'r') as f:
+            count = 1
+            data = json.load(f)
+            for waste in data[:5000]:
+                try:
+                    if waste["group_el9cl08/Facility_of_solid_waste_collection"]:
+                        hh_uuid = waste['Household_uuid']
+                        hh_number = str(int(waste['household_number']))
+                        slum_name = waste['slum']
+                        hh_created_date = waste['HH_created_date']
+                        hh_last_modefied_date = waste['HH_last_modified_date']
+                        lst_mod_date = waste['Last_modified_date']
+                        waste_uuid = waste['waste_encounter_uuid']
+                        empty_keys = [k for k, v in waste.items() if not v]
+                        del_lst1 = ['household_number','slum', 'ward', 'Last_modified_date', 'Household_uuid', 'HH_last_modified_date', 'HH_created_date']
+                        del_lst = del_lst1 + empty_keys
+                        for j in del_lst:
+                            del waste[j]
+
+                        waste.update({'Last_modified_date': lst_mod_date})
+                        slum_id, city_id = self.get_city_slum_ids(slum_name)
+                        hh_details = HouseholdData.objects.filter(slum_id__name=slum_name, household_number=hh_number)
+                        if not hh_details:
+                            self.get_household_details(hh_uuid)
+                            print('Record not found for', hh_number)
+                            self.registrtation_data(self.get_HH_data)
+
+                        get_rhs_data = hh_details.values_list('rhs_data', flat=True)[0]
+                        get_rhs_data.update(waste)
+                        hh_details.update(rhs_data=get_rhs_data)
+                        print(count, 'rhs record updated for', hh_number, slum_name)
+                        count += 1
+                    else:
+                        pass
+                except Exception as e:
+                    print(e, hh_number, "waste uuid = " + waste_uuid)
+
+    def sync_json_covid_data(self):
+        with open('/home/shelter/Desktop/json_file_for_call/Covid_data.json', 'r') as f:
+            count = 1
+            data = json.load(f)
+            for record in data[1000:10000]:
+                try:
+                    if 'household_number' in record:
+                        hh_number = str(int(record['household_number']))
+                        slum_name = record['slum']
+                        covid_uuid = record['uuid']
+                        slum_id, city_id = self.get_city_slum_ids(slum_name)
+                        date_of_survey = dateparser.parse(record['created_date_time']).date()
+                        last_modified_date = dateparser.parse(record['last_modified_date_time']).date()
+                        key_list = ['preganant_or_lactating_mother', 'registered_for_covid_vaccination', 'take_first_dose', 'willing_to_vaccinated', 'do_you_have_any_other_disease', 'take_second_dose', 'corona_infected']
+                        def check_nan(val):
+                            return val == val
+                        final_dict = {}
+                        nan_val = {}
+                        for k, v in record.items():
+                            if check_nan(v) and v != None:
+                                if k in key_list:
+                                    final_dict[k] = v.capitalize()
+                                else:
+                                    final_dict[k] = v
+                            else:
+                                nan_val[k] = None
+                        
+                        if 'first_dose_date' in final_dict:
+                            first_dose_date = datetime.strptime(final_dict['first_dose_date'], '%Y-%m-%d').date()
+                        else:
+                            first_dose_date = None
+                        if 'second_dose_date' in final_dict:
+                            second_dose_date = datetime.strptime(final_dict['second_dose_date'], '%Y-%m-%d').date()
+                        else:
+                            second_dose_date = None
+
+                        # print(final_dict)
+                        del_lst = ['household_number','slum', 'created_date_time', 'last_modified_date_time', 'uuid', 'second_dose_date', 'first_dose_date']
+                        for j in del_lst:
+                            if j in final_dict:
+                                del final_dict[j]
+                        
+                        query_obj = CovidData.objects.filter(covid_uuid=covid_uuid)
+
+                        if query_obj.exists() == False:
+                            final_dict.update(nan_val)
+                            
+                            c = CovidData(household_number=hh_number,
+                                        slum=Slum.objects.get(id=slum_id),
+                                        city=city_id,
+                                        covid_uuid=covid_uuid,
+                                        surveyor_name=final_dict['surveyor_name'],
+                                        date_of_survey=date_of_survey,
+                                        last_modified_date=last_modified_date,
+                                        family_member_name=final_dict['family_member_name'],
+                                        gender=final_dict['gender'], age=int(final_dict['age']),
+                                        aadhar_number=final_dict['aadhar_number'],
+                                        do_you_have_any_other_disease=final_dict['do_you_have_any_other_disease'],
+                                        if_any_then_which_disease=final_dict['if_any_then_which_disease'],
+                                        preganant_or_lactating_mother=final_dict['preganant_or_lactating_mother'],
+                                        registered_for_covid_vaccination=final_dict['registered_for_covid_vaccination'],
+                                        registered_phone_number=final_dict['registered_phone_number'],
+                                        take_first_dose=final_dict['take_first_dose'],
+                                        first_dose_date=first_dose_date,
+                                        vaccine_name=final_dict['vaccine_name'],
+                                        take_second_dose=final_dict['take_second_dose'],
+                                        second_dose_date=second_dose_date,
+                                        corona_infected=final_dict['corona_infected'],
+                                        if_corona_infected_days=final_dict['if_corona_infected_days'],
+                                        willing_to_vaccinated=final_dict['willing_to_vaccinated'],
+                                        if_not_why=final_dict['if_not_why'], note=final_dict['note'])
+
+                            c.save()
+                            print(count, "Record save successfully", slum_name)
+
+                        elif query_obj.values_list('last_modified_date', flat = True)[0] < last_modified_date:
+                            if first_dose_date != None:
+                                final_dict['first_dose_date'] = first_dose_date
+
+                            if second_dose_date != None:
+                                final_dict['second_dose_date'] = second_dose_date
+                            
+                            final_dict['last_modified_date'] = last_modified_date
+
+                            unique_id = query_obj.values_list('id', flat = True)[0]
+                            covid_obj = CovidData.objects.get(id = unique_id)
+
+                            for key, value in final_dict.items():
+                                setattr(covid_obj, key, value)
+
+                            covid_obj.save()
+                            print(count, "Record save successfully", slum_name)
+
+                        else:
+                            print(count, "Record Already Present")
+                    count += 1
+                except Exception as e:
+                    print(e)
 
     # def set_mobile_number(self):
     #     get = HouseholdData.objects.all().filter(slum_id=1675)

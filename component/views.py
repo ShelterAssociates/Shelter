@@ -20,6 +20,8 @@ from graphs.sync_avni_data import *
 from utils.utils_permission import apply_permissions_ajax, access_right, deco_rhs_permission
 from django.core.exceptions import PermissionDenied
 
+slum_list = []
+
 @staff_member_required
 @permission_required('component.can_upload_KML', raise_exception=True)
 def kml_upload(request):
@@ -59,7 +61,12 @@ def get_component(request, slum_id):
        sponsors = request.user.sponsor_set.all().values_list('id',flat=True)
        #sponsor_slum_count = SponsorProjectDetails.objects.filter(slum = slum).count()
     #Fetch filter and sponsor metadata
-    metadata = Metadata.objects.filter(visible=True).order_by('section__order','order')
+    # if slum in slum_list we fetch Shop data from mastersheet else we fetch Shops data from kml data.
+    if slum_id in slum_list:
+        metadata = Metadata.objects.filter(visible=True).exclude(name='Shops').order_by('section__order','order')
+    else:
+        metadata = Metadata.objects.filter(visible=True).exclude(name='Shop').order_by('section__order','order')
+
     rhs_analysis = {}
     try:
         #Fetch RHS data from kobotoolbox
@@ -92,7 +99,6 @@ def get_component(request, slum_id):
             #Fetch component for selected filter and slum , assign it finally to child
             for comp in slum.components.filter(metadata=metad):
                 component['child'].append({'housenumber':comp.housenumber, 'shape':json.loads(comp.shape.json)})
-            # print(len(com_list),com_list)
         #Filter
         elif metad.type == 'F' and metad.code != "":
             field = metad.code.split(':')
