@@ -253,7 +253,7 @@ function generate_filter(slumID, result){
                                    '<a>&nbsp;' + k1 + '</a>&nbsp;(' + v1['child'].length + ')' +
                                  '</input>' +
                                 '</div>';
-            if (k1=="Houses"){
+            if (k1=="Structure"){
                 houses = {};
                  $.each(v1['child'], function(k2,v2){
                     v2.shape['properties'] = {};

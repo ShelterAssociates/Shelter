@@ -38,16 +38,37 @@ def get_household_analysis_data(city, slum_code, fields, kobo_survey=''):
     records = filter(lambda x: x!=None, records)
     grouped_records = itertools.groupby(sorted(records, key=lambda x:int(x['Household_number'])), key=lambda x:int(x["Household_number"]))
 
+    # For Covid Data
+    covid_data = CovidData.objects.filter(slum = slum, age__gt = 17).exclude(household_number = 9999).values_list('household_number',flat = True)
+    covid_hh = list(set(covid_data))
+
     for household, list_record in grouped_records:
         record_sorted = list(list_record) #sorted(list(list_record), key=lambda x:x['_submission_time'], reverse=False)
         household_no = int(household)
         if len(record_sorted)>0:
             record = record_sorted[0]
+
+        # Here we are updating vaccination status for the household.
+        if record['Type_of_structure_occupancy'] != 'Shop':
+            if household_no in covid_hh:
+                cnt_mem = list(covid_data).count(household_no)
+                # we use (__lte for lessthen equal to __lt for lessthen, __gte for graterthen equal to, __gt for graterthen)
+                query_ = CovidData.objects.filter(household_number = household_no, slum = slum, take_first_dose = 'Yes', take_second_dose = 'Yes', age__gt = 17).values_list('household_number')
+                query_1 = CovidData.objects.filter(household_number = household_no, slum = slum, take_first_dose = 'Yes', age__gt = 17).values_list('household_number')
+                if query_ and query_.count() == cnt_mem:
+                    record['vaccination_status'] = 'full_vaccinated'
+                elif query_1 and query_1.count() > 0:
+                    record['vaccination_status'] = 'partial_vaccinated'
+                else:
+                    record['vaccination_status'] = 'not_vaccinated'
+            else:
+                record['vaccination_status'] = 'not_surveyed'
+            
         for field in fields:
             if field != "" and field in record:
                 if field == 'group_el9cl08/Ownership_status_of_the_house' in record and record['Type_of_structure_occupancy'] == 'Shop': pass
                 elif 'group_el9cl08/Type_of_structure_of_the_house' in record and record['Type_of_structure_occupancy'] == 'Shop':pass
-                elif 'Type_of_structure_occupancy' in record and record['Type_of_structure_occupancy'] == 'Shop':pass
+                # elif 'Type_of_structure_occupancy' in record and record['Type_of_structure_occupancy'] == 'Shop':pass
                 else:
                     data = record[field]
                     for val in data if type(data)==list else data.split(','):
