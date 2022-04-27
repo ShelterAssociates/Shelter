@@ -450,7 +450,7 @@ def covid_data(request):
     return render(request, 'covid_data.html')
 
 
-@csrf_exempt
+# @csrf_exempt
 @apply_permissions_ajax('mastersheet.can_view_mastersheet_report')
 def give_report_covid_data(request):  # view for covid data
     tag_key_dict = json.loads(request.body)
@@ -465,9 +465,7 @@ def give_report_covid_data(request):  # view for covid data
     group_perm = map(lambda x: x.split(':')[-1], group_perm)
 
     keys = Slum.objects.filter(id__in=keys,
-                                electoral_ward__administrative_ward__city__name__city_name__in=group_perm).values_list(
-         'id', flat=True) # keys => slum_id
-  
+                                electoral_ward__administrative_ward__city__name__city_name__in=group_perm).values_list('id', flat=True) # keys => slum_id
     
     start_date = tag_key_dict['startDate']
     end_date = tag_key_dict['endDate']
@@ -520,168 +518,255 @@ def give_report_covid_data(request):  # view for covid data
         count_field = {query_on[query_field]: Count('level_id')}
         
         tc = CovidData.objects.filter(**filter_field)\
-            .exclude(household_number = 9999) \
+            .exclude(household_number = 9999).distinct()\
             .annotate(**level_data[tag]).values('level', 'level_id', 'city_name', 'city')\
-            .annotate(**count_field).distinct().order_by('city_name')
+            .annotate(**count_field).order_by('city_name')
+        
         
 
         tc = {obj_ad['level_id']: obj_ad for obj_ad in tc}
+
         for level_id, data in tc.items():
             report_table_data[level_id].update(data)
+        
 
-        h_num = dict()
+        
         tm = CovidData.objects.filter(**filter_field) \
             .exclude(household_number = 9999) \
             .annotate(**level_data[tag]).values('level_id','household_number', 'slum', 'city').distinct()
+
+        house_data = HouseholdData.objects.all()
+        covid_data = CovidData.objects.all()
+
+        house_dict = {}
         for i in tm:
-            
-            if 'total_sw_hh' in report_table_data[i['level_id']]:
-                report_table_data[i['level_id']]['total_sw_hh'] += 1
+            if i['level_id'] in house_dict:
+                temp = house_dict[i['level_id']]
+                temp.append(i['household_number'])
+                house_dict[i['level_id']] = temp
             else:
-                report_table_data[i['level_id']]['total_sw_hh'] = 1
-            
-            h = HouseholdData.objects.filter(household_number = i['household_number'], slum__id = i['slum'], city__id = i['city']).values_list('rhs_data')
-            for j in h:
-                h_oc = j[0]["Type_of_structure_occupancy"]
-                
+                house_dict[i['level_id']] = [i['household_number']]
 
-                if h_oc == 'Occupied house':
+        level_ids = list(report_table_data.keys())
 
-                    if 'total_oc_hh' in report_table_data[i['level_id']]:
-                        report_table_data[i['level_id']]['total_oc_hh'] += 1
-                    else:
-                        report_table_data[i['level_id']]['total_oc_hh'] = 1
-            
-            if 'total_oc_hh' in report_table_data[i['level_id']]:
-                pass
-            else:
-                report_table_data[i['level_id']]['total_oc_hh'] = 0
-
-        
-        for t in tc:
-
-            report_table_data[t]['2_dose_done_18_44'] = 0    # for second dose done in age between 18 to 44
-            report_table_data[t]['1_dose_done_18_44'] = 0    # for second dose done in age between 18 to 44
-            report_table_data[t]['total_intrested_18_44'] = 0   # for total intrested in age between 18 to 44
-            report_table_data[t]['total_1_dose_45'] = 0           # for first dose done  age 45+
-            report_table_data[t]['total_2_dose_45'] = 0           # for second dose done age 45+
-            report_table_data[t]['total_intrested_45'] = 0        # for total intrested age 45+
-            report_table_data[t]['total_intrested'] = 0
-            report_table_data[t]['total_1_dose_elg_18_44'] = 0
-            report_table_data[t]['total_1_dose_elg_abv_45'] = 0
-
-            report_table_data[t]['total_blw_18'] = 0
-            report_table_data[t]['total_18_44'] = 0
-            report_table_data[t]['total_abv_45'] = 0
-
-            report_table_data[t]['total_hh'] = 0      # for Total Household
-            report_table_data[t]['pr'] = 0            # for Percentage
-            l = tc[t]['level_id']
-            sw_hh = report_table_data[t]['total_sw_hh']
-            oc_hh = report_table_data[t]['total_oc_hh']
-            
+        for id_ in level_ids:
             if tag  == 'city':
-                th_ = HouseholdData.objects.filter(slum__electoral_ward__administrative_ward__city__id = l).values('household_number')
-            elif tag == 'admin_ward':
-                th_ = HouseholdData.objects.filter(slum__electoral_ward__administrative_ward__id = l).values('household_number')
-            elif tag == 'electoral_ward':
-                th_ = HouseholdData.objects.filter(slum__electoral_ward__id = l).values('household_number')
-            elif tag == 'slum':
-                th_ = HouseholdData.objects.filter(slum__id = l).values('household_number')
-            
-            report_table_data[t]['total_hh']+= len(th_)
 
-            if oc_hh > 0:
-                per = (sw_hh/oc_hh)*100
+                # for total surveyed Members
+                th_ = house_data.filter(slum__electoral_ward__administrative_ward__city__id = id_).count()
+                blw_18 = covid_data.filter(age__lt = 12, slum__electoral_ward__administrative_ward__city__id = id_).exclude(household_number = 9999).count()
+                report_table_data[id_]['total_ppl_0_11'] = blw_18
+                btw_12_17 = covid_data.filter(age__in = [12, 17], slum__electoral_ward__administrative_ward__city__id = id_).exclude(household_number = 9999).count()
+                report_table_data[id_]['total_ppl_btw_12_17'] = btw_12_17
+                ppl_abv_17 = covid_data.filter(age__gt = 17, slum__electoral_ward__administrative_ward__city__id = id_).exclude(household_number = 9999).count()
+                report_table_data[id_]['total_ppl_abv_17'] = ppl_abv_17
+
+                # For age group 12 to 17
+                #for both dose
+                dose_both = covid_data.filter(age__in = [12, 17], slum__electoral_ward__administrative_ward__city__id = id_, take_first_dose = 'Yes', take_second_dose = 'Yes').exclude(household_number = 9999).count()
+                report_table_data[id_]['2_dose_done_12_17'] = dose_both
+                # for first dose only
+                dose_one = covid_data.filter(age__in = [12, 17], slum__electoral_ward__administrative_ward__city__id = id_, take_first_dose = 'Yes', take_second_dose = 'No').exclude(household_number = 9999).count()
+                report_table_data[id_]['1_dose_done_12_17'] = dose_one
+                report_table_data[id_]['total_2_dose_elg_abv_17'] = dose_one
+                # for No dose
+                dose_no = covid_data.filter(Q(age__in = [12, 17]) & Q(slum__electoral_ward__administrative_ward__city__id = id_) & (Q(take_first_dose = 'No') | Q(take_first_dose__isnull = True))).exclude(household_number = 9999).count()
+                report_table_data[id_]['not_vaccinated_12_17'] = dose_no
+                report_table_data[id_]['total_1_dose_elg_abv_17'] = dose_no
+
+                # For age group above 17
+                #for both dose
+                dose_both = covid_data.filter(age__gt = 17, slum__electoral_ward__administrative_ward__city__id = id_, take_first_dose = 'Yes', take_second_dose = 'Yes').exclude(household_number = 9999).count()
+                report_table_data[id_]['2_dose_done_abv_17'] = dose_both
+                # for first dose only
+                dose_one = covid_data.filter(age__gt = 17, slum__electoral_ward__administrative_ward__city__id = id_, take_first_dose = 'Yes', take_second_dose = 'No').exclude(household_number = 9999).count()
+                report_table_data[id_]['1_dose_done_abv_17'] = dose_one
+                report_table_data[id_]['total_2_dose_elg_abv_17'] = dose_one
+                # for No dose
+                dose_no = covid_data.filter(Q(age__gt = 17) & Q(slum__electoral_ward__administrative_ward__city__id = id_) & (Q(take_first_dose = 'No') | Q(take_first_dose__isnull = True))).exclude(household_number = 9999).count()
+                report_table_data[id_]['not_vaccinated_abv_18'] = dose_no
+                report_table_data[id_]['total_1_dose_elg_abv_17'] = dose_no
+
+                report_table_data[id_]['total_hh'] = th_
+                report_table_data[id_]['total_sw_hh'] = len(house_dict[id_])
+
+                # Total Reach percentage.
+
+                total_structure = house_data.filter(slum__electoral_ward__administrative_ward__city__id = id_, rhs_data__isnull = False).values_list('rhs_data', flat = True)
+                total_struc = [data['Type_of_structure_occupancy'] for data in total_structure if 'Type_of_structure_occupancy' in data and  data['Type_of_structure_occupancy'] != 'Shop']
+                total_structure = len(total_struc)
+                total_surveyed = report_table_data[id_]['total_sw_hh']
+                per = (total_surveyed/total_structure)*100
                 pr = "{:.3f}".format(per)
-                report_table_data[t]['pr'] = pr
-            else:
-                report_table_data[t]['pr'] = 0
+                report_table_data[id_]['pr'] = pr
 
-        
-        
-        # for age columns
+                hh_list = house_dict[id_]
+                occ_cnt = 0
+                hh_data1 = house_data.filter(household_number__in = hh_list, slum__electoral_ward__administrative_ward__city__id = level_id, rhs_data__isnull = False).values_list('rhs_data', flat = True)
+                occ_data = [i['Type_of_structure_occupancy'] for i in hh_data1 if (i['Type_of_structure_occupancy'] and i['Type_of_structure_occupancy'] == 'Occupied house')]
+                report_table_data[id_]['total_oc_hh'] = len(occ_data)
 
-        ag_m = CovidData.objects.filter(**filter_field) \
-            .exclude(household_number = 9999) \
-            .annotate(**level_data[tag]).values('level_id','household_number', 'slum', 'city', 'age', 'id')
-        
-        for i in ag_m:
-            ag = i['age']
-            if ag is not None:
-                if ag < 18:
-                    report_table_data[i['level_id']]['total_blw_18'] += 1
-                
-                elif ag < 45:
-                    report_table_data[i['level_id']]['total_18_44'] += 1
+            elif tag == 'admin_ward':
+                # For Total Surveyed Members
+                th_ = house_data.filter(slum__electoral_ward__administrative_ward__id = id_).count()
+                blw_18 = covid_data.filter(age__lt = 12, slum__electoral_ward__administrative_ward__id = id_).exclude(household_number = 9999).count()
+                report_table_data[id_]['total_ppl_0_11'] = blw_18
+                btw_12_17 = covid_data.filter(age__in = [12, 17], slum__electoral_ward__administrative_ward__id = id_).exclude(household_number = 9999).count()
+                report_table_data[id_]['total_ppl_btw_12_17'] = btw_12_17
+                ppl_abv_17 = covid_data.filter(age__gt = 17, slum__electoral_ward__administrative_ward__id = id_).exclude(household_number = 9999).count()
+                report_table_data[id_]['total_ppl_abv_17'] = ppl_abv_17
 
-                    id_ = i['id']
-                    ag_d = CovidData.objects.filter(id = id_).values_list('take_first_dose', 'take_second_dose', 'willing_to_vaccinated' ,'registered_for_covid_vaccination')
-                    first_dose = ag_d[0][0]
-                    sec_dose = ag_d[0][1]
-                    intrested = ag_d[0][2]
-                    reg_vaccination = ag_d[0][3]
+                # For age group 12 to 17
+                #for both dose
+                dose_both = covid_data.filter(age__in = [12, 17], slum__electoral_ward__administrative_ward__id = id_, take_first_dose = 'Yes', take_second_dose = 'Yes').exclude(household_number = 9999).count()
+                report_table_data[id_]['2_dose_done_12_17'] = dose_both
+                # for first dose only
+                dose_one = covid_data.filter(age__in = [12, 17], slum__electoral_ward__administrative_ward__id = id_, take_first_dose = 'Yes', take_second_dose = 'No').exclude(household_number = 9999).count()
+                report_table_data[id_]['1_dose_done_12_17'] = dose_one
+                report_table_data[id_]['total_2_dose_elg_abv_17'] = dose_one
+                # for No dose
+                dose_no = covid_data.filter(Q(age__in = [12, 17]) & Q(slum__electoral_ward__administrative_ward__id = id_) & (Q(take_first_dose = 'No') | Q(take_first_dose__isnull = True))).exclude(household_number = 9999).count()
+                report_table_data[id_]['not_vaccinated_12_17'] = dose_no
+                report_table_data[id_]['total_1_dose_elg_abv_17'] = dose_no
 
+                # For age group above 17
+                #for both dose
+                dose_both = covid_data.filter(age__gt = 17, slum__electoral_ward__administrative_ward__id = id_, take_first_dose = 'Yes', take_second_dose = 'Yes').exclude(household_number = 9999).count()
+                report_table_data[id_]['2_dose_done_abv_17'] = dose_both
+                # for first dose only
+                dose_one = covid_data.filter(age__gt = 17, slum__electoral_ward__administrative_ward__id = id_, take_first_dose = 'Yes', take_second_dose = 'No').exclude(household_number = 9999).count()
+                report_table_data[id_]['1_dose_done_abv_17'] = dose_one
+                report_table_data[id_]['total_2_dose_elg_abv_17'] = dose_one
+                # for No dose
+                dose_no = covid_data.filter(Q(age__gt = 17) & Q(slum__electoral_ward__administrative_ward__id = id_) & (Q(take_first_dose = 'No') | Q(take_first_dose__isnull = True))).exclude(household_number = 9999).count()
+                report_table_data[id_]['not_vaccinated_abv_18'] = dose_no
+                report_table_data[id_]['total_1_dose_elg_abv_17'] = dose_no
+                report_table_data[id_]['total_sw_hh'] = len(house_dict[id_])
 
-                    if first_dose == 'Yes':
-                        if sec_dose == 'Yes':
-                            report_table_data[i['level_id']]['2_dose_done_18_44'] += 1
-                        else:
-                            report_table_data[i['level_id']]['1_dose_done_18_44'] += 1
-                        
-                    else:
-                        report_table_data[i['level_id']]['total_1_dose_elg_18_44'] += 1
-                    
+                # Total Reach percentage.
 
+                total_structure = house_data.filter(slum__electoral_ward__administrative_ward__id = id_, rhs_data__isnull = False).values_list('rhs_data', flat = True)
+                total_struc = [data['Type_of_structure_occupancy'] for data in total_structure if 'Type_of_structure_occupancy' in data and  data['Type_of_structure_occupancy'] != 'Shop']
+                total_structure = len(total_struc)
+                total_surveyed = report_table_data[id_]['total_sw_hh']
+                per = (total_surveyed/total_structure)*100
+                pr = "{:.3f}".format(per)
+                report_table_data[id_]['pr'] = pr
 
-                    if intrested == 'Yes':
-                        if first_dose == 'Yes':
-                            pass
-                        else:
-                            report_table_data[i['level_id']]['total_intrested_18_44'] += 1
-                            report_table_data[i['level_id']]['total_intrested'] += 1
-                    
-                    elif intrested == None:
-                        if reg_vaccination == 'Yes':
-                            if first_dose == 'No':
-                                report_table_data[i['level_id']]['total_intrested_18_44'] += 1
-                                report_table_data[i['level_id']]['total_intrested'] += 1
-                        
-                        
-                
-                elif ag >= 45:
-                    report_table_data[i['level_id']]['total_abv_45'] += 1
+                # For Occupied House Status
+                hh_list = house_dict[id_]
+                occ_cnt = 0
+                hh_data1 = house_data.filter(household_number__in = hh_list, slum__electoral_ward__administrative_ward__id = level_id, rhs_data__isnull = False).values_list('rhs_data', flat = True)
+                occ_data = [i['Type_of_structure_occupancy'] for i in hh_data1 if (i['Type_of_structure_occupancy'] and i['Type_of_structure_occupancy'] == 'Occupied house')]
+                report_table_data[id_]['total_oc_hh'] = len(occ_data)
 
+            elif tag == 'electoral_ward':
+                # For Total Surveyed Members
+                th_ = house_data.filter(slum__electoral_ward__id = id_).count()
+                blw_18 = covid_data.filter(age__lt = 12, slum__electoral_ward__id = id_).exclude(household_number = 9999).count()
+                report_table_data[id_]['total_ppl_0_11'] = blw_18
+                btw_12_17 = covid_data.filter(age__in = [12, 17], slum__electoral_ward__id = id_).exclude(household_number = 9999).count()
+                report_table_data[id_]['total_ppl_btw_12_17'] = btw_12_17
+                ppl_abv_17 = covid_data.filter(age__gt = 17, slum__electoral_ward__id = id_).exclude(household_number = 9999).count()
+                report_table_data[id_]['total_ppl_abv_17'] = ppl_abv_17
 
-                    id_ = i['id']
-                    ag_d = CovidData.objects.filter(id = id_).values_list('take_first_dose', 'take_second_dose', 'willing_to_vaccinated','registered_for_covid_vaccination')
-                    first_dose = ag_d[0][0]
-                    sec_dose = ag_d[0][1]
-                    intrested = ag_d[0][2]
-                    reg_vaccination = ag_d[0][3]
-                
+                # For age group 12 to 17
+                #for both dose
+                dose_both = covid_data.filter(age__in = [12, 17], slum__electoral_ward__id = id_, take_first_dose = 'Yes', take_second_dose = 'Yes').exclude(household_number = 9999).count()
+                report_table_data[id_]['2_dose_done_12_17'] = dose_both
+                # for first dose only
+                dose_one = covid_data.filter(age__in = [12, 17], slum__electoral_ward__id = id_, take_first_dose = 'Yes', take_second_dose = 'No').exclude(household_number = 9999).count()
+                report_table_data[id_]['1_dose_done_12_17'] = dose_one
+                report_table_data[id_]['total_2_dose_elg_abv_17'] = dose_one
+                # for No dose
+                dose_no = covid_data.filter(Q(age__in = [12, 17]) & Q(slum__electoral_ward__id = id_) & (Q(take_first_dose = 'No') | Q(take_first_dose__isnull = True))).exclude(household_number = 9999).count()
+                report_table_data[id_]['not_vaccinated_12_17'] = dose_no
+                report_table_data[id_]['total_1_dose_elg_abv_17'] = dose_no
 
-                    if first_dose == 'Yes':
-                        if sec_dose == 'Yes':
-                            report_table_data[i['level_id']]['total_2_dose_45'] += 1
-                        else:
-                            report_table_data[i['level_id']]['total_1_dose_45'] += 1
-                    else:
-                        report_table_data[i['level_id']]['total_1_dose_elg_abv_45'] += 1
+                # For age group above 17
+                #for both dose
+                dose_both = covid_data.filter(age__gt = 17, slum__electoral_ward__id = id_, take_first_dose = 'Yes', take_second_dose = 'Yes').exclude(household_number = 9999).count()
+                report_table_data[id_]['2_dose_done_abv_17'] = dose_both
+                # for first dose only
+                dose_one = covid_data.filter(age__gt = 17, slum__electoral_ward__id = id_, take_first_dose = 'Yes', take_second_dose = 'No').exclude(household_number = 9999).count()
+                report_table_data[id_]['1_dose_done_abv_17'] = dose_one
+                report_table_data[id_]['total_2_dose_elg_abv_17'] = dose_one
+                # for No dose
+                dose_no = covid_data.filter(Q(age__gt = 17) & Q(slum__electoral_ward__id = id_) & (Q(take_first_dose = 'No') | Q(take_first_dose__isnull = True))).exclude(household_number = 9999).count()
+                report_table_data[id_]['not_vaccinated_abv_18'] = dose_no
+                report_table_data[id_]['total_1_dose_elg_abv_17'] = dose_no
+                report_table_data[id_]['total_sw_hh'] = len(house_dict[id_])
 
-                    if intrested == 'Yes':
-                        if first_dose == 'Yes' or sec_dose == 'Yes':
-                            pass
-                        else:
-                            report_table_data[i['level_id']]['total_intrested_45'] += 1
-                            report_table_data[i['level_id']]['total_intrested'] += 1                
-                    
-                    elif intrested == None:
-                        if reg_vaccination == 'Yes':
-                            if first_dose == 'No':
-                                report_table_data[i['level_id']]['total_intrested_45'] += 1
-                                report_table_data[i['level_id']]['total_intrested'] += 1 
+                # Total Reach percentage.
 
+                total_structure = house_data.filter(slum__electoral_ward__id = id_, rhs_data__isnull = False).values_list('rhs_data', flat = True)
+                total_struc = [data['Type_of_structure_occupancy'] for data in total_structure if 'Type_of_structure_occupancy' in data and  data['Type_of_structure_occupancy'] != 'Shop']
+                total_structure = len(total_struc)
+                total_surveyed = report_table_data[id_]['total_sw_hh']
+                per = (total_surveyed/total_structure)*100
+                pr = "{:.3f}".format(per)
+                report_table_data[id_]['pr'] = pr
+
+                # For Occupied House Status
+                hh_list = house_dict[id_]
+                occ_cnt = 0
+                hh_data1 = house_data.filter(household_number__in = hh_list, slum__electoral_ward__id = level_id, rhs_data__isnull = False).values_list('rhs_data', flat = True)
+                occ_data = [i['Type_of_structure_occupancy'] for i in hh_data1 if (i['Type_of_structure_occupancy'] and i['Type_of_structure_occupancy'] == 'Occupied house')]
+                report_table_data[id_]['total_oc_hh'] = len(occ_data)
+
+            elif tag == 'slum':
+                # For Total Surveyed Members
+                th_ = house_data.filter(slum__id = id_).count()
+                blw_18 = covid_data.filter(age__lt = 12, slum__id = id_).exclude(household_number = 9999).count()
+                report_table_data[id_]['total_ppl_0_11'] = blw_18
+                btw_12_17 = covid_data.filter(age__in = [12, 17], slum__id = id_).exclude(household_number = 9999).count()
+                report_table_data[id_]['total_ppl_btw_12_17'] = btw_12_17
+                ppl_abv_17 = covid_data.filter(age__gt = 17, slum__id = id_).exclude(household_number = 9999).count()
+                report_table_data[id_]['total_ppl_abv_17'] = ppl_abv_17
+
+                # For age group 12 to 17
+                #for both dose
+                dose_both = covid_data.filter(age__in = [12, 17], slum__id = id_, take_first_dose = 'Yes', take_second_dose = 'Yes').exclude(household_number = 9999).count()
+                report_table_data[id_]['2_dose_done_12_17'] = dose_both
+                # for first dose only
+                dose_one = covid_data.filter(age__in = [12, 17], slum__id = id_, take_first_dose = 'Yes', take_second_dose = 'No').exclude(household_number = 9999).count()
+                report_table_data[id_]['1_dose_done_12_17'] = dose_one
+                report_table_data[id_]['total_2_dose_elg_abv_17'] = dose_one
+                # for No dose
+                dose_no = covid_data.filter(Q(age__in = [12, 17]) & Q(slum__id = id_) & (Q(take_first_dose = 'No') | Q(take_first_dose__isnull = True))).exclude(household_number = 9999).count()
+                report_table_data[id_]['not_vaccinated_12_17'] = dose_no
+                report_table_data[id_]['total_1_dose_elg_abv_17'] = dose_no
+
+                # For age group above 17
+                #for both dose
+                dose_both = covid_data.filter(age__gt = 17, slum__id = id_, take_first_dose = 'Yes', take_second_dose = 'Yes').exclude(household_number = 9999).count()
+                report_table_data[id_]['2_dose_done_abv_17'] = dose_both
+                # for first dose only
+                dose_one = covid_data.filter(age__gt = 17, slum__id = id_, take_first_dose = 'Yes', take_second_dose = 'No').exclude(household_number = 9999).count()
+                report_table_data[id_]['1_dose_done_abv_17'] = dose_one
+                report_table_data[id_]['total_2_dose_elg_abv_17'] = dose_one
+                # for No dose
+                dose_no = covid_data.filter(Q(age__gt = 17) & Q(slum__id = id_) & (Q(take_first_dose = 'No') | Q(take_first_dose__isnull = True))).exclude(household_number = 9999).count()
+                report_table_data[id_]['not_vaccinated_abv_18'] = dose_no
+                report_table_data[id_]['total_1_dose_elg_abv_17'] = dose_no
+                report_table_data[id_]['total_sw_hh'] = len(house_dict[id_])
+
+                # Total Reach percentage.
+
+                total_structure = house_data.filter(slum__id = id_, rhs_data__isnull = False).values_list('rhs_data', flat = True)
+                total_struc = [data['Type_of_structure_occupancy'] for data in total_structure if 'Type_of_structure_occupancy' in data and  data['Type_of_structure_occupancy'] != 'Shop']
+                total_structure = len(total_struc)
+                total_surveyed = report_table_data[id_]['total_sw_hh']
+                per = (total_surveyed/total_structure)*100
+                pr = "{:.3f}".format(per)
+                report_table_data[id_]['pr'] = pr
+
+                # For Occupied House Status
+                hh_list = house_dict[id_]
+                occ_cnt = 0
+                hh_data1 = house_data.filter(household_number__in = hh_list, slum__id = level_id, rhs_data__isnull = False).values_list('rhs_data', flat = True)
+                occ_data = [i['Type_of_structure_occupancy'] for i in hh_data1 if (i['Type_of_structure_occupancy'] and i['Type_of_structure_occupancy'] == 'Occupied house')]
+                report_table_data[id_]['total_oc_hh'] = len(occ_data)
 
     return HttpResponse(json.dumps(list(map(lambda x: report_table_data[x], report_table_data))),
                         content_type="application/json")
