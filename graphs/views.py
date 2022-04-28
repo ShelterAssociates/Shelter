@@ -450,7 +450,7 @@ def covid_data(request):
     return render(request, 'covid_data.html')
 
 
-# @csrf_exempt
+@csrf_exempt
 @apply_permissions_ajax('mastersheet.can_view_mastersheet_report')
 def give_report_covid_data(request):  # view for covid data
     tag_key_dict = json.loads(request.body)
@@ -539,13 +539,24 @@ def give_report_covid_data(request):  # view for covid data
         covid_data = CovidData.objects.all()
 
         house_dict = {}
+        sw_cnt = {}
         for i in tm:
+            slum_= i['slum']
             if i['level_id'] in house_dict:
-                temp = house_dict[i['level_id']]
-                temp.append(i['household_number'])
-                house_dict[i['level_id']] = temp
+                if slum_ in house_dict[i['level_id']]:
+                    temp = house_dict[i['level_id']][slum_]
+                    temp.append(i['household_number'])
+                    house_dict[i['level_id']][slum_] = temp
+                else:
+                    temp_dict = {}
+                    temp_dict[slum_] = [i['household_number']]
+                    house_dict[i['level_id']].update(temp_dict)                    
+                sw_cnt[i['level_id']] += 1 
             else:
-                house_dict[i['level_id']] = [i['household_number']]
+                temp_dict = {}
+                temp_dict[slum_] = [i['household_number']]
+                house_dict[i['level_id']] = temp_dict
+                sw_cnt[i['level_id']] = 1
 
         level_ids = list(report_table_data.keys())
 
@@ -553,7 +564,7 @@ def give_report_covid_data(request):  # view for covid data
             if tag  == 'city':
 
                 # for total surveyed Members
-                th_ = house_data.filter(slum__electoral_ward__administrative_ward__city__id = id_).count()
+                th_ = house_data.filter(slum__electoral_ward__administrative_ward__city__id = id_, rhs_data__isnull = False).count()
                 blw_18 = covid_data.filter(age__lt = 12, slum__electoral_ward__administrative_ward__city__id = id_).exclude(household_number = 9999).count()
                 report_table_data[id_]['total_ppl_0_11'] = blw_18
                 btw_12_17 = covid_data.filter(age__in = [12, 17], slum__electoral_ward__administrative_ward__city__id = id_).exclude(household_number = 9999).count()
@@ -588,7 +599,7 @@ def give_report_covid_data(request):  # view for covid data
                 report_table_data[id_]['total_1_dose_elg_abv_17'] = dose_no
 
                 report_table_data[id_]['total_hh'] = th_
-                report_table_data[id_]['total_sw_hh'] = len(house_dict[id_])
+                report_table_data[id_]['total_sw_hh'] = sw_cnt[id_]
 
                 # Total Reach percentage.
 
@@ -602,9 +613,11 @@ def give_report_covid_data(request):  # view for covid data
 
                 hh_list = house_dict[id_]
                 occ_cnt = 0
-                hh_data1 = house_data.filter(household_number__in = hh_list, slum__electoral_ward__administrative_ward__city__id = level_id, rhs_data__isnull = False).values_list('rhs_data', flat = True)
-                occ_data = [i['Type_of_structure_occupancy'] for i in hh_data1 if (i['Type_of_structure_occupancy'] and i['Type_of_structure_occupancy'] == 'Occupied house')]
-                report_table_data[id_]['total_oc_hh'] = len(occ_data)
+                for k, v in hh_list.items():
+                    hh_data1 = house_data.filter(household_number__in = v, slum__id = k, rhs_data__isnull = False).values_list('rhs_data', flat = True)
+                    occ_data = [occ_cnt for i in hh_data1 if (i['Type_of_structure_occupancy'] and i['Type_of_structure_occupancy'] == 'Occupied house')]
+                    occ_cnt += len(occ_data)
+                report_table_data[id_]['total_oc_hh'] = occ_cnt
 
             elif tag == 'admin_ward':
                 # For Total Surveyed Members
@@ -641,7 +654,9 @@ def give_report_covid_data(request):  # view for covid data
                 dose_no = covid_data.filter(Q(age__gt = 17) & Q(slum__electoral_ward__administrative_ward__id = id_) & (Q(take_first_dose = 'No') | Q(take_first_dose__isnull = True))).exclude(household_number = 9999).count()
                 report_table_data[id_]['not_vaccinated_abv_18'] = dose_no
                 report_table_data[id_]['total_1_dose_elg_abv_17'] = dose_no
-                report_table_data[id_]['total_sw_hh'] = len(house_dict[id_])
+
+                report_table_data[id_]['total_hh'] = th_
+                report_table_data[id_]['total_sw_hh'] = sw_cnt[id_]
 
                 # Total Reach percentage.
 
@@ -653,12 +668,13 @@ def give_report_covid_data(request):  # view for covid data
                 pr = "{:.3f}".format(per)
                 report_table_data[id_]['pr'] = pr
 
-                # For Occupied House Status
                 hh_list = house_dict[id_]
                 occ_cnt = 0
-                hh_data1 = house_data.filter(household_number__in = hh_list, slum__electoral_ward__administrative_ward__id = level_id, rhs_data__isnull = False).values_list('rhs_data', flat = True)
-                occ_data = [i['Type_of_structure_occupancy'] for i in hh_data1 if (i['Type_of_structure_occupancy'] and i['Type_of_structure_occupancy'] == 'Occupied house')]
-                report_table_data[id_]['total_oc_hh'] = len(occ_data)
+                for k, v in hh_list.items():
+                    hh_data1 = house_data.filter(household_number__in = v, slum__id = k, rhs_data__isnull = False).values_list('rhs_data', flat = True)
+                    occ_data = [occ_cnt for i in hh_data1 if (i['Type_of_structure_occupancy'] and i['Type_of_structure_occupancy'] == 'Occupied house')]
+                    occ_cnt += len(occ_data)
+                report_table_data[id_]['total_oc_hh'] = occ_cnt
 
             elif tag == 'electoral_ward':
                 # For Total Surveyed Members
@@ -695,7 +711,9 @@ def give_report_covid_data(request):  # view for covid data
                 dose_no = covid_data.filter(Q(age__gt = 17) & Q(slum__electoral_ward__id = id_) & (Q(take_first_dose = 'No') | Q(take_first_dose__isnull = True))).exclude(household_number = 9999).count()
                 report_table_data[id_]['not_vaccinated_abv_18'] = dose_no
                 report_table_data[id_]['total_1_dose_elg_abv_17'] = dose_no
-                report_table_data[id_]['total_sw_hh'] = len(house_dict[id_])
+
+                report_table_data[id_]['total_hh'] = th_
+                report_table_data[id_]['total_sw_hh'] = sw_cnt[id_]
 
                 # Total Reach percentage.
 
@@ -707,12 +725,13 @@ def give_report_covid_data(request):  # view for covid data
                 pr = "{:.3f}".format(per)
                 report_table_data[id_]['pr'] = pr
 
-                # For Occupied House Status
                 hh_list = house_dict[id_]
                 occ_cnt = 0
-                hh_data1 = house_data.filter(household_number__in = hh_list, slum__electoral_ward__id = level_id, rhs_data__isnull = False).values_list('rhs_data', flat = True)
-                occ_data = [i['Type_of_structure_occupancy'] for i in hh_data1 if (i['Type_of_structure_occupancy'] and i['Type_of_structure_occupancy'] == 'Occupied house')]
-                report_table_data[id_]['total_oc_hh'] = len(occ_data)
+                for k, v in hh_list.items():
+                    hh_data1 = house_data.filter(household_number__in = v, slum__id = k, rhs_data__isnull = False).values_list('rhs_data', flat = True)
+                    occ_data = [occ_cnt for i in hh_data1 if (i['Type_of_structure_occupancy'] and i['Type_of_structure_occupancy'] == 'Occupied house')]
+                    occ_cnt += len(occ_data)
+                report_table_data[id_]['total_oc_hh'] = occ_cnt
 
             elif tag == 'slum':
                 # For Total Surveyed Members
@@ -749,10 +768,11 @@ def give_report_covid_data(request):  # view for covid data
                 dose_no = covid_data.filter(Q(age__gt = 17) & Q(slum__id = id_) & (Q(take_first_dose = 'No') | Q(take_first_dose__isnull = True))).exclude(household_number = 9999).count()
                 report_table_data[id_]['not_vaccinated_abv_18'] = dose_no
                 report_table_data[id_]['total_1_dose_elg_abv_17'] = dose_no
-                report_table_data[id_]['total_sw_hh'] = len(house_dict[id_])
+
+                report_table_data[id_]['total_hh'] = th_
+                report_table_data[id_]['total_sw_hh'] = sw_cnt[id_]
 
                 # Total Reach percentage.
-
                 total_structure = house_data.filter(slum__id = id_, rhs_data__isnull = False).values_list('rhs_data', flat = True)
                 total_struc = [data['Type_of_structure_occupancy'] for data in total_structure if 'Type_of_structure_occupancy' in data and  data['Type_of_structure_occupancy'] != 'Shop']
                 total_structure = len(total_struc)
@@ -761,12 +781,14 @@ def give_report_covid_data(request):  # view for covid data
                 pr = "{:.3f}".format(per)
                 report_table_data[id_]['pr'] = pr
 
-                # For Occupied House Status
+                # Total Occupied Households.
                 hh_list = house_dict[id_]
                 occ_cnt = 0
-                hh_data1 = house_data.filter(household_number__in = hh_list, slum__id = level_id, rhs_data__isnull = False).values_list('rhs_data', flat = True)
-                occ_data = [i['Type_of_structure_occupancy'] for i in hh_data1 if (i['Type_of_structure_occupancy'] and i['Type_of_structure_occupancy'] == 'Occupied house')]
-                report_table_data[id_]['total_oc_hh'] = len(occ_data)
+                for k, v in hh_list.items():
+                    hh_data1 = house_data.filter(household_number__in = v, slum__id = k, rhs_data__isnull = False).values_list('rhs_data', flat = True)
+                    occ_data = [occ_cnt for i in hh_data1 if (i['Type_of_structure_occupancy'] and i['Type_of_structure_occupancy'] == 'Occupied house')]
+                    occ_cnt += len(occ_data)
+                report_table_data[id_]['total_oc_hh'] = occ_cnt
 
     return HttpResponse(json.dumps(list(map(lambda x: report_table_data[x], report_table_data))),
                         content_type="application/json")
