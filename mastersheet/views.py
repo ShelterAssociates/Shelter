@@ -310,24 +310,12 @@ def masterSheet(request, slum_code=0, FF_code=0, RHS_code=0):
 
                 if '_attachments' in x.keys() and len(x['_attachments']) != 0:
 
-                    if 'media/original?media_file=' in x['_attachments'][0]["filename"]:
-                        PATH = settings.BASE_URL + 'media/original?media_file='
-
-                        if 'Toilet_Photo' in x.keys():
-                            url = PATH + "%2F".join(x['_attachments'][0]["filename"].split('/')[:-1])
-                            x.update({'toilet_photo_url': url + '%2F' + x['Toilet_Photo']})
-
-                        if 'Family_Photo' in x.keys():
-                            url = PATH + "%2F".join(x['_attachments'][1]["filename"].split('/')[:-1])
-                            x.update({'family_photo_url': url + '%2F' + x['Family_Photo']})
-
-                    else:
-                        PATH = settings.BASE_URL + 'media/medium?media_file=shelter/attachments'
-
-                        if 'Toilet_Photo' in x.keys():
-                            x.update({'toilet_photo_url': PATH + '/' + x['Toilet_Photo']})
-                        if 'Family_Photo' in x.keys():
-                            x.update({'family_photo_url': PATH + '/' + x['Family_Photo']})
+                    y1 = x['_attachments'][0]["filename"].split('/')
+                    PATH = '/media/shelter/attachments/' + "/".join(x['_attachments'][0]["filename"].split('/')[2:-1])
+                    if 'Toilet_Photo' in x.keys():
+                        x.update({'toilet_photo_url': PATH + '/' + x['Toilet_Photo']})
+                    if 'Family_Photo' in x.keys():
+                        x.update({'family_photo_url': PATH + '/' + x['Family_Photo']})
 
                 else:
                     if 'Toilet_Photo' and 'ff_uuid' in x.keys():
