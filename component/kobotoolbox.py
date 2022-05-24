@@ -395,12 +395,14 @@ def get_kobo_FF_report_detail(city, slum_code,house_number, kobo_survey=''):
                 if len(split_key) > 1:
                     output[split_key[-1:][0]] = output[key]
                     output.pop(key)
-            if "_attachments" in output:
+            if "_attachments" in output and len(output['_attachments']) != 0:
+                y1 = output['_attachments'][0]["filename"].split('/')
+                PATH = '/media/shelter/attachments/' + "/".join(output['_attachments'][0]["filename"].split('/')[2:-1])
                 for photo in output["_attachments"]:
                     if 'Toilet_Photo' in output and output["Toilet_Photo"] in photo["filename"]:
-                        output["Toilet_Photo"] = settings.BASE_URL +'media/original?media_file=' + photo["filename"]
+                        output["Toilet_Photo"] = PATH +"/" + output["Toilet_Photo"]
                     if 'Family_Photo' in output and output["Family_Photo"] in photo["filename"]:
-                        output["Family_Photo"] = settings.BASE_URL +'media/original?media_file=' + photo["filename"]
+                        output["Family_Photo"] = PATH + "/" + output["Family_Photo"]
             else:
                 if 'Toilet_Photo' in output :
                     toilet_image_url = a.get_image(output['Toilet_Photo'])

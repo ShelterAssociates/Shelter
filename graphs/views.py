@@ -511,7 +511,7 @@ def give_report_covid_data(request):  # view for covid data
     
     for query_field in query_on.keys():
         if query_field in ['household_number']:
-            filter_field = {'slum__id__in': keys, 'date_of_survey__range': [start_date, end_date],
+            filter_field = {'slum__id__in': keys, 'last_modified_date__range': [start_date, end_date],
                             query_field + '__isnull': False}
         else:
             filter_field = {'slum__id__in': keys, query_field + '__range': [start_date, end_date]}
@@ -565,36 +565,36 @@ def give_report_covid_data(request):  # view for covid data
 
                 # for total surveyed Members
                 th_ = house_data.filter(slum__electoral_ward__administrative_ward__city__id = id_, rhs_data__isnull = False).count()
-                blw_18 = covid_data.filter(age__lt = 12, slum__electoral_ward__administrative_ward__city__id = id_).exclude(household_number = 9999).count()
+                blw_18 = covid_data.filter(age__lt = 12, slum__electoral_ward__administrative_ward__city__id = id_, last_modified_date__range = [start_date, end_date]).exclude(household_number = 9999).count()
                 report_table_data[id_]['total_ppl_0_11'] = blw_18
-                btw_12_17 = covid_data.filter(age__in = [12, 17], slum__electoral_ward__administrative_ward__city__id = id_).exclude(household_number = 9999).count()
+                btw_12_17 = covid_data.filter(age__range = [12, 17], slum__electoral_ward__administrative_ward__city__id = id_, last_modified_date__range = [start_date, end_date]).exclude(household_number = 9999).count()
                 report_table_data[id_]['total_ppl_btw_12_17'] = btw_12_17
-                ppl_abv_17 = covid_data.filter(age__gt = 17, slum__electoral_ward__administrative_ward__city__id = id_).exclude(household_number = 9999).count()
+                ppl_abv_17 = covid_data.filter(age__gt = 17, slum__electoral_ward__administrative_ward__city__id = id_, last_modified_date__range = [start_date, end_date]).exclude(household_number = 9999).count()
                 report_table_data[id_]['total_ppl_abv_17'] = ppl_abv_17
 
                 # For age group 12 to 17
                 #for both dose
-                dose_both = covid_data.filter(age__in = [12, 17], slum__electoral_ward__administrative_ward__city__id = id_, take_first_dose = 'Yes', take_second_dose = 'Yes').exclude(household_number = 9999).count()
+                dose_both = covid_data.filter(age__range = [12, 17], slum__electoral_ward__administrative_ward__city__id = id_, take_first_dose = 'Yes', take_second_dose = 'Yes', last_modified_date__range = [start_date, end_date]).exclude(household_number = 9999).count()
                 report_table_data[id_]['2_dose_done_12_17'] = dose_both
                 # for first dose only
-                dose_one = covid_data.filter(age__in = [12, 17], slum__electoral_ward__administrative_ward__city__id = id_, take_first_dose = 'Yes', take_second_dose = 'No').exclude(household_number = 9999).count()
+                dose_one = covid_data.filter(age__range = [12, 17], slum__electoral_ward__administrative_ward__city__id = id_, take_first_dose = 'Yes', take_second_dose = 'No', last_modified_date__range = [start_date, end_date]).exclude(household_number = 9999).count()
                 report_table_data[id_]['1_dose_done_12_17'] = dose_one
                 report_table_data[id_]['total_2_dose_elg_abv_17'] = dose_one
                 # for No dose
-                dose_no = covid_data.filter(Q(age__in = [12, 17]) & Q(slum__electoral_ward__administrative_ward__city__id = id_) & (Q(take_first_dose = 'No') | Q(take_first_dose__isnull = True))).exclude(household_number = 9999).count()
+                dose_no = covid_data.filter(Q(age__range = [12, 17]) & Q(slum__electoral_ward__administrative_ward__city__id = id_) & (Q(take_first_dose = 'No') | Q(take_first_dose__isnull = True)) & Q(last_modified_date__range = [start_date, end_date])).exclude(household_number = 9999).count()
                 report_table_data[id_]['not_vaccinated_12_17'] = dose_no
                 report_table_data[id_]['total_1_dose_elg_abv_17'] = dose_no
 
                 # For age group above 17
                 #for both dose
-                dose_both = covid_data.filter(age__gt = 17, slum__electoral_ward__administrative_ward__city__id = id_, take_first_dose = 'Yes', take_second_dose = 'Yes').exclude(household_number = 9999).count()
+                dose_both = covid_data.filter(age__gt = 17, slum__electoral_ward__administrative_ward__city__id = id_, take_first_dose = 'Yes', take_second_dose = 'Yes', last_modified_date__range = [start_date, end_date]).exclude(household_number = 9999).count()
                 report_table_data[id_]['2_dose_done_abv_17'] = dose_both
                 # for first dose only
-                dose_one = covid_data.filter(age__gt = 17, slum__electoral_ward__administrative_ward__city__id = id_, take_first_dose = 'Yes', take_second_dose = 'No').exclude(household_number = 9999).count()
+                dose_one = covid_data.filter(age__gt = 17, slum__electoral_ward__administrative_ward__city__id = id_, take_first_dose = 'Yes', take_second_dose = 'No', last_modified_date__range = [start_date, end_date]).exclude(household_number = 9999).count()
                 report_table_data[id_]['1_dose_done_abv_17'] = dose_one
                 report_table_data[id_]['total_2_dose_elg_abv_17'] = dose_one
                 # for No dose
-                dose_no = covid_data.filter(Q(age__gt = 17) & Q(slum__electoral_ward__administrative_ward__city__id = id_) & (Q(take_first_dose = 'No') | Q(take_first_dose__isnull = True))).exclude(household_number = 9999).count()
+                dose_no = covid_data.filter(Q(age__gt = 17) & Q(slum__electoral_ward__administrative_ward__city__id = id_) & (Q(take_first_dose = 'No') | Q(take_first_dose__isnull = True)) & Q(last_modified_date__range = [start_date, end_date])).exclude(household_number = 9999).count()
                 report_table_data[id_]['not_vaccinated_abv_18'] = dose_no
                 report_table_data[id_]['total_1_dose_elg_abv_17'] = dose_no
 
@@ -622,36 +622,36 @@ def give_report_covid_data(request):  # view for covid data
             elif tag == 'admin_ward':
                 # For Total Surveyed Members
                 th_ = house_data.filter(slum__electoral_ward__administrative_ward__id = id_).count()
-                blw_18 = covid_data.filter(age__lt = 12, slum__electoral_ward__administrative_ward__id = id_).exclude(household_number = 9999).count()
+                blw_18 = covid_data.filter(age__lt = 12, slum__electoral_ward__administrative_ward__id = id_).exclude(household_number = 9999, last_modified_date__range = [start_date, end_date]).count()
                 report_table_data[id_]['total_ppl_0_11'] = blw_18
-                btw_12_17 = covid_data.filter(age__in = [12, 17], slum__electoral_ward__administrative_ward__id = id_).exclude(household_number = 9999).count()
+                btw_12_17 = covid_data.filter(age__range = [12, 17], slum__electoral_ward__administrative_ward__id = id_, last_modified_date__range = [start_date, end_date]).exclude(household_number = 9999).count()
                 report_table_data[id_]['total_ppl_btw_12_17'] = btw_12_17
-                ppl_abv_17 = covid_data.filter(age__gt = 17, slum__electoral_ward__administrative_ward__id = id_).exclude(household_number = 9999).count()
+                ppl_abv_17 = covid_data.filter(age__gt = 17, slum__electoral_ward__administrative_ward__id = id_, last_modified_date__range = [start_date, end_date]).exclude(household_number = 9999).count()
                 report_table_data[id_]['total_ppl_abv_17'] = ppl_abv_17
 
                 # For age group 12 to 17
                 #for both dose
-                dose_both = covid_data.filter(age__in = [12, 17], slum__electoral_ward__administrative_ward__id = id_, take_first_dose = 'Yes', take_second_dose = 'Yes').exclude(household_number = 9999).count()
+                dose_both = covid_data.filter(age__range = [12, 17], slum__electoral_ward__administrative_ward__id = id_, take_first_dose = 'Yes', take_second_dose = 'Yes', last_modified_date__range = [start_date, end_date]).exclude(household_number = 9999).count()
                 report_table_data[id_]['2_dose_done_12_17'] = dose_both
                 # for first dose only
-                dose_one = covid_data.filter(age__in = [12, 17], slum__electoral_ward__administrative_ward__id = id_, take_first_dose = 'Yes', take_second_dose = 'No').exclude(household_number = 9999).count()
+                dose_one = covid_data.filter(age__range = [12, 17], slum__electoral_ward__administrative_ward__id = id_, take_first_dose = 'Yes', take_second_dose = 'No', last_modified_date__range = [start_date, end_date]).exclude(household_number = 9999).count()
                 report_table_data[id_]['1_dose_done_12_17'] = dose_one
                 report_table_data[id_]['total_2_dose_elg_abv_17'] = dose_one
                 # for No dose
-                dose_no = covid_data.filter(Q(age__in = [12, 17]) & Q(slum__electoral_ward__administrative_ward__id = id_) & (Q(take_first_dose = 'No') | Q(take_first_dose__isnull = True))).exclude(household_number = 9999).count()
+                dose_no = covid_data.filter(Q(age__range = [12, 17]) & Q(slum__electoral_ward__administrative_ward__id = id_) & (Q(take_first_dose = 'No') | Q(take_first_dose__isnull = True)) & Q(last_modified_date__range = [start_date, end_date])).exclude(household_number = 9999).count()
                 report_table_data[id_]['not_vaccinated_12_17'] = dose_no
                 report_table_data[id_]['total_1_dose_elg_abv_17'] = dose_no
 
                 # For age group above 17
                 #for both dose
-                dose_both = covid_data.filter(age__gt = 17, slum__electoral_ward__administrative_ward__id = id_, take_first_dose = 'Yes', take_second_dose = 'Yes').exclude(household_number = 9999).count()
+                dose_both = covid_data.filter(age__gt = 17, slum__electoral_ward__administrative_ward__id = id_, take_first_dose = 'Yes', take_second_dose = 'Yes', last_modified_date__range = [start_date, end_date]).exclude(household_number = 9999).count()
                 report_table_data[id_]['2_dose_done_abv_17'] = dose_both
                 # for first dose only
-                dose_one = covid_data.filter(age__gt = 17, slum__electoral_ward__administrative_ward__id = id_, take_first_dose = 'Yes', take_second_dose = 'No').exclude(household_number = 9999).count()
+                dose_one = covid_data.filter(age__gt = 17, slum__electoral_ward__administrative_ward__id = id_, take_first_dose = 'Yes', take_second_dose = 'No', last_modified_date__range = [start_date, end_date]).exclude(household_number = 9999).count()
                 report_table_data[id_]['1_dose_done_abv_17'] = dose_one
                 report_table_data[id_]['total_2_dose_elg_abv_17'] = dose_one
                 # for No dose
-                dose_no = covid_data.filter(Q(age__gt = 17) & Q(slum__electoral_ward__administrative_ward__id = id_) & (Q(take_first_dose = 'No') | Q(take_first_dose__isnull = True))).exclude(household_number = 9999).count()
+                dose_no = covid_data.filter(Q(age__gt = 17) & Q(slum__electoral_ward__administrative_ward__id = id_) & (Q(take_first_dose = 'No') | Q(take_first_dose__isnull = True)) & Q(last_modified_date__range = [start_date, end_date])).exclude(household_number = 9999).count()
                 report_table_data[id_]['not_vaccinated_abv_18'] = dose_no
                 report_table_data[id_]['total_1_dose_elg_abv_17'] = dose_no
 
@@ -679,36 +679,36 @@ def give_report_covid_data(request):  # view for covid data
             elif tag == 'electoral_ward':
                 # For Total Surveyed Members
                 th_ = house_data.filter(slum__electoral_ward__id = id_).count()
-                blw_18 = covid_data.filter(age__lt = 12, slum__electoral_ward__id = id_).exclude(household_number = 9999).count()
+                blw_18 = covid_data.filter(age__lt = 12, slum__electoral_ward__id = id_).exclude(household_number = 9999, last_modified_date__range = [start_date, end_date]).count()
                 report_table_data[id_]['total_ppl_0_11'] = blw_18
-                btw_12_17 = covid_data.filter(age__in = [12, 17], slum__electoral_ward__id = id_).exclude(household_number = 9999).count()
+                btw_12_17 = covid_data.filter(age__range = [12, 17], slum__electoral_ward__id = id_, last_modified_date__range = [start_date, end_date]).exclude(household_number = 9999).count()
                 report_table_data[id_]['total_ppl_btw_12_17'] = btw_12_17
-                ppl_abv_17 = covid_data.filter(age__gt = 17, slum__electoral_ward__id = id_).exclude(household_number = 9999).count()
+                ppl_abv_17 = covid_data.filter(age__gt = 17, slum__electoral_ward__id = id_, last_modified_date__range = [start_date, end_date]).exclude(household_number = 9999).count()
                 report_table_data[id_]['total_ppl_abv_17'] = ppl_abv_17
 
                 # For age group 12 to 17
                 #for both dose
-                dose_both = covid_data.filter(age__in = [12, 17], slum__electoral_ward__id = id_, take_first_dose = 'Yes', take_second_dose = 'Yes').exclude(household_number = 9999).count()
+                dose_both = covid_data.filter(age__range = [12, 17], slum__electoral_ward__id = id_, take_first_dose = 'Yes', take_second_dose = 'Yes', last_modified_date__range = [start_date, end_date]).exclude(household_number = 9999).count()
                 report_table_data[id_]['2_dose_done_12_17'] = dose_both
                 # for first dose only
-                dose_one = covid_data.filter(age__in = [12, 17], slum__electoral_ward__id = id_, take_first_dose = 'Yes', take_second_dose = 'No').exclude(household_number = 9999).count()
+                dose_one = covid_data.filter(age__range = [12, 17], slum__electoral_ward__id = id_, take_first_dose = 'Yes', take_second_dose = 'No', last_modified_date__range = [start_date, end_date]).exclude(household_number = 9999).count()
                 report_table_data[id_]['1_dose_done_12_17'] = dose_one
                 report_table_data[id_]['total_2_dose_elg_abv_17'] = dose_one
                 # for No dose
-                dose_no = covid_data.filter(Q(age__in = [12, 17]) & Q(slum__electoral_ward__id = id_) & (Q(take_first_dose = 'No') | Q(take_first_dose__isnull = True))).exclude(household_number = 9999).count()
+                dose_no = covid_data.filter(Q(age__range = [12, 17]) & Q(slum__electoral_ward__id = id_) & (Q(take_first_dose = 'No') | Q(take_first_dose__isnull = True)) & Q(last_modified_date__range = [start_date, end_date])).exclude(household_number = 9999).count()
                 report_table_data[id_]['not_vaccinated_12_17'] = dose_no
                 report_table_data[id_]['total_1_dose_elg_abv_17'] = dose_no
 
                 # For age group above 17
                 #for both dose
-                dose_both = covid_data.filter(age__gt = 17, slum__electoral_ward__id = id_, take_first_dose = 'Yes', take_second_dose = 'Yes').exclude(household_number = 9999).count()
+                dose_both = covid_data.filter(age__gt = 17, slum__electoral_ward__id = id_, take_first_dose = 'Yes', take_second_dose = 'Yes', last_modified_date__range = [start_date, end_date]).exclude(household_number = 9999).count()
                 report_table_data[id_]['2_dose_done_abv_17'] = dose_both
                 # for first dose only
-                dose_one = covid_data.filter(age__gt = 17, slum__electoral_ward__id = id_, take_first_dose = 'Yes', take_second_dose = 'No').exclude(household_number = 9999).count()
+                dose_one = covid_data.filter(age__gt = 17, slum__electoral_ward__id = id_, take_first_dose = 'Yes', take_second_dose = 'No', last_modified_date__range = [start_date, end_date]).exclude(household_number = 9999).count()
                 report_table_data[id_]['1_dose_done_abv_17'] = dose_one
                 report_table_data[id_]['total_2_dose_elg_abv_17'] = dose_one
                 # for No dose
-                dose_no = covid_data.filter(Q(age__gt = 17) & Q(slum__electoral_ward__id = id_) & (Q(take_first_dose = 'No') | Q(take_first_dose__isnull = True))).exclude(household_number = 9999).count()
+                dose_no = covid_data.filter(Q(age__gt = 17) & Q(slum__electoral_ward__id = id_) & (Q(take_first_dose = 'No') | Q(take_first_dose__isnull = True) & Q(last_modified_date__range = [start_date, end_date]))).exclude(household_number = 9999).count()
                 report_table_data[id_]['not_vaccinated_abv_18'] = dose_no
                 report_table_data[id_]['total_1_dose_elg_abv_17'] = dose_no
 
@@ -736,36 +736,36 @@ def give_report_covid_data(request):  # view for covid data
             elif tag == 'slum':
                 # For Total Surveyed Members
                 th_ = house_data.filter(slum__id = id_).count()
-                blw_18 = covid_data.filter(age__lt = 12, slum__id = id_).exclude(household_number = 9999).count()
+                blw_18 = covid_data.filter(age__lt = 12, slum__id = id_).exclude(household_number = 9999, last_modified_date__range = [start_date, end_date]).count()
                 report_table_data[id_]['total_ppl_0_11'] = blw_18
-                btw_12_17 = covid_data.filter(age__in = [12, 17], slum__id = id_).exclude(household_number = 9999).count()
+                btw_12_17 = covid_data.filter(age__range = [12, 17], slum__id = id_, last_modified_date__range = [start_date, end_date]).exclude(household_number = 9999).count()
                 report_table_data[id_]['total_ppl_btw_12_17'] = btw_12_17
-                ppl_abv_17 = covid_data.filter(age__gt = 17, slum__id = id_).exclude(household_number = 9999).count()
+                ppl_abv_17 = covid_data.filter(age__gt = 17, slum__id = id_, last_modified_date__range = [start_date, end_date]).exclude(household_number = 9999).count()
                 report_table_data[id_]['total_ppl_abv_17'] = ppl_abv_17
 
                 # For age group 12 to 17
                 #for both dose
-                dose_both = covid_data.filter(age__in = [12, 17], slum__id = id_, take_first_dose = 'Yes', take_second_dose = 'Yes').exclude(household_number = 9999).count()
+                dose_both = covid_data.filter(age__range = [12, 17], slum__id = id_, take_first_dose = 'Yes', take_second_dose = 'Yes', last_modified_date__range = [start_date, end_date]).exclude(household_number = 9999).count()
                 report_table_data[id_]['2_dose_done_12_17'] = dose_both
                 # for first dose only
-                dose_one = covid_data.filter(age__in = [12, 17], slum__id = id_, take_first_dose = 'Yes', take_second_dose = 'No').exclude(household_number = 9999).count()
+                dose_one = covid_data.filter(age__range = [12, 17], slum__id = id_, take_first_dose = 'Yes', take_second_dose = 'No', last_modified_date__range = [start_date, end_date]).exclude(household_number = 9999).count()
                 report_table_data[id_]['1_dose_done_12_17'] = dose_one
                 report_table_data[id_]['total_2_dose_elg_abv_17'] = dose_one
                 # for No dose
-                dose_no = covid_data.filter(Q(age__in = [12, 17]) & Q(slum__id = id_) & (Q(take_first_dose = 'No') | Q(take_first_dose__isnull = True))).exclude(household_number = 9999).count()
+                dose_no = covid_data.filter(Q(age__range = [12, 17]) & Q(slum__id = id_) & (Q(take_first_dose = 'No') | Q(take_first_dose__isnull = True)) & Q(last_modified_date__range = [start_date, end_date])).exclude(household_number = 9999).count()
                 report_table_data[id_]['not_vaccinated_12_17'] = dose_no
                 report_table_data[id_]['total_1_dose_elg_abv_17'] = dose_no
 
                 # For age group above 17
                 #for both dose
-                dose_both = covid_data.filter(age__gt = 17, slum__id = id_, take_first_dose = 'Yes', take_second_dose = 'Yes').exclude(household_number = 9999).count()
+                dose_both = covid_data.filter(age__gt = 17, slum__id = id_, take_first_dose = 'Yes', take_second_dose = 'Yes', last_modified_date__range = [start_date, end_date]).exclude(household_number = 9999).count()
                 report_table_data[id_]['2_dose_done_abv_17'] = dose_both
                 # for first dose only
-                dose_one = covid_data.filter(age__gt = 17, slum__id = id_, take_first_dose = 'Yes', take_second_dose = 'No').exclude(household_number = 9999).count()
+                dose_one = covid_data.filter(age__gt = 17, slum__id = id_, take_first_dose = 'Yes', take_second_dose = 'No', last_modified_date__range = [start_date, end_date]).exclude(household_number = 9999).count()
                 report_table_data[id_]['1_dose_done_abv_17'] = dose_one
                 report_table_data[id_]['total_2_dose_elg_abv_17'] = dose_one
                 # for No dose
-                dose_no = covid_data.filter(Q(age__gt = 17) & Q(slum__id = id_) & (Q(take_first_dose = 'No') | Q(take_first_dose__isnull = True))).exclude(household_number = 9999).count()
+                dose_no = covid_data.filter(Q(age__gt = 17) & Q(slum__id = id_) & (Q(take_first_dose = 'No') | Q(take_first_dose__isnull = True)) & Q(last_modified_date__range = [start_date, end_date])).exclude(household_number = 9999).count()
                 report_table_data[id_]['not_vaccinated_abv_18'] = dose_no
                 report_table_data[id_]['total_1_dose_elg_abv_17'] = dose_no
 
