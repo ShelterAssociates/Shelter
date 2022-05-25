@@ -241,23 +241,108 @@ def get_kobo_RIM_report_detail(city, slum_code, kobo_survey=''):
     """
     output=OrderedDict()
     RIM_TOILET="group_te3dx03"
-    if kobo_survey:
-        url = settings.KOBOCAT_FORM_URL+'data/'+kobo_survey+'?format=json&query={"group_zl6oo94/group_uj8eg07/slum_name":"'+slum_code+'"}'
-        req = urllib2.Request(url)
-        req.add_header('Authorization', settings.KOBOCAT_TOKEN)
-        resp = urllib2.urlopen(req)
-        content = resp.read()
-        submission = json.loads(content)
+    slum = Slum.objects.filter(shelter_slum_code = slum_code)
+    data = SlumData.objects.filter(slum_id = slum[0].id).values_list('rim_data', flat = True)[0]
 
-        url1 = settings.KOBOCAT_FORM_URL+'forms/'+kobo_survey+'/form.json'
-        req1 = urllib2.Request(url1)
-        req1.add_header('Authorization', settings.KOBOCAT_TOKEN)
-        resp1 = urllib2.urlopen(req1)
-        content1 = resp1.read()
-        data1 = json.loads(content1)
-        #To maintain the order in which questions are displayed we iterate through the form data
-        if len(submission) > 0:
-            output = parse_RIM_answer(submission, data1)
+    # Useful Functions ...
+    def data_processing(data):
+        keys = list(data.keys())
+        d = {}
+        for i in keys:
+            d[i] = data[i]
+        return data
+
+    def dict_to_str(data_dict):
+        result_str = ""
+        if len(data_dict.keys())>1:
+            data_dict_keys = list(data_dict.keys())
+            for key in data_dict_keys:
+                result_str += "," + key + "(" +str(data_dict[key]) + ")"
+        else:
+            data_dict_key = list(data_dict.keys())[0]
+            result_str += "," + data_dict_key + "(" +str(data_dict[data_dict_key]) + ")"
+        return result_str
+    
+    # // 'General Information'
+    general_info = data['General']
+    output.update(data_processing(general_info))
+    # //'Toilet Information'
+    toilet_info = data['Toilet']
+    output['number_of_community_toilet_blo'] = len(toilet_info)
+    seats_f_man = 0
+    seats_f_woman = 0
+    seats_f_mix = 0
+    ctb_maintenance_provider = {}
+    ctb_structure_condition = {}
+    ctb_cleanliness_condition = {}
+    ctb_for_under_5 = {}
+    ctb_sewage_disposal_system = {}
+    water_supply_condition = []
+    
+    for i in toilet_info:
+        if i['is_the_CTB_in_use'] == 'Yes':
+            if i['ctb_gender_usage'] == 'Female':
+                seats_f_woman += int(i['number_of_seats_allotted_to_wo'])
+            elif i['ctb_gender_usage'] == 'Mix':
+                seats_f_mix += int(i['total_number_of_mixed_seats_al'])
+            elif i['ctb_gender_usage'] == 'Male':
+                seats_f_man += int(i['number_of_seats_allotted_to_me'])
+            if i['ctb_maintenance_provided_by'] in ctb_maintenance_provider:
+                ctb_maintenance_provider[i['ctb_maintenance_provided_by']] += 1
+            else:
+                ctb_maintenance_provider[i['ctb_maintenance_provided_by']] = 1
+
+            if i['condition_of_ctb_structure'] in ctb_structure_condition:
+                ctb_structure_condition[i['condition_of_ctb_structure']] += 1
+            else:
+                ctb_structure_condition[i['condition_of_ctb_structure']] = 1
+            
+            if i['cleanliness_of_the_ctb'] in ctb_cleanliness_condition:
+                ctb_cleanliness_condition[i['cleanliness_of_the_ctb']] += 1
+            else:
+                ctb_cleanliness_condition[i['cleanliness_of_the_ctb']] = 1
+
+            if i['facility_in_the_toilet_block_f'] in ctb_for_under_5:
+                ctb_for_under_5[i['facility_in_the_toilet_block_f']] += 1
+            else:
+                ctb_for_under_5[i['facility_in_the_toilet_block_f']] = 1
+
+            if i['sewage_disposal_system'] in ctb_sewage_disposal_system:
+                ctb_sewage_disposal_system[i['sewage_disposal_system']] += 1
+            else:
+                ctb_sewage_disposal_system[i['sewage_disposal_system']] = 1
+
+            water_supply_condition.extend(i['type_of_water_supply_in_ctb'].split(","))
+    
+    output['number_of_seats_allotted_to_wo'] = seats_f_woman
+    output['total_number_of_mixed_seats_al'] = seats_f_mix
+    output['number_of_seats_allotted_to_me'] = seats_f_man
+
+    water_supply_condition_dict = {i: water_supply_condition.count(i) for i in water_supply_condition}
+
+    output['ctb_maintenance_provided_by'] = dict_to_str(ctb_maintenance_provider)[1:]
+    output['condition_of_ctb_structure'] = dict_to_str(ctb_structure_condition)[1:]
+    output['cleanliness_of_the_ctb'] = dict_to_str(ctb_cleanliness_condition)[1:]
+    output['type_of_water_supply_in_ctb'] = dict_to_str(water_supply_condition_dict)[1:]
+    output['facility_in_the_toilet_block_f'] = dict_to_str(ctb_for_under_5)[1:]
+    output['sewage_disposal_system'] = dict_to_str(ctb_sewage_disposal_system)[1:]
+
+    # //Waste Management Information
+    waste_info = data['Waste']
+    output.update(data_processing(waste_info))
+    # //Water Information
+    water_info = data['Water']
+    output.update(data_processing(water_info))
+    # //Drainage Information
+    drainage_info = data['Drainage']
+    output.update(data_processing(drainage_info))
+    # //Roads &amp; Access Information
+    road_info = data['Road']
+    output.update(data_processing(road_info))
+    # //Gutter Information
+    gutter_info = data['Gutter']
+    output.update(data_processing(gutter_info))
+
     return output
 
 def parse_RIM_answer(submission, data1):
