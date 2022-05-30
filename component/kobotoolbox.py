@@ -66,9 +66,8 @@ def get_household_analysis_data(city, slum_code, fields, kobo_survey=''):
             
         for field in fields:
             if field != "" and field in record:
-                if field == 'group_el9cl08/Ownership_status_of_the_house' in record and record['Type_of_structure_occupancy'] == 'Shop': pass
-                elif 'group_el9cl08/Type_of_structure_of_the_house' in record and record['Type_of_structure_occupancy'] == 'Shop':pass
-                # elif 'Type_of_structure_occupancy' in record and record['Type_of_structure_occupancy'] == 'Shop':pass
+                if (field == 'group_el9cl08/Ownership_status_of_the_house' or field == 'group_el9cl08/Type_of_structure_of_the_house') and record['Type_of_structure_occupancy'] != 'Occupied house': 
+                    pass
                 else:
                     data = record[field]
                     for val in data if type(data)==list else data.split(','):
@@ -481,8 +480,7 @@ def get_kobo_FF_report_detail(city, slum_code,house_number, kobo_survey=''):
                     output[split_key[-1:][0]] = output[key]
                     output.pop(key)
             if "_attachments" in output and len(output['_attachments']) != 0:
-                y1 = output['_attachments'][0]["filename"].split('/')
-                PATH = '/media/shelter/attachments/' + "/".join(output['_attachments'][0]["filename"].split('/')[2:-1])
+                PATH = 'https://app.shelter-associates.org/media/shelter/attachments/' + "/".join(output['_attachments'][0]["filename"].split('/')[2:-1])
                 for photo in output["_attachments"]:
                     if 'Toilet_Photo' in output and output["Toilet_Photo"] in photo["filename"]:
                         output["Toilet_Photo"] = PATH +"/" + output["Toilet_Photo"]
