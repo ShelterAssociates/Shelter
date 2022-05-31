@@ -57,7 +57,7 @@ class avni_sync():
         # latest_date = last_submission_date.submission_date + timedelta(days=1)
         today = datetime.today()  # + timedelta(days= -1)
         latest_date = today.strftime('%Y-%m-%dT00:00:00.000Z')
-        iso = "2022-04-12T00:00:00.000Z"
+        iso = "2022-05-30T00:00:00.000Z"
         # return(latest_date)
         return iso
 
@@ -67,10 +67,10 @@ class avni_sync():
         return request_1.text
 
     def map_rhs_key(self, a, b):
-        change_keys = {'Enter_household_number_again': 'Househhold number', '_notes': 'Note',
+        change_keys = {'Enter_household_number_again': 'Househhold number', '_notes': 'Comment if any ?',
                        'Name_s_of_the_surveyor_s': 'Name of the surveyor',
                        'Household_number': 'First name',
-                       'group_el9cl08/Aadhar_number': 'Aadhar number',
+                       'group_el9cl08/Aadhar_number': 'Aadhaar number',
                        'group_el9cl08/Enter_the_10_digit_mobile_number': 'Enter the 10 digit mobile number',
                        'group_el9cl08/Ownership_status_of_the_house': 'Ownership status of the house_1',
                        'Date_of_survey': 'Date of Survey',
@@ -82,16 +82,23 @@ class avni_sync():
                        'Parent_household_number': 'Parent household number',
                        'Type_of_structure_occupancy': 'Type of structure occupancy_1',
                        'group_el9cl08/Do_you_have_any_girl_child_chi': 'Do you have any girl child/children under the age of 18?_'}
-        a.update(b)
+
         for k, v in change_keys.items():
             try:
-                if k in a.keys() or v in b.keys():
-                    a[k] = b[v]
-                    a.pop(v)
-                if 'Type_of_structure_occupancy' in a and a['Type_of_structure_occupancy'] == 'Occupied house' or 'Shop':
-                    a.pop('Type_of_unoccupied_house') if 'Type_of_unoccupied_house' in a else None
+                if v in b:
+                    b[k] = b.pop(v)
             except Exception as e:
                 print(e)
+        remove_keys = []
+        if a['Type_of_structure_occupancy'] and a['Type_of_structure_occupancy'] == 'Shop':
+            remove_keys = ['If shop, type of occupancy ?', 'Type of shop']
+        elif a['Type_of_structure_occupancy'] and a['Type_of_structure_occupancy'] == 'Unoccupied house':
+            remove_keys = ['Type_of_unoccupied_house', 'Parent_household_number']
+        if len(remove_keys) > 0:
+            for k1 in remove_keys:
+                if k1 in a:
+                    del a[k1]
+        a.update(b)
         return a
 
     def map_ff_keys(self, a, b):
@@ -219,6 +226,8 @@ class avni_sync():
                 rhs_data = {}
                 final_rhs_data = self.map_rhs_key(rhs_data, rhs_from_avni)
                 final_rhs_data.update({'rhs_uuid': HH_data['ID']})
+                if 'group_og5bx85/Type_of_survey' not in final_rhs_data:
+                    final_rhs_data['group_og5bx85/Type_of_survey'] = 'RHS'
                 update_record = HouseholdData.objects.create(household_number=household_number, slum_id=slum_id, city_id=city_id, submission_date=submission_date, rhs_data=final_rhs_data, created_date=created_date)
                 print('Household record created for', slum_name, household_number)
             else:
@@ -227,6 +236,7 @@ class avni_sync():
                     rhs_data = {}
                 final_rhs_data = self.map_rhs_key(rhs_data, rhs_from_avni)
                 final_rhs_data.update({'rhs_uuid': HH_data['ID']})
+                final_rhs_data['group_og5bx85/Type_of_survey'] = 'RHS'
                 check_record.update(submission_date=submission_date, rhs_data=final_rhs_data, created_date=created_date)
                 print('Household record updated for', slum_name, household_number)
         except Exception as e:
@@ -753,7 +763,7 @@ class avni_sync():
 
     def SaveDataFromIds(self):
 
-        IdList = ['673a778a-1a39-4708-9415-4755ee0143aa']  # 'cda4ce0e-f05c-4b49-ac6e-ed160eba1940']
+        IdList = ['beb022c1-8378-458c-8a10-bb2408ecf246']  # 'cda4ce0e-f05c-4b49-ac6e-ed160eba1940']
 
         ''' There Are Three Types Of Flag We Use
         1 - Subject Type
@@ -1246,6 +1256,16 @@ class avni_sync():
                         else:
                             print(count, "Record Already Present")
                     count += 1
+                except Exception as e:
+                    print(e)
+
+    def sync_rhs_data(self):
+        with open('/home/shelter/Desktop/json_file_for_call/RHS_Data.json', 'r') as f:
+            count = 1
+            data = json.load(f)
+            for rhs in data[:5000]:
+                try:
+                    self.registrtation_data(rhs)
                 except Exception as e:
                     print(e)
 
