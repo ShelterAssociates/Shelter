@@ -156,82 +156,136 @@ def get_kobo_RIM_detail(city, slum_code, kobo_survey=''):
     """Method to get RIM data from kobotoolbox using the API. Data contains question and answer decrypted.
     """
     output=OrderedDict()
-    if kobo_survey:
-        url = settings.KOBOCAT_FORM_URL+'data/'+kobo_survey+'?format=json&query={"group_zl6oo94/group_uj8eg07/slum_name":"'+slum_code+'"}'
-        req = urllib2.Request(url)
-        req.add_header('Authorization', settings.KOBOCAT_TOKEN)
-        resp = urllib2.urlopen(req)
-        content = resp.read()
-        submission = json.loads(content)
-
-        url1 = settings.KOBOCAT_FORM_URL+'forms/'+kobo_survey+'/form.json'
-        req1 = urllib2.Request(url1)
-        req1.add_header('Authorization', settings.KOBOCAT_TOKEN)
-        resp1 = urllib2.urlopen(req1)
-        content1 = resp1.read()
-        form_data = json.loads(content1)
-        #To maintain the order in which questions are displayed we iterate through the form data
-        if len(submission) > 0:
-            output = parse_RIM_data(submission, form_data)
+    slum = Slum.objects.filter(shelter_slum_code = slum_code)
+    submission = SlumData.objects.filter(slum_id = slum[0].id).values_list('rim_data', flat = True)[0]
+    if len(submission) > 0:
+        output = parse_RIM_data(submission)
     return output
 
-def parse_RIM_data(submission, form_data):
+def parse_RIM_data(submission):
     """
+    |||||||||| --------- Method For View Tabuler data tab in spatial GIS Dashboard ---------- ||||||||||
     parse RIM data function used in get_kobo_RIM_detail(function above)
     :param submission: 
     :param form_data: 
     :return: 
+    
     """
+    match_keys = {'Drainage': {'coverage_of_drains_across_the': 'Coverage of drains across the settlement',
+                    'diameter_of_ulb_sewer_line_acr': 'Diameter of ULB sewer line across settlement',
+                    'do_the_drains_get_blocked': 'Do the drains get blocked',
+                    'is_the_drainage_gradient_adequ': 'Is the drainage gradient adequate',
+                    'presence_of_drains_within_the': 'Presence of drains within the settlement'},
+                    'General': {'Date_of_declaration': 'Date of declaration',
+                    'admin_ward': 'admin_ward',
+                    'approximate_area_of_the_settle': 'Approximate area of the settlement in square meters',
+                    'development_plan_reservation': 'Development plan reservation',
+                    'development_plan_reservation_t': 'Development plan reservation type',
+                    'land_owner': 'Land owner',
+                    'landmark': 'Landmark',
+                    'legal_status': 'Legal Status',
+                    'location': 'Location',
+                    'number_of_huts_in_settlement': 'Number of huts in settlement (From RHS)',
+                    'slum_name': 'slum_name',
+                    'survey_sector_number': 'Survey/Sector Number',
+                    'topography': 'Topography',
+                    'year_established_according_to': 'Year established according to community'},
+                    'Gutter': {'Presence_of_gutter': 'Presence of gutter',
+                    'are_gutter_covered': 'Are gutter covered',
+                    'coverage_of_gutter': 'Coverage of gutter',
+                    'do_gutter_get_choked': 'Do gutter get choked',
+                    'do_gutters_flood': 'Do gutters flood',
+                    'is_gutter_gradient_adequate': 'Is gutter gradient adequate',
+                    'type_of_gutter_within_the_sett': 'Type of gutter within the settlement'},
+                    'Road': {'are_the_huts_below_or_above_th': 'Are the huts below or above the internal access road',
+                    'average_width_of_arterial_road': 'Average width of arterial road',
+                    'average_width_of_internal_road': 'Average width of internal roads',
+                    'coverage_of_pucca_road_across': 'Coverage of pucca road across the settlement',
+                    'finish_of_the_road': 'Finish of the road',
+                    'is_the_settlement_below_or_abo': 'Is the settlement below or above the mainaccess road',
+                    'point_of_vehicular_access_to_t': 'Point of vehicular access to the slum',
+                    'presence_of_roads_within_the_s': 'Presence of roads within the settlement',
+                    'type_of_roads_within_the_settl': 'Type of roads within the settlemet'},
+                    'Toilet': {'Out_of_total_seats_o_of_pans_not_choked': 'Out of total seats, no of pans not choked',
+                    'availability_of_electricity_in': 'Availability of electricity in toilet block for pumping water to overhead tank',
+                    'availability_of_electricity_in_001': 'Availability of electricity in toilet block after dark',
+                    'availability_of_water_in_the_t': 'Availability of water in the toilet block',
+                    'cleanliness_of_the_ctb': 'Cleanliness of the CTB',
+                    'condition_of_ctb_structure': 'Condition of CTB structure',
+                    'condition_of_facility_for_chil': 'Condition of facility for children under 5 years of age',
+                    'cost_of_pay_and_use_toilet_pe': 'Cost of pay and use toilet (per individual per use)',
+                    'ctb_gender_usage': 'CTB gender usage',
+                    'ctb_maintenance_provided_by': 'CTB maintenance provided by',
+                    'distance_to_nearest_ulb_sewer': 'Distance to nearest ULB sewer line',
+                    'does_the_ulb_ngo_communty_use': 'Does the ULB/NGO/Community use cleaning agents to clean the CTB?',
+                    'facility_in_the_toilet_block_f': 'Facility in the toilet block for children under 5 years of age',
+                    'fee_for_use_of_ctb_per_family': 'Fee for use of CTB (per family per month)',
+                    'frequency_of_ctb_cleaning_by_U': 'Frequency of CTB cleaning by ULB/NGO/Community',
+                    'is_the_CTB_in_use': 'Is the CTB in use',
+                    'is_the_ctb_available_at_night': 'Is the CTB available at night',
+                    'is_there_a_caretaker_for_the_C': 'Is there a caretaker for the CTB?',
+                    'litres_of_water_used_by_commun': 'Litres of water used by community members (per one flush)',
+                    'number_of_mixed_seats_allotted': 'Number of MIXED seats allotted but not in use',
+                    'number_of_seats_allotted_to_me': 'Number of seats allotted to men',
+                    'number_of_seats_allotted_to_me_001': 'Number of seats allotted to men but not in use',
+                    'number_of_seats_allotted_to_wo': 'Number of seats allotted to women',
+                    'number_of_seats_allotted_to_wo_001': 'Number of seats allotted to women but not in use',
+                    'out_of_total_seats_no_of_doors_in_good_condition': 'Out of total seats no of doors in good condition',
+                    'out_of_total_seats_no_of_pans_in_good_condition': 'Out of total seats no of pans in good condition',
+                    'out_of_total_seats_no_of_seats_where_electricity_is_available': 'Out of total seats no of seats where electricity is available',
+                    'out_of_total_seats_no_of_seats_where_tiles_on_floor_are_in_good_condition': 'Out of total seats no of seats where tiles on floor are in good condition',
+                    'out_of_total_seats_no_of_seats_where_tiles_on_wall_are_in_good_condition': 'Out of total seats no of seats where tiles on wall are in good condition',
+                    'sewage_disposal_system': 'Sewage disposal system',
+                    'the_reason_for_men_not_using_t': 'The reason for men not using the seats',
+                    'the_reason_for_the_mixed_seats': 'The Reason for the MIXED seats not in Use',
+                    'the_reason_for_women_not_using': 'The reason for women not using the seats',
+                    'total_number_of_mixed_seats_al': 'Total number of MIXED seats allotted',
+                    'type_of_water_supply_in_ctb': 'Type of water supply in CTB'},
+                    'Waste': {'coverage_of_waste_collection_a_001': 'Coverage of door to door  waste collection',
+                    'coverage_of_waste_collection_a_002': 'Coverage of waste collection by ULB ghantagadi',
+                    'coverage_of_waste_collection_a_003': 'Coverage of waste collection by ULB van',
+                    'do_the_member_of_community_dep': 'Do the member of community deposite waste in the drains',
+                    'facility_of_waste_collection': 'Facility of waste collection',
+                    'frequency_of_waste_collection_': 'Frequency of ULB van',
+                    'frequency_of_waste_collection_001': 'Frequency of ULB ghantagadi',
+                    'frequency_of_waste_collection__001': 'Frequency of cleaning garbage bin',
+                    'frequency_of_waste_collection__002': 'Frequency of door to door waste collection',
+                    'total_number_of_waste_containe': 'Total number of waste containers',
+                    'where_are_the_communty_open_du': 'Where are the communty open dump sites'},
+                    'Water': {'Total_number_of_standposts_NOT': 'Total number of standposts NOT in use',
+                    'Total_number_of_standposts_in_': 'Total number of standposts in use',
+                    'alternative_source_of_water': 'Alternative source of water',
+                    'availability_of_water': 'Availability of water',
+                    'coverage_of_wateracross_settle': 'Coverage of wateracross settlement',
+                    'pressure_of_water_in_the_syste': 'Pressure of water in the system',
+                    'quality_of_water_in_the_system': 'Quality of water in the system',
+                    'total_number_of_handpumps_in_u': 'Total number of handpumps in use',
+                    'total_number_of_handpumps_in_u_001': 'Total number of handpumps NOT in use',
+                    'total_number_of_taps_in_use_n': 'Total number of taps in use',
+                    'total_number_of_taps_in_use_n_001': 'Total number of taps NOT in use'}}
     output = OrderedDict()
-    RIM_GENERAL = "group_zl6oo94"
-    RIM_TOILET = "group_te3dx03"
-    RIM_WATER = "group_zj8tc43"
-    RIM_WASTE = "group_ks0wh10"
-    RIM_DRAINAGE = "group_kk5gz02"
-    RIM_GUTTER = "group_bv7hf31"
-    RIM_ROAD = "group_xy9hz30"
-    section = {RIM_GENERAL: "General", RIM_TOILET: "Toilet", RIM_WATER: "Water",
-               RIM_WASTE: "Waste", RIM_DRAINAGE: "Drainage", RIM_GUTTER: "Gutter", RIM_ROAD: "Road"}
+    
+    '''We Are iterating on the each section of the RIM data'''
+    for key, value in submission.items():
+        # print(key, value)
+        data = OrderedDict()
+        if key != "Toilet":    # here we are iterating on all the non repetative section.
+            match_keys_dict = match_keys[key]   # here we are matching the section key to actual name of the question.
+            for key1, value1 in value.items():
+                if key1 in match_keys_dict:
+                    data[match_keys_dict[key1]] = value1
+            output[key] = data
+        else:
+            match_keys_dict = match_keys[key]   # here we are iterating repetative section Toilet section
+            cnt = 1
+            output[key] = []
+            for i in value:
+                data1 = OrderedDict()
+                for key1, value1 in i.items():
+                    if key1 in match_keys_dict:
+                        data1[match_keys_dict[key1]] = value1   # here we are matching the section key to actual name of the question.
+                output[key].append(data1)
 
-    for data in form_data['children']:
-        if data['type'] == "group" and data['name'] in section.keys():
-            #Group wise get the entire list for questions
-            sect_form_data = trav(data)
-            #Find the list of keys available in the submission data
-            toil_keys = [ str(k) for k in submission[0].keys() if data['name'] in k]
-            count = 0
-            sub_key = []
-            sub = []
-            # Needed for toilet section which has repeat section
-            for sub_k in toil_keys:
-                if type(submission[0][sub_k]) == list:
-                    count = len(submission[0][sub_k])
-                    sub = submission[0][sub_k]
-                    sub_key.extend(sum([list(k.keys()) for k in submission[0][sub_k]], []))
-                else:
-                    sub_key.append(sub_k)
-            #Default values
-            if data['name'] != RIM_TOILET:
-                output[section[data['name']]] = OrderedDict()
-            else:
-                output[section[data['name']]] = []
-                [output[section[data['name']]].append(OrderedDict()) for i in range(count)]
-            #Iterate through the list of questions for the group
-            for sect_form in sect_form_data:
-                key = [x for x in sub_key if x.endswith(sect_form['name'])]
-                #Check if the question has answer in the submission then only proceed further
-                if len(key)>0 and 'label' in sect_form:
-                    if data['name'] != RIM_TOILET:
-                        #Fetch the answer for select one/text/select multiple type question
-                        ans = fetch_answer(sect_form, key, submission[0])
-                        output[section[data['name']]][sect_form['label']]  = ans
-                    else:
-                        #For toilet repeative section append the set of questions for all the CTB's if available
-                        for ind in range(count):
-                            output[section[data['name']]][ind][sect_form['label']] = ""
-                            if key[0] in sub[ind].keys():
-                                ans = fetch_answer(sect_form, key, sub[ind])
-                                output[section[data['name']]][ind][sect_form['label']] = ans
     return output
 
 @survey_mapping(SURVEYTYPE_CHOICES[0][0])
