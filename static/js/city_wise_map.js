@@ -196,8 +196,17 @@ function generate_RIM(result){
             }
             toilet_header+= "</tr></thead>";
             if(v.length > 0){
-                keys_headers = Object.keys(v[0]);
-                $.each(keys_headers.slice(3, keys_headers.length-1), function(key, val) {
+                keys_headers2 = Object.keys(v[0]);
+                for (j=1; j<v.length; j++){
+                    keys_headers1 = Object.keys(v[j]);
+                    keys_headers2 = keys_headers2.concat(keys_headers1);
+                }
+                function removeDuplicates(arr) {
+                    return arr.filter((item,
+                        index) => arr.indexOf(item) === index);
+                }
+                keys_headers = removeDuplicates(keys_headers2);
+                $.each(keys_headers.slice(0, keys_headers.length-1), function(key, val) {
                     toilet_body += '<tr><td style="font-weight:bold;width:200px;">' + val + '</td>';
 
                     for (i=0; i<v.length; i++){
