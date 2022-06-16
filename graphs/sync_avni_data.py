@@ -14,6 +14,7 @@ from datetime import timedelta, datetime
 import dateutil.parser
 
 
+
 direct_encountes = ['Sanitation', 'Property tax', 'Water', 'Waste', 'Electricity', 'Daily Mobilization Activity']
 program_encounters = ['Daily Reporting', 'Family factsheet']
 
@@ -57,7 +58,7 @@ class avni_sync():
         # latest_date = last_submission_date.submission_date + timedelta(days=1)
         today = datetime.today()  # + timedelta(days= -1)
         latest_date = today.strftime('%Y-%m-%dT00:00:00.000Z')
-        iso = "2022-05-30T00:00:00.000Z"
+        iso = "2022-06-15T00:00:00.000Z"
         # return(latest_date)
         return iso
 
@@ -90,9 +91,9 @@ class avni_sync():
             except Exception as e:
                 print(e)
         remove_keys = []
-        if a['Type_of_structure_occupancy'] and a['Type_of_structure_occupancy'] == 'Shop':
+        if 'Type_of_structure_occupancy' in a and a['Type_of_structure_occupancy'] == 'Shop':
             remove_keys = ['If shop, type of occupancy ?', 'Type of shop']
-        elif a['Type_of_structure_occupancy'] and a['Type_of_structure_occupancy'] == 'Unoccupied house':
+        elif 'Type_of_structure_occupancy' in a and a['Type_of_structure_occupancy'] == 'Unoccupied house':
             remove_keys = ['Type_of_unoccupied_house', 'Parent_household_number']
         if len(remove_keys) > 0:
             for k1 in remove_keys:
@@ -184,9 +185,6 @@ class avni_sync():
                 if k in a.keys() or v in s.keys():
                     a[k] = s[v]
                     a.pop(v)
-                # if 'Current place of defecation' in a :
-                #     a.pop('Current place of defecation')
-                # else: pass
             except Exception as e:
                 print(e)
         return a
@@ -242,6 +240,7 @@ class avni_sync():
         except Exception as e:
             print('second exception', slum_name, e)
 
+
     def SaveRhsData(self):  # checked
         pages, path = self.create_registrationdata_url()
 
@@ -249,7 +248,7 @@ class avni_sync():
             send_request = requests.get(self.base_url + path + '&page=' + str(i), headers={'AUTH-TOKEN': self.get_cognito_token()})
             get_HH_data = json.loads(send_request.text)['content']
             for i in get_HH_data:
-                if not ((i['Voided']) or (i['location']['City'] != 'PCMC')):
+                if not (i['Voided']):
                     self.registrtation_data(i)
 
     def update_rhs_data(self, subject_id, encounter_data):  # checked
@@ -763,7 +762,7 @@ class avni_sync():
 
     def SaveDataFromIds(self):
 
-        IdList = ['beb022c1-8378-458c-8a10-bb2408ecf246']  # 'cda4ce0e-f05c-4b49-ac6e-ed160eba1940']
+        IdList = ['b1fff0f1-7afd-47e2-aa4c-e9feec1ab028']  # 'cda4ce0e-f05c-4b49-ac6e-ed160eba1940']
 
         ''' There Are Three Types Of Flag We Use
         1 - Subject Type
@@ -771,7 +770,7 @@ class avni_sync():
         3 - Program Encounter
         Please provide flag when sync data using UUIDs'''
 
-        flag = 'Subject Type'
+        flag = 'Encounters'
 
         for i in IdList:
             try:
@@ -791,8 +790,7 @@ class avni_sync():
                     RequestEncounter = requests.get(self.base_url + 'api/encounter/' + i, headers={'AUTH-TOKEN': self.get_cognito_token()})
                     if RequestEncounter.status_code == 200:
                         data = json.loads(RequestEncounter.text)
-                        if data['Encounter type'] == 'Sanitation' and (
-                                data['observations'] != {} and data['Voided'] == False):
+                        if data['Encounter type'] == 'Sanitation' and (data['observations'] != {} and data['Voided'] == False):
                             sanitation = self.map_sanitation_keys(data['observations'])  # sanitation data
                             sanitation.update({'Last_modified_date': data['audit']['Last modified at']})
                             self.update_rhs_data(data['Subject ID'], sanitation)  # sanitation data
@@ -1031,7 +1029,7 @@ class avni_sync():
     # methods for sync encounter data through json file.
 
     def sync_sanitation_data(self):
-        with open('/home/shelter/Desktop/json file for call/sanitation_data.json', 'r') as f:
+        with open('/home/shelter/Downloads/sanitation_data.json', 'r') as f:
             count = 1
             data = json.load(f)
             for sanitation in data:
@@ -1085,7 +1083,7 @@ class avni_sync():
         with open('/home/shelter/Desktop/json_file_for_call/water_data.json', 'r') as f:
             count = 1
             data = json.load(f)
-            for water in data[:5000]:
+            for water in data:
                 try:
                     if water["group_el9cl08/Type_of_water_connection"]:
                         hh_uuid = water['Household_uuid']
@@ -1126,7 +1124,7 @@ class avni_sync():
         with open('/home/shelter/Desktop/json_file_for_call/waste_data.json', 'r') as f:
             count = 1
             data = json.load(f)
-            for waste in data[:5000]:
+            for waste in data:
                 try:
                     if waste["group_el9cl08/Facility_of_solid_waste_collection"]:
                         hh_uuid = waste['Household_uuid']
@@ -1164,7 +1162,7 @@ class avni_sync():
         with open('/home/shelter/Desktop/json_file_for_call/Covid_data.json', 'r') as f:
             count = 1
             data = json.load(f)
-            for record in data[1000:10000]:
+            for record in data:
                 try:
                     if 'household_number' in record:
                         hh_number = str(int(record['household_number']))
@@ -1233,7 +1231,7 @@ class avni_sync():
                                         if_not_why=final_dict['if_not_why'], note=final_dict['note'])
 
                             c.save()
-                            print(count, "Record save successfully", slum_name)
+                            print(count, "Record Created successfully", slum_name)
 
                         elif query_obj.values_list('last_modified_date', flat = True)[0] < last_modified_date:
                             if first_dose_date != None:
@@ -1251,7 +1249,7 @@ class avni_sync():
                                 setattr(covid_obj, key, value)
 
                             covid_obj.save()
-                            print(count, "Record save successfully", slum_name)
+                            print(count, "Record Updated successfully", slum_name)
 
                         else:
                             print(count, "Record Already Present")
@@ -1260,10 +1258,10 @@ class avni_sync():
                     print(e)
 
     def sync_rhs_data(self):
-        with open('/home/shelter/Desktop/json_file_for_call/RHS_Data.json', 'r') as f:
+        with open('/home/shelter/Desktop/json_file_for_call/RHS_Data_2022_06_08.json', 'r') as f:
             count = 1
             data = json.load(f)
-            for rhs in data[:5000]:
+            for rhs in data:
                 try:
                     self.registrtation_data(rhs)
                 except Exception as e:

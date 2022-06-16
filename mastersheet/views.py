@@ -75,6 +75,12 @@ def masterSheet(request, slum_code=0, FF_code=0, RHS_code=0):
         if slum_code is not 0:
             if flag_fetch_rhs:
                 formdict = list(map(lambda x: x.rhs_data, filter(lambda x: x.rhs_data != None, household_data)))
+                formdict2 = list(map(lambda x : {'Household_number': x.household_number, 'id' : x.id}, filter(lambda x : x.id, household_data)))
+                formdict2 = {i['Household_number'] : i['id'] for i in formdict2}
+                for i in formdict:      # Adding Household Record id in record for each household.
+                    if str(int(i['Household_number'])) in formdict2:
+                        i['Household_id'] = formdict2[str(int(i['Household_number']))]
+
                 for i in formdict:
                     if i['Type_of_structure_occupancy'] in ['Locked house', 'Unoccupied house']:
                         list_of_keys = ['Household_number', 'Date_of_survey', 'Name_s_of_the_surveyor_s',
@@ -89,12 +95,8 @@ def masterSheet(request, slum_code=0, FF_code=0, RHS_code=0):
                         temp_formdict.append(i)
 
                 formdict = temp_formdict
-
             else:
-                formdict = list(map(lambda x: {'Household_number': x.household_number,
-                                               '_id': x.rhs_data['_id'] if '_id' in x.rhs_data else None,
-                                               '_xform_id_string': x.rhs_data[
-                                                   '_xform_id_string'] if '_xform_id_string' in x.rhs_data else None},
+                formdict = list(map(lambda x: {'Household_number': x.household_number, '_id': x.rhs_data['_id'] if '_id' in x.rhs_data else None, '_xform_id_string': x.rhs_data['_xform_id_string'] if '_xform_id_string' in x.rhs_data else None},
                                     filter(lambda x: x.rhs_data != None, household_data)))
 
             if flag_fetch_ff:
@@ -225,7 +227,6 @@ def masterSheet(request, slum_code=0, FF_code=0, RHS_code=0):
                         {new_activity_type: str(y.date_of_activity), str(new_activity_type) + "_id": y.id})
 
             for y in community_mobilization_data:
-                # y = community_mobilization_data[i]
                 if y.household_number != None:
                     y.household_number = [i for i in y.household_number if i != ""]
                     for z in y.household_number:
@@ -308,6 +309,7 @@ def masterSheet(request, slum_code=0, FF_code=0, RHS_code=0):
                         x['ff_id'] = ff_id
                         x['ff_xform_id_string'] = ff_xform_id_string
 
+                # Adding hyperlink for factsheet photos
                 if '_attachments' in x.keys() and len(x['_attachments']) != 0:
 
                     y1 = x['_attachments'][0]["filename"].split('/')
@@ -323,39 +325,35 @@ def masterSheet(request, slum_code=0, FF_code=0, RHS_code=0):
                         x.update({'toilet_photo_url': ff_url if ff_url else x['Toilet_Photo']})
                         x.update({'family_photo_url': ff_url if ff_url else x['Family_Photo']})
 
-                if '_xform_id_string' in x.keys():
+                # Adding hyperlink for RHS Data
+                if 'rhs_uuid' in x.keys():
+                    x.update({'rhs_url': settings.AVNI_URL + '#/app/subject?uuid=' + str(x['rhs_uuid'])})
+                elif '_xform_id_string' in x.keys():
                     x.update({'rhs_url': settings.BASE_URL + str('shelter/forms/') + str(x['_xform_id_string']) + str(
                         '/instance#/') + str(x['_id'])})
-                elif 'rhs_uuid' in x.keys():
-                    x.update({'rhs_url': settings.AVNI_URL + '#/app/subject?uuid=' + str(x['rhs_uuid'])})
                 else:
                     pass
-
-                if 'ff_xform_id_string' in x.keys():
-                    x.update({'ff_url': settings.BASE_URL + str('shelter/forms/') + str(x['ff_xform_id_string']) + str(
-                        '/instance#/') + str(x["ff_id"])})
-                elif 'ff_id' in x.keys():
-                    x.update(
-                        {'ff_url': settings.AVNI_URL + '/#/app/subject/viewProgramEncounter?uuid=' + str(x['ff_uuid'])})
-                else:
-                    pass
+                
+                # Adding hyperlink for factsheet
+                if 'ff_uuid' in x.keys():
+                    x.update({'ff_url': settings.AVNI_URL + '/#/app/subject/viewProgramEncounter?uuid=' + str(x['ff_uuid'])})
 
                 if 'group_oi8ts04/Current_place_of_defecation' in x:
-                    x.update({'current place of defecation': x['group_oi8ts04/Current_place_of_defecation']})
+                    if 'group_oi8ts04/Current_place_of_defecation' != 'Toilet by SA':
+                        x.update({'current place of defecation': x['group_oi8ts04/Current_place_of_defecation']})
 
                 if 'status' in x and x['status'] == 'Completed':
                     x.update({'current place of defecation': 'Toilet by SA'})
 
-                cod_data = followup_data_false.filter(household_number=int(key)).order_by('-submission_date').first()
-                # print(cod_data.followup_data.keys())
-
+                cod_data = followup_data_false.filter(household_number=int(key)).exclude(followup_data__contains = 'Toilet by SA').order_by('-submission_date').first()
                 if cod_data:
                     if 'group_oi8ts04/Which_Community_Toil_r_family_members_use' in cod_data.followup_data:
                         data1 = cod_data.followup_data['group_oi8ts04/Which_Community_Toil_r_family_members_use']
                         x.update({'group_oi8ts04/Which_Community_Toil_r_family_members_use': data1})
                     if 'group_oi8ts04/Current_place_of_defecation' in cod_data.followup_data:
                         data = cod_data.followup_data['group_oi8ts04/Current_place_of_defecation']
-                        x.update({'current place of defecation': data})
+                        if data not in ['Toilet by SA', 'Toilet by SA (SBM)']:
+                            x.update({'current place of defecation': data})
                     if 'status' in x and x['status'] == 'Completed':
                         x.update({'current place of defecation': 'Toilet by SA'})
                         x.update({'group_oi8ts04/Status_of_toilet_under_SBM': ''})
@@ -1040,6 +1038,7 @@ def give_report_table_numbers(request):  # view for toilet construction
             .annotate(**level_data[tag]).values('level', 'level_id', 'city_name') \
             .annotate(**count_field).order_by('city_name')
         tc = {obj_ad['level_id']: obj_ad for obj_ad in tc}
+
         for level_id, data in tc.items():
             report_table_data[level_id].update(data)
 
@@ -1096,6 +1095,28 @@ def give_report_table_numbers(request):  # view for toilet construction
                                 break
 
                 report_table_data[l]['factAssign'] = factsheet_count
+    level_data_tag = {
+                'city':
+                    {
+                        'level_id': 'slum__electoral_ward__administrative_ward__city__id'
+                    },
+                'admin_ward':
+                    {
+                        'level_id': 'slum__electoral_ward__administrative_ward__id'
+                    },
+                'electoral_ward':
+                    {
+                        'level_id': 'slum__electoral_ward__id'
+                    },
+                'slum':
+                    {
+                        'level_id': 'slum__id'
+                    }
+                }
+    for i in report_table_data.keys():
+        query_field = {level_data_tag[tag]['level_id'] : i, 'rhs_data__isnull':False}
+        h = HouseholdData.objects.filter(**query_field)
+        report_table_data[i]['total_structure'] = h.count()
 
     return HttpResponse(json.dumps(list(map(lambda x: report_table_data[x], report_table_data))),
                         content_type="application/json")

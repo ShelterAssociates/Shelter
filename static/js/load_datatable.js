@@ -44,9 +44,11 @@ $(document).ready(function() {
                 for (i = 0 ; i < tmp_FF.length ; i ++ ){
                     columns_defs['data'][tmp_FF[i]]['render']= function ( data, type, row,meta ) {
                         if(typeof data != 'undefined') {
-                            url_FF = row['ff_url']
-                            if(type === 'display'){
-                                        data = '<a href = "#" onclick="window.open(\''+url_FF+'\', \'_blank\', \'width=850,height=750\');">' + data + "</a>";
+                            if (typeof row['ff_url'] != 'undefined'){
+                                url_FF = row['ff_url']
+                                if(type === 'display'){
+                                            data = '<a href = "#" onclick="window.open(\''+url_FF+'\', \'_blank\', \'width=850,height=750\');">' + data + "</a>";
+                                }
                             }
                             return data;
                         }
@@ -92,6 +94,7 @@ $(document).ready(function() {
                 for (i = 0 ; i < tmp_DR.length ; i ++ ){
                     columns_defs['data'][tmp_DR[i]]['render']= function ( data, type, row,meta ) {
                         if(typeof data != 'undefined') {
+
                             url_daily_reporting = String("/accounts/mastersheet/communitymobilization/") + row[columns_defs['data'][meta.col]['title']+"_id"] + String("/");
                             if (data.length > 11){
                                 url_daily_reporting = String("/accounts/mastersheet/communitymobilizationactivityattendance/") + row[columns_defs['data'][meta.col]['title']+"_id"] + String("/");
@@ -121,7 +124,6 @@ $(document).ready(function() {
 
                 // Adding hyperlinks to SBM data
                 var tmp_SBM = columns_defs['buttons']['SBM'];
-                
                 for (i = 0 ; i < tmp_SBM.length ; i ++ ){
                     columns_defs['data'][tmp_SBM[i]]['render']= function ( data, type, row,meta ) {
                         if(typeof data != 'undefined'){
@@ -133,17 +135,17 @@ $(document).ready(function() {
                             return data;
                         }
                     }
+                    // Adding hyperlinks to open Household data
                     columns_defs['data'][columns_defs['buttons']['RHS'][0] - 1]['render']= function ( data, type, row,meta ) {
                         if(typeof data != 'undefined'){
-                            url_SBM = String("/accounts/mastersheet/sbmupload/") + row['sbm_id_'+String(row.Household_number)] + String("/");
-                            if(type === 'display'){
-                                        data = '<a href = "#" onclick="window.open(\''+url_SBM+'\', \'_blank\', \'width=850,height=750\');">' + data + "</a>";
-
+                            if (typeof row['Household_id'] != 'undefined'){
+                                url_SBM = String("/accounts/graphs/householddata/") + row['Household_id'] + String("/");
+                                if(type === 'display'){
+                                            data = '<a href = "#" onclick="window.open(\''+url_SBM+'\', \'_blank\', \'width=850,height=750\');">' + data + "</a>";
+                                }
                             }
-
                             if(row['no_rhs_flag'] != '' )
                             {
-
                                 data = "<p class = 'highlight_p' style = 'background-color : "+row['no_rhs_flag']+";'>"+data+"</p>";
                             }
                             return data;
