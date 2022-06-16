@@ -423,6 +423,7 @@
 				"columnDefs": [{"defaultContent": "-","targets": "_all"},{"footer":true},],
 				"columns":[
 							{"data": "level", "title": "Name"},
+							{"data": "total_structure", "title": "Total Structure"},
 							{"data": "total_ad", "title": "Agreement Done Date"},
 							{"data": "total_p1", "title": "Phase 1 material given"},
 							{"data": "total_p2", "title": "Phase 2 material given"},
