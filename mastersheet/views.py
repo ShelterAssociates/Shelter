@@ -60,7 +60,6 @@ def masterSheet(request, slum_code=0, FF_code=0, RHS_code=0):
 
     try:
         formdict = []
-        temp_formdict = []
         formdict_family_factsheet = []
         slum_code = Slum.objects.filter(pk=int(request.GET['slumname'])).values_list("id", "shelter_slum_code",
                                                                                      "electoral_ward__administrative_ward__city__id",
@@ -69,44 +68,66 @@ def masterSheet(request, slum_code=0, FF_code=0, RHS_code=0):
         slum_funder = SponsorProjectDetails.objects.filter(slum__name=str(slum_code[0][4])).exclude(sponsor__id=10)
         form_ids = Survey.objects.filter(city__id=int(slum_code[0][2]))
         household_data = HouseholdData.objects.filter(slum__id=slum_code[0][0])
-        followup_data_false = FollowupData.objects.filter(slum=slum_code[0][0])  # ,flag_followup_in_rhs = False)
-        # followup_data_true = FollowupData.objects.filter(slum=slum_code[0][0],flag_followup_in_rhs = True)
 
         if slum_code is not 0:
             if flag_fetch_rhs:
-                formdict = list(map(lambda x: x.rhs_data, filter(lambda x: x.rhs_data != None, household_data)))
-                formdict2 = list(map(lambda x : {'Household_number': x.household_number, 'id' : x.id}, filter(lambda x : x.id, household_data)))
-                formdict2 = {i['Household_number'] : i['id'] for i in formdict2}
-                for i in formdict:      # Adding Household Record id in record for each household.
-                    if str(int(i['Household_number'])) in formdict2:
-                        i['Household_id'] = formdict2[str(int(i['Household_number']))]
 
-                for i in formdict:
-                    if i['Type_of_structure_occupancy'] in ['Locked house', 'Unoccupied house']:
-                        list_of_keys = ['Household_number', 'Date_of_survey', 'Name_s_of_the_surveyor_s',
-                                        'Type_of_structure_occupancy']
-                        temp_dict = {}
-                        for cust_key in list_of_keys:
-                            if cust_key in i:
-                                temp_dict[cust_key] = i[cust_key]
-
-                        temp_formdict.append(temp_dict)
+                # this check_rhs_data function return data as per occupacy status
+                def check_rhs_data(record):
+                    key_list = ['rhs_uuid', 'Date_of_survey', 'Name_s_of_the_surveyor_s', 'Type_of_structure_occupancy', 'Type_of_unoccupied_house', 'Parent_household_number', 'group_og5bx85/Full_name_of_the_head_of_the_household', "group_el9cl08/Enter_the_10_digit_mobile_number",
+                    "group_el9cl08/Aadhar_number", "group_el9cl08/Number_of_household_members", 'group_el9cl08/Do_you_have_any_girl_child_chi', "group_el9cl08/How_many", "group_el9cl08/Type_of_structure_of_the_house",
+                    "group_el9cl08/Ownership_status_of_the_house", "group_el9cl08/House_area_in_sq_ft", "group_el9cl08/Type_of_water_connection", "group_el9cl08/Facility_of_solid_waste_collection"]
+                    # if occupied house then if block called otherwise else block called.
+                    if record.rhs_data and record.rhs_data['Type_of_structure_occupancy'] == 'Occupied house':
+                        data = {rhs_key :record.rhs_data[rhs_key] for rhs_key in key_list if rhs_key in record.rhs_data}
+                        data['Household_number'] = record.household_number
+                        data['group_og5bx85/Type_of_survey'] = "RHS"
+                        data['Household_id'] = record.id
+                        return data
                     else:
-                        temp_formdict.append(i)
-
-                formdict = temp_formdict
+                        key_list = ['rhs_uuid', 'Date_of_survey', 'Name_s_of_the_surveyor_s', 'Type_of_structure_occupancy', 'group_og5bx85/Type_of_survey']
+                        data = {rhs_key :record.rhs_data[rhs_key] for rhs_key in key_list if rhs_key in record.rhs_data}
+                        data['Household_number'] = record.household_number
+                        data['Household_id'] = record.id
+                        return data
+                
+                
+                formdict = list(map(check_rhs_data, household_data))
+                cod_data = FollowupData.objects.filter(slum=slum_code[0][0]).values('household_number', 'followup_data', 'submission_date')
+                followup_data = {}
+                for followup_record in cod_data:
+                    if str(int(followup_record['household_number'])) in followup_data:
+                        temp = followup_data[str(int(followup_record['household_number']))]
+                        if temp['submission_date'] < followup_record['submission_date']:
+                            hh = str(int(followup_record['household_number']))
+                            del followup_record['household_number']
+                            temp = followup_record
+                            followup_data[hh] = temp
+                    else:
+                        hh = str(int(followup_record['household_number']))
+                        temp_dict = {'submission_date':followup_record['submission_date'], 'followup_data':followup_record['followup_data']}
+                        followup_data[hh] = temp_dict
+                
             else:
-                formdict = list(map(lambda x: {'Household_number': x.household_number, '_id': x.rhs_data['_id'] if '_id' in x.rhs_data else None, '_xform_id_string': x.rhs_data['_xform_id_string'] if '_xform_id_string' in x.rhs_data else None},
-                                    filter(lambda x: x.rhs_data != None, household_data)))
-
+                formdict = list(map(lambda x: {'Household_number': x.household_number, 'id': x.id, 'rhs_uuid': x.rhs_data['rhs_uuid'] if 'rhs_uuid' in x.rhs_data else None}, filter(lambda x: x.rhs_data != None, household_data)))
+            # Family Factsheet - fetching data
             if flag_fetch_ff:
                 try:
-                    formdict_family_factsheet = list(
-                        map(lambda x: (x.ff_data if x.ff_data else {'group_vq77l17/Household_number': 00}),
-                            household_data))
-                    # formdict_family_factsheet = map(lambda x:(x.ff_data if x.ff_data else {'group_vq77l17/Household_number': 00 }),household_data)
-                # Family Factsheet - fetching data
-                # arranging data with respect to household numbers
+                    def get_factsheet_data(record):
+                        key_list = ['group_vq77l17/Household_number', 'group_ne3ao98/Have_you_upgraded_yo_ng_individual_toilet', 
+                        'group_ne3ao98/Cost_of_upgradation_in_Rs', 'group_ne3ao98/Where_the_individual_ilet_is_connected_to', 
+                        'group_ne3ao98/Use_of_toilet', '_attachments', 'ff_uuid', 'Family_Photo', 'Toilet_Photo']
+                        if record.ff_data:
+                            data = {}
+                            for data_key in key_list:
+                                if data_key in record.ff_data:
+                                    data[data_key] = record.ff_data[data_key]
+                        else:
+                            data = {'group_vq77l17/Household_number': 00}
+                        return data
+
+                    formdict_family_factsheet = list(map(get_factsheet_data, household_data))
+
                 except Exception as e:
                     print(e, 'in ff')
                 temp_FF = {str(int(obj_FF['group_vq77l17/Household_number'])): obj_FF for obj_FF in
@@ -156,10 +177,11 @@ def masterSheet(request, slum_code=0, FF_code=0, RHS_code=0):
             temp_daily_reporting = {str(int(obj_DR['household_number'])): obj_DR for obj_DR in daily_reporting_data}
             temp_DR_keys = temp_daily_reporting.keys()
 
-            # # SBM - fetching data
+            # SBM - fetching data
             sbm_fields = ['slum', 'slum__name', 'household_number', 'name', 'application_id', 'photo_uploaded',
                           'created_date_str', 'id', 'phone_number', 'aadhar_number', 'photo_verified', 'photo_approved',
                           'application_verified', 'application_approved', 'sbm_comment']
+        
             sbm_data = SBMUpload.objects.extra(
                 select={'created_date_str': "to_char(created_date, 'YYYY-MM-DD ')"}).filter(
                 slum__id=slum_code[0][0])
@@ -176,8 +198,6 @@ def masterSheet(request, slum_code=0, FF_code=0, RHS_code=0):
             community_mobilization_data = CommunityMobilization.objects.extra(
                 select={'activity_date_str': "to_char(activity_date, 'YYYY-MM-DD ')"}).filter(
                 slum__id=slum_code[0][0])
-            # community_mobilization_data1 = community_mobilization_data.values(*community_mobilization_fields)
-            # community_mobilization_data_list = list(community_mobilization_data1)
             community_mobilization_data_avni = list(CommunityMobilizationActivityAttendance.objects.filter(
                 slum_id=slum_code[0][0]))
 
@@ -194,9 +214,6 @@ def masterSheet(request, slum_code=0, FF_code=0, RHS_code=0):
                             "Household_number": str(z),
                             "_id": "",
                             "ff_id": "",
-                            "ff_xform_id_string": "",
-                            "_xform_id_string": "",
-                            "_attachments": "",
                             "no_rhs_flag": "#eba6fc"
                         }
                     vendor_name = "vendor_type" + str(y.material_type)
@@ -218,9 +235,6 @@ def masterSheet(request, slum_code=0, FF_code=0, RHS_code=0):
                         "Household_number": str(int(y.household_number)),
                         "_id": "",
                         "ff_id": "",
-                        "ff_xform_id_string": "",
-                        "_xform_id_string": "",
-                        "_attachments": "",
                         "no_rhs_flag": "#eba6fc"
                     }
                     dummy_formdict[str(int(y.household_number))].update(
@@ -237,9 +251,6 @@ def masterSheet(request, slum_code=0, FF_code=0, RHS_code=0):
                                 "Household_number": z,
                                 "_id": "",
                                 "ff_id": "",
-                                "ff_xform_id_string": "",
-                                "_xform_id_string": "",
-                                "_attachments": "",
                                 "no_rhs_flag": "#eba6fc"
                             }
                         dummy_formdict[z].update(
@@ -251,9 +262,6 @@ def masterSheet(request, slum_code=0, FF_code=0, RHS_code=0):
                         "Household_number": i,
                         "_id": "",
                         "ff_id": "",
-                        "ff_xform_id_string": "",
-                        "_xform_id_string": "",
-                        "_attachments": "",
                         "no_rhs_flag": "#eba6fc"
                     }
                 dummy_formdict[str(i)].update(temp_sbm[str(i)])
@@ -265,9 +273,6 @@ def masterSheet(request, slum_code=0, FF_code=0, RHS_code=0):
                         "Household_number": i,
                         "_id": "",
                         "ff_id": "",
-                        "ff_xform_id_string": "",
-                        "_xform_id_string": "",
-                        "_attachments": "",
                         "no_rhs_flag": "#eba6fc"
                     }
                 dummy_formdict[str(i)].update(temp_daily_reporting[str(i)])
@@ -297,63 +302,43 @@ def masterSheet(request, slum_code=0, FF_code=0, RHS_code=0):
                         else:
                             ff_id = temp_FF[x['Household_number']]
 
-                        if '_xform_id_string' in temp_FF[x['Household_number']].keys():
-                            ff_xform_id_string = temp_FF[x['Household_number']]['_xform_id_string']
-                            del (temp_FF[x['Household_number']]['_xform_id_string'])
-                        else:
-                            ff_xform_id_string = None
-
                         x.update(temp_FF[x['Household_number']])
                         x['OnfieldFactsheet'] = 'Yes'
                         x['_id'] = temp
                         x['ff_id'] = ff_id
-                        x['ff_xform_id_string'] = ff_xform_id_string
 
-                # Adding hyperlink for factsheet photos
-                if '_attachments' in x.keys() and len(x['_attachments']) != 0:
+                    # Adding hyperlink for factsheet photos
+                    if '_attachments' in x.keys() and len(x['_attachments']) != 0:
+                        PATH = '/media/shelter/attachments/' + "/".join(x['_attachments'][0]["filename"].split('/')[2:-1])
+                        if 'Toilet_Photo' in x.keys():
+                            x.update({'toilet_photo_url': PATH + '/' + x['Toilet_Photo']})
+                        if 'Family_Photo' in x.keys():
+                            x.update({'family_photo_url': PATH + '/' + x['Family_Photo']})
 
-                    y1 = x['_attachments'][0]["filename"].split('/')
-                    PATH = '/media/shelter/attachments/' + "/".join(x['_attachments'][0]["filename"].split('/')[2:-1])
-                    if 'Toilet_Photo' in x.keys():
-                        x.update({'toilet_photo_url': PATH + '/' + x['Toilet_Photo']})
-                    if 'Family_Photo' in x.keys():
-                        x.update({'family_photo_url': PATH + '/' + x['Family_Photo']})
-
-                else:
-                    if 'Toilet_Photo' and 'ff_uuid' in x.keys():
-                        ff_url = settings.AVNI_URL + '/#/app/subject/viewProgramEncounter?uuid=' + str(x['ff_uuid'])
-                        x.update({'toilet_photo_url': ff_url if ff_url else x['Toilet_Photo']})
-                        x.update({'family_photo_url': ff_url if ff_url else x['Family_Photo']})
+                    else:
+                        if 'Toilet_Photo' and 'ff_uuid' in x.keys():
+                            ff_url = settings.AVNI_URL + '/#/app/subject/viewProgramEncounter?uuid=' + str(x['ff_uuid'])
+                            x.update({'toilet_photo_url': ff_url if ff_url else x['Toilet_Photo']})
+                            x.update({'family_photo_url': ff_url if ff_url else x['Family_Photo']})
+                    # Adding hyperlink for factsheet
+                    if 'ff_uuid' in x.keys():
+                        x.update({'ff_url': settings.AVNI_URL + '/#/app/subject/viewProgramEncounter?uuid=' + str(x['ff_uuid'])})
 
                 # Adding hyperlink for RHS Data
-                if 'rhs_uuid' in x.keys():
-                    x.update({'rhs_url': settings.AVNI_URL + '#/app/subject?uuid=' + str(x['rhs_uuid'])})
-                elif '_xform_id_string' in x.keys():
-                    x.update({'rhs_url': settings.BASE_URL + str('shelter/forms/') + str(x['_xform_id_string']) + str(
-                        '/instance#/') + str(x['_id'])})
-                else:
-                    pass
+                # if 'rhs_uuid' in x.keys():
+                #     x.update({'rhs_url': settings.AVNI_URL + '#/app/subject?uuid=' + str(x['rhs_uuid'])})
                 
-                # Adding hyperlink for factsheet
-                if 'ff_uuid' in x.keys():
-                    x.update({'ff_url': settings.AVNI_URL + '/#/app/subject/viewProgramEncounter?uuid=' + str(x['ff_uuid'])})
-
-                if 'group_oi8ts04/Current_place_of_defecation' in x:
-                    if 'group_oi8ts04/Current_place_of_defecation' != 'Toilet by SA':
-                        x.update({'current place of defecation': x['group_oi8ts04/Current_place_of_defecation']})
-
-                if 'status' in x and x['status'] == 'Completed':
-                    x.update({'current place of defecation': 'Toilet by SA'})
-
-                cod_data = followup_data_false.filter(household_number=int(key)).exclude(followup_data__contains = 'Toilet by SA').order_by('-submission_date').first()
-                if cod_data:
-                    if 'group_oi8ts04/Which_Community_Toil_r_family_members_use' in cod_data.followup_data:
-                        data1 = cod_data.followup_data['group_oi8ts04/Which_Community_Toil_r_family_members_use']
-                        x.update({'group_oi8ts04/Which_Community_Toil_r_family_members_use': data1})
-                    if 'group_oi8ts04/Current_place_of_defecation' in cod_data.followup_data:
-                        data = cod_data.followup_data['group_oi8ts04/Current_place_of_defecation']
-                        if data not in ['Toilet by SA', 'Toilet by SA (SBM)']:
-                            x.update({'current place of defecation': data})
+                # Update Follow up data for household
+                if flag_fetch_rhs:
+                    if str(int(key)) in followup_data:
+                        if 'Type_of_structure_occupancy' in x and x['Type_of_structure_occupancy'] == 'Occupied house':
+                            final_followup_data = followup_data[str(int(key))]
+                            data = final_followup_data['followup_data']
+                            if 'group_oi8ts04/Current_place_of_defecation' in data:
+                                temp = data['group_oi8ts04/Current_place_of_defecation']
+                                data['current place of defecation'] = temp
+                            x.update(data)
+                    # check status if status is Completed change CPD to Toilet by SA.
                     if 'status' in x and x['status'] == 'Completed':
                         x.update({'current place of defecation': 'Toilet by SA'})
                         x.update({'group_oi8ts04/Status_of_toilet_under_SBM': ''})
@@ -368,12 +353,9 @@ def masterSheet(request, slum_code=0, FF_code=0, RHS_code=0):
             formdict = list(map(lambda x: dummy_formdict[x], dummy_formdict))
             for x in formdict:
                 try:
-                    if x['current place of defecation'] in ['SBM (Installment)', 'Own toilet'] and len(
-                            x['agreement_date_str']) > 1:
+                    if ('current place of defecation' in x and x['current place of defecation'] in ['SBM (Installment)', 'Own toilet']) and ('agreement_date_str' in x and x['agreement_date_str'] and len(x['agreement_date_str']) > 1):
                         x['incorrect_cpod'] = 'incorrect_cpod'
 
-                    if x['group_oi8ts04/Current_place_of_defecation'] == 'Own toilet' and x['status'] == 'Completed':
-                        x['incorrect_cpod'] = 'incorrect_cpod'
                 except Exception as e:
                     pass
                     # print ('not found - '+str(x['Household_number']))
@@ -524,7 +506,6 @@ def define_columns(request):
         {"data": "pocket", "title": "Pocket"},
         {"data": "comment", "title": "Comment"},
         # Append community mobilization here #
-
         # Append vendor type here #
     ]
     number_of_invisible_columns = 0
@@ -565,6 +546,7 @@ def define_columns(request):
     except Exception as e:
         print(e)
     final_data['buttons']['Accounts'] = list(range(vendor_pre_len, len(formdict_new)))
+
     # print final_data['buttons']['Accounts'] , len(final_data['buttons']['Accounts'])
     final_data['data'] = formdict_new
     return HttpResponse(json.dumps(final_data), content_type="application/json")

@@ -58,7 +58,7 @@ class avni_sync():
         # latest_date = last_submission_date.submission_date + timedelta(days=1)
         today = datetime.today()  # + timedelta(days= -1)
         latest_date = today.strftime('%Y-%m-%dT00:00:00.000Z')
-        iso = "2022-06-15T00:00:00.000Z"
+        iso = "2022-07-12T00:00:00.000Z"
         # return(latest_date)
         return iso
 
@@ -762,7 +762,7 @@ class avni_sync():
 
     def SaveDataFromIds(self):
 
-        IdList = ['b1fff0f1-7afd-47e2-aa4c-e9feec1ab028']  # 'cda4ce0e-f05c-4b49-ac6e-ed160eba1940']
+        IdList = ['8bd35d6a-51ce-4149-a44a-6ab11cb82b18']  # 'cda4ce0e-f05c-4b49-ac6e-ed160eba1940']
 
         ''' There Are Three Types Of Flag We Use
         1 - Subject Type
@@ -770,7 +770,7 @@ class avni_sync():
         3 - Program Encounter
         Please provide flag when sync data using UUIDs'''
 
-        flag = 'Encounters'
+        flag = 'Program Encounter'
 
         for i in IdList:
             try:
@@ -1029,20 +1029,20 @@ class avni_sync():
     # methods for sync encounter data through json file.
 
     def sync_sanitation_data(self):
-        with open('/home/shelter/Downloads/sanitation_data.json', 'r') as f:
+        with open('/home/shelter/Desktop/json_file_for_call/Sanitation_data.json', 'r') as f:
             count = 1
             data = json.load(f)
             for sanitation in data:
                 try:
                     hh_uuid = sanitation['Household_uuid']
                     hh_number = str(int(sanitation['household_number']))
-                    slum_name = sanitation['slum']
+                    slum_name = sanitation['Slum']
                     hh_created_date = sanitation['HH_created_date']
                     hh_last_modefied_date = sanitation['HH_last_modified_date']
                     lst_mod_date = sanitation['Last_modified_date']
                     san_uuid = sanitation['Sanitation_encounter_uuid']
                     empty_keys = [k for k, v in sanitation.items() if not v]
-                    del_lst1 = ['household_number','slum', 'ward', 'Last_modified_date', 'Sanitation_encounter_uuid', 'Household_uuid', 'HH_last_modified_date', 'HH_created_date']
+                    del_lst1 = ['household_number','Slum', 'Last_modified_date', 'Sanitation_encounter_uuid', 'Household_uuid', 'HH_last_modified_date', 'HH_created_date']
                     del_lst = del_lst1 + empty_keys
                     for j in del_lst:
                         del sanitation[j]
@@ -1088,13 +1088,13 @@ class avni_sync():
                     if water["group_el9cl08/Type_of_water_connection"]:
                         hh_uuid = water['Household_uuid']
                         hh_number = str(int(water['household_number']))
-                        slum_name = water['slum']
+                        slum_name = water['Slum']
                         hh_created_date = water['HH_created_date']
                         hh_last_modefied_date = water['HH_last_modified_date']
                         lst_mod_date = water['Last_modified_date']
                         water_uuid = water['water_encounter_uuid']
                         empty_keys = [k for k, v in water.items() if not v]
-                        del_lst1 = ['household_number','slum', 'ward', 'Last_modified_date', 'Household_uuid', 'HH_last_modified_date', 'HH_created_date']
+                        del_lst1 = ['household_number','Slum', 'Last_modified_date', 'Household_uuid', 'HH_last_modified_date', 'HH_created_date']
                         del_lst = del_lst1 + empty_keys
                         for j in del_lst:
                             del water[j]
@@ -1129,13 +1129,13 @@ class avni_sync():
                     if waste["group_el9cl08/Facility_of_solid_waste_collection"]:
                         hh_uuid = waste['Household_uuid']
                         hh_number = str(int(waste['household_number']))
-                        slum_name = waste['slum']
+                        slum_name = waste['Slum']
                         hh_created_date = waste['HH_created_date']
                         hh_last_modefied_date = waste['HH_last_modified_date']
                         lst_mod_date = waste['Last_modified_date']
                         waste_uuid = waste['waste_encounter_uuid']
                         empty_keys = [k for k, v in waste.items() if not v]
-                        del_lst1 = ['household_number','slum', 'ward', 'Last_modified_date', 'Household_uuid', 'HH_last_modified_date', 'HH_created_date']
+                        del_lst1 = ['household_number','Slum', 'Last_modified_date', 'Household_uuid', 'HH_last_modified_date', 'HH_created_date']
                         del_lst = del_lst1 + empty_keys
                         for j in del_lst:
                             del waste[j]
@@ -1159,7 +1159,7 @@ class avni_sync():
                     print(e, hh_number, "waste uuid = " + waste_uuid)
 
     def sync_json_covid_data(self):
-        with open('/home/shelter/Desktop/json_file_for_call/Covid_data.json', 'r') as f:
+        with open('/home/shelter/Desktop/json_file_for_call/Covid_data_test.json', 'r') as f:
             count = 1
             data = json.load(f)
             for record in data:
@@ -1171,6 +1171,7 @@ class avni_sync():
                         slum_id, city_id = self.get_city_slum_ids(slum_name)
                         date_of_survey = dateparser.parse(record['created_date_time']).date()
                         last_modified_date = dateparser.parse(record['last_modified_date_time']).date()
+                        skip_keys = ['slum', 'uuid', 'created_date_time', 'last_modified_date_time', 'first_dose_date', 'second_dose_date']
                         key_list = ['preganant_or_lactating_mother', 'registered_for_covid_vaccination', 'take_first_dose', 'willing_to_vaccinated', 'do_you_have_any_other_disease', 'take_second_dose', 'corona_infected']
                         def check_nan(val):
                             return val == val
@@ -1180,6 +1181,8 @@ class avni_sync():
                             if check_nan(v) and v != None:
                                 if k in key_list:
                                     final_dict[k] = v.capitalize()
+                                elif k in skip_keys:
+                                    continue
                                 else:
                                     final_dict[k] = v
                             else:
@@ -1195,7 +1198,7 @@ class avni_sync():
                             second_dose_date = None
 
                         # print(final_dict)
-                        del_lst = ['household_number','slum', 'created_date_time', 'last_modified_date_time', 'uuid', 'second_dose_date', 'first_dose_date']
+                        del_lst = ['household_number','Slum', 'created_date_time', 'last_modified_date_time', 'uuid', 'second_dose_date', 'first_dose_date']
                         for j in del_lst:
                             if j in final_dict:
                                 del final_dict[j]
