@@ -58,7 +58,7 @@ class avni_sync():
         # latest_date = last_submission_date.submission_date + timedelta(days=1)
         today = datetime.today()  # + timedelta(days= -1)
         latest_date = today.strftime('%Y-%m-%dT00:00:00.000Z')
-        iso = "2022-07-12T00:00:00.000Z"
+        iso = "2022-07-21T00:00:00.000Z"
         # return(latest_date)
         return iso
 
@@ -468,6 +468,13 @@ class avni_sync():
                 agreement_cancelled = True
             else:
                 agreement_cancelled = False
+            if 'Is the material is shifted ?' in data and data['Is the material is shifted ?'] == 'Yes, Within the Slum':   # If 'Is the material is shifted ?' in data means material is shifted in same slum.
+                materialIsShifted = True
+            elif 'Is the material is shifted ?' in data and data['Is the material is shifted ?'] == 'Yes, Outside the Slum':
+                print("Outside Shifting is handle by the office.")
+                return "Done"
+            else:
+                materialIsShifted = False
 
             if 'Date of agreement' in data:
                 agreement_date = dateparser.parse(data['Date of agreement']).date()
@@ -478,19 +485,19 @@ class avni_sync():
             else:
                 septic_tank_date = None
 
-            if len(phase_one_material_dates) > 0 and not(agreement_cancelled): # Checking if agreement not cancelled.
+            if len(phase_one_material_dates) > 0 and not(agreement_cancelled or materialIsShifted): # Checking if agreement not cancelled.
                 phase_one_material_dates.sort(reverse = True)
                 phase_one_material_date = dateparser.parse(phase_one_material_dates[0]).replace(tzinfo=None)
             else:
                 phase_one_material_date = None
 
-            if len(phase_two_material_dates) > 0 and not agreement_cancelled:  # Checking if agreement not cancelled.
+            if len(phase_two_material_dates) > 0 and not (agreement_cancelled or materialIsShifted):  # Checking if agreement not cancelled.
                 phase_two_material_dates.sort(reverse = True)
                 phase_two_material_date = dateparser.parse(phase_two_material_dates[0]).replace(tzinfo=None)
             else:
                 phase_two_material_date = None
 
-            if 'Date on which door is given' in data and not agreement_cancelled:    # Checking if agreement not cancelled.
+            if 'Date on which door is given' in data and not (agreement_cancelled or materialIsShifted):    # Checking if agreement not cancelled.
                 phase_three_material_date = dateparser.parse(data['Date on which door is given']).date()
             else:
                 phase_three_material_date = None
@@ -502,7 +509,7 @@ class avni_sync():
 
             # Checking if agreement cancelled because sifting data question appears only when the agreement cancelled .
 
-            if agreement_cancelled:
+            if agreement_cancelled or materialIsShifted:
 
                 # if only phase 1 material is given.
                 if 'House numbers of houses where PHASE 1 material bricks, sand and cement is given' in data: 
@@ -762,7 +769,7 @@ class avni_sync():
 
     def SaveDataFromIds(self):
 
-        IdList = ['8bd35d6a-51ce-4149-a44a-6ab11cb82b18']  # 'cda4ce0e-f05c-4b49-ac6e-ed160eba1940']
+        IdList = ['97697dc9-b715-4af0-a809-cccad2180bc5'] # 'cda4ce0e-f05c-4b49-ac6e-ed160eba1940']
 
         ''' There Are Three Types Of Flag We Use
         1 - Subject Type

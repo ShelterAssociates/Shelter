@@ -76,7 +76,7 @@ def masterSheet(request, slum_code=0, FF_code=0, RHS_code=0):
                 def check_rhs_data(record):
                     key_list = ['rhs_uuid', 'Date_of_survey', 'Name_s_of_the_surveyor_s', 'Type_of_structure_occupancy', 'Type_of_unoccupied_house', 'Parent_household_number', 'group_og5bx85/Full_name_of_the_head_of_the_household', "group_el9cl08/Enter_the_10_digit_mobile_number",
                     "group_el9cl08/Aadhar_number", "group_el9cl08/Number_of_household_members", 'group_el9cl08/Do_you_have_any_girl_child_chi', "group_el9cl08/How_many", "group_el9cl08/Type_of_structure_of_the_house",
-                    "group_el9cl08/Ownership_status_of_the_house", "group_el9cl08/House_area_in_sq_ft", "group_el9cl08/Type_of_water_connection", "group_el9cl08/Facility_of_solid_waste_collection"]
+                    "group_el9cl08/Ownership_status_of_the_house", "group_el9cl08/House_area_in_sq_ft", "group_el9cl08/Type_of_water_connection", "group_el9cl08/Facility_of_solid_waste_collection", "Plus code of the house"]
                     # if occupied house then if block called otherwise else block called.
                     if record.rhs_data and record.rhs_data['Type_of_structure_occupancy'] == 'Occupied house':
                         data = {rhs_key :record.rhs_data[rhs_key] for rhs_key in key_list if rhs_key in record.rhs_data}
@@ -85,12 +85,14 @@ def masterSheet(request, slum_code=0, FF_code=0, RHS_code=0):
                         data['Household_id'] = record.id
                         return data
                     else:
-                        key_list = ['rhs_uuid', 'Date_of_survey', 'Name_s_of_the_surveyor_s', 'Type_of_structure_occupancy', 'group_og5bx85/Type_of_survey']
-                        data = {rhs_key :record.rhs_data[rhs_key] for rhs_key in key_list if rhs_key in record.rhs_data}
+                        key_list = ['rhs_uuid', 'Date_of_survey', 'Name_s_of_the_surveyor_s', 'Type_of_structure_occupancy', 'group_og5bx85/Type_of_survey', "Plus code of the house"]
+                        if record.rhs_data:
+                            data = {rhs_key :record.rhs_data[rhs_key] for rhs_key in key_list if rhs_key in record.rhs_data}
+                        else:
+                            data = {}
                         data['Household_number'] = record.household_number
                         data['Household_id'] = record.id
                         return data
-                
                 
                 formdict = list(map(check_rhs_data, household_data))
                 cod_data = FollowupData.objects.filter(slum=slum_code[0][0]).values('household_number', 'followup_data', 'submission_date')
@@ -358,7 +360,6 @@ def masterSheet(request, slum_code=0, FF_code=0, RHS_code=0):
 
                 except Exception as e:
                     pass
-                    # print ('not found - '+str(x['Household_number']))
     except Exception as e:
         print(e)
     return HttpResponse(json.dumps(formdict), content_type="application/json")
@@ -419,6 +420,7 @@ def define_columns(request):
         {"data": "Date_of_survey", "title": "Date of Survey"},
         {"data": "Name_s_of_the_surveyor_s", "title": "Name of the Surveyor"},
         {"data": "Type_of_structure_occupancy", "title": "Type of structure occupancy"},
+        {"data": "Plus code of the house", "title": "Plus code of the house"},
         {"data": "Type_of_unoccupied_house", "title": "Type of unoccupied house"},  # 5
         {"data": "Parent_household_number", "title": "Parent household number"},
         {"data": "group_og5bx85/Full_name_of_the_head_of_the_household",
@@ -516,15 +518,15 @@ def define_columns(request):
     final_data = {}
     final_data['buttons'] = collections.OrderedDict()
     final_data['buttons']['RHS'] = list(range(number_of_invisible_columns + 1,
-                                              number_of_invisible_columns + 1 + 18))  # range(14,32)#range(13,31)
-    final_data['buttons']['Follow-up'] = list(range(number_of_invisible_columns + 1 + 18,
-                                                    number_of_invisible_columns + 1 + 18 + 19))  # range(32,50)#range(31,49)
-    final_data['buttons']['Family factsheet'] = list(range(number_of_invisible_columns + 1 + 18 + 19,
-                                                           number_of_invisible_columns + 1 + 18 + 19 + 7))  # range(50,57)#range(49,56)
-    final_data['buttons']['SBM'] = list(range(number_of_invisible_columns + 1 + 18 + 19 + 7,
-                                              number_of_invisible_columns + 1 + 18 + 19 + 7 + 10))  # range(57,67)#range(56,66)
-    final_data['buttons']['Construction status'] = list(range(number_of_invisible_columns + 1 + 18 + 19 + 7 + 10,
-                                                              number_of_invisible_columns + 1 + 18 + 19 + 7 + 10 + 15))  # range(67,82)#range(66,81)
+                                              number_of_invisible_columns + 1 + 19))  # range(14,33)#range(13,32)
+    final_data['buttons']['Follow-up'] = list(range(number_of_invisible_columns + 1 + 19,
+                                                    number_of_invisible_columns + 1 + 19 + 19))  # range(33,51)#range(33,50)
+    final_data['buttons']['Family factsheet'] = list(range(number_of_invisible_columns + 1 + 19 + 19,
+                                                           number_of_invisible_columns + 1 + 19 + 19 + 7))  # range(51,58)#range(50,57)
+    final_data['buttons']['SBM'] = list(range(number_of_invisible_columns + 1 + 19 + 19 + 7,
+                                              number_of_invisible_columns + 1 + 19 + 19 + 7 + 10))  # range(58,68)#range(57,67)
+    final_data['buttons']['Construction status'] = list(range(number_of_invisible_columns + 1 + 19 + 19 + 7 + 10,
+                                                              number_of_invisible_columns + 1 + 19 + 19 + 7 + 10 + 15))  # range(68,83)#range(67,82)
     # We define the columns for community mobilization and vendor details in a dynamic way. The
     # reason being these columns are prone to updates and additions.
     activity_pre_len = len(formdict_new)
@@ -1010,7 +1012,7 @@ def give_report_table_numbers(request):  # view for toilet construction
                            'phase_three_material_date',
                            'completion_date', 'septic_tank_date', 'use_of_toilet', 'toilet_connected_to',
                            'factsheet_done']:
-            filter_field = {'slum__id__in': keys, 'agreement_date__range': [start_date, end_date],
+            filter_field = {'slum__id__in': keys, 'phase_one_material_date__range': [start_date, end_date],
                             query_field + '__isnull': False}
         else:
             filter_field = {'slum__id__in': keys, query_field + '__range': [start_date, end_date]}
@@ -1033,7 +1035,7 @@ def give_report_table_numbers(request):  # view for toilet construction
                 if tag == 'city':
                     T_Housenum = ToiletConstruction.objects.filter(
                         slum__electoral_ward__administrative_ward__city__id=l,
-                        completion_date__range=[start_date, end_date], factsheet_done__isnull=False).values_list(
+                        phase_one_material_date__range=[start_date, end_date], factsheet_done__isnull=False).values_list(
                         'household_number', flat=True)
 
                     Spsr_Housecode = SponsorProjectDetails.objects.filter(
@@ -1042,7 +1044,7 @@ def give_report_table_numbers(request):  # view for toilet construction
 
                 elif tag == 'admin_ward':
                     T_Housenum = ToiletConstruction.objects.filter(slum__electoral_ward__administrative_ward__id=l,
-                                                                   completion_date__range=[start_date, end_date],
+                                                                   phase_one_material_date__range=[start_date, end_date],
                                                                    factsheet_done__isnull=False).values_list(
                         'household_number', flat=True)
 
@@ -1051,7 +1053,7 @@ def give_report_table_numbers(request):  # view for toilet construction
                         'household_code', flat=True)
                 elif tag == 'electoral_ward':
                     T_Housenum = ToiletConstruction.objects.filter(slum__electoral_ward__id=l,
-                                                                   completion_date__range=[start_date, end_date],
+                                                                   phase_one_material_date__range=[start_date, end_date],
                                                                    factsheet_done__isnull=False).values_list(
                         'household_number', flat=True)
 
@@ -1059,7 +1061,7 @@ def give_report_table_numbers(request):  # view for toilet construction
                         sponsor__id=10).values_list('household_code', flat=True)
                 elif tag == 'slum':
                     T_Housenum = ToiletConstruction.objects.filter(slum__id=l,
-                                                                   completion_date__range=[start_date, end_date],
+                                                                   phase_one_material_date__range=[start_date, end_date],
                                                                    factsheet_done__isnull=False).values_list(
                         'household_number', flat=True)
 
@@ -1406,7 +1408,6 @@ def accounts_excel_generation(request):
         start_date = datetime.datetime.strptime(request.POST.get('account_start_date'), "%d-%m-%Y").date()
         end_date = datetime.datetime.strptime(request.POST.get('account_end_date'), "%d-%m-%Y").date()
     wb = Workbook()
-    print(slum_id)
     sheet1 = wb.add_sheet('Sheet1')
     sheet1.write(0, 0, 'Date')
     sheet1.write(0, 1, 'Invoice No')
@@ -1427,17 +1428,62 @@ def accounts_excel_generation(request):
     sheet1.write(0, 16, 'Transport Charges')
     sheet1.write(0, 17, 'Unloading Charges')
     sheet1.write(0, 18, 'Amount')
+    sheet1.write(0, 19, 'Toilet Record In MasterSheet')
 
     if len(city_id) == 0:
         invoiceItems = InvoiceItems.objects.filter(slum__id=int(slum_id),
                                                    invoice__invoice_date__range=[start_date, end_date])
         fname = str(Slum.objects.get(id=int(slum_id))) + '.xls'
+        sponsor = SponsorProjectDetails.objects.filter(slum__id=int(slum_id)).exclude(sponsor_project=1)
+        Toilet = ToiletConstruction.objects.filter(slum__id=int(slum_id)).exclude(agreement_cancelled = True).values_list('slum_id', 'household_number', 'phase_one_material_date', 'phase_two_material_date', 'phase_three_material_date')
     else:
         invoiceItems = InvoiceItems.objects.filter(slum__electoral_ward__administrative_ward__city__id=int(city_id),
                                                    invoice__invoice_date__range=[start_date, end_date])
         fname = str(City.objects.get(id=int(city_id))) + '.xls'
+        sponsor = SponsorProjectDetails.objects.filter(slum__electoral_ward__administrative_ward__city__id=int(city_id)).exclude(sponsor_project=1)
+        Toilet = ToiletConstruction.objects.filter(slum__electoral_ward__administrative_ward__city__id=int(city_id)).exclude(agreement_cancelled = True).values_list('slum_id', 'household_number', 'phase_one_material_date', 'phase_two_material_date', 'phase_three_material_date')
+    
     dict_of_dict = defaultdict(dict)
-    sponsor = SponsorProjectDetails.objects.all()
+    sponsor_with_slum = {}
+    toiletData = {}
+    for i in sponsor:
+        slum = i.slum_id
+        if slum not in sponsor_with_slum:
+            sponsor_with_slum[slum] = [(i.sponsor_project.name, i.household_code)]
+        else:
+            temp_data = sponsor_with_slum[slum]
+            temp_data.append((i.sponsor_project.name, i.household_code))
+            sponsor_with_slum[slum] = temp_data
+
+    for i in Toilet:
+        (slum, household, phaseOne, phaseTwo, phaseThree) = i
+        if phaseOne or phaseTwo or phaseThree:
+            if slum not in toiletData:
+                toiletData[slum] = [household]
+            else:
+                temp = toiletData[slum]
+                temp.append(household)
+                toiletData[slum] = temp
+
+    def check_funder(house, slum):
+        try:
+            if slum in sponsor_with_slum:
+                sponsor_with_slum_lst = sponsor_with_slum[slum]
+                for i in sponsor_with_slum_lst:
+                    if house in i[1]:
+                        return i[0]
+                return "Funder Not Assign"
+            return "No Funder For This Slum"
+        except Exception as e:
+            print(e, house, slum)
+    def check_toilet_data(house, slum):
+        try:
+            if slum in toiletData:
+                if str(house) in toiletData[slum]:
+                    return "Toilet Record Found"
+            return "Toilet Record Not Found"
+        except Exception as e:
+            print(e, house, slum)
 
     for i in invoiceItems:
         for j in i.household_numbers:
@@ -1445,19 +1491,13 @@ def accounts_excel_generation(request):
                 dict_of_dict[(j, i.slum)].update({i.material_type: i})
             except:
                 dict_of_dict[(j, i.slum)] = {i.material_type: i}
-
     i = 1
     for k, v in dict_of_dict.items():
-        try:
-            s = str(sponsor.filter(slum__id=1094, household_code__contains=k[0]).exclude(
-                sponsor__organization_name='SBM Toilets')[0].sponsor.organization_name)
-        except Exception as e:
-            s = 'Sponsor Error'
         for inner_k, inner_v in v.items():
             sheet1.write(i, 0, str(inner_v.invoice.invoice_date))
             sheet1.write(i, 1, inner_v.invoice.invoice_number)
             sheet1.write(i, 2, inner_v.invoice.vendor.name)
-            sheet1.write(i, 3, s)
+            sheet1.write(i, 3, check_funder(k[0], inner_v.slum.id))
             sheet1.write(i, 4, inner_v.slum.electoral_ward.administrative_ward.city.name.city_name)
             sheet1.write(i, 5, inner_v.slum.name)
             sheet1.write(i, 6, k[0])
@@ -1490,6 +1530,7 @@ def accounts_excel_generation(request):
             sheet1.write(i, 16, round(tc, 2))
             sheet1.write(i, 17, round(luc, 2))
             sheet1.write(i, 18, round(inner_v.total / len(inner_v.household_numbers) + tc + luc, 2))
+            sheet1.write(i, 19, check_toilet_data(k[0], inner_v.slum.id))
             i = i + 1
 
     # wb.save(fname)
