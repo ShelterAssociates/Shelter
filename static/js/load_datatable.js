@@ -1,3 +1,4 @@
+var report_short_datatable = null;
 var columns_defs;
 var table = null;
 var divider = 1000 * 60 * 60 * 24;
@@ -755,12 +756,100 @@ $(document).ready(function() {
 
     }
 
+
+    // For Summery View Datatable master method.......
+    function load_short_datatable(){
+
+		btn_default = [
+			{
+				extend: 'excel',
+				text: 'Excel',
+			}
+	   ];
+       if (report_short_datatable != null )
+       {
+           $("#slum_form p").find("#slum_info").html("");
+           $("#slum_form p").find("#slum_info").remove();
+           $(".overlay").show();
+           report_short_datatable.ajax.reload();
+       }
+       else
+       {
+               
+               $(".overlay").show();
+               $("#legend1").show();
+               $("#legend2").show();
+               buttons = '<div class="btn-group">';
+               $.each(columns_defs['buttons'],function(index, button){
+                   buttons += '<button type="button" class="active btn btn-default" value="'+index+'" id="'+index.replace(/ /g,'')+'">'+index+'</button>';
+               });
+               buttons += '</div>';
+               $("#buttons").append(buttons);
+        report_short_datatable = $("#example").DataTable({
+			"sDom": '<"top"Bfl>r<"mid"t><"bottom"ip><"clear">',
+			"paging" : true,
+			"order": [[ 9, "desc" ]],
+			"ajax":{
+                url : "/mastersheet/show/showSummery/",
+                dataSrc:"",
+                data: function(){
+                    return $("#slum_form").serialize();// , 'csrfmiddlewaretoken':csrf_token}
+                    // NOTE : We could have assigned the variable itself to the 'data' attribute, instead
+                    // of writing  function. That method promotes the errorneous behaviour. The code would have been
+                    // unable to update the 'data' attribute on the call of 'table.ajax.reload()'. 
+                },
+                contentType : "application/json",
+                dataSrc: function(data){
+                    return data;
+                },
+                complete:function(){
+                         $(".overlay").hide(); 
+                },
+                error:function(response){
+                    $(".overlay").hide();
+                    if (response.responseText!=""){
+                        alert(response.responseText);
+                    }
+                }
+			},
+            
+			"buttons":btn_default,
+			"columnDefs": [{"defaultContent": "-","targets": "_all"},{"footer":true},],
+			"columns":[
+                {'data': 'household_number', 'title': 'Household Number'},
+                {'data': 'pluscodes', 'title': 'Plus Code'},
+                {'data': 'occupancy_status', 'title': 'Occupancy Status'},
+                {'data': 'name_head_of_he_household', 'title': 'Name of the head of the household'},
+                {'data': 'current_place_of_defication', 'title': 'Current place of defecation'},
+                {'data': 'phase_one_material_date', 'title': 'Date of Phase One Material'},
+                {'data': 'Completion delayed', 'title': 'Completion delayed:'},
+                {'data': 'agreement_cancelled', 'title': 'Agreement Cancelled?'},
+                {'data': 'material_shifted', 'title': 'Material shifted (Yes/No)'},
+                {'data': 'toilet_status', 'title': 'Final Status of toilet'},
+                {'data': 'sponsor_project', 'title': 'Funder (Project Name)'},
+                {'data': 'factsheet_done', 'title': 'Factsheet onfield'},
+                {'data': 'toilet_connected_to', 'title': 'Toilet Connected Status'},
+                {'data': 'total_moilization_acticity', 'title': 'No. of mobilisation activities attended by family'},
+                {'data': 'invoice_entry', 'title': 'Invoice entry (Yes/No)'}
+					],
+			
+		});
+        $("div.dt-buttons>button").addClass("pull-left");
+        add_search_box();
+        $( report_short_datatable.table().container() ).on( 'keyup ','tfoot tr th input',function (index, element){
+            report_short_datatable.column($(this).attr('dt_index')).search( String(this.value) ).draw();
+
+        } );
+	}
+}
+
     function select_rows(){
         $('#example tbody').on( 'click', 'tr', function () {
             $(this).toggleClass('selected');
         });
     }
 
+    // For Mastersheet View 
     $("#btnFetch").click(function(){
         
         if(document.forms[0].slumname.value == ""){
@@ -797,7 +886,42 @@ $(document).ready(function() {
 
     });
 
-   
+    // for Short View of mastersheet...
+    $("#btnFetchShort").click(function(){
+        if(document.forms[0].slumname.value == ""){
+            alert("Please select a slum");
+        }
+        else{
+            $.ajax({
+                url : "/mastersheet/details/",
+                //dataSrc:"",
+                type : "GET",
+                data:  {'form':$("#slum_form").serialize() , 'csrfmiddlewaretoken':csrf_token}
+                    // NOTE : We could have assigned the variable itself to the 'data' attribute, instead
+                    // of writing  function. That method promotes the errorneous behaviour. The code would have been
+                    // unable to update the 'data' attribute on the call of 'table.ajax.reload()'. 
+                ,
+                contentType : "application/json",
+                success: function(data){
+                    // Displaying the electoral ward and name of the slum besides the look-up box
+                    if (data != 'undefined'){
+                        city_code = data["City Code"];
+                        var slum_info = document.createElement('div');
+                        slum_info.classList.add("display_line");
+                        slum_info.setAttribute("id" , "slum_info");
+                        slum_info.innerHTML = "<p>"+data["Name of the slum"]+", "+data["Electoral Ward"] +"</p>"; 
+                        //console.log(data.responseJSON[data.responseJSON.length-1]);
+                        $("#slum_form p").append(slum_info);
+                        
+                    }
+                     
+                },
+            });
+            load_short_datatable();
+        }
+
+    });
+
 
     function trim_space(str){
         if(str != null)
