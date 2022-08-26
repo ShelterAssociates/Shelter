@@ -19,5 +19,7 @@ urlpatterns = [
     url(r'^show/mastersheet/$', renderMastersheet, name="renderMastersheet"),
     url(r'^list/show/$', masterSheet, name="masterSheet"),
     url(r'^sync/slum/$', sync_kobo_data, name='sync_kobo_data'),
-    url(r'^account/excel/$', accounts_excel_generation, name='accounts_excel_generation')
+    url(r'^account/excel/$', accounts_excel_generation, name='accounts_excel_generation'),
+    url(r'^show/summery/$', renderSummery, name="renderSummery"),
+    url(r'^show/showSummery/$', ProcessShortView, name='ProcessShortView')
 ]

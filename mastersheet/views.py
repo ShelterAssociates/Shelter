@@ -76,7 +76,7 @@ def masterSheet(request, slum_code=0, FF_code=0, RHS_code=0):
                 def check_rhs_data(record):
                     key_list = ['rhs_uuid', 'Date_of_survey', 'Name_s_of_the_surveyor_s', 'Type_of_structure_occupancy', 'Type_of_unoccupied_house', 'Parent_household_number', 'group_og5bx85/Full_name_of_the_head_of_the_household', "group_el9cl08/Enter_the_10_digit_mobile_number",
                     "group_el9cl08/Aadhar_number", "group_el9cl08/Number_of_household_members", 'group_el9cl08/Do_you_have_any_girl_child_chi', "group_el9cl08/How_many", "group_el9cl08/Type_of_structure_of_the_house",
-                    "group_el9cl08/Ownership_status_of_the_house", "group_el9cl08/House_area_in_sq_ft", "group_el9cl08/Type_of_water_connection", "group_el9cl08/Facility_of_solid_waste_collection", "Plus code of the house"]
+                    "group_el9cl08/Ownership_status_of_the_house", "group_el9cl08/House_area_in_sq_ft", "group_el9cl08/Type_of_water_connection", "group_el9cl08/Facility_of_solid_waste_collection", "Plus code of the house", 'Plus Code Part']
                     # if occupied house then if block called otherwise else block called.
                     if record.rhs_data and record.rhs_data['Type_of_structure_occupancy'] == 'Occupied house':
                         data = {rhs_key :record.rhs_data[rhs_key] for rhs_key in key_list if rhs_key in record.rhs_data}
@@ -85,7 +85,7 @@ def masterSheet(request, slum_code=0, FF_code=0, RHS_code=0):
                         data['Household_id'] = record.id
                         return data
                     else:
-                        key_list = ['rhs_uuid', 'Date_of_survey', 'Name_s_of_the_surveyor_s', 'Type_of_structure_occupancy', 'group_og5bx85/Type_of_survey', "Plus code of the house"]
+                        key_list = ['rhs_uuid', 'Date_of_survey', 'Name_s_of_the_surveyor_s', 'Type_of_structure_occupancy', 'group_og5bx85/Type_of_survey', "Plus code of the house", 'Plus Code Part']
                         if record.rhs_data:
                             data = {rhs_key :record.rhs_data[rhs_key] for rhs_key in key_list if rhs_key in record.rhs_data}
                         else:
@@ -421,6 +421,7 @@ def define_columns(request):
         {"data": "Name_s_of_the_surveyor_s", "title": "Name of the Surveyor"},
         {"data": "Type_of_structure_occupancy", "title": "Type of structure occupancy"},
         {"data": "Plus code of the house", "title": "Plus code of the house"},
+        {"data": "Plus Code Part", "title": "Plus Code Part"},
         {"data": "Type_of_unoccupied_house", "title": "Type of unoccupied house"},  # 5
         {"data": "Parent_household_number", "title": "Parent household number"},
         {"data": "group_og5bx85/Full_name_of_the_head_of_the_household",
@@ -518,15 +519,15 @@ def define_columns(request):
     final_data = {}
     final_data['buttons'] = collections.OrderedDict()
     final_data['buttons']['RHS'] = list(range(number_of_invisible_columns + 1,
-                                              number_of_invisible_columns + 1 + 19))  # range(14,33)#range(13,32)
-    final_data['buttons']['Follow-up'] = list(range(number_of_invisible_columns + 1 + 19,
-                                                    number_of_invisible_columns + 1 + 19 + 19))  # range(33,51)#range(33,50)
-    final_data['buttons']['Family factsheet'] = list(range(number_of_invisible_columns + 1 + 19 + 19,
-                                                           number_of_invisible_columns + 1 + 19 + 19 + 7))  # range(51,58)#range(50,57)
-    final_data['buttons']['SBM'] = list(range(number_of_invisible_columns + 1 + 19 + 19 + 7,
-                                              number_of_invisible_columns + 1 + 19 + 19 + 7 + 10))  # range(58,68)#range(57,67)
-    final_data['buttons']['Construction status'] = list(range(number_of_invisible_columns + 1 + 19 + 19 + 7 + 10,
-                                                              number_of_invisible_columns + 1 + 19 + 19 + 7 + 10 + 15))  # range(68,83)#range(67,82)
+                                              number_of_invisible_columns + 1 + 20))  # range(14,34)#range(13,33)
+    final_data['buttons']['Follow-up'] = list(range(number_of_invisible_columns + 1 + 20,
+                                                    number_of_invisible_columns + 1 + 20 + 19))  # range(34,52)#range(33,51)
+    final_data['buttons']['Family factsheet'] = list(range(number_of_invisible_columns + 1 + 20 + 19,
+                                                           number_of_invisible_columns + 1 + 20 + 19 + 7))  # range(52,59)#range(51,58)
+    final_data['buttons']['SBM'] = list(range(number_of_invisible_columns + 1 + 20 + 19 + 7,
+                                              number_of_invisible_columns + 1 + 20 + 19 + 7 + 10))  # range(60,69)#range(58,68)
+    final_data['buttons']['Construction status'] = list(range(number_of_invisible_columns + 1 + 20 + 19 + 7 + 10,
+                                                              number_of_invisible_columns + 1 + 20 + 19 + 7 + 10 + 15))  # range(70,84)#range(68,83)
     # We define the columns for community mobilization and vendor details in a dynamic way. The
     # reason being these columns are prone to updates and additions.
     activity_pre_len = len(formdict_new)
@@ -1538,3 +1539,156 @@ def accounts_excel_generation(request):
     response['Content-Disposition'] = 'attachment; filename=%s' % str(fname).replace(' ', '_')
     wb.save(response)
     return response
+
+
+# For Mastersheet Summery View rendering mastersheet summery page
+@permission_required('mastersheet.can_view_mastersheet', raise_exception=True)
+def renderSummery(request):
+    slum_search_field = find_slum()
+    account_slum_search_field = account_find_slum()
+    file_form1 = file_form()
+    return render(request, 'mastersheet_summery.html', {'form': slum_search_field, 'form_account': account_slum_search_field, 'file_form': file_form1})
+
+
+# For Mastersheet Summery View Processing data
+@csrf_exempt
+@apply_permissions_ajax('mastersheet.can_view_mastersheet')
+@deco_city_permission
+def ProcessShortView(request, slum_code=0):
+    try:
+        formdict = []
+        rhs_not_done = []
+        slum_code = Slum.objects.filter(pk=int(request.GET['slumname'])).values_list("id", "name", "electoral_ward__administrative_ward__city__name__city_name")
+        slum_funder = SponsorProjectDetails.objects.filter(slum=slum_code[0][0]).exclude(sponsor__id=10)
+        act_data = CommunityMobilization.objects.filter(slum_id = slum_code[0][0]).values_list('activity_type', 'household_number')
+        comm_avni = CommunityMobilizationActivityAttendance.objects.filter(slum_id = slum_code[0][0]).values_list('activity_type', 'household_number')
+        invoice_data = InvoiceItems.objects.filter(slum_id = slum_code[0][0]).values_list('household_numbers', flat = True)
+
+        householdData = HouseholdData.objects.filter(slum_id = slum_code[0][0], rhs_data__isnull = False)
+        def getRhsData(record):
+            key_list = {'Plus code of the house': 'pluscodes', 'Type_of_structure_occupancy': 'occupancy_status', 
+            'group_og5bx85/Full_name_of_the_head_of_the_household': 'name_head_of_he_household', 'group_el9cl08/Ownership_status_of_the_house': 'ownership_status', 
+            'group_oi8ts04/Current_place_of_defecation': 'current_place_of_defication'}
+            if record.rhs_data and record.rhs_data['Type_of_structure_occupancy'] == 'Occupied house':
+                data = {key_list[i] : record.rhs_data[i] for i in key_list.keys() if i in record.rhs_data}
+                data['household_number'] = record.household_number
+            else:
+                key_list = {'Plus code of the house': 'pluscodes', 'Type_of_structure_occupancy': 'occupancy_status'}
+                data = {key_list[i] : record.rhs_data[i] for i in key_list.keys() if i in record.rhs_data}
+                data['household_number'] = record.household_number
+            
+            if record.ff_data:
+                data['factsheet_done'] = 'Yes'
+                if "group_oh4zf84/Name_of_the_family_head" in record.ff_data:
+                    data['family_factsheet_name'] = record.ff_data["group_oh4zf84/Name_of_the_family_head"]
+                if "group_ne3ao98/Where_the_individual_ilet_is_connected_to" in record.ff_data:
+                    data['toilet_connected_to'] = record.ff_data["group_ne3ao98/Where_the_individual_ilet_is_connected_to"]
+            data['slum'] = slum_code[0][1]
+            data['city_name'] = slum_code[0][2]
+            return data
+
+        formdict = list(map(getRhsData, householdData))
+        check_formdict = {str(int(x['household_number'])): x for x in formdict}
+
+        household_with_invoice_data = []
+        for i in invoice_data:
+            household_with_invoice_data.extend(i)
+        
+        for i in list(set(household_with_invoice_data)):
+            if str(i) in check_formdict:
+                temp = check_formdict[str(i)]
+                temp['invoice_entry'] = 'Yes'
+            else:
+                temp_dict = {'household_number':str(i), 'occupancy_status': "RHS Not Done", 'invoice_entry':'Yes'}
+                rhs_not_done.append(temp_dict)
+
+        activity_data_with_hh = {}
+        for activity_record in act_data:    # here we are processing data where we have household numbers in json field.
+            if activity_record[0] in activity_data_with_hh:
+                temp = activity_data_with_hh[activity_record[0]]
+                temp.extend(activity_record[1])
+                activity_data_with_hh[activity_record[0]] = list(set(temp))
+            else:
+                activity_data_with_hh[activity_record[0]] = activity_record[1]
+
+        for activity_record in comm_avni:    # here we are processing data where we have household numbers as str.
+            if activity_record[0] in activity_data_with_hh:
+                temp = activity_data_with_hh[activity_record[0]]
+                temp.extend(activity_record[1])
+                activity_data_with_hh[activity_record[0]] = list(set(temp))
+            else:
+                activity_data_with_hh[activity_record[0]] = [activity_record[1]]
+        
+        hh_activity_cnt = {}     # counting number of distinct activity attended by the household. 
+        for k, v in activity_data_with_hh.items():
+            for i in list(set(v)):
+                if i in hh_activity_cnt:
+                    hh_activity_cnt[i] += 1
+                else:
+                    hh_activity_cnt[i] = 1
+
+        for k, v in hh_activity_cnt.items():   # Adding activity count to the json data for response.
+            if k in check_formdict:
+                temp = check_formdict[k]
+                temp['total_moilization_acticity'] = v
+            else:
+                temp_dict = {'household_number':k, 'occupancy_status': "RHS Not Done", 'total_moilization_acticity':v}
+                rhs_not_done.append(temp_dict)
+
+        # Daily Reporting - fetching data
+        toilet_reconstruction_fields = ['slum', 'slum__name', 'household_number', 'agreement_date_str',
+                                            'agreement_cancelled',
+                                            'septic_tank_date_str', 'phase_one_material_date_str',
+                                            'phase_two_material_date_str', 'phase_three_material_date_str',
+                                            'completion_date_str', 'status', 'comment', 'pocket',
+                                            'p1_material_shifted_to',
+                                            'p2_material_shifted_to', 'p3_material_shifted_to',
+                                            'st_material_shifted_to',
+                                            'id']
+
+        daily_reporting_data = ToiletConstruction.objects.extra(
+                select={'phase_one_material_date_str': "to_char(phase_one_material_date, 'YYYY-MM-DD ')",
+                        'phase_two_material_date_str': "to_char(phase_two_material_date, 'YYYY-MM-DD ')",
+                        'phase_three_material_date_str': "to_char(phase_three_material_date, 'YYYY-MM-DD ')",
+                        'septic_tank_date_str': "to_char(septic_tank_date, 'YYYY-MM-DD ')",
+                        'agreement_date_str': "to_char(agreement_date, 'YYYY-MM-DD ')",
+                        'completion_date_str': "to_char(completion_date, 'YYYY-MM-DD ')"}).filter(
+                slum__id=slum_code[0][0])
+
+        daily_reporting_data = daily_reporting_data.values(*toilet_reconstruction_fields)
+        for i in daily_reporting_data:   # Prpcessing Daily Reporting data.
+            if i['household_number'] in check_formdict:
+                temp = check_formdict[i['household_number']]
+                temp['phase_one_material_date'] = i['phase_one_material_date_str']
+                if i['phase_two_material_date_str']: # Checking completion delayed.
+                    if not i['completion_date_str'] and is_delayed(i['phase_two_material_date_str']):
+                        temp['Completion delayed'] = 'Yes'
+                    else:
+                        temp['Completion delayed'] = 'No'
+                temp['agreement_cancelled'] = i['agreement_cancelled']
+
+                if i['p1_material_shifted_to'] or i['p2_material_shifted_to'] or i['p3_material_shifted_to']:  # Checking material is shifted or not.
+                    temp['material_shifted'] = 'Yes'
+                else:
+                    temp['material_shifted'] = 'No'
+                if i['status'] is not None:    # Checking Status of the household
+                    if i['status'].strip() != "":
+                        temp['toilet_status'] = ToiletConstruction.get_status_display(i['status'])
+
+                if len(slum_funder) != 0:   # Adding funder project name.
+                    for funder in slum_funder:
+                        if funder.household_code != None:
+                            if int(i['household_number']) in funder.household_code:
+                                temp.update({'sponsor_project': funder.sponsor_project.name})  # funder.sponsor.organization_name})
+
+                check_formdict[i['household_number']] = temp
+            else:
+                temp_dict = {'household_number':i['household_number'], 'occupancy_status': "RHS Not Done"}
+                rhs_not_done.append(temp_dict)
+
+        formdict.extend(rhs_not_done)
+
+
+    except Exception as e:
+        print(e)
+    return HttpResponse(json.dumps(formdict), content_type="application/json")
