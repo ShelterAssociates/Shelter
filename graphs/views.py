@@ -1,5 +1,5 @@
 from __future__ import division
-from re import S
+from re import S, T
 from django.shortcuts import render
 from django.conf import settings
 from django.contrib.auth.decorators import login_required
@@ -10,6 +10,7 @@ from django.db.models import Avg,Sum,Count
 from collections import OrderedDict
 from graphs.models import *
 from master.models import *
+from graphs.export_data import *
 import json
 
 from django.db.models import Q
@@ -803,118 +804,25 @@ def factsheetData(request):
 def factsheetDataDownload(request):         #     function for city wise factsheet data download.
     
     if request.method == 'POST':
+        Type_of_data = request.POST.get('Data')
         c_id = request.POST.get('City')
         startdate = request.POST.get('startdate')
         enddate = request.POST.get('enddate')
-    
-    a, city_name = cityWiseQuery(c_id, startdate, enddate)
+
+    if Type_of_data == 'Structure Data':
+        response_data, city_name = Structure_data(c_id)  # Check export_data.py file for Structure_data()
+        columns_lst = ['Slum Name', 'Total Structure (In KML)', 'Occupied house','Unoccupied house', 'Locked house', 'Shop', 'Demolished house']
+    elif Type_of_data == 'Factsheet Data':
+        response_data, city_name = cityWiseQuery(c_id, startdate, enddate)
+        columns_lst = ['Slum Name', 'Household_number', 'Name As Per RHS',  'Name As Per Factsheet', 'Ownership Status As Per Factsheet', 'Application id', 'Aadhar Number', 'Phone Number', 'Total_family_members', 'Male_members', 'Female_members', 'Below 5 years', 'Between_0_to_18', 'Above 60 years', 'disable_members', 'Toilet Connected To.', 'Have You Upgraded ?', 'Cost Of Upgradetion?', 'Sponsor Name', 'Who has built your toilet ?']
 
     filename = city_name+'.csv'
     
     response = HttpResponse(content_type='text/csv')
     response['Content-Disposition']  =  'attachment; filename='+filename
 
-    writer = csv.DictWriter(response, ['Slum Name', 'Household_number', 'Name As Per RHS',  'Name As Per Factsheet', 'Ownership Status As Per Factsheet', 'Application id', 'Aadhar Number', 'Phone Number', 'Total_family_members', 'Male_members', 'Female_members', 'Below 5 years', 'Between_0_to_18', 'Above 60 years', 'disable_members', 'Toilet Connected To.', 'Have You Upgraded ?', 'Cost Of Upgradetion?', 'Sponsor Name'])
+    writer = csv.DictWriter(response, columns_lst)
     writer.writeheader()
-    writer.writerows(a)
+    writer.writerows(response_data)
 
     return response
-
-def cityWiseQuery(city_id, startdate, enddate):
-    all=[]
-    city = CityReference.objects.filter(id = City.objects.filter(id = city_id).values_list('name_id')[0][0]).values_list('city_name')[0][0]
-
-    construction_pocket = ToiletConstruction.objects.filter(slum__electoral_ward__administrative_ward__city__id = city_id, completion_date__range= [startdate, enddate])
-
-    household_list = HouseholdData.objects.filter(city_id = city_id).values_list('household_number',flat= True)
-    fff_data = HouseholdData.objects.filter(ff_data__isnull=False,city_id =city_id)
-
-    family_factsheet_available = fff_data.values_list('household_number',flat= True)
-
-
-    for i in fff_data:
-        for j in construction_pocket :
-            if i.household_number == j.household_number and i.slum_id == j.slum_id :
-                family_data = {}
-                family_data.update({'Household_number': i.household_number})
-
-                sp = SponsorProjectDetails.objects.filter(slum_id = i.slum_id).exclude(sponsor_id = 10).values_list('household_code', 'sponsor_project_id')
-                sp_name = ""
-                for i1 in sp:
-                    if i1[0] is not None:
-                        if int(i.household_number) in i1[0]:
-                            sp_name = SponsorProject.objects.filter(id = i1[1]).values_list('name', flat=True)[0]
-                            break
-
-                if sp_name == "":
-                    family_data.update({'Sponsor Name': "Funder Not Assign"})
-                else:
-                    family_data.update({'Sponsor Name': sp_name})
-
-                slum_name = Slum.objects.filter(id = i.slum_id).values_list('name',flat = True)[0]
-
-                data1 =  SBMUpload.objects.filter(household_number = i.household_number, slum__id = i.slum_id).values_list('name', 'application_id', 'aadhar_number', 'phone_number')
-
-                
-                household_list = HouseholdData.objects.filter(household_number = i.household_number, slum__id = i.slum_id).values_list('rhs_data',flat= True)
-
-                if  len(household_list) > 0:
-                    if household_list[0] is not None and  household_list[0]['Type_of_structure_occupancy'] == 'Occupied house':
-                        family_data.update({'Name As Per RHS': household_list[0]['group_og5bx85/Full_name_of_the_head_of_the_household']})
-                
-                if data1.exists() == True:
-                    data = data1.values_list('application_id', 'aadhar_number', 'phone_number')
-                    if data[0][0] != 'nan':
-                        family_data.update({'Application id': data[0][0]})
-                    if data[0][1] != 'nan':
-                        family_data.update({'Aadhar Number': data[0][1]})
-                    if data[0][2] != 'nan':
-                        family_data.update({'Phone Number': data[0][2]})
-
-                
-                family_data.update({'Slum Name': slum_name})
-                ff_keys = i.ff_data.keys()
-                if 'group_im2th52/Total_family_members' in ff_keys:
-                    family_data.update({'Total_family_members': i.ff_data['group_im2th52/Total_family_members']})
-
-                if 'group_im2th52/Number_of_members_over_60_years_of_age' in ff_keys:
-                    family_data.update({'Above 60 years': i.ff_data['group_im2th52/Number_of_members_over_60_years_of_age']})
-                elif 'group_im2th52Number_of_members_over_60_years_of_age' in ff_keys:
-                    family_data.update({'Above 60 years': i.ff_data['group_im2th52Number_of_members_over_60_years_of_age']})
-
-                if 'group_im2th52/Number_of_disabled_members' in ff_keys:
-                    family_data.update({'disable_members': i.ff_data['group_im2th52/Number_of_disabled_members']})
-
-                if 'group_im2th52/Number_of_Male_members' in ff_keys:
-                    family_data.update({'Male_members': i.ff_data['group_im2th52/Number_of_Male_members']})
-
-                if 'group_im2th52/Number_of_Female_members' in ff_keys:
-                    family_data.update({'Female_members': i.ff_data['group_im2th52/Number_of_Female_members']})
-
-                if 'group_im2th52/Number_of_Girl_children_between_0_18_yrs' in ff_keys:
-                    family_data.update({'Between_0_to_18': i.ff_data['group_im2th52/Number_of_Girl_children_between_0_18_yrs']})
-
-                if 'group_im2th52/Number_of_Children_under_5_years_of_age' in ff_keys:
-                    family_data.update({'Below 5 years': i.ff_data['group_im2th52/Number_of_Children_under_5_years_of_age']})
-                
-                if 'group_ne3ao98/Have_you_upgraded_yo_ng_individual_toilet' in ff_keys:
-                    family_data.update({'Have You Upgraded ?': i.ff_data['group_ne3ao98/Have_you_upgraded_yo_ng_individual_toilet']})
-                
-                if 'group_ne3ao98/Cost_of_upgradation_in_Rs' in ff_keys:
-                    family_data.update({'Cost Of Upgradetion?': i.ff_data['group_ne3ao98/Cost_of_upgradation_in_Rs']})
-                
-                if 'group_ne3ao98/Where_the_individual_ilet_is_connected_to' in ff_keys:
-                    family_data.update({'Toilet Connected To.': i.ff_data['group_ne3ao98/Where_the_individual_ilet_is_connected_to']})
-                
-                if 'group_oh4zf84/Name_of_the_family_head' in ff_keys:
-                    family_data.update({'Name As Per Factsheet': i.ff_data['group_oh4zf84/Name_of_the_family_head']})
-
-                if 'group_oh4zf84/Ownership_status' in ff_keys:
-                    family_data.update({'Ownership Status As Per Factsheet': i.ff_data['group_oh4zf84/Ownership_status']})
-
-                 
-                
-                all.append(family_data)
-
-
-    return all, city

@@ -814,8 +814,9 @@ $(document).ready(function() {
 			},
             
 			"buttons":btn_default,
-			"columnDefs": [{"defaultContent": "-","targets": "_all"},{"footer":true},],
+			"columnDefs": [{"defaultContent": "-","targets": "_all"},{"footer":true},{"targets":0, "visible":false, "searchable":false}],
 			"columns":[
+                {'data': 'slum_name', 'title': 'Slum'},
                 {'data': 'household_number', 'title': 'Household Number'},
                 {'data': 'pluscodes', 'title': 'Plus Code'},
                 {'data': 'occupancy_status', 'title': 'Occupancy Status'},

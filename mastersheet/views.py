@@ -578,7 +578,6 @@ def file_ops(request):
             response = resp
         except Exception as e:
             response.append(('error msg', str(e)))
-
     return HttpResponse(json.dumps(response), content_type="application/json")
 
 
@@ -658,7 +657,7 @@ def handle_uploaded_file(f, response, slum_code):
                                 application_approved=check_bool(df_sbm.loc[int(i), 'Application Approved']),
                                 sbm_comment=df_sbm.loc[int(i), 'SBM Comment']
                             )
-                            response.append(("updated sbm", i))
+                            response.append(("updated sbm", int(i)))
 
                         else:
                             if True:
@@ -678,10 +677,10 @@ def handle_uploaded_file(f, response, slum_code):
 
                                 )
                                 SBM_instance_1.save()
-                                response.append(("newly created sbm", i))
+                                response.append(("newly created sbm", int(i)))
                     except Exception as e:
                         response.append(("The error says: " + str(
-                            e) + ". This error is with SBM columns for following household numbers", i))
+                            e) + ". This error is with SBM columns for following household numbers", int(i)))
 
                 if flag_ComMob != 1:
                     # print "in commob"
@@ -702,7 +701,7 @@ def handle_uploaded_file(f, response, slum_code):
                                         temp = ComMob_instance.household_number
                                         if int(i) not in temp:
                                             temp.append(int(i))
-                                            response.append(("updated ComMob", i))
+                                            response.append(("updated ComMob", int(i)))
                                         ComMob_instance.household_number = temp
                                         ComMob_instance.save()
 
@@ -715,11 +714,10 @@ def handle_uploaded_file(f, response, slum_code):
                                             activity_date=df_ComMob.loc[int(i), p]
                                         )
                                         CM_instance.save()
-                                        response.append(("newly created ComMob", i))
+                                        response.append(("newly created ComMob", int(i)))
                             except Exception as e:
                                 response.append(("The error says: " + str(
-                                    e) + ". This error is in Commuinity Mobilization columns for " + p + ", for the following household numbers",
-                                                 i))
+                                    e) + ". This error is in Commuinity Mobilization columns for " + p + ", for the following household numbers", int(i)))
 
                 if flag_accounts != 1:
                     # print "in accounts"
@@ -741,7 +739,7 @@ def handle_uploaded_file(f, response, slum_code):
                                         temp = VHID_instance_1.household_number
                                         if int(i) not in temp:
                                             temp.append(int(i))
-                                            response.append(("updated VHID", i))
+                                            response.append(("updated VHID", int(i)))
                                         VHID_instance_1.household_number = temp
                                         VHID_instance_1.save()
 
@@ -757,12 +755,11 @@ def handle_uploaded_file(f, response, slum_code):
                                             household_number=household_nums
                                         )
                                         VHID_instance.save()
-                                        response.append(("newly created VHID", i))
+                                        response.append(("newly created VHID", int(i)))
 
                             except Exception as e:
                                 response.append(("The error says: " + str(
-                                    e) + ". This error is in Vendor Invoice Details Columns for " + m + ", for the following household numbers",
-                                                 i))
+                                    e) + ". This error is in Vendor Invoice Details Columns for " + m + ", for the following household numbers", int(i)))
 
                 if flag_TC != 1:
                     try:
@@ -773,7 +770,7 @@ def handle_uploaded_file(f, response, slum_code):
                                 TC_instance[0].update_model(df_TC.loc[int(i), :])
                             except Exception as e:
                                 print(e)
-                            response.append(("updated TC", i))
+                            response.append(("updated TC", int(i)))
 
                         else:
                             this_status = " "
@@ -799,10 +796,10 @@ def handle_uploaded_file(f, response, slum_code):
                             )
 
                             TC_instance.save()
-                            response.append(("newly created TC", i))
+                            response.append(("newly created TC", int(i)))
                     except Exception as e:
                         response.append(("The error says: " + str(
-                            e) + ". This error is with Toilet Construction Columns for following household numbers", i))
+                            e) + ". This error is with Toilet Construction Columns for following household numbers", int(i)))
 
         else:
             response.append(("The error says: ",
@@ -812,11 +809,9 @@ def handle_uploaded_file(f, response, slum_code):
     except Exception as e:
         response.append(("The error says: " + str(e),
                          "This is an overall error. Please check the uploaded Excle sheet for column names, slum names etc."))
-
     d = defaultdict(list)
     for k, v in response:
         d[k].append(v)
-
     return d
 
 
@@ -1572,10 +1567,12 @@ def ProcessShortView(request, slum_code=0):
             if record.rhs_data and record.rhs_data['Type_of_structure_occupancy'] == 'Occupied house':
                 data = {key_list[i] : record.rhs_data[i] for i in key_list.keys() if i in record.rhs_data}
                 data['household_number'] = record.household_number
+                data['slum_name'] = slum_code[0][1]
             else:
                 key_list = {'Plus code of the house': 'pluscodes', 'Type_of_structure_occupancy': 'occupancy_status'}
                 data = {key_list[i] : record.rhs_data[i] for i in key_list.keys() if i in record.rhs_data}
                 data['household_number'] = record.household_number
+                data['slum_name'] = slum_code[0][1]
             
             if record.ff_data:
                 data['factsheet_done'] = 'Yes'
@@ -1674,6 +1671,8 @@ def ProcessShortView(request, slum_code=0):
                 if i['status'] is not None:    # Checking Status of the household
                     if i['status'].strip() != "":
                         temp['toilet_status'] = ToiletConstruction.get_status_display(i['status'])
+                        if temp['toilet_status'] == 'Completed':
+                            temp['current_place_of_defication'] = 'Toilet by SA'
 
                 if len(slum_funder) != 0:   # Adding funder project name.
                     for funder in slum_funder:
