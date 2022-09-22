@@ -578,9 +578,6 @@ def file_ops(request):
             response = resp
         except Exception as e:
             response.append(('error msg', str(e)))
-    print(response)
-    print(json.dumps(response))
-
     return HttpResponse(json.dumps(response), content_type="application/json")
 
 
@@ -812,7 +809,6 @@ def handle_uploaded_file(f, response, slum_code):
     except Exception as e:
         response.append(("The error says: " + str(e),
                          "This is an overall error. Please check the uploaded Excle sheet for column names, slum names etc."))
-    print(response)
     d = defaultdict(list)
     for k, v in response:
         d[k].append(v)
