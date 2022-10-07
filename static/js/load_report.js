@@ -434,6 +434,7 @@
 							{"data": "toilet_connected_to", "title": "Toilet connected to"},
 							{"data": "factsheet_done", "title": "Factsheet done"},
 							{"data": "factAssign", "title": "Factsheet Assign"},
+							{"data": "write_off_cases", "title": "Write Off Cases"},
 							{"data": "city_name", "title": "City name"}
 						]
 			});

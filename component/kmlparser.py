@@ -102,24 +102,25 @@ class KMLParser(object):
 
         if self.delete_flag:
             self.object_type.components.all().delete()
-
         for folder in folders:
-          try:
-            kml_name = str(folder.name).split('(')[0]
-            kml_name = kml_name.replace(' ','')
-            kml_folder[kml_name] = False
-            if kml_name in metadata_component:
-                self.component_data = []
-                for pm in folder.Placemark:
-                    #Fetch household number from extended data
-                    try:
-                        (household_no, coordinates) = self.component_latlong(pm)
-                        self.component_data.append({'house_no':household_no, 'coordinates':coordinates})
-
-                    except Exception as ex:
-                        raise Exception(" -> "+str(pm.name) +' ]] '+ str(ex))
-                self.bulk_update_or_create(kml_name)
-                kml_folder[kml_name] = True
-          except Exception as e:
-            raise Exception("[[ " + str(folder.name) +  str(e))
+            try:
+                kml_name = str(folder.name).split('(')[0]
+                kml_name = kml_name.replace(' ','')
+                kml_folder[kml_name] = False
+                if not self.delete_flag:
+                    metadata = Metadata.objects.get(code=kml_name, type='C')
+                    self.object_type.components.filter(metadata = metadata, object_id = self.object_type.id).delete()
+                if kml_name in metadata_component:
+                    self.component_data = []
+                    for pm in folder.Placemark:
+                        #Fetch household number from extended data
+                        try:
+                            (household_no, coordinates) = self.component_latlong(pm)
+                            self.component_data.append({'house_no':household_no, 'coordinates':coordinates})
+                        except Exception as ex:
+                            raise Exception(" -> "+str(pm.name) +' ]] '+ str(ex))
+                    self.bulk_update_or_create(kml_name)
+                    kml_folder[kml_name] = True
+            except Exception as e:
+                raise Exception("[[ " + str(folder.name) +  str(e))
         return kml_folder

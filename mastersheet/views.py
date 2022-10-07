@@ -3,7 +3,7 @@ from django.shortcuts import render
 from django.http import HttpResponse, HttpResponseForbidden
 from django.contrib.auth.decorators import user_passes_test, permission_required
 from mastersheet.forms import find_slum, file_form, account_find_slum
-from django.db.models import Count, F
+from django.db.models import Count, F, Q
 from mastersheet.models import *
 from sponsor.models import *
 from itertools import chain
@@ -1003,6 +1003,7 @@ def give_report_table_numbers(request):  # view for toilet construction
             }
     }
     report_table_data = defaultdict(dict)
+
     for query_field in query_on.keys():
         if query_field in ['agreement_date', 'phase_one_material_date', 'phase_two_material_date',
                            'phase_three_material_date',
@@ -1014,14 +1015,26 @@ def give_report_table_numbers(request):  # view for toilet construction
             filter_field = {'slum__id__in': keys, query_field + '__range': [start_date, end_date]}
         count_field = {query_on[query_field]: Count('level_id')}
         tc = ToiletConstruction.objects.filter(**filter_field) \
-            .exclude(agreement_cancelled=True) \
+            .exclude(Q(agreement_cancelled=True)| Q(status = '7')) \
             .annotate(**level_data[tag]).values('level', 'level_id', 'city_name') \
             .annotate(**count_field).order_by('city_name')
         tc = {obj_ad['level_id']: obj_ad for obj_ad in tc}
+        filter_field = {'slum__id__in': keys, 'phase_one_material_date__range': [start_date, end_date]}
 
         for level_id, data in tc.items():
             report_table_data[level_id].update(data)
 
+        # For write off cases
+        if query_field == 'factsheet_done':
+            count_field = {'status': Count('level_id')}
+            filter_field = {'slum__id__in': keys, 'phase_one_material_date__range': [start_date, end_date], 'status' : '7'}
+            toilet_data = ToiletConstruction.objects.filter(**filter_field).exclude(agreement_cancelled=True).annotate(**level_data[tag]).values('level', 'level_id', 'city_name') \
+                .annotate(**count_field).order_by('city_name')
+            toilet_data = {obj_ad['level_id']: obj_ad for obj_ad in toilet_data}
+            for level_id, data in toilet_data.items():
+                report_table_data[level_id].update({'write_off_cases':data['status']})
+        
+        # For Factsheet Assign Check
         if query_field == 'factsheet_done':
 
             for t in tc:
@@ -1097,7 +1110,6 @@ def give_report_table_numbers(request):  # view for toilet construction
         query_field = {level_data_tag[tag]['level_id'] : i, 'rhs_data__isnull':False}
         h = HouseholdData.objects.filter(**query_field)
         report_table_data[i]['total_structure'] = h.count()
-
     return HttpResponse(json.dumps(list(map(lambda x: report_table_data[x], report_table_data))),
                         content_type="application/json")
 
@@ -1653,6 +1665,7 @@ def ProcessShortView(request, slum_code=0):
                 slum__id=slum_code[0][0])
 
         daily_reporting_data = daily_reporting_data.values(*toilet_reconstruction_fields)
+        print()
         for i in daily_reporting_data:   # Prpcessing Daily Reporting data.
             if i['household_number'] in check_formdict:
                 temp = check_formdict[i['household_number']]
