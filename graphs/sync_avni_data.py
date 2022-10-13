@@ -11,7 +11,8 @@ from master.models import *
 from functools import wraps
 from time import time
 from datetime import timedelta, datetime
-import dateutil.parser
+from django.utils import timezone
+from dateutil import parser
 
 
 
@@ -58,7 +59,7 @@ class avni_sync():
         # latest_date = last_submission_date.submission_date + timedelta(days=1)
         today = datetime.today()  # + timedelta(days= -1)
         latest_date = today.strftime('%Y-%m-%dT00:00:00.000Z')
-        iso = "2022-07-21T00:00:00.000Z"
+        iso = "2022-10-11T00:00:00.000Z"
         # return(latest_date)
         return iso
 
@@ -1080,7 +1081,7 @@ class avni_sync():
                         for i in get_record:
                             get_followup_data = i.followup_data
                             get_followup_data.update(sanitation)
-                            get_record.update(followup_data=get_followup_data, submission_date=dateparser.parse(lst_mod_date))
+                            get_record.update(followup_data=get_followup_data, submission_date=lst_mod_date)
                             print(count, "Follow-Up Record Updated", hh_number, slum_name)
                     count += 1
                 except Exception as e:
@@ -1276,6 +1277,34 @@ class avni_sync():
                     self.registrtation_data(rhs)
                 except Exception as e:
                     print(e)
+
+    def process_data(self, data):
+        final_data = []
+        for record in data:
+            slum = record['Slum']
+            d = {}
+            if slum != 'Ganapati Pada, Turbhe':
+                d['created_on'] = timezone.now()
+                d['modified_on'] = timezone.now()
+                slum_id = Slum.objects.filter(name = slum).values_list("id", flat = True)[0]
+                city_id = Slum.objects.filter(id = slum_id).values_list("electoral_ward__administrative_ward__city__id", flat = True)[0]
+                d['submission_date'] = parser.parse(record['_submission_time'])
+                d['rim_data'] = record['Slum_data']
+                final_data.append([slum_id, city_id, d])
+        return final_data  # Returning list of objects with slum, city and slum_data
+
+    def update_rim_data(self):
+        with open('/home/shelter/Desktop/data_migration_file/Slum _Data_Files/Slum_Rim_data.json') as datafile:
+            data = json.load(datafile)
+        data = self.process_data(data)
+        try:
+            for record in data:
+                slum_id, city_id, data_dict = record
+                rim_record = SlumData.objects.update_or_create(slum_id = slum_id, city_id = city_id, defaults=data_dict)
+                print('Data updated successfully')
+        except Exception as e:
+            print(e)
+
 
     # def set_mobile_number(self):
     #     get = HouseholdData.objects.all().filter(slum_id=1675)
