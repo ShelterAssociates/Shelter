@@ -59,7 +59,7 @@ class avni_sync():
         # latest_date = last_submission_date.submission_date + timedelta(days=1)
         today = datetime.today()  # + timedelta(days= -1)
         latest_date = today.strftime('%Y-%m-%dT00:00:00.000Z')
-        iso = "2022-10-11T00:00:00.000Z"
+        iso = "2022-10-16T00:00:00.000Z"
         # return(latest_date)
         return iso
 
@@ -481,24 +481,24 @@ class avni_sync():
                 agreement_date = dateparser.parse(data['Date of agreement']).date()
             else:
                 agreement_date = None
-            if 'Date on which septic tank is given' in data:
+            if 'Date on which septic tank is given' in data and not (agreement_cancelled or (materialIsShifted and 'House numbers of houses where Septic Tank is given' in data)) :
                 septic_tank_date = dateparser.parse(data['Date on which septic tank is given']).date()
             else:
                 septic_tank_date = None
 
-            if len(phase_one_material_dates) > 0 and not(agreement_cancelled or materialIsShifted): # Checking if agreement not cancelled.
+            if len(phase_one_material_dates) > 0 and not(agreement_cancelled or (materialIsShifted and 'House numbers of houses where PHASE 1 material bricks, sand and cement is given' in data)): # Checking if agreement not cancelled.
                 phase_one_material_dates.sort(reverse = True)
                 phase_one_material_date = dateparser.parse(phase_one_material_dates[0]).replace(tzinfo=None)
             else:
                 phase_one_material_date = None
 
-            if len(phase_two_material_dates) > 0 and not (agreement_cancelled or materialIsShifted):  # Checking if agreement not cancelled.
+            if len(phase_two_material_dates) > 0 and not (agreement_cancelled or (materialIsShifted and 'House numbers of houses where PHASE 2 material Hardware is given' in data)):  # Checking if agreement not cancelled.
                 phase_two_material_dates.sort(reverse = True)
                 phase_two_material_date = dateparser.parse(phase_two_material_dates[0]).replace(tzinfo=None)
             else:
                 phase_two_material_date = None
 
-            if 'Date on which door is given' in data and not (agreement_cancelled or materialIsShifted):    # Checking if agreement not cancelled.
+            if 'Date on which door is given' in data and not (agreement_cancelled or (materialIsShifted and 'House numbers where material is shifted - 3rd Phase' in data)):    # Checking if agreement not cancelled.
                 phase_three_material_date = dateparser.parse(data['Date on which door is given']).date()
             else:
                 phase_three_material_date = None
@@ -770,7 +770,7 @@ class avni_sync():
 
     def SaveDataFromIds(self):
 
-        IdList = ['97697dc9-b715-4af0-a809-cccad2180bc5'] # 'cda4ce0e-f05c-4b49-ac6e-ed160eba1940']
+        IdList = ['6c1861b3-50d5-40da-b0d2-5339f1b05cb9'] # 'cda4ce0e-f05c-4b49-ac6e-ed160eba1940']
 
         ''' There Are Three Types Of Flag We Use
         1 - Subject Type
@@ -860,6 +860,7 @@ class avni_sync():
                     print("Invalid_Flag")
             except Exception as e:
                 print(e)
+                
 
     # methods for covid data >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 
@@ -1204,8 +1205,7 @@ class avni_sync():
                             second_dose_date = datetime.strptime(final_dict['second_dose_date'], '%Y-%m-%d').date()
                         else:
                             second_dose_date = None
-
-                        # print(final_dict)
+                            
                         del_lst = ['household_number','Slum', 'created_date_time', 'last_modified_date_time', 'uuid', 'second_dose_date', 'first_dose_date']
                         for j in del_lst:
                             if j in final_dict:
