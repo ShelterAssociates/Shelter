@@ -63,18 +63,21 @@ class RHSData(object):
         return ctb_count
 
     def individual_toilet(self):
-
+        """ Here we are calculating slum wise individual toilet count for individual toilet coverage. """
         toilet_by_other = ['SBM (Installment)','SBM (Contractor)','Toilet by SA (SBM)','Toilet by other NGO (SBM)','Own toilet','Toilet by other NGO','Toilet by SA']
         # toilet_by_other = [1,2,3,4,5,6,7]
+        
+        toilet_completed = self.toilet_constructed()
         own_toilet_count = 0
         for house in self.get_unique_houses_rhs_householddata():
             try:
                 latest_record = self.followup_data.filter(household_number= house).latest('submission_date')
-                if 'group_oi8ts04/Current_place_of_defecation' in latest_record.followup_data and \
+                if latest_record.household_number not in toilet_completed  and 'group_oi8ts04/Current_place_of_defecation' in latest_record.followup_data and \
                         (latest_record.followup_data['group_oi8ts04/Current_place_of_defecation']) in toilet_by_other:
                         own_toilet_count += 1
             except : pass
-        own_toilet_count = own_toilet_count+len(self.toilet_constructed())
+
+        own_toilet_count = own_toilet_count+len(toilet_completed)
         return own_toilet_count
 
     def get_toilet_data(self):
