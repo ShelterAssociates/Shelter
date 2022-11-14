@@ -1,7 +1,6 @@
 import json
 from urllib import request as urllib2
 from django.conf import settings
-import copy
 from collections import OrderedDict
 from itertools import chain
 from collections import Counter
@@ -40,14 +39,15 @@ def get_household_analysis_data(city, slum_code, fields, kobo_survey=''):
 
     # For Covid Data
     covid_data = CovidData.objects.filter(slum = slum, age__gt = 17).exclude(household_number = 9999).values_list('household_number',flat = True)
+    Toilet_data = list(ToiletConstruction.objects.filter(slum = slum, status = 6).values_list('household_number', flat = True))
     covid_hh = list(set(covid_data))
+    cpod_status = ['SBM (Installment)','SBM (Contractor)','Toilet by SA (SBM)','Toilet by other NGO (SBM)','Own toilet','Toilet by other NGO','Toilet by SA']
 
     for household, list_record in grouped_records:
         record_sorted = list(list_record) #sorted(list(list_record), key=lambda x:x['_submission_time'], reverse=False)
         household_no = int(household)
         if len(record_sorted)>0:
             record = record_sorted[0]
-
         # Here we are updating vaccination status for the household.
         if record['Type_of_structure_occupancy'] != 'Shop':
             if household_no in covid_hh:
@@ -63,7 +63,19 @@ def get_household_analysis_data(city, slum_code, fields, kobo_survey=''):
                     record['vaccination_status'] = 'not_vaccinated'
             else:
                 record['vaccination_status'] = 'not_surveyed'
-            
+
+        # Checking sbm and toilet by sa for filter.
+        if 'group_oi8ts04/Current_place_of_defecation' in record and record['group_oi8ts04/Current_place_of_defecation'] in cpod_status[:4]:
+            record['Final_status'] = 'SBM'
+        elif str(household_no) in Toilet_data:
+            record['Final_status'] = 'Completed'
+
+        # changing intrested status for hh where toilet present.
+        if 'group_oi8ts04/Current_place_of_defecation' in record:
+            if record['group_oi8ts04/Current_place_of_defecation'] in cpod_status or 'Final_status' in record:
+                    if 'group_oi8ts04/Are_you_interested_in_an_indiv' in record:
+                        del record['group_oi8ts04/Are_you_interested_in_an_indiv']
+
         for field in fields:
             if field != "" and field in record:
                 if (field == 'group_el9cl08/Ownership_status_of_the_house' or field == 'group_el9cl08/Type_of_structure_of_the_house') and record['Type_of_structure_occupancy'] != 'Occupied house': 
@@ -77,10 +89,10 @@ def get_household_analysis_data(city, slum_code, fields, kobo_survey=''):
                             output[field][val]=[]
                         if household_no not in output[field][val]:
                             output[field][val].append(str(household_no))
-                
     return output
 
-def format_data(rhs_data):
+def format_data(rhs_data, toilet_by_sa = False):
+    ''' Create RHS Data to show on spatial data'''
     new_rhs = {}
     remove_list = ['Name_s_of_the_surveyor_s', 'Date_of_survey', '_xform_id_string', 'meta/instanceID', 'end', 'start',
     'Enter_household_number_again','_geolocation', 'meta/deprecatedID', '_uuid', '_submitted_by', 'admin_ward', '_status',
@@ -107,9 +119,25 @@ def format_data(rhs_data):
     for i in remove_list:
         if i in rhs_data:
             rhs_data.pop(i)
+    cpod_status = ['SBM (Installment)','SBM (Contractor)','Toilet by SA (SBM)','Toilet by other NGO (SBM)','Own toilet','Toilet by other NGO','Toilet by SA']
+
     for k, v in seq.items():
         try:
-            new_rhs[v] = rhs_data[k]
+            
+            if k == 'group_oi8ts04/Current_place_of_defecation':   # Changing cpod status and adding new cpod for toilet by sa households.
+                print(rhs_data[k] in cpod_status, toilet_by_sa)
+                if toilet_by_sa:
+                    new_rhs[v] = 'Toilet By SA'
+                    new_rhs['Before SA Toilet Place of defication'] = rhs_data[k]
+                    if 'group_oi8ts04/Are_you_interested_in_an_indiv' in rhs_data:   # Removing household from intrested for toilet if household have toilet.
+                        del rhs_data['group_oi8ts04/Are_you_interested_in_an_indiv']
+                elif rhs_data[k] in cpod_status:
+                    if 'group_oi8ts04/Are_you_interested_in_an_indiv' in rhs_data:
+                        del rhs_data['group_oi8ts04/Are_you_interested_in_an_indiv']
+                    new_rhs[v] = rhs_data[k]
+            else:
+                if k in rhs_data:
+                    new_rhs[v] = rhs_data[k]
         except Exception as e:pass
     return new_rhs
 
@@ -118,37 +146,12 @@ def get_kobo_RHS_list(city, slum, house_number, kobo_survey=''):
     """Method which fetches RHS data using the Kobo Toolbox API. Data contains question and answer decrypted. """
     output=OrderedDict()
     household_data = HouseholdData.objects.filter(slum=slum,household_number=house_number).order_by('submission_date')
+    Toilet_data = list(ToiletConstruction.objects.filter(slum = slum, status = 6).values_list('household_number', flat = True))
     if len(household_data)>0:
-        output = format_data(household_data[0].rhs_data)
-    #if kobo_survey:
-        #try:
-        #    url = settings.KOBOCAT_FORM_URL+'data/'+kobo_survey+'?format=json&query={"slum_name":"'+slum_code+'","Household_number":{"$in":["'+str(house_number)+'","'+('000'+str(house_number))[-4:]+'"]}}'
-        #except Exception as e:
-        #    print(e)
-        #req = urllib2.Request(url)
-        #req.add_header('Authorization', settings.KOBOCAT_TOKEN)
-        #resp = urllib2.urlopen(req)
-        #content = resp.read()
-        #submission = json.loads(content)
-
-        #url1 = settings.KOBOCAT_FORM_URL+'forms/'+kobo_survey+'/form.json'
-        #req1 = urllib2.Request(url1)
-        #req1.add_header('Authorization', settings.KOBOCAT_TOKEN)
-        #resp1 = urllib2.urlopen(req1)
-        #content1 = resp1.read()
-        #data1 = json.loads(content1)
-
-        #output = OrderedDict()
-        #if len(submission) > 0:
-        #    for data in data1['children']:
-        #        if data['type'] == "group":
-        #            sect_form_data = trav(data)
-        #            sub_key = [ str(k) for k in submission[0].keys() if data['name'] in k]
-        #            for sect_form in sect_form_data:
-        #                key = [x for x in sub_key if x.endswith(sect_form['name'])]
-        #                if len(key)>0 and 'label' in sect_form:
-        #                    ans = fetch_answer(sect_form, key, submission[0])
-        #                    output[sect_form['label']]  = ans
+        if str(int(house_number)) in Toilet_data:
+            output = format_data(household_data[0].rhs_data, True)
+        else:
+            output = format_data(household_data[0].rhs_data)
     return output
 
 @survey_mapping(SURVEYTYPE_CHOICES[0][0])

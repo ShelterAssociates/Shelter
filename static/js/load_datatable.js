@@ -766,6 +766,7 @@ $(document).ready(function() {
 				text: 'Excel',
 			}
 	   ];
+       
        if (report_short_datatable != null )
        {
            $("#slum_form p").find("#slum_info").html("");
@@ -812,7 +813,6 @@ $(document).ready(function() {
                     }
                 }
 			},
-            
 			"buttons":btn_default,
 			"columnDefs": [{"defaultContent": "-","targets": "_all"},{"footer":true},{"targets":0, "visible":false, "searchable":false}],
 			"columns":[
@@ -832,7 +832,7 @@ $(document).ready(function() {
                 {'data': 'toilet_connected_to', 'title': 'Toilet Connected Status'},
                 {'data': 'total_moilization_acticity', 'title': 'No. of mobilisation activities attended by family'},
                 {'data': 'invoice_entry', 'title': 'Invoice entry (Yes/No)'}
-					],
+				],
 			
 		});
         $("div.dt-buttons>button").addClass("pull-left");
@@ -841,6 +841,8 @@ $(document).ready(function() {
             report_short_datatable.column($(this).attr('dt_index')).search( String(this.value) ).draw();
 
         } );
+
+        select_rows()
 	}
 }
 
