@@ -83,3 +83,16 @@ class account_find_slum(forms.Form):
 
 class file_form(forms.Form):
     file = forms.FileField(help_text="Files with xls and xlsx are accepted")
+
+
+# For Gis Data Download Tab.
+class gis_tab(forms.Form):
+    def __init__(self, *args, **kwargs):
+        super(gis_tab,self).__init__( *args, **kwargs)
+        self.fields['slum_name'] = forms.ModelChoiceField(queryset=Slum.objects.all(), widget=ForeignKeyRawIdWidget(rel=ManyToOneRel(Slum._meta.get_field('id'),Slum, 'id' ), admin_site=admin.site))
+        self.fields['slum_name'].widget.attrs.update({'class':'customized-form'})
+        self.fields['slum_name'].label = "Select slum"
+
+    class Meta:
+        raw_id_fields = ('slum_name',)
+        model = 'Slum'

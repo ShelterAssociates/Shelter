@@ -2,7 +2,7 @@ from __future__ import division
 from django.shortcuts import render
 from django.http import HttpResponse, HttpResponseForbidden
 from django.contrib.auth.decorators import user_passes_test, permission_required
-from mastersheet.forms import find_slum, file_form, account_find_slum
+from mastersheet.forms import find_slum, file_form, account_find_slum, gis_tab
 from django.db.models import Count, F, Q
 from mastersheet.models import *
 from sponsor.models import *
@@ -12,6 +12,7 @@ from django.views.decorators.csrf import csrf_exempt
 import json
 import requests
 import pandas
+import csv
 from urllib import request as urllib2
 from django.conf import settings
 import collections
@@ -1552,50 +1553,87 @@ def accounts_excel_generation(request):
 @permission_required('mastersheet.can_view_mastersheet', raise_exception=True)
 def renderSummery(request):
     slum_search_field = find_slum()
-    account_slum_search_field = account_find_slum()
-    file_form1 = file_form()
-    return render(request, 'mastersheet_summery.html', {'form': slum_search_field, 'form_account': account_slum_search_field, 'file_form': file_form1})
+    gis_field = gis_tab()
+    return render(request, 'mastersheet_summery.html', {'form': slum_search_field, 'form_gis': gis_field})
+
+
+
+def getRhsData(record):
+    key_list = {'Plus code of the house': 'pluscodes', 'Type_of_structure_occupancy': 'occupancy_status', 
+    'group_og5bx85/Full_name_of_the_head_of_the_household': 'name_head_of_he_household', 'group_el9cl08/Ownership_status_of_the_house': 'ownership_status', 
+    'group_oi8ts04/Current_place_of_defecation': 'current_place_of_defication', 'Plus Code Part':'pluscodepart', 'group_el9cl08/Do_you_have_any_girl_child_chi':'girls_child', 
+    'group_el9cl08/Type_of_structure_of_the_house':'house_structure', 'group_el9cl08/Ownership_status_of_the_house':'ownership_status', 
+    'group_el9cl08/House_area_in_sq_ft':'house_area', 'Do you have addhar card?':'isAadharCard', 'group_el9cl08/Aadhar_number':
+	'aadhar_number', 'Colour of ration card':'color_of_ration_card',
+    'group_el9cl08/Type_of_water_connection':'Type_of_water_connection', 'group_el9cl08/Facility_of_solid_waste_collection':"Facility_of_solid_waste_collection"}
+    if record.rhs_data and record.rhs_data['Type_of_structure_occupancy'] == 'Occupied house':
+        data = {key_list[i] : record.rhs_data[i] for i in key_list.keys() if i in record.rhs_data}
+        if 'Type_of_water_connection' in data and data['Type_of_water_connection'] == 'Individual connection':
+            data["Do you have individual water connection at home?"] = 'Yes'
+        else:
+            data["Do you have individual water connection at home?"] = 'No'
+        data['household_number'] = record.household_number
+    else:
+        key_list = {'Plus code of the house': 'pluscodes', 'Type_of_structure_occupancy': 'occupancy_status', 'Type_of_unoccupied_house':'typeUnoccupiedHouse'}
+        data = {key_list[i] : record.rhs_data[i] for i in key_list.keys() if i in record.rhs_data}
+        data['household_number'] = record.household_number
+    if record.ff_data:
+        factsheet_keys = {'group_ne3ao98/Cost_of_upgradation_in_Rs': 'Cost of upgradation', 'group_ne3ao98/Have_you_upgraded_yo_ng_individual_toilet': 'Have you upgraded your toilet/bathroom/house while constructing individual toilet?', 'group_oh4zf84/Name_of_the_family_head': 'family_factsheet_name', 'group_ne3ao98/Where_the_individual_ilet_is_connected_to': 'toilet_connected_to'}
+        for fact_key in factsheet_keys:
+            if fact_key in record.ff_data:
+                data[factsheet_keys[fact_key]] = record.ff_data[fact_key]
+        data['factsheet_done'] = 'Yes'
+    data['slum'] = slum_code[0][1]
+    data['city_name'] = slum_code[0][2]
+    return data
+
+def communityActivityData(slum_code):
+    act_data = CommunityMobilization.objects.filter(slum_id = slum_code[0][0]).values_list('activity_type', 'household_number')
+    comm_avni = CommunityMobilizationActivityAttendance.objects.filter(slum_id = slum_code[0][0]).values_list('activity_type', 'household_number')
+    try:
+        activity_data_with_hh = {}
+        for activity_record in act_data:    # here we are processing data where we have household numbers in json field.
+            if activity_record[0] in activity_data_with_hh:
+                temp = activity_data_with_hh[activity_record[0]]
+                temp.extend(activity_record[1])
+                activity_data_with_hh[activity_record[0]] = list(set(temp))
+            else:
+                activity_data_with_hh[activity_record[0]] = activity_record[1]
+
+        for activity_record in comm_avni:    # here we are processing data where we have household numbers as str.
+            if activity_record[0] in activity_data_with_hh:
+                temp = activity_data_with_hh[activity_record[0]]
+                temp.append(activity_record[1])
+                activity_data_with_hh[activity_record[0]] = list(set(temp))
+            else:
+                activity_data_with_hh[activity_record[0]] = [activity_record[1]]
+        
+        hh_activity_cnt = {}     # counting number of distinct activity attended by the household. 
+        for k, v in activity_data_with_hh.items():
+            for i in list(set(v)):
+                if i in hh_activity_cnt:
+                    hh_activity_cnt[i] += 1
+                else:
+                    hh_activity_cnt[i] = 1
+        return hh_activity_cnt
+    except Exception as e:
+        print(e)
 
 
 # For Mastersheet Summery View Processing data
 @csrf_exempt
 @apply_permissions_ajax('mastersheet.can_view_mastersheet')
 @deco_city_permission
-def ProcessShortView(request, slum_code=0):
+def ProcessShortView(request, slum_details=0):
     try:
         formdict = []
         rhs_not_done = []
+        global slum_code
         slum_code = Slum.objects.filter(pk=int(request.GET['slumname'])).values_list("id", "name", "electoral_ward__administrative_ward__city__name__city_name")
         slum_funder = SponsorProjectDetails.objects.filter(slum=slum_code[0][0]).exclude(sponsor__id=10)
-        act_data = CommunityMobilization.objects.filter(slum_id = slum_code[0][0]).values_list('activity_type', 'household_number')
-        comm_avni = CommunityMobilizationActivityAttendance.objects.filter(slum_id = slum_code[0][0]).values_list('activity_type', 'household_number')
         invoice_data = InvoiceItems.objects.filter(slum_id = slum_code[0][0]).values_list('household_numbers', flat = True)
 
         householdData = HouseholdData.objects.filter(slum_id = slum_code[0][0], rhs_data__isnull = False)
-        def getRhsData(record):
-            key_list = {'Plus code of the house': 'pluscodes', 'Type_of_structure_occupancy': 'occupancy_status', 
-            'group_og5bx85/Full_name_of_the_head_of_the_household': 'name_head_of_he_household', 'group_el9cl08/Ownership_status_of_the_house': 'ownership_status', 
-            'group_oi8ts04/Current_place_of_defecation': 'current_place_of_defication'}
-            if record.rhs_data and record.rhs_data['Type_of_structure_occupancy'] == 'Occupied house':
-                data = {key_list[i] : record.rhs_data[i] for i in key_list.keys() if i in record.rhs_data}
-                data['household_number'] = record.household_number
-                data['slum_name'] = slum_code[0][1]
-            else:
-                key_list = {'Plus code of the house': 'pluscodes', 'Type_of_structure_occupancy': 'occupancy_status'}
-                data = {key_list[i] : record.rhs_data[i] for i in key_list.keys() if i in record.rhs_data}
-                data['household_number'] = record.household_number
-                data['slum_name'] = slum_code[0][1]
-            
-            if record.ff_data:
-                data['factsheet_done'] = 'Yes'
-                if "group_oh4zf84/Name_of_the_family_head" in record.ff_data:
-                    data['family_factsheet_name'] = record.ff_data["group_oh4zf84/Name_of_the_family_head"]
-                if "group_ne3ao98/Where_the_individual_ilet_is_connected_to" in record.ff_data:
-                    data['toilet_connected_to'] = record.ff_data["group_ne3ao98/Where_the_individual_ilet_is_connected_to"]
-            data['slum'] = slum_code[0][1]
-            data['city_name'] = slum_code[0][2]
-            return data
-
         formdict = list(map(getRhsData, householdData))
         check_formdict = {str(int(x['household_number'])): x for x in formdict}
 
@@ -1611,30 +1649,7 @@ def ProcessShortView(request, slum_code=0):
                 temp_dict = {'household_number':str(i), 'occupancy_status': "RHS Not Done", 'invoice_entry':'Yes'}
                 rhs_not_done.append(temp_dict)
 
-        activity_data_with_hh = {}
-        for activity_record in act_data:    # here we are processing data where we have household numbers in json field.
-            if activity_record[0] in activity_data_with_hh:
-                temp = activity_data_with_hh[activity_record[0]]
-                temp.extend(activity_record[1])
-                activity_data_with_hh[activity_record[0]] = list(set(temp))
-            else:
-                activity_data_with_hh[activity_record[0]] = activity_record[1]
-
-        for activity_record in comm_avni:    # here we are processing data where we have household numbers as str.
-            if activity_record[0] in activity_data_with_hh:
-                temp = activity_data_with_hh[activity_record[0]]
-                temp.extend(activity_record[1])
-                activity_data_with_hh[activity_record[0]] = list(set(temp))
-            else:
-                activity_data_with_hh[activity_record[0]] = [activity_record[1]]
-        
-        hh_activity_cnt = {}     # counting number of distinct activity attended by the household. 
-        for k, v in activity_data_with_hh.items():
-            for i in list(set(v)):
-                if i in hh_activity_cnt:
-                    hh_activity_cnt[i] += 1
-                else:
-                    hh_activity_cnt[i] = 1
+        hh_activity_cnt = communityActivityData(slum_code)
 
         for k, v in hh_activity_cnt.items():   # Adding activity count to the json data for response.
             if k in check_formdict:
@@ -1665,7 +1680,6 @@ def ProcessShortView(request, slum_code=0):
                 slum__id=slum_code[0][0])
 
         daily_reporting_data = daily_reporting_data.values(*toilet_reconstruction_fields)
-        print()
         for i in daily_reporting_data:   # Prpcessing Daily Reporting data.
             if i['household_number'] in check_formdict:
                 temp = check_formdict[i['household_number']]
@@ -1692,15 +1706,109 @@ def ProcessShortView(request, slum_code=0):
                         if funder.household_code != None:
                             if int(i['household_number']) in funder.household_code:
                                 temp.update({'sponsor_project': funder.sponsor_project.name})  # funder.sponsor.organization_name})
-
                 check_formdict[i['household_number']] = temp
             else:
                 temp_dict = {'household_number':i['household_number'], 'occupancy_status': "RHS Not Done"}
                 rhs_not_done.append(temp_dict)
-
         formdict.extend(rhs_not_done)
 
 
     except Exception as e:
         print(e)
     return HttpResponse(json.dumps(formdict), content_type="application/json")
+
+
+def AnalyseGisTabData(slum_id):
+    try:
+        global slum_code
+        slum_code = Slum.objects.filter(pk=int(slum_id)).values_list("id", "name", "electoral_ward__administrative_ward__city__name__city_name")
+        slum_funder = SponsorProjectDetails.objects.filter(slum=slum_code[0][0]).exclude(sponsor__id=10)
+        Toilet_data = ToiletConstruction.objects.filter(slum=slum_code[0][0], phase_one_material_date__isnull = False).exclude(agreement_cancelled = True)
+        householdData = HouseholdData.objects.filter(slum_id = slum_code[0][0], rhs_data__isnull = False)
+        columns_lst = ['city_name', 'slum', 'household_number', 'occupancy_status', 'typeUnoccupiedHouse', 'pluscodes', 'pluscodepart', 
+                        'house_structure', 'ownership_status', 'name_head_of_he_household', 'isAadharCard', 'aadhar_number', 'color_of_ration_card', 
+                        'girls_child', 'house_area', 'Do you have individual water connection at home?', 'Type_of_water_connection', 'Facility_of_solid_waste_collection', 
+                        'Do you have a toilet at home?', 'Status of toilet under SBM ?', 'Where the individual toilet is connected to ?', 'Who all use toilets in the household ?', 
+                        'Reason for not using toilet ?', 'current_place_of_defication', 'Is there availability of drainage to connect it to the toilet?', 'Are you interested in an individual toilet ?', 
+                        'Which CTB do your family members use ?', 'Does any household member have any of the construction skills given below ?', 'final_status', 'pocket', 'comment', 
+                        'sponsor_project', 'factsheet_done', 'family_factsheet_name', 'toilet_connected_to', 'Have you upgraded your toilet/bathroom/house while constructing individual toilet?', 
+                        'Cost of upgradation', 'activity_count']
+        formdict = list(map(getRhsData, householdData))
+
+        # For Follow-up data.....
+        followup_data = {}
+        cod_data = FollowupData.objects.filter(slum=slum_code[0][0]).values('household_number', 'followup_data', 'submission_date')
+        for followup_record in cod_data:
+            if str(int(followup_record['household_number'])) in followup_data:
+                temp = followup_data[str(int(followup_record['household_number']))]
+                if temp['submission_date'] < followup_record['submission_date']:
+                    hh = str(int(followup_record['household_number']))
+                    del followup_record['household_number']
+                    temp = followup_record
+                    followup_data[hh] = temp
+            else:
+                hh = str(int(followup_record['household_number']))
+                temp_dict = {'submission_date':followup_record['submission_date'], 'followup_data':followup_record['followup_data']}
+                followup_data[hh] = temp_dict
+        # For Daily Reporting data....
+        def getToiletData(record):
+            data = {}
+            if record.status is not None and record.status.strip() != '':
+                data['final_status'] = ToiletConstruction.get_status_display(record.status)
+            if record.pocket is not None:
+                data['pocket'] = record.pocket
+            if record.comment is not None and record.comment.strip() != "":
+                data['comment'] = record.comment
+            data['household_number'] = str(int(record.household_number))
+            return data
+        toiletdict = list(map(getToiletData, Toilet_data))
+        toiletdict = {temp_data['household_number'] : temp_data for temp_data in toiletdict}
+        # for Communication Activity data ...
+        activity_count = communityActivityData(slum_code)
+
+        sanitation_keys = {'Do you have a toilet at home?': 'Do you have a toilet at home?', 'group_oi8ts04/Status_of_toilet_under_SBM': 'Status of toilet under SBM ?', 'group_oi8ts04/What_is_the_toilet_connected_to': 'Where the individual toilet is connected to ?', 
+                            'group_oi8ts04/Who_all_use_toilets_in_the_hou': 'Who all use toilets in the household ?', 'group_oi8ts04/Reason_for_not_using_toilet': 'Reason for not using toilet ?', 'group_oi8ts04/Current_place_of_defecation': 'current_place_of_defication', 
+                            'group_oi8ts04/Is_there_availabilit_onnect_to_the_toilets': 'Is there availability of drainage to connect it to the toilet?', 'group_oi8ts04/Are_you_interested_in_an_indiv': 'Are you interested in an individual toilet ?', 
+                            'group_oi8ts04/Which_Community_Toil_r_family_members_use': 'Which CTB do your family members use ?', 'group_el9cl08/Does_any_household_m_n_skills_given_below': 'Does any household member have any of the construction skills given below ?'}
+        check_formdict = {}
+        for dct in formdict:
+            hh = str(int(dct['household_number']))
+            # checking for followup-data
+            if hh in followup_data:
+                temp = followup_data[hh]
+                sanitation_data = {sanitation_keys[key]: temp['followup_data'][key] for key in sanitation_keys.keys() if key in temp['followup_data']}
+                dct.update(sanitation_data)
+            # adding Daily Reporting data ...
+            if str(int(hh)) in toiletdict:
+                temp_data = toiletdict[str(int(hh))]
+                del temp_data['household_number']
+                dct.update(temp_data)
+            # Adding Funder project data .....
+            if len(slum_funder) != 0:   # Adding funder project name.
+                for funder in slum_funder:
+                    if funder.household_code != None:
+                        if int(hh) in funder.household_code:
+                            dct.update({'sponsor_project': funder.sponsor_project.name})
+            # Adding Activity Attend count ...
+            if hh in activity_count:
+                dct.update({'activity_count':activity_count[hh]})
+            diff_keys = set(columns_lst).difference(set(dct.keys())) # Handling Empty data fields
+            temp_dict = {i : None for i in diff_keys}
+            dct.update(temp_dict)
+            check_formdict[dct['household_number']] = dct
+        return list(check_formdict.values()), columns_lst
+    except Exception as e:
+        print(e)
+
+# For Gis Tab
+@csrf_exempt
+def gisDataDownload(request):
+    slum_id = request.POST.get('slum_name')
+    response_data,  columns_lst = AnalyseGisTabData(slum_id)
+    filename = slum_code[0][1]+'.csv'
+    response = HttpResponse(content_type='text/csv')
+    response['Content-Disposition']  =  'attachment; filename='+filename
+    writer = csv.DictWriter(response, columns_lst)
+    writer.writeheader()
+    writer.writerows(response_data)
+    return response

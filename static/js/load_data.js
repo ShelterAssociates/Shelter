@@ -46,6 +46,16 @@ function changeDateFormat(date){
 }
 
 
+
+function mouseup(event){
+    // console.log(event)
+    document.getElementById(event).style.display = 'block';
+}
+function mouse_out(event) {
+    document.getElementById(event).style.display = 'none';
+}
+
+
 $(document).ready(function() {
     todayDate = changeDateFormat(todayTime);
     startDate = StartDate(todayTime);

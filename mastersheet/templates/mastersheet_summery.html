@@ -3,48 +3,78 @@
 {% load custom_tags %}
 
 {% block extrastyle %}
-<link rel = "stylesheet" type="text/css" href = "{% static "css/jquery.dataTables.min.css" %}">
-<link rel = "stylesheet" type="text/css" href = "{% static "admin/css/forms.css" %}">
-<link rel = "stylesheet" type="text/css" href = "{% static "css/mastersheet_stylesheet.css" %}">
-<link rel = "stylesheet" type="text/css" href = "{% static "css/bootstrap-datepicker3.min.css" %}">
+<link rel="stylesheet" type="text/css" href="{% static "css/jquery.dataTables.min.css" %}">
+<link rel="stylesheet" type="text/css" href="{% static "admin/css/forms.css" %}">
+<link rel="stylesheet" type="text/css" href="{% static "css/mastersheet_stylesheet.css" %}">
+<link rel="stylesheet" type="text/css" href="{% static "css/bootstrap-datepicker3.min.css" %}">
 
 {%endblock%}
 {% block extrahead %}
-<script src = "{% static "js/jquery.dataTables.min.js" %}"></script>
-<script src = "{% static "js/dataTables.fixedColumns.min.js" %}"></script>
+<script src="{% static "js/jquery.dataTables.min.js" %}"></script>
+<script src="{% static "js/dataTables.fixedColumns.min.js" %}"></script>
 
-<script src = "{% static "js/dataTables.buttons.min.js" %}"></script>
-<script src = "{% static "js/buttons.html5.min.js" %}"></script>
-<script src = "{% static "js/jszip.min.js" %}"></script>
-<script src = "{% static "admin/js/admin/RelatedObjectLookups.js" %}"></script>
-<script src = "{% static "js/load_datatable.js" %}"></script>
-<script src = "{% static "js/bootstrap-datepicker.js" %}"></script>
+<script src="{% static "js/dataTables.buttons.min.js" %}"></script>
+<script src="{% static "js/buttons.html5.min.js" %}"></script>
+<script src="{% static "js/jszip.min.js" %}"></script>
+<script src="{% static "admin/js/admin/RelatedObjectLookups.js" %}"></script>
+<script src="{% static "js/load_datatable.js" %}"></script>
+<script src="{% static "js/bootstrap-datepicker.js" %}"></script>
 {%endblock%}
 
 {% block content %}
 
 <head>
-    <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
 </head>
 
 <div class="overlay">
-    <div id="loading-img"></div>
+  <div id="loading-img"></div>
 </div>
 <div class="customized-form">
-    <div class="row">
-        <div class="col-md-8">
-    <input id="export_mastersheet" type="hidden" value="{{perms.mastersheet.can_export_mastersheet}}"/>
-    <form id = "slum_form" style="display: inline-block;" method="POST">{% csrf_token %}
+  <div class="row">
+    <div class="col-md-8">
+      <input id="export_mastersheet" type="hidden" value="{{perms.mastersheet.can_export_mastersheet}}" />
+      <form id="slum_form" style="display: inline-block;" method="POST">{% csrf_token %}
         {{ form.as_p }}
-        <button type="button" id="btnFetchShort" class="btn btn-primary" ><span class="glyphicon glyphicon-search"></span> Search Summery View</button>
-        <input type="hidden" class="hide" id="slum_code" value="{{slum_code}}"/>
+        <button type="button" id="btnFetchShort" class="btn btn-primary"><span class="glyphicon glyphicon-search"
+            onClick="reloadP()"></span> Search Summery View</button>
+        <button type="button" id="btnFetchGisTab" class="btn btn-primary"><span
+            class="glyphicon glyphicon-search"></span> Download GIS Data</button>
+        <input type="hidden" class="hide" id="slum_code" value="{{slum_code}}" />
 
-    </form>
+      </form>
     </div>
-    </div>
+  </div>
 </div>
 <div style="overflow-x:auto; padding:10px">
-    <table id="example" class="display" width="100%" cellspacing="0"></table>
+  <table id="example" class="display" width="100%" cellspacing="0"></table>
+</div>
+
+<!-- This section is for GIS Data Download. -->
+<div class="modal fade" id="GISModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span
+            aria-hidden="true">&times;</span></button>
+        <h4 class="modal-title" id="GISModal_myModalLabel">Download Excel file</h4>
+      </div>
+      <form id="GISModal_selection" name="GISModal_selection" method="POST" enctype="multipart/form-data"
+        action='/mastersheet/gisDataDownload/'>{% csrf_token %}
+        <div id="GISModal_selection_slum" name="GISModal_selection_slum" class="modal-body">
+          {{ form_gis.as_p }}
+        </div>
+        <div id='GISModal_success_log'>
+        </div>
+        <div id='GISModal_error_log'>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+          <button type="button" id="downloadGIS" class="btn btn-primary">Download Excel</button>
+        </div>
+      </form>
+    </div>
+  </div>
 </div>
 
 {%endblock%}
