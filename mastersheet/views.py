@@ -1805,7 +1805,7 @@ def AnalyseGisTabData(slum_id):
 def gisDataDownload(request):
     slum_id = request.POST.get('slum_name')
     response_data,  columns_lst = AnalyseGisTabData(slum_id)
-    filename = slum_code[0][1]+'.csv'
+    filename = str(slum_id)+'.csv'
     response = HttpResponse(content_type='text/csv')
     response['Content-Disposition']  =  'attachment; filename='+filename
     writer = csv.DictWriter(response, columns_lst)
