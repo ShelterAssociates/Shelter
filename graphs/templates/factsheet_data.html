@@ -2,18 +2,27 @@
 {% load static %}
 {% load custom_tags %}
 {% block extrahead%}
+<!-- <link rel="stylesheet" href="{% static "css/factsheet_style.css" %}"> -->
+<script src="{% static "js/load_data.js" %}"></script>
+<style>
+form{
+        text-align: center;
+    }
 
-<script src = "{% static "js/load_data.js" %}"></script>
+select{
+    transition: 0.3s ease-in;
+}
+
+select:hover{
+    border: 2px solid;
+    border-color: orange;
+    transition: 0.3s ease-out;
+}
+</style>
 
 {% endblock %}
 
-
 {% block content %}
-<style>
-    form{
-        text-align: center;
-    }
-</style>
 
 <div>
     <form method="post" action="{% url  'factsheetDataDownload' %}">
@@ -24,21 +33,27 @@
                     <label> Type of Data : </label>
                 </td>
                 <td>
-                    <select name="Data">
+                    <select name="Data" id="dataType" onmouseover="mouseup('popup')" onmouseout="mouse_out('popup')"
+                        required="required">
                         <option value="">---select---</option>
                         <option value="Structure Data">Structure(KML) Data</option>
                         <option value="Factsheet Data">Factsheet Data</option>
                     </select>
                 </td>
+                <td>
+                    <p id="popup" style="display: none;">Please Select Type of data you
+                        want to download</p>
+                </td>
             </tr>
             <tr>
             <tr>
                 <td>
-                    <label >Select City : </label>
+                    <label for="id_City">Select City : </label>
                 </td>
                 <td>
-                    <select name="City" id="id_City">
-                        <option value="0">---select---</option>
+                    <select name="City" id="id_City" onmouseover="mouseup('popup_1')" onmouseout="mouse_out('popup_1')"
+                        required="required">
+                        <option value="">---select---</option>
                         <option value="4">Kolhapur</option>
                         <option value="2">Sangli</option>
                         <option value="3">PCMC</option>
@@ -49,21 +64,26 @@
                         <option value="14">Panvel</option>
                     </select>
                 </td>
+                <td>
+                    <p id="popup_1" style="display: none;">Please Select City name</p>
+                </td>
             </tr>
             <tr>
-                <td><label>Start Date :</label></td>
-                <td><input class = "interval display_line" type = "date" id = "startDate" name="startdate" placeholder = "Start date"></td>
+                <td><label for="startDate">Start Date :</label></td>
+                <td><input class="interval display_line" type="date" id="startDate" name="startdate"
+                        placeholder="Start date"></td>
             </tr>
             <tr>
-                <td><label>End Date :</label></td>
-                <td><input class = "interval display_line" type = "date" id = "endDate" name="enddate" placeholder = "End date"></td>
+                <td><label for="endDate">End Date :</label></td>
+                <td><input class="interval display_line" type="date" id="endDate" name="enddate" placeholder="End date">
+                </td>
             </tr>
             <tr>
                 <td>
-                    <input type = 'submit' >
+                    <input type='submit'>
                 </td>
             </tr>
-                
+
         </table>
     </form>
 </div>

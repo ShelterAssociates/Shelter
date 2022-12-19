@@ -21,5 +21,6 @@ urlpatterns = [
     url(r'^sync/slum/$', sync_kobo_data, name='sync_kobo_data'),
     url(r'^account/excel/$', accounts_excel_generation, name='accounts_excel_generation'),
     url(r'^show/summery/$', renderSummery, name="renderSummery"),
-    url(r'^show/showSummery/$', ProcessShortView, name='ProcessShortView')
+    url(r'^show/showSummery/$', ProcessShortView, name='ProcessShortView'),
+    url(r'^gisDataDownload/$', gisDataDownload, name='gisDataDownload')
 ]
