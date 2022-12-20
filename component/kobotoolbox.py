@@ -309,15 +309,22 @@ def get_kobo_RIM_report_detail(city, slum_code, kobo_survey=''):
         return data
 
     def dict_to_str(data_dict):
-        result_str = ""
-        if len(data_dict.keys())>1:
-            data_dict_keys = list(data_dict.keys())
-            for key in data_dict_keys:
-                result_str += "," + key + "(" +str(data_dict[key]) + ")"
-        else:
-            data_dict_key = list(data_dict.keys())[0]
-            result_str += "," + data_dict_key + "(" +str(data_dict[data_dict_key]) + ")"
-        return result_str
+        try:
+            result_str = ""
+            print(len(data_dict.keys()))
+            if len(data_dict.keys())>1:
+                data_dict_keys = list(data_dict.keys())
+                for key in data_dict_keys:
+                    result_str += "," + key + "(" +str(data_dict[key]) + ")"
+            elif len(data_dict.keys()) == 0:
+                return result_str
+            else:
+                data_dict_key = list(data_dict.keys())[0]
+                result_str += "," + data_dict_key + "(" +str(data_dict[data_dict_key]) + ")"
+            print(result_str)
+            return result_str
+        except Exception as e:
+            print(e)
     
     # // 'General Information'
     general_info = data['General']
@@ -376,12 +383,13 @@ def get_kobo_RIM_report_detail(city, slum_code, kobo_survey=''):
 
     water_supply_condition_dict = {i: water_supply_condition.count(i) for i in water_supply_condition}
 
-    output['ctb_maintenance_provided_by'] = dict_to_str(ctb_maintenance_provider)[1:]
-    output['condition_of_ctb_structure'] = dict_to_str(ctb_structure_condition)[1:]
-    output['cleanliness_of_the_ctb'] = dict_to_str(ctb_cleanliness_condition)[1:]
-    output['type_of_water_supply_in_ctb'] = dict_to_str(water_supply_condition_dict)[1:]
-    output['facility_in_the_toilet_block_f'] = dict_to_str(ctb_for_under_5)[1:]
-    output['sewage_disposal_system'] = dict_to_str(ctb_sewage_disposal_system)[1:]
+    dict_to_str_keys = {'ctb_maintenance_provided_by':ctb_maintenance_provider, 'condition_of_ctb_structure':ctb_structure_condition, 
+                        'cleanliness_of_the_ctb':ctb_cleanliness_condition, 'type_of_water_supply_in_ctb':water_supply_condition_dict, 'facility_in_the_toilet_block_f':ctb_for_under_5, 'sewage_disposal_system':ctb_sewage_disposal_system}
+    for key in dict_to_str_keys.keys():
+        if len(dict_to_str(dict_to_str_keys[key])) > 1:
+            output[key] = dict_to_str(key)[1:]
+        else:
+            output[key] = ""
 
     # //Waste Management Information
     waste_info = data['Waste']
