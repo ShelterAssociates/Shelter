@@ -29,20 +29,17 @@ def survey_mapping(survey_type):
 def get_household_analysis_data(city, slum_code, fields, kobo_survey=''):
     '''Gets the kobotoolbox RHS data for selected questions
     '''
-    household_field = 'Household_number'
     output = {}
     slum = get_object_or_404(Slum, id=slum_code)
     household_data = HouseholdData.objects.filter(slum=slum)
     records = map(lambda x:x.rhs_data, household_data)
     records = filter(lambda x: x!=None, records)
     grouped_records = itertools.groupby(sorted(records, key=lambda x:int(x['Household_number'])), key=lambda x:int(x["Household_number"]))
-
     # For Covid Data
     covid_data = CovidData.objects.filter(slum = slum, age__gt = 17).exclude(household_number = 9999).values_list('household_number',flat = True)
     Toilet_data = list(ToiletConstruction.objects.filter(slum = slum, status = 6).values_list('household_number', flat = True))
     covid_hh = list(set(covid_data))
     cpod_status = ['SBM (Installment)','SBM (Contractor)','Toilet by SA (SBM)','Toilet by other NGO (SBM)','Own toilet','Toilet by other NGO','Toilet by SA']
-
     for household, list_record in grouped_records:
         record_sorted = list(list_record) #sorted(list(list_record), key=lambda x:x['_submission_time'], reverse=False)
         household_no = int(household)
@@ -77,7 +74,7 @@ def get_household_analysis_data(city, slum_code, fields, kobo_survey=''):
                         del record['group_oi8ts04/Are_you_interested_in_an_indiv']
 
         for field in fields:
-            if field != "" and field in record:
+            if field != "" and field in record and record[field] == record[field]:
                 if (field == 'group_el9cl08/Ownership_status_of_the_house' or field == 'group_el9cl08/Type_of_structure_of_the_house') and record['Type_of_structure_occupancy'] != 'Occupied house': 
                     pass
                 else:
@@ -100,22 +97,22 @@ def format_data(rhs_data, toilet_by_sa = False):
     'OD1', 'C1', 'C2', 'C3','Household_number', '_validation_status']
 
     seq = {'group_el9cl08/Number_of_household_members': 'Number of household members',
-     'group_oi8ts04/Have_you_applied_for_individua': 'Have you applied for an individual toilet under SBM?',
-     'group_oi8ts04/Current_place_of_defecation': 'Current place of defecation',
-     'group_el9cl08/Type_of_structure_of_the_house': 'Type of structure of the house',
-     'group_oi8ts04/What_is_the_toilet_connected_to': 'What is the toilet connected to',
-     'Household_number': 'Household number',
-     'group_el9cl08/Type_of_water_connection': 'Type of water connection',
-     'group_el9cl08/Facility_of_solid_waste_collection': 'Facility of solid waste collection',
-     'group_el9cl08/Ownership_status_of_the_house': 'Ownership status of the house',
-     'group_el9cl08/Does_any_household_m_n_skills_given_below': 'Does any household member have any of the construction skills given below?',
-     'group_el9cl08/Enter_the_10_digit_mobile_number':'Mobile number',
-     'group_el9cl08/House_area_in_sq_ft': 'House area in sq. ft.','group_og5bx85/Type_of_survey': 'Type of survey',
-     'group_og5bx85/Full_name_of_the_head_of_the_household': 'Full name of the head of the household',
-     'group_el9cl08/Do_you_have_any_girl_child_chi': 'Do you have any girl child/children under the age of 18?',
-     'Type_of_structure_occupancy': 'Type of structure of the house',
-     'group_oi8ts04/Are_you_interested_in_an_indiv': 'Are you interested in an individual toilet?'
-     }
+        'group_oi8ts04/Have_you_applied_for_individua': 'Have you applied for an individual toilet under SBM?',
+        'Type_of_structure_occupancy': 'Type of structure occupancy',
+        'group_oi8ts04/Current_place_of_defecation': 'Current place of defecation',
+        'group_el9cl08/Type_of_structure_of_the_house': 'Type of structure of the house',
+        'group_oi8ts04/What_is_the_toilet_connected_to': 'What is the toilet connected to',
+        'Household_number': 'Household number',
+        'group_el9cl08/Type_of_water_connection': 'Type of water connection',
+        'group_el9cl08/Facility_of_solid_waste_collection': 'Facility of solid waste collection',
+        'group_el9cl08/Ownership_status_of_the_house': 'Ownership status of the house',
+        'group_el9cl08/Does_any_household_m_n_skills_given_below': 'Does any household member have any of the construction skills given below?',
+        'group_el9cl08/Enter_the_10_digit_mobile_number':'Mobile number',
+        'group_el9cl08/House_area_in_sq_ft': 'House area in sq. ft.','group_og5bx85/Type_of_survey': 'Type of survey',
+        'group_og5bx85/Full_name_of_the_head_of_the_household': 'Full name of the head of the household',
+        'group_el9cl08/Do_you_have_any_girl_child_chi': 'Do you have any girl child/children under the age of 18?',
+        'group_oi8ts04/Are_you_interested_in_an_indiv': 'Are you interested in an individual toilet?'
+        }
     for i in remove_list:
         if i in rhs_data:
             rhs_data.pop(i)
@@ -125,7 +122,6 @@ def format_data(rhs_data, toilet_by_sa = False):
         try:
             
             if k == 'group_oi8ts04/Current_place_of_defecation':   # Changing cpod status and adding new cpod for toilet by sa households.
-                print(rhs_data[k] in cpod_status, toilet_by_sa)
                 if toilet_by_sa:
                     new_rhs[v] = 'Toilet By SA'
                     new_rhs['Before SA Toilet Place of defication'] = rhs_data[k]
@@ -135,6 +131,9 @@ def format_data(rhs_data, toilet_by_sa = False):
                     if 'group_oi8ts04/Are_you_interested_in_an_indiv' in rhs_data:
                         del rhs_data['group_oi8ts04/Are_you_interested_in_an_indiv']
                     new_rhs[v] = rhs_data[k]
+                else:
+                    if k in rhs_data:
+                        new_rhs[v] = rhs_data[k]
             else:
                 if k in rhs_data:
                     new_rhs[v] = rhs_data[k]
@@ -270,7 +269,6 @@ def parse_RIM_data(submission):
     
     '''We Are iterating on the each section of the RIM data'''
     for key, value in submission.items():
-        # print(key, value)
         data = OrderedDict()
         if key != "Toilet":    # here we are iterating on all the non repetative section.
             match_keys_dict = match_keys[key]   # here we are matching the section key to actual name of the question.
@@ -311,7 +309,6 @@ def get_kobo_RIM_report_detail(city, slum_code, kobo_survey=''):
     def dict_to_str(data_dict):
         try:
             result_str = ""
-            print(len(data_dict.keys()))
             if len(data_dict.keys())>1:
                 data_dict_keys = list(data_dict.keys())
                 for key in data_dict_keys:
@@ -321,7 +318,6 @@ def get_kobo_RIM_report_detail(city, slum_code, kobo_survey=''):
             else:
                 data_dict_key = list(data_dict.keys())[0]
                 result_str += "," + data_dict_key + "(" +str(data_dict[data_dict_key]) + ")"
-            print(result_str)
             return result_str
         except Exception as e:
             print(e)
@@ -387,7 +383,7 @@ def get_kobo_RIM_report_detail(city, slum_code, kobo_survey=''):
                         'cleanliness_of_the_ctb':ctb_cleanliness_condition, 'type_of_water_supply_in_ctb':water_supply_condition_dict, 'facility_in_the_toilet_block_f':ctb_for_under_5, 'sewage_disposal_system':ctb_sewage_disposal_system}
     for key in dict_to_str_keys.keys():
         if len(dict_to_str(dict_to_str_keys[key])) > 1:
-            output[key] = dict_to_str(key)[1:]
+            output[key] = dict_to_str(dict_to_str_keys[key])[1:]
         else:
             output[key] = ""
 
