@@ -59,7 +59,7 @@ class avni_sync():
         # latest_date = last_submission_date.submission_date + timedelta(days=1)
         today = datetime.today()  # + timedelta(days= -1)
         latest_date = today.strftime('%Y-%m-%dT00:00:00.000Z')
-        iso = "2022-10-16T00:00:00.000Z"
+        iso = "2023-01-24T00:00:00.000Z"
         # return(latest_date)
         return iso
 
@@ -457,7 +457,7 @@ class avni_sync():
 
         phase_one_materials = ['Date on which bricks are given', 'Date on which sand is given',
                             'Date on which crush sand is given', 'Date on which river sand is given',
-                            'Date on which cement is given']
+                            'Date on which cement is given', 'Date on which Pre mix plaster are given ?', 'Date on which Sanala are given ?']
         phase_two_materials = ['Date on which other hardware items are given', 'Date on which pan is given',
                             'Date on which Tiles are given']
 
@@ -770,7 +770,7 @@ class avni_sync():
 
     def SaveDataFromIds(self):
 
-        IdList = ['6c1861b3-50d5-40da-b0d2-5339f1b05cb9'] # 'cda4ce0e-f05c-4b49-ac6e-ed160eba1940']
+        IdList = ['4acfc276-830b-440d-9edd-9c1936d663b4', '6a2b19d8-111f-4b91-adfe-9018e52ccda9', '68f208fa-ddce-494a-800d-a38bcf2ef516'] # 'cda4ce0e-f05c-4b49-ac6e-ed160eba1940']
 
         ''' There Are Three Types Of Flag We Use
         1 - Subject Type
