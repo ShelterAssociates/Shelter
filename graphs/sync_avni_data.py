@@ -59,7 +59,7 @@ class avni_sync():
         # latest_date = last_submission_date.submission_date + timedelta(days=1)
         today = datetime.today()  # + timedelta(days= -1)
         latest_date = today.strftime('%Y-%m-%dT00:00:00.000Z')
-        iso = "2023-01-24T00:00:00.000Z"
+        iso = "2023-02-05T00:00:00.000Z"
         # return(latest_date)
         return iso
 
@@ -1304,6 +1304,84 @@ class avni_sync():
                 print('Data updated successfully')
         except Exception as e:
             print(e)
+
+    def map_rim_data(self, rim_data, rim_keys):
+        final_data = {}
+        multiselect = ['Slum Land owner', 'Development plan reservation type_', 'Location of slum', 'Topography of slum',
+                    'Alternative source of water in slum', 'Availability of water in slum', 'Facility of waste collection in slum', 'Where are the communty open dump sites_',
+                    'Finish of the road in slum?', 'Average width of internal roads in slum', 'Status of defecation', 'Diameter of ULB sewer line across settlement?', 'Type of water supply available in CTB', 'Community Toilet Block maintenance provided by', 'The reason for men not using the toilet seats', 'The reason for women not using the toilet seats', 'The Reason for the MIXED seats not in Use']
+        for ques_shelter, ques_avni in rim_keys.items():
+            if ques_avni in rim_data:
+                if ques_avni in multiselect:
+                    temp = rim_data[ques_avni]
+                    final_data[ques_shelter] =  ", ".join(temp)
+                else:
+                    final_data[ques_shelter] = rim_data[ques_avni]
+        return final_data
+    
+    def update_toilet_data(self):
+        id_list = ['74cf6f97-a771-44fd-b480-de3581c4c4bd', '9c83cf61-9de8-4fbe-bce6-163cae24ade1', 'c0a74fd5-0e31-46b8-b10e-ea96c83a13b9', 'a11161d6-baf5-4265-8569-b7a0dac5dc8e', '9bf644e9-5fc0-4d70-b57d-d7bc13fcb3af', '03837f96-883e-4e05-be0d-165ace7bef6b', 'eac740bc-3534-4999-878b-462249c18feb', '4e686980-843a-406d-8fe2-9dd827f5af4b', '6c27044a-b26d-43a5-9059-a1e8342558c6', '69a69469-5797-4c2c-84f4-6023885f4675', '10e76136-4218-40c9-a2d9-30e2aab54214', 'a8e108a1-f8fc-4961-a2f5-ac097cd894a3', 'fdbe80bc-b079-4cf0-b18d-d16d98c0d27b', '376080b9-ace5-4c9d-956b-e8f870aa9adb', 'ab491800-7e01-4974-88eb-d506fe7eaee0', 'f4287450-87ec-4872-b8ea-a4faeae9efc3', '81e5cc67-f685-44e4-ac93-5d956e0b829f', 'eeebb0a1-401f-4398-9f93-62861cae34e9', '632a4f37-1884-42d1-929d-2d8c563607ab', '51e0459e-e492-4a7f-8aa0-4612a4d385c9', '1f74a4c0-9dac-4183-bceb-68b32bf2cb15', 'f965c2f3-ddf2-4221-afa7-6de0bf3a7881', 'b8ded742-81ed-43d4-874b-915941c43532', 'b91be5b5-b962-453d-9626-6f38b0a4ea5a', '14bb04e3-1729-4491-ac3a-46c3d881cd43', '46e40fb3-f4e9-4cfb-81f2-1e6007a42a97', '7b2140e4-4ebb-4426-9023-8b27528e4bfa', '1bc66877-b92c-4920-b15a-c2cd52e36409', 'c97b8090-74e8-48d2-9729-b8c0ff881e84', 'd9b60fa3-ab83-484c-829f-e6a7b0f86cfa', 'faaede4b-fd8d-47f5-85e8-59d7241f1b45', '64b462e5-0949-472b-8a10-867adc2e7291', '6d894fac-f9f2-4369-b025-fe522098f3b7', '0f52c72e-52cc-4237-a578-5b236b8c0ba3', '1b04097a-5172-4bf5-866f-96737f367e12', 'b45bbb4f-1a2b-405b-9c41-433c03e22e45', 'e05ae94c-8aef-4673-ad47-ae2aefe4cbbf', 'f22d2960-8452-4aa7-ab22-ba8fd3650e67', '830c4ab9-127c-4e29-9fc4-2daf51138d5d', 'c01e9689-3e59-4970-8166-e85f89edeae6', 'decf003d-aff2-4ee2-ad29-c76cad043de6', '06d35cfe-d5ca-4813-927d-20ed0a013323', 'a5f1ddfb-c25e-40e8-b6dc-947c5ee5042c', '59f65ab8-5d5e-4ef8-a778-b5c1aba5f730', 'edb9a22c-0f44-4f31-b91e-afc2b2d0550c', '0a1f0749-c6a7-4fc3-b3c5-797a32f405f9', '8113f623-6512-432e-8e17-9b87641452f2', '6932bbce-6f91-4c87-811e-8907d4b62b72', '638ab1f8-c54c-4bc6-b9f5-224c74d9c51f', 'b569450b-78d4-4268-adae-32310b721fa3', '8333348d-934e-483d-90cb-4c02f12dca46', '42a65774-e872-4d0b-b2c6-ab6679ace61c', '6bf1d492-4aa2-4c2e-a719-3edcbde8a9cd', 'ff7e4978-46ca-4b9e-8d3d-7ac9efb45364', '1cc837cd-73e0-4bfc-b0c9-6943d62fe42a', 'e85ced90-f353-4ef2-a237-981b39a2a0df', '425c3395-f5d9-4aaa-aacc-fe58d72e4306', '1840cd80-26e9-4cba-8ad0-fc96ba00fd7d', '62f0e81d-bbad-463a-8ceb-939df64605e1', 'cd5adeda-5a68-4889-98b1-6c825da2d51c', 'c0d3bec1-b848-456d-b816-f8f26f3241d2', '7b197b5c-aaa3-4945-ae77-ff382b4839c8', '3b44890a-3d2e-42d5-bfde-4a8f8e5ea9ff', 'f0267175-d899-413d-a5eb-0af4370e46fb', '14095883-4cc4-4b44-88a2-f89aad3df9e1', '4751e8b7-52fc-4ca8-a2f1-ff15681114ad', '52efc0d1-7ff2-4c74-bc8e-08eca6438e66', '3fe8dc11-a5b2-4946-b12f-8f52bbd20837']
+        section_name = 'Toilet'
+        for i in id_list:
+            RequestHouseholdRegistration = requests.get(self.base_url + 'api/subject/' + i, headers={'AUTH-TOKEN': self.get_cognito_token()})
+            if RequestHouseholdRegistration.status_code == 200:
+                data = json.loads(RequestHouseholdRegistration.text)
+                if not data['Voided']:
+                    slum_name = data['location']['Slum']
+                    with open('graphs/rim_questions_mapping.json') as datafile:
+                        rim_questions = json.load(datafile)
+                        toilet_data = self.map_rim_data(data['observations'], rim_questions[section_name])
+                        slum_id = Slum.objects.filter(name = slum_name).values_list('id', flat = True)[0]
+                        slum_rim_obj = SlumData.objects.filter(slum_id = slum_id)
+                        if slum_rim_obj.exists():
+                            rim_data = slum_rim_obj.values_list('rim_data', flat = True)[0]
+                            if section_name not in rim_data:
+                                rim_data[section_name] = [toilet_data,]
+                                slum_rim_obj.update(rim_data = rim_data)
+                                print("Slum rim data updated successfully : ", slum_name)
+                            else:
+                                toilet_section = rim_data[section_name]
+                                toilet_section.append(toilet_data)
+                                rim_data[section_name] = toilet_section
+                                slum_rim_obj.update(rim_data = rim_data)
+                                print("Slum rim data updated successfully : ", slum_name)
+                        else:
+                            print("Slum rim data not available for slum : ", slum_name)
+
+
+    def update_rim_data(self):
+        id_list = ['f3e72b53-e55b-436f-8661-a09e6abf24c2', '34b57ba0-d845-40eb-ab66-a74328941b74', 'e821f177-966a-405b-ba5f-c115bb8c1438', '4220e084-cc21-4fea-a788-586dc68e586c', 'd124df51-879a-4787-82a0-d678c8b4d395', 'ac2845ae-fbc6-4fdf-abea-0f7727439530', '44660b5f-e8f1-40c5-9766-2334143dc37e', '5f7871ec-59f3-42ab-b84c-e3aade3fdffb', '5cb5b029-4a6e-45f6-8a7e-bea4ed707b96', 'ef8cb5a5-08db-43db-95c6-514ab515ecbd', '5f0dcbd0-a33a-4d72-8014-8bd237150aac']
+        section_names = ['General' , 'Water', 'Waste', 'Drainage', 'Gutter', 'Road']
+        for i in id_list:
+            RequestHouseholdRegistration = requests.get(self.base_url + 'api/subject/' + i, headers={'AUTH-TOKEN': self.get_cognito_token()})
+            if RequestHouseholdRegistration.status_code == 200:
+                data = json.loads(RequestHouseholdRegistration.text)
+                # print(data)
+                if not data['Voided']:
+                    slum_name = data['location']['Slum']
+                    last_modified_at = dateparser.parse(data['audit']['Last modified at'])
+                    with open('graphs/rim_questions_mapping.json') as datafile:
+                        rim_data = {}
+                        rim_questions = json.load(datafile)
+                        for section in section_names:
+                            section_map_data = self.map_rim_data(data['observations'], rim_questions[section])
+                            rim_data[section] = section_map_data
+                        slum_id, city_id = Slum.objects.filter(name = slum_name).values_list('id', 'electoral_ward__administrative_ward__city_id')[0]
+                        slum_rim_obj = SlumData.objects.filter(slum_id = slum_id)
+                        if slum_rim_obj.exists():
+                            slum_rim_obj.update(rim_data = rim_data, modified_on = last_modified_at)
+                            print("Slum_data Updated for slum : ", slum_name)
+                        else:
+                            created_at = dateparser.parse(data['audit']['Created at'])
+                            SlumData.objects.create(slum_id = slum_id, city_id = city_id,
+                                                    submission_date = last_modified_at,
+                                                    rim_data = rim_data, created_on = created_at,
+                                                    modified_on = last_modified_at)
+                            print("Slum_data Created for slum : ", slum_name)
+
+
+
+
 
 
     # def set_mobile_number(self):
