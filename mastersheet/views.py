@@ -550,8 +550,6 @@ def define_columns(request):
     except Exception as e:
         print(e)
     final_data['buttons']['Accounts'] = list(range(vendor_pre_len, len(formdict_new)))
-
-    # print final_data['buttons']['Accounts'] , len(final_data['buttons']['Accounts'])
     final_data['data'] = formdict_new
     return HttpResponse(json.dumps(final_data), content_type="application/json")
 
@@ -640,7 +638,6 @@ def handle_uploaded_file(f, response, slum_code):
                 # this_slum = Slum.objects.get(name=str(df1.loc[int(i), 'Select Slum']))
 
                 if flag_SBM != 1:
-                    # print "in sbm"
                     try:
                         SBM_instance = SBMUpload.objects.filter(slum=this_slum, household_number=int(i))
 
@@ -684,8 +681,6 @@ def handle_uploaded_file(f, response, slum_code):
                             e) + ". This error is with SBM columns for following household numbers", int(i)))
 
                 if flag_ComMob != 1:
-                    # print "in commob"
-
                     for p, q in df_ComMob.loc[int(i)].items():
 
                         if check_null(q) is not None:
@@ -719,16 +714,12 @@ def handle_uploaded_file(f, response, slum_code):
                             except Exception as e:
                                 response.append(("The error says: " + str(
                                     e) + ". This error is in Commuinity Mobilization columns for " + p + ", for the following household numbers", int(i)))
-
                 if flag_accounts != 1:
-                    # print "in accounts"
-
                     for j, m in df_vendors.loc[int(i)].items():
                         if check_null(m) is not None:
                             household_nums = []
                             k = df_vendors.columns.get_loc(j)
                             string = unicode(df_invoice.loc[int(i)][k])
-
                             try:
                                 Vendor_instance = Vendor.objects.get(name=str(m))
                                 if Vendor_instance:
@@ -743,8 +734,6 @@ def handle_uploaded_file(f, response, slum_code):
                                             response.append(("updated VHID", int(i)))
                                         VHID_instance_1.household_number = temp
                                         VHID_instance_1.save()
-
-
                                     except Exception as e:
                                         print(e)
                                         household_nums.append(int(i))
@@ -757,15 +746,12 @@ def handle_uploaded_file(f, response, slum_code):
                                         )
                                         VHID_instance.save()
                                         response.append(("newly created VHID", int(i)))
-
                             except Exception as e:
                                 response.append(("The error says: " + str(
                                     e) + ". This error is in Vendor Invoice Details Columns for " + m + ", for the following household numbers", int(i)))
-
                 if flag_TC != 1:
                     try:
-                        TC_instance = ToiletConstruction.objects.select_related().filter(household_number=int(i),
-                                                                                         slum__name=this_slum)
+                        TC_instance = ToiletConstruction.objects.select_related().filter(household_number=int(i), slum__name=this_slum)
                         if TC_instance:
                             try:
                                 TC_instance[0].update_model(df_TC.loc[int(i), :])
@@ -1402,20 +1388,28 @@ def give_report_table_numbers_accounts(request):
                         content_type="application/json")
 
 
+'''This function is for removing invalid characters from strings'''
+def remove_invalid_char(fname):
+    invalid_char = '''@$%&\/:*?"'<>|~`#^+={}[];!,.'''
+    final_str = ""
+    for char1 in fname:
+        if char1 not in invalid_char:
+            final_str += char1
+    return final_str
+
 @user_passes_test(lambda u: u.groups.filter(name="Account").exists() or u.is_superuser)
 def accounts_excel_generation(request):
     account_form = account_find_slum(request.POST)
-    # print account_form.cleaned_data.get('account_start_date')
-
     city_id = request.POST.get('account_cityname')
     slum_id = request.POST.get('account_slumname')
-    # end_date = request.POST.get('account_end_date')
     if len(request.POST.get('account_start_date')) == 0 or len(request.POST.get('account_end_date')) == 0:
         start_date = datetime.datetime(2001, 1, 1).date()
         end_date = datetime.datetime.today().date()
     else:
         start_date = datetime.datetime.strptime(request.POST.get('account_start_date'), "%d-%m-%Y").date()
         end_date = datetime.datetime.strptime(request.POST.get('account_end_date'), "%d-%m-%Y").date()
+    '''For adding date as a postfix in filename'''
+    filename_date_ext = "_" + str(start_date) + '_' + str(end_date)
     wb = Workbook()
     sheet1 = wb.add_sheet('Sheet1')
     sheet1.write(0, 0, 'Date')
@@ -1442,13 +1436,13 @@ def accounts_excel_generation(request):
     if len(city_id) == 0:
         invoiceItems = InvoiceItems.objects.filter(slum__id=int(slum_id),
                                                    invoice__invoice_date__range=[start_date, end_date])
-        fname = str(Slum.objects.get(id=int(slum_id))) + '.xls'
+        fname = remove_invalid_char(str(Slum.objects.get(id=int(slum_id)))) + filename_date_ext + '.xls'
         sponsor = SponsorProjectDetails.objects.filter(slum__id=int(slum_id)).exclude(sponsor_project=1)
         Toilet = ToiletConstruction.objects.filter(slum__id=int(slum_id)).exclude(agreement_cancelled = True).values_list('slum_id', 'household_number', 'phase_one_material_date', 'phase_two_material_date', 'phase_three_material_date')
     else:
         invoiceItems = InvoiceItems.objects.filter(slum__electoral_ward__administrative_ward__city__id=int(city_id),
                                                    invoice__invoice_date__range=[start_date, end_date])
-        fname = str(City.objects.get(id=int(city_id))) + '.xls'
+        fname = str(City.objects.get(id=int(city_id))) + filename_date_ext + '.xls'
         sponsor = SponsorProjectDetails.objects.filter(slum__electoral_ward__administrative_ward__city__id=int(city_id)).exclude(sponsor_project=1)
         Toilet = ToiletConstruction.objects.filter(slum__electoral_ward__administrative_ward__city__id=int(city_id)).exclude(agreement_cancelled = True).values_list('slum_id', 'household_number', 'phase_one_material_date', 'phase_two_material_date', 'phase_three_material_date')
     
@@ -1541,8 +1535,6 @@ def accounts_excel_generation(request):
             sheet1.write(i, 18, round(inner_v.total / len(inner_v.household_numbers) + tc + luc, 2))
             sheet1.write(i, 19, check_toilet_data(k[0], inner_v.slum.id))
             i = i + 1
-
-    # wb.save(fname)
     response = HttpResponse(content_type="application/ms-excel")
     response['Content-Disposition'] = 'attachment; filename=%s' % str(fname).replace(' ', '_')
     wb.save(response)
@@ -1796,7 +1788,7 @@ def AnalyseGisTabData(slum_id):
             temp_dict = {i : None for i in diff_keys}
             dct.update(temp_dict)
             check_formdict[dct['household_number']] = dct
-        return list(check_formdict.values()), columns_lst
+        return list(check_formdict.values()), columns_lst, slum_code[0][1]
     except Exception as e:
         print(e)
 
@@ -1804,8 +1796,8 @@ def AnalyseGisTabData(slum_id):
 @csrf_exempt
 def gisDataDownload(request):
     slum_id = request.POST.get('slum_name')
-    response_data,  columns_lst = AnalyseGisTabData(slum_id)
-    filename = str(slum_id)+'.csv'
+    response_data,  columns_lst, slum_name = AnalyseGisTabData(slum_id)
+    filename = remove_invalid_char(str(slum_name))+'.csv'
     response = HttpResponse(content_type='text/csv')
     response['Content-Disposition']  =  'attachment; filename='+filename
     writer = csv.DictWriter(response, columns_lst)
