@@ -340,11 +340,11 @@ def get_kobo_RIM_report_detail(city, slum_code, kobo_survey=''):
     
     for i in toilet_info:
         if i['is_the_CTB_in_use'] == 'Yes':
-            if i['ctb_gender_usage'] == 'Female':
+            if 'number_of_seats_allotted_to_wo' in i:
                 seats_f_woman += int(i['number_of_seats_allotted_to_wo'])
-            elif i['ctb_gender_usage'] == 'Mix':
+            if 'total_number_of_mixed_seats_al' in i:
                 seats_f_mix += int(i['total_number_of_mixed_seats_al'])
-            elif i['ctb_gender_usage'] == 'Male':
+            if 'number_of_seats_allotted_to_me' in i:
                 seats_f_man += int(i['number_of_seats_allotted_to_me'])
             if i['ctb_maintenance_provided_by'] in ctb_maintenance_provider:
                 ctb_maintenance_provider[i['ctb_maintenance_provided_by']] += 1
