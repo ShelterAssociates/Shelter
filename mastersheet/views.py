@@ -1,6 +1,5 @@
-from __future__ import division
 from django.shortcuts import render
-from django.http import HttpResponse, HttpResponseForbidden
+from django.http import HttpResponse
 from django.contrib.auth.decorators import user_passes_test, permission_required
 from mastersheet.forms import find_slum, file_form, account_find_slum, gis_tab
 from django.db.models import Count, F, Q
@@ -13,18 +12,14 @@ import json
 import requests
 import pandas
 import csv
-from urllib import request as urllib2
 from django.conf import settings
 import collections
-from django.http import JsonResponse
 from mastersheet.daily_reporting_sync import ToiletConstructionSync, CommunityMobilizaitonSync
 from utils.utils_permission import apply_permissions_ajax
 from .decorators import deco_city_permission
 from collections import defaultdict
 import datetime
 import itertools
-from django.db.models.functions import Length
-import xlwt
 from xlwt import Workbook
 from mastersheet.models import *
 from graphs.models import *
@@ -898,7 +893,7 @@ def sync_kobo_data(request):
         data['msg'] = "Error occurred while sync from kobo. Please contact administrator." + str(e)
     return HttpResponse(json.dumps(data), content_type="application/json")
 
-
+''' Mastersheet Report Tab '''
 @permission_required('mastersheet.can_view_mastersheet_report', raise_exception=True)
 def render_report(request):
     return render(request, 'mastersheet_report.html')
@@ -933,7 +928,35 @@ def create_report(request):
         fancy_tree_data.append(temp)
     return HttpResponse(json.dumps(fancy_tree_data), content_type="application/json")
 
+''' This is for quearing data level wise when we are using report tab methods'''
+level_data = {
+        'city':
+            {
+                'city_name': F('slum__electoral_ward__administrative_ward__city__name__city_name'),
+                'level': F('slum__electoral_ward__administrative_ward__city__name__city_name'),
+                'level_id': F('slum__electoral_ward__administrative_ward__city__id')
+            },
+        'admin_ward':
+            {
+                'city_name': F('slum__electoral_ward__administrative_ward__city__name__city_name'),
+                'level': F('slum__electoral_ward__administrative_ward__name'),
+                'level_id': F('slum__electoral_ward__administrative_ward__id')
+            },
+        'electoral_ward':
+            {
+                'city_name': F('slum__electoral_ward__administrative_ward__city__name__city_name'),
+                'level': F('slum__electoral_ward__name'),
+                'level_id': F('slum__electoral_ward__id')
+            },
+        'slum':
+            {
+                'city_name': F('slum__electoral_ward__administrative_ward__city__name__city_name'),
+                'level': F('slum__name'),
+                'level_id': F('slum__id')
+            }
+    }
 
+''' Mastersheet Report Tab Methods'''
 @csrf_exempt
 @apply_permissions_ajax('mastersheet.can_view_mastersheet_report')
 def give_report_table_numbers(request):  # view for toilet construction
@@ -962,35 +985,9 @@ def give_report_table_numbers(request):  # view for toilet construction
                 'completion_date': 'total_c', 'septic_tank_date': 'total_st',
                 'use_of_toilet': 'use_of_toilet', 'toilet_connected_to': 'toilet_connected_to',
                 'factsheet_done': 'factsheet_done'}
-
-    level_data = {
-        'city':
-            {
-                'city_name': F('slum__electoral_ward__administrative_ward__city__name__city_name'),
-                'level': F('slum__electoral_ward__administrative_ward__city__name__city_name'),
-                'level_id': F('slum__electoral_ward__administrative_ward__city__id')
-            },
-        'admin_ward':
-            {
-                'city_name': F('slum__electoral_ward__administrative_ward__city__name__city_name'),
-                'level': F('slum__electoral_ward__administrative_ward__name'),
-                'level_id': F('slum__electoral_ward__administrative_ward__id')
-            },
-        'electoral_ward':
-            {
-                'city_name': F('slum__electoral_ward__administrative_ward__city__name__city_name'),
-                'level': F('slum__electoral_ward__name'),
-                'level_id': F('slum__electoral_ward__id')
-            },
-        'slum':
-            {
-                'city_name': F('slum__electoral_ward__administrative_ward__city__name__city_name'),
-                'level': F('slum__name'),
-                'level_id': F('slum__id')
-            }
-    }
+    
+    '''Report table data object for response'''
     report_table_data = defaultdict(dict)
-
     for query_field in query_on.keys():
         if query_field in ['agreement_date', 'phase_one_material_date', 'phase_two_material_date',
                            'phase_three_material_date',
@@ -1011,7 +1008,7 @@ def give_report_table_numbers(request):  # view for toilet construction
         for level_id, data in tc.items():
             report_table_data[level_id].update(data)
 
-        # For write off cases
+        '''Here we are checking the write off cases ...'''
         if query_field == 'factsheet_done':
             count_field = {'status': Count('level_id')}
             filter_field = {'slum__id__in': keys, 'phase_one_material_date__range': [start_date, end_date], 'status' : '7'}
@@ -1020,62 +1017,7 @@ def give_report_table_numbers(request):  # view for toilet construction
             toilet_data = {obj_ad['level_id']: obj_ad for obj_ad in toilet_data}
             for level_id, data in toilet_data.items():
                 report_table_data[level_id].update({'write_off_cases':data['status']})
-        
-        # For Factsheet Assign Check
-        if query_field == 'factsheet_done':
-
-            for t in tc:
-                l = tc[t]['level_id']
-                report_table_data[l]['factAssign'] = 0
-
-                if tag == 'city':
-                    T_Housenum = ToiletConstruction.objects.filter(
-                        slum__electoral_ward__administrative_ward__city__id=l,
-                        phase_one_material_date__range=[start_date, end_date], factsheet_done__isnull=False).values_list(
-                        'household_number', flat=True)
-
-                    Spsr_Housecode = SponsorProjectDetails.objects.filter(
-                        slum__electoral_ward__administrative_ward__city__id=l).exclude(sponsor__id=10).values_list(
-                        'household_code', flat=True)
-
-                elif tag == 'admin_ward':
-                    T_Housenum = ToiletConstruction.objects.filter(slum__electoral_ward__administrative_ward__id=l,
-                                                                   phase_one_material_date__range=[start_date, end_date],
-                                                                   factsheet_done__isnull=False).values_list(
-                        'household_number', flat=True)
-
-                    Spsr_Housecode = SponsorProjectDetails.objects.filter(
-                        slum__electoral_ward__administrative_ward__id=l).exclude(sponsor__id=10).values_list(
-                        'household_code', flat=True)
-                elif tag == 'electoral_ward':
-                    T_Housenum = ToiletConstruction.objects.filter(slum__electoral_ward__id=l,
-                                                                   phase_one_material_date__range=[start_date, end_date],
-                                                                   factsheet_done__isnull=False).values_list(
-                        'household_number', flat=True)
-
-                    Spsr_Housecode = SponsorProjectDetails.objects.filter(slum__electoral_ward__id=l).exclude(
-                        sponsor__id=10).values_list('household_code', flat=True)
-                elif tag == 'slum':
-                    T_Housenum = ToiletConstruction.objects.filter(slum__id=l,
-                                                                   phase_one_material_date__range=[start_date, end_date],
-                                                                   factsheet_done__isnull=False).values_list(
-                        'household_number', flat=True)
-
-                    Spsr_Housecode = SponsorProjectDetails.objects.filter(slum__id=l).exclude(
-                        sponsor__id=10).values_list('household_code', flat=True)
-
-                factsheet_count = 0
-                h_list = []
-                for household_num in T_Housenum:
-                    for housecode_list in Spsr_Housecode:
-                        if housecode_list != None:
-                            if int(household_num) in housecode_list and household_num not in h_list:
-                                factsheet_count += 1
-                                h_list.append(household_num)
-                                break
-
-                report_table_data[l]['factAssign'] = factsheet_count
-    level_data_tag = {
+        level_data_tag = {
                 'city':
                     {
                         'level_id': 'slum__electoral_ward__administrative_ward__city__id'
@@ -1093,12 +1035,34 @@ def give_report_table_numbers(request):  # view for toilet construction
                         'level_id': 'slum__id'
                     }
                 }
-    for i in report_table_data.keys():
-        query_field = {level_data_tag[tag]['level_id'] : i, 'rhs_data__isnull':False}
-        h = HouseholdData.objects.filter(**query_field)
-        report_table_data[i]['total_structure'] = h.count()
-    return HttpResponse(json.dumps(list(map(lambda x: report_table_data[x], report_table_data))),
-                        content_type="application/json")
+        ''' For Factsheet Assign Check '''
+        if query_field == 'factsheet_done':
+            for t in tc:
+                l = tc[t]['level_id']
+                '''Assigning Initla count as 0 for every level.'''
+                report_table_data[l]['factAssign'] = 0
+                '''Query filter for toilet construction data'''
+                query_field_TC = {level_data_tag[tag]['level_id'] : l, 'phase_one_material_date__range':[start_date, end_date], 'factsheet_done__isnull' : False}
+                '''Query filter for Sponsor data'''
+                query_field_sponsor = {level_data_tag[tag]['level_id'] : l,}
+                T_Housenum = ToiletConstruction.objects.filter(**query_field_TC).values_list('household_number', flat=True)
+                Spsr_Housecode = SponsorProjectDetails.objects.filter(**query_field_sponsor).exclude(sponsor__id=10).values_list('household_code', flat=True)
+                '''Query filter for the total houses which have rhs data...'''
+                query_field = {level_data_tag[tag]['level_id'] : l, 'rhs_data__isnull':False}
+                h = HouseholdData.objects.filter(**query_field)
+                report_table_data[l]['total_structure'] = h.count()
+                '''Here we are cheching that the funder assign or not to the household.'''
+                factsheet_count = 0
+                h_list = []
+                for household_num in T_Housenum:
+                    for housecode_list in Spsr_Housecode:
+                        if housecode_list != None:
+                            if int(household_num) in housecode_list and household_num not in h_list:
+                                factsheet_count += 1
+                                h_list.append(household_num)
+                                break
+                report_table_data[l]['factAssign'] = factsheet_count
+    return HttpResponse(json.dumps(list(map(lambda x: report_table_data[x], report_table_data))), content_type="application/json")
 
 
 @csrf_exempt
@@ -1124,34 +1088,7 @@ def report_table_cm(request):
     else:
         start_date = datetime.datetime.strptime(tag_key_dict['startDate'], "%Y-%m-%d").date()
         end_date = datetime.datetime.strptime(tag_key_dict['endDate'], "%Y-%m-%d").date()
-
-    level_data = {
-        'city':
-            {
-                'city_name': F('slum__electoral_ward__administrative_ward__city__name__city_name'),
-                'level': F('slum__electoral_ward__administrative_ward__city__name__city_name'),
-                'level_id': F('slum__electoral_ward__administrative_ward__city__id')
-            },
-        'admin_ward':
-            {
-                'city_name': F('slum__electoral_ward__administrative_ward__city__name__city_name'),
-                'level': F('slum__electoral_ward__administrative_ward__name'),
-                'level_id': F('slum__electoral_ward__administrative_ward__id')
-            },
-        'electoral_ward':
-            {
-                'city_name': F('slum__electoral_ward__administrative_ward__city__name__city_name'),
-                'level': F('slum__electoral_ward__name'),
-                'level_id': F('slum__electoral_ward__id')
-            },
-        'slum':
-            {
-                'city_name': F('slum__electoral_ward__administrative_ward__city__name__city_name'),
-                'level': F('slum__name'),
-                'level_id': F('slum__id'),
-
-            }
-    }
+    '''Report table data object for response'''
     report_table_data_cm = defaultdict(dict)
     activity_type = ActivityType.objects.all()
     for x in activity_type:
@@ -1219,34 +1156,6 @@ def report_table_cm_activity_count(request):
     else:
         start_date = datetime.datetime.strptime(tag_key_dict['startDate'], "%Y-%m-%d").date()
         end_date = datetime.datetime.strptime(tag_key_dict['endDate'], "%Y-%m-%d").date()
-
-    level_data = {
-        'city':
-            {
-                'city_name': F('slum__electoral_ward__administrative_ward__city__name__city_name'),
-                'level': F('slum__electoral_ward__administrative_ward__city__name__city_name'),
-                'level_id': F('slum__electoral_ward__administrative_ward__city__id')
-            },
-        'admin_ward':
-            {
-                'city_name': F('slum__electoral_ward__administrative_ward__city__name__city_name'),
-                'level': F('slum__electoral_ward__administrative_ward__name'),
-                'level_id': F('slum__electoral_ward__administrative_ward__id')
-            },
-        'electoral_ward':
-            {
-                'city_name': F('slum__electoral_ward__administrative_ward__city__name__city_name'),
-                'level': F('slum__electoral_ward__name'),
-                'level_id': F('slum__electoral_ward__id')
-            },
-        'slum':
-            {
-                'city_name': F('slum__electoral_ward__administrative_ward__city__name__city_name'),
-                'level': F('slum__name'),
-                'level_id': F('slum__id'),
-
-            }
-    }
     report_table_data_cm_activity_count = defaultdict(dict)
     activity_type = ActivityType.objects.all()
 
@@ -1295,7 +1204,6 @@ def give_report_table_numbers_accounts(request):
     if request.user.is_superuser:
         group_perm = Group.objects.all().values_list('name', flat=True)
     group_perm = map(lambda x: x.split(':')[-1], group_perm)
-
     keys = Slum.objects.filter(id__in=keys,
                                electoral_ward__administrative_ward__city__name__city_name__in=group_perm).values_list(
         'id', flat=True)
@@ -1309,81 +1217,45 @@ def give_report_table_numbers_accounts(request):
     else:
         start_date = datetime.datetime.strptime(tag_key_dict['startDate'], "%Y-%m-%d").date()
         end_date = datetime.datetime.strptime(tag_key_dict['endDate'], "%Y-%m-%d").date()
-
-    query_on = {'phase_one_material_date': 'total_p1',
-                'phase_two_material_date': 'total_p2',
-                'phase_three_material_date': 'total_p3',
+    '''For Daily reporting data count'''
+    query_on = {'phase_one_material_date': 'total_date_phase_1',
+                'phase_two_material_date': 'total_date_phase_2',
+                'phase_three_material_date': 'total_date_phase_3',
                 }
-
-    level_data = {
-        'city':
-            {
-                'city_name': F('slum__electoral_ward__administrative_ward__city__name__city_name'),
-                'level': F('slum__electoral_ward__administrative_ward__city__name__city_name'),
-                'level_id': F('slum__electoral_ward__administrative_ward__city__id')
-            },
-        'admin_ward':
-            {
-                'city_name': F('slum__electoral_ward__administrative_ward__city__name__city_name'),
-                'level': F('slum__electoral_ward__administrative_ward__name'),
-                'level_id': F('slum__electoral_ward__administrative_ward__id')
-            },
-        'electoral_ward':
-            {
-                'city_name': F('slum__electoral_ward__administrative_ward__city__name__city_name'),
-                'level': F('slum__electoral_ward__name'),
-                'level_id': F('slum__electoral_ward__id')
-            },
-        'slum':
-            {
-                'city_name': F('slum__electoral_ward__administrative_ward__city__name__city_name'),
-                'level': F('slum__name'),
-                'level_id': F('slum__id')
-            }
-    }
     report_table_accounts_data = defaultdict(dict)
     for query_field in query_on.keys():
-        filter_field = {'slum__id__in': keys, query_field + '__range': [start_date, end_date]}
+        filter_field = {'slum__id__in': keys, 'phase_one_material_date' + '__range': [start_date, end_date], query_field + '__isnull': False}
         count_field = {query_on[query_field]: Count('level_id')}
         tc = ToiletConstruction.objects.filter(**filter_field) \
             .exclude(agreement_cancelled=True) \
             .annotate(**level_data[tag]).values('level', 'level_id', 'city_name') \
             .annotate(**count_field).order_by('city_name')
         tc = {obj_ad['level_id']: obj_ad for obj_ad in tc}
-
         for level_id, data in tc.items():
             report_table_accounts_data[level_id].update(data)
-
+    ''' Filter field for Invoice data'''
     filter_field = {'slum__id__in': keys, 'invoice__invoice_date__range': [start_date, end_date]}
-
     invoiceItems = InvoiceItems.objects.filter(**filter_field) \
         .annotate(**level_data[tag]).values('level', 'level_id', 'city_name', 'phase', 'household_numbers',
-                                            'material_type__name') \
-        .order_by('city_name')
-
+                                            'material_type__name').order_by('city_name')
+    ''' Creating Group by objects using level_id.'''
     invoiceItems = itertools.groupby(sorted(invoiceItems, key=lambda x: x['level_id']), key=lambda x: x['level_id'])
-
+    ''' Iterating level wise and counting distinct household numbers (phase wise)'''
     for level, level_wise_list in invoiceItems:
-
-        new_phase_wise_list = itertools.groupby(sorted(level_wise_list, key=lambda x: x['phase']),
-                                                key=lambda x: x['phase'])
-
-        for key_phase, values_list in new_phase_wise_list:
-
-            values_list_temp = itertools.groupby(
-                list(sorted(list(values_list), key=lambda x: x['material_type__name'])),
-                key=lambda x: x['material_type__name'])
-            temp_material_type_count_dict = defaultdict(int)
-            for material_type_name, material_type_list in values_list_temp:
-                material_type_list_temp = list(material_type_list)
-                if len(material_type_list_temp) > 0:
-                    temp_material_type_count_dict[str(material_type_name)] = len(
-                        json.loads(str(material_type_list_temp[0]['household_numbers'])))
-            str_tmp = ''
-            for k, v in temp_material_type_count_dict.items():
-                str_tmp = str_tmp + k + ':' + str(v) + '<br/>'
-            report_table_accounts_data[level].update({'total_p' + str(key_phase) + '_accounts': str_tmp})
-
+        phase_wise_material_cnt = {}
+        for record in level_wise_list:
+            hh_numbers = record['household_numbers']
+            phase = record['phase']
+            city_name= record['city_name']
+            if phase in phase_wise_material_cnt:
+                temp = phase_wise_material_cnt[phase]
+                temp.extend(hh_numbers)
+                phase_wise_material_cnt[phase] = list(set(temp))
+            else:
+                phase_wise_material_cnt[phase] = list(set(hh_numbers))
+        phase_wise_material_cnt = {"total_material_phase_" + str(phase) : len(hhs) for phase, hhs in phase_wise_material_cnt.items()}
+        phase_wise_material_cnt.update({'level':record['level'], 'level_id':level, 'city_name':city_name})
+        report_table_accounts_data[level].update(phase_wise_material_cnt)
     return HttpResponse(json.dumps(list(map(lambda x: report_table_accounts_data[x], report_table_accounts_data))),
                         content_type="application/json")
 

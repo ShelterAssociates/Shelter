@@ -5,6 +5,7 @@
 	var report_table_cm_activity_count = null
 	var report_table_cm_activity_count_aggregated = null;
 	var report_table_accounts = null;
+	var report_table_accounts_aggregated = null;
 	var tag  = null;
 	var key = null;
 	var tag_key_dict = {};
@@ -214,6 +215,14 @@
 		load_report_table();
 	}
 	function load_report_table(){
+		total_accounts_counts = [{
+			'aggregated_total_date_phase_1':0,
+			'aggregated_total_material_phase_1':0,
+			'aggregated_total_date_phase_2':0,
+			'aggregated_total_material_phase_2':0,
+			'aggregated_total_date_phase_3':0,
+			'aggregated_total_material_phase_3':0,
+		}];
 		total_counts = [{
 							'aggregated_total_ad':0, 
 							'aggregated_total_p1':0,
@@ -325,7 +334,22 @@
 							]
 			});
 		}
-	               
+		if (report_table_accounts_aggregated == null){
+			report_table_accounts_aggregated = $("#report_table_accounts_aggregated").DataTable({
+				"dom": 't',
+				"data": total_counts,
+				"columnDefs": [{"defaultContent": "-","targets": "_all"},{"footer":true}],
+				"columns":[
+								{"data": "", "title": "Name"},
+								{"data": "aggregated_total_date_phase_1", "title": "Phase 1 material given"},
+								{"data": "aggregated_total_material_phase_1", "title": "Phase 1 Accounts Entry"},
+								{"data": "aggregated_total_date_phase_2", "title": "Phase 2 material given"},
+								{"data": "aggregated_total_material_phase_2", "title": "Phase 2 Accounts Entry"},
+								{"data": "aggregated_total_date_phase_3", "title": "Phase 3 material given"},
+								{"data": "aggregated_total_material_phase_3", "title": "Phase 3 Accounts Entry"},
+							]
+			});
+		}
 		if($("#export_mastersheet").val()=="False"){
 	        btn_default=[];
 	    }       
@@ -346,18 +370,44 @@
 						return JSON.stringify(tag_key_dict);
 					} ,
 					contentType : "application/json",
-					dataSrc:'',
+					dataSrc : function(data){
+						for (i = 0; i < data.length; i++){
+							if(typeof data[i]['total_date_phase_1'] != 'undefined'){
+								total_accounts_counts[0]['aggregated_total_date_phase_1'] += data[i]['total_date_phase_1'];
+							}
+							if(typeof data[i]['total_material_phase_1'] != 'undefined'){
+								total_accounts_counts[0]['aggregated_total_material_phase_1'] += data[i]['total_material_phase_1'];
+							}
+							if(typeof data[i]['total_date_phase_2'] != 'undefined'){
+								total_accounts_counts[0]['aggregated_total_date_phase_2'] += data[i]['total_date_phase_2'];
+							}
+							if(typeof data[i]['total_material_phase_2'] != 'undefined'){
+								total_accounts_counts[0]['aggregated_total_material_phase_2'] += data[i]['total_material_phase_2'];
+							}
+							if(typeof data[i]['total_date_phase_3'] != 'undefined'){
+								total_accounts_counts[0]['aggregated_total_date_phase_3'] += data[i]['total_date_phase_3'];
+							}
+							if(typeof data[i]['total_material_phase_3'] != 'undefined'){
+								total_accounts_counts[0]['aggregated_total_material_phase_3'] += data[i]['total_material_phase_3'];
+							}
+						}
+						report_table_accounts_aggregated.row(0).data(total_accounts_counts[0]);
+						return data;
+					},
+					complete: function(data){
+						$("div.dt-buttons>button").addClass("pull-left");
+					}
 				},
 				"buttons":btn_default,
 				"columnDefs": [{"defaultContent": "-","targets": "_all"},{"footer":true},],
 				"columns":[
 							{"data": "level", "title": "Name"},
-							{"data": "total_p1", "title": "Phase 1 material given"},
-							{"data": "total_p1_accounts", "title": "Phase 1 - Accounts"},
-							{"data": "total_p2", "title": "Phase 2 material given"},
-							{"data": "total_p2_accounts", "title": "Phase 2 - Accounts"},
-							{"data": "total_p3", "title": "Phase 3 material given"},
-							{"data": "total_p3_accounts", "title": "Phase 3 - Accounts"},
+							{"data": "total_date_phase_1", "title": "Phase 1 material given"},
+							{"data": "total_material_phase_1", "title": "Phase 1 - Accounts"},
+							{"data": "total_date_phase_2", "title": "Phase 2 material given"},
+							{"data": "total_material_phase_2", "title": "Phase 2 - Accounts"},
+							{"data": "total_date_phase_3", "title": "Phase 3 material given"},
+							{"data": "total_material_phase_3", "title": "Phase 3 - Accounts"},
 							{"data": "city_name", "title": "City name"}
 							
 						]

@@ -38,10 +38,12 @@
         {{ form.as_p }}
         <button type="button" id="btnFetchShort" class="btn btn-primary"><span class="glyphicon glyphicon-search"
             onClick="reloadP()"></span> Search Summery View</button>
+        
+        {% if request.user|has_group:"GIS" == True or request.user|has_group:"Data" == True or request.user.is_superuser %}
         <button type="button" id="btnFetchGisTab" class="btn btn-primary"><span
             class="glyphicon glyphicon-search"></span> Download GIS Data</button>
         <input type="hidden" class="hide" id="slum_code" value="{{slum_code}}" />
-
+        {%endif%}
       </form>
     </div>
   </div>
@@ -49,7 +51,6 @@
 <div style="overflow-x:auto; padding:10px">
   <table id="example" class="display" width="100%" cellspacing="0"></table>
 </div>
-
 <!-- This section is for GIS Data Download. -->
 <div class="modal fade" id="GISModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
   <div class="modal-dialog" role="document">
@@ -76,5 +77,4 @@
     </div>
   </div>
 </div>
-
 {%endblock%}
