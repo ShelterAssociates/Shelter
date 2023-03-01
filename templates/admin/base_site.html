@@ -55,8 +55,6 @@
             <li>
                 <a href="/mastersheet/show/summery/" >Summary view</a>
             </li>
-            {%endif%}
-            {% if perms.mastersheet.can_view_mastersheet%}
             <li>
                 <a href="/mastersheet/report/" >Reports</a>
             </li>
@@ -64,14 +62,10 @@
             {% if perms.master.can_generate_reports %}
             <li role="separator" class="divider"></li>
             <li class="dropdown-header">Documents</li>
-            {% endif %}
-            {%if perms.master.can_generate_reports%}
-                <li><a href="/admin/report/">Factsheet Report</a></li>
-            {%endif%}
-            {%if perms.master.can_generate_reports%}
-                <li><a href="/admin/VulnerabilityReport/" target="__blank">Vulnerability Report</a></li>
-            {%endif%}
+            <li><a href="/admin/report/">Factsheet Report</a></li>
+            <li><a href="/admin/vulnerabilityReport/" target="__blank">Vulnerability Report</a></li>
             <li><a href="/graphs/factsheet_data">City Wise Factsheet Data</a></li>
+            {%endif%}
         </ul>
     </li>
 </ul>
