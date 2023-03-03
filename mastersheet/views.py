@@ -1047,10 +1047,6 @@ def give_report_table_numbers(request):  # view for toilet construction
                 query_field_sponsor = {level_data_tag[tag]['level_id'] : l,}
                 T_Housenum = ToiletConstruction.objects.filter(**query_field_TC).values_list('household_number', flat=True)
                 Spsr_Housecode = SponsorProjectDetails.objects.filter(**query_field_sponsor).exclude(sponsor__id=10).values_list('household_code', flat=True)
-                '''Query filter for the total houses which have rhs data...'''
-                query_field = {level_data_tag[tag]['level_id'] : l, 'rhs_data__isnull':False}
-                h = HouseholdData.objects.filter(**query_field)
-                report_table_data[l]['total_structure'] = h.count()
                 '''Here we are cheching that the funder assign or not to the household.'''
                 factsheet_count = 0
                 h_list = []
@@ -1062,6 +1058,11 @@ def give_report_table_numbers(request):  # view for toilet construction
                                 h_list.append(household_num)
                                 break
                 report_table_data[l]['factAssign'] = factsheet_count
+    '''Query filter for the total houses which have rhs data...'''
+    for query_key in report_table_data.keys():
+        query_field = {level_data_tag[tag]['level_id'] : query_key, 'rhs_data__isnull':False}
+        h = HouseholdData.objects.filter(**query_field)
+        report_table_data[query_key]['total_structure'] = h.count()
     return HttpResponse(json.dumps(list(map(lambda x: report_table_data[x], report_table_data))), content_type="application/json")
 
 
@@ -1236,26 +1237,32 @@ def give_report_table_numbers_accounts(request):
     ''' Filter field for Invoice data'''
     filter_field = {'slum__id__in': keys, 'invoice__invoice_date__range': [start_date, end_date]}
     invoiceItems = InvoiceItems.objects.filter(**filter_field) \
-        .annotate(**level_data[tag]).values('level', 'level_id', 'city_name', 'phase', 'household_numbers',
+        .annotate(**level_data[tag]).values('level', 'level_id', 'city_name', 'phase', 'household_numbers', 'slum_id',
                                             'material_type__name').order_by('city_name')
     ''' Creating Group by objects using level_id.'''
     invoiceItems = itertools.groupby(sorted(invoiceItems, key=lambda x: x['level_id']), key=lambda x: x['level_id'])
     ''' Iterating level wise and counting distinct household numbers (phase wise)'''
     for level, level_wise_list in invoiceItems:
-        phase_wise_material_cnt = {}
-        for record in level_wise_list:
-            hh_numbers = record['household_numbers']
-            phase = record['phase']
-            city_name= record['city_name']
-            if phase in phase_wise_material_cnt:
-                temp = phase_wise_material_cnt[phase]
-                temp.extend(hh_numbers)
-                phase_wise_material_cnt[phase] = list(set(temp))
-            else:
-                phase_wise_material_cnt[phase] = list(set(hh_numbers))
-        phase_wise_material_cnt = {"total_material_phase_" + str(phase) : len(hhs) for phase, hhs in phase_wise_material_cnt.items()}
-        phase_wise_material_cnt.update({'level':record['level'], 'level_id':level, 'city_name':city_name})
-        report_table_accounts_data[level].update(phase_wise_material_cnt)
+        ''' Creating Group by objects Phase wise.'''
+        phasewise = itertools.groupby(sorted(level_wise_list, key=lambda x: x['phase']), key=lambda x: x['phase'])
+        level_name = None
+        city_name = None
+        phase_wise_material_cnt = {}  # Here we are checking slum wise households count for each phase.
+        for phase, phasewisedata in phasewise:
+            slum_wise_acc_data = {}  # here we are checking slum wise households count.
+            for record in phasewisedata:
+                level_name = record['level']
+                city_name = record['city_name']
+                if record['slum_id'] in slum_wise_acc_data:
+                    temp = slum_wise_acc_data[record['slum_id']]
+                    temp.extend(record['household_numbers'])
+                    slum_wise_acc_data[record['slum_id']] = list(set(temp))
+                else:
+                    slum_wise_acc_data[record['slum_id']] = record['household_numbers']
+            phasecnt = sum(list(map(len, slum_wise_acc_data.values())))  # Generating total count of households phase wise
+            phase_wise_material_cnt["total_material_phase_" + str(phase)] = phasecnt
+        phase_wise_material_cnt.update({'level':level_name, 'level_id':level, 'city_name':city_name})  # Adding Level details and citu names for cases where we have accounts data but not daily reporting.
+        report_table_accounts_data[level].update(phase_wise_material_cnt)   # adding this count into final response data level wise.
     return HttpResponse(json.dumps(list(map(lambda x: report_table_accounts_data[x], report_table_accounts_data))),
                         content_type="application/json")
 
