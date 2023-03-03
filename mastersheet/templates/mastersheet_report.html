@@ -54,6 +54,17 @@
   <label><input id = "admin_ward" type="radio" name="optradio" onclick="changeDatatableLevel()">Administrative ward</label>
   <label><input id = "city" value = 'city' type="radio" name="optradio" onclick="changeDatatableLevel()" checked>City</label>
 </div>
+<div>
+  <div id = "tc">
+    <h2>Toilet Construction</h2>
+    <h3>Household Counts</h3>
+  </div>
+  <table id="report_table" class="display" width="100%" cellspacing="0"></table> 
+  <h3>Household Counts - aggregated</h3>
+  <div id = "report_table_aggregated_div">
+    <table id="report_table_aggregated" class="display" width="100%" cellspacing="0"></table>
+  </div>
+</div>
 {% if request.user|has_group:"Account" == True or request.user|has_group:"Data" or request.user.is_superuser %}
 <div id = "acc">
   <h2>Accounts Data</h2>
@@ -66,17 +77,6 @@
   <table id="report_table_accounts_aggregated" class="display" width="100%" cellspacing="0"></table>
 </div>
 {%endif%}
-<div>
-  <div id = "tc">
-    <h2>Toilet Construction</h2>
-    <h3>Household Counts</h3>
-  </div>
-  <table id="report_table" class="display" width="100%" cellspacing="0"></table> 
-  <h3>Household Counts - aggregated</h3>
-  <div id = "report_table_aggregated_div">
-    <table id="report_table_aggregated" class="display" width="100%" cellspacing="0"></table>
-  </div>
-</div>
 {% if request.user|has_group:"Mobilizer" or request.user|has_group:"GIS" or request.user|has_group:"Data" or request.user.is_superuser %}
   <div id = "cm">
     <h2>Community Mobilization</h2>
