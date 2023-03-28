@@ -13,6 +13,7 @@ style_value ={
 level_names = ["administrative_ward", "electoral_ward" , "slum"]
 
 scores = [0, 25, 50, 75, 100];
+
 function getColor(d) {
     return d < 25 ? '#ff0000' :
            d < 50  ? '#ffaa00' :
@@ -77,10 +78,12 @@ function display_cards(names,level){
       if(value == 0 || value == '0.0 %' || value == "NO CTB") { }
       else {
       var section_card = $("div[name=section_card_clone]")[0].outerHTML;
+      // section_card.style.backgroundColor = 'Yellow';
       section_card = $(section_card).attr('name','section_card').removeClass('hide');
       section_card.find('span')[0].innerHTML = value;
       section_card.find('span')[1].innerHTML = Object.values(card_data["metadata"]['Cards'][section][key])[0];
       section_card.find('img')[0].src = "/static/images/dashboard/" + Object.keys(card_data["metadata"]['Cards'][section][key])[0] + '.png';
+      section_card[0].style.backgroundColor = '#008DD2';
       $("#section_cards").append(section_card);}
     });
     }
