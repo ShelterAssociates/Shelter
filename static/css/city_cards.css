@@ -113,7 +113,7 @@ i.down {
   padding-top: 12px;
 }
 .sub-header {
-  background-color: #1e69b4;
+  background-color: #64696b;
   height: 60px;
   padding: 15px;
 }
@@ -149,7 +149,6 @@ ul.count li {
   height: 35px;
   margin-left: 15.5px;
   width: 1px;
-  float: left;
 }
 .toilent-count {
   height: 32px;
@@ -159,7 +158,6 @@ ul.count li {
   color: #fff;
   font-size: 15px;
   font-weight: 600;
-  background-color: #15497e;
   border-radius: 4px;
   font-family: "SFDisplayBold";
 }
@@ -335,15 +333,13 @@ span.l30 {
 .card-btn{
   width:80%;
   padding:5px;
-    margin-top:10px;
+  margin-top:10px;
   background-color:#1E69B4;
   border-radius:20px;
   color:#fff;
   margin-left:24px;
 }
-.card-btn-right{
 
-}
 .card-url{
   color:#fff;
 }

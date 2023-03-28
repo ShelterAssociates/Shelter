@@ -65,17 +65,20 @@
   <!--Content starts here-->
 
   <div class="row">
-    <div class="col-md-5" style="">
-      <b><select id="city_name_text"></select></b>
-      <input type="radio" value="0" name="level" checked text="Administrative ward"> Administrative Ward
-      <input type="radio" value="1" name="level" text="Electoral ward"> Electoral Ward
-      <input type="radio" value="2" name="level" text="Slum"> Slum
+    <div class="col-md-5">
       <div class="note">
         <b>Note</b> : Click on the below coloured area to view specific details.
       </div>
       <div id="map"></div>
     </div>
-    <div class="col-md-7">
+    <!--Section where city selection dropdown and area choose options available. -->
+    <div class="col-md-7" style="border-left:  1px solid #c6ccd1;">
+      <div class="city_name_text">
+        <b><select id="city_name_text"></select></b>
+        <input type="radio" value="0" name="level" checked text="Administrative ward"> Administrative Ward
+        <input type="radio" value="1" name="level" text="Electoral ward"> Electoral Ward
+        <input type="radio" value="2" name="level" text="Slum"> Slum
+      </div>
       <!--Information starts here-->
       <div class="information">
         <div class="water-info">
@@ -96,18 +99,14 @@
                               </span>
                           </div>
                           <div class="info-divider"></div> -->
-        <div class="overall-score hide">
-          <span class="overall-cnt" id="total_score"></span>
-          <span class="overall-text" id="total_score_text"></span>
+        <div class="report-card" id="report_selections">
+          General Report Card for all Administrative ward
+          <span class="full-screen">
+            <img src="/static/images/Symbol 38 – 1.svg"
+          /></span>
         </div>
       </div>
       <!--Information endss here-->
-      <div class="report-card" id="report_selections">
-        General Report Card for all Administrative ward
-        <span class="full-screen"
-          ><img src="/static/images/Symbol 38 – 1.svg"
-        /></span>
-      </div>
       <div class="details">
         <div class="cards">
           <div class="first-card">
@@ -134,19 +133,33 @@
             <p class="result-text positive hide">800 in previous period</p>
           </div>
 
-          <div class="bar-chart hide">
+          <div class="overall-score hide">
+            <div class="overall-cnt-1">
+              <span class="overall-cnt" id="total_score" ></span>
+            </div>
+            
+          <span class="overall-text" id="total_score_text"></span>
+          </div>
+
+
+          <!-- <div class="overall-score hide">
+
+            <span class="overall-cnt" id="total_score" style="padding-right: 10px;"></span>
+          <span class="overall-text" id="total_score_text"></span>
+          </div> -->
+          <!-- <div class="bar-chart">
             <div class="bar-header">
               <span>Water Availability</span>
               <span class="bar-select">Select Any two parameters</span>
             </div>
             <div class="bar-graph"></div>
-          </div>
+          </div> -->
           <div class="key-values">
             <div class="key-takeaways">
               Key Takeaways
               <i class="down"></i>
             </div>
-            <ul class="takeaways" </ul>
+            <ul class="takeaways"></ul>
           </div>
         </div>
       </div>
@@ -154,4 +167,8 @@
   </div>
   </div>
 <!--Content ends here-->
+<script type="text/javascript">
+</script>
+
+
 {% endblock %}

@@ -113,7 +113,7 @@ i.down {
   padding-top: 12px;
 }
 .sub-header {
-  background-color: #1e69b4;
+  background-color: #64696b;
   height: 60px;
   padding: 15px 0 10px 119px;
 }
@@ -149,7 +149,6 @@ ul.count li {
   height: 35px;
   margin-left: 15.5px;
   width: 1px;
-  float: left;
 }
 .toilent-count {
   height: 32px;
@@ -159,10 +158,10 @@ ul.count li {
   color: #fff;
   font-size: 15px;
   font-weight: 600;
-  background-color: #15497e;
   border-radius: 4px;
   font-family: "SFDisplayBold";
 }
+
 .all-values {
   float: left;
   margin-left: 24px;
@@ -180,17 +179,20 @@ ul.count li {
 }
 .information {
   height: 85px;
-  background-color: #f8f9fa;
+  background-color:  #ffffff;  /* #f8f9fa; */
   padding-right: 35px;
-  border: 1px solid #c6ccd1;
-  border-right: none;
 }
 .water-info {
   float: left;
   position: relative;
-  top: 30px;
+  top: 20px;
   width: 120px;
-  margin-left: 30px;
+  margin-left: 20px;
+  z-index: 2;
+}
+.city_name_text{
+  margin-top: 10px;
+  margin-left: 20px;
 }
 .water-label {
   font-family: "SFDisplayMedium";
@@ -215,25 +217,41 @@ span.l30 {
   left: 30px;
 }
 .overall-score {
-  border-radius: 21px;
-  background-color: #e9ecee;
-  float: right;
-  color: #1b2a2e;
+  clear: both;
+  width: 400px;
+  height: 50px;
+  border-radius: 8px;
+  background-color: #5B5B5B;
+  color: #ffffff;
   position: relative;
-  top: 24px;
-  font-size: 14px;
-  padding:5px 20px;
+  font-size: 16px;
+  margin-top: 2px;
+  margin-bottom: 20px;
+  box-shadow: 0 4px 8px 0 rgba(0,0,0,0.2);
+}
+
+.overall-cnt-1{
+  background-color: #008DD2;
+  height: 60px;
+  width: 50px;
+  margin-left: 10px;
+  margin-top: -5px;
+  display: inline-block;
+  border-radius: 8px;
+  padding: 12px 0px 10px 10px;
+
 }
 .overall-cnt {
   font-family: "SFDisplaySemiBold";
   font-size: 20px;
-  display: inline-block;
+  
 }
 .overall-text {
   font-family: "SFDisplayMedium";
-  position: relative;
-  top: -3px;
-  left: 9px;
+  font-size: 18px;
+  text-align: center;
+  margin-left: 20px;
+  padding-top: 20;
 }
 .content {
   clear: both;
@@ -256,7 +274,7 @@ span.l30 {
  color: #1b2a2e;
  font-size: 16px;
  padding:5px 10px;
- margin-top: 5px;
+ margin-top: 10px;
 }
 .report-card {
   height: 59px;
@@ -264,10 +282,6 @@ span.l30 {
   color: #1b2a2e;
   font-size: 18px;
   padding: 19.5px 30.5px 17.5px;
-  border: 1px solid #c6ccd1;
-  opacity: 0.7;
-  border-top: none;
-  border-right: none;
 }
 .chip {
   display:inline-block;
@@ -285,7 +299,6 @@ span.l30 {
 }
 .details {
   overflow: hidden;
-  border-left: 1px solid #c6ccd1;
   padding-bottom: 50px;
 }
 .cards {
@@ -296,7 +309,7 @@ span.l30 {
 .first-card {
   height: 218px;
   width: 21.5%;
-  border: 1px solid #c6ccd1;
+  border: .5px;
   border-radius: 8px;
   box-shadow: 0px 3px 6px #000000;
   float: left;
@@ -304,31 +317,39 @@ span.l30 {
   padding: 34px 0 23px;
   text-align: center;
   margin-bottom: 36px;
+  color: #fff;
+  background-color: #008DD2;
 }
 .first-card:last-child {
   margin-right: 0px;
 }
+.first-card::after{
+  background-color: #008DD2;
+}
+
 .average-img {
-  margin-bottom: 0px;
   height: 50px;
 }
 .average-val-label {
+  margin-top: 15;
   margin-bottom: 4px;
   height: 96px;
 }
 .average-val-label span {
   display: block;
-  color: #1b2a2e;
+  color: #fff;
+  padding-top: 10px;
 }
 .average-val {
   position: relative;
   top: 6px;
-  font-size: 22px;
-  font-family: "SFDisplayBold";
+  font-size: 25px;
+  font-family: 'Roboto';
+  font-weight: bold;
 }
 .average-label {
   font-family: "SFDisplayRegular";
-  font-size: 15px;
+  font-size: 20px;
 }
 .result-text {
   font-family: "SFDisplayBold";
@@ -345,10 +366,11 @@ span.l30 {
 }
 .key-takeaways {
   font-family: "SFDisplayMedium";
+  color: white;
   height: 38px;
   border-bottom: 1px solid #c6ccd1;
   border-top: 1px solid #c6ccd1;
-  background-color: #f8f9fa;
+  background-color: #5B5B5B;
   padding: 10px 0 11px 18px;
 }
 .key-takeaways i.down {
@@ -360,8 +382,8 @@ span.l30 {
   overflow: hidden;
   width: 94%;
   border: 1px solid #c6ccd1;
-  border-radius: 0 0 8px 8px;
-  border-top: none;
+  border-radius: 8px;
+  box-shadow: 0 4px 8px 0 rgba(0,0,0,0.2);
 }
 .takeaways {
   padding: 15px 30px;
