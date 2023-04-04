@@ -26,7 +26,7 @@ def survey_mapping(survey_type):
     return real_decorator
 
 #@survey_mapping(SURVEYTYPE_CHOICES[1][0])
-def get_household_analysis_data(city, slum_code, fields, kobo_survey=''):
+def get_household_analysis_data(city, slum_code, question_fields, kobo_survey=''):
     '''Gets the kobotoolbox RHS data for selected questions
     '''
     output = {}
@@ -64,6 +64,7 @@ def get_household_analysis_data(city, slum_code, fields, kobo_survey=''):
         # Checking sbm and toilet by sa for filter.
         if 'group_oi8ts04/Current_place_of_defecation' in record and record['group_oi8ts04/Current_place_of_defecation'] in cpod_status[:4]:
             record['Final_status'] = 'SBM'
+            record['group_oi8ts04/Current_place_of_defecation'] = 'Use CTB'
         elif str(household_no) in Toilet_data:
             record['Final_status'] = 'Completed'
 
@@ -72,9 +73,12 @@ def get_household_analysis_data(city, slum_code, fields, kobo_survey=''):
             if record['group_oi8ts04/Current_place_of_defecation'] in cpod_status or 'Final_status' in record:
                     if 'group_oi8ts04/Are_you_interested_in_an_indiv' in record:
                         del record['group_oi8ts04/Are_you_interested_in_an_indiv']
-
-        for field in fields:
+        
+        '''question_fields is the different types of parameter of RHS Data.'''
+        for field in question_fields:
+            '''field present in rhs data'''
             if field != "" and field in record and record[field] == record[field]:
+                '''RHS data is occupied in status or not.'''
                 if (field == 'group_el9cl08/Ownership_status_of_the_house' or field == 'group_el9cl08/Type_of_structure_of_the_house') and record['Type_of_structure_occupancy'] != 'Occupied house': 
                     pass
                 else:
@@ -86,6 +90,15 @@ def get_household_analysis_data(city, slum_code, fields, kobo_survey=''):
                             output[field][val]=[]
                         if household_no not in output[field][val]:
                             output[field][val].append(str(household_no))
+            elif record['Type_of_structure_occupancy'] == 'Occupied house' and field in ['group_el9cl08/Type_of_water_connection', 'group_el9cl08/Facility_of_solid_waste_collection', 'group_oi8ts04/Current_place_of_defecation']:
+                ''' Checking encounter data not available if hh status is occupied.'''
+                if field in output:
+                    if  'data_not_available' in output[field]:
+                        output[field]['data_not_available'].append(str(household_no))
+                    else:
+                        output[field]['data_not_available'] = [str(household_no), ]
+                else:
+                    output[field]['data_not_available'] = [str(household_no), ]
     return output
 
 def format_data(rhs_data, toilet_by_sa = False):
@@ -124,12 +137,13 @@ def format_data(rhs_data, toilet_by_sa = False):
             if k == 'group_oi8ts04/Current_place_of_defecation':   # Changing cpod status and adding new cpod for toilet by sa households.
                 if toilet_by_sa:
                     new_rhs[v] = 'Toilet By SA'
-                    new_rhs['Before SA Toilet Place of defication'] = rhs_data[k]
+                    new_rhs['Before Home Toilet Place of defication'] = rhs_data[k]
                     if 'group_oi8ts04/Are_you_interested_in_an_indiv' in rhs_data:   # Removing household from intrested for toilet if household have toilet.
                         del rhs_data['group_oi8ts04/Are_you_interested_in_an_indiv']
                 elif rhs_data[k] in cpod_status:
+                    new_rhs['Before Home Toilet Place of defication'] = 'Use CTB'   #  If the hh has Toilet by sbm then cpod is Use CTB.
                     if 'group_oi8ts04/Are_you_interested_in_an_indiv' in rhs_data:
-                        del rhs_data['group_oi8ts04/Are_you_interested_in_an_indiv']
+                        del rhs_data['group_oi8ts04/Are_you_interested_in_an_indiv']  # Removing household from intrested for toilet if household have toilet.
                     new_rhs[v] = rhs_data[k]
                 else:
                     if k in rhs_data:
