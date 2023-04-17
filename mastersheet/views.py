@@ -1,6 +1,7 @@
 from django.shortcuts import render
 from django.http import HttpResponse
 from django.contrib.auth.decorators import user_passes_test, permission_required
+from graphs.sync_avni_data import avni_sync
 from mastersheet.forms import find_slum, file_form, account_find_slum, gis_tab
 from django.db.models import Count, F, Q
 from mastersheet.models import *
@@ -863,31 +864,33 @@ def sync_kobo_data(request):
     :param request:
     :param slum_id:
     :return: success/error msg
-    """
+    """ 
     data = {}
     try:
         slum = Slum.objects.get(id=request.GET['slumname'])
-        user = request.user
-        toilet_const = ToiletConstructionSync(slum, user)
-        t_data = toilet_const.fetch_data()
-        com_mobilization = CommunityMobilizaitonSync(slum, user)
-        c_data = com_mobilization.fetch_data()
-
-        if any(t_data) and any(c_data):
-            if t_data[2] > c_data[2]:
-                toilet_const.update_sync_info(t_data[2])
-            else:
-                com_mobilization.update_sync_info(c_data[2])
-        elif any(t_data) and not any(c_data):
-            toilet_const.update_sync_info(t_data[2])
-        elif not any(t_data) and any(c_data):
-            com_mobilization.update_sync_info(c_data[2])
+        ''' Calling a method sync_rim_data() of avni_sync class to sync Slum-RIM data of the given slum.
+            Argument => slum_id
+            Return => Number of Forms synced.
+        '''
+        sync_obj = avni_sync()
+        slum_in_avni_flag, rim_sync_num = sync_obj.sync_rim_data(slum.id)
+        toilet_sync_num = sync_obj.sync_toilet_data(slum.id)
         data['flag'] = True
-        if not any(t_data) and not any(c_data):
-            data['msg'] = "Nothing to sync for slum - " + slum.name
+        if not (slum_in_avni_flag):
+            data['msg'] = "The Avni UUID mapping is not available for this slum." + slum.name +"\n Please contact administrator."
         else:
-            data['msg'] = "Data successfully synced for slum - " + slum.name
-            data['msg'] += "\nTotal records updated : " + str(t_data[0] + c_data[0])
+            if rim_sync_num > 0:
+                data['msg'] = "Rim Data successfully synced for slum - " + slum.name
+                data['msg'] += "\nTotal records updated : " + str(rim_sync_num)
+            else:
+                data['msg'] = "There is no records available to sync RIM data for - " + slum.name
+                data['msg'] += "\nTotal records updated : " + str(rim_sync_num)
+            if toilet_sync_num > 0:
+                data['msg'] += "\n Toilet Data successfully synced for slum - " + slum.name
+                data['msg'] += "\nTotal records updated : " + str(toilet_sync_num)
+            else:
+                data['msg'] += "\n There is no records available to sync CTB data for slum - " + slum.name
+                data['msg'] += "\nTotal records updated : " + str(toilet_sync_num)
     except Exception as e:
         data['flag'] = False
         data['msg'] = "Error occurred while sync from kobo. Please contact administrator." + str(e)
