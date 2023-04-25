@@ -65,7 +65,9 @@ def get_household_analysis_data(city, slum_code, question_fields, kobo_survey=''
         if 'group_oi8ts04/Current_place_of_defecation' in record and record['group_oi8ts04/Current_place_of_defecation'] in cpod_status[:4]:
             record['Final_status'] = 'SBM'
             record['group_oi8ts04/Current_place_of_defecation'] = 'Use CTB'
-        elif str(household_no) in Toilet_data:
+        if str(household_no) in Toilet_data:
+            if 'group_oi8ts04/Current_place_of_defecation' in record and record['group_oi8ts04/Current_place_of_defecation'] in cpod_status:
+                record['group_oi8ts04/Current_place_of_defecation'] = 'Use CTB'
             record['Final_status'] = 'Completed'
 
         # changing intrested status for hh where toilet present.
@@ -79,8 +81,13 @@ def get_household_analysis_data(city, slum_code, question_fields, kobo_survey=''
             '''field present in rhs data'''
             if field != "" and field in record and record[field] == record[field]:
                 '''RHS data is occupied in status or not.'''
-                if (field == 'group_el9cl08/Ownership_status_of_the_house' or field == 'group_el9cl08/Type_of_structure_of_the_house') and record['Type_of_structure_occupancy'] != 'Occupied house': 
-                    pass
+                if record['Type_of_structure_occupancy'] != 'Occupied house':
+                    if field == 'Type_of_structure_occupancy': # here we will check only for occupancy field.
+                        data = record[field]
+                        if data not in output[field]:
+                            output[field][data] = [str(household_no), ]
+                        else:
+                            output[field][data].append(str(household_no))
                 else:
                     data = record[field]
                     for val in data if type(data)==list else data.split(','):
