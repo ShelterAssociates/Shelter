@@ -1,7 +1,10 @@
 from django.contrib import admin
 from .models import *
+from mastersheet.models import ToiletConstruction
 from django.contrib.auth.admin import UserAdmin
 from django.http import HttpResponseRedirect
+from django.contrib import messages
+from django.urls import reverse
 
 class SponsorAdmin(admin.ModelAdmin):
 	list_display = ('organization_name', 'address', 'website_link', 'intro_date', 'logo')
@@ -23,6 +26,8 @@ class SponsorProjectDetailsAdmin(admin.ModelAdmin):
 	ordering = ['sponsor', 'slum', 'sponsor_project']
 	list_filter = ['sponsor_project__sponsor']
 	inlines = [ SponsorProjectDetailsSubFieldsInline ]
+	global message_dict # This message_dict we are creating to save custom messages.
+	message_dict = {}
 
 	class Media:
 		js = ['js/collapse_household_code.js']
@@ -32,6 +37,65 @@ class SponsorProjectDetailsAdmin(admin.ModelAdmin):
 
 	def sponsor_project(self, obj):
 		return obj.sponsor_project.name
+	
+	'''Method for checking data impurities when a user save sponsor project details entry using admin.'''
+	@receiver(pre_save, sender=SponsorProjectDetailsSubFields)
+	def check_for_duplicates(sender, instance, **kwargs):
+		household_codes = instance.household_code
+		unique_hh_codes = list(set(household_codes))
+
+		if len(unique_hh_codes) != len(household_codes):
+			message_dict['Message'] = "There are duplicate households present in your data !!"
+		else:
+			if 'Message' in message_dict:
+				del message_dict['Message']
+			hh_codes = []
+			change_data = household_codes
+			if instance.id: # We are calculating this to find out change household numbers.
+				_ , sp_change =  SponsorProjectDetailsSubFields.objects.filter(id = instance.id).values_list('sponsor_project_details', 'household_code')[0]
+				hh_change = set(change_data).difference(set(sp_change))
+			
+			sp_project_details_code = SponsorProjectDetails.objects.filter(slum_id__name = instance).exclude(sponsor_id = 10).values_list('id', flat = True)
+			sub_fields = SponsorProjectDetailsSubFields.objects.filter(sponsor_project_details__in = sp_project_details_code)
+
+			for i in sub_fields:
+				if instance.id is None:
+					diff = set(change_data).difference(i.household_code)
+					if len(diff) != len(change_data):
+						common_hhs = set(change_data).difference(i.household_code)
+						message_dict['Message'] = "These household no's. already available in Sponsor data. Kindly check !!{}".format(common_hhs)
+				else:
+					if i.id != instance.id:
+						diff = set(change_data).intersection(i.household_code)
+						if len(diff) > 0:
+							print(hh_change, i.household_code, diff)
+							hh_codes.extend(list(diff))
+			if len(hh_codes) > 0:
+				message_dict['Message'] = "These household no's. already available in Sponsor data. Kindly check !! {}".format(hh_codes)
+			else:
+				''' Checking The updated household Codes is present in the Toilet construction table.'''
+				Toilet_data = ToiletConstruction.objects.filter(slum_id__name = instance, household_number__in = change_data).values_list('household_number', flat = True)
+				if Toilet_data.count() > 0:
+					if Toilet_data.count() != len(change_data):
+						hh_codes = [i for i in change_data if str(i) not in Toilet_data]
+						message_dict['Message'] = "The Sanitation data is not available for these households. Kindly check !! {}".format(hh_codes)
+				else:
+					message_dict['Message'] = "The Sanitation data is not available for these households. Kindly check !! {}".format(change_data)
+	
+	''' These methods is for overwriting the django's built-in message module as per our requirements. '''
+	def response_add(self, request, obj, post_url_continue=None):
+		if message_dict:
+			messages.warning(request, 'Data is not formatted correctly.')
+			return HttpResponseRedirect(reverse('admin:sponsor_sponsorprojectdetails_changelist'))
+		else:
+			return super().response_add(request, obj, post_url_continue)
+
+	def response_change(self, request, obj):
+		if message_dict:
+			messages.warning(request, message_dict['Message'])
+			return HttpResponseRedirect(reverse('admin:sponsor_sponsorprojectdetails_change', args=[obj.pk]))
+		else:
+			return super().response_change(request, obj)
 
 	# def quarter(self, obj):
 	#  	return obj.get_quarter_display()
