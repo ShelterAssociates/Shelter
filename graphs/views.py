@@ -439,6 +439,8 @@ def dashboard_all_cards(request,key):
             output_data['city'][city_name].update(qol_scores)
             output_data['city'][city_name]['slum_count'] = slum_count
             output_data['city'][city_name]['total_slum_count'] = total_slum_count
+            if city_name == 'Saharanpur':
+                output_data['city'][city_name]['household_count__sum'] = 3930
         return output_data
 
     result = get_data(key)
