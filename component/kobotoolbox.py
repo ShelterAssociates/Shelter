@@ -84,10 +84,13 @@ def get_household_analysis_data(city, slum_code, question_fields, kobo_survey=''
                 if record['Type_of_structure_occupancy'] != 'Occupied house':
                     if field == 'Type_of_structure_occupancy': # here we will check only for occupancy field.
                         data = record[field]
-                        if data not in output[field]:
-                            output[field][data] = [str(household_no), ]
+                        if field not in output:
+                            output[field] = {data:[str(household_no), ]}
                         else:
-                            output[field][data].append(str(household_no))
+                            if data not in output[field]:
+                                output[field][data] = [str(household_no), ]
+                            else:
+                                output[field][data].append(str(household_no))
                 else:
                     data = record[field]
                     for val in data if type(data)==list else data.split(','):
@@ -105,7 +108,7 @@ def get_household_analysis_data(city, slum_code, question_fields, kobo_survey=''
                     else:
                         output[field]['data_not_available'] = [str(household_no), ]
                 else:
-                    output[field]['data_not_available'] = [str(household_no), ]
+                    output[field] = {'data_not_available' : [str(household_no), ]}
     return output
 
 def format_data(rhs_data, toilet_by_sa = False):
@@ -131,7 +134,9 @@ def format_data(rhs_data, toilet_by_sa = False):
         'group_el9cl08/House_area_in_sq_ft': 'House area in sq. ft.','group_og5bx85/Type_of_survey': 'Type of survey',
         'group_og5bx85/Full_name_of_the_head_of_the_household': 'Full name of the head of the household',
         'group_el9cl08/Do_you_have_any_girl_child_chi': 'Do you have any girl child/children under the age of 18?',
-        'group_oi8ts04/Are_you_interested_in_an_indiv': 'Are you interested in an individual toilet?'
+        'group_oi8ts04/Are_you_interested_in_an_indiv': 'Are you interested in an individual toilet?',
+        'Plus code of the house' : 'Plus code of the house',
+        "If individual water connection, type of water meter?":"If individual water connection, type of water meter?"
         }
     for i in remove_list:
         if i in rhs_data:
@@ -158,6 +163,8 @@ def format_data(rhs_data, toilet_by_sa = False):
             else:
                 if k in rhs_data:
                     new_rhs[v] = rhs_data[k]
+            if k == 'Plus code of the house':
+                new_rhs[v] =  (rhs_data[k] + " " + rhs_data["Plus Code Part"]) if "Plus Code Part" in rhs_data else rhs_data[k]
         except Exception as e:pass
     return new_rhs
 
