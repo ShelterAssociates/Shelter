@@ -57,11 +57,11 @@ class avni_sync():
         # date from household table and pass it to url
         last_submission_date = HouseholdData.objects.latest('submission_date')
         # latest_date = last_submission_date.submission_date + timedelta(days=1)
-        today = datetime.today()  # + timedelta(days= -1)
+        today = datetime.today() + timedelta(days= -1)
         latest_date = today.strftime('%Y-%m-%dT00:00:00.000Z')
         iso = "2023-04-12T00:00:00.000Z"
-        # return(latest_date)
-        return iso
+        return(latest_date)
+        # return iso
 
     def get_image(self, image_link):
         path = 'https://app.avniproject.org/media/signedUrl?url='
@@ -328,30 +328,22 @@ class avni_sync():
                     temp = data['observations'][i]
                     temp_lst = temp.split(',')
                     temp_lst = [i for i in temp_lst if i != ""]
-                    household_list += temp_lst
-            household_list = list(set(household_list))
+                    household_list.extend(temp_lst)
+            household_list = set(household_list)
+            household_data_for_slum = set(HouseholdData.objects.filter(slum_id = slum_id, rhs_data__isnull = False).values_list('household_number', flat = True))
+            final_household_lst = list(household_list.intersection(household_data_for_slum))
 
             check = CommunityMobilization.objects.filter(slum=slum_id, activity_date=date_of_activity, activity_type_id=activity)
             if not check:
-                save = CommunityMobilization.objects.create(slum_id=slum_id, household_number=household_list, activity_type_id=activity, activity_date=date_of_activity)
+                save = CommunityMobilization.objects.create(slum_id=slum_id, household_number=final_household_lst, activity_type_id=activity, activity_date=date_of_activity)
                 print('record created for', slum_name)
             else:
                 hh_lst = check.values_list('household_number', flat = True)[0]
                 hh_lst = list(set(hh_lst))
                 hh_lst = [i for i in hh_lst if i != ""]
-                flag = False
-                for i in household_list:
-                    if i not in hh_lst:
-                        flag = True
-                        break
-                    else:
-                        continue
-                if flag:
-                    household_list = list(set(household_list + hh_lst))
-                    check.update(household_number=household_list)
-                    print('record updated for', slum_name, date_of_activity, activity_name)
-                else:
-                    print("Record Already Present For", slum_name)
+                final_household_lst.extend(hh_lst)
+                check.update(household_number=list(set(final_household_lst)))
+                print('record updated for', slum_name, date_of_activity, activity_name)
 
         except Exception as e:
             print(e, data['ID'])
