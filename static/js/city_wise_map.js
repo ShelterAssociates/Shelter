@@ -130,19 +130,24 @@ function initMap(){
                         "PCMC":new L.LatLng(18.640083, 73.825560),
                         "Pune":new L.LatLng(18.51099762698481, 73.86055464212859),
                         "Panvel":new L.LatLng(19.051509, 73.109058),
-                        "Saharanpur":new L.LatLng(29.96813172,77.54673382)};
+                        "Saharanpur":new L.LatLng(29.96813172,77.54673382),
+                        "Pune District":new L.LatLng(18.57054718,74.07657987)};
     var pos = new L.LatLng(18.640083, 73.825560);
     if ($('#city_name').val() in center_data)
     {
         pos = center_data[$('#city_name').val()];
     }
+    
     map = new L.Map('map', {
                     center: pos,
                     zoom: 12,
                     zoomSnap: 0.25,
                     markerZoomAnimation:false
                 });
-
+    // Changing Zoom level for Pune District.   
+    if ($('#city_name').val() == 'Pune District'){
+        map.setZoom(9);
+    };
     var ggl = L.gridLayer.googleMutant({type: 'satellite' }).addTo(map);
     initMap12();
 }
