@@ -441,6 +441,8 @@ def dashboard_all_cards(request,key):
             output_data['city'][city_name]['total_slum_count'] = total_slum_count
             if city_name == 'Saharanpur':
                 output_data['city'][city_name]['household_count__sum'] = 3930
+            if city_name == 'Pune District':
+                output_data['city'][city_name]['household_count__sum'] = 2500
         return output_data
 
     result = get_data(key)
