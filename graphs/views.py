@@ -420,6 +420,8 @@ def dashboard_all_cards(request,key):
     '''dashboard all cities card data'''
     def get_data(key):
         dict_filter = {}
+        ''' Cities which not have RHS Data.'''
+        city_array = {'Saharanpur' : 3930, 'Pune District' : 2500, 'Nilgiri District' : 548}
         output_data = {'city': OrderedDict()}
         if key != 'all':
             dict_filter['id'] = key
@@ -439,10 +441,8 @@ def dashboard_all_cards(request,key):
             output_data['city'][city_name].update(qol_scores)
             output_data['city'][city_name]['slum_count'] = slum_count
             output_data['city'][city_name]['total_slum_count'] = total_slum_count
-            if city_name == 'Saharanpur':
-                output_data['city'][city_name]['household_count__sum'] = 3930
-            if city_name == 'Pune District':
-                output_data['city'][city_name]['household_count__sum'] = 2500
+            if city_name in city_array:
+                output_data['city'][city_name]['household_count__sum'] = city_array[city_name]
         return output_data
 
     result = get_data(key)
