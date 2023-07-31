@@ -215,13 +215,10 @@ def masterSheet(request, slum_code=0, FF_code=0, RHS_code=0):
                             "ff_id": "",
                             "no_rhs_flag": "#eba6fc"
                         }
-                    vendor_name = "vendor_type" + str(y.material_type)
                     invoice_number = "invoice_number" + str(y.material_type)
                     dummy_formdict[str(z)].update({
-                        vendor_name: y.invoice.vendor.name,
                         invoice_number: y.invoice.invoice_number,
-                        str(y.material_type) + " Invoice Number" + "_id": y.invoice.id,
-                        "Name of " + str(y.material_type) + " vendor" + "_id": y.invoice.id
+                        str(y.material_type) + " Invoice Number" + "_id": y.invoice.id
                     })
 
             for y in community_mobilization_data_avni:
@@ -541,7 +538,6 @@ def define_columns(request):
 
     try:
         for i in material_type_model:
-            formdict_new.append({"data": "vendor_type" + str(i.name), "title": "Name of " + str(i.name) + " vendor"})
             formdict_new.append({"data": "invoice_number" + str(i.name), "title": str(i.name) + " Invoice Number"})
     except Exception as e:
         print(e)
