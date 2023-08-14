@@ -89,10 +89,15 @@ class file_form(forms.Form):
 class gis_tab(forms.Form):
     def __init__(self, *args, **kwargs):
         super(gis_tab,self).__init__( *args, **kwargs)
-        self.fields['slum_name'] = forms.ModelChoiceField(queryset=Slum.objects.all(), widget=ForeignKeyRawIdWidget(rel=ManyToOneRel(Slum._meta.get_field('id'),Slum, 'id' ), admin_site=admin.site))
-        self.fields['slum_name'].widget.attrs.update({'class':'customized-form'})
-        self.fields['slum_name'].label = "Select slum"
+        self.fields['gisdata_slumname'] = forms.ModelChoiceField(queryset=Slum.objects.all(), widget=ForeignKeyRawIdWidget(rel=ManyToOneRel(Slum._meta.get_field('id'),Slum, 'id' ), admin_site=admin.site))
+        self.fields['gisdata_cityname'] = forms.ModelChoiceField(queryset = City.objects.all())
+        self.fields['gisdata_slumname'].widget.attrs.update({'class':'customized-form'})
+        self.fields['gisdata_slumname'].widget.attrs.update({'name':'gisdata_slumname', 'id':'gisdata_slumname'})
+        self.fields['gisdata_slumname'].label = "Select slum"
+        self.fields['gisdata_cityname'].widget.attrs.update({'class':'customized-form'})
+        self.fields['gisdata_cityname'].widget.attrs.update({'name':'gisdata_cityname', 'id':'gisdata_cityname'})
+        self.fields['gisdata_cityname'].label = "Select city"
 
     class Meta:
-        raw_id_fields = ('slum_name',)
+        raw_id_fields = ('gisdata_slumname',)
         model = 'Slum'

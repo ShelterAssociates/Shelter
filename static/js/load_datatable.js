@@ -415,7 +415,7 @@ $(document).ready(function () {
 
     // when we submit  Account data download  tab we check if slum is selected or not.
     $("#downloadExcel").on("click", function () {
-        if ($("#account_slumname").val() == "" && ($("#account_cityname").val() == "")) {
+        if ($("#id_account_slumname").val() == "" && ($("#account_cityname").val() == "")) {
             alert('Either Slum or City is required')
         }
         else {
@@ -425,8 +425,8 @@ $(document).ready(function () {
 
     // when we submit  GIS data download tab we check if slum is selected or not.
     $("#downloadGIS").on("click", function () {
-        if (document.forms[1].slum_name.value == "") {
-            alert("Please select a slum");
+        if ($("#gisdata_slumname").val() == "" && ($("#gisdata_cityname").val() == "")) {
+            alert('Please select any option for slum/city !!')
         }
         else {
             $("#GISModal_selection").submit();

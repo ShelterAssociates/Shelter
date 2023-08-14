@@ -59,7 +59,7 @@ class avni_sync():
         # latest_date = last_submission_date.submission_date + timedelta(days=1)
         today = datetime.today() + timedelta(days= -1)
         latest_date = today.strftime('%Y-%m-%dT00:00:00.000Z')
-        iso = "2023-04-12T00:00:00.000Z"
+        iso = "2023-07-05T00:00:00.000Z"
         return(latest_date)
         # return iso
 
@@ -129,7 +129,8 @@ class avni_sync():
             "Toilet_Photo": "Toilet Photo",
             "group_ne3ao98/Use_of_toilet": "Use of toilet",
             "group_im2th52/Number_of_Girl_children_between_0_18_yrs": "Number of Girl children between 0-18 yrs",
-            "group_im2th52/Number_of_Female_members": "Number of Female members"
+            "group_im2th52/Number_of_Female_members": "Number of Female members",
+            "group_oh4zf84/Name_of_Native_villa_district_and_state" : 'What is your native place (village, town, city) ?'
         }
         occupation_str = ''
         useOfToilte = ''
@@ -432,7 +433,6 @@ class avni_sync():
         latest_date = self.lastModifiedDateTime()
         programEncounters_path = 'api/programEncounters?lastModifiedDateTime=' + latest_date + '&encounterType=Daily Reporting'
         result = requests.get(self.base_url + programEncounters_path, headers={'AUTH-TOKEN': self.get_cognito_token()})
-
         get_page_count = json.loads(result.text)['totalPages']
         for i in range(get_page_count):
             send_request = requests.get(self.base_url + programEncounters_path + '&page=' + str(i), headers={'AUTH-TOKEN': self.get_cognito_token()})
@@ -1030,7 +1030,7 @@ class avni_sync():
     # methods for sync encounter data through json file.
 
     def sync_sanitation_data(self):
-        with open('/home/shelter/Desktop/json_file_for_call/Sanitation_data.json', 'r') as f:
+        with open('/home/shelter/Desktop/Json_files_for_upload/sanitation_data_01_08_2023.json', 'r') as f:
             count = 1
             data = json.load(f)
             for sanitation in data:
@@ -1081,7 +1081,7 @@ class avni_sync():
                     print(e, hh_number, "sanitation_uuid = " + san_uuid)
 
     def sync_water_data(self):
-        with open('/home/shelter/Desktop/json_file_for_call/water_data.json', 'r') as f:
+        with open('/home/shelter/Desktop/Json_files_for_upload/water_data_10_08_2023.json', 'r') as f:
             count = 1
             data = json.load(f)
             for water in data:
@@ -1122,7 +1122,7 @@ class avni_sync():
 
 
     def sync_waste_data(self):
-        with open('/home/shelter/Desktop/json_file_for_call/waste_data.json', 'r') as f:
+        with open('/home/shelter/Desktop/Json_files_for_upload/waste_data_01_08_2023.json', 'r') as f:
             count = 1
             data = json.load(f)
             for waste in data:
