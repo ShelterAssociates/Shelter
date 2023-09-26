@@ -56,6 +56,7 @@ def get_component(request, slum_id):
     '''
     slum = get_object_or_404(Slum, pk=slum_id)
     sponsors=[]
+    city_name = list(Slum.objects.filter(id = slum.id).values_list('electoral_ward__administrative_ward__city__name__city_name', flat = True))[0]
     sponsor_slum_count = 0
     if not request.user.is_anonymous:
        sponsors = request.user.sponsor_set.all().values_list('id',flat=True)
@@ -73,7 +74,6 @@ def get_component(request, slum_id):
         fields_code = metadata.filter(type='F').exclude(code="").values_list('code', flat=True)
         fields = list(set([str(x.split(':')[0]) for x in fields_code]))
         rhs_analysis = get_household_analysis_data(slum.electoral_ward.administrative_ward.city.id,slum.id, fields)
-        # print('rhs', rhs_analysis.keys())
     except Exception as e:
         pass
     lstcomponent = []
@@ -102,10 +102,13 @@ def get_component(request, slum_id):
         #Filter
         elif metad.type == 'F' and metad.code != "":
             field = metad.code.split(':')
-            if field[0] in rhs_analysis:
-                options = []
-                options = [rhs_analysis[field[0]][option] for option in field[1].split('|,|') if option in rhs_analysis[field[0]]]
-                component['child'] = list(set(sum(options,[])))
+            if city_name != 'Kolhapur' and field[0] == 'If individual water connection, type of water meter?':
+                pass
+            else:
+                if field[0] in rhs_analysis:
+                    options = []
+                    options = [rhs_analysis[field[0]][option] for option in field[1].split('|,|') if option in rhs_analysis[field[0]]]
+                    component['child'] = list(set(sum(options,[])))
         # # Sponsor : Depending on superuser or sponsor render the data accordingly
         elif metad.type == 'S' and (metad.authenticate == False or not request.user.is_anonymous) :
             if  metad.code!= "":
