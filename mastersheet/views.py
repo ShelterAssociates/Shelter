@@ -1045,19 +1045,29 @@ def give_report_table_numbers(request):  # view for toilet construction
                 query_field_TC = {level_data_tag[tag]['level_id'] : l, 'phase_one_material_date__range':[start_date, end_date], 'factsheet_done__isnull' : False}
                 '''Query filter for Sponsor data'''
                 query_field_sponsor = {level_data_tag[tag]['level_id'] : l,}
-                T_Housenum = ToiletConstruction.objects.filter(**query_field_TC).values_list('household_number', flat=True)
-                Spsr_Housecode = SponsorProjectDetails.objects.filter(**query_field_sponsor).exclude(sponsor__id=10).values_list('household_code', flat=True)
+                T_Housenum = ToiletConstruction.objects.filter(**query_field_TC).values_list('household_number', 'slum_id')
+                Spsr_Housecode = SponsorProjectDetails.objects.filter(**query_field_sponsor).exclude(sponsor__id=10).values_list('household_code', 'slum_id')
                 '''Here we are cheching that the funder assign or not to the household.'''
-                factsheet_count = 0
-                h_list = []
-                for household_num in T_Housenum:
-                    for housecode_list in Spsr_Housecode:
-                        if housecode_list != None:
-                            if int(household_num) in housecode_list and household_num not in h_list:
-                                factsheet_count += 1
-                                h_list.append(household_num)
-                                break
-                report_table_data[l]['factAssign'] = factsheet_count
+                # Creating dict object of sponsor hh data.
+                Spnsr_data_with_hh = {}
+                for households, slum in Spsr_Housecode:
+                    if slum not in Spnsr_data_with_hh:
+                        Spnsr_data_with_hh[slum] = households
+                    else:
+                        temp_spsr_obj = Spnsr_data_with_hh[slum]
+                        temp_spsr_obj.extend(households)
+                
+                # Loop for checking hh have toilet data and sponsor data.
+                FactsheetAssign = 0
+                for query_obj in T_Housenum:
+                    household, slum = query_obj
+                    if slum in Spnsr_data_with_hh:
+                        temp_spsr_obj = Spnsr_data_with_hh[slum]
+                        if int(household) in temp_spsr_obj:
+                            FactsheetAssign += 1
+                    
+                report_table_data[l]['factAssign'] = FactsheetAssign
+                
     '''Query filter for the total houses which have rhs data...'''
     for query_key in report_table_data.keys():
         query_field = {level_data_tag[tag]['level_id'] : query_key, 'rhs_data__isnull':False}

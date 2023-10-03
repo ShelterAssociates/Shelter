@@ -730,7 +730,11 @@ $(document).ready(function () {
             buttons += '</div>';
             $("#buttons").append(buttons);
             report_short_datatable = $("#example").DataTable({
-                "sDom": '<"top"Bfl>r<"mid"t><"bottom"ip><"clear">',
+                // "sDom": '<"top"Bfl>r<"mid"t><"bottom"ip><"clear">',
+                dom: 'QBlfrtip',
+                "searchBuilder": {
+                    depthLimit: 2
+                },
                 "paging": true,
                 "order": [[9, "desc"]],
                 "ajax": {
@@ -782,6 +786,8 @@ $(document).ready(function () {
             add_search_box();
             $(report_short_datatable.table().container()).on('keyup ', 'tfoot tr th input', function (index, element) {
                 report_short_datatable.column($(this).attr('dt_index')).search(String(this.value)).draw();
+
+        new $.fn.dataTable.SearchBuilder(report_short_datatable);
 
             });
 
