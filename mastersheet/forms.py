@@ -92,7 +92,7 @@ class gis_tab(forms.Form):
         self.fields['gisdata_slumname'] = forms.ModelChoiceField(queryset=Slum.objects.all(), widget=ForeignKeyRawIdWidget(rel=ManyToOneRel(Slum._meta.get_field('id'),Slum, 'id' ), admin_site=admin.site))
         self.fields['gisdata_cityname'] = forms.ModelChoiceField(queryset = City.objects.all())
         self.fields['gisdata_slumname'].widget.attrs.update({'class':'customized-form'})
-        self.fields['gisdata_slumname'].widget.attrs.update({'name':'gisdata_slumname', 'id':'gisdata_slumname'})
+        self.fields['gisdata_slumname'].widget.attrs.update({'name':'gisdata_slumname', 'id':'id_gisdata_slumname'})
         self.fields['gisdata_slumname'].label = "Select slum"
         self.fields['gisdata_cityname'].widget.attrs.update({'class':'customized-form'})
         self.fields['gisdata_cityname'].widget.attrs.update({'name':'gisdata_cityname', 'id':'gisdata_cityname'})

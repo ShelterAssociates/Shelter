@@ -7,18 +7,20 @@
 <link rel="stylesheet" type="text/css" href="{% static "admin/css/forms.css" %}">
 <link rel="stylesheet" type="text/css" href="{% static "css/mastersheet_stylesheet.css" %}">
 <link rel="stylesheet" type="text/css" href="{% static "css/bootstrap-datepicker3.min.css" %}">
+<link rel="stylesheet" type="text/css" href="{% static "css/searchBuilder.dataTables.min.css" %}">
 
 {%endblock%}
 {% block extrahead %}
 <script src="{% static "js/jquery.dataTables.min.js" %}"></script>
 <script src="{% static "js/dataTables.fixedColumns.min.js" %}"></script>
-
 <script src="{% static "js/dataTables.buttons.min.js" %}"></script>
 <script src="{% static "js/buttons.html5.min.js" %}"></script>
 <script src="{% static "js/jszip.min.js" %}"></script>
 <script src="{% static "admin/js/admin/RelatedObjectLookups.js" %}"></script>
 <script src="{% static "js/load_datatable.js" %}"></script>
 <script src="{% static "js/bootstrap-datepicker.js" %}"></script>
+<script src="{% static "js/dataTables.searchBuilder.min.js" %}"></script>
+
 {%endblock%}
 
 {% block content %}
@@ -37,7 +39,7 @@
       <form id="slum_form" style="display: inline-block;" method="POST">{% csrf_token %}
         {{ form.as_p }}
         <button type="button" id="btnFetchShort" class="btn btn-primary"><span class="glyphicon glyphicon-search"
-            onClick="reloadP()"></span> Search Summery View</button>
+            onClick="reloadP()"></span> Search Summary View</button>
         
         {% if request.user|has_group:"GIS" == True or request.user|has_group:"Data" == True or request.user.is_superuser %}
         <button type="button" id="btnFetchGisTab" class="btn btn-primary"><span
