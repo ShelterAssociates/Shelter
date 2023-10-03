@@ -815,7 +815,8 @@ def factsheetDataDownload(request):         #     function for city wise factshe
     exportClassObj = exportMethods(c_id)
     if Type_of_data == 'Structure Data':
         response_data, city_name = exportClassObj.Structure_data()  # Check export_data.py file for Structure_data()
-        columns_lst = ['Slum Name', 'Total Structure (In KML)', 'Occupied house','Unoccupied house', 'Locked house', 'Shop', 'Demolished house']
+        columns_lst = ['Slum Name', 'Total Structure (In KML)', 'Occupied house','Unoccupied house', 'Locked house', 'Shop', 'Demolished house', 'Permanently locked house', 'Broken house']
+
     elif Type_of_data == 'Factsheet Data':
         response_data, city_name = exportClassObj.cityWiseQuery(startdate, enddate)
         columns_lst = ['Slum Name', 'Household_number', 'Name As Per RHS',  'Name As Per Factsheet', 'Ownership Status As Per Factsheet', 'Application id', 'Aadhar number', 'Phone number', 'Total_family_members', 'Male_members', 'Female_members', 'Below 5 years', 'Between_0_to_18', 'Above 60 years', 'disable_members', 'Toilet Connected To.', 'Have You Upgraded ?', 'Cost Of Upgradetion?', 'Sponsor Name', 'Who has built your toilet ?']
