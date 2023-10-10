@@ -709,9 +709,22 @@ $(document).ready(function () {
             {
                 extend: 'excel',
                 text: 'Excel',
+            },
+            {
+                extend: 'searchBuilder',
+                config: {
+                    depthLimit: 2
+                }
+            },
+            {
+                extend: 'createState',
+                text:"Create State"
+            },
+            {
+                extend: 'savedStates',
+                text : "Save State"
             }
         ];
-
         if (report_short_datatable != null) {
             $("#slum_form p").find("#slum_info").html("");
             $("#slum_form p").find("#slum_info").remove();
@@ -730,10 +743,9 @@ $(document).ready(function () {
             buttons += '</div>';
             $("#buttons").append(buttons);
             report_short_datatable = $("#example").DataTable({
-                // "sDom": '<"top"Bfl>r<"mid"t><"bottom"ip><"clear">',
-                dom: 'QBlfrtip',
-                "searchBuilder": {
-                    depthLimit: 2
+                dom: 'Bfrtip',
+                search: {
+                    return: true   // This is for forced search implementation on Search builder.
                 },
                 "paging": true,
                 "order": [[9, "desc"]],
