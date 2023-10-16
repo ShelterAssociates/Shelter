@@ -76,6 +76,11 @@ def get_household_analysis_data(city, slum_code, question_fields, kobo_survey=''
             if record['group_oi8ts04/Current_place_of_defecation'] in cpod_status or 'Final_status' in record:
                     if 'group_oi8ts04/Are_you_interested_in_an_indiv' in record:
                         del record['group_oi8ts04/Are_you_interested_in_an_indiv']
+            elif record['group_oi8ts04/Current_place_of_defecation'] == 'Use CTB':
+                record['remain_ctb'] = 'available' # Checking remining CTB's for POST SBM
+            
+            if 'group_oi8ts04/Are_you_interested_in_an_indiv' in record and record['group_oi8ts04/Are_you_interested_in_an_indiv'] == 'Yes':
+                record['remain_intrested'] = 'Yes'   # Checking remining Interested for POST SBM
         
         '''question_fields is the different types of parameter of RHS Data.'''
         for field in question_fields:
