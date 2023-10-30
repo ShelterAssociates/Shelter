@@ -190,6 +190,10 @@ def get_kobo_RHS_data(request, slum_id,house_num):
      output['admin_ward'] = slum.electoral_ward.administrative_ward.name
      output['slum_name'] = slum.name
      output['house_no'] = house_num
+     # Adding code fetch pluscode from RHS data.
+     plus_code = getPlusCodeDetails(slum_id, house_num)
+     if plus_code:
+         output['PlusCode'] = plus_code
      # output['Household_details']= json.dumps(rhs_data)
      output['FFReport'] = project_details
      return HttpResponse(json.dumps(output),content_type='application/json')
