@@ -187,6 +187,19 @@ def get_kobo_RHS_list(city, slum, house_number, kobo_survey=''):
             output = format_data(household_data[0].rhs_data)
     return output
 
+def getPlusCodeDetails(slum, household):
+    rhs_obj = HouseholdData.objects.filter(slum = slum, household_number = str(int(household)), rhs_data__isnull = False)
+    if rhs_obj.exists():
+        rhs_data = rhs_obj.values_list('rhs_data', flat = True)[0]
+        if 'Plus code of the house' in rhs_data:
+            if 'Plus Code Part' in rhs_data:
+                pluscode = rhs_data['Plus code of the house'] + "-" + rhs_data['Plus Code Part']
+                print(pluscode)
+                return pluscode
+            return rhs_data['Plus code of the house']
+    return None
+
+
 @survey_mapping(SURVEYTYPE_CHOICES[0][0])
 def get_kobo_RIM_detail(city, slum_code, kobo_survey=''):
     """Method to get RIM data from kobotoolbox using the API. Data contains question and answer decrypted.
