@@ -194,7 +194,6 @@ def getPlusCodeDetails(slum, household):
         if 'Plus code of the house' in rhs_data:
             if 'Plus Code Part' in rhs_data:
                 pluscode = rhs_data['Plus code of the house'] + "-" + rhs_data['Plus Code Part']
-                print(pluscode)
                 return pluscode
             return rhs_data['Plus code of the house']
     return None
