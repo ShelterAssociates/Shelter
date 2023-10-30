@@ -1653,29 +1653,30 @@ def AnalyseGisTabData(slum_id):
                             'group_oi8ts04/Which_Community_Toil_r_family_members_use': 'Which CTB do your family members use ?', 'group_el9cl08/Does_any_household_m_n_skills_given_below': 'Does any household member have any of the construction skills given below ?'}
         check_formdict = {}
         for dct in formdict:
-            hh = str(int(dct['household_number']))
-            # checking for followup-data
-            if hh in followup_data:
-                temp = followup_data[hh]
-                sanitation_data = {sanitation_keys[key]: temp['followup_data'][key] for key in sanitation_keys.keys() if key in temp['followup_data']}
-                dct.update(sanitation_data)
-            # adding Daily Reporting data ...
-            if str(int(hh)) in toiletdict:
-                temp_data = toiletdict[str(int(hh))]
-                del temp_data['household_number']
-                dct.update(temp_data)
-            # Adding Funder project data .....
-            if len(slum_funder) != 0:   # Adding funder project name.
-                for funder in slum_funder:
-                    if funder.household_code != None:
-                        if int(hh) in funder.household_code:
-                            dct.update({'sponsor_project': funder.sponsor_project.name})
-            # Adding Activity Attend count ...
-            if hh in activity_count:
-                dct.update({'activity_count':activity_count[hh]})
-            diff_keys = set(columns_lst).difference(set(dct.keys())) # Handling Empty data fields
-            temp_dict = {i : None for i in diff_keys}
-            dct.update(temp_dict)
+            if 'occupancy_status' in dct and dct['occupancy_status'] == "Occupied house":
+                hh = str(int(dct['household_number']))
+                # checking for followup-data
+                if hh in followup_data:
+                    temp = followup_data[hh]
+                    sanitation_data = {sanitation_keys[key]: temp['followup_data'][key] for key in sanitation_keys.keys() if key in temp['followup_data']}
+                    dct.update(sanitation_data)
+                # adding Daily Reporting data ...
+                if str(int(hh)) in toiletdict:
+                    temp_data = toiletdict[str(int(hh))]
+                    del temp_data['household_number']
+                    dct.update(temp_data)
+                # Adding Funder project data .....
+                if len(slum_funder) != 0:   # Adding funder project name.
+                    for funder in slum_funder:
+                        if funder.household_code != None:
+                            if int(hh) in funder.household_code:
+                                dct.update({'sponsor_project': funder.sponsor_project.name})
+                # Adding Activity Attend count ...
+                if hh in activity_count:
+                    dct.update({'activity_count':activity_count[hh]})
+                diff_keys = set(columns_lst).difference(set(dct.keys())) # Handling Empty data fields
+                temp_dict = {i : None for i in diff_keys}
+                dct.update(temp_dict)
             check_formdict[dct['household_number']] = dct
         return list(check_formdict.values()), columns_lst, slum_code[0][1]
     except Exception as e:
