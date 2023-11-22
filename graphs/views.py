@@ -31,7 +31,7 @@ from mastersheet.models import *
 
 
 CARDS = {'Cards': {'General':[{'slum_count':'Slum count'},{'gen_avg_household_size':"Avg Household size"}, {'gen_tenement_density':"Tenement density (Huts/Hector)"},
-                    {'household_owners_count':'Superstructure Ownership'}],
+                    {'household_owners_count':'Superstructure Ownership'}, {'type_of_structure_of_the_house':"Kuccha|Puccha|Semi-Pucca"}],
          'Waste': [{'waste_no_collection_facility_percentile':'Garbage Bin'},
                    {'waste_door_to_door_collection_facility_percentile':'Door to door waste collection'},
                    {'waste_dump_in_open_percent':'Dump in open'},{'drains_coverage':'ULB Service'},{'waste_other_services':'Other services'}],
@@ -108,6 +108,8 @@ def get_dashboard_card(request, key):
     key_takeaway.update(key_takeaways_toilet(city_keyTakeaways_ctb))
     output_data['city'][city.name.city_name]['cards'] = cards
     output_data['city'][city.name.city_name]['key_takeaways'] = key_takeaway
+    if city.name.city_name == 'Kolhapur':
+        output_data['city'][city.name.city_name]['cards']['General'].append('1541|3250|11110')
 
     # Administrative ward calculations
     for admin_ward in AdministrativeWard.objects.filter(city=city):
@@ -152,7 +154,6 @@ def get_dashboard_card(request, key):
                         'key_takeaways': all_key_takeaways(key)} for key, values in qol_scores}
     output_data['slum'] = qol_scores
     output_data['metadata'] = CARDS
-
     return HttpResponse(json.dumps(output_data),content_type='application/json')
 
 def all_key_takeaways(slum):
