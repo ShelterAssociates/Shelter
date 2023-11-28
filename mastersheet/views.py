@@ -1445,7 +1445,8 @@ def getRhsData(record):
     'group_oi8ts04/Current_place_of_defecation': 'current_place_of_defication', 'Plus Code Part':'pluscodepart', 'group_el9cl08/Do_you_have_any_girl_child_chi':'girls_child', 
     'group_el9cl08/Type_of_structure_of_the_house':'house_structure', 'group_el9cl08/Ownership_status_of_the_house':'ownership_status', 
     'group_el9cl08/House_area_in_sq_ft':'house_area', 'Do you have addhar card?':'isAadharCard', 'group_el9cl08/Aadhar_number':
-	'aadhar_number', 'Colour of ration card':'color_of_ration_card',
+	'aadhar_number', 'Colour of ration card':'color_of_ration_card', 'Select Religion' : 'Select Religion', 'If other religion' : 'If other religion',
+    'Select Caste' : 'Select Caste', 'If other caste' : 'If other caste',
     'group_el9cl08/Type_of_water_connection':'Type_of_water_connection', 'group_el9cl08/Facility_of_solid_waste_collection':"Facility_of_solid_waste_collection"}
     if record.rhs_data and record.rhs_data['Type_of_structure_occupancy'] == 'Occupied house':
         data = {key_list[i] : record.rhs_data[i] for i in key_list.keys() if i in record.rhs_data}
@@ -1466,6 +1467,8 @@ def getRhsData(record):
         data['factsheet_done'] = 'Yes'
     data['slum'] = slum_code[0][1]
     data['city_name'] = slum_code[0][2]
+    data['Last Modified At'] = datetime.datetime.strptime(str(record.submission_date)[:10], '%Y-%m-%d').date()
+    
     return data
 
 def communityActivityData(slum_code):
@@ -1512,23 +1515,15 @@ def ProcessShortView(request, slum_details=0):
         global slum_code
         slum_code = Slum.objects.filter(pk=int(request.GET['slumname'])).values_list("id", "name", "electoral_ward__administrative_ward__city__name__city_name")
         slum_funder = SponsorProjectDetails.objects.filter(slum=slum_code[0][0]).exclude(sponsor__id=10)
-        invoice_data = InvoiceItems.objects.filter(slum_id = slum_code[0][0]).values_list('household_numbers', flat = True)
+        invoice_data = InvoiceItems.objects.filter(slum_id = slum_code[0][0]).values_list('phase', 'household_numbers')
 
         householdData = HouseholdData.objects.filter(slum_id = slum_code[0][0], rhs_data__isnull = False)
         formdict = list(map(getRhsData, householdData))
         check_formdict = {str(int(x['household_number'])): x for x in formdict}
 
-        household_with_invoice_data = []
-        for i in invoice_data:
-            household_with_invoice_data.extend(i)
-        
-        for i in list(set(household_with_invoice_data)):
-            if str(i) in check_formdict:
-                temp = check_formdict[str(i)]
-                temp['invoice_entry'] = 'Yes'
-            else:
-                temp_dict = {'household_number':str(i), 'occupancy_status': "RHS Not Done", 'invoice_entry':'Yes'}
-                rhs_not_done.append(temp_dict)
+        # Process Invoice data...
+        phasewise = sorted(invoice_data, key=lambda x: x[0])
+        phaseWiseGroupedInvoiceData = {key: list(set([num for sublist in group for num in sublist[1]])) for key, group in itertools.groupby(phasewise, key=lambda x: x[0])}
 
         hh_activity_cnt = communityActivityData(slum_code)
 
@@ -1564,7 +1559,20 @@ def ProcessShortView(request, slum_details=0):
         for i in daily_reporting_data:   # Prpcessing Daily Reporting data.
             if i['household_number'] in check_formdict:
                 temp = check_formdict[i['household_number']]
-                temp['phase_one_material_date'] = i['phase_one_material_date_str']
+                # Here we are checking phase-wise invoice data availability.....
+                material_dates = {'phase_one_material_date' : '1', 'phase_two_material_date' : '2', 'phase_three_material_date' : '3'}
+                for material_date in material_dates.keys():
+                    if material_date + '_str' in i:
+                        temp[material_date] = i[material_date + '_str']
+                        if i[material_date + '_str']:
+                            phase = material_dates[material_date]
+                            if phase in phaseWiseGroupedInvoiceData:
+                                households = phaseWiseGroupedInvoiceData[phase]
+                                if int(i['household_number']) in households:
+                                    temp['invoice_phase_' + phase] = 'Yes'
+                                else:
+                                    temp['invoice_phase_' + phase] = 'No'
+                # Here we are checking completion delayed.
                 if i['phase_two_material_date_str']: # Checking completion delayed.
                     if not i['completion_date_str'] and is_delayed(i['phase_two_material_date_str']):
                         temp['Completion delayed'] = 'Yes'
@@ -1606,9 +1614,9 @@ def AnalyseGisTabData(slum_id):
         slum_funder = SponsorProjectDetails.objects.filter(slum=slum_code[0][0]).exclude(sponsor__id=10)
         Toilet_data = ToiletConstruction.objects.filter(slum=slum_code[0][0], phase_one_material_date__isnull = False).exclude(agreement_cancelled = True)
         householdData = HouseholdData.objects.filter(slum_id = slum_code[0][0], rhs_data__isnull = False)
-        columns_lst = ['city_name', 'slum', 'household_number', 'occupancy_status', 'typeUnoccupiedHouse', 'pluscodes', 'pluscodepart', 
+        columns_lst = ['city_name', 'slum', 'household_number', 'Last Modified At', 'occupancy_status', 'typeUnoccupiedHouse', 'pluscodes', 'pluscodepart', 
                         'house_structure', 'ownership_status', 'name_head_of_he_household', 'isAadharCard', 'aadhar_number', 'color_of_ration_card', 
-                        'girls_child', 'house_area', 'Do you have individual water connection at home?', 'Type_of_water_connection', 'Facility_of_solid_waste_collection', 
+                        'girls_child', 'Select Religion' , 'If other religion' , 'Select Caste', 'If other caste', 'house_area', 'Do you have individual water connection at home?', 'Type_of_water_connection', 'Facility_of_solid_waste_collection', 
                         'Do you have a toilet at home?', 'Status of toilet under SBM ?', 'Where the individual toilet is connected to ?', 'Who all use toilets in the household ?', 
                         'Reason for not using toilet ?', 'current_place_of_defication', 'Is there availability of drainage to connect it to the toilet?', 'Are you interested in an individual toilet ?', 
                         'Which CTB do your family members use ?', 'Does any household member have any of the construction skills given below ?', 'final_status', 'pocket', 'comment', 
@@ -1693,7 +1701,7 @@ def gisDataDownload(request):
     else:
         exportClassObj = exportMethods(city_id)
         response_data, city_name = exportClassObj.cityWiseRhsData()
-        columns_lst = ['Household_id', 'Avni UUID', 'Household number', 'Slum', 'Survey Date','slum_id', 'Name of the Surveyor', 'Type of structure occupancy', 'Type of unoccupied house', 'Parent household number', 'Full name of the head of the household', 'Enter the 10 digit mobile number', 'Aadhar number', 'Number of household members', 'Total female members', 'total male members', 'total other gender members', 'Do you have any girl child/children under the age of 18?', 'How many ? ( Count )', 'Type of structure of house', 'Ownership status of the household', 'House area in sq. ft.', 'Type of water connection', 'group_el9cl08/Facility_of_solid_waste_collection', 'Plus code of the house', 'group_oi8ts04/Current_place_of_defecation', 'Type of household toilet ?', "Are you interested in an individual toilet?", "Current place of defecation", 'Does any member of the household go for open defecation ?', 'Do you have a toilet at home?', 'If no for individual toilet , why?', 
+        columns_lst = ['Household_id', 'Avni UUID', 'Household number', 'Slum', 'Survey Date', 'Last Modified At', 'slum_id', 'Name of the Surveyor', 'Type of structure occupancy', 'Type of unoccupied house', 'Parent household number', 'Full name of the head of the household', 'Enter the 10 digit mobile number', 'Aadhar number', 'Number of household members', 'Total female members', 'total male members', 'total other gender members', 'Do you have any girl child/children under the age of 18?', 'How many ? ( Count )', 'Type of structure of house', 'Ownership status of the household', 'House area in sq. ft.', 'Type of water connection', 'group_el9cl08/Facility_of_solid_waste_collection', 'Plus code of the house', 'group_oi8ts04/Current_place_of_defecation', 'Type of household toilet ?', "Are you interested in an individual toilet?", "Current place of defecation", 'Does any member of the household go for open defecation ?', 'Do you have a toilet at home?', 'If no for individual toilet , why?', 
             'Under what scheme would you like your toilet to be built ?', 'Does any household member have any of the construction skills give below?', 'Have you applied for an individual toilet under SBM?', 'How many installments have you received?', 'When did you receive your first installment?', 'When did you receive your second installment?', 'When did you receive your third installment?', 'If built by a contractor, how satisfied are you?', 'Status of toilet under SBM?', 'What was the cost incurred to build the toilet?', 'Current place of defecation', 'Which CTB', 'Is there availability of drainage to connect to the toilet?', 'Are you interested in an individual toilet?', 'What kind of toilet would you like?', 'Under what scheme would you like your toilet to be built?', 'If yes, why?', 'If no, why?', 'What is the toilet connected to?', 'Who all use toilets in the household?', 'Reason for not using toilet']
         filename = remove_invalid_char(str(city_name))+'.csv'
     response = HttpResponse(content_type='text/csv')
