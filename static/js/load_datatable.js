@@ -782,6 +782,8 @@ $(document).ready(function () {
                     { 'data': 'name_head_of_he_household', 'title': 'Name of the head of the household' },
                     { 'data': 'current_place_of_defication', 'title': 'Current place of defecation' },
                     { 'data': 'phase_one_material_date', 'title': 'Date of Phase One Material' },
+                    { 'data': 'phase_two_material_date', 'title': 'Date of Phase Two Material' },
+                    { 'data': 'phase_three_material_date', 'title': 'Date of Phase Three Material' },
                     { 'data': 'Completion delayed', 'title': 'Completion delayed:' },
                     { 'data': 'agreement_cancelled', 'title': 'Agreement Cancelled?' },
                     { 'data': 'material_shifted', 'title': 'Material shifted (Yes/No)' },
@@ -790,7 +792,9 @@ $(document).ready(function () {
                     { 'data': 'factsheet_done', 'title': 'Factsheet onfield' },
                     { 'data': 'toilet_connected_to', 'title': 'Toilet Connected Status' },
                     { 'data': 'total_moilization_acticity', 'title': 'No. of mobilisation activities attended by family' },
-                    { 'data': 'invoice_entry', 'title': 'Invoice entry (Yes/No)' }
+                    { 'data': 'invoice_phase_1', 'title': 'Invoice Phase 1 (Yes/No)' },
+                    { 'data': 'invoice_phase_2', 'title': 'Invoice Phase 2 (Yes/No)' },
+                    { 'data': 'invoice_phase_3', 'title': 'Invoice Phase 3 (Yes/No)' }
                 ],
 
             });
