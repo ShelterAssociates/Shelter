@@ -1467,7 +1467,7 @@ def getRhsData(record):
         data['factsheet_done'] = 'Yes'
     data['slum'] = slum_code[0][1]
     data['city_name'] = slum_code[0][2]
-    data['Last Modified At'] = datetime.datetime.strptime(str(record.submission_date)[:10], '%Y-%m-%d').date()
+    data['Last Modified At'] = str(datetime.datetime.strptime(str(record.submission_date)[:10], '%Y-%m-%d').date())
     
     return data
 

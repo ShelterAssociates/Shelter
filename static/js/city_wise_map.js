@@ -200,27 +200,33 @@ function generate_RIM(result){
             let toilet_header = "<thead><tr><th>&nbsp;</th>";
             let toilet_body = "<tbody>";
             for (i=0; i<v.length; i++){
-                toilet_header += "<th> CTB " +(i+1) + "</th>";
+                if (v[i].hasOwnProperty( "ctb_name")){
+                    toilet_header += "<th> " +v[i][ "ctb_name"]+ "</th>";
+                    delete v[i][ "ctb_name"]
+                }else{
+                    toilet_header += "<th> CTB" +(i+1) + "</th>";
+                };
             }
             toilet_header+= "</tr></thead>";
             if(v.length > 0){
+                // Making a array cosisting all keys which available in toilet data.
                 keys_headers2 = Object.keys(v[0]);
                 for (j=1; j<v.length; j++){
                     keys_headers1 = Object.keys(v[j]);
                     keys_headers2 = keys_headers2.concat(keys_headers1);
                 }
+                // Removing duplicates from  all keys_headers2 which available in toilet data.
                 function removeDuplicates(arr) {
                     return arr.filter((item,
                         index) => arr.indexOf(item) === index);
                 }
                 keys_headers = removeDuplicates(keys_headers2);
-                $.each(keys_headers.slice(0, keys_headers.length-1), function(key, val) {
+                $.each(keys_headers.slice(0, keys_headers.length), function(key, val) {
                     toilet_body += '<tr><td style="font-weight:bold;width:200px;">' + val + '</td>';
-
                     for (i=0; i<v.length; i++){
                         value = v[i][val];
                         if(value == undefined)
-                                value="&nbsp;";
+                                value="None";
                         toilet_body += '<td>' + value + '</td>';
                     }
                     toilet_body += '</tr>';
