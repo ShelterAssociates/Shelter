@@ -15,7 +15,6 @@ from django.utils import timezone
 from dateutil import parser
 
 
-
 direct_encountes = ['Sanitation', 'Property tax', 'Water', 'Waste', 'Electricity', 'Daily Mobilization Activity']
 program_encounters = ['Daily Reporting', 'Family factsheet']
 
@@ -59,9 +58,9 @@ class avni_sync():
         # latest_date = last_submission_date.submission_date + timedelta(days=1)
         today = datetime.today() + timedelta(days= -1)
         latest_date = today.strftime('%Y-%m-%dT00:00:00.000Z')
-        iso = "2023-07-05T00:00:00.000Z"
-        return(latest_date)
-        # return iso
+        iso = "2023-12-11T05:40:00.000Z"
+        # return(latest_date)
+        return iso
 
     def get_image(self, image_link):
         path = 'https://app.avniproject.org/media/signedUrl?url='
@@ -770,7 +769,7 @@ class avni_sync():
         3 - Program Encounter
         Please provide flag when sync data using UUIDs'''
 
-        flag = 'Program Encounter'
+        flag = 'Subject Type'
 
         for i in IdList:
             try:
