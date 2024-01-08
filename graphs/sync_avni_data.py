@@ -59,8 +59,8 @@ class avni_sync():
         today = datetime.today() + timedelta(days= -1)
         latest_date = today.strftime('%Y-%m-%dT00:00:00.000Z')
         iso = "2023-12-11T05:40:00.000Z"
-        # return(latest_date)
-        return iso
+        return(latest_date)
+        # return iso
 
     def get_image(self, image_link):
         path = 'https://app.avniproject.org/media/signedUrl?url='
@@ -1266,6 +1266,37 @@ class avni_sync():
             for rhs in data:
                 try:
                     self.registrtation_data(rhs)
+                except Exception as e:
+                    print(e)
+                    
+    def processElectricityData(self, data):
+        electricity_keys = ['uuid', 'Photo for electricity bill', 'Do you lend electricity to any house ?', 'Do you have electricity in the house ?', 'Comment if any ?', 'If borrowed meter, from which house you borrowed?', 'If yes for electricity ,  type of meter ?', 'Name on the electricity bill', 'If yes for lending electricity with other houses , write those ', 'What is the average monthly billing amount ? (Electricity)', 'If own meter, then meter/consumer number ?']
+        electricity_data = {}
+        for key in electricity_keys:
+            if data[key] != 'None':
+                electricity_data[key] = data[key]
+        submission_date = data['Date of Survey']
+        return electricity_data, submission_date
+        
+                    
+    def sync_Electricity_data(self):
+        with open('/home/shelter/Desktop/Jupyter_Scripts/Encounter_Data_for_Upload_on_SA_from_json/Data_Files/electricity_encounter_data_download_as_json_file_2024-01-02T12_04_35.869815+05_30.json', 'r') as f:
+            count = 1
+            data = json.load(f)
+            for electricity_obj in data:
+                try:
+                    electricity_processed_data, submission_date = self.processElectricityData(electricity_obj)
+                    slum, city = self.get_city_slum_ids(electricity_obj['Slum'])
+                    hh_details = HouseholdData.objects.filter(slum_id=slum, household_number=str(int(electricity_obj['household__first_name'])))
+                    if not hh_details:
+                        self.get_household_details(electricity_obj['household__uuid'])
+                        print('Record not found for', str(int(electricity_obj['household__first_name'])))
+                        self.registrtation_data(self.get_HH_data)
+                    get_rhs_data = hh_details.values_list('rhs_data', flat=True)[0]
+                    get_rhs_data.update({'Electricity_data' : electricity_processed_data})
+                    hh_details.update(rhs_data=get_rhs_data)
+                    print(count, 'rhs record updated for', str(int(electricity_obj['household__first_name'])), str(int(electricity_obj['household__first_name'])))
+                    count += 1
                 except Exception as e:
                     print(e)
 

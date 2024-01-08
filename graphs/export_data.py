@@ -4,7 +4,7 @@ from graphs.models import *
 from mastersheet.models import *
 from sponsor.models import *
 from component.models import *
-from collections import Counter
+from collections import Counter, defaultdict
 
 
 
@@ -129,15 +129,19 @@ class exportMethods:
         question = {'rhs_uuid' : "Avni UUID", 'Date_of_survey' : "Survey Date", 'Name_s_of_the_surveyor_s' :"Name of the Surveyor", 'Type_of_structure_occupancy' : "Type of structure occupancy", 'Type_of_unoccupied_house' : "Type of unoccupied house", 'Parent_household_number' : "Parent household number", 'group_og5bx85/Full_name_of_the_head_of_the_household' : "Full name of the head of the household", "group_el9cl08/Enter_the_10_digit_mobile_number" : "Enter the 10 digit mobile number",
             "group_el9cl08/Aadhar_number" : "Aadhar number", "group_el9cl08/Number_of_household_members":"Number of household members", 'group_el9cl08/Do_you_have_any_girl_child_chi':"Do you have any girl child/children under the age of 18?", "group_el9cl08/How_many":"How many ? ( Count )", "group_el9cl08/Type_of_structure_of_the_house":"Type of structure of house",
             "group_el9cl08/Ownership_status_of_the_house":"Ownership status of the household", "group_el9cl08/House_area_in_sq_ft":"House area in sq. ft.", "group_el9cl08/Type_of_water_connection" :"Type of water connection", "group_el9cl08/Facility_of_solid_waste_collection" : "group_el9cl08/Facility_of_solid_waste_collection", "Plus code of the house":"Plus code of the house", "group_oi8ts04/Are_you_interested_in_an_indiv":"Are you interested in an individual toilet?", "group_oi8ts04/Current_place_of_defecation": "Current place of defecation", 'group_oi8ts04/OD1':'Does any member of the household go for open defecation ?', 'Do you have a toilet at home?':'Do you have a toilet at home?',
-            'group_oi8ts04/If_no_why': 'If no for individual toilet , why?', 'group_oi8ts04/Under_what_scheme_wo_r_toilet_to_be_built': 'Under what scheme would you like your toilet to be built ?', "group_el9cl08/Total_number_of_fema_including_children": "Total female members", "group_el9cl08/Total_number_of_male_including_children":"total male members", "group_el9cl08/Total_number_of_Other_gender_members":"total other gender members"}
+            'group_oi8ts04/If_no_why': 'If no for individual toilet , why?', 'group_oi8ts04/Under_what_scheme_wo_r_toilet_to_be_built': 'Under what scheme would you like your toilet to be built ?', "group_el9cl08/Total_number_of_fema_including_children": "Total female members", "group_el9cl08/Total_number_of_male_including_children":"total male members", "group_el9cl08/Total_number_of_Other_gender_members":"total other gender members", "Do you have electricity in the house ?" : "Do you have electricity in the house ?", "If yes for electricity ,  type of meter ?" : "If yes for electricity ,  type of meter ?"}
         
         """ Creating a dictionary with slum names."""
         slum_name_dict = self.SlumNameLst()
-        construction_data = self.toilet_data.filter(status = 6, slum_id__in = list(slum_name_dict.keys())).exclude(agreement_cancelled = True).values_list('household_number', 'slum_id')
+        construction_data = self.toilet_data.filter(slum_id__in = list(slum_name_dict.keys())).exclude(agreement_cancelled = True).values_list('household_number', 'status', 'slum_id')
         """ Create groupby object of construction_data for mapping."""
-        construction_data_group = itertools.groupby(sorted(construction_data, key = lambda x : x[1]), key = lambda x : x[1])
+        construction_data_dct = defaultdict(dict)
+        for household, status, slum_id in construction_data:
+            if household not in construction_data_dct[slum_id]:
+                construction_data_dct[slum_id][household] = status
+                
+        construction_data = dict(construction_data_dct)
         """ Here we are creating slum wise group of hh who has toilet construction data (for mapping)"""
-        construction_data = {slum : list(map(lambda x : x[0], hh_lst)) for slum, hh_lst in construction_data_group}
         """Extracting Followup data and sorting data as per the last modified date."""
         cod_data = FollowupData.objects.filter(slum_id__in = list(slum_name_dict.keys())).values('household_number', 'followup_data', 'submission_date', 'slum_id')
         followup_data = {}
@@ -168,50 +172,53 @@ class exportMethods:
             "group_el9cl08/Aadhar_number", "group_el9cl08/Number_of_household_members", 'group_el9cl08/Do_you_have_any_girl_child_chi', "group_el9cl08/How_many", "group_el9cl08/Type_of_structure_of_the_house",
             "group_el9cl08/Ownership_status_of_the_house", "group_el9cl08/House_area_in_sq_ft", "group_el9cl08/Type_of_water_connection", "group_el9cl08/Facility_of_solid_waste_collection", "Plus code of the house", 'group_el9cl08/Total_number_of_fema_including_children', 'group_el9cl08/Total_number_of_male_including_children', 'group_el9cl08/Total_number_of_Other_gender_members']
             # if occupied house then if block called otherwise else block called.
+            electricity_keys = ['If yes for electricity ,  type of meter ?', 'Do you have electricity in the house ?']
             if record.rhs_data:
-                data = {question[rhs_key] :record.rhs_data[rhs_key] for rhs_key in key_list if rhs_key in record.rhs_data}
-                data['Household number'] = record.household_number
-                data['Household_id'] = record.id
-                data['slum_id'] = record.slum_id
-                if record.slum_id in slum_name_dict:
-                    data['Slum'] = slum_name_dict[record.slum_id]
-                return data
-            else:
-                key_list = ['rhs_uuid', 'Date_of_survey', 'Name_s_of_the_surveyor_s', 'Type_of_structure_occupancy', "Plus code of the house"]
-                if record.rhs_data:
+                if record.rhs_data['Type_of_structure_occupancy'] == 'Occupied house':
                     data = {question[rhs_key] :record.rhs_data[rhs_key] for rhs_key in key_list if rhs_key in record.rhs_data}
+                    if "Electricity_data" in record.rhs_data:
+                        electricity_data_obj = record.rhs_data['Electricity_data']
+                        electricity_data = {question[key] :electricity_data_obj[key] for key in electricity_keys if key in electricity_data_obj}
+                        data.update(electricity_data)
                 else:
-                    data = {}
-                data['Household number'] = record.household_number
-                data['Household_id'] = record.id
-                data['slum_id'] = record.slum_id
-                if record.slum_id in slum_name_dict:
-                    data['Slum'] = slum_name_dict[record.slum_id]
-                return data
+                    key_list = ['rhs_uuid', 'Date_of_survey', 'Name_s_of_the_surveyor_s', 'Type_of_structure_occupancy', "Plus code of the house"]
+                    data = {question[rhs_key] :record.rhs_data[rhs_key] for rhs_key in key_list if rhs_key in record.rhs_data}
+            else:
+                data = {}
+            data['Household number'] = record.household_number
+            data['Household_id'] = record.id
+            data['slum_id'] = record.slum_id
+            if record.slum_id in slum_name_dict:
+                data['Slum'] = slum_name_dict[record.slum_id]
+            return data
         """Iterating household data and selecting question for response data."""
         formdict = list(map(check_rhs_data, householdData))
         """Adding Followup data and Construction data in this city wise data."""
         for rhs_data in formdict:
             """ If the followup data is available then this block will run."""
-            if rhs_data['slum_id'] in followup_data:
+            if rhs_data['slum_id'] in followup_data and ('Type_of_structure_occupancy' in rhs_data and rhs_data['Type_of_structure_occupancy'] == 'Occupied house'):
                 followup_slum_data = followup_data[rhs_data['slum_id']]
                 if str(int(rhs_data['Household number'])) in followup_slum_data:
                     final_followup_data = followup_slum_data[str(int(rhs_data['Household number']))]
                     data = final_followup_data['followup_data']
                     temp = {}
-                    key_lst = {'group_el9cl08/Does_any_household_m_n_skills_given_below': 'Does any household member have any of the construction skills give below?', 'group_oi8ts04/Have_you_applied_for_individua': 'Have you applied for an individual toilet under SBM?', 'group_oi8ts04/How_many_installments_have_you': 'How many installments have you received?', 'group_oi8ts04/When_did_you_receive_ur_first_installment': 'When did you receive your first installment?', 'group_oi8ts04/When_did_you_receive_r_second_installment': 'When did you receive your second installment?', 'group_oi8ts04/When_did_you_receive_ur_third_installment': 'When did you receive your third installment?', 'group_oi8ts04/If_built_by_contract_ow_satisfied_are_you': 'If built by a contractor, how satisfied are you?', 'group_oi8ts04/Status_of_toilet_under_SBM': 'Status of toilet under SBM?', 'group_oi8ts04/What_was_the_cost_in_to_build_the_toilet': 'What was the cost incurred to build the toilet?', 'group_oi8ts04/Current_place_of_defecation': 'Current place of defecation', 'group_oi8ts04/Which_Community_Toil_r_family_members_use': 'Which CTB', 'group_oi8ts04/Is_there_availabilit_onnect_to_the_toilets': 'Is there availability of drainage to connect to the toilet?', 'group_oi8ts04/Are_you_interested_in_an_indiv': 'Are you interested in an individual toilet?', 'group_oi8ts04/What_kind_of_toilet_would_you_likes': 'What kind of toilet would you like?', 'group_oi8ts04/Under_what_scheme_wo_r_toilet_to_be_built': 'Under what scheme would you like your toilet to be built?', 'group_oi8ts04/If_yes_why': 'If yes, why?', 'group_oi8ts04/If_no_why': 'If no, why?', 'group_oi8ts04/What_is_the_toilet_connected_to': 'What is the toilet connected to?', 'group_oi8ts04/Who_all_use_toilets_in_the_hou': 'Who all use toilets in the household?', 'group_oi8ts04/Reason_for_not_using_toilet': 'Reason for not using toilet'}
+                    key_lst = {'Type of household toilet ?' : 'Type of household toilet ?', 'group_el9cl08/Does_any_household_m_n_skills_given_below': 'Does any household member have any of the construction skills give below?', 'group_oi8ts04/Have_you_applied_for_individua': 'Have you applied for an individual toilet under SBM?', 'group_oi8ts04/How_many_installments_have_you': 'How many installments have you received?', 'group_oi8ts04/When_did_you_receive_ur_first_installment': 'When did you receive your first installment?', 'group_oi8ts04/When_did_you_receive_r_second_installment': 'When did you receive your second installment?', 'group_oi8ts04/When_did_you_receive_ur_third_installment': 'When did you receive your third installment?', 'group_oi8ts04/If_built_by_contract_ow_satisfied_are_you': 'If built by a contractor, how satisfied are you?', 'group_oi8ts04/Status_of_toilet_under_SBM': 'Status of toilet under SBM?', 'group_oi8ts04/What_was_the_cost_in_to_build_the_toilet': 'What was the cost incurred to build the toilet?', 'group_oi8ts04/Current_place_of_defecation': 'Current place of defecation', 'group_oi8ts04/Which_Community_Toil_r_family_members_use': 'Which CTB', 'group_oi8ts04/Is_there_availabilit_onnect_to_the_toilets': 'Is there availability of drainage to connect to the toilet?', 'group_oi8ts04/Are_you_interested_in_an_indiv': 'Are you interested in an individual toilet?', 'group_oi8ts04/What_kind_of_toilet_would_you_likes': 'What kind of toilet would you like?', 'group_oi8ts04/Under_what_scheme_wo_r_toilet_to_be_built': 'Under what scheme would you like your toilet to be built?', 'group_oi8ts04/If_yes_why': 'If yes, why?', 'group_oi8ts04/If_no_why': 'If no, why?', 'group_oi8ts04/What_is_the_toilet_connected_to': 'What is the toilet connected to?', 'group_oi8ts04/Who_all_use_toilets_in_the_hou': 'Who all use toilets in the household?', 'group_oi8ts04/Reason_for_not_using_toilet': 'Reason for not using toilet'}
                     for key in key_lst.keys():
                         if key in data:
                             temp[key_lst[key]] = data[key]
-                    if 'group_oi8ts04/Current_place_of_defecation' in data:
-                        temp['group_oi8ts04/Current_place_of_defecation'] = data['group_oi8ts04/Current_place_of_defecation']
-                    if 'Type of household toilet ?' in data:
-                        temp['Type of household toilet ?'] = data['Type of household toilet ?']
                     if temp != {}:
                         rhs_data.update(temp)
             """ If the household has construction data then this block will run."""
-            if rhs_data['slum_id'] in construction_data:
-                if str(int(rhs_data['Household number'])) in construction_data[rhs_data['slum_id']]:
-                    rhs_data['group_oi8ts04/Current_place_of_defecation'] = "Toilet By SA K"
+            try :
+                exclude_lst = {1053: ['791'], 1294: ['141'], 1008: ['882'], 1047: ['130'], 1014: ['213'], 1052: ['178'], 1119: ['108'], 1059: ['117'], 1028: ['819'], 1138: ['1970'], 1054: ['140'], 600: ['405'], 1285: ['35'], 1348: ['131']}
+                if rhs_data['slum_id'] in construction_data:
+                    if rhs_data['slum_id'] in exclude_lst:
+                        if str(int(rhs_data['Household number'])) in exclude_lst[rhs_data['slum_id']]:
+                            continue
+                    slum_construction_data = construction_data[rhs_data['slum_id']]
+                    if str(int(rhs_data['Household number'])) in slum_construction_data:
+                        rhs_data['Final_Status'] = ToiletConstruction.get_status_display(int(slum_construction_data[str(int(rhs_data['Household number']))]))
+            except Exception as e:
+                print(e)
                     
         return formdict, self.city_name
