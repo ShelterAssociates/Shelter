@@ -5,7 +5,7 @@ from mastersheet.models import *
 from sponsor.models import *
 from component.models import *
 from collections import Counter, defaultdict
-
+import datetime
 
 
 class exportMethods:
@@ -188,6 +188,7 @@ class exportMethods:
             data['Household number'] = record.household_number
             data['Household_id'] = record.id
             data['slum_id'] = record.slum_id
+            data['Last Modified At'] = str(datetime.datetime.strptime(str(record.submission_date)[:10], '%Y-%m-%d').date())
             if record.slum_id in slum_name_dict:
                 data['Slum'] = slum_name_dict[record.slum_id]
             return data
@@ -196,7 +197,7 @@ class exportMethods:
         """Adding Followup data and Construction data in this city wise data."""
         for rhs_data in formdict:
             """ If the followup data is available then this block will run."""
-            if rhs_data['slum_id'] in followup_data and ('Type_of_structure_occupancy' in rhs_data and rhs_data['Type_of_structure_occupancy'] == 'Occupied house'):
+            if rhs_data['slum_id'] in followup_data and ("Type of structure occupancy" in rhs_data and rhs_data["Type of structure occupancy"] == 'Occupied house'):
                 followup_slum_data = followup_data[rhs_data['slum_id']]
                 if str(int(rhs_data['Household number'])) in followup_slum_data:
                     final_followup_data = followup_slum_data[str(int(rhs_data['Household number']))]
