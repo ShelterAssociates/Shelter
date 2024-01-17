@@ -191,9 +191,20 @@ class RHSData(object):
         return household_member
 
     def get_household_member_total(self):
-       slum_population = sum(map(lambda x: int(x.rhs_data['group_el9cl08/Number_of_household_members']
-                            if int(x.rhs_data['group_el9cl08/Number_of_household_members']) else 0) ,self.get_household_members()))
-       return slum_population
+        slum_population = 0
+        for hh_data in self.household_data:
+            if hh_data.rhs_data and hh_data.rhs_data != {} and hh_data.rhs_data != 'None':
+                rhs = hh_data.rhs_data
+                if 'group_el9cl08/Number_of_household_members' in rhs and rhs['group_el9cl08/Number_of_household_members'] and rhs['group_el9cl08/Number_of_household_members'] != "None" and rhs['group_el9cl08/Number_of_household_members'] == rhs['group_el9cl08/Number_of_household_members']:
+                    try:
+                        slum_population += int(rhs['group_el9cl08/Number_of_household_members'])
+                    except Exception as e:
+                        print(hh_data.id, rhs['group_el9cl08/Number_of_household_members'])
+        return slum_population
+                    
+    #    slum_population = sum(map(lambda x: int(x.rhs_data['group_el9cl08/Number_of_household_members']
+    #                         if int(x.rhs_data['group_el9cl08/Number_of_household_members']) else 0) ,self.get_household_members()))
+
 
     def get_slum_area_size_in_hectors(self):
         return int(self.slum_data.rim_data['General']['approximate_area_of_the_settle']) / 10000 \
