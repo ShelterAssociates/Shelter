@@ -184,6 +184,9 @@ class DashboardData(models.Model):
    modified_on = models.DateTimeField(default=datetime.datetime.now)
    household_count = models.FloatField(blank= True,null=True)
    occupied_household_count = models.IntegerField(blank=True,null=True)
+   kutcha_household_cnt = models.IntegerField(blank = True, null = True, default = 0)
+   puccha_household_cnt = models.IntegerField(blank = True, null = True, default = 0)
+   semi_puccha_household_cnt = models.IntegerField(blank = True, null = True, default = 0)
    # Genreal section columns
    gen_avg_household_size = models.FloatField(blank= True,null=True)
    gen_tenement_density = models.FloatField(blank= True,null=True) # get_slum_area_size_in_hectors
