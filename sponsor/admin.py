@@ -24,7 +24,7 @@ class SponsorProjectDetailsAdmin(admin.ModelAdmin):
 	raw_id_fields = ['slum', 'sponsor_project']
 	search_fields = ['slum__name', 'sponsor__organization_name', 'sponsor_project__name']
 	ordering = ['sponsor', 'slum', 'sponsor_project']
-	list_filter = ['sponsor_project__sponsor']
+	list_filter = ['slum__electoral_ward__administrative_ward__city', 'sponsor_project__sponsor']
 	inlines = [ SponsorProjectDetailsSubFieldsInline ]
 	global message_dict # This message_dict we are creating to save custom messages.
 	message_dict = {}
