@@ -31,15 +31,16 @@ from mastersheet.models import *
 
 
 CARDS = {'Cards': {'General':[{'slum_count':'Slum count'}, {'occupied_household_count':'Occupied household count'},{'gen_avg_household_size':"Avg Household size"}, {'gen_tenement_density':"Tenement density (Huts/Hector)"},
-                    {'household_owners_count':'Superstructure Ownership'}, {'type_of_structure_of_the_house':"Kuccha|Puccha|Semi-Pucca"}],
+                    {'household_owners_count':'Superstructure Ownership'}, {'type_of_structure_of_the_house':"Kutcha | Pucca | Semi-Pucca"}],
         'Waste': [{'waste_no_collection_facility_percentile':'Garbage Bin'},
                 {'waste_door_to_door_collection_facility_percentile':'Door to door waste collection'},
                 {'waste_dump_in_open_percent':'Dump in open'},{'drains_coverage':'ULB Service'},{'waste_other_services':'Other services'}],
         'Water': [{'water_individual_connection_percentile':'Individual water connection'},{'water_shared_service_percentile':'Shared Water Connection'},
                 {'waterstandpost_percentile':'Water Standposts'},{'water_other_services':'Other sources'}],
         'Toilet': [{'toilet_seat_to_person_ratio':'Toilet seat to person ratio'},
-                    {'toilet_men_women_seats_ratio':'Men|Women|Mix toilet seats'},
-                    {'individual_toilet_coverage':'Individual Toilet Coverage'},{'ctb_coverage':'CTB usage'}],
+                    {'toilet_men_women_seats_ratio':'Men | Women | Mix toilet seats'},
+                    {'individual_toilet_coverage':'Individual Toilet Coverage'},{'ctb_coverage':'CTB usage'},
+                    {'other_usage':'Other usage'}],
         'Road': [{'road_with_no_vehicle_access':'No. of slums with no vehicle access'},
                 {'pucca_road_coverage':'Pucca Road Coverage'},{'kutcha_road_coverage':'Kutcha Road Coverage'}],
         'Drainage':[{'drainage_coverage':'Drain coverage'}]},
@@ -96,7 +97,7 @@ def get_dashboard_card(request, key):
 
     #City level
     output_data['city'][city.name.city_name] = {'scores':{}, 'cards':{}}#,'key_takeaways':{} }
-    list_associated_with_SA_city = Slum.objects.filter(associated_with_SA=True, electoral_ward__administrative_ward__city__name__city_name=city)
+    list_associated_with_SA_city = Slum.objects.filter(associated_with_SA=True, electoral_ward__administrative_ward__city__name__city_name=city).exclude(status=False)
     qol_scores = QOLScoreData.objects.filter(city=city)
     for clause in select_clause:
         output_data['city'][city.name.city_name]['scores'][clause] = qol_scores.aggregate(Avg(clause))[clause + '__avg']
@@ -208,8 +209,11 @@ def score_cards(ele):
                     if men_wmn_seats_ratio == '0|0|0':
                         cards[k].append('NO CTB')
                     else : cards[k].append(men_wmn_seats_ratio)
-                    cards[k].append(str(round((aggrgated_data['individual_toilet_coverage__sum']/aggrgated_data['occupied_household_count__sum'])*100 if aggrgated_data['occupied_household_count__sum'] else 0,2))+" %")
-                    cards[k].append(str(round((aggrgated_data['ctb_coverage__sum']/aggrgated_data['occupied_household_count__sum'])*100 if aggrgated_data['occupied_household_count__sum'] else 0,2))+" %")
+                    individual_coverage = round((aggrgated_data['individual_toilet_coverage__sum']/aggrgated_data['occupied_household_count__sum'])*100 if aggrgated_data['occupied_household_count__sum'] else 0,2)
+                    ctb_coverage = round((aggrgated_data['ctb_coverage__sum']/aggrgated_data['occupied_household_count__sum'])*100 if aggrgated_data['occupied_household_count__sum'] else 0,2)
+                    cards[k].append(str(individual_coverage)+" %")
+                    cards[k].append(str(ctb_coverage)+" %")
+                    cards[k].append(str(round(100 - (individual_coverage + ctb_coverage), 2))+" %")
                     all_cards.update(cards)
                 elif k == 'General':
                     cards[k].append(str(len(slum_count)))
@@ -435,8 +439,8 @@ def dashboard_all_cards(request,key):
                                                                                     Sum('household_count'),
                                                                                     Sum('count_of_toilets_completed'),
                                                                                     Sum('people_impacted'))
-            slum_count = Slum.objects.filter(electoral_ward__administrative_ward__city=city, associated_with_SA=True).count()
-            total_slum_count = Slum.objects.filter(electoral_ward__administrative_ward__city=city).exclude(status=False).count()
+            total_slum_count = Slum.objects.filter(electoral_ward__administrative_ward__city=city, associated_with_SA=True).count()
+            slum_count = Slum.objects.filter(electoral_ward__administrative_ward__city=city, associated_with_SA=True).exclude(status=False).count()
             qol_scores = QOLScoreData.objects.filter(city=city).aggregate(Avg('totalscore_percentile'))
             city_name = city.name.city_name
             output_data['city'][city_name] = dashboard_data
