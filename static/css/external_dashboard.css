@@ -282,6 +282,10 @@ span.l30 {
   color: #1b2a2e;
   font-size: 18px;
   padding: 19.5px 30.5px 17.5px;
+  float: left;
+}
+#fullscreen-icon {
+  padding-top: 8px;
 }
 .chip {
   display:inline-block;
