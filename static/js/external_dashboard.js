@@ -83,7 +83,7 @@ function change_text(name) {
       " Report Card for all " +
       $("input[type=radio][name=level]:checked").attr("text").toLowerCase();
     $("#report_selections").html(vis);
-    $(".closebtn").hide();
+    //$(".closebtn").hide();
   }
 }
 
@@ -424,4 +424,24 @@ $(document).ready(function () {
   $("#city_name_text").change(function () {
     document.location.href = "/dashboard/" + $(this).val();
   });
+});
+
+ // JavaScript to toggle fullscreen mode
+ document.addEventListener('DOMContentLoaded', () => {
+  // JavaScript to toggle fullscreen mode
+  const fullscreenContainer = document.getElementById('fullscreen-container');
+
+  if (fullscreenContainer) {
+      fullscreenContainer.addEventListener('click', () => {
+          if (document.fullscreenElement) {
+              // Exit fullscreen mode if already fullscreen
+              document.exitFullscreen();
+          } else {
+              // Enter fullscreen mode if not already fullscreen
+              document.documentElement.requestFullscreen();
+          }
+      });
+  } else {
+      console.error("Fullscreen container not found in the document.");
+  }
 });
