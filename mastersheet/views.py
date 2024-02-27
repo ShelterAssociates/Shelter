@@ -1447,13 +1447,19 @@ def getRhsData(record):
     'group_el9cl08/House_area_in_sq_ft':'house_area', 'Do you have addhar card?':'isAadharCard', 'group_el9cl08/Aadhar_number':
 	'aadhar_number', 'Colour of ration card':'color_of_ration_card', 'Select Religion' : 'Select Religion', 'If other religion' : 'If other religion',
     'Select Caste' : 'Select Caste', 'If other caste' : 'If other caste',
-    'group_el9cl08/Type_of_water_connection':'Type_of_water_connection', 'group_el9cl08/Facility_of_solid_waste_collection':"Facility_of_solid_waste_collection"}
+    'group_el9cl08/Type_of_water_connection':'Type_of_water_connection', 'group_el9cl08/Facility_of_solid_waste_collection':"Facility_of_solid_waste_collection", "Do you have electricity in the house ?" : "Do you have electricity in the house ?", "If yes for electricity ,  type of meter ?" : "If yes for electricity ,  type of meter ?", 'Is there any seperated woman in the household ?': 'Is there any seperated woman in the household ?', 'Is there any widow woman in the household?': 'Is there any widow woman in the household?', 'Is any family member physically/mentally challenged?': 'Is any family member physically/mentally challenged?'}
+    # if occupied house then if block called otherwise else block called.
+    electricity_keys = ['If yes for electricity ,  type of meter ?', 'Do you have electricity in the house ?']
     if record.rhs_data and record.rhs_data['Type_of_structure_occupancy'] == 'Occupied house':
         data = {key_list[i] : record.rhs_data[i] for i in key_list.keys() if i in record.rhs_data}
         if 'Type_of_water_connection' in data and data['Type_of_water_connection'] == 'Individual connection':
             data["Do you have individual water connection at home?"] = 'Yes'
         else:
             data["Do you have individual water connection at home?"] = 'No'
+        if "Electricity_data" in record.rhs_data:
+            electricity_data_obj = record.rhs_data['Electricity_data']
+            electricity_data = {key_list[key] :electricity_data_obj[key] for key in electricity_keys if key in electricity_data_obj}
+            data.update(electricity_data)
         data['household_number'] = record.household_number
     else:
         key_list = {'Plus code of the house': 'pluscodes', 'Type_of_structure_occupancy': 'occupancy_status', 'Type_of_unoccupied_house':'typeUnoccupiedHouse'}
@@ -1616,12 +1622,13 @@ def AnalyseGisTabData(slum_id):
         householdData = HouseholdData.objects.filter(slum_id = slum_code[0][0], rhs_data__isnull = False)
         columns_lst = ['city_name', 'slum', 'household_number', 'Last Modified At', 'occupancy_status', 'typeUnoccupiedHouse', 'pluscodes', 'pluscodepart', 
                         'house_structure', 'ownership_status', 'name_head_of_he_household', 'isAadharCard', 'aadhar_number', 'color_of_ration_card', 
-                        'girls_child', 'Select Religion' , 'If other religion' , 'Select Caste', 'If other caste', 'house_area', 'Do you have individual water connection at home?', 'Type_of_water_connection', 'Facility_of_solid_waste_collection', 
+                        'girls_child', 'Select Religion' , 'If other religion' , 'Select Caste', 'If other caste', 'Is there any seperated woman in the household ?', 'Is there any widow woman in the household?', 'Is any family member physically/mentally challenged?',
+                        'house_area', 'Do you have individual water connection at home?', 'Type_of_water_connection', 'Facility_of_solid_waste_collection', 
                         'Do you have a toilet at home?', 'Status of toilet under SBM ?', 'Where the individual toilet is connected to ?', 'Who all use toilets in the household ?', 
                         'Reason for not using toilet ?', 'current_place_of_defication', 'Is there availability of drainage to connect it to the toilet?', 'Are you interested in an individual toilet ?', 
-                        'Which CTB do your family members use ?', 'Does any household member have any of the construction skills given below ?', 'final_status', 'pocket', 'comment', 
-                        'sponsor_project', 'factsheet_done', 'family_factsheet_name', 'toilet_connected_to', 'Have you upgraded your toilet/bathroom/house while constructing individual toilet?', 
-                        'Cost of upgradation', 'activity_count']
+                        'Which CTB do your family members use ?', 'Does any household member have any of the construction skills given below ?', 'Do you have electricity in the house ?', 'If yes for electricity ,  type of meter ?',
+                        'final_status', 'pocket', 'comment', 'sponsor_project', 'factsheet_done', 'family_factsheet_name', 'toilet_connected_to', 
+                        'Have you upgraded your toilet/bathroom/house while constructing individual toilet?', 'Cost of upgradation', 'activity_count']
         formdict = list(map(getRhsData, householdData))
 
         # For Follow-up data.....
@@ -1701,8 +1708,8 @@ def gisDataDownload(request):
     else:
         exportClassObj = exportMethods(city_id)
         response_data, city_name = exportClassObj.cityWiseRhsData()
-        columns_lst = ['Household_id', 'Avni UUID', 'Household number', 'Admin', 'Slum', 'Survey Date', 'Last Modified At', 'slum_id', 'Name of the Surveyor', 'Type of structure occupancy', 'Type of unoccupied house', 'Parent household number', 'Full name of the head of the household', 'Enter the 10 digit mobile number', 'Aadhar number', 'Number of household members', 'Total female members', 'total male members', 'total other gender members', 'Do you have any girl child/children under the age of 18?', 'How many ? ( Count )', 'Type of structure of house', 'Ownership status of the household', 'House area in sq. ft.', 'Type of water connection', 'group_el9cl08/Facility_of_solid_waste_collection', 'Plus code of the house', 'Date of Survey for sanitation', 'Type of household toilet ?', "Are you interested in an individual toilet?", "Current place of defecation", 'Does any member of the household go for open defecation ?', 'Do you have a toilet at home?', 'If no for individual toilet , why?', 
-            'Under what scheme would you like your toilet to be built ?', 'Does any household member have any of the construction skills give below?', 'Have you applied for an individual toilet under SBM?', 'How many installments have you received?', 'When did you receive your first installment?', 'When did you receive your second installment?', 'When did you receive your third installment?', 'If built by a contractor, how satisfied are you?', 'Status of toilet under SBM?', 'What was the cost incurred to build the toilet?', 'Current place of defecation', 'Which CTB', 'Is there availability of drainage to connect to the toilet?', 'Are you interested in an individual toilet?', 'What kind of toilet would you like?', 'Under what scheme would you like your toilet to be built?', 'If yes, why?', 'If no, why?', 'What is the toilet connected to?', 'Who all use toilets in the household?', 'Reason for not using toilet', 'Do you have electricity in the house ?', 'Final_Status', 'If yes for electricity ,  type of meter ?']
+        columns_lst = ['Household_id', 'Avni UUID', 'Household number', 'Admin', 'Slum', 'Survey Date', 'Last Modified At', 'slum_id', 'Name of the Surveyor', 'Type of structure occupancy', 'Type of unoccupied house', 'Parent household number', 'Full name of the head of the household', 'Enter the 10 digit mobile number', 'Aadhar number', 'Number of household members', 'Total female members', 'total male members', 'total other gender members', 'Do you have any girl child/children under the age of 18?', 'How many ? ( Count )', 'Is there any seperated woman in the household ?', 'Is there any widow woman in the household?', 'Is any family member physically/mentally challenged?', 'Type of structure of house', 'Ownership status of the household', 'House area in sq. ft.', 'Type of water connection', 'group_el9cl08/Facility_of_solid_waste_collection', 'Plus code of the house', 'Date of Survey for sanitation', 'Type of household toilet ?', "Are you interested in an individual toilet?", "Current place of defecation", 'Does any member of the household go for open defecation ?', 'Do you have a toilet at home?', 'If no for individual toilet , why?', 
+            'Under what scheme would you like your toilet to be built ?', 'Does any household member have any of the construction skills give below?', 'Have you applied for an individual toilet under SBM?', 'How many installments have you received?', 'When did you receive your first installment?', 'When did you receive your second installment?', 'When did you receive your third installment?', 'If built by a contractor, how satisfied are you?', 'Status of toilet under SBM?', 'What was the cost incurred to build the toilet?', 'Which CTB', 'Is there availability of drainage to connect to the toilet?', 'Are you interested in an individual toilet?', 'What kind of toilet would you like?', 'Under what scheme would you like your toilet to be built?', 'If yes, why?', 'If no, why?', 'What is the toilet connected to?', 'Who all use toilets in the household?', 'Reason for not using toilet', 'Do you have electricity in the house ?', 'Final_Status', 'If yes for electricity ,  type of meter ?']
         filename = remove_invalid_char(str(city_name))+'.csv'
     response = HttpResponse(content_type='text/csv')
     response['Content-Disposition']  =  'attachment; filename='+filename
