@@ -70,11 +70,12 @@ class exportMethods:
                 'group_im2th52/Number_of_Children_under_5_years_of_age': 'Below 5 years', 'group_ne3ao98/Have_you_upgraded_yo_ng_individual_toilet': 'Have You Upgraded ?', 'group_ne3ao98/Cost_of_upgradation_in_Rs': 'Cost Of Upgradetion?', 
                 'group_ne3ao98/Where_the_individual_ilet_is_connected_to': 'Toilet Connected To.', 'group_oh4zf84/Name_of_the_family_head': 'Name As Per Factsheet', 'group_oh4zf84/Ownership_status': 'Ownership Status As Per Factsheet', 
                 'group_ne3ao98/Who_has_built_your_toilet': 'Who has built your toilet ?', 'group_im2th52/Number_of_members_over_60_years_of_age':'Above 60 years'}
-
                 '''Using question_dict to iterate over the over all data for getting required data for factsheet export.'''
                 for key in questions_dict.keys():
                     if key in ff_keys:
                         family_data.update({questions_dict[key]:hh_object.ff_data[key]})
+                if 'group_og5bx85/Full_name_of_the_head_of_the_household' in hh_object.rhs_data:
+                    family_data.update({'Name As Per RHS':hh_object.rhs_data['group_og5bx85/Full_name_of_the_head_of_the_household']})
                 # Adding Data to output list household wise.
                 output_data.append(family_data)
         return output_data, self.city_name
