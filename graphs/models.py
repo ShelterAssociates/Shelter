@@ -195,11 +195,13 @@ class DashboardData(models.Model):
 		   # gen_sex_ration = models.IntegerField(blank= True,null=True)
 		   # gen_odf_status = models.IntegerField(blank= True,null=True)
    # Waste section columns
+   waste_data_available = models.FloatField(blank=True, null=True)
    waste_no_collection_facility_percentile = models.FloatField(blank=True, null=True) # repalce this field to garbage_bin_facility
    waste_door_to_door_collection_facility_percentile = models.FloatField(blank=True, null=True)
    waste_dump_in_open_percent= models.FloatField(blank=True, null=True)
    waste_other_services = models.FloatField(blank=True, null=True)
    # water section columns
+   water_data_available = models.FloatField(blank=True, null=True)
    water_individual_connection_percentile = models.FloatField(blank=True,null=True)
    water_shared_service_percentile  = models.FloatField(blank=True, null= True)
    waterstandpost_percentile = models.FloatField(blank=True, null= True)
@@ -218,9 +220,12 @@ class DashboardData(models.Model):
    fun_male_seats = models.IntegerField(blank= True,null=True)#toilet seats in use (male)
    fun_fmale_seats = models.IntegerField(blank= True,null=True)#toilet seats in use (female)
    toilet_men_women_seats_ratio = models.FloatField(blank= True,null=True)#toilet seats in use (mix)
+   toilet_data_available = models.FloatField(blank=True, null=True)
    individual_toilet_coverage =models.FloatField(blank= True,null=True)
    open_defecation_coverage = models.FloatField(blank= True,null=True)
    ctb_coverage = models.FloatField(blank= True,null=True)
+   shared_group_toilet_coverage = models.FloatField(blank= True,null=True, default = 0)
+   other_services_toilet_coverage = models.FloatField(blank= True,null=True, default = 0)
    #dashboard parameters
    people_impacted = models.IntegerField(blank= True,null=True)
    count_of_toilets_completed = models.IntegerField(blank= True,null=True)
