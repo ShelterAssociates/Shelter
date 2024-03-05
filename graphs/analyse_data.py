@@ -17,6 +17,38 @@ class RHSData(object):
         self.followup_data =FollowupData.objects.filter(slum=self.slum)
         self.slum_data = SlumData.objects.get(slum=self.slum)
         self.toilet_ms_data = ToiletConstruction.objects.filter(slum=self.slum)
+        self.hh_have_toilet_enc = self.toilet_data_available()
+        self.hh_have_water_enc = self.water_data_available()
+        self.hh_have_waste_enc = self.waste_data_available()
+        
+    def toilet_data_available(self):
+        hh_toilet_data_available = []
+        '''count of occupied houses in slums'''
+        sanitation_hhs = filter(lambda x: x.rhs_data and 'Type_of_structure_occupancy' in x.rhs_data and 'group_oi8ts04/Current_place_of_defecation' in x.rhs_data, self.household_data)
+        hh_toilet_data_available = [i.household_number for i in sanitation_hhs]
+        # occupied houses ...
+        occupied_houses = self.occupied_houses()
+        # Also adding followup_households ...
+        followup_hhs = self.followup_data.filter(household_number__in = occupied_houses).values_list('household_number', flat = True)
+        hh_toilet_data_available.extend(list(followup_hhs))
+        # Also adding household where SA toilet available ...
+        SA_toilet_constructed = self.toilet_constructed()
+        hh_toilet_data_available.extend(list(SA_toilet_constructed))
+        return list(set(hh_toilet_data_available))
+    
+    def water_data_available(self):
+        hh_water_data_available = []
+        '''count of occupied houses in slums'''
+        water_hhs = filter(lambda x: x.rhs_data and 'Type_of_structure_occupancy' in x.rhs_data and 'group_el9cl08/Type_of_water_connection' in x.rhs_data, self.household_data)
+        hh_water_data_available = [i.household_number for i in water_hhs]
+        return list(set(hh_water_data_available))
+    
+    def waste_data_available(self):
+        hh_waste_data_available = []
+        '''count of occupied houses in slums'''
+        waste_hhs = filter(lambda x: x.rhs_data and 'Type_of_structure_occupancy' in x.rhs_data and 'group_el9cl08/Facility_of_solid_waste_collection' in x.rhs_data, self.household_data)
+        hh_waste_data_available = [i.household_number for i in waste_hhs]
+        return list(set(hh_waste_data_available))
 
     def get_unique_houses_rhs_householddata(self):
         """
@@ -90,7 +122,7 @@ class RHSData(object):
         """
         ctb_count = 0
         toilet_completed = self.toilet_constructed()
-        for house in self.get_unique_houses_rhs_householddata():
+        for house in self.hh_have_toilet_enc:
             try:
                 latest_record = self.followup_data.filter(household_number=house).latest('submission_date')
                 if latest_record.household_number not in toilet_completed and \
@@ -99,6 +131,26 @@ class RHSData(object):
                         ctb_count += 1
             except : pass
         return ctb_count
+    
+    def shared_group_toilet_cnt(self):
+        """
+        The `ctb_count` function counts the number of households that use a Community Toilet Block (CTB) as
+        their current place of defecation.
+        :return: the count of households where the latest record indicates that the household uses a CTB
+        (Community Toilet Block) for defecation.
+        """
+        toilet_cnt = 0
+        toilet_completed = self.toilet_constructed()
+        options = ['Shared toilet', 'Group toilet']
+        for house in self.hh_have_toilet_enc:
+            try:
+                latest_record = self.followup_data.filter(household_number=house).latest('submission_date')
+                if latest_record.household_number not in toilet_completed and \
+                ('group_oi8ts04/Current_place_of_defecation' in latest_record.followup_data and \
+                latest_record.followup_data['group_oi8ts04/Current_place_of_defecation']  in options):
+                        toilet_cnt += 1
+            except : pass
+        return toilet_cnt
 
     def individual_toilet(self):
         """
@@ -114,7 +166,7 @@ class RHSData(object):
         
         toilet_completed = self.toilet_constructed()
         own_toilet_count = 0
-        for house in self.occupied_houses():
+        for house in self.hh_have_toilet_enc:
             try:
                 latest_record = self.followup_data.filter(household_number= house).latest('submission_date')
                 if latest_record.household_number not in toilet_completed  and 'group_oi8ts04/Current_place_of_defecation' in latest_record.followup_data and \

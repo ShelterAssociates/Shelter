@@ -65,15 +65,16 @@ class DashboardCard(RHSData):
         guttter = self.get_waste_facility('Inside gutter')
         canal = self.get_waste_facility('Along/Inside canal')
         other_waste_collections = guttter+canal
-        return (door_to_door_percent,garbage_bin_facility,openspace_percent,ulb,other_waste_collections)
+        waste_data_available = len(self.hh_have_waste_enc)
+        return (door_to_door_percent,garbage_bin_facility,openspace_percent,ulb,other_waste_collections, waste_data_available)
 
     def save_waste(self):
         """
         The function saves waste information to the database using the provided parameters.
         """
-        (door_to_door_percent,garbage_bin_facility,openspace_percent,ulb,other_waste_collections)= self.Waste_Info()
+        (door_to_door_percent,garbage_bin_facility,openspace_percent,ulb,other_waste_collections, waste_data_available)= self.Waste_Info()
         to_save = DashboardData.objects.update_or_create(slum =self.slum, defaults=
-                                {'waste_door_to_door_collection_facility_percentile': door_to_door_percent,'waste_other_services':other_waste_collections,
+                                {'waste_data_available' : waste_data_available, 'waste_door_to_door_collection_facility_percentile': door_to_door_percent,'waste_other_services':other_waste_collections,
             'waste_dump_in_open_percent': openspace_percent,'waste_no_collection_facility_percentile': garbage_bin_facility,'drains_coverage':ulb})
 
     def Water_Info(self):
@@ -85,20 +86,17 @@ class DashboardCard(RHSData):
         individual_connection_percent = self.get_water_coverage('Individual connection')
         shared_connection_percent = self.get_water_coverage('Shared connection')
         water_standpost_percent = self.get_water_coverage('Water standpost')
-        hand_pump = self.get_water_coverage('Hand pump')
-        water_tanker = self.get_water_coverage('Water tanker')
-        from_other_settlements = self.get_water_coverage('From other settlements')
-        well = self.get_water_coverage('Well')
-        other_water_services = hand_pump+water_tanker+from_other_settlements+well
-        return (individual_connection_percent,shared_connection_percent,water_standpost_percent,other_water_services)
+        other_water_services = 100 - (individual_connection_percent + shared_connection_percent + water_standpost_percent)
+        water_data_available = len(self.hh_have_water_enc)
+        return (individual_connection_percent,shared_connection_percent,water_standpost_percent,other_water_services, water_data_available)
 
     def save_water(self):
         """
         The function saves water-related information to the DashboardData model.
         """
-        (individual_connection_percent,shared_connection_percent,water_standpost_percent,other_water_services) = self.Water_Info()
+        (individual_connection_percent,shared_connection_percent,water_standpost_percent,other_water_services, water_data_available) = self.Water_Info()
         to_save = DashboardData.objects.update_or_create(slum =self.slum,
-            defaults={'water_individual_connection_percentile':individual_connection_percent,'water_other_services':other_water_services,
+            defaults={'water_data_available' : water_data_available, 'water_individual_connection_percentile':individual_connection_percent,'water_other_services':other_water_services,
             'water_shared_service_percentile':shared_connection_percent,'waterstandpost_percentile':water_standpost_percent})
 
     def Road_Info(self):
@@ -135,10 +133,15 @@ class DashboardCard(RHSData):
         """
         own_toilet_count = self.individual_toilet()
         ctb_use_count = self.ctb_count()
+        shared_group_toilet_count = self.shared_group_toilet_cnt()
+        toilet_data_available = len(self.hh_have_toilet_enc)
+        other_services = toilet_data_available - (own_toilet_count + ctb_use_count + shared_group_toilet_count)
+        
         (total_toilet_seats, fun_mix_seats, fun_male_seats, fun_female_seats) = self.get_toilet_data()
         to_save = DashboardData.objects.filter(slum=self.slum).update(individual_toilet_coverage  = own_toilet_count,
                                 ctb_coverage = ctb_use_count,toilet_men_women_seats_ratio =  fun_mix_seats, fun_male_seats = fun_male_seats,
-                                toilet_seat_to_person_ratio =  total_toilet_seats, fun_fmale_seats = fun_female_seats )
+                                toilet_seat_to_person_ratio =  total_toilet_seats, fun_fmale_seats = fun_female_seats, toilet_data_available = toilet_data_available, 
+                                shared_group_toilet_coverage = shared_group_toilet_count, other_services_toilet_coverage = other_services)
 
     def save_rim_gen(self):
         """
@@ -229,7 +232,7 @@ class DashboardCard(RHSData):
 def dashboard_data_Save(city):
     slums = Slum.objects.filter(electoral_ward__administrative_ward__city__id__in = [city], associated_with_SA = True).exclude(status = False)
     for slum in slums:
-        logging.basicConfig(filename="code_exec.log", format='%(asctime)s %(message)s', filemode='a')
+        logging.basicConfig(filename="code_exec.log", format='%(asctime)s %(message)s', filemode='w')
         slum_data = SlumData.objects.filter(slum=slum.id)
         if slum_data.count() > 0:
             # Create a logger
