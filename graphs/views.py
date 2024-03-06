@@ -224,7 +224,8 @@ def score_cards(ele):
                     houses = aggrgated_data['household_count__sum'] if aggrgated_data['household_count__sum']  else 0
                     shops = aggrgated_data['get_shops_count__sum'] if aggrgated_data['get_shops_count__sum'] else 0 #this column contains shops count for slum
                     structure_fields = ['kutcha_household_cnt__sum', 'puccha_household_cnt__sum', 'semi_puccha_household_cnt__sum']
-                    structure_str = [str(round(aggrgated_data[field]/aggrgated_data['occupied_household_count__sum'] * 100, 2)) if aggrgated_data[field] else str(0) for field in structure_fields]
+                    structure_total = sum([aggrgated_data[field] if aggrgated_data[field] else 0 for field in structure_fields])
+                    structure_str = [str(round(aggrgated_data[field]/structure_total * 100, 2)) if aggrgated_data[field] else str(0) for field in structure_fields]
                     cards[k].append(str(round(aggrgated_data['gen_avg_household_size__sum']/aggrgated_data['occupied_household_count__sum']\
                                             if aggrgated_data['occupied_household_count__sum'] else 0,2)))
                     cards[k].append(str(int( (houses+shops) / aggrgated_data['gen_tenement_density__sum'] if aggrgated_data['gen_tenement_density__sum'] else 0)))
