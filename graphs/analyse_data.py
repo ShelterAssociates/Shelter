@@ -98,6 +98,7 @@ class RHSData(object):
         :return: the count of households where the ownership status of the house is 'Own house'.
         """
         owner_count =filter(lambda x: x.rhs_data and 'group_el9cl08/Ownership_status_of_the_house' in x.rhs_data and x.rhs_data[
+                'Type_of_structure_occupancy'] == 'Occupied house' and x.rhs_data[
             'group_el9cl08/Ownership_status_of_the_house'] == 'Own house', self.household_data)
         return len(list(owner_count))
 
