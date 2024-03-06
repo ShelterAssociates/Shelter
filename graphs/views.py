@@ -30,8 +30,8 @@ from mastersheet.models import *
 
 
 
-CARDS = {'Cards': {'General':[{'slum_count':'Slum count'}, {'occupied_household_count':'Occupied household count'},{'gen_avg_household_size':"Avg Household size"}, {'gen_tenement_density':"Tenement density (Huts/Hector)"},
-                    {'household_owners_count':'Superstructure Ownership'}, {'type_of_structure_of_the_house':"Kutcha | Pucca | Semi-Pucca"}],
+CARDS = {'Cards': {'General':[{'slum_count':'Slum count'}, {'occupied_household_count':'Occupied household count'},{'gen_avg_household_size':"Avg Family size"}, {'gen_tenement_density':"Tenement density (Huts/Hector)"},
+                    {'household_owners_count':'Superstructure Ownership'}, {'type_of_structure_of_the_house':"Kutcha | Pucca | Semi-Pucca (%)"}],
         'Waste': [{'waste_no_collection_facility_percentile':'Garbage Bin'},
                 {'waste_door_to_door_collection_facility_percentile':'Door to door waste collection'},
                 {'waste_dump_in_open_percent':'Dump in open'},{'drains_coverage':'ULB Service'},{'waste_other_services':'Other services'}],
@@ -224,7 +224,7 @@ def score_cards(ele):
                     houses = aggrgated_data['household_count__sum'] if aggrgated_data['household_count__sum']  else 0
                     shops = aggrgated_data['get_shops_count__sum'] if aggrgated_data['get_shops_count__sum'] else 0 #this column contains shops count for slum
                     structure_fields = ['kutcha_household_cnt__sum', 'puccha_household_cnt__sum', 'semi_puccha_household_cnt__sum']
-                    structure_str = [str(aggrgated_data[field]) if aggrgated_data[field] else str(0) for field in structure_fields]
+                    structure_str = [str(round(aggrgated_data[field]/aggrgated_data['occupied_household_count__sum'] * 100, 2)) if aggrgated_data[field] else str(0) for field in structure_fields]
                     cards[k].append(str(round(aggrgated_data['gen_avg_household_size__sum']/aggrgated_data['occupied_household_count__sum']\
                                             if aggrgated_data['occupied_household_count__sum'] else 0,2)))
                     cards[k].append(str(int( (houses+shops) / aggrgated_data['gen_tenement_density__sum'] if aggrgated_data['gen_tenement_density__sum'] else 0)))
