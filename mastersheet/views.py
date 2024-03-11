@@ -1570,14 +1570,13 @@ def ProcessShortView(request, slum_details=0):
                 for material_date in material_dates.keys():
                     if material_date + '_str' in i:
                         temp[material_date] = i[material_date + '_str']
-                        if i[material_date + '_str']:
-                            phase = material_dates[material_date]
-                            if phase in phaseWiseGroupedInvoiceData:
-                                households = phaseWiseGroupedInvoiceData[phase]
-                                if int(i['household_number']) in households:
-                                    temp['invoice_phase_' + phase] = 'Yes'
-                                else:
-                                    temp['invoice_phase_' + phase] = 'No'
+                        phase = material_dates[material_date]
+                        if phase in phaseWiseGroupedInvoiceData:
+                            households = phaseWiseGroupedInvoiceData[phase]
+                            if int(i['household_number']) in households:
+                                temp['invoice_phase_' + phase] = 'Yes'
+                            else:
+                                temp['invoice_phase_' + phase] = 'No'
                 # Here we are checking completion delayed.
                 if i['phase_two_material_date_str']: # Checking completion delayed.
                     if not i['completion_date_str'] and is_delayed(i['phase_two_material_date_str']):
