@@ -101,8 +101,8 @@ class avni_sync():
                     del a[k1]
         a.update(b)
         return a
-
-    def map_ff_keys(self, a, b):
+    
+    def map_ff_keys(self, factsheet_data):
         change_keys = {
             "Note": 'Note',
             "group_im2th52/Number_of_Children_under_5_years_of_age": "Number of Children under 5 years of age",
@@ -131,29 +131,30 @@ class avni_sync():
             "group_im2th52/Number_of_Female_members": "Number of Female members",
             "group_oh4zf84/Name_of_Native_villa_district_and_state" : 'What is your native place (village, town, city) ?'
         }
-        occupation_str = ''
-        useOfToilte = ''
-        a.update(b)
-        for k, v in change_keys.items():
+        
+        multiselect_keys = ["Occupation(s) of earning members", "Use of toilet"]
+        change_keys = {v : k for k, v in change_keys.items()}
+        updated_factsheet_data = {}
+        for k, v in factsheet_data.items():
             try:
-                if k in a.keys() or v in b.keys():
-                    a[k] = b[v]
-                    a.pop(v)
-                occupation = a['group_im2th52/Occupation_s_of_earning_membe'] if 'group_im2th52/Occupation_s_of_earning_membe' in a else None
-                useOfToilte = a['group_ne3ao98/Use_of_toilet'] if 'group_ne3ao98/Use_of_toilet' in a else None
-                if type(occupation) == list or type(useOfToilte) == list:
-                    occupation_str = ','.join(i for i in occupation)
-                    useOfToilte = ','.join(i for i in useOfToilte)
-                elif type(occupation) == str or type(useOfToilte) == str:
-                    occupation_str = occupation.replace(',', '')
-                    useOfToilte = useOfToilte.replace(',', '')
+                if k in change_keys.keys():
+                    updated_factsheet_data[change_keys[k]] = v 
                 else:
-                    pass
-                a['group_im2th52/Occupation_s_of_earning_membe'] = occupation_str
-                a['group_ne3ao98/Use_of_toilet'] = useOfToilte
+                    updated_factsheet_data[k] = v
+                print(k)
+                if k in multiselect_keys:
+                    if type(v) == list:
+                        updated_factsheet_data[change_keys[k]] = ",".join(v)
+                    elif type(v) == str:
+                        updated_factsheet_data[change_keys[k]] = v
+                    else:
+                        pass
+                else:
+                    updated_factsheet_data[change_keys[k]] = None
             except Exception as e:
                 print(e)
-        return a
+        return updated_factsheet_data
+    
 
     def map_sanitation_keys(self, s):
         map_toilet_keys = {
@@ -375,9 +376,14 @@ class avni_sync():
     def FamilyFactsheetData(self, data, slum_name, HH):  # checked
 
         try:
+            use_of_toilet = None
+            toilet_connected_to = None
             slum_id, city_id = self.get_city_slum_ids(slum_name)
+            use_of_toilet = None
+            toilet_connected_to = None
             check_record = HouseholdData.objects.filter(household_number=HH, city_id=city_id, slum_id=slum_id)
             factsheetDate = ToiletConstruction.objects.filter(household_number=HH, slum_id=slum_id)
+            factsheet_done_date = dateparser.parse(data['audit']['Last modified at']).date()
             if check_record:
                 ff_data = check_record.values_list('ff_data', flat=True)[0]
                 if ff_data is None or len(ff_data) == 0:
@@ -385,10 +391,9 @@ class avni_sync():
                 else:
                     ff_data = check_record.values_list('ff_data', flat=True)[0]
 
-                final_ff_data = self.map_ff_keys(ff_data, data['observations'])
+                final_ff_data = self.map_ff_keys(data['observations'])
                 final_ff_data.update({'ff_uuid': data['ID']})
                 check_record.update(ff_data=final_ff_data)
-                factsheet_done_date = dateparser.parse(data['audit']['Last modified at']).date()
                 if 'Where the individual toilet is connected ?' in data['observations']:
                     if data['observations']['Where the individual toilet is connected ?'] != 'Not connected':
                         toilet_connected_to = factsheet_done_date
@@ -408,10 +413,9 @@ class avni_sync():
                 get_HH_data = json.loads(send_request2.text)
                 self.registrtation_data(get_HH_data)
                 get_reocrd = HouseholdData.objects.filter(household_number=HH, slum_id=slum_id, city_id=city_id)
-                final_ff_data = self.map_ff_keys(ff_data, data['observations'])
+                final_ff_data = self.map_ff_keys(data['observations'])
                 final_ff_data.update({'ff_uuid': data['ID']})
                 get_reocrd.update(ff_data=final_ff_data)
-                factsheet_done_date = dateparser.parse(data['audit']['Last modified at']).date()
                 if 'Where the individual toilet is connected ?' in data['observations']:
                     if data['observations']['Where the individual toilet is connected ?'] != 'Not connected':
                         toilet_connected_to = factsheet_done_date
@@ -761,7 +765,7 @@ class avni_sync():
 
     def SaveDataFromIds(self):
 
-        IdList = ['4acfc276-830b-440d-9edd-9c1936d663b4', '6a2b19d8-111f-4b91-adfe-9018e52ccda9', '68f208fa-ddce-494a-800d-a38bcf2ef516'] # 'cda4ce0e-f05c-4b49-ac6e-ed160eba1940']
+        IdList = ['31780f12-115b-43e5-a7ca-21f315fe2905'] # 'cda4ce0e-f05c-4b49-ac6e-ed160eba1940']
 
         ''' There Are Three Types Of Flag We Use
         1 - Subject Type
@@ -769,7 +773,7 @@ class avni_sync():
         3 - Program Encounter
         Please provide flag when sync data using UUIDs'''
 
-        flag = 'Subject Type'
+        flag = 'Program Encounter'
 
         for i in IdList:
             try:
@@ -833,7 +837,6 @@ class avni_sync():
                         print(i, 'uuid is not accessible')
                 elif flag == 'Program Encounter':
                     RequestProgramEncounter = requests.get(self.base_url + 'api/programEncounter/' + i, headers={'AUTH-TOKEN': self.get_cognito_token()})
-
                     if RequestProgramEncounter.status_code == 200:
                         data = json.loads(RequestProgramEncounter.text)
                         a, slum_name, HH, d = self.get_household_details(data['Subject ID'])
