@@ -1,5 +1,5 @@
 from django.shortcuts import render
-from django.http import HttpResponse
+from django.http import HttpResponse, JsonResponse
 from django.contrib.auth.decorators import user_passes_test, permission_required
 from graphs.sync_avni_data import avni_sync
 from mastersheet.forms import find_slum, file_form, account_find_slum, gis_tab
@@ -989,24 +989,41 @@ def give_report_table_numbers(request):  # view for toilet construction
     '''Report table data object for response'''
     report_table_data = defaultdict(dict)
     for query_field in query_on.keys():
+        """"Case :-1 phase_one_material_date not null """
         if query_field in ['agreement_date', 'phase_one_material_date', 'phase_two_material_date',
                            'phase_three_material_date',
                            'completion_date', 'septic_tank_date', 'use_of_toilet', 'toilet_connected_to',
                            'factsheet_done']:
-            filter_field = {'slum__id__in': keys, 'phase_one_material_date__range': [start_date, end_date],
-                            query_field + '__isnull': False}
+            filter_field = {'slum__id__in': keys, 'phase_one_material_date__range': [start_date, end_date], query_field + '__isnull': False}
         else:
-            filter_field = {'slum__id__in': keys, query_field + '__range': [start_date, end_date]}
+            filter_field = {'slum__id__in': keys, query_field + '__range': [start_date, end_date], query_field + '__isnull': False}
         count_field = {query_on[query_field]: Count('level_id')}
-        tc = ToiletConstruction.objects.filter(**filter_field) \
+        tc_result = ToiletConstruction.objects.filter(**filter_field) \
             .exclude(Q(agreement_cancelled=True)| Q(status = '7')) \
             .annotate(**level_data[tag]).values('level', 'level_id', 'city_name') \
             .annotate(**count_field).order_by('city_name')
-        tc = {obj_ad['level_id']: obj_ad for obj_ad in tc}
-        filter_field = {'slum__id__in': keys, 'phase_one_material_date__range': [start_date, end_date]}
-
-        for level_id, data in tc.items():
-            report_table_data[level_id].update(data)
+        
+        for tc_obj in tc_result:
+            report_table_data[tc_obj['level_id']].update(tc_obj)
+            
+        """"Case :-2 phase_one_material_date is null. In this case we are going to query on phase_two_material_date"""
+        if query_field != 'phase_one_material_date':
+            filter_field = {'slum__id__in': keys, 'phase_two_material_date__range': [start_date, end_date], query_field + '__isnull': False}
+            filter_field['phase_one_material_date__isnull'] = True
+            count_field = {query_on[query_field]: Count('level_id')}
+            tc_result_one = ToiletConstruction.objects.filter(**filter_field) \
+                .exclude(Q(agreement_cancelled=True)| Q(status = '7')) \
+                .annotate(**level_data[tag]).values('level', 'level_id', 'city_name') \
+                .annotate(**count_field).order_by('city_name')
+            if tc_result_one.count() > 0:
+                for tc_obj in tc_result_one:
+                    if tc_obj['level_id'] in report_table_data:
+                        if query_on[query_field] in report_table_data[tc_obj['level_id']]:
+                            report_table_data[tc_obj['level_id']][query_on[query_field]] += tc_obj[query_on[query_field]]
+                        else:
+                            report_table_data[tc_obj['level_id']][query_on[query_field]] = tc_obj[query_on[query_field]]
+                    else:
+                        report_table_data[tc_obj['level_id']].update(tc_obj)
 
         '''Here we are checking the write off cases ...'''
         if query_field == 'factsheet_done':
@@ -1037,36 +1054,37 @@ def give_report_table_numbers(request):  # view for toilet construction
                 }
         ''' For Factsheet Assign Check '''
         if query_field == 'factsheet_done':
-            for t in tc:
-                l = tc[t]['level_id']
+            for level_id in report_table_data.keys():
                 '''Assigning Initla count as 0 for every level.'''
-                report_table_data[l]['factAssign'] = 0
-                '''Query filter for toilet construction data'''
-                query_field_TC = {level_data_tag[tag]['level_id'] : l, 'phase_one_material_date__range':[start_date, end_date], 'factsheet_done__isnull' : False}
-                '''Query filter for Sponsor data'''
-                query_field_sponsor = {level_data_tag[tag]['level_id'] : l,}
-                T_Housenum = ToiletConstruction.objects.filter(**query_field_TC).values_list('household_number', 'slum_id')
-                Spsr_Housecode = SponsorProjectDetails.objects.filter(**query_field_sponsor).exclude(sponsor__id=10).values_list('household_code', 'slum_id')
-                '''Here we are cheching that the funder assign or not to the household.'''
-                # Creating dict object of sponsor hh data.
-                Spnsr_data_with_hh = {}
-                for households, slum in Spsr_Housecode:
-                    if slum not in Spnsr_data_with_hh:
-                        Spnsr_data_with_hh[slum] = households
-                    else:
-                        temp_spsr_obj = Spnsr_data_with_hh[slum]
-                        temp_spsr_obj.extend(households)
-                
-                # Loop for checking hh have toilet data and sponsor data.
-                FactsheetAssign = 0
-                for query_obj in T_Housenum:
-                    household, slum = query_obj
-                    if slum in Spnsr_data_with_hh:
-                        temp_spsr_obj = Spnsr_data_with_hh[slum]
-                        if int(household) in temp_spsr_obj:
-                            FactsheetAssign += 1
+                report_table_data[level_id]['factAssign'] = 0
+                if 'factsheet_done' in report_table_data[level_id] and report_table_data[level_id]['factsheet_done'] > 0:
+                    '''Query filter for toilet construction data'''
+                    query_field_TC = Q(**{level_data_tag[tag]['level_id'] : level_id}) & (Q(**{'phase_one_material_date__range': [start_date, end_date], 'factsheet_done__isnull': False}) | (Q(**{'phase_one_material_date__isnull' : True, 'phase_two_material_date__range' : [start_date, end_date], 'factsheet_done__isnull' : False})))
                     
-                report_table_data[l]['factAssign'] = FactsheetAssign
+                    # query_field_TC = {level_data_tag[tag]['level_id'] : l, 'phase_one_material_date__range':[start_date, end_date], 'factsheet_done__isnull' : False}
+                    '''Query filter for Sponsor data'''
+                    query_field_sponsor = {level_data_tag[tag]['level_id'] : level_id,}
+                    T_Housenum = ToiletConstruction.objects.filter(query_field_TC).values_list('household_number', 'slum_id')
+                    Spsr_Housecode = SponsorProjectDetails.objects.filter(**query_field_sponsor).exclude(sponsor__id=10).values_list('household_code', 'slum_id')
+                    '''Here we are cheching that the funder assign or not to the household.'''
+                    # Creating dict object of sponsor hh data.
+                    Spnsr_data_with_hh = {}
+                    for households, slum in Spsr_Housecode:
+                        if slum not in Spnsr_data_with_hh:
+                            Spnsr_data_with_hh[slum] = households
+                        else:
+                            temp_spsr_obj = Spnsr_data_with_hh[slum]
+                            temp_spsr_obj.extend(households)
+                    
+                    # Loop for checking hh have toilet data and sponsor data.
+                    FactsheetAssign = 0
+                    for query_obj in T_Housenum:
+                        household, slum = query_obj
+                        if slum in Spnsr_data_with_hh:
+                            temp_spsr_obj = Spnsr_data_with_hh[slum]
+                            if int(household) in temp_spsr_obj:
+                                FactsheetAssign += 1
+                    report_table_data[level_id]['factAssign'] = FactsheetAssign
                 
     '''Query filter for the total houses which have rhs data...'''
     for query_key in report_table_data.keys():
@@ -1235,15 +1253,35 @@ def give_report_table_numbers_accounts(request):
                 }
     report_table_accounts_data = defaultdict(dict)
     for query_field in query_on.keys():
-        filter_field = {'slum__id__in': keys, 'phase_one_material_date' + '__range': [start_date, end_date], query_field + '__isnull': False}
+        """"Case :-1 phase_one_material_date not null """
+        filter_field = {'slum__id__in': keys, 'phase_one_material_date__range' : [start_date, end_date], query_field + '__isnull': False}
         count_field = {query_on[query_field]: Count('level_id')}
-        tc = ToiletConstruction.objects.filter(**filter_field) \
+        tc_result = ToiletConstruction.objects.filter(**filter_field) \
             .exclude(agreement_cancelled=True) \
             .annotate(**level_data[tag]).values('level', 'level_id', 'city_name') \
             .annotate(**count_field).order_by('city_name')
-        tc = {obj_ad['level_id']: obj_ad for obj_ad in tc}
-        for level_id, data in tc.items():
-            report_table_accounts_data[level_id].update(data)
+        for tc_obj in tc_result:
+            report_table_accounts_data[tc_obj['level_id']].update(tc_obj)
+        
+        """"Case :-2 phase_one_material_date is null. In this case we are going to query on phase_two_material_date"""
+        if query_field != 'phase_one_material_date':
+            filter_field = {'slum__id__in': keys, 'phase_two_material_date__range': [start_date, end_date], query_field + '__isnull': False}
+            filter_field['phase_one_material_date__isnull'] = True
+            count_field = {query_on[query_field]: Count('level_id')}
+            tc_result_one = ToiletConstruction.objects.filter(**filter_field) \
+                .exclude(agreement_cancelled=True) \
+                .annotate(**level_data[tag]).values('level', 'level_id', 'city_name') \
+                .annotate(**count_field).order_by('city_name')
+            if tc_result_one.count() > 0:
+                for tc_obj in tc_result_one:
+                    if tc_obj['level_id'] in report_table_accounts_data:
+                        if query_on[query_field] in report_table_accounts_data[tc_obj['level_id']]:
+                            report_table_accounts_data[tc_obj['level_id']][query_on[query_field]] += tc_obj[query_on[query_field]]
+                        else:
+                            report_table_accounts_data[tc_obj['level_id']][query_on[query_field]] = tc_obj[query_on[query_field]]
+                    else:
+                        report_table_accounts_data[tc_obj['level_id']].update(tc_obj)
+                        
     ''' Filter field for Invoice data'''
     filter_field = {'slum__id__in': keys, 'invoice__invoice_date__range': [start_date, end_date]}
     invoiceItems = InvoiceItems.objects.filter(**filter_field) \

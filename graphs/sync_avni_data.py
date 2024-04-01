@@ -58,7 +58,7 @@ class avni_sync():
         # latest_date = last_submission_date.submission_date + timedelta(days=1)
         today = datetime.today() + timedelta(days= -1)
         latest_date = today.strftime('%Y-%m-%dT00:00:00.000Z')
-        iso = "2023-12-11T05:40:00.000Z"
+        iso = "2024-03-24T05:40:00.000Z"
         return(latest_date)
         # return iso
 
@@ -141,7 +141,6 @@ class avni_sync():
                     updated_factsheet_data[change_keys[k]] = v 
                 else:
                     updated_factsheet_data[k] = v
-                print(k)
                 if k in multiselect_keys:
                     if type(v) == list:
                         updated_factsheet_data[change_keys[k]] = ",".join(v)
@@ -149,8 +148,6 @@ class avni_sync():
                         updated_factsheet_data[change_keys[k]] = v
                     else:
                         pass
-                else:
-                    updated_factsheet_data[change_keys[k]] = None
             except Exception as e:
                 print(e)
         return updated_factsheet_data
@@ -379,8 +376,6 @@ class avni_sync():
             use_of_toilet = None
             toilet_connected_to = None
             slum_id, city_id = self.get_city_slum_ids(slum_name)
-            use_of_toilet = None
-            toilet_connected_to = None
             check_record = HouseholdData.objects.filter(household_number=HH, city_id=city_id, slum_id=slum_id)
             factsheetDate = ToiletConstruction.objects.filter(household_number=HH, slum_id=slum_id)
             factsheet_done_date = dateparser.parse(data['audit']['Last modified at']).date()
