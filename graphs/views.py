@@ -833,7 +833,7 @@ def factsheetDataDownload(request):         #     function for city wise factshe
     exportClassObj = exportMethods(c_id)
     if Type_of_data == 'Structure Data':
         response_data, city_name = exportClassObj.Structure_data()  # Check export_data.py file for Structure_data()
-        columns_lst = ['Slum Name', 'Total Structure (In KML)', 'Occupied house','Unoccupied house', 'Locked house', 'Shop', 'Demolished house', 'Permanently locked house', 'Broken house']
+        columns_lst = ['Slum Name','Admin Ward', 'Total Structure (In KML)', 'Occupied house','Unoccupied house', 'Locked house', 'Shop', 'Demolished house', 'Permanently locked house', 'Broken house']
 
     elif Type_of_data == 'Factsheet Data':
         response_data, city_name = exportClassObj.cityWiseQuery(startdate, enddate)

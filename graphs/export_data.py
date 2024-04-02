@@ -24,7 +24,12 @@ class exportMethods:
         """ In Array we are storing the household queryset objects which have factsheet data available."""
         factsheet_data_households = []
         """ Here we are checking construction data available for selected city. """
-        construction_data = self.toilet_data.filter(slum__electoral_ward__administrative_ward__city__id = self.city, completion_date__range= [startdate, enddate])
+        """Case :-1 phase_one_material_date not null """
+        construction_data_phase_1 = self.toilet_data.filter(slum__electoral_ward__administrative_ward__city__id = self.city, phase_one_material_date__range = [startdate, enddate], completion_date__isnull = False)
+        """Case :-2 phase_one_material_date is null. In this case we are going to query on phase_two_material_date"""
+        construction_data_phase_2 = self.toilet_data.filter(slum__electoral_ward__administrative_ward__city__id = self.city, phase_two_material_date__range = [startdate, enddate], phase_one_material_date__isnull = True, completion_date__isnull = False)
+        """ Here we are combining the both queryset object to single object"""
+        construction_data = construction_data_phase_1.values_list('slum_id', 'household_number') | construction_data_phase_2.values_list('slum_id', 'household_number')
         """ Creating a groupby object to for making groups of slum_ids and households. """
         construction_group = itertools.groupby(sorted(construction_data.values_list('slum_id', 'household_number'), key = lambda x:x[0]), key = lambda x:x[0])
         """ Here we iterate on construction data groups slum by slum and getting the household querysets which have factsheet data available."""
@@ -122,7 +127,7 @@ class exportMethods:
                 rhs_data_status = rhs_data_cnt[slum_id]
             else:
                 rhs_data_status = {}
-            rhs_data_status.update({'Slum Name': slum_name_dict[slum_id], 'Total Structure (In KML)':count})
+            rhs_data_status.update({'Slum Name': slum_name_dict[slum_id][0], 'Admin Ward' : slum_name_dict[slum_id][1], 'Total Structure (In KML)':count})
             final_data_lst.append(rhs_data_status)
         return final_data_lst, self.city_name
     
