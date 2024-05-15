@@ -2,7 +2,7 @@ from django.shortcuts import render
 from django.http import HttpResponse, JsonResponse
 from django.contrib.auth.decorators import user_passes_test, permission_required
 from graphs.sync_avni_data import avni_sync
-from mastersheet.forms import find_slum, file_form, account_find_slum, gis_tab
+from mastersheet.forms import find_slum, file_form, account_find_slum, gis_tab, SponsorForm
 from django.db.models import Count, F, Q
 from mastersheet.models import *
 from sponsor.models import *
@@ -10,6 +10,7 @@ from itertools import chain
 from master.models import *
 from django.views.decorators.csrf import csrf_exempt
 import json
+from django.urls import reverse
 import requests
 import pandas
 import csv
@@ -596,26 +597,30 @@ def handle_uploaded_file(f, response, slum_code):
     flag_SBM = 0
     flag_ComMob = 0
     flag_TC = 0
-    try:
-        df_vendors = df1.filter(like='Vendor Name')
-        df_invoice = df1.filter(like='Invoice')
-    except:
-        flag_accounts = 1
-
-    try:
-        df_ComMob = df1.loc[:, 'FGD with women':'Community Mobilization Ends']
-    except:
-        flag_ComMob = 1
-
-    try:
-        df_sbm = df1.loc[:, 'SBM Name':'SBM Comment']
-    except:
-        flag_SBM = 1
-
-    try:
-        df_TC = df1.loc[:, 'Date of Agreement':'Comment']
-    except:
-        flag_TC = 1
+    flag_rhs_data = 0
+    # Checking that the file is for RHS update or not
+    if "rhs_update" in list(df1.columns):
+        flag_rhs_data = 0
+        df_rhs = df1
+        flag_accounts = flag_SBM = flag_ComMob = flag_TC = 1
+    else:
+        try:
+            df_vendors = df1.filter(like='Vendor Name')
+            df_invoice = df1.filter(like='Invoice')
+        except:
+            flag_accounts = 1
+        try:
+            df_ComMob = df1.loc[:, 'FGD with women':'Community Mobilization Ends']
+        except:
+            flag_ComMob = 1
+        try:
+            df_sbm = df1.loc[:, 'SBM Name':'SBM Comment']
+        except:
+            flag_SBM = 1
+        try:
+            df_TC = df1.loc[:, 'Date of Agreement':'Comment']
+        except:
+            flag_TC = 1
 
     # *******************************IMPORTANT!!!!*************************************
     # In the excel sheet that has been uploaded, it is imperative to have a column with
@@ -629,7 +634,17 @@ def handle_uploaded_file(f, response, slum_code):
 
             for i in df1.index.values:
                 # this_slum = Slum.objects.get(name=str(df1.loc[int(i), 'Select Slum']))
-
+                
+                if flag_rhs_data != 1:
+                    rhs_instence = HouseholdData.objects.filter(id = int(i), rhs_data__isnull = False)
+                    if rhs_instence.count() > 0:
+                        rhs_data = rhs_instence[0].rhs_data
+                        drainage_data = {'HH_can_connect_to_Drainage' : df_rhs.loc[int(i), 'HH can connect to Drainage line']}
+                        rhs_data.update(drainage_data)
+                        rhs_instence.update(rhs_data = rhs_data)
+                        response.append(("updated RHS", str(df_rhs.loc[int(i), 'Household number'])))
+                    else:
+                        response.append(("No Households Available",  str(df_rhs.loc[int(i), 'Household number'])))
                 if flag_SBM != 1:
                     try:
                         SBM_instance = SBMUpload.objects.filter(slum=this_slum, household_number=int(i))
@@ -788,7 +803,7 @@ def handle_uploaded_file(f, response, slum_code):
 
     except Exception as e:
         response.append(("The error says: " + str(e),
-                         "This is an overall error. Please check the uploaded Excle sheet for column names, slum names etc."))
+                        "This is an overall error. Please check the uploaded Excle sheet for column names, slum names etc."))
     d = defaultdict(list)
     for k, v in response:
         d[k].append(v)
@@ -1472,8 +1487,9 @@ def accounts_excel_generation(request):
 @permission_required('mastersheet.can_view_mastersheet', raise_exception=True)
 def renderSummery(request):
     slum_search_field = find_slum()
+    sponsor = SponsorForm()
     gis_field = gis_tab()
-    return render(request, 'mastersheet_summery.html', {'form': slum_search_field, 'form_gis': gis_field})
+    return render(request, 'mastersheet_summery.html', {'form': slum_search_field, 'form_gis': gis_field, 'form_sponsor' : sponsor})
 
 
 
@@ -1484,7 +1500,7 @@ def getRhsData(record):
     'group_el9cl08/Type_of_structure_of_the_house':'house_structure', 'group_el9cl08/Ownership_status_of_the_house':'ownership_status', 
     'group_el9cl08/House_area_in_sq_ft':'house_area', 'Do you have addhar card?':'isAadharCard', 'group_el9cl08/Aadhar_number':
 	'aadhar_number', 'Colour of ration card':'color_of_ration_card', 'Select Religion' : 'Select Religion', 'If other religion' : 'If other religion',
-    'Select Caste' : 'Select Caste', 'If other caste' : 'If other caste',
+    'Select Caste' : 'Select Caste', 'If other caste' : 'If other caste', 'HH_can_connect_to_Drainage' : 'HH can connect to Drainage line',
     'group_el9cl08/Type_of_water_connection':'Type_of_water_connection', 'group_el9cl08/Facility_of_solid_waste_collection':"Facility_of_solid_waste_collection", "Do you have electricity in the house ?" : "Do you have electricity in the house ?", "If yes for electricity ,  type of meter ?" : "If yes for electricity ,  type of meter ?", 'Is there any seperated woman in the household ?': 'Is there any seperated woman in the household ?', 'Is there any widow woman in the household?': 'Is there any widow woman in the household?', 'Is any family member physically/mentally challenged?': 'Is any family member physically/mentally challenged?'}
     # if occupied house then if block called otherwise else block called.
     electricity_keys = ['If yes for electricity ,  type of meter ?', 'Do you have electricity in the house ?']
@@ -1500,7 +1516,7 @@ def getRhsData(record):
             data.update(electricity_data)
         data['household_number'] = record.household_number
     else:
-        key_list = {'Plus code of the house': 'pluscodes', 'Type_of_structure_occupancy': 'occupancy_status', 'Type_of_unoccupied_house':'typeUnoccupiedHouse'}
+        key_list = {'Plus code of the house': 'pluscodes', 'Type_of_structure_occupancy': 'occupancy_status', 'Type_of_unoccupied_house':'typeUnoccupiedHouse', 'HH_can_connect_to_Drainage' : 'HH can connect to Drainage line'}
         data = {key_list[i] : record.rhs_data[i] for i in key_list.keys() if i in record.rhs_data}
         data['household_number'] = record.household_number
     if record.ff_data:
@@ -1547,6 +1563,32 @@ def communityActivityData(slum_code):
     except Exception as e:
         print(e)
 
+
+# Helper function for factsheet assign elegibility check ....
+
+def factsheetAssignCheck(dataList):
+    finalList = []
+    for record in dataList:
+        if record['occupancy_status'] == 'Occupied house' and ('toilet_status' in record and record['toilet_status'] == 'Completed') and ('factsheet_done' in record and record['factsheet_done'] == 'Yes'):
+            key_lst = {'phase_one_material_date' : '1', 'phase_two_material_date' : '2', 'phase_three_material_date' : '3'}
+            for k, v in key_lst.items():
+                if k in record:
+                    if 'invoice_phase_' + v in record and record['invoice_phase_' + v] == 'Yes':
+                        record['factsheetAssignStatus'] = 'Ready To Assign'
+                    else:
+                        record['factsheetAssignStatus'] = 'No'
+                        break
+                elif 'invoice_phase_' + v in record and record['invoice_phase_' + v] == 'Yes':
+                    record['factsheetAssignStatus'] = 'No'
+                    break
+                
+            if 'factsheetAssignStatus' in record and record['factsheetAssignStatus'] != 'No':
+                if 'sponsor_project' in record:
+                    record['factsheetAssignStatus'] = 'Already Assign'
+                else:
+                    record['factsheetAssignStatus'] = 'Ready To Assign'
+        finalList.append(record)
+    return finalList
 
 # For Mastersheet Summery View Processing data
 @csrf_exempt
@@ -1643,7 +1685,7 @@ def ProcessShortView(request, slum_details=0):
                 temp_dict = {'household_number':i['household_number'], 'occupancy_status': "RHS Not Done"}
                 rhs_not_done.append(temp_dict)
         formdict.extend(rhs_not_done)
-
+        formdict = factsheetAssignCheck(formdict)
 
     except Exception as e:
         print(e)
@@ -1659,7 +1701,7 @@ def AnalyseGisTabData(slum_id):
         householdData = HouseholdData.objects.filter(slum_id = slum_code[0][0], rhs_data__isnull = False)
         columns_lst = ['city_name', 'slum', 'household_number', 'Last Modified At', 'occupancy_status', 'typeUnoccupiedHouse', 'pluscodes', 'pluscodepart', 
                         'house_structure', 'ownership_status', 'name_head_of_he_household', 'isAadharCard', 'aadhar_number', 'color_of_ration_card', 
-                        'girls_child', 'Select Religion' , 'If other religion' , 'Select Caste', 'If other caste', 'Is there any seperated woman in the household ?', 'Is there any widow woman in the household?', 'Is any family member physically/mentally challenged?',
+                        'girls_child', 'Select Religion' , 'If other religion' , 'Select Caste', 'If other caste', 'Is there any seperated woman in the household ?', 'Is there any widow woman in the household?', 'Is any family member physically/mentally challenged?', 'HH can connect to Drainage line',
                         'house_area', 'Do you have individual water connection at home?', 'Type_of_water_connection', 'Facility_of_solid_waste_collection', 
                         'Do you have a toilet at home?', 'Status of toilet under SBM ?', 'Where the individual toilet is connected to ?', 'Who all use toilets in the household ?', 
                         'Reason for not using toilet ?', 'current_place_of_defication', 'Is there availability of drainage to connect it to the toilet?', 'Are you interested in an individual toilet ?', 
@@ -1754,3 +1796,90 @@ def gisDataDownload(request):
     writer.writeheader()
     writer.writerows(response_data)
     return response
+
+
+@csrf_exempt
+def addSponsor(request):
+    response = {}
+    data = json.loads(request.body)
+    sponsor_project_id = int(data['project_id'])
+    sponsor_id = int(data['sponsor_id'])
+    quarter_id = data['quarter_id']
+    slum = int(data['slum'])
+    household_code = list(map(int, data['records']))
+    return_url_id = None
+    
+    """ Creating some helper functions ."""
+    def merge_household_codes(privious_code_lst, current_code_lst):
+        current_code_lst.extend(privious_code_lst)
+        current_code_lst = list(set(current_code_lst))
+        current_code_lst.sort()
+        return current_code_lst
+    
+    def update_sponsor_project_details(sponsorProjectdetails_obj, household_code_updated):
+        old_household_code = sponsorProjectdetails_obj[0].household_code 
+        household_code_updated = merge_household_codes(old_household_code, household_code_updated)
+        try:
+            sp_details_obj = sponsorProjectdetails_obj.update(household_code = household_code_updated)
+        except Exception as e:
+            print(e)
+    
+    def create_sponsor_project_details_subfields(aurgument_lst):
+        sponsor_project_details_id, household_code, quarter = aurgument_lst
+        create_sp_details_sub = SponsorProjectDetailsSubFields(sponsor_project_details_id = sponsor_project_details_id,
+                                                                            household_code = household_code,
+                                                                            quarter = quarter,
+                                                                            count = len(household_code))
+        create_sp_details_sub.save()
+    
+    sponsorProjectdetails = SponsorProjectDetails.objects.filter(sponsor_project_id = sponsor_project_id, slum_id = slum)
+    if sponsorProjectdetails.exists():
+        return_url_id = sponsorProjectdetails[0].id
+        sponsorProjectdetailsSubfields = SponsorProjectDetailsSubFields.objects.filter(sponsor_project_details_id = 
+                                                                                        sponsorProjectdetails[0].id, quarter = str(quarter_id))
+        if sponsorProjectdetailsSubfields.exists():
+            sponsorProjectdetailsSubfields_obj = sponsorProjectdetailsSubfields[0]
+            old_household_code = sponsorProjectdetailsSubfields_obj.household_code
+            # Converting all household code to integer ..
+            household_code_updated = merge_household_codes(old_household_code, household_code)
+            try:
+                sp_update = SponsorProjectDetailsSubFields.objects.filter(id = sponsorProjectdetailsSubfields_obj.id).update(household_code = household_code_updated, count = len(household_code_updated))
+                """ Now Update the household_code list in the SponsorProjectDetails"""
+                update_sponsor_project_details(sponsorProjectdetails, household_code_updated)
+            except Exception as e:
+                print(e)
+        else:
+            """In This case there is no Sponsor Project Details SubFields entry available. So we have to create a new entry."""
+            create_sponsor_project_details_subfields([sponsorProjectdetails[0].id, household_code, quarter_id])
+            """ Now Update the household_code list in the SponsorProjectDetails"""
+            update_sponsor_project_details(sponsorProjectdetails, household_code)
+
+    else:
+        ''' In this case we have to create a new Sponsor Project Detail entry with Sponsor Project Details SubFields'''
+        create_sp_details = SponsorProjectDetails(sponsor_id = sponsor_id,
+                                                                sponsor_project_id = sponsor_project_id,
+                                                                slum_id = slum,
+                                                                household_code = household_code)
+        create_sp_details.save()
+        sp_details_pk = create_sp_details.pk
+        create_sponsor_project_details_subfields([create_sp_details.pk, household_code, quarter_id])
+        return_url_id = sp_details_pk
+    admin_url = "http://127.0.0.1:8000" + reverse('admin:sponsor_sponsorprojectdetails_change', args=[int(return_url_id)])
+    response['response'] = admin_url
+    return HttpResponse(json.dumps(response), content_type="application/json")
+
+@csrf_exempt
+def sponsorprojectList(request):
+    """Administrativeward List Display"""
+    sponsorid = request.POST['id']
+    sponsorObj = SponsorProject.objects.filter(sponsor=sponsorid)
+    idArray = []
+    nameArray = []
+    for i in sponsorObj:
+        nameArray.append(str(i.name))
+        idArray.append(i.id)
+    data ={}
+    data = { 'idArray'  : idArray,
+                'nameArray': nameArray
+            }
+    return HttpResponse(json.dumps(data),content_type='application/json')
