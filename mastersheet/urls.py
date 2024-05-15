@@ -22,5 +22,7 @@ urlpatterns = [
     url(r'^account/excel/$', accounts_excel_generation, name='accounts_excel_generation'),
     url(r'^show/summery/$', renderSummery, name="renderSummery"),
     url(r'^show/showSummery/$', ProcessShortView, name='ProcessShortView'),
-    url(r'^gisDataDownload/$', gisDataDownload, name='gisDataDownload')
+    url(r'^gisDataDownload/$', gisDataDownload, name='gisDataDownload'),
+    url(r'^addSponsor/$', addSponsor, name='gisDataDownload'),
+    url(r'^sponsorprojectList/$', sponsorprojectList, name = 'sponsorprojectList'),
 ]

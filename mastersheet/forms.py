@@ -4,6 +4,7 @@ from master.models import *
 from django.contrib import admin
 from django.db.models.fields.related import ManyToOneRel
 from mastersheet.models import *
+from sponsor.models import *
 
 class BaseForm(forms.Form):
     '''
@@ -101,3 +102,24 @@ class gis_tab(forms.Form):
     class Meta:
         raw_id_fields = ('gisdata_slumname',)
         model = 'Slum'
+
+
+class SponsorForm(forms.Form):
+    def __init__(self, *args, **kwargs):
+        super(SponsorForm,self).__init__( *args, **kwargs)
+        Sponsor_Name_List = [('0','---select---'),]
+        Sponsor_Name_List.extend(list(set(Sponsor.objects.all().values_list('id', 'organization_name'))))
+        self.fields['sponsor_name'] = forms.ChoiceField(choices=Sponsor_Name_List, widget=forms.Select(attrs={'style': 'width: 200px;'}))
+        self.fields['sponsor_name'].widget.attrs.update({'class':'customized-form'})
+        self.fields['sponsor_name'].label = "Select Sponsor"
+        self.fields['sponsor_name'].widget.attrs.update({'name':'sponsor_name', 'id':'sponsor_name'})
+        SponsorProject_Name_List = [('0','---select---'),]
+        self.fields['sponsor_project'] = forms.ChoiceField(choices=SponsorProject_Name_List, widget=forms.Select(attrs={'style': 'width: 200px;'}))
+        self.fields['sponsor_project'].widget.attrs.update({'class':'customized-form'})
+        self.fields['sponsor_project'].label = "Select Project"
+        self.fields['sponsor_project'].widget.attrs.update({'name':'sponsor_project', 'id':'sponsor_project'})
+        quarter_choices =  [('0','---select---'), ] + list(QUARTER_CHOICES)
+        self.fields['sponsor_quarter'] = forms.ChoiceField(choices=quarter_choices, widget=forms.Select(attrs={'style': 'width: 200px;'}))
+        self.fields['sponsor_quarter'].widget.attrs.update({'class':'customized-form'})
+        self.fields['sponsor_quarter'].label = "Select Quarter"
+        self.fields['sponsor_quarter'].widget.attrs.update({'name':'sponsor_quarter', 'id':'sponsor_quarter'})

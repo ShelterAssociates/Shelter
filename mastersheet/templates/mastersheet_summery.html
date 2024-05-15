@@ -9,6 +9,7 @@
 <link rel="stylesheet" type="text/css" href="{% static "css/searchBuilder.dataTables.min.css" %}">
 <link rel="stylesheet" type="text/css" href="{% static "css/buttons.dataTables.min.css" %}">
 <link rel="stylesheet" type="text/css" href="{% static "css/stateRestore.dataTables.min.css" %}">
+<link rel = "stylesheet" type="text/css" href = "{% static "css/bootstrap-datepicker3.min.css" %}">
 
 {%endblock%}
 {% block extrahead %}
@@ -33,7 +34,7 @@
 
 <div class="overlay">
   <div id="loading-img"></div>
-</div>
+</div> 
 <div class="customized-form">
   <div class="row">
     <div class="col-md-8">
@@ -62,7 +63,7 @@
       <div class="modal-header">
         <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span
             aria-hidden="true">&times;</span></button>
-        <h4 class="modal-title" id="GISModal_myModalLabel">Download Excel file</h4>
+        <h4 class="modal-title" id="GISModal_myModalLabel">Download GIS Data</h4>
       </div>
       <form id="GISModal_selection" name="GISModal_selection" method="POST" enctype="multipart/form-data"
         action='/mastersheet/gisDataDownload/'>{% csrf_token %}
@@ -81,4 +82,45 @@
     </div>
   </div>
 </div>
+
+<!-- This section is for GIS Data Download. -->
+<div class="modal fade" id="SponsorModel" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span
+            aria-hidden="true">&times;</span></button>
+        <h4 class="modal-title" id="SponsorModel_myModalLabel">Select Sponsor Details</h4>
+      </div>
+      <form id="SponsorModel_selection" name="SponsorModel_selection" method="POST" enctype="multipart/form-data"
+        action='/mastersheet/addSponsor/'>{% csrf_token %}
+        <div id="SponsorModel_selection_slum" name="SponsorModel_selection_slum" class="modal-body">
+          {{ form_sponsor.as_p }}
+        </div>
+        <div id='SponsorModel_success_log'>
+        </div>
+        <div id='SponsorModel_error_log'>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+          <button type="button" id="addSponsor" class="btn btn-primary">Add Sponsor</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+
+{% if request.user.is_superuser %}
+<div style="overflow-x:auto;">
+  <table id="example" class="display" width="100%" cellspacing="0">
+      </table>
+      <div class="row" id="add_table_btn", style = "margin-top:5px;">
+          <div class="col-md-1">
+              <button id = "add_sponsor" type="button" class="btn btn-default btn-success"><span class="glyphicon glyphicon-plus"></span> Add Sponsor</button>
+
+      </div>
+  </div>
+</div>
+{%endif%}
 {%endblock%}
