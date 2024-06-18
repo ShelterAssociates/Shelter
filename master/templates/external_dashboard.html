@@ -111,7 +111,7 @@
       <!--Information endss here-->
       <div class="details">
         <div class="cards">
-          <div class="first-card">
+          {% comment %} <div class="first-card">
             <p class="average-img"><img width="60px" src="/static/images/dashboard/score.png" /></p>
             <p class="average-val-label">
               <span class="average-val" id="score_val">60</span>
@@ -119,7 +119,7 @@
               <span class="average-label hide">Above Average</span>
             </p>
             <p class="result-text hide">70 in previous period</p>
-          </div>
+          </div> {% endcomment %}
 
           <div id="section_cards">
 
@@ -135,13 +135,13 @@
             <p class="result-text positive hide">800 in previous period</p>
           </div>
 
-          <div class="overall-score hide">
+          {% comment %} <div class="overall-score hide">
             <div class="overall-cnt-1">
               <span class="overall-cnt" id="total_score" ></span>
             </div>
             
           <span class="overall-text" id="total_score_text"></span>
-          </div>
+          </div> {% endcomment %}
 
 
           <!-- <div class="overall-score hide">
