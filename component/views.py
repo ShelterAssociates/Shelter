@@ -228,6 +228,13 @@ def get_kobo_RIM_report_data(request, slum_id):
         output['electoral_ward'] = slum[0].electoral_ward.name
         output['slum_name'] = slum[0].name
         if rim_image and len(rim_image) > 0:
+            """Handling the Scenario where Slums Lack Community Toilet Block Availability: 
+                Removing CTB Information from RIM Additional Info."""
+            if 'number_of_community_toilet_blo' in output and output['number_of_community_toilet_blo'] == 0:
+                del_keys = ['toilet_seat_to_persons_ratio', 'toilet_cost']
+                for key in del_keys:
+                    if key in rim_image[0]:
+                        del rim_image[0][key]
             output.update(rim_image[0])
             output['image'] = True
     return HttpResponse(json.dumps(output),content_type='application/json')
