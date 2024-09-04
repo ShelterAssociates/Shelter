@@ -372,66 +372,69 @@ def get_kobo_RIM_report_detail(city, slum_code, kobo_survey=''):
     general_info = data['General']
     output.update(data_processing(general_info))
     # //'Toilet Information'
-    toilet_info = data['Toilet']
-    output['number_of_community_toilet_blo'] = len(toilet_info)
-    seats_f_man = 0
-    seats_f_woman = 0
-    seats_f_mix = 0
-    ctb_maintenance_provider = {}
-    ctb_structure_condition = {}
-    ctb_cleanliness_condition = {}
-    ctb_for_under_5 = {}
-    ctb_sewage_disposal_system = {}
-    water_supply_condition = []
-    
-    for i in toilet_info:
-        if i['is_the_CTB_in_use'] == 'Yes':
-            if 'number_of_seats_allotted_to_wo' in i:
-                seats_f_woman += int(i['number_of_seats_allotted_to_wo'])
-            if 'total_number_of_mixed_seats_al' in i:
-                seats_f_mix += int(i['total_number_of_mixed_seats_al'])
-            if 'number_of_seats_allotted_to_me' in i:
-                seats_f_man += int(i['number_of_seats_allotted_to_me'])
-            if i['ctb_maintenance_provided_by'] in ctb_maintenance_provider:
-                ctb_maintenance_provider[i['ctb_maintenance_provided_by']] += 1
-            else:
-                ctb_maintenance_provider[i['ctb_maintenance_provided_by']] = 1
+    if 'Toilet' in data:
+        toilet_info = data['Toilet']
+        output['number_of_community_toilet_blo'] = len(toilet_info)
+        seats_f_man = 0
+        seats_f_woman = 0
+        seats_f_mix = 0
+        ctb_maintenance_provider = {}
+        ctb_structure_condition = {}
+        ctb_cleanliness_condition = {}
+        ctb_for_under_5 = {}
+        ctb_sewage_disposal_system = {}
+        water_supply_condition = []
+        
+        for i in toilet_info:
+            if 'is_the_CTB_in_use' in i and i['is_the_CTB_in_use'] == 'Yes':
+                if 'number_of_seats_allotted_to_wo' in i:
+                    seats_f_woman += int(i['number_of_seats_allotted_to_wo'])
+                if 'total_number_of_mixed_seats_al' in i:
+                    seats_f_mix += int(i['total_number_of_mixed_seats_al'])
+                if 'number_of_seats_allotted_to_me' in i:
+                    seats_f_man += int(i['number_of_seats_allotted_to_me'])
+                if i['ctb_maintenance_provided_by'] in ctb_maintenance_provider:
+                    ctb_maintenance_provider[i['ctb_maintenance_provided_by']] += 1
+                else:
+                    ctb_maintenance_provider[i['ctb_maintenance_provided_by']] = 1
 
-            if i['condition_of_ctb_structure'] in ctb_structure_condition:
-                ctb_structure_condition[i['condition_of_ctb_structure']] += 1
-            else:
-                ctb_structure_condition[i['condition_of_ctb_structure']] = 1
-            
-            if i['cleanliness_of_the_ctb'] in ctb_cleanliness_condition:
-                ctb_cleanliness_condition[i['cleanliness_of_the_ctb']] += 1
-            else:
-                ctb_cleanliness_condition[i['cleanliness_of_the_ctb']] = 1
+                if i['condition_of_ctb_structure'] in ctb_structure_condition:
+                    ctb_structure_condition[i['condition_of_ctb_structure']] += 1
+                else:
+                    ctb_structure_condition[i['condition_of_ctb_structure']] = 1
+                
+                if i['cleanliness_of_the_ctb'] in ctb_cleanliness_condition:
+                    ctb_cleanliness_condition[i['cleanliness_of_the_ctb']] += 1
+                else:
+                    ctb_cleanliness_condition[i['cleanliness_of_the_ctb']] = 1
 
-            if i['facility_in_the_toilet_block_f'] in ctb_for_under_5:
-                ctb_for_under_5[i['facility_in_the_toilet_block_f']] += 1
-            else:
-                ctb_for_under_5[i['facility_in_the_toilet_block_f']] = 1
+                if i['facility_in_the_toilet_block_f'] in ctb_for_under_5:
+                    ctb_for_under_5[i['facility_in_the_toilet_block_f']] += 1
+                else:
+                    ctb_for_under_5[i['facility_in_the_toilet_block_f']] = 1
 
-            if i['sewage_disposal_system'] in ctb_sewage_disposal_system:
-                ctb_sewage_disposal_system[i['sewage_disposal_system']] += 1
-            else:
-                ctb_sewage_disposal_system[i['sewage_disposal_system']] = 1
+                if i['sewage_disposal_system'] in ctb_sewage_disposal_system:
+                    ctb_sewage_disposal_system[i['sewage_disposal_system']] += 1
+                else:
+                    ctb_sewage_disposal_system[i['sewage_disposal_system']] = 1
 
-            water_supply_condition.extend(i['type_of_water_supply_in_ctb'].split(","))
-    
-    output['number_of_seats_allotted_to_wo'] = seats_f_woman
-    output['total_number_of_mixed_seats_al'] = seats_f_mix
-    output['number_of_seats_allotted_to_me'] = seats_f_man
+                water_supply_condition.extend(i['type_of_water_supply_in_ctb'].split(","))
+        
+            output['number_of_seats_allotted_to_wo'] = seats_f_woman
+            output['total_number_of_mixed_seats_al'] = seats_f_mix
+            output['number_of_seats_allotted_to_me'] = seats_f_man
 
-    water_supply_condition_dict = {i: water_supply_condition.count(i) for i in water_supply_condition}
+            water_supply_condition_dict = {i: water_supply_condition.count(i) for i in water_supply_condition}
 
-    dict_to_str_keys = {'ctb_maintenance_provided_by':ctb_maintenance_provider, 'condition_of_ctb_structure':ctb_structure_condition, 
-                        'cleanliness_of_the_ctb':ctb_cleanliness_condition, 'type_of_water_supply_in_ctb':water_supply_condition_dict, 'facility_in_the_toilet_block_f':ctb_for_under_5, 'sewage_disposal_system':ctb_sewage_disposal_system}
-    for key in dict_to_str_keys.keys():
-        if len(dict_to_str(dict_to_str_keys[key])) > 1:
-            output[key] = dict_to_str(dict_to_str_keys[key])[1:]
-        else:
-            output[key] = ""
+            dict_to_str_keys = {'ctb_maintenance_provided_by':ctb_maintenance_provider, 'condition_of_ctb_structure':ctb_structure_condition, 
+                                'cleanliness_of_the_ctb':ctb_cleanliness_condition, 'type_of_water_supply_in_ctb':water_supply_condition_dict, 'facility_in_the_toilet_block_f':ctb_for_under_5, 'sewage_disposal_system':ctb_sewage_disposal_system}
+            for key in dict_to_str_keys.keys():
+                if len(dict_to_str(dict_to_str_keys[key])) > 1:
+                    output[key] = dict_to_str(dict_to_str_keys[key])[1:]
+                else:
+                    output[key] = ""
+    else:
+        output.update({'number_of_community_toilet_blo' : 0})
 
     # //Waste Management Information
     waste_info = data['Waste']
