@@ -209,6 +209,17 @@ def get_kobo_RIM_data(request, slum_id):
         output = {}
     return HttpResponse(json.dumps(output),content_type='application/json')
 
+def get_avni_image_urls(rim_obj):
+    fields_to_modify= ['toilet_image_bottomdown1', 'toilet_image_bottomdown2', 'water_image_bottomdown1', 'water_image_bottomdown2', 'waste_management_image_bottomdown1', 'waste_management_image_bottomdown2', 'drainage_image_bottomdown1', 'drainage_image_bottomdown2', 'gutter_image_bottomdown1', 'gutter_image_bottomdown2', 'roads_image_bottomdown1', 'road_image_bottomdown2', 'general_image_bottomdown1', 'general_image_bottomdown2']
+    a = avni_sync()
+    for field in fields_to_modify:
+        if field in rim_obj:
+            old_link = str(rim_obj[field])
+            if "https://s3.ap-south-1.amazonaws.com/" in old_link:
+                new_link = a.get_image(old_link)
+                rim_obj[field] = new_link
+    return rim_obj
+
 def get_kobo_RIM_report_data(request, slum_id):
     try:
         slum = Slum.objects.filter(shelter_slum_code=slum_id)
@@ -235,7 +246,9 @@ def get_kobo_RIM_report_data(request, slum_id):
                 for key in del_keys:
                     if key in rim_image[0]:
                         del rim_image[0][key]
-            output.update(rim_image[0])
+            # Check if there are avni images available.
+            rim_image_updated = get_avni_image_urls(rim_image[0])
+            output.update(rim_image_updated)
             output['image'] = True
     return HttpResponse(json.dumps(output),content_type='application/json')
 
