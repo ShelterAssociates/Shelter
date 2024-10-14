@@ -400,7 +400,11 @@ $(document).ready(function(){
 
 
 						<div class="col-md-3">
-							{{form.general_image_bottomdown1 }}
+							{% if form.general_image_bottomdown1.value and "https://s3.ap-south-1.amazonaws.com/" in form.general_image_bottomdown1.value|stringformat:"s" %}
+								<a href="{{ form.general_image_bottomdown1.value }}" target="_blank"> General image bottomdown1 </a>
+							{% else %}
+								{{ form.general_image_bottomdown1 }}
+							{% endif %}
 						</div>
 
 						<div class="col-md-3">
@@ -408,7 +412,11 @@ $(document).ready(function(){
 						</div>
 
 						<div class="col-md-3">
-							{{form.general_image_bottomdown2 }}
+							{% if form.general_image_bottomdown2.value and "https://s3.ap-south-1.amazonaws.com/" in form.general_image_bottomdown2.value|stringformat:"s" %}
+								<a href="{{ form.general_image_bottomdown2.value }}" target="_blank"> General image bottomdown2 </a>
+							{% else %}
+								{{ form.general_image_bottomdown2 }}
+							{% endif %}
 						</div>
 				</div>
 
@@ -504,14 +512,22 @@ $(document).ready(function(){
 						</div>
 
 						<div class="col-md-3">
-							{{form.toilet_image_bottomdown1 }}
+							{% if form.toilet_image_bottomdown1.value and "https://s3.ap-south-1.amazonaws.com/" in form.toilet_image_bottomdown1.value|stringformat:"s" %}
+								<a href="{{ form.toilet_image_bottomdown1.value }}" target="_blank"> Toilet image bottomdown1 </a>
+							{% else %}
+								{{ form.toilet_image_bottomdown1 }}
+							{% endif %}
 						</div>
 						<div class="col-md-3">
 							<label for="toilet_image_bottomdown2">Toilet image bottomdown2</label>
 						</div>
 
 						<div class="col-md-3">
-							{{form.toilet_image_bottomdown2 }}
+							{% if form.toilet_image_bottomdown2.value and "https://s3.ap-south-1.amazonaws.com/" in form.toilet_image_bottomdown2.value|stringformat:"s" %}
+								<a href="{{ form.toilet_image_bottomdown2.value }}" target="_blank"> Toilet image bottomdown2 </a>
+							{% else %}
+								{{ form.toilet_image_bottomdown2 }}
+							{% endif %}
 						</div>
 					</div>
 
@@ -574,16 +590,24 @@ $(document).ready(function(){
 							<label for="water_image_bottomdown1">Water image bottomdown1</label>
 					</div>
 
-
 					<div class="col-md-3">
-							{{form.water_image_bottomdown1 }}
+							{% if form.water_image_bottomdown1.value and "https://s3.ap-south-1.amazonaws.com/" in form.water_image_bottomdown1.value|stringformat:"s" %}
+								<a href="{{ form.water_image_bottomdown1.value }}" target="_blank"> Water image bottomdown1 </a>
+							{% else %}
+								{{ form.water_image_bottomdown1 }}
+							{% endif %}
 						</div>
 
 					<div class="col-md-3">
 							<label for="water_image_bottomdown2">Water image bottomdown2</label>
 					</div>
+
 					<div class="col-md-3">
-							{{form.water_image_bottomdown2 }}
+							{% if form.water_image_bottomdown2.value and "https://s3.ap-south-1.amazonaws.com/" in form.water_image_bottomdown2.value|stringformat:"s" %}
+								<a href="{{ form.water_image_bottomdown2.value }}" target="_blank"> Water image bottomdown2 </a>
+							{% else %}
+								{{ form.water_image_bottomdown2 }}
+							{% endif %}
 						</div>
 				</div>
 
@@ -626,7 +650,12 @@ $(document).ready(function(){
 						</div>
 
 						<div class="col-md-3">
-							{{form.roads_image_bottomdown1 }}
+							{% if form.roads_image_bottomdown1.value and "https://s3.ap-south-1.amazonaws.com/" in form.roads_image_bottomdown1.value|stringformat:"s" %}
+								<a href="{{ form.roads_image_bottomdown1.value }}" target="_blank"> Roads image bottomdown1 </a>
+							{% else %}
+								{{ form.roads_image_bottomdown1 }}
+							{% endif %}
+							
 						</div>
 					</div>
 
@@ -648,7 +677,12 @@ $(document).ready(function(){
 						</div>
 
 						<div class="col-md-3">
-							{{form.road_image_bottomdown2 }}
+							{% if form.road_image_bottomdown2.value and "https://s3.ap-south-1.amazonaws.com/" in form.road_image_bottomdown2.value|stringformat:"s" %}
+								<a href="{{ form.road_image_bottomdown2.value }}" target="_blank"> Roads image bottomdown2 </a>
+							{% else %}
+								{{ form.road_image_bottomdown2 }}
+							{% endif %}
+							
 						</div>
 					</div>
 
@@ -687,7 +721,12 @@ $(document).ready(function(){
 
 
 						<div class="col-md-3">
-							{{form.drainage_image_bottomdown1  }}
+							
+							{% if form.drainage_image_bottomdown1.value and "https://s3.ap-south-1.amazonaws.com/" in form.drainage_image_bottomdown1.value|stringformat:"s" %}
+								<a href="{{ form.drainage_image_bottomdown1.value }}" target="_blank"> Drainage image bottomdown1 </a>
+							{% else %}
+								{{ form.drainage_image_bottomdown1 }}
+							{% endif %}
 						</div>
 					</div>
 
@@ -709,7 +748,11 @@ $(document).ready(function(){
 						</div>
 
 						<div class="col-md-3">
-							{{form.drainage_image_bottomdown2  }}
+							{% if form.drainage_image_bottomdown2.value and "https://s3.ap-south-1.amazonaws.com/" in form.drainage_image_bottomdown2.value|stringformat:"s" %}
+								<a href="{{ form.drainage_image_bottomdown2.value }}" target="_blank"> Drainage image bottomdown2 </a>
+							{% else %}
+								{{ form.drainage_image_bottomdown2 }}
+							{% endif %}
 						</div>
 
 						<div class="col-md-3">
@@ -753,7 +796,11 @@ $(document).ready(function(){
 						</div>
 
 						<div class="col-md-3">
-							{{form.gutter_image_bottomdown1 }}
+							{% if form.gutter_image_bottomdown1.value and "https://s3.ap-south-1.amazonaws.com/" in form.gutter_image_bottomdown1.value|stringformat:"s" %}
+								<a href="{{ form.gutter_image_bottomdown1.value }}" target="_blank"> Gutter image bottomdown1 </a>
+							{% else %}
+								{{ form.gutter_image_bottomdown1 }}
+							{% endif %}
 						</div>
 					</div>
 
@@ -775,7 +822,11 @@ $(document).ready(function(){
 						</div>
 
 						<div class="col-md-3">
-							{{form.gutter_image_bottomdown2  }}
+							{% if form.gutter_image_bottomdown2.value and "https://s3.ap-south-1.amazonaws.com/" in form.gutter_image_bottomdown2.value|stringformat:"s" %}
+								<a href="{{ form.gutter_image_bottomdown2.value }}" target="_blank"> Gutter image bottomdown2 </a>
+							{% else %}
+								{{ form.gutter_image_bottomdown2 }}
+							{% endif %}
 						</div>
 					</div>
 
@@ -832,7 +883,11 @@ $(document).ready(function(){
 						</div>
 
 						<div class="col-md-3">
-							{{form.waste_management_image_bottomdown1 }}
+							{% if form.waste_management_image_bottomdown1.value and "https://s3.ap-south-1.amazonaws.com/" in form.waste_management_image_bottomdown1.value|stringformat:"s" %}
+								<a href="{{ form.waste_management_image_bottomdown1.value }}" target="_blank"> Waste management image bottomdown1 </a>
+							{% else %}
+								{{ form.waste_management_image_bottomdown1 }}
+							{% endif %}
 						</div>
 
 						<div class="col-md-3">
@@ -841,7 +896,11 @@ $(document).ready(function(){
 
 
 						<div class="col-md-3">
-							{{form.waste_management_image_bottomdown2 }}
+							{% if form.waste_management_image_bottomdown2.value and "https://s3.ap-south-1.amazonaws.com/" in form.waste_management_image_bottomdown2.value|stringformat:"s" %}
+								<a href="{{ form.waste_management_image_bottomdown2.value }}" target="_blank"> Waste management image bottomdown2 </a>
+							{% else %}
+								{{ form.waste_management_image_bottomdown2 }}
+							{% endif %}
 						</div>
 					</div>
 

@@ -58,7 +58,7 @@ class avni_sync():
         # latest_date = last_submission_date.submission_date + timedelta(days=1)
         today = datetime.today() + timedelta(days= -1)
         latest_date = today.strftime('%Y-%m-%dT00:00:00.000Z')
-        iso = "2024-03-24T05:40:00.000Z"
+        iso = "2024-07-05T05:40:00.000Z"
         return(latest_date)
         # return iso
 
@@ -760,7 +760,7 @@ class avni_sync():
 
     def SaveDataFromIds(self):
 
-        IdList = ['31780f12-115b-43e5-a7ca-21f315fe2905'] # 'cda4ce0e-f05c-4b49-ac6e-ed160eba1940']
+        IdList = ['96b3fd71-d837-4837-b1b3-e521a64c05c4'] # 'cda4ce0e-f05c-4b49-ac6e-ed160eba1940']
 
         ''' There Are Three Types Of Flag We Use
         1 - Subject Type
@@ -768,7 +768,7 @@ class avni_sync():
         3 - Program Encounter
         Please provide flag when sync data using UUIDs'''
 
-        flag = 'Program Encounter'
+        flag = 'Subject Type'
 
         for i in IdList:
             try:
@@ -1027,7 +1027,7 @@ class avni_sync():
     # methods for sync encounter data through json file.
 
     def sync_sanitation_data(self):
-        with open('/home/shelter/Desktop/Json_files_for_upload/sanitation_data_01_08_2023.json', 'r') as f:
+        with open('/home/ubuntu/kuldeep/sanitation_data_08_10_2024.json', 'r') as f:
             count = 1
             data = json.load(f)
             for sanitation in data:
@@ -1078,7 +1078,7 @@ class avni_sync():
                     print(e, hh_number, "sanitation_uuid = " + san_uuid)
 
     def sync_water_data(self):
-        with open('/home/shelter/Desktop/Json_files_for_upload/water_data_10_08_2023.json', 'r') as f:
+        with open('/home/ubuntu/kuldeep/water_data_08_10_2024.json', 'r') as f:
             count = 1
             data = json.load(f)
             for water in data:
@@ -1119,7 +1119,7 @@ class avni_sync():
 
 
     def sync_waste_data(self):
-        with open('/home/shelter/Desktop/Json_files_for_upload/waste_data_01_08_2023.json', 'r') as f:
+        with open('/home/ubuntu/kuldeep/waste_data_08_10_2024.json', 'r') as f:
             count = 1
             data = json.load(f)
             for waste in data:
@@ -1278,7 +1278,7 @@ class avni_sync():
         
                     
     def sync_Electricity_data(self):
-        with open('/home/shelter/Desktop/Jupyter_Scripts/Encounter_Data_for_Upload_on_SA_from_json/Data_Files/electricity_encounter_data_download_as_json_file_2024-01-02T12_04_35.869815+05_30.json', 'r') as f:
+        with open('/home/ubuntu/kuldeep/electricity_data_08_10_2024.json', 'r') as f:
             count = 1
             data = json.load(f)
             for electricity_obj in data:
@@ -1311,6 +1311,16 @@ class avni_sync():
                 else:
                     final_data[ques_shelter] = rim_data[ques_avni]
         return final_data
+    
+    def get_rim_images(self, rim_data):
+        rim_add_data = {}
+        # Checking image data file available for slum for rim additional info.
+        rim_additional_ques = {'Toilet Image 1': 'toilet_image_bottomdown1', 'Toilet Image 2': 'toilet_image_bottomdown2', 'Water Image 1': 'water_image_bottomdown1', 'Water Image 2': 'water_image_bottomdown2', 'Waste Image 1': 'waste_management_image_bottomdown1', 'Waste Image 2': 'waste_management_image_bottomdown2', 'Drainage Image 1': 'drainage_image_bottomdown1', 'Drainage Image 2': 'drainage_image_bottomdown2', 'Gutter Image 1': 'gutter_image_bottomdown1', 'Gutter Image 2': 'gutter_image_bottomdown2', 'Road and Access Image 1': 'roads_image_bottomdown1', 'Road and Access Image 2': 'road_image_bottomdown2', 'General Information Image 1': 'general_image_bottomdown1', 'General Information Image 2': 'general_image_bottomdown2'}
+        for rim_add_que, rim_val in rim_additional_ques.items():
+            if rim_add_que in rim_data:
+                    rim_add_data[rim_val] = rim_data[rim_add_que]
+                    
+        return rim_add_data
     
     def update_toilet_data(self, get_text):
         section_name = 'Toilet'
@@ -1371,7 +1381,15 @@ class avni_sync():
                                                 modified_on = last_modified_at)
                         print("Slum_data Created for slum : ", slum_name)
                     Update_count += 1
-        return Update_count
+                    # Checking RIM images.
+                    rim_add_data = self.get_rim_images(data['observations'])
+                    rim_add_flag = False
+                    if rim_add_data != {}:
+                        rim_add_obj = Rapid_Slum_Appraisal.objects.filter(slum_name_id = slum_id)
+                        if rim_add_obj.exists():
+                            rim_add_obj.update(**rim_add_data)
+                            rim_add_flag = True
+        return Update_count, rim_add_flag
     
     def avni_uuid_details(self, slum_id):
         ''' This method will return avni_uuid of the slum if slum_id present in slum_location_uuids.json else return None'''
@@ -1389,9 +1407,10 @@ class avni_sync():
             slumRim_path = 'api/subjects?lastModifiedDateTime=' + latest_date + '&subjectType=' + 'Slum-RIM%20Registration&locationIds=' + avni_uuid
             result = requests.get(self.base_url + slumRim_path, headers={'AUTH-TOKEN': self.get_cognito_token()})
             get_text = json.loads(result.text)['content']
-            return  True, self.update_rim_data(get_text)
+            update_cnt, rim_add_flag = self.update_rim_data(get_text)
+            return  True, update_cnt, rim_add_flag
         else:
-            return False, 0
+            return False, 0, False
     
     def sync_toilet_data(self, slum_id):
         """ Using this method we fetch CTB data slum wise from avni.
