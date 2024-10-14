@@ -38,6 +38,7 @@ from django.http import Http404
 from django.core.exceptions import PermissionDenied
 from graphs.models import *
 from django.db.models import Avg
+from graphs.sync_avni_data import avni_sync
 
 @staff_member_required
 def index(request):
@@ -161,6 +162,16 @@ def rimedit(request,Rapid_Slum_Appraisal_id):
 			return HttpResponseRedirect('/admin/sluminformation/rim/display')
 	elif request.method=="GET":
 		R = Rapid_Slum_Appraisal.objects.get(pk=Rapid_Slum_Appraisal_id)
+
+		# Step 2: changing urls of avni images.
+		fields_to_modify= ['toilet_image_bottomdown1', 'toilet_image_bottomdown2', 'water_image_bottomdown1', 'water_image_bottomdown2', 'waste_management_image_bottomdown1', 'waste_management_image_bottomdown2', 'drainage_image_bottomdown1', 'drainage_image_bottomdown2', 'gutter_image_bottomdown1', 'gutter_image_bottomdown2', 'roads_image_bottomdown1', 'road_image_bottomdown2', 'general_image_bottomdown1', 'general_image_bottomdown2']
+		a = avni_sync()
+		for field in fields_to_modify:
+			value = getattr(R, field)  # Get the field's current value
+			# Modify each field based on type or other logic, only for display
+			if "https://s3.ap-south-1.amazonaws.com/" in str(value):
+				new_link = a.get_image(str(value))
+				setattr(R, field, new_link)
 		form = Rapid_Slum_AppraisalForm(instance=R)
 	return render(request, 'riminsert.html', {'form': form})
 
@@ -593,7 +604,7 @@ def city_wise_map(request, key, slumname = None, flag=True):
 	else:
 		cipher = AESCipher()
 		city = cipher.decrypt(key.split('::')[1])
-		city = City.objects.get(name__id=city)
+		city = City.objects.get(id=city)
 
 	template = loader.get_template('city_wise_map.html')
 	data={}
@@ -611,7 +622,7 @@ def city_wise_map(request, key, slumname = None, flag=True):
 def login_success(request):
 	return_to = ""
 	if 'next' in request.GET:
-		return_to =  request.GET['next']
+		return_to = request.GET['next']
 	if (request.user.groups.filter(name__in=['sponsor']).exists()):
 		return HttpResponseRedirect('/sponsor/')
 	else:

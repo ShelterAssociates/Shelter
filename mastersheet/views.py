@@ -885,7 +885,7 @@ def sync_kobo_data(request):
             Return => Number of Forms synced.
         '''
         sync_obj = avni_sync()
-        slum_in_avni_flag, rim_sync_num = sync_obj.sync_rim_data(slum.id)
+        slum_in_avni_flag, rim_sync_num, rim_add_flag = sync_obj.sync_rim_data(slum.id)
         toilet_sync_num = sync_obj.sync_toilet_data(slum.id)
         data['flag'] = True
         if not (slum_in_avni_flag):
@@ -903,6 +903,11 @@ def sync_kobo_data(request):
             else:
                 data['msg'] += "\n There is no records available to sync CTB data for slum - " + slum.name
                 data['msg'] += "\nTotal records updated : " + str(toilet_sync_num)
+            if rim_add_flag:
+                data['msg'] += "\n Photos Added to the RIM Additional Data for - " + slum.name
+            else:
+                data['msg'] += "\n Rim Additional data not available for this slum - " + slum.name
+            
     except Exception as e:
         data['flag'] = False
         data['msg'] = "Error occurred while sync from kobo. Please contact administrator." + str(e)
@@ -1865,7 +1870,7 @@ def addSponsor(request):
         sp_details_pk = create_sp_details.pk
         create_sponsor_project_details_subfields([create_sp_details.pk, household_code, quarter_id])
         return_url_id = sp_details_pk
-    admin_url = "http://127.0.0.1:8000" + reverse('admin:sponsor_sponsorprojectdetails_change', args=[int(return_url_id)])
+    admin_url = BASE_APP_URL + reverse('admin:sponsor_sponsorprojectdetails_change', args=[int(return_url_id)])
     response['response'] = admin_url
     return HttpResponse(json.dumps(response), content_type="application/json")
 
