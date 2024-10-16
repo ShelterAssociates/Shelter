@@ -1870,7 +1870,7 @@ def addSponsor(request):
         sp_details_pk = create_sp_details.pk
         create_sponsor_project_details_subfields([create_sp_details.pk, household_code, quarter_id])
         return_url_id = sp_details_pk
-    admin_url = BASE_APP_URL + reverse('admin:sponsor_sponsorprojectdetails_change', args=[int(return_url_id)])
+    admin_url = settings.BASE_APP_URL + reverse('admin:sponsor_sponsorprojectdetails_change', args=[int(return_url_id)])
     response['response'] = admin_url
     return HttpResponse(json.dumps(response), content_type="application/json")
 
