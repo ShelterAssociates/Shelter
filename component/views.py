@@ -217,9 +217,11 @@ def get_avni_image_urls(rim_obj):
             old_link = str(rim_obj[field])
             if "https://s3.ap-south-1.amazonaws.com/" in old_link:
                 new_link = a.get_image(old_link)
-            else:
+            elif "ShelterPhotos" in old_link:
                 prefix = 'https://app.shelter-associates.org/media/'
                 new_link = prefix + old_link
+            else:
+                continue
             rim_obj[field] = new_link
     return rim_obj
 
