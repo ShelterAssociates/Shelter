@@ -22,6 +22,7 @@ let zindex = 0;
 let global_slum_id=0;
 let lst_sponsor =[];
 let parse_component = {};
+let globalJsonData = {};
 let modelsection = {
 		"General" : "General information" ,
 		"Toilet" : "Status of sanitation (pre SBM)",
@@ -154,6 +155,23 @@ function initMap(){
     initMap12();
 }
 
+function getQueryParam(param) {
+    const params = new URLSearchParams(window.location.search);
+    return params.get(param);
+}
+
+
+function readJSONFile(filePath, callback, param1, param2) {
+    return fetch(filePath)
+        .then(response => response.json())
+        .then(data => {
+            callback(data, param1, param2);  // Assign the JSON response to a global variable
+        })
+        .catch(error => {
+            console.error('Error fetching JSON data:', error);
+        });
+}
+
 // Get filters and RIM data after selecting particular slum
 function slum_data_fetch(slumId){
     let compochk = $("#compochk");
@@ -172,7 +190,13 @@ function slum_data_fetch(slumId){
 
     Promise.all(ajax_calls).then(function(result) {
         global_slum_id =slumId;
-        generate_filter(slumId, result[0]);
+        const visible = getQueryParam('mr');
+        if (visible=='1'){
+            readJSONFile(`/admin/translations/?mr=${visible}`, generate_filter, slumId, result[0])
+        }else{
+            readJSONFile(`/admin/translations/`, generate_filter, slumId, result[0])
+        }
+        // generate_filter(globalJsonData, slumId, result[0]);
         generate_RIM(result[1]);
     });
 
@@ -257,14 +281,14 @@ function generate_RIM(result){
     });
 }
 // Generates right filter
-function generate_filter(slumID, result){
+function generate_filter(globalJsonData, slumID, result){
     let compochk = $("#compochk");
     let counter = 0;
     let panel_component = "";
     $.each(result, function(k, v){
         counter = counter + 1;
 		panel_component += '<div name="div_group" class=" panel  panel-default panel-heading"> ' +
-		                    '<input class="chk" name="grpchk" type="checkbox" onclick="checkAllGroup(this)"></input>&nbsp;&nbsp;<a name="chk_group" data-toggle="collapse" data-parent="#compochk" href="#' + counter + '"><b>' + k + '</b></a>' +
+		                    '<input class="chk" name="grpchk" type="checkbox" onclick="checkAllGroup(this)"></input>&nbsp;&nbsp;<a name="chk_group" data-toggle="collapse" data-parent="#compochk" href="#' + counter + '"><b><span>' + globalJsonData[k] + '</span></b></a>' +
 		                    '</br>'
 
 		panel_component += '<div id="' + counter + '" class="panel-collapse collapse" name="'+k+'">';
@@ -273,7 +297,7 @@ function generate_filter(slumID, result){
             let chkcolor = v1['blob']['polycolor'];
             panel_component += '<div name="div_group" >' + '&nbsp;&nbsp;&nbsp;' +
                                  '<input name="chk1" class="chk" style="background:'+chkcolor+';background-color:' + chkcolor + '; " selection="' + k + '" component_type="' + v1['type'] + '" type="checkbox" value="' + k1 + '" onclick="checkSingleGroup(this);" >' +
-                                   '<a>&nbsp;' + k1 + '</a>&nbsp;(' + v1['child'].length + ')' +
+                                   '<a>&nbsp;' + globalJsonData[k1] + '</a>&nbsp;(' + v1['child'].length + ')' +
                                  '</input>' +
                                 '</div>';
             if (k1=="Structure"){
