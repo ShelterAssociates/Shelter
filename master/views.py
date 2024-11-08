@@ -8,7 +8,7 @@ from django.urls import reverse
 from django.contrib.admin.views.decorators import staff_member_required
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.template import RequestContext, loader
-from django.http import HttpResponse, HttpResponseRedirect
+from django.http import HttpResponse, HttpResponseRedirect, JsonResponse
 from django.views.generic import ListView
 from django.views.decorators.csrf import csrf_exempt
 from django.views.generic.edit import FormView
@@ -663,5 +663,15 @@ def dashboard_view(request, key, slumname = None):
 	context = data
 	return HttpResponse(template.render(context))
 
+def read_files(path):
+    with open(path, 'r') as datafile:
+        data = json.load(datafile)
+        return data
 
-
+def get_translations(request):
+    mr_flag = request.GET.get('mr')
+    if mr_flag == '1':
+        output = read_files("master/translations/mr_translations.json")
+    else:
+        output = read_files("master/translations/eng_translations.json")
+    return JsonResponse(output)
