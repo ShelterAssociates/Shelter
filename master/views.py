@@ -664,14 +664,14 @@ def dashboard_view(request, key, slumname = None):
 	return HttpResponse(template.render(context))
 
 def read_files(path):
-    with open(path, 'r') as datafile:
+    with open(path, 'r', encoding='utf-8') as datafile:
         data = json.load(datafile)
         return data
 
 def get_translations(request):
     mr_flag = request.GET.get('mr')
     if mr_flag == '1':
-        output = read_files("master/translations/mr_translations.json")
+        output = read_files("/srv/Shelter/master/translations/mr_translations.json")
     else:
-        output = read_files("master/translations/eng_translations.json")
+        output = read_files("/srv/Shelter/master/translations/eng_translations.json")
     return JsonResponse(output)
