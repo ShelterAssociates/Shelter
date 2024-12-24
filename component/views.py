@@ -19,6 +19,7 @@ from sponsor.models import SponsorProjectDetails
 from graphs.sync_avni_data import *
 from utils.utils_permission import apply_permissions_ajax, access_right, deco_rhs_permission
 from django.core.exceptions import PermissionDenied
+from concurrent.futures import ThreadPoolExecutor
 
 slum_list = []
 
@@ -209,20 +210,38 @@ def get_kobo_RIM_data(request, slum_id):
         output = {}
     return HttpResponse(json.dumps(output),content_type='application/json')
 
+
+def get_image(image_name, image_link, cognito_token):
+    path = 'https://app.avniproject.org/media/signedUrl?url='
+    request_1 = requests.get(path + image_link, headers={'AUTH-TOKEN': cognito_token})
+    return image_name, request_1.text
+
+def fetch_images_and_update_urls(image_dict, cognito_token):
+    with ThreadPoolExecutor() as executor:
+        # Submit tasks with Cognito token included
+        tasks = [executor.submit(get_image, name, link, cognito_token) for name, link in image_dict.items()]
+        updated_dict = {task.result()[0]: task.result()[1] for task in tasks}
+    return updated_dict
+
+
 def get_avni_image_urls(rim_obj):
-    fields_to_modify= ['toilet_image_bottomdown1', 'toilet_image_bottomdown2', 'water_image_bottomdown1', 'water_image_bottomdown2', 'waste_management_image_bottomdown1', 'waste_management_image_bottomdown2', 'drainage_image_bottomdown1', 'drainage_image_bottomdown2', 'gutter_image_bottomdown1', 'gutter_image_bottomdown2', 'roads_image_bottomdown1', 'road_image_bottomdown2', 'general_image_bottomdown1', 'general_image_bottomdown2', 'general_info_left_image', 'toilet_info_left_image', 'waste_management_info_left_image', 'water_info_left_image', 'roads_and_access_info_left_image', 'drainage_info_left_image', 'gutter_info_left_image']
+    fields_to_modify= ['toilet_image_bottomdown1', 'toilet_image_bottomdown2', 'water_image_bottomdown1', 'water_image_bottomdown2', 'waste_management_image_bottomdown1', 'waste_management_image_bottomdown2', 'drainage_image_bottomdown1', 'drainage_image_bottomdown2', 'gutter_image_bottomdown1', 'gutter_image_bottomdown2', 'roads_image_bottomdown1', 'road_image_bottomdown2', 'general_image_bottomdown1', 'general_image_bottomdown2', 'general_info_left_image', 'toilet_info_left_image', 'waste_management_info_left_image', 'water_info_left_image', 'roads_and_access_info_left_image', 'drainage_info_left_image', 'gutter_info_left_image', 'drainage_report_image']
+    image_dict = {}
     a = avni_sync()
     for field in fields_to_modify:
         if field in rim_obj:
             old_link = str(rim_obj[field])
             if "https://s3.ap-south-1.amazonaws.com/" in old_link:
-                new_link = a.get_image(old_link)
+                image_dict[field] = old_link
             elif "ShelterPhotos" in old_link:
                 prefix = 'https://app.shelter-associates.org/media/'
-                new_link = prefix + old_link
+                rim_obj[field] = prefix + old_link
             else:
                 continue
-            rim_obj[field] = new_link
+    # Process images with Cognito token
+    cognito_token = a.get_cognito_token()
+    updated_image_dict = fetch_images_and_update_urls(image_dict, cognito_token)
+    rim_obj.update(updated_image_dict)
     return rim_obj
 
 def get_kobo_RIM_report_data(request, slum_id):
