@@ -194,7 +194,7 @@ function slum_data_fetch(slumId){
         if (visible=='1'){
             readJSONFile(`/admin/translations/?mr=${visible}`, generate_filter, slumId, result[0])
         }else{
-            readJSONFile(`/admin/translations/`, generate_filter, slumId, result[0])
+            generate_filter(globalJsonData, slumId, result[0]);
         }
         // generate_filter(globalJsonData, slumId, result[0]);
         generate_RIM(result[1]);
@@ -287,17 +287,19 @@ function generate_filter(globalJsonData, slumID, result){
     let panel_component = "";
     $.each(result, function(k, v){
         counter = counter + 1;
+        panel_component_value = Object.keys(globalJsonData).length > 0 ? globalJsonData[k] : k;
 		panel_component += '<div name="div_group" class=" panel  panel-default panel-heading"> ' +
-		                    '<input class="chk" name="grpchk" type="checkbox" onclick="checkAllGroup(this)"></input>&nbsp;&nbsp;<a name="chk_group" data-toggle="collapse" data-parent="#compochk" href="#' + counter + '"><b><span>' + globalJsonData[k] + '</span></b></a>' +
+		                    '<input class="chk" name="grpchk" type="checkbox" onclick="checkAllGroup(this)"></input>&nbsp;&nbsp;<a name="chk_group" data-toggle="collapse" data-parent="#compochk" href="#' + counter + '"><b><span>' + panel_component_value + '</span></b></a>' +
 		                    '</br>'
 
 		panel_component += '<div id="' + counter + '" class="panel-collapse collapse" name="'+k+'">';
 
         $.each(v, function(k1, v1) {
             let chkcolor = v1['blob']['polycolor'];
+            inner_panel_component_value = Object.keys(globalJsonData).length > 0 ? globalJsonData[k1] : k1;
             panel_component += '<div name="div_group" >' + '&nbsp;&nbsp;&nbsp;' +
                                  '<input name="chk1" class="chk" style="background:'+chkcolor+';background-color:' + chkcolor + '; " selection="' + k + '" component_type="' + v1['type'] + '" type="checkbox" value="' + k1 + '" onclick="checkSingleGroup(this);" >' +
-                                   '<a>&nbsp;' + globalJsonData[k1] + '</a>&nbsp;(' + v1['child'].length + ')' +
+                                   '<a>&nbsp;' + inner_panel_component_value + '</a>&nbsp;(' + v1['child'].length + ')' +
                                  '</input>' +
                                 '</div>';
             if (k1=="Structure"){
