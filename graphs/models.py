@@ -4,7 +4,7 @@ from master.models import City, Slum
 from jsonfield import JSONField
 import datetime
 from django.utils import timezone
-
+from datetime import date
 class HouseholdData(models.Model):
 
 	household_number = models.CharField(max_length=5)
@@ -275,4 +275,93 @@ class CovidData(models.Model):
 	willing_to_vaccinated = models.CharField(max_length=100, verbose_name='Are you willing to get vaccinated?', null=True)
 	if_not_why = models.TextField(verbose_name='If not, why?', null=True)
 	note = models.TextField(verbose_name='Note', null=True)
+
+
+class MemberData(models.Model):
+
+	GENDER_CHOICES=(('1', 'Male'),
+                ('2', 'Female'),
+                ('3', 'Other')
+            )
+	slum = models.ForeignKey(Slum, on_delete=models.CASCADE)
+	household_number = models.IntegerField(null = True, verbose_name="House Number")
+	member_uuid = models.CharField(max_length=100, verbose_name='Member Uuid', blank=True)
+	member_first_name = models.CharField(max_length=100, verbose_name='First Name', blank=True)
+	member_last_name = models.CharField(max_length=100, verbose_name='Last Name', blank=True)
+	date_of_birth = models.DateField(null = True, verbose_name="Date Of Birth")
+	gender = models.CharField(choices=GENDER_CHOICES, max_length=2, blank=True, verbose_name='Gender')
+	created_date = models.DateField(null=True, verbose_name="Created date")
+	submission_date = models.DateField(null=True, verbose_name="Last Modified date")
+	member_data = JSONField(null=True, blank=True)
+		
+	# Computed property for age calculation
+	@property
+	def age(self):
+		if self.date_of_birth:
+			today = date.today()
+			return today.year - self.date_of_birth.year - ((today.month, today.day) < (self.date_of_birth.month, self.date_of_birth.day))
+		return None
+
+	# Method to get values from JSONField safely
+	def get_json_field(self, field_name):
+		if self.member_data and isinstance(self.member_data, dict):
+			return self.member_data.get(field_name, None)
+		return None
+
+	# Computed properties for JSON fields
+	@property
+	def disability_status(self):
+		return self.get_json_field("Are you a person with disability ?")
+
+	@property
+	def education(self):
+		return self.get_json_field("Education")
+
+	@property
+	def employment_status(self):
+		return self.get_json_field("Employment Status")
+
+	@property
+	def marital_status(self):
+		return self.get_json_field("Marital Status")
+
+	@property
+	def children_count(self):
+		return self.get_json_field("How many Children do you have ?")
+
+	@property
+	def menstruation_status(self):
+		return self.get_json_field("Are you menstruating ?")
+
+	# Computed property to map gender codes
+	@property
+	def gender_display(self):
+		gender_mapping = {'1': 'Male', '2': 'Female', '3': 'Other'}
+		return gender_mapping.get(self.gender, 'Unknown')
+
+
+class MemberProgramData(models.Model):
+	slum = models.ForeignKey(Slum, on_delete=models.CASCADE, verbose_name='Slum Id')
+	member = models.ForeignKey(MemberData, on_delete=models.CASCADE, verbose_name='Member Id')
+	program_uuid = models.CharField(max_length=100, verbose_name='Program uuid', blank=True)
+	program_name = models.CharField(max_length=100, verbose_name='First Name', blank=True)
+	created_date = models.DateField(null=True, verbose_name="Program Enrolment date")
+	submission_date = models.DateField(null=True, verbose_name="Last Modified date")
+	program_exit_date = models.DateField(null=True, verbose_name="Program Exit date")
+	program_data = JSONField(null=True, blank=True)
+
+class MemberEncounterData(models.Model):
+	slum = models.ForeignKey(Slum, on_delete=models.CASCADE, verbose_name='Slum Id')
+	member = models.ForeignKey(MemberData, on_delete=models.CASCADE, verbose_name='Member Id')
+	program = models.ForeignKey(MemberProgramData, on_delete=models.CASCADE, verbose_name='Program Enrollment Id', null=True, blank=True)
+	encounter_uuid = models.CharField(max_length=100, verbose_name='Encounter uuid', blank=True)
+	encounter_name = models.CharField(max_length=100, verbose_name='Encounter uuid', blank=True)
+	created_date = models.DateField(null=True, verbose_name="Created date")
+	submission_date = models.DateField(null=True, verbose_name="Last Modified date")
+	encounter_data = JSONField(null=True, blank=True)
+
+
+
+
+
 
