@@ -40,3 +40,16 @@ class CovidDataAdmin(admin.ModelAdmin):
 	list_per_page = 10
 
 admin.site.register(CovidData, CovidDataAdmin)
+
+
+@admin.register(MemberData)
+class MemberDataAdmin(admin.ModelAdmin):
+	list_filter = ['slum__electoral_ward__administrative_ward__city']
+	list_display = ('member_first_name', 'member_uuid' ,'slum','created_date','submission_date')
+	search_fields = ['slum_id__name']
+	raw_id_fields = ['slum']
+	list_per_page = 10
+
+# admin.site.register(MemberData, MemberDataAdmin)
+
+# admin.site.register(GroupData, GroupDataAdmin)

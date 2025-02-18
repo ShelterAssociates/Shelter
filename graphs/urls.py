@@ -10,5 +10,6 @@ urlpatterns = [
     url(r'^covid_report/$',give_report_covid_data, name='give_report_covid_data'), # url for coid data
     url(r'^factsheet_data/$',factsheetData, name='factsheetData'),
     url(r'^factsheet_data_download/$',factsheetDataDownload, name='factsheetDataDownload'),   #  url for family factsheet data
-    
+    url(r'^member_data/$',member_data, name='member_data'),
+    url(r'^show/MemberData/$', MemberDataView, name='MemberDataView'),
 ]

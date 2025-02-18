@@ -371,7 +371,6 @@ class avni_sync():
                     self.FamilyFactsheetData(j, slum, HH)
 
     def FamilyFactsheetData(self, data, slum_name, HH):  # checked
-
         try:
             use_of_toilet = None
             toilet_connected_to = None
@@ -1428,94 +1427,100 @@ class avni_sync():
                 get_text = json.loads(result.text)['content']
                 Update_count += self.update_toilet_data(get_text)
             return Update_count
+    
+    def SaveMemberData(self, datafile_path):
+        with open(datafile_path, 'r') as f:
+            data = json.load(f)
+            error = []
+            count = 1
+            for item in data:
+                try:
+                    slum = Slum.objects.filter(name = item['slum'])
+                    if not slum.exists():
+                        continue
+                    update_data_values = {}
+                    slum = slum[0]
+                    member_uuid = item['member_uuid']
+                    update_data_values['created_date'] = datetime.strptime(item['created_date'], '%B %d, %Y, %I:%M %p').date()
+                    update_data_values['submission_date'] = datetime.strptime(item['submission_date'], '%B %d, %Y, %I:%M %p').date()
+                    update_data_values['date_of_birth'] = datetime.strptime(item['date_of_birth'], '%B %d, %Y').date()
+                    update_data_values['household_number'] = int(item['household_number'])
+                    update_data_values['gender'] = "1" if item['gender'] == 'Male' else "2" if item['gender'] == "Female" else "3"
+                    item.update(update_data_values)
+                    # delete extra keys ....
+                    delete_keys = ['member_uuid', 'slum']
+                    for key_ in delete_keys:
+                        del item[key_]
+                    # Creating/Updating  model data
+                    to_save = MemberData.objects.update_or_create(slum=slum, member_uuid = member_uuid, defaults=item)
+                    print("Record Saved Successfully", count)
+                    count += 1
+                except Exception as e:
+                    error.append([e, item['slum']])
+                    print(e, item['slum'], count)
+                    count += 1
+            print(error)
 
+    def SaveMemberProgramData(self, datafile_path):
+        with open(datafile_path, 'r') as f:
+            data = json.load(f)
+            error = []
+            count = 1
+            for item in data:
+                try:
+                    update_data_values = {}
+                    member_id = item['member_id']
+                    member = MemberData.objects.filter(member_uuid = item['member_id'])
+                    if member.exists():
+                        update_data_values['created_date'] = datetime.strptime("".join(item['created_date'].split(',')[:-1]), '%B %d %Y').date()
+                        update_data_values['submission_date'] = datetime.strptime("".join(item['submission_date'].split(',')[:-1]) , '%B %d %Y').date()
+                        if item['program_exit_date'] != '':
+                            update_data_values['program_exit_date'] = datetime.strptime("".join(item['program_exit_date'].split(',')[:-1]), '%B %d %Y').date()
+                        else:
+                            del item['program_exit_date']
+                        update_data_values['program_uuid'] = item['family_member_menstrual_hygiene__uuid']
+                        item.update(update_data_values)
+                        remove_keys = ['family_member_menstrual_hygiene__uuid', 'first_name', 'member_id']
+                        item = {k : v for k, v in item.items() if k not in remove_keys}
+                        to_save = MemberProgramData.objects.update_or_create(member=member[0], slum = member[0].slum, defaults=item)
+                        print("Record Saved Successfully", count)
+                    else:
+                        error.append([member_id, "Member not available"])
+                    count += 1
+                except Exception as e:
+                    error.append([e, member_id])
+                    print(e, member_id, count)
+                    count += 1
+            print(error)
 
-
-
-
-
-
-    # def set_mobile_number(self):
-    #     get = HouseholdData.objects.all().filter(slum_id=1675)
-    #     get_data = get.values('household_number','rhs_data')
-    #     for i in get_data:
-    #         HH = i['household_number']
-    #         rhs = i['rhs_data']
-    #         for k,v in rhs.items():
-    #             if k == 'Enter the 10 digit mobile number':
-    #                 rhs.update({'group_el9cl08/Enter_the_10_digit_mobile_number' : v})
-    #                 rhs.pop(k)
-    #             if k == 'Aadhar number' :
-    #                 rhs.update({'group_el9cl08/Aadhar_number' :v})
-    #                 rhs.pop(k)
-    #         a = HouseholdData.objects.filter(slum_id=1675,household_number =HH)
-    #         a.update(rhs_data= rhs)
-    #         print('rhs updated for',HH)
-    #
-    # def changeListToStrInFfData(self):
-    #
-    #     getData = HouseholdData.objects.filter(slum_id=1675)
-    #     for i in getData:
-    #         ff  = getData.filter(household_number=i.household_number)
-    #         getff = ff.values_list('ff_data', flat=True)[0]
-    #         if type(getff['group_ne3ao98/Use_of_toilet']) == list:
-    #             useOfToilte = getff['group_ne3ao98/Use_of_toilet']
-    #             useOfToilte = ','.join(i for i in useOfToilte)
-    #             getff['group_ne3ao98/Use_of_toilet']= useOfToilte
-    #             ff.update(ff_data = getff)
-    #             print('updated for',i.household_number)
-    #         elif type(useOfToilte) == str:pass
-    #         else : pass
-
-    # def programEncounter_api_call(self):
-    #     latest_date = self.lastModifiedDateTime()
-    #     # programEncounters_path = 'api/programEncounters?lastModifiedDateTime=' + latest_date +'&encounterType=Family factsheet'
-    #     programEncounters_path = 'api/programEncounters?lastModifiedDateTime=' + latest_date +'&encounterType=Daily Reporting'
-    #     result = requests.get(self.base_url + programEncounters_path,headers={'AUTH-TOKEN': self.get_cognito_token()})
-    #     get_page_count = json.loads(result.text)['totalPages']
-    #     return (get_page_count, programEncounters_path)
-    #
-    # def saveProgramEncounterData(self, encounter_ids,slum_name):
-    #     for i in encounter_ids:
-    #         send_request = requests.get(self.base_url + 'api/programEncounter/' + i,headers={'AUTH-TOKEN': self.get_cognito_token()})
-    #         get_data = json.loads(send_request.text)
-    #         if 'Encounter type' in get_data.keys():
-    #             if get_data['Encounter type'] == 'Family factsheet':
-    #                 self.saveFamilyFactsheetData(get_data['observations'],slum_name)
-    #             elif get_data['Encounter type'] == 'Daily Reporting':
-    #                 HH = self.getHouseholdNumberFromEnrolmentID(get_data['Enrolment ID'])
-    #                 self.saveDailyReportingData(get_data['observations'],slum_name,HH) #
-    #             else : pass
-    #
-    # def fetch_program_encounter_data(self):
-    #     totalPages, enc_path = self.programEncounter_api_call()
-    #     for i in range(totalPages):
-    #         send_request = requests.get(self.base_url + enc_path + '&' + str(i),headers={'AUTH-TOKEN': self.get_cognito_token()})
-    #         data = json.loads(send_request.text)['content']
-    #         for j in data:
-    #             if j['Encounter type'] == 'Daily Reporting':
-    #                 HH,slum = self.getHouseholdNumberFromEnrolmentID(j['Enrolment ID'])
-    #                 self.saveDailyReportingData(j['observations'],slum,HH)
-    #             encounter_data = j['observations']
-    #             enrolment_id = j['Enrolment ID']
-    #             send_request1 = requests.get(self.base_url + 'api/enrolment/' + enrolment_id,headers={'AUTH-TOKEN': self.get_cognito_token()})
-    #             text =  json.loads(send_request1.text)
-    #             subject_id = text['Subject ID']
-    #             encount_ids = text['encounters']
-    #             send_request2 = requests.get(self.base_url + 'api/subject/' + subject_id ,headers={'AUTH-TOKEN': self.get_cognito_token()})
-    #             get_HH_data = json.loads(send_request2.text)
-    #             self.registrtation_data(get_HH_data)
-    #             self.saveProgramEncounterData(encount_ids, get_HH_data['location']['Slum'])
-    #
-    # def ShiftNativePlaceDataToFF(self,rhs_data,slum_id):
-    #     HH = str(int(rhs_data['Household_number']))
-    #     NativePlace = rhs_data['What is your native place (village, town, city) ?']
-    #     check_record = HouseholdData.objects.filter(slum_id = slum_id, household_number= HH )
-    #     if check_record:
-    #         ff_data = check_record.values_list('ff_data',flat=True)[0]
-    #         if ff_data and 'group_oh4zf84/Name_of_Native_villa_district_and_state' in ff_data.keys():
-    #             print(HH, 'key present')
-    #         else:
-    #             add_place = {'group_oh4zf84/Name_of_Native_villa_district_and_state':NativePlace}
-    #             ff_data.update(add_place)
-    #             print('Updated FF data for', HH)
+    def SaveMemberEncounterData(self, datafile_path):
+        with open(datafile_path, 'r') as f:
+            data = json.load(f)
+            error = []
+            count = 1
+            for item in data:
+                try:
+                    update_data_values = {}
+                    member_id = item['member_id']
+                    member = MemberData.objects.filter(member_uuid = item['member_id'])
+                    if member.exists():
+                        program = MemberProgramData.objects.filter(member = member[0])
+                        if program.exists():
+                            program = program[0]
+                        else:
+                            program = None
+                        update_data_values['created_date'] = datetime.strptime("".join(item['created_date'].split(',')[:-1]), '%B %d %Y').date()
+                        update_data_values['submission_date'] = datetime.strptime("".join(item['submission_date'].split(',')[:-1]) , '%B %d %Y').date()
+                        item.update(update_data_values)
+                        remove_keys = ['program_id', 'member_id', 'program__name', 'first_name']
+                        item = {k : v for k, v in item.items() if k not in remove_keys}
+                        to_save = MemberEncounterData.objects.update_or_create(member=member[0], slum = member[0].slum, program = program, defaults=item)
+                        print("Record Saved Successfully", count)
+                    else:
+                        error.append([member_id, "Member not available"])
+                    count += 1
+                except Exception as e:
+                    error.append([e, member_id])
+                    print(e, member_id, count)
+                    count += 1
+            print(error)
