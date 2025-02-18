@@ -1,4 +1,5 @@
 var report_short_datatable = null;
+var report_member_datatable = null;
 var columns_defs;
 var table = null;
 var divider = 1000 * 60 * 60 * 24;
@@ -1133,6 +1134,7 @@ $(document).ready(function () {
       buttons += "</div>";
       $("#buttons").append(buttons);
       report_short_datatable = $("#example").DataTable({
+        responsive: true,
         dom: "Bfrtip",
         search: {
           return: true, // This is for forced search implementation on Search builder.
@@ -1330,6 +1332,132 @@ $(document).ready(function () {
     }
   }
 
+
+    // For Summery View Datatable master method.......
+    function load_member_datatable() {
+      btn_default = [
+        {
+          extend: "excel",
+          text: "Excel",
+        },
+        {
+          extend: "searchBuilder",
+          config: {
+            depthLimit: 2,
+          },
+        },
+        {
+          extend: "createState",
+          text: "Create State",
+        },
+        {
+          extend: "savedStates",
+          text: "Save State",
+        }
+      ];
+      if (report_member_datatable != null) {
+        $("#slum_form p").find("#slum_info").html("");
+        $("#slum_form p").find("#slum_info").remove();
+        $(".overlay").show();
+        report_member_datatable.ajax.reload();
+      } else {
+        $(".overlay").show();
+        $("#legend1").show();
+        $("#legend2").show();
+        buttons = '<div class="btn-group">';
+        $.each(columns_defs["buttons"], function (index, button) {
+          buttons +=
+            '<button type="button" class="active btn btn-default" value="' +
+            index +
+            '" id="' +
+            index.replace(/ /g, "") +
+            '">' +
+            index +
+            "</button>";
+        });
+        buttons += "</div>";
+        $("#buttons").append(buttons);
+        report_member_datatable = $("#example").DataTable({
+          responsive: true,
+          dom: "Bfrtip",
+          // search: {
+          //   return: true, // This is for forced search implementation on Search builder.
+          // },
+          layout: {
+            top1: 'searchBuilder'
+        },
+          paging: true,
+          order: [[9, "desc"]],
+          ajax: {
+            url: "/graphs/show/MemberData/",
+            dataSrc: "",
+            data: function () {
+              return $("#slum_form").serialize(); // , 'csrfmiddlewaretoken':csrf_token}
+              // NOTE : We could have assigned the variable itself to the 'data' attribute, instead
+              // of writing  function. That method promotes the errorneous behaviour. The code would have been
+              // unable to update the 'data' attribute on the call of 'table.ajax.reload()'.
+            },
+            contentType: "application/json",
+            dataSrc: function (data) {
+              return data;
+            },
+            complete: function (response) {
+              $(".overlay").hide();
+              if (response.responseText == '{}'){
+                alert('No Member Data Available...');
+              };
+            },
+            error: function (response) {
+              $(".overlay").hide();
+              if (response.responseText != "") {
+                alert(response.responseText);
+              }
+            },
+          },
+          buttons: btn_default,
+          columnDefs: [
+            { defaultContent: "-", targets: "_all" },
+            { footer: true },
+            { targets: 0, visible: false, searchable: false },
+          ],
+          columns: [
+            { data: "slum_id__name", title: "Slum" },
+            { data: "household_number", title: "Household Number" },
+            { data: "created_date_str", title: "Created Date" },
+            { data: "submission_date_str", title: "Last Modified Date" },
+            { data: "member_first_name", title: "Member First Name" },
+            { data: "member_last_name", title: "Member Last Name" },
+            { data: "gender", title: "Gender"},
+            { data: "age", title: "Age" },
+            { data: "Education", title: "Education" },
+            { data: "Employment Status", title: "Employment Status" },
+            { data: "Marital Status", title: "Marital Status" },
+            { data: "How many Children do you have ?", title: "How many Children do you have ?" },
+            { data: "Are you menstruating ?", title: "Are you menstruating ?" },
+            { data: "Are you a person with disability ?", title: "Are you a person with disability ?" },
+            { data: "Select the type of disablity ?", title: "Select the type of disablity ?" },
+          ],
+        });
+        $("div.dt-buttons>button").addClass("pull-left");
+        add_search_box();
+        $(report_member_datatable.table().container()).on(
+          "keyup ",
+          "tfoot tr th input",
+          function (index, element) {
+            report_member_datatable
+              .column($(this).attr("dt_index"))
+              .search(String(this.value))
+              .draw();
+  
+            new $.fn.dataTable.SearchBuilder(report_member_datatable);
+          }
+        );
+        select_rows();
+        $("#add_table_btn").show();
+      }
+    }
+
+
   function select_rows() {
     $("#example tbody").on("click", "tr", function () {
       $(this).toggleClass("selected");
@@ -1412,6 +1540,45 @@ $(document).ready(function () {
       load_short_datatable();
     }
   });
+
+    // for Short View of mastersheet...
+    $("#btnFetchMember").click(function () {
+      if (document.forms[0].slumname.value == "") {
+        alert("Please select a slum");
+      } else {
+        $.ajax({
+          url: "/mastersheet/details/",
+          //dataSrc:"",
+          type: "GET",
+          data: {
+            form: $("#slum_form").serialize(),
+            csrfmiddlewaretoken: csrf_token,
+          },
+          // NOTE : We could have assigned the variable itself to the 'data' attribute, instead
+          // of writing  function. That method promotes the errorneous behaviour. The code would have been
+          // unable to update the 'data' attribute on the call of 'table.ajax.reload()'.
+          contentType: "application/json",
+          success: function (data) {
+            // Displaying the electoral ward and name of the slum besides the look-up box
+            // Checking if the element is already available or not
+            if (data != "undefined") {
+              city_code = data["City Code"];
+              var slum_info = document.createElement("div");
+              slum_info.classList.add("display_line");
+              slum_info.setAttribute("id", "slum_info");
+              slum_info.innerHTML =
+                "<p>" +
+                data["Name of the slum"] +
+                ", " +
+                data["Electoral Ward"] +
+                "</p>";
+              $("#slum_form p").append(slum_info);
+            }
+          },
+        });
+        load_member_datatable();
+      }
+    });
 
   function trim_space(str) {
     if (str != null) {

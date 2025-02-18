@@ -12,21 +12,19 @@ from graphs.models import *
 from master.models import *
 from graphs.export_data import *
 import json
-
+from mastersheet.forms import find_slum
 from django.db.models import Q
-
 import csv
-
-
 from sponsor.models import *
-
 from django.views.decorators.csrf import csrf_exempt
 from utils.utils_permission import apply_permissions_ajax
 from django.db.models import Count, F
 from django.contrib.auth.models import Group
 from collections import defaultdict
 from mastersheet.models import *
-
+import pandas as pd
+from django.db.models.functions import Cast
+from django.db.models import CharField
 
 
 
@@ -469,8 +467,8 @@ def dashboard_all_cards(request,key):
 
 
 def covid_data(request):
-    
     return render(request, 'covid_data.html')
+
 
 
 @csrf_exempt
@@ -849,3 +847,36 @@ def factsheetDataDownload(request):         #     function for city wise factshe
     writer.writerows(response_data)
 
     return response
+
+
+# For Mastersheet Summery View rendering mastersheet summery page
+# @permission_required('mastersheet.can_view_mastersheet', raise_exception=True)
+def member_data(request):
+    slum_search_field = find_slum()
+    return render(request, 'member_data.html', {'form': slum_search_field})
+
+
+@csrf_exempt
+def MemberDataView(request):
+    
+    data = {}
+    slumname = request.GET['slumname']
+    member_data = list(MemberData.objects.filter(slum_id = slumname).annotate( created_date_str=Cast("created_date", CharField()),
+                            submission_date_str=Cast("submission_date", CharField())
+                            ).values('created_date_str', 'date_of_birth', 'gender', 'household_number', 'member_data', 'member_first_name', 'submission_date_str', 'slum_id__name'))
+    if len(member_data) > 0:
+        member_df = pd.DataFrame(member_data)
+        # Convert date_of_birth column to datetime
+        member_df['date_of_birth'] = pd.to_datetime(member_df['date_of_birth'])
+        # Cahculate age using date of birth.
+        member_df['age'] = member_df['date_of_birth'].apply(lambda x: datetime.datetime.today().year - x.year - ((datetime.datetime.today().month, datetime.datetime.today().day) < (x.month, x.day)))
+        # Drop date_of_birth column
+        member_df = member_df.drop(columns=['date_of_birth'])
+        # Map gender coding to categotical names.
+        member_df['gender'] = member_df['gender'].map({'1' : 'Male', '2' : 'Female', '3' : 'Other'})
+        # convert dataframe into list of dict
+        member_data = member_df.to_dict(orient='records')
+        member_data = [{**dct, **dct.pop("member_data")} for dct in member_data]
+        return HttpResponse(json.dumps(member_data),content_type='application/json')
+    else:
+        return HttpResponse(json.dumps(data),content_type='application/json')
