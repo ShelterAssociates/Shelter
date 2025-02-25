@@ -1435,7 +1435,7 @@ $(document).ready(function () {
             { data: "How many Children do you have ?", title: "How many Children do you have ?" },
             { data: "Are you menstruating ?", title: "Are you menstruating ?" },
             { data: "Are you a person with disability ?", title: "Are you a person with disability ?" },
-            { data: "Select the type of disablity ?", title: "Select the type of disablity ?" },
+            { data: "What Type of disablity ?", title: "Select the type of disablity ?" },
           ],
         });
         $("div.dt-buttons>button").addClass("pull-left");
