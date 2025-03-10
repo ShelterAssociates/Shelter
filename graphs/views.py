@@ -867,7 +867,10 @@ def MemberDataView(request):
     if len(member_data) > 0:
         member_df = pd.DataFrame(member_data)
         # Convert date_of_birth column to datetime
-        member_df['date_of_birth'] = pd.to_datetime(member_df['date_of_birth'])
+        member_df['date_of_birth'] = pd.to_datetime(member_df['date_of_birth'], errors='coerce')
+        # Checking if there are any nan values in date_of_birth_column ...
+        if member_df['date_of_birth'].isnull().any():
+            member_df = member_df[member_df['date_of_birth'].isnull() == False]
         # Cahculate age using date of birth.
         member_df['age'] = member_df['date_of_birth'].apply(lambda x: datetime.datetime.today().year - x.year - ((datetime.datetime.today().month, datetime.datetime.today().day) < (x.month, x.day)))
         # Drop date_of_birth column
