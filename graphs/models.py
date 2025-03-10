@@ -360,6 +360,51 @@ class MemberEncounterData(models.Model):
 	submission_date = models.DateField(null=True, verbose_name="Last Modified date")
 	encounter_data = JSONField(null=True, blank=True)
 
+	# Method to get values from JSONField safely
+	def get_json_field(self, field_name):
+		if self.encounter_data and isinstance(self.encounter_data, dict):
+			return self.encounter_data.get(field_name, None)
+		return None
+
+	# Computed properties for JSON fields
+	@property
+	def cup_use_status(self):
+		return self.get_json_field("Did you use cup in the previous menstruation?")
+
+class MemberDataETL(models.Model):
+
+	slum = models.ForeignKey(Slum, on_delete=models.CASCADE, verbose_name='Slum Id')
+	city_name =  models.CharField(max_length=255, null=True, blank=True)
+	member =  models.ForeignKey(MemberData, on_delete=models.CASCADE, verbose_name='Slum Id')
+	slum_name =  models.CharField(max_length=255, null=True, blank=True)
+	created_date = models.CharField(max_length=255, null=True, blank=True)
+	age = models.IntegerField(null=True, blank=True)
+	gender = models.CharField(max_length=10, null=True, blank=True)
+	household_number = models.IntegerField(null=True, blank=True)
+	member_first_name = models.CharField(max_length=255, null=True, blank=True)
+	submission_date = models.CharField(max_length=255, null=True, blank=True)
+	disability = models.CharField(max_length=255, null=True, blank=True)
+	education = models.CharField(max_length=255, null=True, blank=True)
+	employment_status = models.CharField(max_length=255, null=True, blank=True)
+	marital_status = models.CharField(max_length=255, null=True, blank=True)
+	children_count = models.CharField(max_length=255, null=True, blank=True)
+	menstruation_status = models.CharField(max_length=255, null=True, blank=True)
+	mhm_program_enrollment = models.CharField(max_length=20, blank=True, verbose_name='Enrollment In MHM')
+	available_followup_cnt = models.IntegerField(null=True, blank=True)
+	cup_used_in_last_followup = models.CharField(max_length=20, blank=True, verbose_name='Cup Used In Last Follow-up')
+	last_updated = models.DateTimeField(auto_now=True)
+
+
+class ETLLog(models.Model):
+	run_timestamp = models.DateTimeField(auto_now_add=True)  # Track when ETL ran
+	task_name = models.CharField(max_length=255, null=True, blank=True)
+	updated_records = models.IntegerField(default=0)
+	inserted_records = models.IntegerField(default=0)
+	failed_records = models.IntegerField(default=0)    
+	error_details = JSONField(null=True, blank=True)  # Store error messages
+
+	def __str__(self):
+		return f"ETL Log {self.run_timestamp}: {self.updated_records} updated, {self.inserted_records} inserted, {self.failed_records} errors"
 
 
 
