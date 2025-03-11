@@ -58,7 +58,7 @@ class MemberDataProcess:
         def get_cup_use_status(id_):
             if id_ in qualified_members_dict:
                 return qualified_members_dict[id_].cup_use_status
-            return "Follow-up Record Not Available"
+            return "No Record Available"
         member_data['cup_used_in_last_followup'] = member_data['id'].apply(get_cup_use_status)
         return member_data
     
@@ -140,7 +140,8 @@ def main():
         mem_obj = MemberDataProcess(slum_id)
         etl_logs = mem_obj.save_member_data_metrics()
         error_logs_dict = { k: v + error_logs_dict.get(k) if isinstance(v, int) else {**error_logs_dict.get(k, {}), **v} for k, v in etl_logs.items()}
-    
+        print("*"*100)
+        print(f"ETL completed for {slum_id}: {etl_logs['updated_records']} updated, {etl_logs['inserted_records']} inserted, {etl_logs['failed_records']} failed.")
     #Store ETL log
     ETLLog.objects.create(
         task_name = 'Member ETL Task',
