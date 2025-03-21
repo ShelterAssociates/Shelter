@@ -1026,7 +1026,7 @@ class avni_sync():
     # methods for sync encounter data through json file.
 
     def sync_sanitation_data(self):
-        with open('/home/ubuntu/kuldeep/sanitation_data_08_10_2024.json', 'r') as f:
+        with open('/home/shelter/Desktop/Json_files_for_upload/sanitation_data_10_03_2025.json', 'r') as f:
             count = 1
             data = json.load(f)
             for sanitation in data:
@@ -1043,7 +1043,6 @@ class avni_sync():
                     del_lst = del_lst1 + empty_keys
                     for j in del_lst:
                         del sanitation[j]
-
                     sanitation.update({'Last_modified_date': lst_mod_date})
                     slum_id, city_id = self.get_city_slum_ids(slum_name)
 
@@ -1441,8 +1440,8 @@ class avni_sync():
                     update_data_values = {}
                     slum = slum[0]
                     member_uuid = item['member_uuid']
-                    update_data_values['created_date'] = datetime.strptime(item['created_date'], '%B %d, %Y, %I:%M %p').date()
-                    update_data_values['submission_date'] = datetime.strptime(item['submission_date'], '%B %d, %Y, %I:%M %p').date()
+                    update_data_values['created_date'] = datetime.strptime(item['created_date'], '%Y-%m-%d').date()
+                    update_data_values['submission_date'] = datetime.strptime(item['submission_date'], '%Y-%m-%d').date()
                     update_data_values['date_of_birth'] = datetime.strptime(item['date_of_birth'], '%B %d, %Y').date()
                     update_data_values['household_number'] = int(item['household_number'])
                     update_data_values['gender'] = "1" if item['gender'] == 'Male' else "2" if item['gender'] == "Female" else "3"
@@ -1472,10 +1471,10 @@ class avni_sync():
                     member_id = item['member_id']
                     member = MemberData.objects.filter(member_uuid = item['member_id'])
                     if member.exists():
-                        update_data_values['created_date'] = datetime.strptime("".join(item['created_date'].split(',')[:-1]), '%B %d %Y').date()
-                        update_data_values['submission_date'] = datetime.strptime("".join(item['submission_date'].split(',')[:-1]) , '%B %d %Y').date()
+                        update_data_values['created_date'] = datetime.strptime(item['created_date'], '%Y-%m-%d').date()
+                        update_data_values['submission_date'] = datetime.strptime(item['submission_date'] , '%Y-%m-%d').date()
                         if item['program_exit_date'] != '':
-                            update_data_values['program_exit_date'] = datetime.strptime("".join(item['program_exit_date'].split(',')[:-1]), '%B %d %Y').date()
+                            update_data_values['program_exit_date'] = datetime.strptime(item['program_exit_date'], '%Y-%m-%d').date()
                         else:
                             del item['program_exit_date']
                         update_data_values['program_uuid'] = item['family_member_menstrual_hygiene__uuid']
@@ -1509,8 +1508,8 @@ class avni_sync():
                             program = program[0]
                         else:
                             program = None
-                        update_data_values['created_date'] = datetime.strptime("".join(item['created_date'].split(',')[:-1]), '%B %d %Y').date()
-                        update_data_values['submission_date'] = datetime.strptime("".join(item['submission_date'].split(',')[:-1]) , '%B %d %Y').date()
+                        update_data_values['created_date'] = datetime.strptime(item['created_date'], '%Y-%m-%d').date()
+                        update_data_values['submission_date'] = datetime.strptime(item['submission_date'], '%Y-%m-%d').date()
                         item.update(update_data_values)
                         remove_keys = ['program_id', 'member_id', 'program__name', 'first_name']
                         item = {k : v for k, v in item.items() if k not in remove_keys}
