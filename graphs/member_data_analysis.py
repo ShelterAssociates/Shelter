@@ -65,7 +65,7 @@ class MemberDataProcess:
     def create_member_program_metrics(self, member_data):
         # Extract member program data and convert into dataframe for processing
         member_ids = member_data['id'].tolist()
-        member_program_data = list(self.program_data.filter(member_id__in = member_ids).values_list('member_id', flat = True))
+        member_program_data = list(self.program_data.filter(member_id__in = member_ids).exclude(program_exit_date__isnull = False).values_list('member_id', flat = True))
         member_data['mhm_program_enrollment'] = member_data['id'].apply(lambda x: "Yes" if x in member_program_data else "No")
         # Query to count records for each member_id
         member_counts = self.encounter_data.values('member_id').annotate(encounter_count=Count('id'))

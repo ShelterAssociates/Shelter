@@ -315,7 +315,7 @@ def masterSheet(request, slum_code=0, FF_code=0, RHS_code=0):
 
                     else:
                         if 'Toilet_Photo' and 'ff_uuid' in x.keys():
-                            ff_url = settings.AVNI_URL + '/#/app/subject/viewProgramEncounter?uuid=' + str(x['ff_uuid'])
+                            ff_url = settings.AVNI_URL + '#/app/subject/viewProgramEncounter?uuid=' + str(x['ff_uuid'])
                             x.update({'toilet_photo_url': ff_url if ff_url else x['Toilet_Photo']})
                             x.update({'family_photo_url': ff_url if ff_url else x['Family_Photo']})
                     # Adding hyperlink for factsheet
