@@ -25,6 +25,46 @@ def survey_mapping(survey_type):
         return wrapper
     return real_decorator
 
+
+def get_household_analysis_data_for_UP(question_fields):
+    path = ""
+    path_water = ""
+    output = {}
+    water_waste_ques = ['group_el9cl08/Type_of_water_connection', 'group_el9cl08/Facility_of_solid_waste_collection']
+    with open(path) as datafile:
+        household_data = json.load(datafile)
+    with open(path_water) as datafile:
+        household_water_waste_data = json.load(datafile)
+    for household_obj in household_data:
+        household_no = household_obj['household_number'].lstrip('0')
+        rhs_data = json.loads(household_obj['rhs_data'])
+        if 'Functioning of the structure' in rhs_data and rhs_data['Functioning of the structure'] == 'Shop':
+            rhs_data['Type_of_structure_occupancy'] = 'Shop'
+        for ques in question_fields:
+            if ques in rhs_data and rhs_data[ques] and (rhs_data[ques] == rhs_data[ques]):
+                ques_ans = rhs_data[ques]
+                if ques in water_waste_ques:
+                    if household_no in household_water_waste_data.keys():
+                        ques_ans = household_water_waste_data[household_no][ques].strip()
+                    else:
+                        continue
+                if ques == 'group_oi8ts04/Current_place_of_defecation':
+                        if ques_ans == 'Yes':
+                            ques_ans = 'Toilet Available'
+                        else:
+                            ques_ans = 'No Toilet'
+
+                if ques not in output:
+                    output[ques] = {ques_ans:[str(household_no), ]}
+                else:
+                    if ques_ans not in output[ques]:
+                        output[ques][ques_ans] = [str(household_no), ]
+                    else:
+                        output[ques][ques_ans].append(household_no)
+    return output
+
+
+
 #@survey_mapping(SURVEYTYPE_CHOICES[1][0])
 def get_household_analysis_data(city, slum_code, question_fields, kobo_survey=''):
     '''Gets the kobotoolbox RHS data for selected questions

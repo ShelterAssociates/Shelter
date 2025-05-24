@@ -74,7 +74,10 @@ def get_component(request, slum_id):
         #Fetch RHS data from kobotoolbox
         fields_code = metadata.filter(type='F').exclude(code="").values_list('code', flat=True)
         fields = list(set([str(x.split(':')[0]) for x in fields_code]))
-        rhs_analysis = get_household_analysis_data(slum.electoral_ward.administrative_ward.city.id,slum.id, fields)
+        if slum.name == 'Mohanlalganj':
+            rhs_analysis = get_household_analysis_data_for_UP(fields)
+        else:
+            rhs_analysis = get_household_analysis_data(slum.electoral_ward.administrative_ward.city.id,slum.id, fields)
     except Exception as e:
         pass
     lstcomponent = []
