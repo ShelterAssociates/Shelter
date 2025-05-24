@@ -27,7 +27,7 @@ class KMLParser(object):
         if 'houseno' in  extendeddata.keys():
             household_no = extendeddata['houseno']
         if household_no == "" and len(extendeddata.keys()) > 0:
-            household_no = extendeddata[extendeddata.keys()[0]]
+            household_no = extendeddata[list(extendeddata.keys())[0]]
 
         #Get lat long coordinates as per the type of shape(polygon, point and linestring)
         key = LINESTRING
