@@ -7,6 +7,7 @@
  *   5. RIM data
  */
 //Admin, Electoral, Slum map variables
+let length_of_components = {"Dambar road":75140, "Cement/Concrete":34648, "Interlocking":24264, "Kharanja":20767, "Kutcha road":96744, "Existing Drainage Line":383, "Location of Kutcha Open Nali (Gutter)":5266, "Location of Pucca Closed Nali (Gutter)":5581, "Location of Pucca Open Nali (Gutter)":59665, "Location of Nahar":23136, "Location of Nala":6907};
 let WARDLEVEL = ["AdministrativeWard",
                  "ElectoralWard",
                  "Slum"];
@@ -133,6 +134,7 @@ function initMap(){
                         "Panvel":new L.LatLng(19.051509, 73.109058),
                         "Saharanpur":new L.LatLng(29.96813172,77.54673382),
                         "Pune District":new L.LatLng(18.57054718,74.07657987),
+                        "Lucknow":new L.LatLng(26.66998253,80.98541311),
                         "Nilgiri District":new L.LatLng(11.45878141, 76.64049998)};
     var pos = new L.LatLng(18.640083, 73.825560);
     if ($('#city_name').val() in center_data)
@@ -293,13 +295,18 @@ function generate_filter(globalJsonData, slumID, result){
 		                    '</br>'
 
 		panel_component += '<div id="' + counter + '" class="panel-collapse collapse" name="'+k+'">';
-
         $.each(v, function(k1, v1) {
             let chkcolor = v1['blob']['polycolor'];
             inner_panel_component_value = Object.keys(globalJsonData).length > 0 ? globalJsonData[k1] : k1;
+            let child_length = null;
+            if (k1 in length_of_components){
+                child_length = length_of_components[k1] + " mtr";
+            }else{
+                child_length = v1['child'].length;
+            };
             panel_component += '<div name="div_group" >' + '&nbsp;&nbsp;&nbsp;' +
                                  '<input name="chk1" class="chk" style="background:'+chkcolor+';background-color:' + chkcolor + '; " selection="' + k + '" component_type="' + v1['type'] + '" type="checkbox" value="' + k1 + '" onclick="checkSingleGroup(this);" >' +
-                                   '<a>&nbsp;' + inner_panel_component_value + '</a>&nbsp;(' + v1['child'].length + ')' +
+                                   '<a>&nbsp;' + inner_panel_component_value + '</a>&nbsp;(' + child_length + ')' +
                                  '</input>' +
                                 '</div>';
             if (k1=="Structure"){
