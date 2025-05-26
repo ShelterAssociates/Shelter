@@ -82,7 +82,11 @@ function household_details(housenumber){
 function onEachFeature(feature, layer){
     if ('properties' in feature && 'name' in feature.properties){
         var name = feature.properties.name;
-        layer.bindPopup("House:"+name);
+        if ('Level' in feature.properties){
+            layer.bindPopup("Admin Ward:"+name);
+        } else{
+            layer.bindPopup("House:"+name);
+        }
         layer.on('mouseover', function (e) {
             this.openPopup();
         });
