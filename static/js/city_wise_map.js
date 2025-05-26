@@ -134,7 +134,7 @@ function initMap(){
                         "Panvel":new L.LatLng(19.051509, 73.109058),
                         "Saharanpur":new L.LatLng(29.96813172,77.54673382),
                         "Pune District":new L.LatLng(18.57054718,74.07657987),
-                        "Lucknow":new L.LatLng(26.66998253,80.98541311),
+                        "Mohanlalganj City":new L.LatLng(26.66998253,80.98541311),
                         "Nilgiri District":new L.LatLng(11.45878141, 76.64049998)};
     var pos = new L.LatLng(18.640083, 73.825560);
     if ($('#city_name').val() in center_data)
@@ -304,16 +304,20 @@ function generate_filter(globalJsonData, slumID, result){
             }else{
                 child_length = v1['child'].length;
             };
+            let icon = v1['icon'] ?? "Not specified";
             panel_component += '<div name="div_group" >' + '&nbsp;&nbsp;&nbsp;' +
                                  '<input name="chk1" class="chk" style="background:'+chkcolor+';background-color:' + chkcolor + '; " selection="' + k + '" component_type="' + v1['type'] + '" type="checkbox" value="' + k1 + '" onclick="checkSingleGroup(this);" >' +
-                                   '<a>&nbsp;' + inner_panel_component_value + '</a>&nbsp;(' + child_length + ')' +
+                                   '<a>&nbsp;' + inner_panel_component_value + '</a>&nbsp;(' + child_length + ') <img src="' + icon + '">' +
                                  '</input>' +
                                 '</div>';
-            if (k1=="Structure"){
+            if (k1=="Structure" || k1 == 'Admin Ward Area'){
                 houses = {};
                  $.each(v1['child'], function(k2,v2){
                     v2.shape['properties'] = {};
                     v2.shape.properties['name'] = v2.housenumber;
+                    if (k1 == 'Admin Ward Area'){
+                        v2.shape.properties['Level'] = 'Admin';
+                    }
                     houses[v2.housenumber] = v2.shape;
                  });
             }
