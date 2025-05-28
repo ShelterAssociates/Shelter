@@ -4,6 +4,7 @@ from django.db.models.functions import Cast
 from django.db.models import CharField
 from django.db.models import Max
 from django.db.models import Count
+from django.db import transaction
 
 class MemberDataProcess:
     updated_count = 0
@@ -77,6 +78,10 @@ class MemberDataProcess:
         member_data = self.get_last_encounters(member_data, member_ids)
         return member_data
     
+    def chunked_queryset(self, queryset, size=100):
+        for i in range(0, len(queryset), size):
+            yield queryset[i:i + size]
+        
     def save_member_data_metrics(self):
         """ETL function to process, insert, and update records while logging activity."""
         updated_count = 0
@@ -121,7 +126,10 @@ class MemberDataProcess:
 
         # Perform bulk updates
         if records_to_update:
-            MemberDataETL.objects.bulk_update(records_to_update, fields=final_data_for_update[record_ids[0]].keys())
+            fields_to_update = list(final_data_for_update[record_ids[0]].keys())
+            for batch in self.chunked_queryset(records_to_update):  # Adjust size as needed
+                with transaction.atomic():  # Optional: ensure atomic batch updates
+                    MemberDataETL.objects.bulk_update(batch, fields=fields_to_update)
 
         # Perform bulk inserts
         if records_to_create:
