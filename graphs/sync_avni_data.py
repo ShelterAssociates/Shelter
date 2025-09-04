@@ -1025,8 +1025,9 @@ class avni_sync():
 
     # methods for sync encounter data through json file.
 
-    def sync_sanitation_data(self):
-        with open('/home/shelter/Desktop/Json_files_for_upload/sanitation_data_10_03_2025.json', 'r') as f:
+    def sync_sanitation_data(self ,file_path):
+        # with open('/home/shelter/Desktop/Json_files_for_upload/sanitation_data_10_03_2025.json', 'r') as f:
+        with open(file_path, 'r') as f:
             count = 1
             data = json.load(f)
             for sanitation in data:
@@ -1075,8 +1076,9 @@ class avni_sync():
                 except Exception as e:
                     print(e, hh_number, "sanitation_uuid = " + san_uuid)
 
-    def sync_water_data(self):
-        with open('/home/ubuntu/kuldeep/water_data_08_10_2024.json', 'r') as f:
+    def sync_water_data(self , file_path):
+        # with open('/home/ubuntu/kuldeep/water_data_08_10_2024.json', 'r') as f:
+        with open(file_path, 'r') as f:
             count = 1
             data = json.load(f)
             for water in data:
@@ -1116,8 +1118,9 @@ class avni_sync():
 
 
 
-    def sync_waste_data(self):
-        with open('/home/ubuntu/kuldeep/waste_data_08_10_2024.json', 'r') as f:
+    def sync_waste_data(self,file_path):
+        # with open('/home/ubuntu/kuldeep/waste_data_08_10_2024.json', 'r') as f:
+        with open(file_path, 'r') as f:
             count = 1
             data = json.load(f)
             for waste in data:
@@ -1275,8 +1278,9 @@ class avni_sync():
         return electricity_data, submission_date
         
                     
-    def sync_Electricity_data(self):
-        with open('/home/ubuntu/kuldeep/electricity_data_08_10_2024.json', 'r') as f:
+    def sync_Electricity_data(self,file_path):
+        #with open('/home/ubuntu/kuldeep/electricity_data_08_10_2024.json', 'r') as f:
+        with open(file_path, 'r') as f:
             count = 1
             data = json.load(f)
             for electricity_obj in data:
