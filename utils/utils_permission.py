@@ -42,7 +42,7 @@ def apply_permissions_ajax(perms):
 
 def access_right(func):
 	def wrapper(request, *args, **kwargs):
-		if request.META.get('HTTP_REFERER')==None or "app.shelter-associates.org" not in request.META.get('HTTP_REFERER'):
-			raise PermissionDenied()
+		# if request.META.get('HTTP_REFERER')==None or "app.shelter-associates.org" not in request.META.get('HTTP_REFERER'):
+		# 	raise PermissionDenied()
 		return func(request, *args, **kwargs)
 	return wrapper

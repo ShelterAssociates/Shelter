@@ -25,7 +25,7 @@ SECRET_KEY = 'd75_awn2qsnk!z*m)gdx(7^u1b4rqnn+pjoofg(4qa%^#bp&3w'
 DEBUG = True
 
 #ALLOWED_HOSTS = []
-ALLOWED_HOSTS = ['.shelter-associates.org']
+ALLOWED_HOSTS = ['*']
 
 # Application definition
 INSTALLED_APPS = (
