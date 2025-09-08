@@ -55,7 +55,6 @@ def get_component(request, slum_id):
     '''Get component/filter/sponsor data for the selected slum.
        Here sponsor data is fetch according to user role access rights
     '''
-    print("get_component called ")
     slum = get_object_or_404(Slum, pk=slum_id)
     sponsors=[]
     city_name = list(Slum.objects.filter(id = slum.id).values_list('electoral_ward__administrative_ward__city__name__city_name', flat = True))[0]
@@ -71,19 +70,11 @@ def get_component(request, slum_id):
         metadata = Metadata.objects.filter(visible=True).exclude(name='Shop').order_by('section__order','order')
 
     rhs_analysis = {}
-    print("Try Block")
-    # try:
-        #Fetch RHS data from kobotoolbox
+
     fields_code = metadata.filter(type='F').exclude(code="").values_list('code', flat=True)
     fields = list(set([str(x.split(':')[0]) for x in fields_code]))
-    # if slum.name == 'Mohanlalganj':
-    #     rhs_analysis = get_household_analysis_data_for_UP(fields)
-    # else:
-    #print("Starting RHS analaysisi for " + slum.id)
     rhs_analysis = get_household_analysis_data(slum.electoral_ward.administrative_ward.city.id,slum.id, fields)
-    # except Exception as e:
-    #     print(e)
-    #     pass
+
     lstcomponent = [] 
     sponsor_houses = []
     #Iterate through each filter and assign answers to child if available
@@ -111,7 +102,7 @@ def get_component(request, slum_id):
         #Filter
         elif metad.type == 'F' and metad.code != "":
             field = metad.code.split(':')
-            #print(f"field is {field}")
+
             
             if city_name != 'Kolhapur' and field[0] == 'If individual water connection, type of water meter?':
                 pass
@@ -148,7 +139,6 @@ def get_component(request, slum_id):
             dtcomponent[key] = OrderedDict()
         for c in comp:
             dtcomponent[key][c['name']] = c
-    #print(dtcomponent)
     return HttpResponse(json.dumps(dtcomponent),content_type='application/json')
 
 def format_data(rhs_data):
