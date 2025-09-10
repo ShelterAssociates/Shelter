@@ -178,8 +178,6 @@ def get_kobo_RHS_data(request, slum_id,house_num):
      output = OrderedDict()
      slum = get_object_or_404(Slum, id=slum_id)
      project_details = False
-     print("Slum id is " + str(slum.id))
-     print("Slum found is " + slum.name)
      if slum_id != '1971':
          output['admin_ward'] = slum.electoral_ward.administrative_ward.name
      output['slum_name'] = slum.name
@@ -187,10 +185,8 @@ def get_kobo_RHS_data(request, slum_id,house_num):
 
      if request.user.is_superuser or request.user.groups.filter(name__in=['ulb']).exists():
          project_details = True
-         print("Superuser or ulb user")
          output.update(get_kobo_RHS_list(slum.electoral_ward.administrative_ward.city.id, slum,slum_id ,house_num))
      elif (request.user.is_superuser or request.user.groups.filter(name='MLG').exists()) and slum_id=='1971':
-         print("MLG user")
          project_details = True
          output.update(get_kobo_RHS_list(slum.electoral_ward.administrative_ward.city.id, slum, slum_id,house_num))
      elif request.user.groups.filter(name='sponsor').exists():
