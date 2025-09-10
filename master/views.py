@@ -429,7 +429,7 @@ def slummapdisplay(request,id):
 				[str(i.slum.electoral_ward.name)]['content'] \
 				[str(i.slum.name)].update({'scores': score_dict})
 		except Exception as e:
-			print(e)
+			pass
 	return HttpResponse(json.dumps(city_main),content_type='application/json')
 
 @csrf_exempt

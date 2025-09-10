@@ -70,17 +70,12 @@ def get_component(request, slum_id):
         metadata = Metadata.objects.filter(visible=True).exclude(name='Shop').order_by('section__order','order')
 
     rhs_analysis = {}
-    try:
-        #Fetch RHS data from kobotoolbox
-        fields_code = metadata.filter(type='F').exclude(code="").values_list('code', flat=True)
-        fields = list(set([str(x.split(':')[0]) for x in fields_code]))
-        if slum.name == 'Mohanlalganj':
-            rhs_analysis = get_household_analysis_data_for_UP(fields)
-        else:
-            rhs_analysis = get_household_analysis_data(slum.electoral_ward.administrative_ward.city.id,slum.id, fields)
-    except Exception as e:
-        pass
-    lstcomponent = []
+
+    fields_code = metadata.filter(type='F').exclude(code="").values_list('code', flat=True)
+    fields = list(set([str(x.split(':')[0]) for x in fields_code]))
+    rhs_analysis = get_household_analysis_data(slum.electoral_ward.administrative_ward.city.id,slum.id, fields)
+
+    lstcomponent = [] 
     sponsor_houses = []
     #Iterate through each filter and assign answers to child if available
     for metad in metadata:
@@ -106,6 +101,8 @@ def get_component(request, slum_id):
         #Filter
         elif metad.type == 'F' and metad.code != "":
             field = metad.code.split(':')
+
+            
             if city_name != 'Kolhapur' and field[0] == 'If individual water connection, type of water meter?':
                 pass
             else:
@@ -178,12 +175,20 @@ def format_data(rhs_data):
 
 # @deco_rhs_permission
 def get_kobo_RHS_data(request, slum_id,house_num):
-     output = {}
+     output = OrderedDict()
      slum = get_object_or_404(Slum, id=slum_id)
      project_details = False
-     if request.user.is_superuser or request.user.groups.filter(name='ulb').exists():
+     if slum_id != '1971':
+         output['admin_ward'] = slum.electoral_ward.administrative_ward.name
+     output['slum_name'] = slum.name
+     output['house_no'] = house_num         
+
+     if request.user.is_superuser or request.user.groups.filter(name__in=['ulb']).exists():
          project_details = True
-         output = get_kobo_RHS_list(slum.electoral_ward.administrative_ward.city.id, slum, house_num)
+         output.update(get_kobo_RHS_list(slum.electoral_ward.administrative_ward.city.id, slum,slum_id ,house_num))
+     elif (request.user.is_superuser or request.user.groups.filter(name='MLG').exists()) and slum_id=='1971':
+         project_details = True
+         output.update(get_kobo_RHS_list(slum.electoral_ward.administrative_ward.city.id, slum, slum_id,house_num))
      elif request.user.groups.filter(name='sponsor').exists():
          project_details = SponsorProjectDetails.objects.filter(slum=slum, sponsor__user=request.user, household_code__contains=int(house_num)).exists()
      if request.user.groups.filter(name='ulb').exists():
@@ -191,13 +196,12 @@ def get_kobo_RHS_data(request, slum_id,house_num):
      
      if project_details:
           project_details = project_details = SponsorProjectDetails.objects.filter(slum=slum,  household_code__contains=int(house_num)).exists()
-     output['admin_ward'] = slum.electoral_ward.administrative_ward.name
-     output['slum_name'] = slum.name
-     output['house_no'] = house_num
-     # Adding code fetch pluscode from RHS data.
-     plus_code = getPlusCodeDetails(slum_id, house_num)
-     if plus_code:
-         output['PlusCode'] = plus_code
+
+     #Adding code fetch pluscode from RHS data.
+     if slum_id != '1971':   
+        plus_code = getPlusCodeDetails(slum_id, house_num)
+        if plus_code:
+            output['PlusCode'] = plus_code
      # output['Household_details']= json.dumps(rhs_data)
      output['FFReport'] = project_details
      return HttpResponse(json.dumps(output),content_type='application/json')

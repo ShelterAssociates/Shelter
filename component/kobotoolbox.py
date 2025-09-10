@@ -26,37 +26,6 @@ def survey_mapping(survey_type):
     return real_decorator
 
 
-def get_household_analysis_data_for_UP(question_fields):
-    path = ""
-    output = {}
-    with open(path) as datafile:
-        household_data = json.load(datafile)
-    for household_obj in household_data:
-        household_no = household_obj['household_number'].lstrip('0')
-        rhs_data = household_obj['rhs_data']
-        if 'Functioning of the structure' in rhs_data and rhs_data['Functioning of the structure'] == 'Shop':
-            rhs_data['Type_of_structure_occupancy'] = 'Shop'
-        # print(question_fields)
-        for ques in question_fields:
-            if ques in rhs_data and rhs_data[ques] and (rhs_data[ques] == rhs_data[ques]) and household_no not in ['10310', '10311', '10312']:
-                ques_ans = rhs_data[ques]
-                if ques == 'group_oi8ts04/Current_place_of_defecation':
-                        if ques_ans == 'Yes':
-                            ques_ans = 'Toilet Available'
-                        else:
-                            ques_ans = 'No Toilet'
-
-                if ques not in output:
-                    output[ques] = {ques_ans:[str(household_no), ]}
-                else:
-                    if ques_ans not in output[ques]:
-                        output[ques][ques_ans] = [str(household_no), ]
-                    else:
-                        output[ques][ques_ans].append(household_no)
-    return output
-
-
-
 #@survey_mapping(SURVEYTYPE_CHOICES[1][0])
 def get_household_analysis_data(city, slum_code, question_fields, kobo_survey=''):
     '''Gets the kobotoolbox RHS data for selected questions
@@ -67,7 +36,9 @@ def get_household_analysis_data(city, slum_code, question_fields, kobo_survey=''
     household_data = HouseholdData.objects.filter(slum=slum).exclude(id__in = hide_houdehold_data)
     records = map(lambda x:x.rhs_data, household_data)
     records = filter(lambda x: x!=None, records)
-    grouped_records = itertools.groupby(sorted(records, key=lambda x:int(x['Household_number'])), key=lambda x:int(x["Household_number"]))
+
+    grouped_records = itertools.groupby(sorted(records, key=lambda x:(x['Household_number'])), key=lambda x:(x["Household_number"]))
+
     # For Covid Data
     covid_data = CovidData.objects.filter(slum = slum, age__gt = 17).exclude(household_number = 9999).values_list('household_number',flat = True)
     Toilet_data = list(ToiletConstruction.objects.filter(slum = slum, status = 6).values_list('household_number', flat = True))
@@ -75,14 +46,17 @@ def get_household_analysis_data(city, slum_code, question_fields, kobo_survey=''
     cpod_status = ['SBM (Installment)','SBM (Contractor)','Toilet by SA (SBM)','Toilet by other NGO (SBM)','Own toilet','Toilet by other NGO','Toilet by SA']
     for household, list_record in grouped_records:
         record_sorted = list(list_record) #sorted(list(list_record), key=lambda x:x['_submission_time'], reverse=False)
-        household_no = int(household)
+        if slum_code == '1971':
+            household_no = household
+        else:
+            household_no = int(household)   
         if len(record_sorted)>0:
             record = record_sorted[0]
         # Here we are updating vaccination status for the household.
-        if record['Type_of_structure_occupancy'] != 'Shop':
+        if 'Type_of_structure_occupancy' in record and record['Type_of_structure_occupancy'] != 'Shop':
             if household_no in covid_hh:
                 cnt_mem = list(covid_data).count(household_no)
-                # we use (__lte for lessthen equal to __lt for lessthen, __gte for graterthen equal to, __gt for graterthen)
+                # we use (__lte for lessthen equal to __lt for lessthen, __ if ouput is emptygte for graterthen equal to, __gt for graterthen)
                 query_ = CovidData.objects.filter(household_number = household_no, slum = slum, take_first_dose = 'Yes', take_second_dose = 'Yes', age__gt = 17).values_list('household_number')
                 query_1 = CovidData.objects.filter(household_number = household_no, slum = slum, take_first_dose = 'Yes', age__gt = 17).values_list('household_number')
                 if query_ and query_.count() == cnt_mem:
@@ -119,7 +93,7 @@ def get_household_analysis_data(city, slum_code, question_fields, kobo_survey=''
             '''field present in rhs data'''
             if field != "" and field in record and record[field] == record[field]:
                 '''RHS data is occupied in status or not.'''
-                if record['Type_of_structure_occupancy'] != 'Occupied house':
+                if 'Type_of_structure_occupancy' in record and record['Type_of_structure_occupancy'] != 'Occupied house':
                     if field == 'Type_of_structure_occupancy': # here we will check only for occupancy field.
                         data = record[field]
                         if field not in output:
@@ -138,7 +112,7 @@ def get_household_analysis_data(city, slum_code, question_fields, kobo_survey=''
                             output[field][val]=[]
                         if household_no not in output[field][val]:
                             output[field][val].append(str(household_no))
-            elif record['Type_of_structure_occupancy'] == 'Occupied house' and field in ['group_el9cl08/Type_of_water_connection', 'group_el9cl08/Facility_of_solid_waste_collection', 'group_oi8ts04/Current_place_of_defecation']:
+            elif 'Type_of_structure_occupancy' in record and record['Type_of_structure_occupancy'] == 'Occupied house' and field in ['group_el9cl08/Type_of_water_connection', 'group_el9cl08/Facility_of_solid_waste_collection', 'group_oi8ts04/Current_place_of_defecation']:
                 ''' Checking encounter data not available if hh status is occupied.'''
                 if field in output:
                     if  'data_not_available' in output[field]:
@@ -147,9 +121,11 @@ def get_household_analysis_data(city, slum_code, question_fields, kobo_survey=''
                         output[field]['data_not_available'] = [str(household_no), ]
                 else:
                     output[field] = {'data_not_available' : [str(household_no), ]}
+                    
+   
     return output
 
-def format_data(rhs_data, toilet_by_sa = False):
+def format_data(rhs_data, slum_id,toilet_by_sa = False):
     ''' Create RHS Data to show on spatial data'''
     new_rhs = {}
     remove_list = ['Name_s_of_the_surveyor_s', 'Date_of_survey', '_xform_id_string', 'meta/instanceID', 'end', 'start',
@@ -157,7 +133,7 @@ def format_data(rhs_data, toilet_by_sa = False):
     'formhub/uuid', '__version__','_submission_time', '_id', '_notes', '_bamboo_dataset_id', '_tags', 'slum_name', '_attachments',
     'OD1', 'C1', 'C2', 'C3','Household_number', '_validation_status']
 
-    seq = {'group_el9cl08/Number_of_household_members': 'Number of household members',
+    seq_old = {'group_el9cl08/Number_of_household_members': 'Number of household members',
         'group_oi8ts04/Have_you_applied_for_individua': 'Have you applied for an individual toilet under SBM?',
         'Type_of_structure_occupancy': 'Type of structure occupancy',
         'group_oi8ts04/Current_place_of_defecation': 'Current place of defecation',
@@ -176,6 +152,52 @@ def format_data(rhs_data, toilet_by_sa = False):
         'Plus code of the house' : 'Plus code of the house',
         "If individual water connection, type of water meter?":"If individual water connection, type of water meter?"
         }
+    seq_up = { 
+                    "Select Ward": "Ward No", 
+                    "Household_number" : "Structure number", 
+                    "Plus code of the house" : "Plus code of the Structure",
+                    "Digipin of the structure" : "Digipin of the structure",
+                    
+                    "Functioning of the structure": "Functioning of the structure",
+                    "Details of shop": "Details of shop",
+                    "If shop, type of occupancy ?": "Type of occupancy ?",
+                    "Please select the structure type (For: Religious, Health Care, Educational)": "Structure type",
+                    "Please select the sub category type for the structure ?": "sub category type for the structure ",
+                    "Type of unoccupied house_1" : "Type of unoccupied house",
+                    "Type_of_structure_occupancy": "Type of structure occupancy",
+                    "Name of the Building": "Name of the Building",
+                    "Number of units in the building ?": "Number of units in the building ?",
+                    "Comments if any ? (For other then individual": "Comments",
+                    
+                    "group_og5bx85/Full_name_of_the_head_of_the_household": "Full name of the head of the household",  
+                    "group_el9cl08/Enter_the_10_digit_mobile_number": "Contact number",    
+                    "Type_of_structure_occupancy": "Type of structure occupancy",
+                    "group_el9cl08/Ownership_status_of_the_house": "Ownership status of the house",
+                    
+                    "group_el9cl08/Number_of_household_members": "Number of household members",
+                    "Total number of male members (including children)": "Total number of male members (including children)",
+                    "Total number of female members (including children)": "Total number of female members (including children)",
+                    "Total number of third gender members (including children)?": "Total number of third gender members (including children)?",
+        
+                    "Do you have electricity in the house ?" : "Electricity status in the house ",
+                    "Do you have a toilet at home?": "Toilet at home?",
+                    
+                    "Waste Main Category": "Waste Main Category",
+                    "Please specify the other" : "Please specify the other",
+                    "Where do you dispose of your waste?": "Where do you dispose of your waste?",
+                    "How do you dispose your solid waste ?" : "Where do you dispose your solid waste ?",
+
+
+                    "Water Main Category": "Water Main Category", 
+                    "Water Sub Category": "Water Sub Category", 
+                    "Do you use any other sources ?": "Sources of the water",
+                    "Comment if any ?" : "Comment if any ?"
+    }
+    if slum_id == '1971':
+        seq = seq_up
+    else:
+        seq = seq_old
+        
     for i in remove_list:
         if i in rhs_data:
             rhs_data.pop(i)
@@ -198,29 +220,40 @@ def format_data(rhs_data, toilet_by_sa = False):
                 else:
                     if k in rhs_data:
                         new_rhs[v] = rhs_data[k]
+            elif k == 'Plus code of the house':
+                new_rhs[v] =  (rhs_data[k] + " " + rhs_data["Plus Code Part"]) if "Plus Code Part" in rhs_data else rhs_data[k]
             else:
                 if k in rhs_data:
                     new_rhs[v] = rhs_data[k]
-            if k == 'Plus code of the house':
-                new_rhs[v] =  (rhs_data[k] + " " + rhs_data["Plus Code Part"]) if "Plus Code Part" in rhs_data else rhs_data[k]
-        except Exception as e:pass
+                    
+        except Exception as e:
+            pass
     return new_rhs
 
 @survey_mapping(SURVEYTYPE_CHOICES[1][0])
-def get_kobo_RHS_list(city, slum, house_number, kobo_survey=''):
+def get_kobo_RHS_list(city, slum, slum_id ,house_number, kobo_survey=''):
     """Method which fetches RHS data using the Kobo Toolbox API. Data contains question and answer decrypted. """
     output=OrderedDict()
     household_data = HouseholdData.objects.filter(slum=slum,household_number=house_number).order_by('submission_date')
     Toilet_data = list(ToiletConstruction.objects.filter(slum = slum, status = 6).values_list('household_number', flat = True))
+    
     if len(household_data)>0:
         if str(int(house_number)) in Toilet_data:
-            output = format_data(household_data[0].rhs_data, True)
+            output = format_data(household_data[0].rhs_data, slum_id, True)
         else:
-            output = format_data(household_data[0].rhs_data)
+            output = format_data(household_data[0].rhs_data, slum_id)
     return output
+
+
 
 def getPlusCodeDetails(slum, household):
     rhs_obj = HouseholdData.objects.filter(slum = slum, household_number = str(int(household)), rhs_data__isnull = False)
+    if slum == '1971':
+        with open('/home/shelter/Desktop/Mohnlalganj_data/UP_pluscode_mapping.json', 'r') as datafile:
+            pluscode_data = json.load(datafile)
+        if str(household) in pluscode_data:
+            pluscode = pluscode_data[str(household)]
+            return pluscode
     if rhs_obj.exists():
         rhs_data = rhs_obj.values_list('rhs_data', flat = True)[0]
         if 'Plus code of the house' in rhs_data:

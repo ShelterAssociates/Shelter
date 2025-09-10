@@ -7,7 +7,7 @@ from django.utils import timezone
 from datetime import date
 class HouseholdData(models.Model):
 
-	household_number = models.CharField(max_length=5)
+	household_number = models.CharField(max_length=6)
 	slum = models.ForeignKey(Slum, on_delete=models.DO_NOTHING)
 	city = models.ForeignKey(City, on_delete=models.DO_NOTHING)
 	submission_date = models.DateTimeField()
