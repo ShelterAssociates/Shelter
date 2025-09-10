@@ -122,10 +122,7 @@ def get_household_analysis_data(city, slum_code, question_fields, kobo_survey=''
                 else:
                     output[field] = {'data_not_available' : [str(household_no), ]}
                     
-    with open("/home/shelter/Desktop/output.json", "w", encoding="utf-8") as f:
-        json.dump(output, f, ensure_ascii=False, indent=4)
-
-       
+   
     return output
 
 def format_data(rhs_data, slum_id,toilet_by_sa = False):
