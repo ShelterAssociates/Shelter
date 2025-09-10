@@ -14,7 +14,6 @@ from datetime import timedelta, datetime
 from django.utils import timezone
 from dateutil import parser
 
-
 direct_encountes = ['Sanitation', 'Property tax', 'Water', 'Waste', 'Electricity', 'Daily Mobilization Activity']
 program_encounters = ['Daily Reporting', 'Family factsheet']
 
@@ -52,15 +51,12 @@ class avni_sync():
         return slum[0], slum[1]
 
     def lastModifiedDateTime(self):
-        # get the latest submission
-        # date from household table and pass it to url
         last_submission_date = HouseholdData.objects.latest('submission_date')
         # latest_date = last_submission_date.submission_date + timedelta(days=1)
         today = datetime.today() + timedelta(days= -1)
         latest_date = today.strftime('%Y-%m-%dT00:00:00.000Z')
         iso = "2024-07-05T05:40:00.000Z"
         return(latest_date)
-        # return iso
 
     def get_image(self, image_link):
         path = 'https://app.avniproject.org/media/signedUrl?url='
@@ -199,10 +195,10 @@ class avni_sync():
         return a_city, b_slum, c_HH, d_date
 
     # This function is used to create rhs data url when we sync data page wise.
-    def create_registrationdata_url(self):  # checked
+    def create_registrationdata_url(self,subject_type):  # checked
         latest_date = self.lastModifiedDateTime()
 
-        household_path = 'api/subjects?lastModifiedDateTime=' + latest_date + '&subjectType=Household'
+        household_path = 'api/subjects?lastModifiedDateTime=' + latest_date + '&subjectType=' + subject_type
         result = requests.get(self.base_url + household_path, headers={'AUTH-TOKEN': self.get_cognito_token()})
         get_text = json.loads(result.text)['content']
         pages = json.loads(result.text)['totalPages']
@@ -211,7 +207,15 @@ class avni_sync():
     def registrtation_data(self, HH_data):  # checked
         final_rhs_data = {}
         rhs_from_avni = HH_data['observations']
-        household_number = str(int(rhs_from_avni['First name']))
+        # household_number = str(int(rhs_from_avni['First name']))
+        value = str(rhs_from_avni.get('First name', '')).strip()
+
+        try:
+            household_number = str(int(value))  # works if it's pure digits
+        except ValueError:
+            household_number = value           # fallback for things like "123A"
+        print(f"Household number is {household_number}")
+        
         created_date = HH_data['Registration date']
         submission_date = (HH_data['audit']['Last modified at'])  # use last modf date
         try:
@@ -239,16 +243,32 @@ class avni_sync():
         except Exception as e:
             print('second exception', slum_name, e)
 
+    
+    def SaveRhsData_byIIDs(self):
+        uuid = ['e1283832-c21c-49d0-a7ca-72a4d49755d6', 'c50d1c12-dced-4838-9922-1b588eb26175', '3fb191a0-6bc8-4e6a-8e71-3a47c79ac42c', '58f53187-0fa3-4de4-b3e7-ef6fa5883068', '41131705-5188-4df1-a2fc-cc316271abac', 'db3ef54e-3c8e-481c-ac2c-aba578528ba5', '102dec6d-b139-4912-b65f-cd0a95749f67']
+        for i in uuid:
+            Request = requests.get(self.base_url + 'api/subject/' + i ,headers={'AUTH-TOKEN': self.get_cognito_token()})
+            get_HH_data = json.loads(Request.text)
+            #print(get_HH_data)
+            if not (get_HH_data['Voided']):
+                self.registrtation_data(get_HH_data)
+            else:
+                print("Record is voided")   
 
-    def SaveRhsData(self):  # checked
-        pages, path = self.create_registrationdata_url()
-
-        for i in range(pages):
-            send_request = requests.get(self.base_url + path + '&page=' + str(i), headers={'AUTH-TOKEN': self.get_cognito_token()})
+        # checked
+    def SaveRhsData(self,subject_type):  # checked
+        pages, path = self.create_registrationdata_url(subject_type)    
+        all_records = []
+        for ij in range(pages):
+            send_request = requests.get(self.base_url + path + '&page=' + str(ij), headers={'AUTH-TOKEN': self.get_cognito_token()})
             get_HH_data = json.loads(send_request.text)['content']
             for i in get_HH_data:
                 if not (i['Voided']):
                     self.registrtation_data(i)
+                else:
+                    print("Record is voided")
+            print(f"Page {ij+1} of {pages} processed.")
+
 
     def update_rhs_data(self, subject_id, encounter_data):  # checked
         self.get_household_details(subject_id)

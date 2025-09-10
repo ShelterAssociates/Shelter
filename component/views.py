@@ -79,7 +79,6 @@ def get_component(request, slum_id):
     sponsor_houses = []
     #Iterate through each filter and assign answers to child if available
     for metad in metadata:
-        #print(metad.name)
         component = {}
         component['name'] = metad.name
         component['level'] = metad.level
@@ -176,11 +175,6 @@ def format_data(rhs_data):
 
 # @deco_rhs_permission
 def get_kobo_RHS_data(request, slum_id,house_num):
-     print(f"Logged in user: {request.user}")
-     print(f"Is authenticated: {request.user.is_authenticated}")
-     print(f"Username: {request.user.username}")
-     print(f"User groups: {[g.name for g in request.user.groups.all()]}")
-     print(f"Request is {request} slum_id is {slum_id} house_num is {house_num}")
      output = OrderedDict()
      slum = get_object_or_404(Slum, id=slum_id)
      project_details = False

@@ -26,77 +26,30 @@ def survey_mapping(survey_type):
     return real_decorator
 
 
-def get_household_analysis_data_for_UP(question_fields):
-    path = "/home/shelter/Desktop/Mohnlalganj_data/UP_Mohanlalganj_data_24_July_2025.json"
-    output = {}
-    with open(path, encoding='utf-8') as datafile:
-        household_data = json.load(datafile)
-    for household_obj in household_data:
-        household_no = household_obj['household_number'].lstrip('0')
-        rhs_data = household_obj['rhs_data']
-        if 'Functioning of the structure' in rhs_data and rhs_data['Functioning of the structure'] == 'Shop':
-            rhs_data['Type_of_structure_occupancy'] = 'Shop'
-        if 'Please select the structure type (For Religious, Health Care, Educational)' in rhs_data and rhs_data['Functioning of the structure'] == 'Educational':
-            if "Please select the sub category type for the structure ?" in rhs_data:
-                if rhs_data["Please select the sub category type for the structure ?"] not in ['Anganwadi', 'Madarsa']:
-                    answer_key = f"{rhs_data['Please select the structure type (For Religious, Health Care, Educational)']} {rhs_data['Please select the sub category type for the structure ?']}"
-                else:
-                    answer_key = rhs_data['Please select the sub category type for the structure ?']
-                rhs_data['Please select the structure type (For Religious, Health Care, Educational)'] = answer_key
-
-        for ques in question_fields:
-            if ques in rhs_data and rhs_data[ques] and (rhs_data[ques] == rhs_data[ques]):
-                ques_ans = rhs_data[ques]
-                if ques == 'group_oi8ts04/Current_place_of_defecation':
-                        if ques_ans == 'Yes':
-                            ques_ans = 'Toilet Available'
-                        else:
-                            ques_ans = 'No Toilet'
-
-                if ques not in output:
-                    output[ques] = {ques_ans:[str(household_no), ]}
-                else:
-                    if ques_ans not in output[ques]:
-                        output[ques][ques_ans] = [str(household_no), ]
-                    else:
-                        output[ques][ques_ans].append(household_no)
-                        
-    return output
-
-
-
 #@survey_mapping(SURVEYTYPE_CHOICES[1][0])
 def get_household_analysis_data(city, slum_code, question_fields, kobo_survey=''):
     '''Gets the kobotoolbox RHS data for selected questions
     '''
-    print("Starting household analaysisi for "+ str(slum_code))
     output = {}
     slum = get_object_or_404(Slum, id=slum_code)
     hide_houdehold_data = [1303807, 1303809, 1303815, 1302608, 1445969, 1303816, 1302615, 1302656, 1302659, 1302664, 1302674, 1302690, 1302691, 1302693, 1302696, 1302697, 1302698, 1302700, 1302701, 1302702, 1302704, 1302706, 1302707, 1302708, 1302709, 1302710, 1302712, 1302716, 1302717, 1302718, 1302719, 1302720, 1302723, 1302724, 1302725, 1302727, 1302728, 1302731, 1302732, 1302733, 1302734, 1302735, 1302736, 1302737, 1302738, 1302739, 1302740, 1302742, 1302743, 1302744, 1302745, 1302747, 1302748, 1302749, 1302750, 1302751, 1302752, 1302757, 1302758, 1302759, 1302760, 1302761, 1302762, 1302763, 1302764, 1302765, 1302766, 1302771, 1302772, 1302773, 1302774, 1302775, 1302778, 1302779, 1302780, 1302781, 1302782, 1302783, 1302784, 1302785, 1302786, 1302787, 1302788, 1302789, 1302790, 1302791, 1302792, 1302793, 1302794, 1302905, 1302906, 1302908, 1302912, 1302913, 1302914, 1302917, 1302918, 1302925, 1302928, 1302930, 1302931, 1302932, 1302943, 1302945, 1302946, 1302947, 1302948, 1302951, 1302952, 1302954, 1302958, 1302959, 1302960, 1302961, 1302968, 1302975, 1302979, 1302980, 1302981, 1302982, 1302983, 1302986, 1302989, 1302992, 1302995, 1302998, 1302999, 1303004, 1303005, 1303006, 1303008, 1303010, 1303013, 1303016, 1303019, 1303023, 1451254, 1303037, 1303039, 1303066, 1303067, 1303072, 1303076, 1303078, 1451266, 1451273, 1448770, 1448771, 1448774, 1448775, 1448776, 1448777, 1448780, 1448781, 1448782, 1448784, 1448785, 1448787, 1448788, 1448790, 1448791, 1448792, 1448793, 1448803, 1448805, 1448806, 1448807, 1448810, 1448854, 1448867, 1448869, 1448875, 1448876, 1448878, 1450960, 1448917, 1448918, 1450977, 1450979, 1448936, 1450986, 1448940, 1450988, 1451000, 1451001, 1451002, 1451003, 1451004, 1451005, 1451006, 1451007, 1448958, 1305605, 1305607, 1305608, 1451023, 1451024, 1451027, 1451028, 1451029, 1451030, 1305620, 1451041, 1305634, 1451042, 1451044, 1451043, 1451046, 1451047, 1451048, 1451045, 1451050, 1451051, 1469484, 1305645, 1451054, 1451055, 1451056, 1451057, 1451058, 1451059, 1451060, 1305653, 1451061, 1305655, 1451062, 1305680, 1305681, 1305682, 1305684, 1305685, 1305692, 1305694, 1305695, 1305696, 1305697, 1305699, 1305700, 1305701, 1305705, 1305706, 1305707, 1305708, 1305709, 1305711, 1305712, 1305713, 1305716, 1305717, 1305718, 1305723, 1305728, 1305729, 1305730, 1305751, 1305754, 1305756, 1305757, 1305759, 1305776, 1305777, 1305790, 1305791, 1303749, 1303750, 1303754, 1303756, 1303758, 1303762, 1303763, 1303764, 1303766, 1303768, 1303772, 1303773, 1303774, 1451231, 1451232, 1451233, 1451234, 1451235, 1451236, 1303780, 1451238, 1451239, 1451240, 1451241, 1303782, 1451237, 1303783, 1303784, 1451242, 1451246, 1303792, 1451249, 1451250, 1451251, 1451252, 1303797, 1451253, 1451255, 1451256, 1451257, 1303801, 1303803, 1303804, 1451261, 1451262, 1451263, 1451264, 1451265, 1303810, 1451267, 1451268, 1303811, 1451269, 1303813, 1303814, 1451270, 1451271, 1451272, 1303818, 1451274, 1451276, 1451277, 1451278, 1303825, 1303819, 1303824, 1451275, 1303821, 1451279, 1451280, 1303828, 1451289, 1451281, 1451288, 1451286, 1451287, 1451290, 1451291, 1451292, 1451293, 1451294, 1451296, 1451297, 1451298, 1451299, 1451300, 1451301, 1451302, 1451303, 1451305, 1451306, 1451307, 1451308, 1451309, 1451310, 1451311, 1451312, 1451313, 1451314, 1451315, 1451316, 1451317, 1451318, 1305907, 1305906, 1451324, 1305926, 1305942, 1447259, 1447260, 1447261, 1306027, 1306075, 1306120, 1306128, 1306135, 1445421, 1445422, 1445423, 1445424, 1445426, 1445440, 1445441, 1445446, 1445450, 1445451, 1451654, 1451680, 1451695, 1451696, 1451697, 1451698, 1451699, 1451701, 1451703, 1451704, 1451707, 1451718, 1435440, 1303775, 1303781, 1303785, 1303790, 1303795]
     household_data = HouseholdData.objects.filter(slum=slum).exclude(id__in = hide_houdehold_data)
-    # for s in household_data:
-    #     print(s.rhs_data)
     records = map(lambda x:x.rhs_data, household_data)
     records = filter(lambda x: x!=None, records)
-    # for r in records:
-    #     print(f"record is {r}")
+
     grouped_records = itertools.groupby(sorted(records, key=lambda x:(x['Household_number'])), key=lambda x:(x["Household_number"]))
 
-    # print("Get household analaysisi of data")
-    # print(f"Grouped Records are {grouped_records}")
-    # for s in grouped_records:
-    #     print(f"grouped record is {s}")
     # For Covid Data
     covid_data = CovidData.objects.filter(slum = slum, age__gt = 17).exclude(household_number = 9999).values_list('household_number',flat = True)
     Toilet_data = list(ToiletConstruction.objects.filter(slum = slum, status = 6).values_list('household_number', flat = True))
     covid_hh = list(set(covid_data))
     cpod_status = ['SBM (Installment)','SBM (Contractor)','Toilet by SA (SBM)','Toilet by other NGO (SBM)','Own toilet','Toilet by other NGO','Toilet by SA']
     for household, list_record in grouped_records:
-        print(f"Processing household {household}")
-        print(f"list_record is {list_record}")
         record_sorted = list(list_record) #sorted(list(list_record), key=lambda x:x['_submission_time'], reverse=False)
-        #household_no = int(household)
-        household_no = household
+        if slum_code == '1971':
+            household_no = household
+        else:
+            household_no = int(household)   
         if len(record_sorted)>0:
             record = record_sorted[0]
         # Here we are updating vaccination status for the household.
