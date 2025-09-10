@@ -229,10 +229,16 @@ class SlumDetailAdmin(BaseModelAdmin):
         return obj.electoral_ward.name
 
     def administrative_ward(self, obj):
-        return obj.electoral_ward.administrative_ward.name
+        try:
+            return obj.electoral_ward.administrative_ward.name
+        except Exception as e:
+            print(e)
 
     def city_name(self, obj):
-        return obj.electoral_ward.administrative_ward.city.name.city_name
+        try:
+            return obj.electoral_ward.administrative_ward.city.name.city_name
+        except Exception as e:
+            print(e)
 
 admin.site.register(Slum, SlumDetailAdmin)
 

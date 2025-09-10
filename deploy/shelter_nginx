@@ -6,8 +6,8 @@ upstream shelter_app {
 server{
     listen 80;
     server_name app.shelter-associates.org;
-    access_log  /var/log/nginx/enketo_express.access.log;
-    error_log   /var/log/nginx/enketo_express.error.log;
+    access_log  /var/log/nginx/shelter.access.log;
+    error_log   /var/log/nginx/shelter.error.log;
 
     # Support bigger headers. Useful for huge cookies
     large_client_header_buffers 8 16k;
@@ -26,8 +26,8 @@ server {
 #    ssl_certificate_key /srv/secrets/ssl.key;
     
      # RSA certificate
-    ssl_certificate /etc/letsencrypt/live/app.shelter-associates.org/fullchain.pem; # managed by Certbot
-    ssl_certificate_key /etc/letsencrypt/live/app.shelter-associates.org/privkey.pem; # managed by Certbot
+    ssl_certificate /etc/letsencrypt/live/app.shelter-associates.org-0002/fullchain.pem; # managed by Certbot
+    ssl_certificate_key /etc/letsencrypt/live/app.shelter-associates.org-0002/privkey.pem; # managed by Certbot
 
     include /etc/letsencrypt/options-ssl-nginx.conf; # managed by Certbot
     
@@ -46,8 +46,9 @@ server {
         add_header Access-Control-Allow-Origin *;
         # checks for static file, if not found proxy to app
         try_files $uri @proxy_to_app;
-        proxy_read_timeout 300;
-        proxy_send_timeout 300;
+        proxy_read_timeout 3000;
+	proxy_connect_timeout 3000;
+        proxy_send_timeout 3000;
     }
 
     location @proxy_to_app {
@@ -56,5 +57,73 @@ server {
         proxy_redirect off;
 
         proxy_pass   http://shelter_app;
+    }
+}
+
+upstream birt_report {
+    server 127.0.0.1:8080 fail_timeout=0;
+}
+server{
+    listen 80;
+    server_name report.shelter-associates.org;
+    access_log  /var/log/nginx/birt_report.access.log;
+    error_log   /var/log/nginx/birt_report.error.log;
+
+    # Support bigger headers. Useful for huge cookies
+    large_client_header_buffers 8 16k;
+
+    client_max_body_size 4G;
+    return 301 https://$http_host$request_uri;
+}
+
+server {
+     #listen 80;
+     server_name report.shelter-associates.org;
+     listen 443;
+
+
+    ssl on;
+	# RSA certificate
+    ssl_certificate /etc/letsencrypt/live/app.shelter-associates.org-0002/fullchain.pem; # managed by Certbot
+    ssl_certificate_key /etc/letsencrypt/live/app.shelter-associates.org-0002/privkey.pem; # managed by Certbot
+
+     client_max_body_size 4G;
+    location / {
+        # checks for static file, if not found proxy to app
+        try_files $uri @proxy_to_superset_app;
+        proxy_read_timeout 300;
+        proxy_send_timeout 300;
+    }
+
+    location @proxy_to_superset_app {
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header Host $http_host;
+        proxy_redirect off;
+
+        proxy_pass http://birt_report;
+    }
+}
+
+upstream superset_app{
+    server 3.90.10.80:8088 fail_timeout=10;
+}
+
+server {
+     listen 80;
+     server_name graphs.shelter-associates.org;
+     client_max_body_size 4G;
+    location / {
+        # checks for static file, if not found proxy to app
+        try_files $uri @proxy_to_superset_app;
+        proxy_read_timeout 300;
+        proxy_send_timeout 300;
+    }
+
+    location @proxy_to_superset_app {
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header Host $http_host;
+        proxy_redirect off;
+
+        proxy_pass http://superset_app;
     }
 }

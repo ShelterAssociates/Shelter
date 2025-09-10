@@ -13,6 +13,9 @@ from component.kobotoolbox import parse_RIM_answer_with_toilet
 import pdb
 import re
 import pytz
+import ssl
+
+ssl._create_default_https_context = ssl._create_unverified_context
 
 def convert_datetime(date_str):
 	ret = parse_datetime(date_str)#pytz.utc.localize(parse_datetime(date_str))
@@ -43,6 +46,7 @@ def fetch_labels_codes(rhs_data, form_code):
 	name_label_data_dict = {
  			obj_name_label_data['name']: {child['name']: child['label'] for child in obj_name_label_data['children']} for
 			obj_name_label_data in name_label_data}
+	name_label_data_dict["slum_name"]={}
 	for x in rhs_data:
 		for key_f,value_f in x.items():
 			key = key_f.split("/")[-1]
@@ -146,7 +150,7 @@ def syn_rim_data(city_id):
 				else:
 					print ("RIM ERROR:: Slum name missing for "+ str(record["_id"]))
 
-def syn_rhs_followup_data(city_id, ff_flag=False, latest_flag=True, start_date=datetime.datetime.now()):
+def syn_rhs_followup_data(city_id, ff_flag=False, latest_flag=True, start_date=None):
 	count_o = []
 	count_u = []
 	count_l = []
@@ -182,7 +186,7 @@ def syn_rhs_followup_data(city_id, ff_flag=False, latest_flag=True, start_date=d
 				latest_followup_date = latest_followup[0].submission_date
 
 			latest_date = latest_followup_date if latest_followup_date > latest_rhs_date else latest_rhs_date
-			if not latest_flag:
+			if not latest_flag and start_date:
 				latest_date = start_date
 			print(latest_date)
 			if ff_flag:
@@ -202,9 +206,8 @@ def syn_rhs_followup_data(city_id, ff_flag=False, latest_flag=True, start_date=d
 				print("Unoccupied Houses and locked Houses")
 				for key,list_records in groupby(data_with_lables, lambda x:x['slum_name']):
 					try:
-						slum = Slum.objects.get(shelter_slum_code = key)
+					        slum = Slum.objects.get(shelter_slum_code = key)
 					except:
-						#print key 
 						slum = Slum.objects.get(shelter_slum_code = 272537891001)
 					for record in list_records:
 						if 'group_oi8ts04/C1' in record.keys():
@@ -245,7 +248,7 @@ def syn_rhs_followup_data(city_id, ff_flag=False, latest_flag=True, start_date=d
 					except:
 						slum = Slum.objects.get(shelter_slum_code = 272537891001)
 					list_records = list(list_records)
-					#print(str(len(list_records)))
+					print(str(len(list_records)))
 					for index,  record in enumerate(list_records):
 						if 'group_oi8ts04/C1' in record.keys():
 							record.update({'group_oi8ts04/Current_place_of_defecation': record['group_oi8ts04/C1']})
@@ -325,7 +328,7 @@ def syn_rhs_followup_data(city_id, ff_flag=False, latest_flag=True, start_date=d
 					try:
 						slum = Slum.objects.get(shelter_slum_code = key)
 					except:
-						#print key 
+                                                #print(key)
 						slum = Slum.objects.get(shelter_slum_code = 272537891001)
 					for record in list_records:
 						if 'group_oi8ts04/C1' in record.keys():
@@ -381,12 +384,13 @@ def sync_ff_data(city_id, latest_date=''):
 		for i in survey_forms_ff:
 			form_code = i.kobotool_survey_id
 			ff_data = fetch_data(form_code, latest_date)
+			print("Total records", len(ff_data))
 			ff_data_with_labels = fetch_labels_codes(ff_data, form_code)
 
 			ff_data_with_labels = [x for x in ff_data_with_labels if 'group_vq77l17/slum_name' in x.keys()]
 
 			ff_data_with_labels = sorted(ff_data_with_labels, key = lambda x:x['group_vq77l17/slum_name']) #group_vq77l17/slum_name
-
+			print("----------------------------------")
 			for key,list_records in groupby(ff_data_with_labels, lambda x:x['group_vq77l17/slum_name']):
 				slum = None
 				try:
@@ -394,6 +398,7 @@ def sync_ff_data(city_id, latest_date=''):
 				except:
 					print (key," - slum not found")
 				if slum:
+                                        #print(slum)
 					list_records = list(list_records)
 					print(key, ' - ', str(len(list_records)))
 					for record in list_records:
@@ -418,7 +423,7 @@ def sync_ff_data(city_id, latest_date=''):
 								household_data.save()
 						except Exception as e:
 							#print no_rhs_but_ff.append(record['group_vq77l17/Household_number'] + " in" + str(slum) + " has a factesheet but no rhs/followup record")
-							print(e)
+							print(e)#pass
 			
 
 	# print "unoccupied =" + str(count_u) + str(len(count_u))

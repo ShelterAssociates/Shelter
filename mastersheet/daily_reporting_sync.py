@@ -19,7 +19,9 @@ from django.utils.dateparse import parse_datetime
 from django.utils import timezone
 from master.models import Survey, Slum, SURVEYTYPE_CHOICES
 from .models import *
+import ssl
 
+ssl._create_default_https_context = ssl._create_unverified_context
 
 class DDSync(object):
     def __init__(self, slum, user):

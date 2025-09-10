@@ -4,5 +4,3 @@ ENV
 .DS_Store
 node_modules
 package-lock.json
-settings.py
-utils_permission.py

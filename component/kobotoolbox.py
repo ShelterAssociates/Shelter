@@ -249,7 +249,7 @@ def get_kobo_RHS_list(city, slum, slum_id ,house_number, kobo_survey=''):
 def getPlusCodeDetails(slum, household):
     rhs_obj = HouseholdData.objects.filter(slum = slum, household_number = str(int(household)), rhs_data__isnull = False)
     if slum == '1971':
-        with open('/home/shelter/Desktop/Mohnlalganj_data/UP_pluscode_mapping.json', 'r') as datafile:
+        with open('/home/ubuntu/kuldeep/UP_pluscode_mapping.json', 'r') as datafile:
             pluscode_data = json.load(datafile)
         if str(household) in pluscode_data:
             pluscode = pluscode_data[str(household)]

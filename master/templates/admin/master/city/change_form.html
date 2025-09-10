@@ -1,5 +1,5 @@
 {% extends "admin/base_site.html" %}
-{% load i18n admin_urls admin_static admin_modify %}
+{% load i18n admin_urls static admin_modify %}
 {% block extrahead %}{{ block.super }}
 <script type="text/javascript" src="{% url 'admin:jsi18n' %}"></script>
 {{ media }}
@@ -51,7 +51,7 @@
 function myFunction(){
     var cityname = django.jQuery("#id_name option:selected").text();
     var id = django.jQuery("#id_name option:selected").val();
-    var url = "{% url 'search' %}";
+    var url = "";
     django.jQuery.ajax({
         url : url,
         data : { id : id },
