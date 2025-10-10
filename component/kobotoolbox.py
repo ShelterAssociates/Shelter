@@ -46,10 +46,11 @@ def get_household_analysis_data(city, slum_code, question_fields, kobo_survey=''
     cpod_status = ['SBM (Installment)','SBM (Contractor)','Toilet by SA (SBM)','Toilet by other NGO (SBM)','Own toilet','Toilet by other NGO','Toilet by SA']
     for household, list_record in grouped_records:
         record_sorted = list(list_record) #sorted(list(list_record), key=lambda x:x['_submission_time'], reverse=False)
-        if slum_code == '1971':
+        print(slum_code)
+        if slum_code == '1971' or slum_code == 1971:
             household_no = household
         else:
-            household_no = int(household)   
+            household_no = int(household)
         if len(record_sorted)>0:
             record = record_sorted[0]
         # Here we are updating vaccination status for the household.

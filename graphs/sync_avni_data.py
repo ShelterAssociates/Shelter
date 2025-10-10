@@ -52,9 +52,9 @@ class avni_sync():
 
     def lastModifiedDateTime(self):
         last_submission_date = HouseholdData.objects.latest('submission_date')
-        # latest_date = last_submission_date.submission_date + timedelta(days=1)
-        today = datetime.today() + timedelta(days= -1)
-        latest_date = today.strftime('%Y-%m-%dT00:00:00.000Z')
+        #latest_date = last_submission_date.submission_date + timedelta(days=1)
+        latest_date = datetime.today() + timedelta(days= -1)
+        latest_date = latest_date.strftime('%Y-%m-%dT00:00:00.000Z')
         iso = "2024-07-05T05:40:00.000Z"
         return(latest_date)
 
@@ -459,6 +459,7 @@ class avni_sync():
                 if j['Voided'] == False and j['observations'] != {}:
                     a, slum_id, HH, d = self.get_household_details(j['Subject ID'])
                     self.DailyReportingData(j['observations'], slum_id, HH)
+
 
 
     def DailyReportingData(self, data, slum, HH):  # checked

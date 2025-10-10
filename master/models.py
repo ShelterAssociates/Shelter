@@ -15,6 +15,7 @@ FACTSHEET_PHOTO="factsheet/"
 SHELTER_PHOTO="ShelterPhotos/"
 DRAINAGE_PHOTO="ShelterPhotos/FactsheetPhotos/"
 
+
 class CityReference(models.Model):
     """Worldwide City Database"""
     city_name = models.CharField(max_length=2048)
@@ -27,6 +28,7 @@ class CityReference(models.Model):
     def __str__(self):
         """Returns string representation of object"""
         return str(self.city_name)
+
 
 class City(models.Model):
     """Shelter City Database"""
@@ -53,10 +55,12 @@ class City(models.Model):
         verbose_name = 'City'
         verbose_name_plural = 'Cities'
 
+
 SURVEYTYPE_CHOICES = (('Slum Level', 'Slum Level'),
                       ('Household Level', 'Household Level'),
                       ('Household Member Level', 'Household Member Level'),
                       ('Family Factsheet', 'Family Factsheet'))
+
 
 class Survey(models.Model):
     """Shelter Survey Database"""
@@ -290,6 +294,23 @@ def validate_image(fieldfile_obj):
     megabyte_limit = 3.0
     if filesize > megabyte_limit*1024*1024:
         raise ValidationError("Max file size is %sMB" % str(megabyte_limit))
+import os
+
+def rapid_slum_upload_path(instance, filename):
+    """
+    Generates dynamic upload path for Rapid_Slum_Appraisal images:
+    ShelterPhotos/<CityName>/<AdminWardName>/<SlumName>/<filename>
+    """
+    try:
+        slum = instance.slum_name
+        city_name = slum.electoral_ward.administrative_ward.city.name.city_name.strip().replace(" ", "_")
+        admin_ward_name = slum.electoral_ward.administrative_ward.name.strip().replace(" ", "_")
+        slum_name = slum.name.strip().replace(" ", "_")
+        return os.path.join("ShelterPhotos", city_name, admin_ward_name, slum_name, filename)
+    except AttributeError:
+        # fallback path if relationships are missing
+        return os.path.join("ShelterPhotos", "Unknown", filename)
+
 
 class Rapid_Slum_Appraisal(models.Model):
     def validate_image(fieldfile_obj):
@@ -303,28 +324,28 @@ class Rapid_Slum_Appraisal(models.Model):
     toilet_seat_to_persons_ratio = models.CharField(max_length=2048,blank=True, null=True)
     percentage_with_an_individual_water_connection = models.CharField(max_length=2048,blank=True, null=True)
     frequency_of_clearance_of_waste_containers = models.CharField(max_length=2048,blank=True, null=True)
-    general_info_left_image = models.ImageField(validate_image,upload_to=SHELTER_PHOTO,blank=True, null=True)
-    toilet_info_left_image = models.ImageField(validate_image,upload_to=SHELTER_PHOTO,blank=True, null=True)
-    waste_management_info_left_image = models.ImageField(validate_image,upload_to=SHELTER_PHOTO,blank=True, null=True)
-    water_info_left_image = models.ImageField(validate_image,upload_to=SHELTER_PHOTO,blank=True, null=True)
-    roads_and_access_info_left_image = models.ImageField(validate_image,upload_to=SHELTER_PHOTO,blank=True, null=True)
-    drainage_info_left_image = models.ImageField(validate_image,upload_to=SHELTER_PHOTO,blank=True, null=True)
-    gutter_info_left_image = models.ImageField(validate_image,upload_to=SHELTER_PHOTO,blank=True, null=True)
-    general_image_bottomdown1 = models.ImageField(validate_image,upload_to=SHELTER_PHOTO,blank=True, null=True)
-    general_image_bottomdown2 = models.ImageField(validate_image,upload_to=SHELTER_PHOTO,blank=True, null=True)
-    toilet_image_bottomdown1 = models.ImageField(validate_image,upload_to=SHELTER_PHOTO,blank=True, null=True)
-    toilet_image_bottomdown2 = models.ImageField(validate_image,upload_to=SHELTER_PHOTO,blank=True, null=True)
-    waste_management_image_bottomdown1 = models.ImageField(validate_image,upload_to=SHELTER_PHOTO,blank=True, null=True)
-    waste_management_image_bottomdown2 = models.ImageField(validate_image,upload_to=SHELTER_PHOTO,blank=True, null=True)
-    water_image_bottomdown1  = models.ImageField(validate_image,upload_to=SHELTER_PHOTO,blank=True, null=True)
-    water_image_bottomdown2 = models.ImageField(validate_image,upload_to=SHELTER_PHOTO,blank=True, null=True)
-    roads_image_bottomdown1 = models.ImageField(validate_image,upload_to=SHELTER_PHOTO,blank=True, null=True)
-    road_image_bottomdown2  = models.ImageField(validate_image,upload_to=SHELTER_PHOTO,blank=True, null=True)
-    drainage_image_bottomdown1 = models.ImageField(validate_image,upload_to=SHELTER_PHOTO,blank=True, null=True)
-    drainage_image_bottomdown2 = models.ImageField(validate_image,upload_to=SHELTER_PHOTO,blank=True, null=True)
-    gutter_image_bottomdown1  = models.ImageField(validate_image,upload_to=SHELTER_PHOTO,blank=True, null=True)
-    gutter_image_bottomdown2 = models.ImageField(validate_image,upload_to=SHELTER_PHOTO,blank=True, null=True)
-    drainage_report_image = models.ImageField(upload_to=DRAINAGE_PHOTO,blank=True, null=True)
+    general_info_left_image = models.ImageField(validate_image,upload_to=rapid_slum_upload_path,blank=True, null=True,max_length=255)
+    toilet_info_left_image = models.ImageField(validate_image,upload_to=rapid_slum_upload_path,blank=True, null=True,max_length=255)
+    waste_management_info_left_image = models.ImageField(validate_image,upload_to=rapid_slum_upload_path,blank=True, null=True,max_length=255)
+    water_info_left_image = models.ImageField(validate_image,upload_to=rapid_slum_upload_path,blank=True, null=True,max_length=255)
+    roads_and_access_info_left_image = models.ImageField(validate_image,upload_to=rapid_slum_upload_path,blank=True, null=True,max_length=255)
+    drainage_info_left_image = models.ImageField(validate_image,upload_to=rapid_slum_upload_path,blank=True, null=True,max_length=255)
+    gutter_info_left_image = models.ImageField(validate_image,upload_to=rapid_slum_upload_path,blank=True, null=True,max_length=255)
+    general_image_bottomdown1 = models.ImageField(validate_image,upload_to=rapid_slum_upload_path,blank=True, null=True,max_length=255)
+    general_image_bottomdown2 = models.ImageField(validate_image,upload_to=rapid_slum_upload_path,blank=True, null=True,max_length=255)
+    toilet_image_bottomdown1 = models.ImageField(validate_image,upload_to=rapid_slum_upload_path,blank=True, null=True,max_length=255)
+    toilet_image_bottomdown2 = models.ImageField(validate_image,upload_to=rapid_slum_upload_path,blank=True, null=True,max_length=255)
+    waste_management_image_bottomdown1 = models.ImageField(validate_image,upload_to=rapid_slum_upload_path,blank=True, null=True,max_length=255)
+    waste_management_image_bottomdown2 = models.ImageField(validate_image,upload_to=rapid_slum_upload_path,blank=True, null=True,max_length=255)
+    water_image_bottomdown1  = models.ImageField(validate_image,upload_to=rapid_slum_upload_path,blank=True, null=True,max_length=255)
+    water_image_bottomdown2 = models.ImageField(validate_image,upload_to=rapid_slum_upload_path,blank=True, null=True,max_length=255)
+    roads_image_bottomdown1 = models.ImageField(validate_image,upload_to=rapid_slum_upload_path,blank=True, null=True,max_length=255)
+    road_image_bottomdown2  = models.ImageField(validate_image,upload_to=rapid_slum_upload_path,blank=True, null=True,max_length=255)
+    drainage_image_bottomdown1 = models.ImageField(validate_image,upload_to=rapid_slum_upload_path,blank=True, null=True,max_length=255)
+    drainage_image_bottomdown2 = models.ImageField(validate_image,upload_to=rapid_slum_upload_path,blank=True, null=True,max_length=255)
+    gutter_image_bottomdown1  = models.ImageField(validate_image,upload_to=rapid_slum_upload_path,blank=True, null=True,max_length=255)
+    gutter_image_bottomdown2 = models.ImageField(validate_image,upload_to=rapid_slum_upload_path,blank=True, null=True,max_length=255)
+    drainage_report_image = models.ImageField(upload_to=rapid_slum_upload_path,blank=True, null=True,max_length=255)
     location_of_defecation = models.CharField(max_length=2048,blank=True, null=True)
     percentage_with_individual_toilet = models.CharField(max_length=2048,blank=True, null=True)
     drainage_coverage = models.IntegerField(blank=True, null=True)

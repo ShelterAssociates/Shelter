@@ -6,11 +6,12 @@ from time import sleep
 import time
 a = avni_sync()
 a.SaveDailyReportingdata()
-time.sleep(1m)
+time.sleep(1)
 a.SaveFamilyFactsheetData()
-time.sleep(1m)
+time.sleep(1)
 a.SaveCommunityMobilizationData()
-time.sleep(1m)
+time.sleep(1)
+## Not Doing currently
 # a.SaveFollowupData()
 # time.sleep(1m)
 # a.SaveRhsData('Household')
@@ -26,13 +27,13 @@ time.sleep(1m)
 # a.SavePropertyTaxData()
 # time.sleep(1m)
 # a.SaveDailyReportingdata()
-#a.sync_sanitation_data('/home/ubuntu/Json_files_for_upload/sanitation_data_04_09_2025.json')
+#a.sync_sanitation_data('/home/ubuntu/Json_files_for_upload/sanitation_data_09_10_2025.json')
 #sleep(3)
-#a.sync_water_data('/home/ubuntu/Json_files_for_upload/water_data_04_09_2025.json')
+#a.sync_water_data('/home/ubuntu/Json_files_for_upload/water_data_09_10_2025.json')
 #sleep(3)
-#a.sync_waste_data('/home/ubuntu/Json_files_for_upload/waste_data_04_09_2025.json')
+#a.sync_waste_data('/home/ubuntu/Json_files_for_upload/waste_data_09_10_2025.json')
 #sleep(3)
-#a.sync_Electricity_data('/home/ubuntu/Json_files_for_upload/electricity_data_04_09_2025.json')
+#a.sync_Electricity_data('/home/ubuntu/Json_files_for_upload/electricity_data_09_10_2025.json')
 
 
 ORM
