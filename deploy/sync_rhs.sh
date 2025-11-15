@@ -5,8 +5,9 @@ from importlib import reload
 reload(sync_module)
 a = sync_module.avni_sync()
 #a.SaveRhsData("Structure")  # now it will work
+a.SaveRhsData("Household")  # now it will work
 
-a.SaveRhsData_byIIDs()
+#a.SaveRhsData_byIIDs()
 
 
 #print(a.get_cognito_token())

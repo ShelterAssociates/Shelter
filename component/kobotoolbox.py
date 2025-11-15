@@ -46,7 +46,6 @@ def get_household_analysis_data(city, slum_code, question_fields, kobo_survey=''
     cpod_status = ['SBM (Installment)','SBM (Contractor)','Toilet by SA (SBM)','Toilet by other NGO (SBM)','Own toilet','Toilet by other NGO','Toilet by SA']
     for household, list_record in grouped_records:
         record_sorted = list(list_record) #sorted(list(list_record), key=lambda x:x['_submission_time'], reverse=False)
-        print(slum_code)
         if slum_code == '1971' or slum_code == 1971:
             household_no = household
         else:
@@ -70,11 +69,11 @@ def get_household_analysis_data(city, slum_code, question_fields, kobo_survey=''
                 record['vaccination_status'] = 'not_surveyed'
 
         # Checking sbm and toilet by sa for filter.
-        if 'group_oi8ts04/Current_place_of_defecation' in record and record['group_oi8ts04/Current_place_of_defecation'] in cpod_status[:4]:
+        if 'group_oi8ts04/Current_place_of_defecation' in record and record['group_oi8ts04/Current_place_of_defecation'] in cpod_status[:4] and slum_code != 1971:
             record['Final_status'] = 'SBM'
             record['group_oi8ts04/Current_place_of_defecation'] = 'Use CTB'
         if str(household_no) in Toilet_data:
-            if 'group_oi8ts04/Current_place_of_defecation' in record and record['group_oi8ts04/Current_place_of_defecation'] in cpod_status:
+            if 'group_oi8ts04/Current_place_of_defecation' in record and record['group_oi8ts04/Current_place_of_defecation'] in cpod_status and slum_code != 1971:
                 record['group_oi8ts04/Current_place_of_defecation'] = 'Use CTB'
             record['Final_status'] = 'Completed'
 

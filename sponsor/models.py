@@ -8,16 +8,30 @@ from .birt_ff_report import *
 from django.db.models.signals import pre_save, pre_delete
 from django.dispatch import receiver
 
-LOGO_PATH = 'sponsor_logo/'
-PROJECT_PATH = 'sponsor_project/'
+from django.utils.text import slugify
+
+
+def project_image_path(instance, filename):
+    # Slugify the project name to make it filesystem-friendly
+    project_name = slugify(instance.sponsor_project.name)
+    return f'sponsor_project/{project_name}/{filename}'
+
+def sponsor_logo_path(instance, filename):
+    # Slugify the organization name to make it filesystem-friendly
+    org_name = slugify(instance.organization_name)
+    return f'sponsor_logo/{org_name}/{filename}'
+
+#sponsor_logo_path = 'sponsor_logo/'
+#project_image_path = 'sponsor_project/'
 ZIP_PATH = 'FFReport'
+
 class Sponsor(models.Model):
 	organization_name = models.CharField(max_length=1024)
 	address = models.CharField(max_length=2048)
 	website_link = models.CharField(max_length = 2048, null=True, blank=True)
 	intro_date = models.DateField(default=datetime.now)
 	other_info = models.TextField(null=True, blank=True)
-	logo = models.ImageField(upload_to=LOGO_PATH, null=True, blank=True)
+	logo = models.ImageField(upload_to=sponsor_logo_path, null=True, blank=True)
 	user = models.ForeignKey(User, limit_choices_to={'groups__name': "sponsor"}, on_delete=models.DO_NOTHING)
 
 	class Meta:
@@ -60,7 +74,7 @@ class SponsorProject(models.Model):
 
 class ProjectDocuments(models.Model):
 	sponsor_project = models.ForeignKey(SponsorProject, on_delete=models.CASCADE)
-	document = models.FileField(upload_to=PROJECT_PATH)
+	document = models.FileField(upload_to=project_image_path)
 
 	def __unicode__(self):
 		return self.document.url
@@ -74,7 +88,7 @@ class ProjectDocuments(models.Model):
 
 class ProjectImages(models.Model):
 	sponsor_project = models.ForeignKey(SponsorProject, on_delete=models.CASCADE)
-	image = models.ImageField(upload_to=PROJECT_PATH)
+	image = models.ImageField(upload_to=project_image_path)
 
 	def __str__(self):
 		return self.image.url
