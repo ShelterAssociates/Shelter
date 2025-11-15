@@ -1,10 +1,23 @@
 from django.db import models
 from django.contrib.auth.models import User
+from django.contrib.postgres.fields import JSONField
 from master.models import City, Slum
 from jsonfield import JSONField
 import datetime
 from django.utils import timezone
 from datetime import date
+
+class APICache(models.Model):
+    request_hash = models.CharField(max_length=64, unique=True)
+    response = JSONField()
+    created_at = models.DateTimeField(auto_now_add=True)
+    expires_at = models.DateTimeField(null=True, blank=True)
+
+    def is_expired(self):
+        if self.expires_at:
+            return timezone.now() > self.expires_at
+        return False
+
 class HouseholdData(models.Model):
 
 	household_number = models.CharField(max_length=6)

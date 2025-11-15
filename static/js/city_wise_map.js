@@ -135,7 +135,8 @@ function initMap(){
                         "Saharanpur":new L.LatLng(29.96813172,77.54673382),
                         "Pune District":new L.LatLng(18.57054718,74.07657987),
                         "Mohanlalganj City":new L.LatLng(26.66998253,80.98541311),
-                        "Nilgiri District":new L.LatLng(11.45878141, 76.64049998)};
+                        "Nilgiri District":new L.LatLng(11.45878141, 76.64049998),
+                        "Ichalkaranji":new L.LatLng(16.68803567359255879, 74.46583551598165229)};
     var pos = new L.LatLng(18.640083, 73.825560);
     if ($('#city_name').val() in center_data)
     {
@@ -176,12 +177,50 @@ function readJSONFile(filePath, callback, param1, param2) {
 
 // Get filters and RIM data after selecting particular slum
 function slum_data_fetch(slumId){
+    let compochk_refresh = $("#compochk_refresh");
+    compochk_refresh.html('<button id="refreshComponents" class="btn btn-primary" style="margin-bottom:10px;">Refresh Components</button>');
+    compochk_refresh.html(`
+      <button id="refreshComponents"
+        class="btn btn-primary"
+        style="margin-bottom:10px; position:absolute; top:10px; right:10px; z-index:99999;margin-top:80px; margin-right:50px; padding:2px 6px; border-radius:6px; font-size:12px;">
+        Refresh Components
+      </button>
+    `);
+    // Handle button click for forced refresh
+    $(document).off("click", "#refreshComponents").on("click", "#refreshComponents", function() {
+        let btn = $(this);
+
+        // Disable button to avoid spam
+        btn.prop("disabled", true).text("Refreshing...");
+
+        $.ajax({
+            url: `/component/get_component/${slumId}`,
+            type: "GET",
+            headers: {
+                "Force-Refresh-Flag": "1"
+            },
+            success: function() {
+                console.log("✅ Refresh triggered successfully");
+                btn.prop("disabled", false).text("Refresh Components");
+            },
+            error: function() {
+                console.error("❌ Error triggering refresh");
+                btn.prop("disabled", false).text("Refresh Components");
+                alert("Failed to refresh. Try again.");
+            }
+        });
+    });
+
+
     let compochk = $("#compochk");
     compochk.html('<div style="height:300px;width:300px;"><div id="loading-img"></div></div>');
 	var ajax_calls = [$.ajax({
             url : '/component/get_component/' + slumId,
             type : "GET",
-            contenttype : "json"
+            contenttype : "json",
+            headers: {
+                "Force-Refresh-Flag": "0"
+            }
         }),
         $.ajax({
             url : '/component/get_kobo_RIM_data/' + slumId,

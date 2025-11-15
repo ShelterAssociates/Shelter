@@ -1,6 +1,10 @@
 from django.contrib import admin
 #from django.contrib.gis import admin
 from .models import *
+from django.contrib import admin
+
+from django.contrib.auth.admin import UserAdmin
+from django.contrib.auth.models import User
 
 class SectionListFilter(admin.SimpleListFilter):
     """
@@ -116,3 +120,35 @@ class ComponentAdmin(admin.ModelAdmin):
     component_name.admin_order_field = 'metadata__name'
 
 admin.site.register(Component, ComponentAdmin)
+
+
+try:
+    from admin_view_permission.admin import UserAdmin as AVPUserAdmin
+    BaseUserAdmin = AVPUserAdmin
+except ImportError:
+    BaseUserAdmin = UserAdmin
+
+
+class PatchedUserAdmin(BaseUserAdmin):
+    def save_related(self, request, form, formsets, change):
+        super().save_related(request, form, formsets, change)
+
+        # Fix groups (avoids ON CONFLICT)
+        if 'groups' in form.cleaned_data:
+            groups = form.cleaned_data['groups']
+            form.instance.groups.clear()
+            for g in groups:
+                form.instance.groups.add(g)
+
+        # Fix user_permissions too (same issue possible)
+        if 'user_permissions' in form.cleaned_data:
+            perms = form.cleaned_data['user_permissions']
+            form.instance.user_permissions.clear()
+            for p in perms:
+                form.instance.user_permissions.add(p)
+
+
+# Re-register User with patched admin
+admin.site.unregister(User)
+admin.site.register(User, PatchedUserAdmin)
+

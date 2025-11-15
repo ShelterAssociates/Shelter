@@ -55,7 +55,8 @@ class avni_sync():
         #latest_date = last_submission_date.submission_date + timedelta(days=1)
         latest_date = datetime.today() + timedelta(days= -1)
         latest_date = latest_date.strftime('%Y-%m-%dT00:00:00.000Z')
-        iso = "2024-07-05T05:40:00.000Z"
+        #iso = "2024-07-05T05:40:00.000Z"
+        #latest_date = "2025-10-10T05:40:00.000Z"
         return(latest_date)
 
     def get_image(self, image_link):
@@ -1377,11 +1378,12 @@ class avni_sync():
         return Update_count
 
 
-    def update_rim_data(self, get_text):
+    def update_rim_data(self, get_text,slum_id):
         section_names = ['General' , 'Water', 'Waste', 'Drainage', 'Gutter', 'Road']
         Update_count = 0
         for data in get_text:
             if not data['Voided']:
+                print(get_text)
                 slum_name = data['location']['Slum']
                 last_modified_at = dateparser.parse(data['audit']['Last modified at'])
                 with open('graphs/rim_questions_mapping.json') as datafile:
@@ -1391,8 +1393,14 @@ class avni_sync():
                         section_map_data = self.map_rim_data(data['observations'], rim_questions[section])
                         rim_data[section] = section_map_data
                     rim_data['Toilet'] = []
-                    slum_id, city_id = self.get_city_slum_ids(slum_name)
+                    #slum_id, city_id = self.get_city_slum_ids(slum_name)
+                    slum = Slum.objects.get(id=slum_id) 
+                    city = slum.electoral_ward.administrative_ward.city
+                    city_id = city.id
+		 
                     slum_rim_obj = SlumData.objects.filter(slum_id = slum_id)
+                    print(slum_id)
+                    print(city_id)
                     if slum_rim_obj.exists():
                         slum_rim_obj.update(rim_data = rim_data, modified_on = last_modified_at)
                         print("Slum_data Updated for slum : ", slum_name)
@@ -1407,8 +1415,10 @@ class avni_sync():
                     # Checking RIM images.
                     rim_add_data = self.get_rim_images(data['observations'])
                     rim_add_flag = False
+                    print(rim_add_data)
                     if rim_add_data != {}:
                         rim_add_obj = Rapid_Slum_Appraisal.objects.filter(slum_name_id = slum_id)
+                        print(rim_add_obj)
                         if rim_add_obj.exists():
                             rim_add_obj.update(**rim_add_data)
                             rim_add_flag = True
@@ -1430,7 +1440,7 @@ class avni_sync():
             slumRim_path = 'api/subjects?lastModifiedDateTime=' + latest_date + '&subjectType=' + 'Slum-RIM%20Registration&locationIds=' + avni_uuid
             result = requests.get(self.base_url + slumRim_path, headers={'AUTH-TOKEN': self.get_cognito_token()})
             get_text = json.loads(result.text)['content']
-            update_cnt, rim_add_flag = self.update_rim_data(get_text)
+            update_cnt, rim_add_flag = self.update_rim_data(get_text,slum_id)
             return  True, update_cnt, rim_add_flag
         else:
             return False, 0, False

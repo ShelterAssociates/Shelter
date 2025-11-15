@@ -37,3 +37,6 @@ time.sleep(1)
 
 
 ORM
+
+sudo bash /srv/Shelter/deploy/auto_ssl_renew.sh
+

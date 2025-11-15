@@ -1,3 +1,4 @@
+from pdb import pm
 from django.apps import apps
 from pykml import parser
 from django.contrib.gis.geos import GEOSGeometry
@@ -80,19 +81,44 @@ class KMLLevelParser(object):
         parent_filter = {'defaults':{}}
         parent_filter[base_filter_data[self.action_title][0]] = self.city_id
         if self.action_title == "AdministrativeWard":
-            parent_filter['defaults'][base_filter_data['City'][1]] = \
-            City.objects.filter(id=self.city_id)[0]
+            parent_filter['defaults'][base_filter_data['City'][1]] = City.objects.filter(id=self.city_id).first()
 
         if self.action_title == "ElectoralWard":
-            parent_filter['defaults'][base_filter_data['AdministrativeWard'][1]] = \
-            AdministrativeWard.objects.filter(city__id=self.city_id)[0]
+            parent_filter['defaults'][base_filter_data['AdministrativeWard'][1]] = AdministrativeWard.objects.filter(city__id=self.city_id).first()
 
         if self.action_title == "Slum":
-            parent_filter['defaults'][base_filter_data['ElectoralWard'][1]] = \
-                ElectoralWard.objects.filter(administrative_ward__city__id=self.city_id)[0]
+            parent_filter['defaults'][base_filter_data['ElectoralWard'][1]] = ElectoralWard.objects.filter(administrative_ward__city__id=self.city_id).first()
 
         for folder in self.folders:
             for pm in folder.Placemark:
+                admin_name = None
+                # Refactored ExtendedData processing for ElectoralWard
+                if getattr(pm, 'ExtendedData', None) and self.action_title in ["ElectoralWard", "Slum"]:
+                    schema_data = getattr(pm.ExtendedData, 'SchemaData', None)
+                    if schema_data and getattr(schema_data, 'SimpleData', None):
+                        admin_name = None
+                        electoral_name = None
+                        for simple_data in schema_data.SimpleData:
+                            name_attr = simple_data.get('name')
+                            value = str(simple_data)
+                            if name_attr == 'admin' :
+                                admin_name = value
+                                admin_obj = AdministrativeWard.objects.filter(
+                                    name__iexact=admin_name, city__id=self.city_id
+                                ).first()
+                                if self.action_title == "ElectoralWard":
+                                    parent_filter['defaults'][base_filter_data['AdministrativeWard'][1]] = admin_obj
+                                admin_id = getattr(admin_obj, 'id', None)
+                            elif name_attr == 'electoral':
+                                electoral_name = value
+                                if admin_name:
+                                    electoral_obj = ElectoralWard.objects.filter(
+                                        name__iexact=electoral_name,
+                                        administrative_ward__name__iexact=admin_name,
+                                        administrative_ward__city__id=self.city_id
+                                    ).first()
+                                    parent_filter['defaults'][base_filter_data['ElectoralWard'][1]] = electoral_obj
+                                    electoral_id = getattr(electoral_obj, 'id', None)
                 (name, coordinates) = self.parse_placemark(pm)
                 for count_c, coordinate in enumerate(coordinates):
                     if self.action_title == "ElectoralWard":
@@ -109,9 +135,9 @@ class KMLLevelParser(object):
                         cnt['created'] += 1
                     else:
                         cnt['updated'] += 1
-        if self.action_title in parse_link.values():
-            linking = LinkingLevels(self.city_id)
-            linking.linking()
+        # if self.action_title in parse_link.values():
+        #     linking = LinkingLevels(self.city_id)
+        #     linking.linking()
         return cnt
 
 class LinkingLevels(object):
@@ -120,7 +146,7 @@ class LinkingLevels(object):
 
     def linking(self):
         try:
-            for parent_level,child_level in parse_link.items():
+            for parent_level, child_level in parse_link.items():
                 child_level_model = apps.get_model('master', child_level)
                 filter_level = {}
                 filter_level[base_filter_data[child_level][0]] = self.city_id
@@ -129,7 +155,7 @@ class LinkingLevels(object):
                 child_level_model.objects.filter(**filter_level).update(**update_level)
 
                 parent_level_model = apps.get_model('master', parent_level)
-                parent_level_filter ={}
+                parent_level_filter = {}
                 parent_level_filter[base_filter_data[parent_level][0]] = self.city_id
                 parent_level_objects = parent_level_model.objects.filter(**parent_level_filter)
 
@@ -137,9 +163,9 @@ class LinkingLevels(object):
                     child_level_objects = child_level_model.objects.filter(**update_level)
                     for child_level_object in child_level_objects:
                         if parent_level_object.shape.intersects(child_level_object.shape):
-                            filter_data_child={}
+                            filter_data_child = {}
                             filter_data_child[base_filter_data[parent_level][1]] = parent_level_object
                             child_level_model.objects.filter(id=child_level_object.id).update(**filter_data_child)
-        except:
+        except Exception as e:
             return False
         return True

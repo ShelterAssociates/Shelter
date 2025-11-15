@@ -628,6 +628,8 @@ def login_success(request):
 	else:
 		if (request.user.groups.filter(name__in=['ulb']).exists()):
 			return HttpResponseRedirect('/city::B5+A2nt050dP4nC55nmuYx9/MPi6RFp2cgBUKxRkedE=')
+		elif (request.user.groups.filter(name__in=['MLG']).exists()):
+			return HttpResponseRedirect('/city::Mohanlalganj%20City')
 
 	if return_to:
 		return HttpResponseRedirect(return_to.strip().replace(" ", "+"))

@@ -81,6 +81,8 @@ def get_component(request, slum_id):
     for metad in metadata:
         component = {}
         component['name'] = metad.name
+        if component['name'] == 'Slum boundary' and slum_id == '1971':
+            component['name'] = 'Town boundary'
         component['level'] = metad.level
         component['section'] = metad.section.name
         component['section_order'] = metad.section.order
@@ -209,14 +211,20 @@ def get_kobo_RHS_data(request, slum_id,house_num):
 #@user_passes_test(lambda u: u.is_superuser)
 # @access_right
 def get_kobo_RIM_data(request, slum_id):
-
-    slum = get_object_or_404(Slum, pk=slum_id)
     try:
-        output = get_kobo_RIM_detail(slum.electoral_ward.administrative_ward.city.id, slum.shelter_slum_code)
+        slum = Slum.objects.get(pk=slum_id)
+    except Slum.DoesNotExist:
+        return HttpResponse(f"<h1>Slum with ID {slum_id} not found</h1>", content_type='text/html')
+
+    try:
+        output = get_kobo_RIM_detail(
+            slum.electoral_ward.administrative_ward.city.id, 
+            slum.shelter_slum_code
+        )
     except:
         output = {}
-    return HttpResponse(json.dumps(output),content_type='application/json')
 
+    return HttpResponse(json.dumps(output), content_type='application/json')
 
 def get_image(image_name, image_link, cognito_token):
     path = 'https://app.avniproject.org/media/signedUrl?url='
