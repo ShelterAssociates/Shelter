@@ -200,11 +200,9 @@ function slum_data_fetch(slumId){
                 "Force-Refresh-Flag": "1"
             },
             success: function() {
-                console.log("✅ Refresh triggered successfully");
                 btn.prop("disabled", false).text("Refresh Components");
             },
             error: function() {
-                console.error("❌ Error triggering refresh");
                 btn.prop("disabled", false).text("Refresh Components");
                 alert("Failed to refresh. Try again.");
             }
