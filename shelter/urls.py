@@ -51,6 +51,8 @@ urlpatterns = [
                   url(r'^sponsor/', include('sponsor.urls')),
                   url(r'^mastersheet/', include('mastersheet.urls')),
                   url(r'^graphs/', include('graphs.urls')),
+                  # Setting URL for Helper functions (Digipin Generation , Sync Data)
+                  url(r'^helpers/', include('helpers.urls')),
                     #Setting URL for QGIS plugin login
                   url('api-token-auth/', obtain_auth_token, name='api_token_auth'), 
                     url('api/', include(router.urls))

@@ -66,6 +66,11 @@
             <li><a href="/admin/vulnerabilityReport/" target="__blank">Vulnerability Report</a></li>
             <li><a href="/graphs/factsheet_data">City Wise Factsheet Data</a></li>
             {%endif%}
+            {% if perms.master.can_generate_reports %}
+            <li role="separator" class="divider"></li>
+            <li class="dropdown-header">Additional Tools</li>
+            <li><a href="/helpers/digipin_generate/">Generate Digipin</a></li>
+            {%endif%}
         </ul>
     </li>
 </ul>
