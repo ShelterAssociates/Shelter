@@ -1,107 +1,128 @@
 {% extends "admin/base_site.html" %}
 {% load i18n %}
 {% load static %}
+{% load widget_tweaks %}
 {% block extrahead %}
-<script src="{% static "js/common_cascading.js" %}"></script>
+  <script src="{% static 'js/common_cascading.js' %}"></script>
 {% endblock %}
 {% block sidebar %}
 {% endblock %}
 
 {% block content %}
-<h3>Upload slum components</h3>
-<script>
-var city_url = "{% url 'master:cityList' %}";
-var administrative_url = "{% url 'master:administrativewardList' %}";
-var electoral_url = "{% url 'master:electoralWardList' %}";
-var slum_url = "{% url 'master:slumList' %}";
-var url = "{% url 'master:modelList' %}";
-</script>
-{% if form.errors %}
+  <h3>Upload slum components</h3>
+  <script>
+    var city_url = "{% url 'master:cityList' %}";
+    var administrative_url = "{% url 'master:administrativewardList' %}";
+    var electoral_url = "{% url 'master:electoralWardList' %}";
+    var slum_url = "{% url 'master:slumList' %}";
+    var url = "{% url 'master:modelList' %}";
+  </script>
+  
+  {% if form.errors %}
     {% for field in form %}
-        {% for error in field.errors %}
-            <div class="alert alert-danger">
-                <strong>{{ error|escape }}</strong>
-            </div>
-        {% endfor %}
+      {% for error in field.errors %}
+        <div class="alert alert-danger">
+          <strong>{{ error|escape }}</strong>
+        </div>
+      {% endfor %}
     {% endfor %}
     {% for error in form.non_field_errors %}
-        <div class="alert alert-danger">
-            <strong>{{ error|escape }}</strong>
-        </div>
+      <div class="alert alert-danger">
+        <strong>{{ error|escape }}</strong>
+      </div>
     {% endfor %}
-{% endif %}
-<form enctype="multipart/form-data" method="post">
-    {% csrf_token %}
+  {% endif %}
 
-    <div class="col-md-12">
-        <div class="row" style="margin-bottom:20px;">
-            <div class="col-md-2">
-                <label>Level</label>
-            </div>
-            <div class="col-md-2">
-                {{form.level}}
-            </div>
-        </div>
-      <div class="row" id="Cities" style="margin-bottom: 20px">
-          <div class ="col-md-2">
-              <label> City </label>
-          </div>
-          <div class="col-md-2">
-              {{form.City}}
-          </div>
-      </div>
-      <div class="row" id='AdministrativeWards' style="margin-bottom: 20px">
-          <div class ="col-md-2">
-              <label> Administrative Ward </label>
-          </div>
-          <div class="col-md-2">
-              {{form.AdministrativeWard}}
-          </div>
-      </div>
-      <div class="row" id="ElectoralWards" style="margin-bottom: 20px">
-          <div class ="col-md-2">
-              <label> Electoral Ward </label>
-          </div>
-          <div class="col-md-2">
-              {{form.ElectoralWard}}
-          </div>
-      </div>
-      <div class="row" id="Slums" style="margin-bottom: 20px">
-        <div class ="col-md-2">
-          <label for="id_slum_name"> Slum name </label>
-        </div>
-        <div class="col-md-2">
-          {{form.slum_name}}
-        </div>
-      </div>
-      <div class="row"  style="margin-bottom: 20px">
-        <div class="col-md-2">{{form.kml_file.label_tag}}</div>
-        <div class="col-md-2">{{form.kml_file}}</div>
-      </div>
-      <div class="row"  style="margin-bottom: 20px">
-        <div class="col-md-4">{{form.delete_flag}}&nbsp;{{form.delete_flag.label_tag}}</div>
-      </div>
-    <div class="row" style="padding-top:2px;">
-      <div class="col-md-12 breadcrumb" style="font-style: italic;margin-bottom:0px;">
-        <li><label>Note :</label><br/>
-            Components in KML should have names - {{component|join:', '}} </li>
+<form id="kml-upload-form" enctype="multipart/form-data" method="post">
+
+{% csrf_token %}
+
+<div class="row">
+
+  <!-- Left form -->
+  <div class="col-md-8">
+
+    <div class="row" style="margin-bottom:20px;">
+      <div class="col-md-2"><label>Level</label></div>
+      <div class="col-md-4">{{ form.level }}</div>
+    </div>
+
+    <div class="row" id="Cities" style="margin-bottom:20px;">
+      <div class="col-md-2"><label>City</label></div>
+      <div class="col-md-4">{{ form.City }}</div>
+    </div>
+
+    <div class="row" id="AdministrativeWards" style="margin-bottom:20px;">
+      <div class="col-md-2"><label>Administrative Ward</label></div>
+      <div class="col-md-4">{{ form.AdministrativeWard }}</div>
+    </div>
+
+    <div class="row" id="ElectoralWards" style="margin-bottom:20px;">
+      <div class="col-md-2"><label>Electoral Ward</label></div>
+      <div class="col-md-4">{{ form.ElectoralWard }}</div>
+    </div>
+
+    <div class="row" id="Slums" style="margin-bottom:20px;">
+      <div class="col-md-2"><label>Slum name</label></div>
+      <div class="col-md-4">{{ form.slum_name|add_class:"form-control" }}</div>
+    </div>
+
+    <div class="row" style="margin-bottom:20px;">
+      <div class="col-md-2">{{ form.kml_file.label_tag }}</div>
+      <div class="col-md-4">{{ form.kml_file }}</div>
+    </div>
+
+    <div class="row" style="margin-bottom:20px;">
+      <div class="col-md-6">
+        {{ form.delete_flag }} {{ form.delete_flag.label_tag }}
       </div>
     </div>
-    <div class="row" style="">
-      <div class="col-md-12">
-        {% if parsed != None and parsed|length > 0%}
-          <li{% if message.tags %} class="{{ message.tags }}"{% endif %}>Parsed data : {{parsed|join:', '}}</li>
-        {% endif %}
-        {% if unparsed != None and unparsed|length > 0%}
-          <li{% if message.tags %} class="{{ message.tags }}"{% endif %}>Unparsed data : {{unparsed|join:', '}}</li>
-        {% endif %}
+
+
+
+  </div>
+
+  <!-- Right sidebar -->
+  <div class="col-md-4">
+    <div class="panel panel-default" style="max-height:450px; overflow-y:auto; padding:10px;">
+      <div style="display:flex; justify-content:space-between; align-items:center;">
+          <h4 id="componentListTitle">Components List</h4>
+          <button type="button" id="refreshComponentList" class="btn btn-info btn-sm">Refresh List</button>
+      </div>
+      <div class="list-group" id="componentList">
+                <div id="slum-selected-info" style="margin-bottom:10px; font-weight:bold; font-size:14px;">
+        </div>
+        {% for comp in component_list %}
+
+          <div class="list-group-item" style="display:flex; justify-content:space-between;">
+            <div><input type="checkbox"> {{ comp }}</div>
+            <button class="btn btn-danger btn-xs">Delete</button>
+          </div>
+        {% endfor %}
       </div>
     </div>
+  </div>
+
+</div>
+    <div class="row">
+      <div class="col-md-12 breadcrumb" style="font-style: italic;">
+        <li><label>Note:</label><br>Components in KML should have names - {{ component|join:', ' }}</li>
+      </div>
+    </div>
+
+    {% if parsed %}
+      <div class="row"><div class="col-md-12">Parsed: {{ parsed|join:', ' }}</div></div>
+    {% endif %}
+
+    {% if unparsed %}
+      <div class="row"><div class="col-md-12">Unparsed: {{ unparsed|join:', ' }}</div></div>
+    {% endif %}
+
     <div class="row" style="padding-top:20px;">
       <div class="col-md-4">
-        <input class="btn btn-primary" type="submit" value="Submit" />
+        <input class="btn btn-primary" type="submit" value="Submit">
       </div>
     </div>
-    </div>
 </form>
+<script src="{% static 'js/component_list_kml_upload.js' %}"></script>
 {% endblock %}

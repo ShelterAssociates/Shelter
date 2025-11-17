@@ -107,7 +107,8 @@ var Polygon = (function () {
         objBreadcrumb.push(this.name);
         //Header
         myheader = $("#maphead");
-        myheader.html('<h4>' + this.name+'</h4>');
+        myheader.html('<h4>' + this.name + '</h4>');
+        myheader.find("h4").css("padding", "15px");
 
         //Info
         let mydesc = $("#mapdesc");

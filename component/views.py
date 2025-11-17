@@ -1,5 +1,5 @@
 from django.shortcuts import render
-from django.http import HttpResponse
+from django.http import HttpResponse, JsonResponse
 from django.contrib import messages
 from django.shortcuts import get_object_or_404
 from django.contrib.auth.decorators import user_passes_test, permission_required
@@ -20,6 +20,7 @@ from graphs.sync_avni_data import *
 from utils.utils_permission import apply_permissions_ajax, access_right, deco_rhs_permission
 from django.core.exceptions import PermissionDenied
 from concurrent.futures import ThreadPoolExecutor
+import json
 
 slum_list = ['223', '1925', '1923', '1927', '1062', '1050', '1061', '1061', '1914', '763', '29', '672', '525', '686', '546', '547', '572', '529', '1363', '175', '514', '760', '639', '672', '820', '1026', '1008', '1169', '1639', '1644', '1647', '1171', '1645', '1170', '1640', '1641', '1136', '1164', '1137', '1642', '1142', '1069', '1026', '1034', '1012', '1048', '1050', '1054', '1057', '1119', '1020', '1030', '1028', '1057', '1652', '1283', '1288', '1095', '1096', '1097', '1099', '1100', '1101', '1098', '1104', '1107', '1111', '1079', '1080', '1342', '1083', '1672', '1673', '1085', '1086', '1087', '1077', '1091', '1092', '1665', '1081', '1082', '1338', '1084', '1074', '1340', '1350', '1088', '1089', '1075', '1076', '1090', '1093', '1344', '1094', '1349', '1102', '1103', '1666', '1105', '1106', '1343', '1108', '1109', '1346', '1078', '1112', '1115', '1116', '1113', '1341', '1117', '1339', '1110', '1375', '1259', '1198', '1293', '1200', '1288', '1283', '1971']
 
@@ -340,3 +341,33 @@ def get_kobo_drainage_report_data(request, slum_id):
          output['electoral_ward'] = slum[0].electoral_ward.name
          output['slum_name'] = slum[0].name
      return HttpResponse(json.dumps(output),content_type='application/json')
+
+def get_component_list(request):
+    """Get unique component names from Metadata for a given object_id, with count numbers."""
+    object_id = request.GET.get('object_id')
+    components = Component.objects.filter(object_id=object_id).values_list('metadata__name', flat=True)
+    unique_names = sorted(set(components))
+    data = [{'id': i + 1, 'name': name} for i, name in enumerate(unique_names)]
+    return JsonResponse(data, safe=False)
+
+def delete_component(request):
+
+    if request.method == "POST":  # or "DELETE"
+        object_id = request.POST.get("object_id")
+        comp_name = request.POST.get("comp_name")
+        print(object_id , comp_name)
+        if not object_id or not comp_name:
+            return JsonResponse({"success": False, "message": "Missing object_id or comp_name"}, status=400)
+
+        # Try to delete the component
+        try:
+            comp = Component.objects.filter(object_id=object_id, metadata__name=comp_name)
+            print("Component to be deleted:", comp)
+            comp.delete()
+            return JsonResponse({"success": True, "message": f'Component "{comp_name}" deleted successfully'})
+        except Component.DoesNotExist:
+            return JsonResponse({"success": False, "message": "Component not found"}, status=404)
+        except Exception as e:
+            return JsonResponse({"success": False, "message": str(e)}, status=500)
+    else:
+        return JsonResponse({"success": False, "message": "Invalid request method"}, status=405)

@@ -96,7 +96,7 @@
 {%endif%}
 
 
-<div style="margin-top:50px;">
+<div style="margin-top:70px;">
     {% block breadcrumbs %}
     <div class="breadcrumbs">
     <a href="{% url 'master:index' %}">{% trans 'Home' %}</a>
@@ -108,7 +108,7 @@
     {% block messages %}
         {% if messages %}
         <ul class="messagelist">{% for message in messages %}
-          <li{% if message.tags %} class="{{ message.tags }}"{% endif %}>{{ message|capfirst }}</li>
+          <li {% if message.tags %} class="{{ message.tags }}"{% endif %}>{{ message|capfirst }}</li>
         {% endfor %}</ul>
         {% endif %}
     {% endblock messages %}

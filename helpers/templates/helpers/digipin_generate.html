@@ -1,0 +1,216 @@
+{% extends "admin/base_site.html" %}
+{% load static %}
+{% load custom_tags %}
+
+{% block title %}DIGIPIN {% endblock %}
+
+{% block extrahead %}
+  <style>
+    .breadcrumbs {
+    width: 100vw !important;
+    margin-left: calc(50% - 50vw) !important;
+    margin-right: calc(50% - 50vw) !important;
+    box-sizing: border-box;
+    padding-left: 20px;
+    padding-right: 20px;
+}
+
+/* =========================
+       Color and style variables
+       ========================= */
+    :root{
+      --bg: #f7fbfd;
+      --card: #ffffff;
+      --text: #243746;
+      --muted: #5b6b75;
+      --accent-1: #5b9ecf; /* base blue */
+      --accent-2: #3b82c6; /* stronger blue */
+      --accent-3: #2b6b95; /* deep blue */
+      --border: #e6f0f6;
+      --shadow: 0 6px 18px rgba(37,68,88,0.06);
+    }
+
+    /* =========================
+       Base page styles
+       ========================= */
+    body { font-family: system-ui, -apple-system, "Segoe UI", Roboto, Arial; margin: 18px; color:var(--text); background:var(--bg); }
+    h2 { margin:0 0 12px 0; font-weight:700; color:var(--accent-3); }
+
+    /* =========================
+       Layout helpers
+       ========================= */
+    .row { margin-bottom: 12px; display:flex; gap:12px; align-items:center; flex-wrap:wrap; }
+    .col { display:flex; flex-direction:column; gap:8px; }
+
+    /* =========================
+       Main wrapper card
+       ========================= */
+    .digipin-app { background: linear-gradient(180deg, rgba(246,252,255,1), rgba(251,255,255,1)); padding:18px; border-radius:14px; border:1px solid var(--border); box-shadow:var(--shadow); }
+
+    /* =========================
+       Input fields and buttons
+       ========================= */
+    input[type="text"], input[type="number"] { padding:10px 12px; border-radius:8px; border:1px solid #e3eef8; min-width:180px; background:transparent; color:var(--text); }
+    #file { padding:8px; }
+
+    .btn { padding:9px 14px; border-radius:8px; border:0; background:var(--accent-2); color:white; cursor:pointer; box-shadow:0 2px 6px rgba(32,80,120,.08); font-weight:600; }
+    .btn.secondary { background:transparent; border:1px solid #dbeffb; color:var(--accent-3); }
+    .btn.small { padding:6px 10px; font-size:0.9rem; border-radius:8px; }
+    .btn:disabled { opacity:.6; cursor:not-allowed; }
+
+    /* =========================
+       Progress bar styles
+       ========================= */
+    #progress { width: 100%; height: 14px; background: #eef8ff; border-radius: 8px; overflow: hidden; border:1px solid #d6eefd; }
+    #progress > div { height:100%; width:0%; transition: width .12s linear; background: linear-gradient(90deg,var(--accent-1),var(--accent-2)); }
+
+    /* =========================
+       Panels and containers
+       ========================= */
+    .tools { border:1px solid transparent; padding:14px; border-radius:12px; margin-bottom:12px; display:flex; gap:18px; background:linear-gradient(180deg, rgba(249,253,255,0.95), rgba(243,249,255,0.95)); }
+
+    pre.result { background:var(--card); padding:10px; border-radius:8px; border:1px solid #eef6fb; min-width:220px; color:var(--text); }
+    .btn:hover:not(:disabled){ transform:translateY(-1px); }
+    input:focus{ outline:2px solid rgba(59,130,246,0.12); }
+
+    /* ----- Fix: ensure tools layout is consistent and responsive ----- */
+.tools {
+	display: flex !important;
+	flex-wrap: wrap !important;
+	gap: 28px !important;          /* slightly larger breathing room */
+	align-items: flex-start !important;
+}
+
+/* each column should grow but never shrink below a comfortable width */
+.tools .col {
+	flex: 1 1 360px;               /* min 360px, grows if space available */
+	min-width: 320px;              /* safety lower bound for narrow screens */
+}
+
+/* the small inline input + button row should wrap cleanly */
+.digipin-actions {
+	display: flex;
+	gap: 8px;
+	align-items: center;
+	flex-wrap: wrap;               /* allow inputs/buttons to wrap to next line */
+}
+
+/* make sure small CTA buttons don't shrink or overlap inputs */
+.digipin-actions .btn,
+.digipin-actions input {
+	flex: 0 0 auto;
+}
+
+/* keep pre.result from forcing a squeeze on the first column */
+pre.result {
+	min-width: 180px;
+	max-width: 100%;
+	white-space: pre-wrap;
+}
+
+/* minor: ensure smaller screens stack naturally */
+@media (max-width: 720px) {
+	.tools .col { flex-basis: 100%; min-width: 100%; }
+	.digipin-actions { gap: 10px; }
+}
+
+  </style>
+
+  <!-- SheetJS library for Excel file processing -->
+  <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
+
+  <!-- Custom JS for DIGIPIN functionality -->
+  <script src="{% static 'js/digipin.js' %}"></script>
+{% endblock %}
+
+{% block content %}
+  <div class="digipin-app">
+    <h2>DIGIPIN — tools</h2>
+    <h3>Note: One Digipin covers a 4×4 square with many coordinates, but each coordinate maps to only one Digipin.</h3>
+
+    <!-- =========================
+         Single processing section
+         ========================= -->
+    <section aria-label="Single processing" class="row tools" style="gap:18px;">
+      <!-- Generate DIGIPIN from latitude/longitude -->
+      <div class="col" style="flex:1; min-width:260px;">
+        <label><strong>Single processing</strong> — Generate DIGIPIN from Lat / Long</label>
+        <div style="display:flex; gap:8px; align-items:center;" class="digipin-actions">
+          <input id="single_lat" type="number" step="any" placeholder="Latitude" />
+          <input id="single_lon" type="number" step="any" placeholder="Longitude" />
+          <button id="single_gen" class="btn small">Generate</button>
+        </div>
+        <div style="display:flex; gap:8px; align-items:center; margin-top:8px;">
+          <pre id="single_out" class="result">DIGIPIN will appear here</pre>
+          <button id="single_copy" class="btn small">Copy</button>
+        </div>
+      </div>
+
+      <!-- Decode DIGIPIN to latitude/longitude -->
+      <div class="col" style="flex:1; min-width:300px;">
+        <label><strong>Single processing</strong> — Decode DIGIPIN → Lat / Long</label>
+        <div style="display:flex; gap:8px; align-items:center;">
+          <input id="reverse_in" type="text" placeholder="Enter DIGIPIN (e.g. K4L-TC7-...)" />
+          <button id="reverse_btn" class="btn small">Decode</button>
+        </div>
+        <div style="display:flex; gap:8px; align-items:center; margin-top:8px;">
+          <pre id="reverse_out" class="result">Lat Long will appear here</pre>
+          <button id="reverse_copy" class="btn small">Copy</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Divider -->
+    <div class="row" style="border-top:1px solid var(--border); padding-top:12px; margin-top:8px;">
+      <div style="flex:1"><strong>Multi-level processing (batch)</strong><br><small>Upload Excel to process many rows at once</small></div>
+    </div>
+
+    <!-- Multi-level processing / file upload -->
+    <div class="row">
+      <!-- kept id/class names unchanged as requested -->
+      <input id="file" type="file" accept=".xlsx,.xls" />
+      <button id="process" class="btn">Process & Download</button>
+      <button id="download-errors" class="btn secondary" style="display:none;">Download Error Report</button>
+    </div>
+
+    <div class="row">
+      <div id="progress" aria-hidden="true" style="flex:1"><div></div></div>
+      <div style="min-width:90px; text-align:right;"><strong id="percentText">0%</strong></div>
+    </div>
+
+    <!-- Explicit Excel format instructions -->
+    <div class="row">
+      <div style="flex:1">
+        <strong>Expected Excel format</strong>
+        <div class="excel-format" role="note">
+          The uploaded Excel file <em>must</em> match the following structure exactly (column headers in the first row):
+        <br>No limit on coordinates or decimal precision.
+          <pre>
+
+Column A: HouseNo          (unique identifier — required)
+Column B: latitude     (decimal degrees, e.g. 26.692873)
+Column C: longitude    (decimal degrees, e.g. 80.804720)
+
+Example (first two rows):
+HouseNo	    latitude	  longitude
+   1	      26.692873	  80.804720 
+   2	      26.692858	  80.804723 
+          </pre>
+          Notes:
+          <ul>
+            <li>File must be .xlsx or .xls and the first worksheet will be used.</li>
+            <li>Header names must be exactly <code>HouseNo</code>, <code>latitude</code>, <code>longitude</code> (case-sensitive) in row 1.</li>
+            <li>Rows with missing latitude/longitude will be skipped and listed in the error report.</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <div class="row">
+      <div style="flex:1">
+        <strong>Log</strong>
+        <div id="log">Pick an Excel file with Lat/Long and click Process. For single processing, use the top form.</div>
+      </div>
+    </div>
+  </div>
+{% endblock %}
