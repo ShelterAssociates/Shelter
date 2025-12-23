@@ -6,7 +6,8 @@ from sponsor.models import *
 from component.models import *
 from collections import Counter, defaultdict
 import datetime
-
+import logging
+logger = logging.getLogger(__name__)
 
 class exportMethods:
     
@@ -182,7 +183,17 @@ class exportMethods:
             electricity_keys = ['If yes for electricity ,  type of meter ?', 'Do you have electricity in the house ?']
             member_keys = {"group_el9cl08/Total_number_of_fema_including_children": "Total female members", "group_el9cl08/Total_number_of_male_including_children":"total male members", "group_el9cl08/Total_number_of_Other_gender_members":"total other gender members"}
             if record.rhs_data:
-                if record.rhs_data['Type_of_structure_occupancy'] == 'Occupied house':
+                structure_type = record.rhs_data.get('Type_of_structure_occupancy')
+                if not structure_type:
+                    logger.error(
+                        "MISSING Type_of_structure_occupancy | "
+                        "HouseholdID=%s | HouseholdNo=%s | RHS_UUID=%s",
+                        record.id,
+                        record.household_number,
+                        record.rhs_data.get("rhs_uuid")
+                    )
+                if structure_type == 'Occupied house':
+#                if record.rhs_data['Type_of_structure_occupancy'] == 'Occupied house':
                     data = {question[rhs_key] :record.rhs_data[rhs_key] for rhs_key in key_list if rhs_key in record.rhs_data}
                     if "Electricity_data" in record.rhs_data:
                         electricity_data_obj = record.rhs_data['Electricity_data']
