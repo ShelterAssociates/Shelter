@@ -21,7 +21,9 @@ data_filter = {'CityReference': 'city_name__in',
                'ElectoralWard': 'administrative_ward__city__name__city_name__in',
                'Slum': 'electoral_ward__administrative_ward__city__name__city_name__in',
                'WardOfficeContact': 'administrative_ward__city__name__city_name__in',
-               'ElectedRepresentative': 'electoral_ward__administrative_ward__city__name__city_name__in'}
+               'ElectedRepresentative': 'electoral_ward__administrative_ward__city__name__city_name__in',
+               'Rapid_Slum_Appraisal': 'slum_name__electoral_ward__administrative_ward__city__name__city_name__in'
+            }
 
 class UploadKMLBase(admin.ModelAdmin):
 
@@ -329,8 +331,28 @@ class ElectedRepresentativeAdmin(BaseModelAdmin):
 
     def city_name(self, obj):
         return obj.electoral_ward.administrative_ward.city.name.city_name
+    
+class RapidSlumAppraisalAdmin(BaseModelAdmin):
+	list_display = (
+		'slum_name',
+		'city_name',
+		'administrative_ward',
+	)
+	search_fields = (
+		'slum_name__name',
+		'slum_name__electoral_ward__name',
+		'slum_name__electoral_ward__administrative_ward__name',
+	)
+	ordering = ('slum_name__name',)
+
+	def administrative_ward(self, obj):
+		return obj.slum_name.electoral_ward.administrative_ward.name
+
+	def city_name(self, obj):
+		return obj.slum_name.electoral_ward.administrative_ward.city.name.city_name
 
 admin.site.register(ElectedRepresentative, ElectedRepresentativeAdmin)
 
-admin.site.register(Rapid_Slum_Appraisal)
+admin.site.register(Rapid_Slum_Appraisal, RapidSlumAppraisalAdmin)
+
 admin.site.register(drainage)
