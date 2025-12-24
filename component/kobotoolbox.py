@@ -51,7 +51,7 @@ def get_household_analysis_data(city, slum_code, question_fields, kobo_survey=''
             print("debug")
             print(list(list_record))
         record_sorted = list(list_record) #sorted(list(list_record), key=lambda x:x['_submission_time'], reverse=False)
-        if slum_code == '1971' or slum_code == 1971:
+        if slum_code in ['1971' , '1972'] or slum_code in [1971, 1972]:
             household_no = household
         else:
             household_no = int(household)
