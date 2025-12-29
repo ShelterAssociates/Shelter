@@ -136,7 +136,8 @@ function initMap(){
                         "Pune District":new L.LatLng(18.57054718,74.07657987),
                         "Mohanlalganj City":new L.LatLng(26.66998253,80.98541311),
                         "Nilgiri District":new L.LatLng(11.45878141, 76.64049998),
-                        "Ichalkaranji":new L.LatLng(16.68803567359255879, 74.46583551598165229)};
+                        "Banthara Town": new L.LatLng(26.6890600000000, 80.81704000000000), 
+                     "Ichalkaranji":new L.LatLng(16.68803567359255879, 74.46583551598165229)};
     var pos = new L.LatLng(18.640083, 73.825560);
     if ($('#city_name').val() in center_data)
     {

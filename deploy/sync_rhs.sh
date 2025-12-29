@@ -1,6 +1,16 @@
+#!/bin/bash
+set -e
 
-cd /srv/Shelter/
-env
+PROJECT_DIR="/srv/Shelter"
+VENV_DIR="/srv/Shelter/ENV3"
+
+export VIRTUAL_ENV="$VENV_DIR"
+export PATH="$VENV_DIR/bin:$PATH"
+export DJANGO_SETTINGS_MODULE=shelter.settings
+
+echo "VIRTUAL_ENV=$VIRTUAL_ENV"
+cd "$PROJECT_DIR"
+
 SCRIPT_NAME="$(basename "$0")"
 
 LOG_DIR="$HOME/sync_logs"
@@ -95,7 +105,7 @@ case "$MODE" in
 esac
 
 echo "========== $(date "+%Y-%m-%d %H:%M:%S") : Starting RHS sync (mode=$MODE, print_token=$PRINT_TOKEN, print_console=$PRINT_CONSOLE) =========="
-python manage.py shell <<EOF
+"$VENV_DIR/bin/python" manage.py shell <<EOF
 from importlib import reload
 import time
 import graphs.sync_avni_data as sync_module
