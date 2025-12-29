@@ -1,0 +1,138 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>RIM Factsheet</title>
+
+	<link href="https://fonts.googleapis.com/css2?family=Roboto&display=swap" rel="stylesheet">
+
+	<!-- html2pdf -->
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+
+	<style>
+		/* ================= GLOBAL ================= */
+		html, body {
+			margin: 0;
+			font-family: 'Roboto', sans-serif;
+			background: #e5e5e5;
+		}
+
+		/* ================= TOOLBAR ================= */
+		.print-toolbar {
+			text-align: center;
+			padding: 10px;
+			background: #f2f2f2;
+		}
+
+		.print-toolbar button {
+			padding: 8px 18px;
+			font-size: 14px;
+			border: none;
+			cursor: pointer;
+			background: #0b5aa6;
+			color: #fff;
+			border-radius: 4px;
+		}
+
+		/* ================= SCREEN CENTER ================= */
+		.screen-center {
+			display: flex;
+			justify-content: center;
+			margin: 20px 0;
+		}
+
+		/* ================= A4 PAGE ================= */
+		.a4-container {
+			width: 21cm;
+			min-height: 29.7cm;
+			background: #fff;
+
+			/* ✅ BORDER INSIDE A4 (FIXES RIGHT EDGE) */
+			outline: 1px solid #ccc;
+			outline-offset: -1px;
+
+			box-sizing: border-box;
+			display: flex;
+			flex-direction: column;
+		}
+
+		/* ================= HEADER ================= */
+		.a4-header {
+			height: 2.5cm;
+			flex-shrink: 0;
+			border-bottom: 1px solid #000;
+		}
+
+		/* ================= FOOTER ================= */
+		.a4-footer {
+			height: 1.8cm;
+			flex-shrink: 0;
+			border-top: 1px solid #000;
+			font-size: 9pt;
+			display: flex;
+			align-items: center;
+			justify-content: center;
+		}
+
+		/* ================= CONTENT ================= */
+		.a4-content {
+			flex: 1;
+			padding: 0.5cm;
+			box-sizing: border-box;
+		}
+	</style>
+</head>
+
+<body>
+
+<!-- ===== DOWNLOAD BUTTON ===== -->
+<div class="print-toolbar">
+	<button onclick="downloadPDF()">Download PDF</button>
+</div>
+
+<div class="screen-center">
+
+	<!-- ===== PDF ROOT ===== -->
+	<div id="pdf-area" class="a4-container">
+
+		<div class="a4-header">
+			{% include "reports/header.html" %}
+		</div>
+
+		<div class="a4-content">
+			{% block content %}{% endblock %}
+		</div>
+
+		<div class="a4-footer">
+			{% include "reports/footer.html" %}
+		</div>
+
+	</div>
+
+</div>
+
+<!-- ================= SCRIPT ================= -->
+<script>
+	function downloadPDF() {
+		html2pdf().set({
+			margin: 0,
+			filename: 'RIM_Factsheet.pdf',
+			image: { type: 'jpeg', quality: 1 },
+			html2canvas: {
+				scale: 1.6,        // avoids right-edge clipping
+				useCORS: true,
+				scrollX: 0,
+				scrollY: 0
+			},
+			jsPDF: {
+				unit: 'cm',
+				format: 'a4',
+				orientation: 'portrait'
+			}
+		}).from(document.getElementById('pdf-area')).save();
+	}
+</script>
+
+</body>
+</html>

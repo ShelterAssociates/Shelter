@@ -1,0 +1,214 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>RIM Factsheet</title>
+
+	<link href="https://fonts.googleapis.com/css2?family=Roboto&display=swap" rel="stylesheet">
+
+	<style>
+/* =====================================================
+   PAGE SETUP (PRINT)
+   ===================================================== */
+@page {
+	size: A4;
+	margin: 2.5cm 1.5cm;
+}
+
+body {
+	font-family: 'Roboto', sans-serif;
+	margin: 0;
+}
+
+/* =====================================================
+   FIXED HEADER & FOOTER (PAGE LEVEL)
+   ===================================================== */
+.header,
+.footer {
+	position: fixed;
+	left: 0;
+	right: 0;
+	background: transparent;
+	z-index: 10;
+}
+
+.header {
+	top: 0;
+	height: 2.5cm;
+}
+
+.footer {
+	bottom: 0;
+	height: 1.8cm;
+	font-size: 9pt;
+}
+
+/* =====================================================
+   INNER A4 CONTAINER (KEY PART)
+   ===================================================== */
+.header-inner,
+.footer-inner {
+	width: 21cm;              /* A4 width */
+	margin: 0 auto;           /* CENTER */
+	background: #fff;
+	box-sizing: border-box;
+}
+
+.header-inner {
+	border-bottom: 1px solid #000;
+}
+
+.footer-inner {
+	border-top: 1px solid #000;
+	text-align: center;
+	padding-top: 0.4cm;
+}
+
+/* =====================================================
+   CONTENT AREA
+   ===================================================== */
+.page-wrapper {
+	width: 21cm;
+	margin: 0 auto;
+}
+
+.content {
+	margin-top: 2.6cm;   /* space for header */
+	margin-bottom: 2.2cm; /* space for footer */
+	padding: 0 0.5cm;
+}
+
+.page {
+	page-break-after: always;
+}
+
+/* =====================================================
+   RIM HEADER DESIGN
+   ===================================================== */
+.rim-header {
+	background: #0b5aa6;
+	color: #fff;
+	height: 2.5cm;
+	padding: 0.4cm 0.6cm;
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	box-sizing: border-box;
+}
+
+.rim-header-left {
+	line-height: 1.2;
+}
+
+.rim-title {
+	font-size: 11pt;
+}
+
+.rim-subtitle {
+	font-size: 16pt;
+	font-weight: bold;
+}
+
+.rim-slum {
+	font-size: 10pt;
+	font-weight: bold;
+	margin-top: 0.1cm;
+}
+
+.rim-header-right {
+	font-size: 9pt;
+	text-align: right;
+}
+
+/* =====================================================
+   SCREEN PREVIEW (CENTER A4)
+   ===================================================== */
+@media screen {
+	body {
+		background: #e5e5e5;
+	}
+
+	.page-wrapper {
+		width: 21cm;
+		min-height: 29.7cm;   /* 🔑 THIS IS THE KEY */
+		margin: 1cm auto;
+		background: #fff;
+		box-shadow: 0 0 12px rgba(0,0,0,0.3);
+		position: relative;
+	}
+	.header-inner,
+	.footer-inner {
+		box-shadow: 0 0 10px rgba(0,0,0,0.3);
+		background: #fff;
+	}
+
+	.page-wrapper {
+		margin: 1cm auto;
+	}
+}
+
+/* =====================================================
+   PRINT / PDF
+   ===================================================== */
+@media print {
+	body {
+		background: none;
+	}
+
+	.page-wrapper,
+	.header-inner,
+	.footer-inner {
+		box-shadow: none;
+		margin: 0;
+	}
+}
+/* =====================================================
+   FORCE A4 HEIGHT & FOOTER STICKING
+   ===================================================== */
+html, body {
+	height: 100%;
+}
+
+/* Ensure footer is always at bottom of A4 */
+.footer {
+	position: fixed;
+	bottom: 0;
+	left: 0;
+	right: 0;
+}
+
+/* Prevent content from overlapping footer */
+.content {
+	padding-bottom: 2.2cm;
+}
+
+
+	</style>
+</head>
+
+<body>
+
+<!-- FIXED HEADER (PAGE LEVEL) -->
+<div class="header">
+	<div class="header-inner">
+		{% include "reports/header.html" %}
+	</div>
+</div>
+
+<!-- FIXED FOOTER -->
+<div class="footer">
+	<div class="footer-inner">
+		{% include "reports/footer.html" %}
+	</div>
+</div>
+
+<!-- PAGE CONTENT -->
+<div class="page-wrapper">
+	<div class="content">
+		{% block content %}{% endblock %}
+	</div>
+</div>
+
+</body>
+

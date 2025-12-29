@@ -1,0 +1,45 @@
+<div class="fact-card">
+
+	<!-- HEADER -->
+	<div class="fact-header">
+		<div class="section-title">{{ section_name }}</div>
+		<div class="slum-name">{{ slum_name }}</div>
+	</div>
+
+	<!-- MAP -->
+	{% if map_image %}
+	<div class="fact-map">
+		<img src="{{ map_image }}" alt="Map">
+	</div>
+	{% endif %}
+
+	<!-- TABLE -->
+	<table class="fact-table">
+		<tbody>
+		{% for label, value in fields.items %}
+			<tr>
+				<td class="label-cell">{{ label }}</td>
+				<td class="value-cell">{{ value }}</td>
+			</tr>
+		{% endfor %}
+		</tbody>
+	</table>
+
+	<!-- GENERAL OBSERVATION -->
+	{% if observation %}
+	<div class="fact-observation">
+		<b>General Observation:</b>
+		{{ observation }}
+	</div>
+	{% endif %}
+
+	<!-- IMAGES -->
+	{% if images %}
+	<div class="fact-images">
+		{% for img in images %}
+			<img src="{{ img }}" alt="Section Image">
+		{% endfor %}
+	</div>
+	{% endif %}
+
+</div>

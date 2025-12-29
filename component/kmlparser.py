@@ -108,6 +108,7 @@ class KMLParser(object):
                 kml_name = kml_name.replace(' ','')
                 kml_folder[kml_name] = False
                 if not self.delete_flag:
+                    print("KML Name:", kml_name )
                     metadata = Metadata.objects.get(code=kml_name, type='C')
                     self.object_type.components.filter(metadata = metadata, object_id = self.object_type.id).delete()
                 if kml_name in metadata_component:

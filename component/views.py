@@ -261,7 +261,7 @@ def get_avni_image_urls(rim_obj):
     rim_obj.update(updated_image_dict)
     return rim_obj
 
-def get_kobo_RIM_report_data(request, slum_id):
+def get_kobo_RIM_report_data(request, slum_id,rawa=False):
     try:
         slum = Slum.objects.filter(shelter_slum_code=slum_id)
     except:
@@ -291,6 +291,8 @@ def get_kobo_RIM_report_data(request, slum_id):
             rim_image_updated = get_avni_image_urls(rim_image[0])
             output.update(rim_image_updated)
             output['image'] = True
+    if rawa:
+        return output
     return HttpResponse(json.dumps(output),content_type='application/json')
 
 #@user_passes_test(lambda u: u.is_superuser)

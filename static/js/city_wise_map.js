@@ -137,6 +137,7 @@ function initMap(){
                         "Mohanlalganj City":new L.LatLng(26.66998253,80.98541311),
                         "Nilgiri District":new L.LatLng(11.45878141, 76.64049998),
                         "Ichalkaranji":new L.LatLng(16.68803567359255879, 74.46583551598165229),
+                        "Mumbai": new L.LatLng(19.0760, 72.8777),
                         "Banthara Town": new L.LatLng(26.6890600000000, 80.81704000000000)
                     };
     var pos = new L.LatLng(18.640083, 73.825560);

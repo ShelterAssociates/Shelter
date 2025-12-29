@@ -215,7 +215,7 @@ class avni_sync():
         elif subject_type == "Household":
             obj = HouseholdData.objects.exclude(city__name__city_name__in=names).order_by('-submission_date').first()
 
-        latest_date = obj.submission_date + timedelta(days=1)
+        latest_date = obj.submission_date + timedelta(days=-1)
         latest_date = latest_date.strftime('%Y-%m-%dT00:00:00.000Z')
 
         household_path = 'api/subjects?lastModifiedDateTime=' + latest_date + '&subjectType=' + subject_type

@@ -1,0 +1,68 @@
+<!-- reports/header.html -->
+{% load static %}
+
+<style>
+/* =====================================================
+   HEADER INTERNAL STYLING ONLY
+   ===================================================== */
+
+        body, .rim-header, .rim-header-left, .rim-header-right {
+            font-family: 'Roboto', sans-serif;
+        }
+    
+.rim-header {
+	background: #0b5aa6;
+	color: #fff;
+	height: 3.5cm;
+	padding: 0.4cm 0.6cm;
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	box-sizing: border-box;
+}
+
+.rim-header-left {
+	line-height: 1.2;
+}
+.rim-subtitle {
+    line-height: 1.2;
+	font-size: 22pt;
+	font-weight: 900;
+	letter-spacing: 0.3px;
+	text-transform: uppercase;
+}
+
+
+.rim-title {
+    line-height: 1.2;
+    margin-top: -15px;
+	font-size: 17pt;
+}
+
+.rim-slum {
+	font-size: 15pt;
+    font-weight: 2000;
+	margin-top: 0.1cm;
+    letter-spacing: 0.2px;
+
+}
+
+.rim-header-right {
+	font-size: 9pt;
+	text-align: right;
+}
+</style>
+
+<div class="rim-header">
+	<div class="rim-header-left">
+        <div class="rim-title">Rapid Infrastructure Mapping</div>
+		<div class="rim-subtitle">FACTSHEET</div>
+		<div class="rim-slum">{{ meta_data.slum_name }}, {{ meta_data.admin_ward }}, {{ meta_data.city_name }}</div>
+	</div>
+
+	<div class="rim-header-right">
+<img src="{% static 'images/SA Logo_White.png' %}" alt="SA Logo" style="height: 1.5cm; margin-bottom: 0.3cm;">
+<div>{{ factsheet.meta_data.city_name }}</div>
+<div>{{ factsheet.meta_data.submission_date }}</div>
+</div>
+</div>
