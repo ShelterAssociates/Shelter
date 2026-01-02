@@ -1,68 +1,102 @@
-<!-- reports/header.html -->
 {% load static %}
 
 <style>
-/* =====================================================
-   HEADER INTERNAL STYLING ONLY
-   ===================================================== */
+/* ========= WEASYPRINT PERFECT HEADER ========= */
 
-        body, .rim-header, .rim-header-left, .rim-header-right {
-            font-family: 'Roboto', sans-serif;
-        }
-    
+
 .rim-header {
-	background: #0b5aa6;
+	position: fixed;
+	top: 0;
+	left: 0;
+
+	width: 100%;
+	height: 3.0cm;
+
+	background: #0046a2;
 	color: #fff;
-	height: 3.5cm;
-	padding: 0.4cm 0.6cm;
-	display: flex;
-	justify-content: space-between;
-	align-items: center;
+
 	box-sizing: border-box;
+	border-bottom: 0.3cm solid #0046a2;
+
+	display: block;   /* ✅ NOT table */
 }
 
-.rim-header-left {
-	line-height: 1.2;
-}
-.rim-subtitle {
-    line-height: 1.2;
-	font-size: 22pt;
-	font-weight: 900;
-	letter-spacing: 0.3px;
-	text-transform: uppercase;
+
+
+/* single row filling full height */
+.rim-row {
+    display: table-row;
+    height: 2.5cm;
 }
 
+/* cells fill height */
+.rim-left,
+.rim-right {
+    display: table-cell;
+    vertical-align: middle;
+    padding: 0.25cm 0.6cm 0.45cm 0.6cm;
+}
+
+/* typography */
+.rim-header,
+.rim-header * {
+    font-family: Roboto, sans-serif;
+}
 
 .rim-title {
-    line-height: 1.2;
-    margin-top: -15px;
-	font-size: 17pt;
+    font-size: 16pt;
+    line-height: 1.1;
+}
+
+.rim-subtitle {
+    font-size: 22pt;
+    font-weight: 900;
+    line-height: 1.1;
+    margin-top: 2px;
 }
 
 .rim-slum {
-	font-size: 15pt;
-    font-weight: 2000;
-	margin-top: 0.1cm;
-    letter-spacing: 0.2px;
-
+    font-size: 14pt;
+    margin-top: 2px;
 }
 
-.rim-header-right {
-	font-size: 9pt;
-	text-align: right;
+.rim-right {
+    text-align: right;
+    font-size: 9pt;
 }
+
+/* Logo positioning */
+.rim-logo {
+    height: 1.3cm;
+    display: block;
+
+    margin-top: -0.25cm;   /* moves logo UP */
+}
+
+
 </style>
 
 <div class="rim-header">
-	<div class="rim-header-left">
-        <div class="rim-title">Rapid Infrastructure Mapping</div>
-		<div class="rim-subtitle">FACTSHEET</div>
-		<div class="rim-slum">{{ meta_data.slum_name }}, {{ meta_data.admin_ward }}, {{ meta_data.city_name }}</div>
-	</div>
+    <div class="rim-row">
 
-	<div class="rim-header-right">
-<img src="{% static 'images/SA Logo_White.png' %}" alt="SA Logo" style="height: 1.5cm; margin-bottom: 0.3cm;">
-<div>{{ factsheet.meta_data.city_name }}</div>
-<div>{{ factsheet.meta_data.submission_date }}</div>
-</div>
+        <div class="rim-left">
+            <div class="rim-title">Rapid Infrastructure Mapping</div>
+            <div class="rim-subtitle">FACTSHEET</div>
+            <div class="rim-slum">
+                {{ meta_data.slum_name }},
+                {{ meta_data.admin_ward }},
+                {{ meta_data.city_name }}
+            </div>
+        </div>
+
+        <div class="rim-right">
+			<img src="https://app.shelter-associates.org/static/images/SA%20Logo_White.png"
+     			alt="Shelter Associates"
+     			class="rim-logo">
+            
+            <div>{{ factsheet.meta_data.city_name }}</div>
+            <div>{{ factsheet.meta_data.submission_date }}</div>
+        </div>
+
+    </div>
 </div>

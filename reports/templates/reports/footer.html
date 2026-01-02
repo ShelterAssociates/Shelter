@@ -1,13 +1,62 @@
-<div style="display: flex; justify-content: space-between; padding: 0 0.6cm;">
-	<div>
-		© Shelter Associates
-	</div>
+<style>
+/* ============ FULL-WIDTH FOOTER (WEASYPRINT SAFE) ============ */
 
-	<div>
-		RIM Factsheet
-	</div>
+.rim-footer {
+    background: #004aad;      /* same as header */
+    color: #ffffff;
 
-	<div>
-		Page <span class="page-number"></span>
-	</div>
+
+    box-sizing: border-box;
+    display: table;
+    width: 100%;
+}
+
+.rim-footer-row {
+    display: table-row;
+    height: 1.5cm;
+}
+
+.rim-footer-left,
+.rim-footer-right {
+    display: table-cell;
+    vertical-align: middle;
+    padding: 0.1cm 0.6cm;
+    font-size: 9pt;
+}
+
+.rim-footer-left {
+    text-align: left;
+}
+
+.rim-footer-right {
+    text-align: right;
+}
+
+/* clickable link */
+.rim-footer a {
+    color: #ffffff;
+    text-decoration: none;
+    font-weight: 600;
+}
+
+.rim-footer a:hover {
+    text-decoration: underline;
+}
+</style>
+
+<div class="rim-footer">
+    <div class="rim-footer-row">
+
+        <div class="rim-footer-left">
+            © Copyright Shelter Associates, 2025
+        </div>
+
+        <div class="rim-footer-right">
+            For more information, please visit our website<br>
+            <a href="https://www.shelter-associates.org" target="_blank">
+                www.shelter-associates.org
+            </a>
+        </div>
+
+    </div>
 </div>

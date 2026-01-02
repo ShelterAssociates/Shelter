@@ -2,7 +2,7 @@ import requests
 from collections import OrderedDict, Counter
 from concurrent.futures import ThreadPoolExecutor
 from functools import lru_cache
-
+import json
 from master.models import Slum
 from graphs.models import SlumData
 from graphs.sync_avni_data import avni_sync
@@ -22,35 +22,30 @@ RIM_FIELD_DISPLAY_NAMES = {
 	  "city_name": "city_name",
 	  "admin_ward": "admin_ward",
 	  "electoral_ward": "electoral_ward",
-	  "slum_name": "slum_name"
+	  "slum_name": "slum_name",
+	  "_exists" : "_exists"
   },
-
   "sections": {
     "General": {
-      "status": "Status",
-      "survey_sector_number": "Survey / Sector Number",
+      "general_info_left_image": "general_info_map",
       "year_established_according_to": "Year Established",
       "legal_status": "Legal Status of Slum",
       "Date_of_declaration": "Date of Declaration",
       "land_owner": "Land Ownership",
       "development_plan_reservation": "Development Plan Reservation",
-      "development_plan_reservation_t": "Development Plan Reservation Type",
       "approximate_area_of_the_settle": "Approximate Area of Settlement",
       "number_of_huts_in_settlement": "Number of Huts in Settlement",
       "approximate_population": "Approximate Population",
       "location": "Location",
       "topography": "Topography",
       "landmark": "Nearby Landmark",
-      "describe_the_slum": "Description of the Slum",
-      "Number_of_Anganwadis_in_the_slum": "Number of Anganwadis in the Slum",
-      "Name_of_NGOs_working_in_the_slum": "NGOs Working in the Slum",
-
-      "general_info_left_image": "General Information Image",
-      "general_image_bottomdown1": "General Image 1",
-      "general_image_bottomdown2": "General Image 2"
+      "describe_the_slum": "Description of the Slum_observations",
+      "general_image_bottomdown1": "general_image_1_bottom1",
+      "general_image_bottomdown2": "general_image_2_bottom2"
     },
 
     "Toilet": {
+	  "toilet_info_left_image": "toilet_info_map",
       "number_of_community_toilet_blo": "Number of Community Toilet Blocks",
       "number_of_seats_allotted_to_wo": "Seats for Women",
       "number_of_seats_allotted_to_me": "Seats for Men",
@@ -66,13 +61,13 @@ RIM_FIELD_DISPLAY_NAMES = {
       "toilet_cost": "Cost of Toilet",
       "toilet_seat_to_persons_ratio": "Toilet Seat to Person Ratio",
       "location_of_defecation": "Location of Open Defecation",
-	  "toilet_comment" : "Toilet Observations",
-      "toilet_info_left_image": "Toilet Information Image",
-      "toilet_image_bottomdown1": "Toilet Image 1",
-      "toilet_image_bottomdown2": "Toilet Image 2"
+	  "toilet_comment" : "Toilet Observations_observations",
+      "toilet_image_bottomdown1": "toilet_image_1_bottom1",
+      "toilet_image_bottomdown2": "toilet_image_2_bottom2"
     },
 
     "Water": {
+	  "water_info_left_image": "general_water_supply_map",
       "Total_number_of_standposts_in_": "Total Number of Standposts",
       "Total_number_of_standposts_NOT": "Non-Functional Standposts",
       "total_number_of_taps_in_use_n": "Total Number of Taps in Use",
@@ -82,17 +77,17 @@ RIM_FIELD_DISPLAY_NAMES = {
       "pressure_of_water_in_the_syste": "Water Pressure",
       "coverage_of_wateracross_settle": "Coverage of Water Across Settlement",
       "quality_of_water_in_the_system": "Quality of Water",
-      "water_supply_comment": "Water Supply Observations",
       "percentage_with_an_individual_water_connection": "Households with Individual Water Connection (%)",
-
-      "water_info_left_image": "Water Supply Image",
-      "water_image_bottomdown1": "Water Image 1",
-      "water_image_bottomdown2": "Water Image 2",
+	  "water_supply_comment": "Water Supply Observations_observations",
+      
+      "water_image_bottomdown1": "water_image_bottom1",
+      "water_image_bottomdown2": "water_image_bottom2",
       "Water_Photo1": "Water Photo 1",
       "Water_Photo2": "Water Photo 2"
     },
 
     "Road": {
+	  "roads_and_access_info_left_image": "roads_and_access_map",
       "presence_of_roads_within_the_s": "Presence of Roads",
       "type_of_roads_within_the_settl": "Type of Roads",
       "coverage_of_pucca_road_across": "Pucca Road Coverage (%)",
@@ -102,32 +97,31 @@ RIM_FIELD_DISPLAY_NAMES = {
       "point_of_vehicular_access_to_t": "Point of Vehicular Access",
       "is_the_settlement_below_or_abo": "Settlement Level (Above/Below Road)",
       "are_the_huts_below_or_above_th": "Hut Level (Above/Below Road)",
-      "road_and_access_comment": "Road & Access Observations",
-
-      "roads_and_access_info_left_image": "Roads & Access Image",
-      "roads_image_bottomdown1": "Road Image 1",
-      "road_image_bottomdown2": "Road Image 2",
+      "road_and_access_comment": "Road & Access Observations_observations",
+      "roads_image_bottomdown1": "roads_image_bottom1",
+      "road_image_bottomdown2": "road_image_bottom2",
       "Road_Photo1": "Road Photo 1",
       "Road_Photo2": "Road Photo 2"
     },
 
     "Drainage": {
+	  "drainage_info_left_image": "drainage_info_map",
       "presence_of_drains_within_the": "Presence of Drains",
       "coverage_of_drains_across_the": "Coverage of Drains",
       "do_the_drains_get_blocked": "Do Drains Get Blocked?",
       "is_the_drainage_gradient_adequ": "Drainage Gradient Adequate?",
       "diameter_of_ulb_sewer_line_acr": "Diameter of ULB Sewer Line",
-      "drainage_comment": "Drainage Observations",
-      "drainage_coverage": "Overall Drainage Coverage",
 
-      "drainage_info_left_image": "Drainage Image",
-      "drainage_image_bottomdown1": "Drainage Image 1",
-      "drainage_image_bottomdown2": "Drainage Image 2",
-      "Drainage_Photo1": "Drainage Photo 1",
-      "Drainage_Photo2": "Drainage Photo 2"
+      "drainage_coverage": "Overall Drainage Coverage",
+      "drainage_comment": "Drainage Observations_observations",
+      "drainage_image_bottomdown1": "drainage_image_bottom1",
+      "drainage_image_bottomdown2": "drainage_image_bottom2",
+      "Drainage_Photo1": "Drainage_bottom1",
+      "Drainage_Photo2": "Drainage_bottom2"
     },
 
     "Gutter": {
+	  "gutter_info_left_image": "general_gutter_map",
       "Presence_of_gutter": "Presence of Gutter",
       "type_of_gutter_within_the_sett": "Type of Gutter",
       "coverage_of_gutter": "Coverage of Gutter",
@@ -135,15 +129,14 @@ RIM_FIELD_DISPLAY_NAMES = {
       "do_gutters_flood": "Do Gutters Flood?",
       "do_gutter_get_choked": "Do Gutters Get Choked?",
       "is_gutter_gradient_adequate": "Gutter Gradient Adequate?",
-      "comments_on_gutter": "Gutter Observations",
-
-      "gutter_info_left_image": "Gutter Image",
-      "gutter_image_bottomdown1": "Gutter Image 1",
-      "gutter_image_bottomdown2": "Gutter Image 2",
+      "comments_on_gutter": "Gutter Observations_observations",
+      "gutter_image_bottomdown1": "gutter_image_bottom1",
+      "gutter_image_bottomdown2": "gutter_image_bottom2",
       "Gutter_Photo1": "Gutter Photo"
     },
 
     "Waste": {
+	  "waste_management_info_left_image": "Waste Management Map", 
       "total_number_of_waste_containe": "Total Number of Waste Containers",
       "facility_of_waste_collection": "Facility of Waste Collection",
       "frequency_of_waste_collection": "Frequency of Waste Collection",
@@ -151,14 +144,14 @@ RIM_FIELD_DISPLAY_NAMES = {
       "where_are_the_communty_open_du": "Location of Community Open Dumping",
       "do_the_member_of_community_dep": "Community Dependent on Waste Facility",
       "Is wet and dry garbage collected seperately ?": "Wet & Dry Waste Collected Separately?",
-      "Waste_management_comments": "Waste Management Observations",
+      
       "frequency_of_clearance_of_waste_containers": "Waste Container Clearance Frequency",
-
-      "waste_management_info_left_image": "Waste Management Image",
-      "waste_management_image_bottomdown1": "Waste Image 1",
-      "waste_management_image_bottomdown2": "Waste Image 2",
-      "Waste_Management_Photo1": "Waste Management Photo 1",
-      "Waste_Management_Photo2": "Waste Management Photo 2"
+	"Waste_management_comments": "Waste Management Observations_observations",
+ 
+      "waste_management_image_bottomdown1": "waste_image_bottom1",
+      "waste_management_image_bottomdown2": "waste_image_bottom2",
+      "Waste_Management_Photo1": "Waste_Management_bottom1",
+      "Waste_Management_Photo2": "Waste_Management_bottom2"
     }
   }
 }
@@ -200,6 +193,9 @@ def map_rim_data(raw_data: dict) -> dict:
 			sections_output[section_name] = section_data
 
 	result["sections"] = sections_output
+
+	print("RIM Factsheet Mapped Data:")
+	print(json.dumps(result, indent=2))
 
 	return result
 
@@ -277,7 +273,7 @@ def get_rim_factsheet_detail(slum_code):
 		result["number_of_community_toilet_blo"] = 0
 		result["toilet_comment"] = toilet_entries[0].get("toilet_comment", "")
 
-		seats = {"women": 0, "men": 0, "mixed": 0}
+		seats = {"women": 1, "men": 1, "mixed": 1}
 		ctb_stats = {
 			"ctb_maintenance_provided_by": Counter(),
 			"condition_of_ctb_structure": Counter(),
@@ -324,12 +320,12 @@ def get_rim_factsheet_detail(slum_code):
 
 	else:
 		update({
-			"number_of_community_toilet_blo": 0,
-			"number_of_seats_allotted_to_wo": 0,
-			"number_of_seats_allotted_to_me": 0,
-			"total_number_of_mixed_seats_al": 0,
+			"number_of_community_toilet_blo": 1,
+			"number_of_seats_allotted_to_wo": 1,
+			"number_of_seats_allotted_to_me": 1,
+			"total_number_of_mixed_seats_al": 1,
 		})
-
+	# print(json.dumps(result, indent=2))
 	return result
 
 

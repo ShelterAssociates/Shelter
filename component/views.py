@@ -62,6 +62,7 @@ def get_component(request, slum_id):
     sponsor_slum_count = 0
     if not request.user.is_anonymous:
        sponsors = request.user.sponsor_set.all().values_list('id',flat=True)
+       print("Sponsors for user {}: {}".format(request.user.username, list(sponsors)))
        #sponsor_slum_count = SponsorProjectDetails.objects.filter(slum = slum).count()
     #Fetch filter and sponsor metadata
     # if slum in slum_list we fetch Shop data from mastersheet else we fetch Shops data from kml data.
@@ -115,10 +116,12 @@ def get_component(request, slum_id):
                     options = [rhs_analysis[field[0]][option] for option in field[1].split('|,|') if option in rhs_analysis[field[0]]]
                     component['child'] = list(set(sum(options,[])))
         # # Sponsor : Depending on superuser or sponsor render the data accordingly
-        elif metad.type == 'S' and (metad.authenticate == False or not request.user.is_anonymous) :
+        elif metad.type == 'S' and (metad.authenticate == False or not request.user.is_anonymous):
+            # print("Fetching Sponsor Data for Component:", metad.name) 
             if  metad.code!= "":
                 sponsor_households = []
                 sponsor_households = SponsorProjectDetails.objects.filter(slum = slum, sponsor__id = int(metad.code)).values_list('household_code', flat=True)
+                # print("Sponsor Households for Sponsor ID {}: {}".format(metad.code, sponsor_households))
                 if len(sponsor_households)>0:
                     try:
                         sponsor_households = sum(list(sponsor_households), [])
@@ -142,6 +145,9 @@ def get_component(request, slum_id):
             dtcomponent[key] = OrderedDict()
         for c in comp:
             dtcomponent[key][c['name']] = c
+
+    # with open('/home/shelter/Desktop/Shelter_New/component/dtcomponent.json', 'w') as f:
+    #     json.dump(dtcomponent, f, indent=4)
     return HttpResponse(json.dumps(dtcomponent),content_type='application/json')
 
 def format_data(rhs_data):
