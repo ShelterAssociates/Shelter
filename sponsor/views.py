@@ -4,6 +4,7 @@ from sponsor.models import *
 from master.models import *
 from django.views.decorators.csrf import csrf_exempt
 from django.core.files.storage import default_storage
+from django.contrib.auth.decorators import login_required
 
 import json
 from component.cipher import *
@@ -11,7 +12,7 @@ import zipfile
 import shutil
 import os
 
-
+@login_required(login_url='/accounts/login/')
 def sponsors(request):
 
 	cipher = AESCipher()
@@ -120,7 +121,7 @@ def sponsors(request):
 			'projects': projects_under_sponsor_array
 		}
 	)
-
+@login_required(login_url='/accounts/login/')
 def create_zip(request, slumname):
     cipher = AESCipher()
     user_id = request.user.id

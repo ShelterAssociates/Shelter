@@ -15,7 +15,7 @@ from .kmlparser import KMLParser
 from .models import Metadata
 from .cipher import *
 from master.models import Slum, Rapid_Slum_Appraisal, drainage
-from sponsor.models import SponsorProjectDetails
+from sponsor.models import SponsorProject, SponsorProjectDetails
 from graphs.sync_avni_data import *
 from utils.utils_permission import apply_permissions_ajax, access_right, deco_rhs_permission
 from django.core.exceptions import PermissionDenied
@@ -57,12 +57,20 @@ def get_component(request, slum_id):
        Here sponsor data is fetch according to user role access rights
     '''
     slum = get_object_or_404(Slum, pk=slum_id)
-    sponsors=[]
     city_name = list(Slum.objects.filter(id = slum.id).values_list('electoral_ward__administrative_ward__city__name__city_name', flat = True))[0]
     sponsor_slum_count = 0
+    sponsors = []
+    sponsor_project_detail_ids = []
+
     if not request.user.is_anonymous:
-       sponsors = request.user.sponsor_set.all().values_list('id',flat=True)
-       print("Sponsors for user {}: {}".format(request.user.username, list(sponsors)))
+        sponsors = request.user.sponsor_set.all().values_list("id", flat=True)
+        
+        sponsor_project_detail_ids = (
+            SponsorProject.objects
+            .filter(sponsor_id__in=sponsors)
+            .values_list("id", flat=True)
+        )
+
        #sponsor_slum_count = SponsorProjectDetails.objects.filter(slum = slum).count()
     #Fetch filter and sponsor metadata
     # if slum in slum_list we fetch Shop data from mastersheet else we fetch Shops data from kml data.
@@ -83,7 +91,7 @@ def get_component(request, slum_id):
     for metad in metadata:
         component = {}
         component['name'] = metad.name
-        if component['name'] == 'Slum boundary' and slum_id == '1971':
+        if component['name'] == 'Slum boundary' and slum_id in ['1971','1972']:
             component['name'] = 'Town boundary'
         component['level'] = metad.level
         component['section'] = metad.section.name
@@ -120,8 +128,7 @@ def get_component(request, slum_id):
             # print("Fetching Sponsor Data for Component:", metad.name) 
             if  metad.code!= "":
                 sponsor_households = []
-                sponsor_households = SponsorProjectDetails.objects.filter(slum = slum, sponsor__id = int(metad.code)).values_list('household_code', flat=True)
-                # print("Sponsor Households for Sponsor ID {}: {}".format(metad.code, sponsor_households))
+                sponsor_households = SponsorProjectDetails.objects.filter(sponsor_project__id=int(metad.code),slum=slum).values_list("household_code", flat=True)
                 if len(sponsor_households)>0:
                     try:
                         sponsor_households = sum(list(sponsor_households), [])
@@ -129,7 +136,7 @@ def get_component(request, slum_id):
                         sponsor_households = sum(map(lambda x : json.loads(x),sponsor_households),[])
                 if metad.section.name=="Sponsor":
                     sponsor_houses.extend(sponsor_households)
-                if request.user.is_superuser or int(metad.code) in sponsors or metad.authenticate == False :
+                if request.user.is_superuser or int(metad.code) in sponsor_project_detail_ids or metad.authenticate == False :
                     component['child'] = sponsor_households
             else:
                 component['child'] = sponsor_houses
