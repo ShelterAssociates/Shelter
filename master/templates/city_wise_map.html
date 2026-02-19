@@ -72,6 +72,72 @@ async defer></script>
   transform: rotate(45deg);
   border: 1px solid #FFFFFF
   }
+  .preview-container {
+    width: 569px;
+    height: 607px;
+    border-radius: 12px;
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.08);
+    padding: 20px;
+    margin: 0 auto;
+    overflow-y: auto;
+    background: white;
+}
+/* ===== FULL SCREEN OVERLAY ===== */
+.rim-preview-modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(0, 0, 0, 0.6);
+    z-index: 99999;
+}
+
+/* ===== CENTERED POPUP BOX ===== */
+.rim-preview-content {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: white;
+    border-radius: 12px;
+    width: 620px;
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.3);
+    overflow: hidden;
+}
+
+/* ===== HEADER BAR ===== */
+.rim-preview-header {
+    height: 45px;
+    background: #2c3e50;
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 15px;
+    font-weight: bold;
+}
+
+/* ===== CLOSE BUTTON ===== */
+.rim-close {
+    cursor: pointer;
+    font-size: 22px;
+}
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.custom-spinner {
+  width: 50px;
+  height: 50px;
+  border: 5px solid #ddd;
+  border-top-color: #2c3e50;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+
 </style>
 
 {% endblock %}
@@ -156,4 +222,49 @@ async defer></script>
 	</div>
 	</div>
 </div>
+<!-- RIM Preview Popup -->
+<!-- RIM Preview Modal -->
+<div id="rimPreviewModal" class="rim-preview-modal">
+
+    <div class="rim-preview-content">
+
+        <!-- Header -->
+        <div class="rim-preview-header">
+            <span>RIM Factsheet Preview</span>
+
+            <div>
+                <button id="rimDownloadBtn"
+                        class="btn btn-sm btn-success"
+                        style="margin-right:10px;"
+                        disabled>
+                    Download PDF
+                </button>
+
+                <span class="rim-close">&times;</span>
+            </div>
+        </div>
+
+        <!-- Body -->
+        <div id="rimPreviewBody" class="preview-container">
+        </div>
+
+        <!-- Note Section -->
+        <div style="padding:12px 18px;
+                    font-size:12px;
+                    background:#f8f9fa;
+                    border-top:1px solid #ddd;
+                    color:#555;">
+            <strong>Note:</strong><br>
+            This is only a preview of the RIM Factsheet.  
+            The final PDF version may have slight design or formatting differences.  
+            The PDF download option may take approximately 2–3 minutes to generate.  
+            Please wait until the download button becomes active.
+        </div>
+
+    </div>
+</div>
+
+
+
+
 {% endblock %}

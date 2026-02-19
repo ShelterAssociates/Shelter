@@ -1,0 +1,496 @@
+{% load static %}
+
+<style>
+    /* ================= PAGE BACKGROUND ================= */
+
+    html,
+    body {
+        margin: 0;
+        padding: 0;
+        background: #e6e6e6;
+        font-family: Roboto, sans-serif;
+    }
+
+    /* ================= WRAPPER ================= */
+
+    .factsheet-wrapper {
+        width: 100%;
+        text-align: center;
+    }
+
+    /* ================= PAGE ================= */
+
+    .factsheet-page {
+        width: 529px;
+        height: 650px;
+        background: #ffffff;
+        position: relative;
+        margin: 0 auto 40px auto;
+        overflow: hidden;
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+    }
+
+    /* ================= HEADER ================= */
+
+    .rim-header {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 65px;
+        background: #2f4e9b;
+        color: #ffffff;
+    }
+
+    .rim-header-inner {
+        display: flex;
+        align-items: center;
+        height: 100%;
+        padding: 0 15px;
+    }
+
+    .col-logo img {
+        height: 23px;
+        margin-left: 10%;
+    }
+
+    .col-center {
+        flex: 1;
+        text-align: center;
+    }
+
+    .col-right {
+        text-align: right;
+    }
+
+    .sep {
+        width: 1px;
+        height: 50px;
+        background: rgba(255, 255, 255, 0.35);
+        margin: 0 15px;
+    }
+
+    .rim-title {
+        font-size: 14px;
+        font-weight: 500;
+    }
+
+    .rim-subtitle {
+        font-size: 18px;
+        font-weight: 900;
+    }
+
+    .slum-short {
+        font-size: 12px;
+        font-weight: 800;
+        line-height: 1.15;
+    }
+
+    .slum-long {
+        font-size: 10px;
+        font-weight: 800;
+        line-height: 1.2;
+    }
+
+    .admin_ward,
+    .city_name {
+        font-size: 12px;
+    }
+
+    /* ================= CONTENT AREA ================= */
+
+    .page-content {
+        position: absolute;
+        top: 65px;
+        left: 0;
+        width: 100%;
+        height: 535;
+
+        box-sizing: border-box;
+        overflow: hidden;
+    }
+
+    /* ================= SECTION ================= */
+    /* ================= SECTION TITLE (GENERIC FOR ALL) ================= */
+
+    .section-title {
+        font-size: 18px;
+        font-weight: 900;
+        text-align: center;
+        text-transform: uppercase;
+        margin: 0;
+        line-height: 1;
+    }
+
+
+    /* ================= SPECIFIC SECTION OVERRIDES ================= */
+
+    /* Drainage smaller title */
+    .section-drainage .section-title {
+        font-size: 17px;
+        margin: 20px 20px 20px 20px;
+        padding: 5px 0;
+    }
+
+    /* Add top spacing for specific sections */
+    .section-drainage .section-title,
+    .section-gutter .section-title,
+    .section-waste .section-title,
+    .section-water .section-title {
+        margin: 5px 5px 5px 5px;
+    }
+
+
+    /* ================= MAP + IMAGES ================= */
+
+
+    .top-layout {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 0;
+    }
+
+    .top-layout tr,
+    .top-layout td {
+        padding: 0;
+    }
+
+    .section-title+.top-layout {
+        margin-top: 0;
+    }
+
+    .map-box {
+        width: 100%;
+        height: 227px;
+        border: 1px solid #ccc;
+        position: relative;
+    }
+
+    .map-img {
+        width: 100%;
+        height: 227px;
+        object-fit: contain;
+        display: block;
+    }
+
+    .top-images {
+        width: 151px;
+    }
+
+    .top-images img {
+        width: 121px;
+        height: 110px;
+        object-fit: cover;
+        display: block;
+        margin-bottom: 4px;
+        border: 1px solid #ccc;
+    }
+
+    /* ================= GREY BLOCK ================= */
+
+    .grey-block {
+        width: 510px;
+        height: 300px;
+        background: #f2f2f2;
+        margin: 0 auto;
+        padding: 4px;
+        box-sizing: border-box;
+        page-break-inside: avoid;
+    }
+
+    /* ================= TABLE ================= */
+    .data-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 6pt;
+        margin-left: 0.02cm;
+        table-layout: fixed;
+        /* IMPORTANT */
+
+    }
+
+    .section-toilet .data-table td,
+    .section-general .data-table td {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 6pt;
+        margin-left: 0.02cm;
+        line-height: 1.6;
+    }
+x
+    .section-waste .data-table td,
+    .section-road .data-table td,
+    .section-gutter .data-table td {
+        font-size: 10pt !important;
+    }
+
+    .section-drainage .data-table td {
+        font-size: 11px !important;
+        line-height: 30px;
+    }
+
+    .section-gutter .data-table td {
+        line-height: 20px;
+    }
+
+    .data-table td {
+        border: 1px solid #ccc;
+        vertical-align: top;
+        padding: 2px;
+    }
+
+    /* OBSERVATION */
+    /* OBSERVATION */
+    .observation-cell {
+        font-size: 7pt;
+        /* increased from 6pt */
+        line-height: 1.4;
+        /* better readability */
+        margin-top: 4px;
+        text-align: left;
+        /* left align */
+    }
+
+    .section-drainage .observation-cell {
+        font-size: 12px;
+        /* slightly increased */
+        line-height: 1.2;
+        margin-top: 4px;
+        text-align: left;
+        /* left align */
+    }
+
+    /* ================= FOOTER ================= */
+
+.rim-footer {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 50px;
+    background: #2f4e9b;
+    color: #ffffff;
+}
+
+
+    /* Footer table */
+    .rim-footer-table {
+        width: 100%;
+        border-collapse: collapse;
+        table-layout: fixed;
+    }
+
+    /* Common cell styles */
+    .rim-footer-table td {
+        vertical-align: middle;
+        padding: 0.8em 1.2em;
+        /* scales with page size */
+        font-size: 7pt;
+        /* relative to body font */
+        box-sizing: border-box;
+    }
+
+    /* LEFT : META DATA */
+    .footer-left {
+        width: 35%;
+        text-align: left;
+        line-height: 1.35;
+    }
+
+    /* CENTER : COPYRIGHT */
+    .footer-center {
+        width: 30%;
+        text-align: center;
+        font-weight: 600;
+    }
+
+    /* RIGHT : WEBSITE */
+    .footer-right {
+        width: 35%;
+        text-align: right;
+        line-height: 1.35;
+    }
+
+    /* Meta text slightly lighter */
+    .footer-meta {
+        font-size: 6pt;
+        /* slightly smaller than footer text */
+        opacity: 0.95;
+    }
+
+    /* Clickable link */
+    .rim-footer a {
+        color: #ffffff;
+        text-decoration: none;
+        font-weight: 600;
+    }
+
+    .rim-footer a:hover {
+        text-decoration: underline;
+    }
+</style>
+
+
+
+<div class="factsheet-wrapper">
+
+    {% for section_name, section in sections.items %}
+
+    <div class="factsheet-page">
+
+        <!-- ================= HEADER ================= -->
+
+        <div class="rim-header">
+            <div class="rim-header-inner">
+
+                <div class="col-logo">
+                    <a href="https://shelter-associates.org" target="_blank">
+                        <img src="https://app.shelter-associates.org/static/images/SA%20Logo_White.png"
+                            alt="Shelter Associates">
+                    </a>
+                </div>
+
+                <div class="sep"></div>
+
+                <div class="col-center">
+                    <div class="rim-title">Rapid Infrastructure Mapping</div>
+                    <div class="rim-subtitle">FACTSHEET</div>
+                </div>
+
+                <div class="sep"></div>
+
+                <div class="col-right">
+                    <div class="{% if meta_data.slum_name|length > 25 %}slum-long{% else %}slum-short{% endif %}">
+                        {{ meta_data.slum_name }}
+                    </div>
+                    <div class="admin_ward">{{ meta_data.admin_ward }}</div>
+                    <div class="city_name">{{ meta_data.city_name }}</div>
+                </div>
+
+            </div>
+        </div>
+
+
+        <!-- ================= CONTENT ================= -->
+
+        <div class="page-content">
+
+            <div class="section-page section-{{ section_name|lower }}">
+
+                <div class="section-title">
+                    {{ section_name }}
+                </div>
+
+                <!-- MAP + IMAGES -->
+                <table class="top-layout">
+                    <tr>
+
+                        {% if not section.meta.img1_ok and not section.meta.img2_ok %}
+                        <td colspan="2">
+                            <div class="map-box">
+                                {% for label, value in section.fields.items %}
+                                {% if forloop.first %}
+                                <img class="map-img" src="{{ value }}">
+                                {% endif %}
+                                {% endfor %}
+                            </div>
+                        </td>
+
+                        {% else %}
+
+                        <td>
+                            <div class="map-box">
+                                {% for label, value in section.fields.items %}
+                                {% if forloop.first %}
+                                <img class="map-img" src="{{ value }}">
+                                {% endif %}
+                                {% endfor %}
+                            </div>
+                        </td>
+
+                        <td class="top-images">
+                            {% for label, value in section.fields.items %}
+                            {% if value and "_bottom" in label %}
+                            <img src="{{ value }}">
+                            {% endif %}
+                            {% endfor %}
+                        </td>
+
+                        {% endif %}
+
+                    </tr>
+                </table>
+
+
+                <!-- GREY TABLE + OBSERVATION -->
+                <div class="grey-block">
+
+                    <table class="data-table">
+                        <colgroup>
+                            <col style="width:230px;">
+                            <col style="width:280px;">
+                        </colgroup>
+
+                        {% for label, value in section.fields.items %}
+                        {% if value and not forloop.first and "_bottom" not in label and "_observation" not in label %}
+                        <tr>
+                            <td><strong>{{ label }}</strong></td>
+                            <td>{{ value }}</td>
+                        </tr>
+                        {% endif %}
+                        {% endfor %}
+                    </table>
+
+                    <div class="observation-cell">
+                        {% for label, value in section.fields.items %}
+                        {% if value and "_observation" in label %}
+                        <strong>{{ label|cut:"_observation"|upper }}</strong><br>
+                        {{ value }}
+                        {% endif %}
+                        {% endfor %}
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+        <div class="rim-footer">
+            <table class="rim-footer-table">
+                <tr>
+
+                    <!-- PHASE 1 : META DATA -->
+                    <td class="footer-left">
+                        {% if meta_data.submission_date or meta_data.last_modified_on %}
+                        <div class="footer-meta">
+                            {% if meta_data.submission_date %}
+                            Submission Date: {{ meta_data.submission_date }}<br>
+                            {% endif %}
+                            {% if meta_data.last_modified_on %}
+                            Last Modified: {{ meta_data.last_modified_on }}
+                            {% endif %}
+                        </div>
+                        {% endif %}
+                    </td>
+
+                    <!-- PHASE 2 : COPYRIGHT -->
+                    <td class="footer-center">
+                        © Copyright Shelter Associates, {% now "Y" %}
+                    </td>
+
+                    <!-- PHASE 3 : WEBSITE -->
+                    <td class="footer-right">
+                        For more information, please visit<br>
+                        <a href="https://www.shelter-associates.org" target="_blank">
+                            www.shelter-associates.org
+                        </a>
+                    </td>
+
+                </tr>
+            </table>
+        </div>
+    </div>
+
+    {% endfor %}
+
+</div>

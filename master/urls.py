@@ -26,7 +26,7 @@ from master.views import index, SurveyListView, SurveyCreateView, \
     vulnerabilityreport,formList,slummapdisplay,slummap,citymapdisplay, \
     modelmapdisplay, drainageinsert, sluminformation, drainagedisplay , \
     drainageedit, cityList, drainagereportgenerate, modelList, \
-    familyrportgenerate, user_login, get_translations
+    familyrportgenerate, user_login, get_translations ,rim_factsheet_available
 from django.contrib.auth import views as auth_views
 from django.conf import settings
 from django.conf.urls.static import static
@@ -64,6 +64,7 @@ urlpatterns = [
     url(r'^modelList/$', modelList, name='modelList'),
     url(r'^familyrportgenerate/$', familyrportgenerate, name='familyrportgenerate'),
     url(r'^translations/$', get_translations, name='get_translations'),
+    url(r'^api/rim_factsheet_available/(?P<slum_id>[0-9]+)/$',rim_factsheet_available,name='rim_factsheet_available'),
     #Redirect user to new url
     url(r'^user_login/$', user_login, name="user_login"),
     #Using built in rest URLS for QGIS plugin login

@@ -159,57 +159,162 @@ var Polygon = (function () {
 
 var Slum = (function (_super) {
     __extends(Slum, _super);
-    function Slum(obj_data) {
-        obj_data['info'] = obj_data['info'] + "<br/><div style='padding-top:10px;'><a style='font-weight:bold;text-decoration: underline;cursor:pointer;' href='javascript:Slum.prototype.factsheet_click(this,"+obj_data.id+")'>View Factsheet</a></div>";
-       _super.call(this, obj_data) || this;
-       _super.prototype.show.call(this);
-    }
-    Slum.prototype.factsheet_click = function(element, slum_id){
-        $(".overlay").show();
-		var Sid = slum_id;
-		var url = "/admin/rimreportgenerate/";
-        var Fid = "154";
-		$.ajax({
-			url : url,
-			data : { Sid : Sid, Fid : Fid},
-			type: "POST",
-			contenttype : "json",
-			success : function(json){
-					url = json.string;
-					$(".overlay").hide();
-					window.open("" + url );
-			}
-		});
-    }
-    //Set click listeners
-    Slum.prototype.setListeners = function(){
-        _super.prototype.setListeners.call(this);
-        let _this = this;
-        this.shape.on({
-            'click' : function(event) {
 
-            let flag= false;
-            if(objBreadcrumb.val.length < 2){
-                $("#datatable_filter").find("input").val(_this.name);
-		        $("#datatable_filter").find("input").trigger('keyup');
-		        $("#datatable").find('tbody>tr>td>div>span:contains('+_this.name+')').trigger('click');
-		        flag = true;
-            }
-            else{
-                if(event!=undefined){
-                     slum_data_fetch(_this.id);
+    function Slum(obj_data) {
+
+        this.slumId = obj_data.id;   // store id
+
+        _super.call(this, obj_data) || this;
+        _super.prototype.show.call(this);
+
+        // 🔥 After creation check availability
+        this.checkFactsheetAvailability();
+    }
+
+    // --------------------------------------------------
+    // CHECK FACTSHEET AVAILABILITY (NEW)
+    // --------------------------------------------------
+    Slum.prototype.checkFactsheetAvailability = function () {
+
+        let _this = this;
+
+        fetch(`/admin/api/rim_factsheet_available/${this.slumId}/`)
+            .then(res => res.json())
+            .then(data => {
+                console.log(data.available);
+                if (data.available === true) {
+
+                    // Append button dynamically
+                    _this.info = _this.info +
+                        "<br/><div style='padding-top:10px;'>" +
+                        "<a style='font-weight:bold;text-decoration: underline;cursor:pointer;' " +
+                        "href='javascript:void(0)' " +
+                        "onclick='Slum.prototype.factsheet_click(this," + _this.slumId + ")'>" +
+                        "View Factsheet</a></div>";
+
+                    // 🔁 Refresh info panel if currently open
+                    if ($("#maphead h4").text() === _this.name) {
+                        $("#mapdesc").html(_this.info);
+                    }
                 }
 
+            })
+            .catch(err => {
+                console.error("Factsheet availability check failed:", err);
+            });
+    };
+
+
+    // --------------------------------------------------
+    // FACTSHEET CLICK (UNCHANGED)
+    // --------------------------------------------------
+    Slum.prototype.factsheet_click = function (element, slum_id) {
+
+        const selectedSlumId = slum_id;
+
+        $("#rimPreviewModal").fadeIn();
+
+        $("#rimDownloadBtn")
+            .prop("disabled", true)
+            .css("opacity", "0.6")
+            .text("Generating PDF...")
+            .removeAttr("data-slum-id");
+
+        $("#rimPreviewBody").html(`
+            <div style="display:flex;align-items:center;justify-content:center;height:607px;">
+                <div style="text-align:center;">
+                    <div class="custom-spinner"></div>
+                    <div style="margin-top:15px;font-weight:bold;">
+                        Loading preview & generating PDF...
+                    </div>
+                </div>
+            </div>
+        `);
+
+        /* Load Preview */
+        fetch(`/reports/preview-rim-factsheet/${selectedSlumId}/`)
+            .then(res => res.text())
+            .then(html => {
+                $("#rimPreviewBody").html(html);
+            })
+            .catch(err => {
+                console.error(err);
+                $("#rimPreviewBody").html(`
+                    <div style="padding:40px;text-align:center;color:red;">
+                        Failed to load preview
+                    </div>
+                `);
+            });
+
+        /* Generate PDF */
+        fetch(`/reports/api/rim_factsheet_generation/${selectedSlumId}/`)
+        .then(res => {
+
+            if (res.status === 405) {
+                throw new Error('Please fill RIM form or sync data.');
+            }
+            else if (res.status === 406) {
+                throw new Error('RIM data not found.');
+            }
+            else if (res.status !== 202) {
+                throw new Error('PDF generation failed.');
             }
 
-            _super.prototype.event_onClick.call(_this);
-            _super.prototype.show.call(_this);
-            map.fitBounds(_this.shape.getBounds());
+            $("#rimDownloadBtn")
+                .prop("disabled", false)
+                .css("opacity", "1")
+                .text("Download PDF")
+                .attr("data-slum-id", selectedSlumId);
 
-            }});
-    }
+        })
+        .catch(err => {
+            console.error(err);
+            alert(err.message);
+        });
+    };
+
+
+    // --------------------------------------------------
+    // LISTENERS (UNCHANGED)
+    // --------------------------------------------------
+    Slum.prototype.setListeners = function () {
+
+        _super.prototype.setListeners.call(this);
+        let _this = this;
+
+        this.shape.on({
+            'click': function (event) {
+
+                let flag = false;
+
+                if (objBreadcrumb.val.length < 2) {
+
+                    $("#datatable_filter").find("input").val(_this.name);
+                    $("#datatable_filter").find("input").trigger('keyup');
+                    $("#datatable")
+                        .find('tbody>tr>td>div>span:contains(' + _this.name + ')')
+                        .trigger('click');
+
+                    flag = true;
+
+                } else {
+
+                    if (event != undefined) {
+                        slum_data_fetch(_this.slumId);
+                    }
+                }
+
+                _super.prototype.event_onClick.call(_this);
+                _super.prototype.show.call(_this);
+                map.fitBounds(_this.shape.getBounds());
+            }
+        });
+    };
+
     return Slum;
+
 }(Polygon));
+
 
 var ElectoralWard = (function (_super) {
     __extends(ElectoralWard, _super);
@@ -299,6 +404,30 @@ var City = (function(){
     }
     return City;
 }());
+
+$(document).on("click", ".rim-close", function () {
+    $("#rimPreviewModal").fadeOut();
+});
+
+$(document).on("click", "#rimPreviewModal", function (e) {
+    if (e.target.id === "rimPreviewModal") {
+        $("#rimPreviewModal").fadeOut();
+    }
+});
+// --------------------------------------------------
+// DOWNLOAD PDF (AUTO DOWNLOAD)
+// --------------------------------------------------
+$(document).on('click', '#rimDownloadBtn', function () {
+
+    const selectedSlumId = $(this).attr("data-slum-id");
+
+    if (!selectedSlumId || $(this).prop("disabled")) return;
+
+    window.location.href =
+        `/reports/api/rim_factsheet_pdf_fetch/${selectedSlumId}/`;
+});
+
+
 //AdministrativeWard.prototype = Object.create(Polygon.prototype);
 //ElectoralWard.prototype = Object.create(Polygon.prototype);
 //Slum.prototype = Object.create(Polygon.prototype);

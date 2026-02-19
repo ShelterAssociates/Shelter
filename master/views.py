@@ -40,6 +40,8 @@ from graphs.models import *
 from django.db.models import Avg
 from graphs.sync_avni_data import avni_sync
 
+
+
 @staff_member_required
 def index(request):
 	"""Renders the index template in browser"""
@@ -682,3 +684,17 @@ def get_translations(request):
     else:
         output = read_files("/srv/Shelter/master/translations/eng_translations.json")
     return JsonResponse(output)
+
+def rim_factsheet_available(request, slum_id):
+
+    rim_exists = Rapid_Slum_Appraisal.objects.filter(
+        slum_name_id=slum_id
+    ).exists()
+
+    slum_exists = SlumData.objects.filter(
+        slum_id=slum_id
+    ).exists()
+
+    return JsonResponse({
+        "available": rim_exists and slum_exists
+    })
