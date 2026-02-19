@@ -47,9 +47,6 @@ def get_household_analysis_data(city, slum_code, question_fields, kobo_survey=''
     for household, list_record in grouped_records:
         # print(household)
         # print(list_record)
-        if household in ["0100","0292","0374","0606","0756" ]:
-            print("debug")
-            print(list(list_record))
         record_sorted = list(list_record) #sorted(list(list_record), key=lambda x:x['_submission_time'], reverse=False)
         if slum_code in ['1971' , '1972'] or slum_code in [1971, 1972]:
             household_no = household
@@ -112,9 +109,6 @@ def get_household_analysis_data(city, slum_code, question_fields, kobo_survey=''
                                 output[field][data].append(str(household_no))
                 else:
                     data = record[field]
-                    if data == "Individual home + shop":
-                        print("Data Value:", data)
-                        print("field:", field)
                     for val in data if type(data)==list else data.split(','):
                         if field not in output:                            
                             output[field] = {}
