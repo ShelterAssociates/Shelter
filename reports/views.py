@@ -207,3 +207,8 @@ def rim_factsheet_view(slum_id, raw=False):
 
 
 	return map_rim_data(response)
+
+
+## Donar report 
+def donor_report_home(request):
+	return render(request, "reports/donor_report/donor_report_home.html")

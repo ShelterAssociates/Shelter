@@ -15,4 +15,7 @@ urlpatterns = [
     ),
     url(r'^rim/$', report_view, name='rim_report_home'),
     url(r'^preview-rim-factsheet/(?P<slum_id>[0-9]+)/$', rim_factsheet_preview, name='rim_factsheet_preview'),
+
+    ## Donar report
+    url(r'^donor/$', donor_report_home, name='donar_report_home'),
 ]
