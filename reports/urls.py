@@ -18,4 +18,6 @@ urlpatterns = [
 
     ## Donar report
     url(r'^donor/$', donor_report_home, name='donar_report_home'),
+    url(r'^monthly-report/(?P<report_id>[0-9]+)/$', monthly_report_details, name='monthly_report_details'),
+    url(r'^generate-donor-report/(?P<report_id>[0-9]+)/$', monthly_report_pdf_generation, name='generate_donor_report'),
 ]

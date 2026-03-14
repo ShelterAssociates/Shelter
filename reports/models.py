@@ -4,6 +4,12 @@ from sponsor.models import SponsorProject
 from master.models import Slum
 import uuid
 
+
+STATUS_CHOICES = (
+	("draft", "Draft"),
+	("completed", "Completed"),
+)
+
 def sponsor_project_photo_upload_path(instance, filename):
 	"""
 	Upload path structure:
@@ -40,8 +46,10 @@ class Deliverable(models.Model):
 	"""
 
 	name = models.CharField(max_length=255, unique=True)
+	abbrevation = models.CharField(max_length=50, blank=True, null=True)
 	description = models.TextField(blank=True, null=True)
 	is_active = models.BooleanField(default=True)
+	icon = models.ImageField(upload_to="deliverable_icons/", blank=True, null=True)
 
 	class Meta:
 		verbose_name = "Deliverable"
@@ -99,6 +107,7 @@ class BeneficiaryIndicator(models.Model):
 	description = models.TextField(blank=True, null=True)
 	unit = models.CharField(max_length=50, blank=True, null=True)
 	is_active = models.BooleanField(default=True)
+	icon = models.ImageField(upload_to="beneficiary_indicator_icons/", blank=True, null=True)
 
 	class Meta:
 		verbose_name = "Beneficiary indicator"
@@ -241,7 +250,12 @@ class SponsorProjectMonthlyReportDetails(models.Model):
 
 	# Always stored as first day of the month
 	month = models.DateField()
-
+	
+	status = models.CharField(
+		max_length=20,
+		choices=STATUS_CHOICES,
+		default="draft"
+	)
 	# Many-to-many for easy access to parameters,
 	# actual values stored in through table
 	work_parameters = models.ManyToManyField(
@@ -272,8 +286,7 @@ class SponsorProjectMonthlyReportDetails(models.Model):
 			self.month = self.month.replace(day=1)
 
 	def __str__(self):
-		return f"{self.project_report} - {self.month.strftime('%m/%Y')}"
-
+		return f"{self.month.strftime('%b %Y')} - {self.project_report.sponsor_project}"
 
 
 # =================================================
