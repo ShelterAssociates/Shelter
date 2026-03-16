@@ -417,7 +417,6 @@ def get_rim_factsheet_detail(slum_code):
 			"number_of_seats_allotted_to_me": 1,
 			"total_number_of_mixed_seats_al": 1,
 		})
-	# print(json.dumps(result, indent=2))
 	return result
 
 

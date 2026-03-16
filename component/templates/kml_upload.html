@@ -95,8 +95,8 @@
         {% for comp in component_list %}
 
           <div class="list-group-item" style="display:flex; justify-content:space-between;">
-            <div><input type="checkbox"> {{ comp }}</div>
-            <button class="btn btn-danger btn-xs">Delete</button>
+            {% comment %} <div><input type="checkbox"> {{ comp }}</div>
+            <button class="btn btn-danger btn-xs">Delete</button> {% endcomment %}
           </div>
         {% endfor %}
       </div>
