@@ -9,7 +9,9 @@
 <link rel="stylesheet"  type="text/css" href="{% static "css/bootstrap.min.css" %}"/>
 <link rel="stylesheet"  type="text/css" href="{% static "css/jquery.dataTables.min.css" %}" />
 <link rel="stylesheet"  type="text/css" href="{% static "css/leaflet.css" %}" />
-
+<script>
+	const csrftoken = "{{ csrf_token }}";
+</script>
 <script src="{% static "js/jquery.min.js" %}"></script>
 <!-- <script type="text/javascript" src="http://www.google.com/jsapi" ></script> -->
 <script src="{% static "js/master_map_boundaries.js" %}"></script>
@@ -137,7 +139,105 @@ async defer></script>
   animation: spin 1s linear infinite;
 }
 
+/* ======== OTP form====== */
+/* Download wrapper */
+.rim-download-wrapper{
+	position:relative;
+	display:inline-block;
+}
 
+/* Download button */
+.rim-download-btn{
+	font-weight:600;
+}
+
+/* Dropdown form box */
+.rim-download-form{
+	display:none;
+	position:absolute;
+	top:42px;
+	right:0;
+	width:260px;
+	background:#ffffff;
+	border-radius:6px;
+	box-shadow:0 6px 20px rgba(0,0,0,0.25);
+	padding:12px;
+	z-index:9999;
+}
+
+/* Form header (close button row) */
+.rim-form-header{
+	text-align:right;
+	margin-bottom:6px;
+}
+
+/* Close button */
+.rim-form-close{
+	cursor:pointer;
+	font-size:18px;
+	font-weight:bold;
+	color:#555;
+}
+
+.rim-form-close:hover{
+	color:#e74c3c;
+}
+
+.rim-input{
+    width:100%;
+    padding:6px 8px;
+    margin-bottom:6px;
+    border:1px solid #ccc;
+    border-radius:4px;
+    font-size:13px;
+    outline:none;
+
+    color:#000 !important;
+    background:#fff !important;
+}
+
+.rim-input:focus{
+	border-color:#2b7fc2;
+	box-shadow:0 0 3px rgba(43,127,194,0.4);
+}
+
+/* Send OTP button */
+.rim-send-otp{
+	width:100%;
+	margin-bottom:6px;
+}
+
+/* OTP section hidden initially */
+.rim-otp-section{
+	display:none;
+}
+
+/* Verify button */
+.rim-verify-btn{
+	width:100%;
+}
+
+/* Mobile input numeric appearance */
+#rimMobile{
+	letter-spacing:1px;
+}
+
+/* Smooth dropdown animation */
+.rim-download-form.show{
+	display:block;
+	animation:rimDrop 0.2s ease-out;
+}
+
+@keyframes rimDrop{
+	from{
+		transform:translateY(-8px);
+		opacity:0;
+	}
+	to{
+		transform:translateY(0);
+		opacity:1;
+	}
+}
 </style>
 
 {% endblock %}
@@ -233,13 +333,26 @@ async defer></script>
             <span>RIM Factsheet Preview</span>
 
             <div>
-                <button id="rimDownloadBtn"
-                        class="btn btn-sm btn-success"
-                        style="margin-right:10px;"
-                        disabled>
-                    Download PDF
-                </button>
+				<div class="rim-download-wrapper">
+					<button id="rimDownloadBtn" class="btn btn-sm btn-success rim-download-btn" disabled>Download PDF</button>
 
+					<div id="rimDownloadForm" class="rim-download-form">
+						<div class="rim-form-header">
+							<span id="rimFormClose" class="rim-form-close">&times;</span>
+						</div>
+					
+						<input type="text" id="rimName" class="rim-input" placeholder="Full Name">
+						<input type="email" id="rimEmail" class="rim-input" placeholder="Email Address">
+						<input type="text" id="rimMobile" class="rim-input" placeholder="Mobile Number" maxlength="10">
+					
+						<button id="rimSendOTP" class="btn btn-primary rim-send-otp">Send OTP</button>
+					
+						<div id="rimOTPSection" class="rim-otp-section">
+							<input type="text" id="rimOTP" class="rim-input" placeholder="Enter OTP">
+							<button id="rimVerifyOTP" class="btn btn-success rim-verify-btn">Verify & Download</button>
+						</div>
+					</div>
+				</div>	
                 <span class="rim-close">&times;</span>
             </div>
         </div>

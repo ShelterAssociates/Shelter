@@ -1,3 +1,4 @@
+
 from django.db import models
 from django.core.exceptions import ValidationError
 from sponsor.models import SponsorProject
@@ -440,4 +441,5 @@ class SponsorProjectMonthlyPhoto(models.Model):
 		
 	def __str__(self):
 		return f"Photo | {self.monthly_report}"
+
 

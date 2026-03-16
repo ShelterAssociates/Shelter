@@ -406,28 +406,149 @@ var City = (function(){
 }());
 
 $(document).on("click", ".rim-close", function () {
-    $("#rimPreviewModal").fadeOut();
+
+    $("#rimPreviewModal").hide();        // hide overlay
+    $("#rimPreviewBody").html("");       // clear preview content
+    $("#rimDownloadForm").removeClass("show").hide();
+    $("#rimOTPSection").hide();
 });
 
 $(document).on("click", "#rimPreviewModal", function (e) {
     if (e.target.id === "rimPreviewModal") {
-        $("#rimPreviewModal").fadeOut();
+        $("#rimPreviewModal").hide();
+        $("#rimPreviewBody").html("");
+        $("#rimDownloadForm").removeClass("show").hide();
+        $("#rimOTPSection").hide();
     }
+
 });
 // --------------------------------------------------
 // DOWNLOAD PDF (AUTO DOWNLOAD)
 // --------------------------------------------------
 $(document).on('click', '#rimDownloadBtn', function () {
 
-    const selectedSlumId = $(this).attr("data-slum-id");
+	const selectedSlumId = $(this).attr("data-slum-id");
 
-    if (!selectedSlumId || $(this).prop("disabled")) return;
+	if (!selectedSlumId || $(this).prop("disabled")) return;
 
-    window.location.href =
-        `/reports/api/rim_factsheet_pdf_fetch/${selectedSlumId}/`;
+	$("#rimDownloadForm").toggleClass("show");
+	$("#rimDownloadForm").attr("data-slum-id", selectedSlumId);
+
 });
 
+$(document).on('click', '#rimFormClose', function () {
+	$("#rimDownloadForm").removeClass("show");
+});
 
+$(document).click(function(e){
+	if(!$(e.target).closest('#rimDownloadForm, #rimDownloadBtn').length){
+		$("#rimDownloadForm").removeClass("show");
+	}
+});
 //AdministrativeWard.prototype = Object.create(Polygon.prototype);
 //ElectoralWard.prototype = Object.create(Polygon.prototype);
 //Slum.prototype = Object.create(Polygon.prototype);
+
+// --------------------------------------------------
+// SEND OTP
+// --------------------------------------------------
+$(document).on('click', '#rimSendOTP', function () {
+
+	const email = $("#rimEmail").val().trim();
+	const mobile = $("#rimMobile").val().trim();
+	const name = $("#rimName").val().trim();
+
+	if(!name){
+		alert("Please enter your name");
+		return;
+	}
+
+	if(!email){
+		alert("Please enter email");
+		return;
+	}
+
+	if(!mobile || mobile.length !== 10){
+		alert("Enter valid 10 digit mobile number");
+		return;
+	}
+
+	fetch("/helpers/api/send-otp/",{
+		method:"POST",
+		headers:{
+			"Content-Type":"application/json",
+			"X-CSRFToken": csrftoken
+		},
+		body:JSON.stringify({
+			email:email,
+			mobile:mobile,
+			task:"FACTSHEET_DOWNLOAD"
+		})
+	})
+	.then(res=>res.json())
+	.then(data=>{
+    if(data.status === "otp_sent"){
+    	alert("OTP sent to your email");
+    	$("#rimOTPSection").show();
+    }
+    else if(data.status === "wait"){
+    	alert(data.message);
+    }
+    else{
+    	alert("Failed to send OTP");
+    }
+
+	});
+
+});
+
+// --------------------------------------------------
+// VERIFY OTP AND DOWNLOAD PDF
+// --------------------------------------------------
+$(document).on('click', '#rimVerifyOTP', function () {
+
+	const otp = $("#rimOTP").val().trim();
+	const email = $("#rimEmail").val().trim();
+	const mobile = $("#rimMobile").val().trim();
+	const name = $("#rimName").val().trim();
+
+	const slumId = $("#rimDownloadForm").attr("data-slum-id");
+
+	if(!otp){
+		alert("Please enter OTP");
+		return;
+	}
+
+	fetch("/helpers/api/verify-otp/",{
+		method:"POST",
+		headers:{
+			"Content-Type":"application/json",
+			"X-CSRFToken": csrftoken
+		},
+		body:JSON.stringify({
+			name:name,
+			email:email,
+			mobile:mobile,
+			otp:otp,
+			task:"FACTSHEET_DOWNLOAD"
+		})
+	})
+	.then(res=>res.json())
+	.then(data=>{
+
+		if(data.status === "verified"){
+
+			window.location.href =
+			`/reports/api/rim_factsheet_pdf_fetch/${slumId}/`;
+
+		}
+        else if(data.status==="blocked"){
+        	alert("Too many attempts. Please request a new OTP.")
+        }
+		else{
+			alert("Invalid OTP");
+		}
+
+	});
+
+});

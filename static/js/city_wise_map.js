@@ -81,7 +81,6 @@ var Parser = (function() {
             $.extend(details, legends);
             dataval['legend'] = details || [];
             let ward = new (eval(WARDLEVEL[this.index]))(dataval);
-            delete dataval;
             ward.setListeners();
             return ward;
        }

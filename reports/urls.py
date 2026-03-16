@@ -13,11 +13,13 @@ urlpatterns = [
         rim_factsheet_html_report,
         name='rim_factsheet_html'
     ),
-    url(r'^rim/$', report_view, name='rim_report_home'),
+    url(r'^$', report_view, name='report_home'),
     url(r'^preview-rim-factsheet/(?P<slum_id>[0-9]+)/$', rim_factsheet_preview, name='rim_factsheet_preview'),
 
     ## Donar report
-    url(r'^donor/$', donor_report_home, name='donar_report_home'),
     url(r'^monthly-report/(?P<report_id>[0-9]+)/$', monthly_report_details, name='monthly_report_details'),
-    url(r'^generate-donor-report/(?P<report_id>[0-9]+)/$', monthly_report_pdf_generation, name='generate_donor_report'),
+    url(r'^generate-donor-report/(?P<report_id>[0-9]+)/$', monthly_donor_report_pdf_generation, name='generate_donor_report'),
+    url(r'^fetch-donor-report/(?P<report_id>[0-9]+)/$', monthly_donor_report_pdf_fetch, name='fetch_donor_report'),
+    url(r'^api/donor-projects/$', donor_projects, name='donor_projects_api'),
+    url(r'^api/project-months/(?P<project_id>[0-9]+)/$', project_months, name='monthly_report_api'),
 ]

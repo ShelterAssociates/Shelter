@@ -7,6 +7,7 @@ from master.models import Slum
 from graphs.models import SlumData
 from graphs.sync_avni_data import avni_sync
 import time
+from master.models import Slum, Rapid_Slum_Appraisal
 
 _avni_token = None
 _token_expiry = 0  # epoch timestamp
@@ -489,3 +490,50 @@ def resolve_rim_images(rim_record):
 			rim_record[key] = url
 
 	return rim_record
+
+
+def rim_factsheet_view(slum_id, raw=False):
+
+	slum_id = int(slum_id)
+	response = {
+		"status": False,
+		"image": False,
+		"_exists": False
+	}
+
+	slum = Slum.objects.filter(id=slum_id).first()
+	if not slum:
+		return response
+
+	response["_exists"] = True
+	response.update(get_rim_factsheet_detail(slum_id))
+	if response.get("data") == "NA":
+		return response
+	
+	response["status"] = len(response) > 2
+
+	response.update({
+		"city_name": slum.electoral_ward.administrative_ward.city.name.city_name,
+		"admin_ward": slum.electoral_ward.administrative_ward.name,
+		"electoral_ward": slum.electoral_ward.name,
+		"slum_name": slum.name,
+	})
+
+	rim_image = Rapid_Slum_Appraisal.objects.filter(
+		slum_name=slum
+	).values().first()
+	if not rim_image:
+		response["_exists"] = False
+		return response
+
+	if rim_image:
+		if response.get("number_of_community_toilet_blo") == 0:
+			rim_image.pop("toilet_seat_to_persons_ratio", None)
+			rim_image.pop("toilet_cost", None)
+
+		response.update(resolve_rim_images(rim_image))
+		response["image"] = True
+
+
+
+	return map_rim_data(response)

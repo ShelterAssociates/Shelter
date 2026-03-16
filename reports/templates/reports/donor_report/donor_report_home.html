@@ -1,20 +1,148 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Donor Report</title>
-</head>
-<body>
 {% extends "admin/base_site.html" %}
 
-{% block title %} Donor Report {% endblock %}
+{% block title %}Donor Report{% endblock %}
 
 {% block content %}
-<div class="container">
-    <h1>Donor Report</h1>
-    <p>This is the donor report page.</p>
-    <p>Here you can view donor monthly reports.</p>
+
+<div class="container" style="max-width:800px">
+
+    <h1>Donor Monthly Report</h1>
+
+    <br>
+
+    <label><b>Select Project</b></label>
+    <select id="projectSelect" style="width:100%; padding:8px;">
+        <option value="">Select Project</option>
+    </select>
+
+    <br><br>
+
+    <label><b>Select Month</b></label>
+    <select id="monthSelect" style="width:100%; padding:8px;">
+        <option value="">Select Month</option>
+    </select>
+
+    <br><br>
+
+    <div id="reportActions"></div>
+
+    <br><br>
+
+    <div style="background:#fff3cd; padding:15px; border-radius:6px;">
+        <b>Note:</b>  
+        If the month you want to download is not visible here, please go to  
+        <a href="/accounts/reports/" target="_blank">Admin → Sponsor Files</a>,  
+        fill the monthly report for that month and mark the status as  
+        <b>Completed</b>.  
+        Only completed reports will appear here.
+    </div>
+
 </div>
+
+
+<script>
+
+document.addEventListener("DOMContentLoaded", function(){
+
+    const projectSelect = document.getElementById("projectSelect")
+    const monthSelect = document.getElementById("monthSelect")
+    const reportActions = document.getElementById("reportActions")
+
+    loadProjects()
+
+})
+
+
+function loadProjects(){
+
+    fetch("/api/donor-projects/")
+    .then(res => res.json())
+    .then(data => {
+
+        const projectSelect = document.getElementById("projectSelect")
+
+        data.projects.forEach(p => {
+
+            const opt = document.createElement("option")
+            opt.value = p.id
+            opt.text = p.name
+
+            projectSelect.appendChild(opt)
+
+        })
+
+    })
+
+}
+
+
+document.getElementById("projectSelect").addEventListener("change", function(){
+
+    const project_id = this.value
+
+    const monthSelect = document.getElementById("monthSelect")
+    monthSelect.innerHTML = '<option value="">Select Month</option>'
+
+    fetch(`/api/project-months/${project_id}/`)
+    .then(res => res.json())
+    .then(data => {
+
+        data.months.forEach(m => {
+
+            const opt = document.createElement("option")
+
+            opt.value = m.id
+            opt.text = m.month
+
+            monthSelect.appendChild(opt)
+
+        })
+
+    })
+
+})
+
+
+document.getElementById("monthSelect").addEventListener("change", function(){
+
+    const report_id = this.value
+
+    const reportActions = document.getElementById("reportActions")
+
+    reportActions.innerHTML = `
+        <button onclick="generateReport(${report_id})" 
+        style="padding:10px 20px; font-size:16px">
+        Generate Report
+        </button>
+    `
+
+})
+
+
+function generateReport(report_id){
+
+    const reportActions = document.getElementById("reportActions")
+
+    reportActions.innerHTML = "Generating report..."
+
+    fetch(`http://127.0.0.1:9000/fetch-pdf?report_type=donor_report&report_id=${report_id}`)
+    .then(res => res.blob())
+    .then(blob => {
+
+        const url = window.URL.createObjectURL(blob)
+
+        reportActions.innerHTML = `
+            <a href="${url}" download="donor_report.pdf">
+                <button style="padding:10px 20px; font-size:16px">
+                Download Report
+                </button>
+            </a>
+        `
+
+    })
+
+}
+
+</script>
+
 {% endblock %}
-</body>
-</html>

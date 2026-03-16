@@ -1536,6 +1536,7 @@ class avni_sync():
             data = json.load(f)
             error = []
             count = 1
+            print(len(data))
             for item in data:
                 try:
                     slum = Slum.objects.filter(name = item['slum'])

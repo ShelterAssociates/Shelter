@@ -1,0 +1,355 @@
+{% load static %}
+<script src="{% static 'admin/js/vendor/jquery/jquery.js' %}"></script>
+
+<script>
+
+/* ================= TAB SWITCH ================= */
+
+function switchReport(id, el){
+	document.querySelectorAll('.reports-tab').forEach(t => t.classList.remove('active'));
+	document.querySelectorAll('.report-section').forEach(s => s.style.display = 'none');
+
+	el.classList.add('active');
+	document.getElementById(id).style.display = 'block';
+}
+
+
+/* ================= MAIN SCRIPT ================= */
+
+$(document).ready(function(){
+
+	
+/* ==================================================
+   RIM REPORT
+================================================== */
+
+let selectedSlumId = null
+let isGenerating = false
+let confirmRegenerate = false
+
+
+function resetSelect(id,text){
+	$(id).html(`<option value="">${text}</option>`).prop('disabled',true)
+}
+
+function disableDownload(){
+	$('#downloadBtn').prop('disabled',true).css('opacity','0.5')
+}
+
+function enableDownload(){
+	$('#downloadBtn').prop('disabled',false).css('opacity','1')
+}
+
+disableDownload()
+
+
+/* ---------- CITY LIST ---------- */
+
+$.get("{% url 'master:cityList' %}", function(data){
+
+	$.each(data.nameArray,function(i,name){
+		$('#city').append(`<option value="${data.idArray[i]}">${name}</option>`)
+	})
+
+})
+
+
+/* ---------- CITY CHANGE ---------- */
+
+$('#city').change(function(){
+
+	resetSelect('#admin_ward','--- Select Administrative Ward ---')
+	resetSelect('#electoral_ward','--- Select Electoral Ward ---')
+	resetSelect('#slum','--- Select Slum ---')
+
+	$('#generate').prop('disabled',true)
+	disableDownload()
+
+	let id=$(this).val()
+	if(!id) return
+
+	$.post("{% url 'master:administrativewardList' %}",{
+		id:id,
+		csrfmiddlewaretoken:'{{ csrf_token }}'
+	},function(data){
+
+		$('#admin_ward').prop('disabled',false)
+
+		$.each(data.nameArray,function(i,name){
+			$('#admin_ward').append(`<option value="${data.idArray[i]}">${name}</option>`)
+		})
+
+	})
+
+})
+
+
+/* ---------- ADMIN WARD ---------- */
+
+$('#admin_ward').change(function(){
+
+	resetSelect('#electoral_ward','--- Select Electoral Ward ---')
+	resetSelect('#slum','--- Select Slum ---')
+
+	$('#generate').prop('disabled',true)
+	disableDownload()
+
+	let id=$(this).val()
+	if(!id) return
+
+	$.post("{% url 'master:electoralWardList' %}",{
+		id:id,
+		csrfmiddlewaretoken:'{{ csrf_token }}'
+	},function(data){
+
+		$('#electoral_ward').prop('disabled',false)
+
+		$.each(data.nameArray,function(i,name){
+			$('#electoral_ward').append(`<option value="${data.idArray[i]}">${name}</option>`)
+		})
+
+	})
+
+})
+
+
+/* ---------- ELECTORAL WARD ---------- */
+
+$('#electoral_ward').change(function(){
+
+	resetSelect('#slum','--- Select Slum ---')
+
+	$('#generate').prop('disabled',true)
+	disableDownload()
+
+	let id=$(this).val()
+	if(!id) return
+
+	$.post("{% url 'master:slumList' %}",{
+		id:id,
+		csrfmiddlewaretoken:'{{ csrf_token }}'
+	},function(data){
+
+		$('#slum').prop('disabled',false)
+
+		$.each(data.nameArray,function(i,name){
+			$('#slum').append(`<option value="${data.idArray[i]}">${name}</option>`)
+		})
+
+	})
+
+})
+
+
+/* ---------- SLUM SELECT ---------- */
+
+$('#slum').change(function(){
+
+	selectedSlumId=$(this).val()
+
+	$('#generate').prop('disabled',!selectedSlumId)
+
+	disableDownload()
+
+})
+
+
+/* ---------- GENERATE RIM ---------- */
+
+$('#generate').click(function(){
+
+	if(!selectedSlumId || isGenerating) return
+
+	isGenerating=true
+
+	$('#generate')
+	.prop('disabled',true)
+	.text('Generating...')
+
+	disableDownload()
+
+
+	/* PREVIEW */
+
+	const preview=$('#rim_preview')
+
+	preview.html(`
+		<div class="preview-placeholder">
+			Generating preview...
+		</div>
+	`)
+
+	fetch(`/reports/preview-rim-factsheet/${selectedSlumId}/`)
+	.then(res=>res.text())
+	.then(html=>{
+		preview.html(html)
+	})
+	.catch(()=>{
+		preview.html(`
+			<div class="preview-placeholder">
+				Failed to load preview
+			</div>
+		`)
+	})
+
+
+	/* GENERATE PDF */
+
+	fetch(`/reports/api/rim_factsheet_generation/${selectedSlumId}/?force_generate=true`)
+	.then(res=>{
+
+		if(res.status===405)
+			throw new Error('Please fill out the RIM form or sync the RIM data.')
+
+		if(res.status===406)
+			throw new Error('RIM data not found for this slum.')
+
+		if(res.status!==202)
+			throw new Error('PDF generation failed.')
+
+		enableDownload()
+
+	})
+	.catch(err=>{
+		showButtonError(err.message)
+	})
+	.finally(()=>{
+		$('#generate')
+		.prop('disabled',false)
+		.text('Generate RIM Report')
+
+		isGenerating=false
+	})
+
+})
+
+
+/* ---------- DOWNLOAD button---------- */
+
+$('#downloadBtn').click(function(){
+
+	if(selectedSlumId){
+		window.location.href =
+		`/reports/api/rim_factsheet_pdf_fetch/${selectedSlumId}/`
+		return
+	}
+
+
+
+})
+
+
+/* ==================================================
+   DONOR REPORT
+================================================== */
+
+let selectedProject=null
+let selectedMonthlyReport=null
+
+
+/* LOAD PROJECTS */
+
+fetch("/reports/api/donor-projects/")
+.then(res=>res.json())
+.then(data=>{
+
+	data.projects.forEach(p=>{
+		$('#donor_project').append(
+			`<option value="${p.id}">${p.name}</option>`
+		)
+	})
+
+})
+
+
+/* PROJECT SELECT */
+
+$('#donor_project').change(function(){
+
+	selectedProject=$(this).val()
+
+	$('#donor_month')
+	.html('<option value="">--- Select Month ---</option>')
+
+	if(!selectedProject){
+		$('#donor_month').prop('disabled',true)
+		return
+	}
+
+	$('#donor_month').prop('disabled',false)
+
+	fetch(`/reports/api/project-months/${selectedProject}/`)
+	.then(res=>res.json())
+	.then(data=>{
+
+		data.months.forEach(m=>{
+			$('#donor_month').append(
+				`<option value="${m.id}">${m.month}</option>`
+			)
+		})
+
+	})
+
+})
+
+
+/* MONTH SELECT */
+
+$('#donor_month').change(function(){
+
+	selectedMonthlyReport=$(this).val()
+
+	$('#generate_donor_report')
+	.prop('disabled',!selectedMonthlyReport)
+
+})
+
+
+/* GENERATE DONOR REPORT */
+
+$('#generate_donor_report').click(function(){
+
+	if(!selectedMonthlyReport) return
+
+	$(this)
+	.prop('disabled', true)
+	.text('Generating...')
+
+	fetch(`/reports/generate-donor-report/${selectedMonthlyReport}/`)
+	.then(res => {
+
+		if(!res.ok){
+			throw new Error("Report generation failed")
+		}
+
+		$('#download_donor_report')
+		.prop('disabled', false)
+		.css('opacity', '1')
+
+	})
+	.catch(err=>{
+		alert("Failed to generate report")
+	})
+	.finally(()=>{
+		$('#generate_donor_report')
+		.prop('disabled', false)
+		.text('Generate Report')
+	})
+
+})
+
+
+/* DOWNLOAD DONOR */
+
+$('#download_donor_report').click(function(){
+
+	if(!selectedMonthlyReport) return
+
+	window.location.href =
+	`/reports/fetch-donor-report/${selectedMonthlyReport}/`
+
+})
+
+})
+
+</script>
