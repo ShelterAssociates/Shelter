@@ -66,6 +66,7 @@ def get_component_api(request, slum_id):
     """
     req_hash = get_request_hash(request, slum_id)
     flag = request.headers.get("Force-Refresh-Flag", "0")
+    print(f"Request hash: {req_hash}, Force refresh: {flag}")
 
     try:
         cache = APICache.objects.get(request_hash=req_hash)

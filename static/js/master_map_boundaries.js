@@ -372,6 +372,8 @@ var City = (function(){
     }
     //Added click listener to display top level details from where it started.
     City.prototype.click = function(){
+        // Hide right panel border and clear search when going back to city
+        $("#right-panel").removeClass("active");
         $(".overlay").show();
         $.each(arr_poly_disp, function(k,v){
              map.removeLayer(v.shape);

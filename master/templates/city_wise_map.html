@@ -29,6 +29,7 @@ async defer></script>
 
 {% block styleblock%}
 <style>
+/* ===== MAP ===== */
 #map {
     height: 80vh;
     width: 100%;
@@ -36,46 +37,63 @@ async defer></script>
     padding: 0px;
     float: none;
 }
-	#loading-img {
-		background: url(/static/images/spinner.gif) center center no-repeat;
-		height: 100%;
-		width: 55%;
-		z-index: 20;
-	}
-	.overlay {
-		background: #e9e9e9;
-		display: none;
-		position: absolute;
-		top: 0;
-		right: 0;
-		bottom: 0;
-		left: 0;
-		opacity: 0.5;
-		z-index: 1;
-	}
-	input.chk[type='checkbox']{
-		-webkit-appearance: none;-moz-appearance: none;
-		border: 1px solid black; height: 1.2em; width: 1.2em;
-	}
-	input[type='checkbox']:checked:before {
-		content: "\2713";
-		position: relative;
-	}
-	.table > tbody > tr > td {
 
-		padding: 6px !important;
-	}
-.container .jumbotron, .container-fluid .jumbotron{
-	padding-left: 0px;
-	padding-right:0px;
+/* ===== LOADING ===== */
+#loading-img {
+    background: url(/static/images/spinner.gif) center center no-repeat;
+    height: 100%;
+    width: 55%;
+    z-index: 20;
 }
-.myDivIcon{
-  display: block;
-  border-radius: 3rem 3rem 0;
-  transform: rotate(45deg);
-  border: 1px solid #FFFFFF
-  }
-  .preview-container {
+
+/* ===== OVERLAY ===== */
+.overlay {
+    background: #e9e9e9;
+    display: none;
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    opacity: 0.5;
+    z-index: 1;
+}
+
+/* ===== CHECKBOX ===== */
+input.chk[type='checkbox'] {
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    border: 1px solid black;
+    height: 1.2em;
+    width: 1.2em;
+}
+input[type='checkbox']:checked:before {
+    content: "\2713";
+    position: relative;
+}
+
+/* ===== TABLE ===== */
+.table > tbody > tr > td {
+    padding: 6px !important;
+}
+
+/* ===== JUMBOTRON ===== */
+.container .jumbotron,
+.container-fluid .jumbotron {
+    padding-left: 0px;
+    padding-right: 0px;
+}
+
+/* ===== MAP MARKER ICON ===== */
+.myDivIcon {
+    display: block;
+    border-radius: 3rem 3rem 0;
+    transform: rotate(45deg);
+    border: 1px solid #FFFFFF;
+}
+
+/* ===== RIM PREVIEW MODAL ===== */
+.preview-container {
     width: 569px;
     height: 607px;
     border-radius: 12px;
@@ -85,7 +103,7 @@ async defer></script>
     overflow-y: auto;
     background: white;
 }
-/* ===== FULL SCREEN OVERLAY ===== */
+
 .rim-preview-modal {
     display: none;
     position: fixed;
@@ -97,7 +115,6 @@ async defer></script>
     z-index: 99999;
 }
 
-/* ===== CENTERED POPUP BOX ===== */
 .rim-preview-content {
     position: fixed;
     top: 50%;
@@ -110,7 +127,6 @@ async defer></script>
     overflow: hidden;
 }
 
-/* ===== HEADER BAR ===== */
 .rim-preview-header {
     height: 45px;
     background: #2c3e50;
@@ -122,124 +138,95 @@ async defer></script>
     font-weight: bold;
 }
 
-/* ===== CLOSE BUTTON ===== */
 .rim-close {
     cursor: pointer;
     font-size: 22px;
 }
+
+/* ===== SPINNER ===== */
 @keyframes spin {
-  to { transform: rotate(360deg); }
+    to { transform: rotate(360deg); }
 }
-
 .custom-spinner {
-  width: 50px;
-  height: 50px;
-  border: 5px solid #ddd;
-  border-top-color: #2c3e50;
-  border-radius: 50%;
-  animation: spin 1s linear infinite;
+    width: 50px;
+    height: 50px;
+    border: 5px solid #ddd;
+    border-top-color: #2c3e50;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
 }
 
-/* ======== OTP form====== */
-/* Download wrapper */
-.rim-download-wrapper{
-	position:relative;
-	display:inline-block;
+/* ===== OTP / DOWNLOAD FORM ===== */
+.rim-download-wrapper {
+    position: relative;
+    display: inline-block;
+}
+.rim-download-btn {
+    font-weight: 600;
+}
+.rim-download-form {
+    display: none;
+    position: absolute;
+    top: 42px;
+    right: 0;
+    width: 260px;
+    background: #ffffff;
+    border-radius: 6px;
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.25);
+    padding: 12px;
+    z-index: 9999;
+}
+.rim-form-header {
+    text-align: right;
+    margin-bottom: 6px;
+}
+.rim-form-close {
+    cursor: pointer;
+    font-size: 18px;
+    font-weight: bold;
+    color: #555;
+}
+.rim-form-close:hover {
+    color: #e74c3c;
+}
+.rim-input {
+    width: 100%;
+    padding: 6px 8px;
+    margin-bottom: 6px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    font-size: 13px;
+    outline: none;
+    color: #000 !important;
+    background: #fff !important;
+}
+.rim-input:focus {
+    border-color: #2b7fc2;
+    box-shadow: 0 0 3px rgba(43, 127, 194, 0.4);
+}
+.rim-send-otp {
+    width: 100%;
+    margin-bottom: 6px;
+}
+.rim-otp-section {
+    display: none;
+}
+.rim-verify-btn {
+    width: 100%;
+}
+#rimMobile {
+    letter-spacing: 1px;
+}
+.rim-download-form.show {
+    display: block;
+    animation: rimDrop 0.2s ease-out;
+}
+@keyframes rimDrop {
+    from { transform: translateY(-8px); opacity: 0; }
+    to   { transform: translateY(0);    opacity: 1; }
 }
 
-/* Download button */
-.rim-download-btn{
-	font-weight:600;
-}
-
-/* Dropdown form box */
-.rim-download-form{
-	display:none;
-	position:absolute;
-	top:42px;
-	right:0;
-	width:260px;
-	background:#ffffff;
-	border-radius:6px;
-	box-shadow:0 6px 20px rgba(0,0,0,0.25);
-	padding:12px;
-	z-index:9999;
-}
-
-/* Form header (close button row) */
-.rim-form-header{
-	text-align:right;
-	margin-bottom:6px;
-}
-
-/* Close button */
-.rim-form-close{
-	cursor:pointer;
-	font-size:18px;
-	font-weight:bold;
-	color:#555;
-}
-
-.rim-form-close:hover{
-	color:#e74c3c;
-}
-
-.rim-input{
-    width:100%;
-    padding:6px 8px;
-    margin-bottom:6px;
-    border:1px solid #ccc;
-    border-radius:4px;
-    font-size:13px;
-    outline:none;
-
-    color:#000 !important;
-    background:#fff !important;
-}
-
-.rim-input:focus{
-	border-color:#2b7fc2;
-	box-shadow:0 0 3px rgba(43,127,194,0.4);
-}
-
-/* Send OTP button */
-.rim-send-otp{
-	width:100%;
-	margin-bottom:6px;
-}
-
-/* OTP section hidden initially */
-.rim-otp-section{
-	display:none;
-}
-
-/* Verify button */
-.rim-verify-btn{
-	width:100%;
-}
-
-/* Mobile input numeric appearance */
-#rimMobile{
-	letter-spacing:1px;
-}
-
-/* Smooth dropdown animation */
-.rim-download-form.show{
-	display:block;
-	animation:rimDrop 0.2s ease-out;
-}
-
-@keyframes rimDrop{
-	from{
-		transform:translateY(-8px);
-		opacity:0;
-	}
-	to{
-		transform:translateY(0);
-		opacity:1;
-	}
-}
-/* Refresh confirmation popup */
+/* ===== REFRESH CONFIRM DROPDOWN ===== */
 .refresh-confirm-box {
     display: none;
     position: absolute;
@@ -250,7 +237,7 @@ async defer></script>
     border-radius: 6px;
     padding: 14px;
     width: 100%;
-    box-shadow: 0 6px 20px rgba(0,0,0,0.25);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.25);
     z-index: 9999;
     margin-top: 4px;
     box-sizing: border-box;
@@ -274,6 +261,153 @@ async defer></script>
     display: flex;
     gap: 8px;
     justify-content: flex-end;
+}
+
+/* ===== RIGHT PANEL ===== */
+#right-panel {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-width: 0;
+    height: 80vh;
+    border: 1.5px solid transparent;  /* hidden by default */
+    border-radius: 6px;
+    overflow: hidden;
+    background: #fff;
+    transition: border-color 0.3s ease;
+}
+
+#right-panel.active {
+    border-color: #bdc3c7;  /* visible when slum selected */
+}
+
+/* ===== REFRESH BUTTON ===== */
+#compochk_refresh button {
+    border-radius: 0 !important;
+    border-bottom: 1.5px solid #2471a3 !important;
+}
+
+/* ===== SEARCH BOX WRAPPER ===== */
+#household-search-wrapper {
+    border-bottom: 1.5px solid #bdc3c7;
+    padding: 6px 8px;
+    background: #fff;
+    flex-shrink: 0;
+}
+
+/* ===== HOUSEHOLD SEARCH INPUT ===== */
+#household-search-input {
+    width: 100%;
+    padding: 6px 10px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    font-size: 13px;
+    box-sizing: border-box;
+    color: #000;
+    background: #fff;
+    outline: none;
+}
+#household-search-input:focus {
+    border-color: #2b7fc2;
+    box-shadow: 0 0 3px rgba(43, 127, 194, 0.4);
+}
+
+/* ===== HOUSEHOLD SEARCH DROPDOWN ===== */
+#household-search-dropdown {
+    display: none;
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background: white;
+    border: 1px solid #ccc;
+    border-top: none;
+    border-radius: 0 0 4px 4px;
+    max-height: 200px;
+    overflow-y: auto;
+    z-index: 9999;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* ===== COMPOCHK SCROLLABLE AREA ===== */
+#compochk {
+    overflow-y: auto;
+    flex: 1;
+    min-height: 0;
+    border-bottom: 1.5px solid #bdc3c7;
+}
+
+/* Each top-level group panel */
+#compochk > [name='div_group'] {
+    border-bottom: 1px solid #d5d8dc;
+    padding: 6px 8px;
+    background: #fff;
+    transition: background 0.15s;
+}
+#compochk > [name='div_group']:last-child {
+    border-bottom: none;
+}
+#compochk > [name='div_group']:hover {
+    background: #eaf2fb;
+}
+
+/* Inner child items */
+#compochk [name='div_group'] > [name='div_group'] {
+    border-top: 1px solid #eaecee;
+    padding: 4px 8px 4px 20px;
+    background: #fdfefe;
+}
+#compochk [name='div_group'] > [name='div_group']:hover {
+    background: #f2f3f4;
+}
+
+/* Group label links */
+#compochk a[name='chk_group'] {
+    color: #1a5276;
+    font-size: 13px;
+    text-decoration: none;
+}
+#compochk a[name='chk_group']:hover {
+    color: #2980b9;
+    text-decoration: underline;
+}
+
+/* Custom scrollbar */
+#compochk::-webkit-scrollbar {
+    width: 5px;
+}
+#compochk::-webkit-scrollbar-track {
+    background: #f1f1f1;
+}
+#compochk::-webkit-scrollbar-thumb {
+    background: #bdc3c7;
+    border-radius: 4px;
+}
+#compochk::-webkit-scrollbar-thumb:hover {
+    background: #2980b9;
+}
+
+/* ===== SPONSOR PINNED SECTION ===== */
+#sponsor-pinned {
+    display: none;
+    border-top: 1px solid #b8daf0;
+    background: #ffffff;
+    padding: 8px 10px;
+    border-radius: 0 0 6px 6px;
+    font-size: 13px;
+    flex-shrink: 0;
+}
+#sponsor-pinned [name='div_group'] {
+    border-bottom: 1px solid #d5d8dc;
+    padding: 4px 8px;
+}
+#sponsor-pinned [name='div_group']:last-child {
+    border-bottom: none;
+}
+#sponsor-pinned a[name='chk_group'] {
+    color: #1a5276;
+    font-weight: bold;
+    font-size: 13px;
 }
 </style>
 
@@ -313,52 +447,53 @@ async defer></script>
     <div style="flex:0 0 75%; min-width:0;">
         <div id="map"></div>
     </div>
+<!-- Right: Refresh + Search + Components -->
+<div id="right-panel">
 
-    <!-- Right: Search + Components -->
-    <div style="flex:1; display:flex; flex-direction:column; gap:8px; min-width:0;">
-		<div id="compochk_refresh"></div>
+    <!-- Refresh Button -->
+    <div id="compochk_refresh" style="flex-shrink:0;"></div>
 
-        <!-- Search Box -->
-        <div id="household-search-wrapper" style="display:none;">
-            <div style="position:relative;">
-                <input
-                    type="text"
-                    id="household-search-input"
-                    placeholder="Search household number..."
-                    autocomplete="off"
-                    style="width:100%;
-                           padding:6px 10px;
-                           border:1px solid #ccc;
-                           border-radius:4px;
-                           font-size:13px;
-                           box-sizing:border-box;
-                           color:#000;
-                           background:#fff;
-                           outline:none;"
-                />
-                <div
-                    id="household-search-dropdown"
-                    style="display:none;
-                           position:absolute;
-                           top:100%;
-                           left:0;
-                           right:0;
-                           background:white;
-                           border:1px solid #ccc;
-                           border-top:none;
-                           border-radius:0 0 4px 4px;
-                           max-height:200px;
-                           overflow-y:auto;
-                           z-index:9999;
-                           box-shadow:0 4px 8px rgba(0,0,0,0.1);">
-                </div>
+    <!-- Search Box -->
+    <div id="household-search-wrapper" style="display:none; flex-shrink:0; margin-bottom:8px;">
+        <div style="position:relative;">
+            <input
+                type="text"
+                id="household-search-input"
+                placeholder="Search household number..."
+                autocomplete="off"
+                style="width:100%;
+                       padding:6px 10px;
+                       border:1px solid #ccc;
+                       border-radius:4px;
+                       font-size:13px;
+                       box-sizing:border-box;
+                       color:#000;
+                       background:#fff;
+                       outline:none;"
+            />
+            <div id="household-search-dropdown"
+                 style="display:none;
+                        position:absolute;
+                        top:100%; left:0; right:0;
+                        background:white;
+                        border:1px solid #ccc;
+                        border-top:none;
+                        border-radius:0 0 4px 4px;
+                        max-height:200px;
+                        overflow-y:auto;
+                        z-index:9999;
+                        box-shadow:0 4px 8px rgba(0,0,0,0.1);">
             </div>
         </div>
-
-        <!-- Component Checkboxes -->
-        <div id="compochk" style="overflow-y:auto; height:75vh;"></div>
-
     </div>
+
+    <!-- Scrollable Component Checkboxes -->
+    <div id="compochk"></div>
+
+    <!-- Sponsor pinned at bottom -->
+    <div id="sponsor-pinned"></div>
+
+</div>
 
 </div>
 

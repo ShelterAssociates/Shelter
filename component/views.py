@@ -1,14 +1,19 @@
-from django.shortcuts import render
+from urllib import request
+
+from django.shortcuts import render, get_object_or_404
 from django.http import HttpResponse, JsonResponse
 from django.contrib import messages
-from django.shortcuts import get_object_or_404
 from django.contrib.auth.decorators import user_passes_test, permission_required
 from django.contrib.admin.views.decorators import staff_member_required
 from django.conf import settings
 from django.contrib.auth.models import User
 from itertools import groupby
-import json
 from collections import OrderedDict
+import json
+from concurrent.futures import ThreadPoolExecutor
+from calendar import monthrange
+from datetime import date
+
 from .kobotoolbox import *
 from .forms import KMLUpload
 from .kmlparser import KMLParser
@@ -19,8 +24,9 @@ from sponsor.models import SponsorProject, SponsorProjectDetails
 from graphs.sync_avni_data import *
 from utils.utils_permission import apply_permissions_ajax, access_right, deco_rhs_permission
 from django.core.exceptions import PermissionDenied
-from concurrent.futures import ThreadPoolExecutor
-import json
+from django.db.models import F
+from django.db.models.functions import TruncMonth
+from mastersheet.models import ToiletConstruction
 
 slum_list = ['223', '1925', '1923', '1927', '1062', '1050', '1061', '1061', '1914', '763', '29', '672', '525', '686', '546', '547', '572', '529', '1363', '175', '514', '760', '639', '672', '820', '1026', '1008', '1169', '1639', '1644', '1647', '1171', '1645', '1170', '1640', '1641', '1136', '1164', '1137', '1642', '1142', '1069', '1026', '1034', '1012', '1048', '1050', '1054', '1057', '1119', '1020', '1030', '1028', '1057', '1652', '1283', '1288', '1095', '1096', '1097', '1099', '1100', '1101', '1098', '1104', '1107', '1111', '1079', '1080', '1342', '1083', '1672', '1673', '1085', '1086', '1087', '1077', '1091', '1092', '1665', '1081', '1082', '1338', '1084', '1074', '1340', '1350', '1088', '1089', '1075', '1076', '1090', '1093', '1344', '1094', '1349', '1102', '1103', '1666', '1105', '1106', '1343', '1108', '1109', '1346', '1078', '1112', '1115', '1116', '1113', '1341', '1117', '1339', '1110', '1375', '1259', '1198', '1293', '1200', '1288', '1283', '1971','1929']
 
@@ -61,16 +67,22 @@ def get_component(request, slum_id):
     sponsor_slum_count = 0
     sponsors = []
     sponsor_project_detail_ids = []
-
+    
     if not request.user.is_anonymous:
-        sponsors = request.user.sponsor_set.all().values_list("id", flat=True)
-        
+        # Exclude sponsor ID 10 (Toilet Facilitation under SBM Toilets)
+        sponsors = list(
+            request.user.sponsor_set
+            .exclude(id=10)
+            .values_list("id", flat=True)
+        )
+    
+        print("Sponsor IDs:", sponsors)
+    
         sponsor_project_detail_ids = (
             SponsorProject.objects
             .filter(sponsor_id__in=sponsors)
             .values_list("id", flat=True)
         )
-
        #sponsor_slum_count = SponsorProjectDetails.objects.filter(slum = slum).count()
     #Fetch filter and sponsor metadata
     # if slum in slum_list we fetch Shop data from mastersheet else we fetch Shops data from kml data.
@@ -387,3 +399,144 @@ def delete_component(request):
             return JsonResponse({"success": False, "message": str(e)}, status=500)
     else:
         return JsonResponse({"success": False, "message": "Invalid request method"}, status=405)
+
+# ================== New API for Sponsor Toilet Household Month End Dates ==================
+def get_household_month_end_dates(request):
+    slum_id = request.GET.get('slum_id')
+
+    if not slum_id:
+        return JsonResponse({"error": "slum_id is required"}, status=400)
+
+    toilet_filter = {
+        'completion_date__isnull': False,
+        'slum_id': slum_id
+    }
+
+    # ----------------------------------------------------------------
+    # CASE 1: Superuser / staff → same logic as get_component
+    #         only toilets whose household_number exists in
+    #         SponsorProjectDetails.household_code for that slum
+    # ----------------------------------------------------------------
+    if request.user.is_superuser or request.user.is_staff:
+
+        # Fetch all household codes linked to this slum via SponsorProjectDetails
+        # (mirrors get_component sponsor logic)
+        sponsor_households_qs = SponsorProjectDetails.objects.filter(
+            slum_id=slum_id
+        ).values_list("household_code", flat=True)
+
+        all_house_codes = []
+        for codes in sponsor_households_qs:
+            if codes:
+                try:
+                    if isinstance(codes, list):
+                        all_house_codes.extend(codes)
+                    else:
+                        all_house_codes.extend(json.loads(codes))
+                except Exception:
+                    pass
+
+        # Deduplicate — same as get_component uses set()
+        all_house_codes = list(set(str(c) for c in all_house_codes))
+
+        if not all_house_codes:
+            return JsonResponse({"error": "No sponsor-linked households found for this slum"}, status=404)
+
+        toilet_filter['household_number__in'] = all_house_codes
+        toilets = ToiletConstruction.objects.filter(**toilet_filter)
+        return build_response(toilets, scope='all', slum_id=slum_id)
+
+    # ----------------------------------------------------------------
+    # CASE 2: Sponsor user → only their sponsor project household codes
+    #         for that slum (same as get_component sponsor check)
+    # ----------------------------------------------------------------
+    elif request.user.groups.filter(name='sponsor').exists():
+        sponsor_name = request.GET.get('sponsor_name')
+
+        # Get sponsor IDs linked to this user
+        sponsor_qs = request.user.sponsor_set.all()
+        if sponsor_name:
+            sponsor_qs = sponsor_qs.filter(organization_name=sponsor_name)
+
+        sponsor_ids = sponsor_qs.values_list('id', flat=True)
+
+        if not sponsor_ids:
+            return JsonResponse({"error": "No sponsor linked to this user"}, status=403)
+
+        # Get sponsor project IDs for this user — mirrors get_component logic
+        sponsor_project_ids = SponsorProject.objects.filter(
+            sponsor_id__in=sponsor_ids
+        ).values_list("id", flat=True)
+
+        # Fetch household codes only for sponsor's projects in this slum
+        sponsor_households_qs = SponsorProjectDetails.objects.filter(
+            sponsor_project_id__in=sponsor_project_ids,
+            slum_id=slum_id
+        ).values_list("household_code", flat=True)
+
+        all_house_codes = []
+        for codes in sponsor_households_qs:
+            if codes:
+                try:
+                    if isinstance(codes, list):
+                        all_house_codes.extend(codes)
+                    else:
+                        all_house_codes.extend(json.loads(codes))
+                except Exception:
+                    pass
+
+        all_house_codes = list(set(str(c) for c in all_house_codes))
+
+        if not all_house_codes:
+            return JsonResponse({"error": "No households found for this sponsor in the given slum"}, status=404)
+
+        toilet_filter['household_number__in'] = all_house_codes
+        toilets = ToiletConstruction.objects.filter(**toilet_filter)
+        return build_response(toilets, scope='sponsor', slum_id=slum_id, user=request.user)
+
+    # ----------------------------------------------------------------
+    # CASE 3: No valid role
+    # ----------------------------------------------------------------
+    else:
+        return JsonResponse({"error": "You do not have permission to access this data"}, status=403)
+
+
+def build_response(toilets, scope, slum_id, user=None):
+    grouped = {}
+    for t in toilets:
+        comp_date = t.completion_date
+        last_day = monthrange(comp_date.year, comp_date.month)[1]
+        month_end = date(comp_date.year, comp_date.month, last_day)
+        month_key = month_end.strftime("%b %Y")
+        month_end_str = month_end.strftime("%Y-%m-%d")
+
+        if month_key not in grouped:
+            grouped[month_key] = {
+                "month_end_date": month_end_str,
+                "house_numbers": [],
+                "total": 0
+            }
+        grouped[month_key]["house_numbers"].append(t.household_number)
+        grouped[month_key]["total"] += 1
+
+    sorted_months = sorted(grouped.items(), key=lambda x: x[1]["month_end_date"])
+
+    response = {
+        "slum_id": slum_id,
+        "scope": scope,
+        "grand_total": sum(v["total"] for _, v in sorted_months),
+        "monthly_data": [
+            {
+                "month": month,
+                "month_end_date": data["month_end_date"],
+                "house_numbers": sorted(data["house_numbers"]),
+                "total": data["total"]
+            }
+            for month, data in sorted_months
+        ]
+    }
+
+    if user and scope == 'sponsor':
+        response["sponsors"] = list(user.sponsor_set.all().values_list('organization_name', flat=True))
+
+    return JsonResponse(response)

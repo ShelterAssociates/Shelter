@@ -177,6 +177,7 @@ function readJSONFile(filePath, callback, param1, param2) {
 }
 
 function slum_data_fetch(slumId){
+    $("#right-panel").addClass("active");
 
     // Clear any existing household highlight when switching slum
     if (window._householdHighlight) {
@@ -466,6 +467,10 @@ function generate_filter(globalJsonData, slumID, result){
         }
 
     }, 300); // small delay to ensure DOM is ready
+        // ← ADD THIS
+    setTimeout(function(){
+        pinSponsorToBottom();
+    }, 400);
     initHouseholdSearch();
 }
 
@@ -757,4 +762,46 @@ function checkSingleGroup(singlechk){
     if($(singlechk).parent().parent().parent().find('[name=chk1]:checked').length > 0)
         flag = true;
     $(singlechk).parent().parent().parent().find('[name=grpchk]')[0].checked = flag;
+}
+
+function pinSponsorToBottom() {
+
+    var sponsorPanel = null;
+
+    // Method 1: by panel-collapse name attribute
+    var sponsorCollapse = $("#compochk div.panel-collapse[name='Sponsor']");
+    if (sponsorCollapse.length > 0) {
+        sponsorPanel = sponsorCollapse.closest("[name='div_group']");
+    }
+
+    // Method 2: fallback by grpchk label text using indexOf (Option A)
+    if (!sponsorPanel || sponsorPanel.length === 0) {
+        $("#compochk > [name='div_group']").each(function () {
+            var labelText = $(this).find("a[name='chk_group']").text().trim().toLowerCase();
+            if (labelText.indexOf("sponsor") !== -1) {
+                sponsorPanel = $(this);
+                return false;
+            }
+        });
+    }
+
+    // Method 3: fallback by chk1 checkbox value
+    if (!sponsorPanel || sponsorPanel.length === 0) {
+        $("#compochk [name='chk1']").each(function () {
+            if ($(this).val().toLowerCase().indexOf("sponsor") !== -1) {
+                sponsorPanel = $(this).closest("[name='div_group']").parent().closest("[name='div_group']");
+                return false;
+            }
+        });
+    }
+
+    if (!sponsorPanel || sponsorPanel.length === 0) {
+        $("#sponsor-pinned").hide();
+        return;
+    }
+
+    // Move to pinned area
+    var cloned = sponsorPanel.clone(true, true);
+    sponsorPanel.remove();
+    $("#sponsor-pinned").html("").append(cloned).show();
 }
