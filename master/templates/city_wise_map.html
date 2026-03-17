@@ -29,12 +29,13 @@ async defer></script>
 
 {% block styleblock%}
 <style>
-	#map {
-		height: 75%;
-		width: 75%;
-		margin: 0px;
-		padding: 0px
-	}
+#map {
+    height: 80vh;
+    width: 100%;
+    margin: 0px;
+    padding: 0px;
+    float: none;
+}
 	#loading-img {
 		background: url(/static/images/spinner.gif) center center no-repeat;
 		height: 100%;
@@ -238,6 +239,42 @@ async defer></script>
 		opacity:1;
 	}
 }
+/* Refresh confirmation popup */
+.refresh-confirm-box {
+    display: none;
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background: white;
+    border-radius: 6px;
+    padding: 14px;
+    width: 100%;
+    box-shadow: 0 6px 20px rgba(0,0,0,0.25);
+    z-index: 9999;
+    margin-top: 4px;
+    box-sizing: border-box;
+}
+.refresh-confirm-box.show {
+    display: block;
+}
+.refresh-confirm-box h5 {
+    margin: 0 0 8px 0;
+    font-size: 13px;
+    font-weight: bold;
+    color: #2c3e50;
+}
+.refresh-confirm-box p {
+    font-size: 12px;
+    color: #555;
+    margin-bottom: 12px;
+    line-height: 1.5;
+}
+.refresh-confirm-actions {
+    display: flex;
+    gap: 8px;
+    justify-content: flex-end;
+}
 </style>
 
 {% endblock %}
@@ -269,57 +306,123 @@ async defer></script>
 		<div style="float:left;width:15px;height:15px;border:1px solid red;background: red;"></div>
 		<div class="">&nbsp;Slums where household data is available</div>
 	</div>
-	<div id="compochk_refresh"></div>
-	<div>
-		<div id="map" style="float:left"></div>
-		<div id="compochk"  style="float:left;padding-left:15px;overflow-y:auto;height:75%;width:25%"></div>
-		<div style="height: 10px;width: 75%"></div>
-		<div style="width: 75%;" id="datatablecontainer">
-			<table id="datatable" class="display" style="width:100% !important;"></table>
-		</div>
-		<div id="rim"></div>
-		<div class="modal fade" id="myModal" role="dialog">
-			<div class="modal-dialog">
 
-				<!-- Modal content-->
-				<div  class="modal-content">
-					<div id="modelheader" class="modal-header">
-						<h4 class="modal-title" ><label id="modelhdtext"></label>
-						<button type="button" class="close" data-dismiss="modal"></button>
-						</h4>
-					</div>
-					<div id="modelbody" class="modal-body" style="padding-top:0px;padding-bottom:0px;height:70%;overflow:auto;">
-					</div>
-					<div class="modal-footer">
-						<button type="button" class="btn btn-default" data-dismiss="modal">
-							Close
-						</button>
-					</div>
-				</div>
-			</div>
-		</div>
+	<div style="display:flex; flex-direction:row; gap:15px; align-items:flex-start;">
 
-		<div class="modal fade" id="household_data" role="dialog">
-			<div class="modal-dialog">
+    <!-- Left: Map -->
+    <div style="flex:0 0 75%; min-width:0;">
+        <div id="map"></div>
+    </div>
 
-				<!-- Modal content-->
-				<div  class="modal-content">
-					<div id="modelheader" class="modal-header">
-						<h4 class="modal-title" ><label id="modelhdtext"></label>
-						<button type="button" class="close" data-dismiss="modal"></button>
-						</h4>
-					</div>
-					<div id="modelbody" class="modal-body" style="padding-top:0px;padding-bottom:0px;height:70%;overflow:auto;">
-					</div>
-					<div class="modal-footer">
-						<button type="button" class="btn btn-default" data-dismiss="modal">
-							Close
-						</button>
-					</div>
-				</div>
-			</div>
-		</div>
-	</div>
+    <!-- Right: Search + Components -->
+    <div style="flex:1; display:flex; flex-direction:column; gap:8px; min-width:0;">
+		<div id="compochk_refresh"></div>
+
+        <!-- Search Box -->
+        <div id="household-search-wrapper" style="display:none;">
+            <div style="position:relative;">
+                <input
+                    type="text"
+                    id="household-search-input"
+                    placeholder="Search household number..."
+                    autocomplete="off"
+                    style="width:100%;
+                           padding:6px 10px;
+                           border:1px solid #ccc;
+                           border-radius:4px;
+                           font-size:13px;
+                           box-sizing:border-box;
+                           color:#000;
+                           background:#fff;
+                           outline:none;"
+                />
+                <div
+                    id="household-search-dropdown"
+                    style="display:none;
+                           position:absolute;
+                           top:100%;
+                           left:0;
+                           right:0;
+                           background:white;
+                           border:1px solid #ccc;
+                           border-top:none;
+                           border-radius:0 0 4px 4px;
+                           max-height:200px;
+                           overflow-y:auto;
+                           z-index:9999;
+                           box-shadow:0 4px 8px rgba(0,0,0,0.1);">
+                </div>
+            </div>
+        </div>
+
+        <!-- Component Checkboxes -->
+        <div id="compochk" style="overflow-y:auto; height:75vh;"></div>
+
+    </div>
+
+</div>
+
+<!-- Datatable below map -->
+<div style="width:75%; margin-top:10px;">
+    <div id="datatablecontainer">
+        <table id="datatable" class="display" style="width:100% !important;"></table>
+    </div>
+</div>
+
+<div id="rim"></div>
+
+<!-- Modal: RIM data -->
+<div class="modal fade" id="myModal" role="dialog">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div id="modelheader" class="modal-header">
+                <h4 class="modal-title">
+                    <label id="modelhdtext"></label>
+                    <button type="button" class="close" data-dismiss="modal"></button>
+                </h4>
+            </div>
+            <div id="modelbody" class="modal-body" style="padding-top:0px;padding-bottom:0px;height:70%;overflow:auto;">
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal: Household data -->
+<div class="modal fade" id="household_data" role="dialog">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div id="modelheader" class="modal-header">
+                <h4 class="modal-title">
+                    <label id="modelhdtext"></label>
+                    <button type="button" class="close" data-dismiss="modal"></button>
+                </h4>
+            </div>
+            <div id="modelbody" class="modal-body" style="padding-top:0px;padding-bottom:0px;height:70%;overflow:auto;">
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+        <!-- Refresh Components Confirmation Popup -->
+        <div class="refresh-confirm-overlay" id="refreshConfirmOverlay">
+            <div class="refresh-confirm-box">
+                <h5>Refresh Components?</h5>
+                <p>
+                    Clicking <strong>Yes</strong> will clear the cached component
+                    data and reload a fresh copy from the server.<br><br>
+                    This may take a few seconds to complete.
+                </p>
+                <div class="refresh-confirm-actions">
+                    <button class="btn btn-default btn-sm" id="refreshConfirmNo">Cancel</button>
+                    <button class="btn btn-primary btn-sm" id="refreshConfirmYes">Yes, Refresh</button>
+                </div>
+            </div>
+        </div>
 	</div>
 </div>
 <!-- RIM Preview Popup -->

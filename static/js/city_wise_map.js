@@ -176,70 +176,150 @@ function readJSONFile(filePath, callback, param1, param2) {
         });
 }
 
-// Get filters and RIM data after selecting particular slum
 function slum_data_fetch(slumId){
-    let compochk_refresh = $("#compochk_refresh");
-    compochk_refresh.html('<button id="refreshComponents" class="btn btn-primary" style="margin-bottom:10px;">Refresh Components</button>');
-    compochk_refresh.html(`
-      <button id="refreshComponents"
-        class="btn btn-primary"
-        style="margin-bottom:10px; position:absolute; top:10px; right:10px; z-index:99999;margin-top:80px; margin-right:50px; padding:2px 6px; border-radius:6px; font-size:12px;">
-        Refresh Components
-      </button>
-    `);
-    // Handle button click for forced refresh
-    $(document).off("click", "#refreshComponents").on("click", "#refreshComponents", function() {
-        let btn = $(this);
 
-        // Disable button to avoid spam
-        btn.prop("disabled", true).text("Refreshing...");
+    // Clear any existing household highlight when switching slum
+    if (window._householdHighlight) {
+        window._householdHighlight.closePopup();
+        map.removeLayer(window._householdHighlight);
+        window._householdHighlight = null;
+    }
 
-        $.ajax({
-            url: `/component/get_component/${slumId}`,
-            type: "GET",
-            headers: {
-                "Force-Refresh-Flag": "1"
-            },
-            success: function() {
-                btn.prop("disabled", false).text("Refresh Components");
-            },
-            error: function() {
-                btn.prop("disabled", false).text("Refresh Components");
-                alert("Failed to refresh. Try again.");
-            }
-        });
+    // Render refresh button in right panel
+// Render refresh button in right panel
+let compochk_refresh = $("#compochk_refresh");
+compochk_refresh.html(`
+    <div style="position:relative;">
+        <button id="refreshComponents"
+            class="btn btn-primary btn-xs"
+            style="width:100%;
+                   margin-bottom:0px;
+                   font-size:12px;
+                   border-radius:4px;
+                   padding:4px 8px;">
+            Refresh Components
+        </button>
+        <div class="refresh-confirm-box" id="refreshConfirmBox">
+            <h5>Refresh Components?</h5>
+            <p>
+                Clicking <strong>Yes</strong> will clear cached data
+                and reload fresh from server.
+            </p>
+            <div class="refresh-confirm-actions">
+                <button class="btn btn-default btn-xs" id="refreshConfirmNo">Cancel</button>
+                <button class="btn btn-primary btn-xs" id="refreshConfirmYes">Yes, Refresh</button>
+            </div>
+        </div>
+    </div>
+`);
+
+// Show confirm box below button
+$(document).off("click", "#refreshComponents").on("click", "#refreshComponents", function(e) {
+    e.stopPropagation();
+    $("#refreshConfirmBox").toggleClass("show");
+});
+
+// Close on cancel
+$(document).off("click", "#refreshConfirmNo").on("click", "#refreshConfirmNo", function(e) {
+    e.stopPropagation();
+    $("#refreshConfirmBox").removeClass("show");
+});
+
+// Close on outside click
+$(document).off("click.refreshOutside").on("click.refreshOutside", function(e) {
+    if (!$(e.target).closest('#compochk_refresh').length) {
+        $("#refreshConfirmBox").removeClass("show");
+    }
+});
+
+// Yes — do the refresh
+$(document).off("click", "#refreshConfirmYes").on("click", "#refreshConfirmYes", function(e) {
+    e.stopPropagation();
+    $("#refreshConfirmBox").removeClass("show");
+
+    let btn = $("#refreshComponents");
+    btn.prop("disabled", true).text("Refreshing...");
+
+    // Clear search box
+    var searchInput = document.getElementById('household-search-input');
+    if (searchInput) searchInput.value = '';
+    var dropdown = document.getElementById('household-search-dropdown');
+    if (dropdown) dropdown.style.display = 'none';
+
+    // Clear household highlight
+    if (window._householdHighlight) {
+        window._householdHighlight.closePopup();
+        map.removeLayer(window._householdHighlight);
+        window._householdHighlight = null;
+    }
+
+    // Show loading in compochk
+    $("#compochk").html('<div style="height:300px;width:100%;display:flex;align-items:center;justify-content:center;"><div id="loading-img"></div></div>');
+
+    // Call API with force refresh flag
+    $.ajax({
+        url: `/component/get_component/${slumId}`,
+        type: "GET",
+        headers: {
+            "Force-Refresh-Flag": "1"
+        },
+        success: function(result) {
+            btn.prop("disabled", false).text("Refresh Components");
+
+            Promise.all([
+                Promise.resolve(result),
+                $.ajax({
+                    url: '/component/get_kobo_RIM_data/' + slumId,
+                    type: "GET",
+                    contenttype: "json"
+                })
+            ]).then(function(data) {
+                global_slum_id = slumId;
+                const visible = getQueryParam('mr');
+                if (visible == '1') {
+                    readJSONFile(`/admin/translations/?mr=${visible}`, generate_filter, slumId, data[0]);
+                } else {
+                    generate_filter(globalJsonData, slumId, data[0]);
+                }
+                generate_RIM(data[1]);
+            });
+        },
+        error: function() {
+            btn.prop("disabled", false).text("Refresh Components");
+            $("#compochk").html('<div style="padding:10px;color:red;font-size:13px;">Failed to refresh. Please try again.</div>');
+        }
     });
-
-
+});
+    // Initial load
     let compochk = $("#compochk");
-    compochk.html('<div style="height:300px;width:300px;"><div id="loading-img"></div></div>');
-	var ajax_calls = [$.ajax({
-            url : '/component/get_component/' + slumId,
-            type : "GET",
-            contenttype : "json",
+    compochk.html('<div style="height:300px;width:100%;display:flex;align-items:center;justify-content:center;"><div id="loading-img"></div></div>');
+
+    var ajax_calls = [
+        $.ajax({
+            url: '/component/get_component/' + slumId,
+            type: "GET",
+            contenttype: "json",
             headers: {
                 "Force-Refresh-Flag": "0"
             }
         }),
         $.ajax({
-            url : '/component/get_kobo_RIM_data/' + slumId,
-            type : "GET",
-            contenttype : "json"
+            url: '/component/get_kobo_RIM_data/' + slumId,
+            type: "GET",
+            contenttype: "json"
         })
-	];
+    ];
 
     Promise.all(ajax_calls).then(function(result) {
-        global_slum_id =slumId;
+        global_slum_id = slumId;
         const visible = getQueryParam('mr');
-        if (visible=='1'){
-            readJSONFile(`/admin/translations/?mr=${visible}`, generate_filter, slumId, result[0])
-        }else{
+        if (visible == '1') {
+            readJSONFile(`/admin/translations/?mr=${visible}`, generate_filter, slumId, result[0]);
+        } else {
             generate_filter(globalJsonData, slumId, result[0]);
         }
-        // generate_filter(globalJsonData, slumId, result[0]);
         generate_RIM(result[1]);
     });
-
 }
 
 //Populate RIM data modal pop-up's as per section wise.
@@ -366,6 +446,27 @@ function generate_filter(globalJsonData, slumID, result){
 		panel_component += '</div></div>';
     });
     compochk.html(panel_component);
+        setTimeout(function(){
+        var autoSelect = null;
+
+        // Try to find 'Town boundary' checkbox first
+        $('[name=chk1]').each(function(){
+            var val = $(this).val();
+            if(
+                val === 'Town boundary' ||
+                val === 'Slum boundary'
+            ){
+                autoSelect = $(this);
+                return false; // break loop
+            }
+        });
+
+        if(autoSelect && !autoSelect.is(':checked')){
+            autoSelect.click();
+        }
+
+    }, 300); // small delay to ensure DOM is ready
+    initHouseholdSearch();
 }
 
 //Event handler for check/uncheck all boxes as per the section
@@ -406,4 +507,254 @@ function checkSingleGroup(singlechk){
 	    flag=true;
 	$(singlechk).parent().parent().parent().find('[name=grpchk]')[0].checked =flag;
 //    map.setZoom(l+1);
+}
+
+// ============================================================
+// HOUSEHOLD SEARCH - focuses map on selected household
+// ============================================================
+function initHouseholdSearch() {
+    $.each(arr_poly_disp, function(k, v){
+        if (v.type === 'Slum') {
+            map.removeLayer(v.shape);
+        }
+    });
+    var searchInput  = document.getElementById('household-search-input');
+    var dropdown     = document.getElementById('household-search-dropdown');
+    var wrapper      = document.getElementById('household-search-wrapper');
+
+    if (!searchInput) return;
+
+    wrapper.style.display = 'block';
+
+    // Clone and replace to remove all previously stacked listeners
+    var newInput = searchInput.cloneNode(true);
+    searchInput.parentNode.replaceChild(newInput, searchInput);
+    searchInput = newInput;
+
+    searchInput.addEventListener('input', function () {
+
+        // Clear highlight immediately when typing starts
+        if (window._householdHighlight) {
+            window._householdHighlight.closePopup();
+            map.removeLayer(window._householdHighlight);
+            window._householdHighlight = null;
+        }
+        if (window._householdHighlightTimer) {
+            clearTimeout(window._householdHighlightTimer);
+            window._householdHighlightTimer = null;
+        }
+
+        var query = this.value.trim().toLowerCase();
+        dropdown.innerHTML = '';
+
+        if (!query || !houses || Object.keys(houses).length === 0) {
+            dropdown.style.display = 'none';
+            return;
+        }
+
+        var matches = Object.keys(houses).filter(function (houseNo) {
+            return String(houseNo).toLowerCase().indexOf(query) !== -1;
+        });
+
+        if (matches.length === 0) {
+            dropdown.style.display = 'none';
+            return;
+        }
+
+        matches.sort(function (a, b) {
+            return String(a).localeCompare(String(b), undefined, { numeric: true });
+        });
+
+        matches.forEach(function (houseNo) {
+            var item = document.createElement('div');
+            item.textContent = 'House: ' + houseNo;
+            item.style.cssText = 'padding:8px 12px; cursor:pointer; font-size:13px; border-bottom:1px solid #eee;';
+
+            item.addEventListener('mouseenter', function () {
+                this.style.background = '#f0f4ff';
+            });
+            item.addEventListener('mouseleave', function () {
+                this.style.background = 'white';
+            });
+
+            item.addEventListener('click', function () {
+                searchInput.value = houseNo;
+                dropdown.style.display = 'none';
+                focusHouseOnMap(String(houseNo));
+            });
+
+            dropdown.appendChild(item);
+        });
+
+        dropdown.style.display = 'block';
+    });
+
+    // Remove old outside click listener and attach fresh one
+    document.removeEventListener('click', window._householdOutsideClick);
+    window._householdOutsideClick = function (e) {
+        if (!searchInput.contains(e.target) && !dropdown.contains(e.target)) {
+            dropdown.style.display = 'none';
+        }
+    };
+    document.addEventListener('click', window._householdOutsideClick);
+
+    searchInput.addEventListener('keydown', function (e) {
+        if (e.key === 'Enter') {
+            var query = this.value.trim();
+            if (query) {
+                dropdown.style.display = 'none';
+                focusHouseOnMap(String(query));
+            }
+        }
+    });
+}
+
+// Focus the map on a given house number
+function focusHouseOnMap(houseNo) {
+    // Try both string and number lookup
+    var shape = houses[houseNo] || houses[parseInt(houseNo)] || houses[String(houseNo)];
+
+    if (!houses || !shape) {
+        alert('House number ' + houseNo + ' not found.');
+        return;
+    }
+
+    try {
+        // Draw a temporary highlight layer
+        var highlightStyle = {
+            color: '#FFD700',
+            weight: 4,
+            opacity: 1,
+            fillColor: '#FFFF00',
+            fillOpacity: 0.6
+        };
+
+        // Remove previous highlight if any
+        if (window._householdHighlight) {
+            window._householdHighlight.closePopup();
+            map.removeLayer(window._householdHighlight);
+            window._householdHighlight = null;
+        }
+
+        // Clear previous auto-remove timer if any
+        if (window._householdHighlightTimer) {
+            clearTimeout(window._householdHighlightTimer);
+            window._householdHighlightTimer = null;
+        }
+
+        var highlightLayer = L.geoJson(shape, {
+            style: highlightStyle,
+            onEachFeature: function(feature, layer) {
+                // Show house number on hover
+                layer.bindPopup('House: ' + houseNo, { autoPan: true });
+
+                layer.on('mouseover', function () {
+                    this.openPopup();
+                });
+                layer.on('mouseout', function () {
+                    this.closePopup();
+                });
+
+                // Show household details on click
+                layer.on('click', function () {
+                    household_details(houseNo);
+                });
+            }
+        });
+
+        highlightLayer.addTo(map);
+        window._householdHighlight = highlightLayer;
+
+        // Open popup immediately on search
+        highlightLayer.eachLayer(function(layer) {
+            layer.openPopup();
+        });
+
+        // Fit map to the house bounds
+        var bounds = highlightLayer.getBounds();
+        if (bounds.isValid()) {
+            map.fitBounds(bounds, { maxZoom: 19, padding: [40, 40] });
+        } else {
+            // Fallback for Point geometry
+            var coords = shape.coordinates;
+            if (coords) {
+                var latlng;
+                if (shape.type === 'Point') {
+                    latlng = L.latLng(coords[1], coords[0]);
+                } else if (shape.type === 'Polygon') {
+                    latlng = L.latLng(coords[0][0][1], coords[0][0][0]);
+                }
+                if (latlng) map.setView(latlng, 19);
+            }
+        }
+
+        // highlight stays until next search or Structure checkbox interaction
+
+    } catch (err) {
+        console.error('Error focusing house on map:', err);
+    }
+}
+
+// ============================================================
+// HELPER - clear household highlight (reused in multiple places)
+// ============================================================
+function clearHouseholdHighlight() {
+    if (window._householdHighlight) {
+        window._householdHighlight.closePopup();
+        map.removeLayer(window._householdHighlight);
+        window._householdHighlight = null;
+    }
+    if (window._householdHighlightTimer) {
+        clearTimeout(window._householdHighlightTimer);
+        window._householdHighlightTimer = null;
+    }
+    var searchInput = document.getElementById('household-search-input');
+    if (searchInput) searchInput.value = '';
+    var dropdown = document.getElementById('household-search-dropdown');
+    if (dropdown) dropdown.style.display = 'none';
+}
+
+// ============================================================
+// CHECKBOX HANDLERS
+// ============================================================
+function checkAllGroup(grpchk){
+    if($(grpchk).is(':checked')){
+        $(grpchk).parent().find('[name=chk1]:not(:checked)').click();
+        if($(grpchk).parent().find('div.in').length == 0)
+            $(grpchk).parent().find('a[name=chk_group]').click();
+    }
+    else{
+        $(grpchk).parent().find('[name=chk1]:checked').click();
+        if ($(grpchk).parent().find('div.in').length > 0)
+            $(grpchk).parent().find('a[name=chk_group]').click();
+    }
+}
+
+function checkSingleGroup(singlechk){
+
+    var chkchild = $(singlechk).val();
+
+    // If Structure checkbox is unchecked, clear household highlight
+    if (chkchild === 'Structure' && !$(singlechk).is(':checked')) {
+        clearHouseholdHighlight();
+    }
+
+    $.each(arr_poly_disp, function(k,v){
+        map.removeLayer(v.shape);
+    });
+
+    var section = $(singlechk).attr('selection');
+    var component_type = $(singlechk).attr('component_type');
+
+    if ($(singlechk).is(':checked')){
+        parse_component[chkchild].show();
+    }
+    else{
+        parse_component[chkchild].hide();
+    }
+
+    let flag = false;
+    if($(singlechk).parent().parent().parent().find('[name=chk1]:checked').length > 0)
+        flag = true;
+    $(singlechk).parent().parent().parent().find('[name=grpchk]')[0].checked = flag;
 }
