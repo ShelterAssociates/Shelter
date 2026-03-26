@@ -13,7 +13,7 @@ import json
 from concurrent.futures import ThreadPoolExecutor
 from calendar import monthrange
 from datetime import date
-
+from django.contrib.auth.decorators import login_required
 from .kobotoolbox import *
 from .forms import KMLUpload
 from .kmlparser import KMLParser
@@ -540,3 +540,10 @@ def build_response(toilets, scope, slum_id, user=None):
         response["sponsors"] = list(user.sponsor_set.all().values_list('organization_name', flat=True))
 
     return JsonResponse(response)
+
+@login_required
+def can_refresh_section(request):
+    result = {
+        "can_refresh": request.user.has_perm("component.can_refresh_section")
+    }
+    return JsonResponse(result)

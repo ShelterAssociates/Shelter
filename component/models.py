@@ -38,6 +38,9 @@ class Section(models.Model):
         """Section of the components"""
         verbose_name = 'Section'
         verbose_name_plural = 'Sections'
+        permissions = [
+            ("can_refresh_section", "Can refresh sections"),
+        ]
 
 class Metadata(models.Model):
     """Metadata of component and analysis"""

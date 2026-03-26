@@ -15,7 +15,7 @@ var Polygon = (function () {
         this.info = obj_data.info;
         slum_bgColor = "#A3A3FF";
         slum_borderColor = "#3232FF";
-        if(obj_data.associated){
+        if (obj_data.associated) {
             slum_bgColor = "#FFA3A3";
             slum_borderColor = "#FF0000";
         }
@@ -42,59 +42,59 @@ var Polygon = (function () {
     })
 
     //Draw polygon using other set of attributes like color, opacity..
-    Polygon.prototype.drawPolygon = function(bounds){
+    Polygon.prototype.drawPolygon = function (bounds) {
         let opacity = 0.4;
         let strokeOpacity = 0.7;
-        let poly_options ={
-          color : this.borderColor,
-          opacity : strokeOpacity,
-          weight : 2,
-          fillColor : this.bgColor,
-          fillOpacity : opacity,
-          name : this.name
+        let poly_options = {
+            color: this.borderColor,
+            opacity: strokeOpacity,
+            weight: 2,
+            fillColor: this.bgColor,
+            fillOpacity: opacity,
+            name: this.name
         }
-        var Poly = L.geoJson(bounds, {style:poly_options/*, onEachFeature:admin_onEachFeature*/});
+        var Poly = L.geoJson(bounds, { style: poly_options/*, onEachFeature:admin_onEachFeature*/ });
         var return_poly;
-        Poly.eachLayer(function(layer){
+        Poly.eachLayer(function (layer) {
             return_poly = layer;
         });
         //Poly.addTo(map);
         return return_poly;
     }
     //Set up basic listeners for polygon which is displayed on map - say map hover
-    Polygon.prototype.setListeners = function (){
+    Polygon.prototype.setListeners = function () {
         let shapename = this.name
-        if (this.type == "Slum")
-        {
+        if (this.type == "Slum") {
             shapename = this.type + ' : ' + this.name;
             //shapename = '<div id="content" >' + '<div id="bodyContent">' + '<p><b>' + this.name + '</b></p>' + '<div class="row">' + '<div class="col-md-12">' + '<p style="font-size: 13px;">' + this.info + '</p> ';
             //shapename +='</div>' + '</div>';
         }
-        this.shape.bindPopup(shapename,{autoPan:true});
+        this.shape.bindPopup(shapename, { autoPan: true });
         this.shape.on({
-        'mouseover': function (ev) {
-                        this.openPopup();
-                     },
-        'mouseout' : function(ev){
-                        this.closePopup();
-                    }
+            'mouseover': function (ev) {
+                this.openPopup();
+            },
+            'mouseout': function (ev) {
+                this.closePopup();
+            }
 
         });
     }
     //Show the polygon on map
-    Polygon.prototype.show = function(){
-            map.addLayer(this.shape);
-            if (this.type == "Slum"){
-            this.shape.bringToFront();}
-            arr_poly_disp.push(this);
+    Polygon.prototype.show = function () {
+        map.addLayer(this.shape);
+        if (this.type == "Slum") {
+            this.shape.bringToFront();
+        }
+        arr_poly_disp.push(this);
     }
     //Hide the polygon on map
-    Polygon.prototype.hide = function(){
-            map.removeLayer(this.shape);
+    Polygon.prototype.hide = function () {
+        map.removeLayer(this.shape);
     }
     //Hide all the polygon that are displayed on map
-    Polygon.prototype.hideAll = function(){
-        $.each(arr_poly_disp, function(k,v){
+    Polygon.prototype.hideAll = function () {
+        $.each(arr_poly_disp, function (k, v) {
             map.removeLayer(v.shape)
         });
         arr_poly_disp = [];
@@ -102,14 +102,13 @@ var Polygon = (function () {
     }
 
     //Set other UI details like info, ward details ...depending on the admin, elect, slum
-    Polygon.prototype.event_onClick = function(){
+    Polygon.prototype.event_onClick = function () {
         this.hideAll();
         objBreadcrumb.push(this.name);
         //Header
         myheader = $("#maphead");
         myheader.html('<h4>' + this.name + '</h4>');
-        myheader.find("h4").css("padding", "15px");
-
+        myheader.find("h4").css("padding-top", "15px");
         //Info
         let mydesc = $("#mapdesc");
         mydesc.html(this.info);
@@ -120,7 +119,7 @@ var Polygon = (function () {
         let wdhd = "";
         let wdadd = "";
         let wdname = "";
-        if(this.officeAddress!=""){
+        if (this.officeAddress != "") {
 
             wdhd = "<div><b>Details: </b></div>";
             wdadd = "<div class='row'><div  class='col-md-2' style='margin-left:25px'><b>Address :</b> </div><div class='col-md-9'>";
@@ -139,7 +138,7 @@ var Polygon = (function () {
                 wdname += " - ";
             }
             wdname += "</div></div>";
-            wdname +="<div class='row' style='margin-left:25px'><div class='col-md-2' ><b> Contact :</b></div><div class='col-md-10'> ";
+            wdname += "<div class='row' style='margin-left:25px'><div class='col-md-2' ><b> Contact :</b></div><div class='col-md-10'> ";
             if (this.officerTel) {
                 wdname += this.officerTel;
             } else {
@@ -248,29 +247,29 @@ var Slum = (function (_super) {
 
         /* Generate PDF */
         fetch(`/reports/api/rim_factsheet_generation/${selectedSlumId}/`)
-        .then(res => {
+            .then(res => {
 
-            if (res.status === 405) {
-                throw new Error('Please fill RIM form or sync data.');
-            }
-            else if (res.status === 406) {
-                throw new Error('RIM data not found.');
-            }
-            else if (res.status !== 202) {
-                throw new Error('PDF generation failed.');
-            }
+                if (res.status === 405) {
+                    throw new Error('Please fill RIM form or sync data.');
+                }
+                else if (res.status === 406) {
+                    throw new Error('RIM data not found.');
+                }
+                else if (res.status !== 202) {
+                    throw new Error('PDF generation failed.');
+                }
 
-            $("#rimDownloadBtn")
-                .prop("disabled", false)
-                .css("opacity", "1")
-                .text("Download PDF")
-                .attr("data-slum-id", selectedSlumId);
+                $("#rimDownloadBtn")
+                    .prop("disabled", false)
+                    .css("opacity", "1")
+                    .text("Download PDF")
+                    .attr("data-slum-id", selectedSlumId);
 
-        })
-        .catch(err => {
-            console.error(err);
-            alert(err.message);
-        });
+            })
+            .catch(err => {
+                console.error(err);
+                alert(err.message);
+            });
     };
 
 
@@ -322,18 +321,20 @@ var ElectoralWard = (function (_super) {
         _super.call(this, obj_data) || this;
     }
     //Set click listeners
-    ElectoralWard.prototype.setListeners = function(){
+    ElectoralWard.prototype.setListeners = function () {
         _super.prototype.setListeners.call(this);
         let _this = this;
 
-        this.shape.on({'click':function(event) {
-            _super.prototype.event_onClick.call(_this);
+        this.shape.on({
+            'click': function (event) {
+                _super.prototype.event_onClick.call(_this);
                 _super.prototype.show.call(_this);
-                $.each(parse_data[objBreadcrumb.val[0]]['content'][_this.name]['content'], function(k,v){
+                $.each(parse_data[objBreadcrumb.val[0]]['content'][_this.name]['content'], function (k, v) {
                     v.obj.show();
                 });
                 map.fitBounds(_this.shape.getBounds());
-            }});
+            }
+        });
     }
     return ElectoralWard;
 }(Polygon));
@@ -345,44 +346,46 @@ var AdministrativeWard = (function (_super) {
         _super.prototype.show.call(this);
     }
     //Set click listeners
-    AdministrativeWard.prototype.setListeners = function(){
+    AdministrativeWard.prototype.setListeners = function () {
         _super.prototype.setListeners.call(this);
         let _this = this;
-        this.shape.on({'click': function(event) {
-            _super.prototype.event_onClick.call(_this);
+        this.shape.on({
+            'click': function (event) {
+                _super.prototype.event_onClick.call(_this);
 
-            $.each(parse_data[_this.name]['content'], function(k,v){
-                v.obj.show();
-                $.each(v['content'], function(key,val){
-                    val.obj.show();
+                $.each(parse_data[_this.name]['content'], function (k, v) {
+                    v.obj.show();
+                    $.each(v['content'], function (key, val) {
+                        val.obj.show();
+                    });
                 });
-            });
-            map.fitBounds(_this.shape.getBounds());
-            }});
+                map.fitBounds(_this.shape.getBounds());
+            }
+        });
     }
     return AdministrativeWard;
 }(Polygon));
 
 //As there is no  city detials. Created a dummy city class.
-var City = (function(){
+var City = (function () {
 
-    function City (name){
+    function City(name) {
         this.name = name;
-        this.shape = { 'click':this.click };
+        this.shape = { 'click': this.click };
     }
     //Added click listener to display top level details from where it started.
-    City.prototype.click = function(){
+    City.prototype.click = function () {
         // Hide right panel border and clear search when going back to city
         $("#right-panel").removeClass("active");
         $(".overlay").show();
-        $.each(arr_poly_disp, function(k,v){
-             map.removeLayer(v.shape);
+        $.each(arr_poly_disp, function (k, v) {
+            map.removeLayer(v.shape);
         });
         arr_poly_disp = [];
-        $.each(parse_data, function(key,value){
+        $.each(parse_data, function (key, value) {
             value.obj.show();
-            $.each(value['content'], function(k1,v1){
-                $.each(v1['content'], function(k2,v2){
+            $.each(value['content'], function (k1, v1) {
+                $.each(v1['content'], function (k2, v2) {
                     v2.obj.show();
                     //v2.obj.shape.bringToFront();
                 });
@@ -429,23 +432,23 @@ $(document).on("click", "#rimPreviewModal", function (e) {
 // --------------------------------------------------
 $(document).on('click', '#rimDownloadBtn', function () {
 
-	const selectedSlumId = $(this).attr("data-slum-id");
+    const selectedSlumId = $(this).attr("data-slum-id");
 
-	if (!selectedSlumId || $(this).prop("disabled")) return;
+    if (!selectedSlumId || $(this).prop("disabled")) return;
 
-	$("#rimDownloadForm").toggleClass("show");
-	$("#rimDownloadForm").attr("data-slum-id", selectedSlumId);
+    $("#rimDownloadForm").toggleClass("show");
+    $("#rimDownloadForm").attr("data-slum-id", selectedSlumId);
 
 });
 
 $(document).on('click', '#rimFormClose', function () {
-	$("#rimDownloadForm").removeClass("show");
+    $("#rimDownloadForm").removeClass("show");
 });
 
-$(document).click(function(e){
-	if(!$(e.target).closest('#rimDownloadForm, #rimDownloadBtn').length){
-		$("#rimDownloadForm").removeClass("show");
-	}
+$(document).click(function (e) {
+    if (!$(e.target).closest('#rimDownloadForm, #rimDownloadBtn').length) {
+        $("#rimDownloadForm").removeClass("show");
+    }
 });
 //AdministrativeWard.prototype = Object.create(Polygon.prototype);
 //ElectoralWard.prototype = Object.create(Polygon.prototype);
@@ -456,51 +459,51 @@ $(document).click(function(e){
 // --------------------------------------------------
 $(document).on('click', '#rimSendOTP', function () {
 
-	const email = $("#rimEmail").val().trim();
-	const mobile = $("#rimMobile").val().trim();
-	const name = $("#rimName").val().trim();
+    const email = $("#rimEmail").val().trim();
+    const mobile = $("#rimMobile").val().trim();
+    const name = $("#rimName").val().trim();
 
-	if(!name){
-		alert("Please enter your name");
-		return;
-	}
-
-	if(!email){
-		alert("Please enter email");
-		return;
-	}
-
-	if(!mobile || mobile.length !== 10){
-		alert("Enter valid 10 digit mobile number");
-		return;
-	}
-
-	fetch("/helpers/api/send-otp/",{
-		method:"POST",
-		headers:{
-			"Content-Type":"application/json",
-			"X-CSRFToken": csrftoken
-		},
-		body:JSON.stringify({
-			email:email,
-			mobile:mobile,
-			task:"FACTSHEET_DOWNLOAD"
-		})
-	})
-	.then(res=>res.json())
-	.then(data=>{
-    if(data.status === "otp_sent"){
-    	alert("OTP sent to your email");
-    	$("#rimOTPSection").show();
-    }
-    else if(data.status === "wait"){
-    	alert(data.message);
-    }
-    else{
-    	alert("Failed to send OTP");
+    if (!name) {
+        alert("Please enter your name");
+        return;
     }
 
-	});
+    if (!email) {
+        alert("Please enter email");
+        return;
+    }
+
+    if (!mobile || mobile.length !== 10) {
+        alert("Enter valid 10 digit mobile number");
+        return;
+    }
+
+    fetch("/helpers/api/send-otp/", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+            "X-CSRFToken": csrftoken
+        },
+        body: JSON.stringify({
+            email: email,
+            mobile: mobile,
+            task: "FACTSHEET_DOWNLOAD"
+        })
+    })
+        .then(res => res.json())
+        .then(data => {
+            if (data.status === "otp_sent") {
+                alert("OTP sent to your email");
+                $("#rimOTPSection").show();
+            }
+            else if (data.status === "wait") {
+                alert(data.message);
+            }
+            else {
+                alert("Failed to send OTP");
+            }
+
+        });
 
 });
 
@@ -509,48 +512,48 @@ $(document).on('click', '#rimSendOTP', function () {
 // --------------------------------------------------
 $(document).on('click', '#rimVerifyOTP', function () {
 
-	const otp = $("#rimOTP").val().trim();
-	const email = $("#rimEmail").val().trim();
-	const mobile = $("#rimMobile").val().trim();
-	const name = $("#rimName").val().trim();
+    const otp = $("#rimOTP").val().trim();
+    const email = $("#rimEmail").val().trim();
+    const mobile = $("#rimMobile").val().trim();
+    const name = $("#rimName").val().trim();
 
-	const slumId = $("#rimDownloadForm").attr("data-slum-id");
+    const slumId = $("#rimDownloadForm").attr("data-slum-id");
 
-	if(!otp){
-		alert("Please enter OTP");
-		return;
-	}
+    if (!otp) {
+        alert("Please enter OTP");
+        return;
+    }
 
-	fetch("/helpers/api/verify-otp/",{
-		method:"POST",
-		headers:{
-			"Content-Type":"application/json",
-			"X-CSRFToken": csrftoken
-		},
-		body:JSON.stringify({
-			name:name,
-			email:email,
-			mobile:mobile,
-			otp:otp,
-			task:"FACTSHEET_DOWNLOAD"
-		})
-	})
-	.then(res=>res.json())
-	.then(data=>{
+    fetch("/helpers/api/verify-otp/", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+            "X-CSRFToken": csrftoken
+        },
+        body: JSON.stringify({
+            name: name,
+            email: email,
+            mobile: mobile,
+            otp: otp,
+            task: "FACTSHEET_DOWNLOAD"
+        })
+    })
+        .then(res => res.json())
+        .then(data => {
 
-		if(data.status === "verified"){
+            if (data.status === "verified") {
 
-			window.location.href =
-			`/reports/api/rim_factsheet_pdf_fetch/${slumId}/`;
+                window.location.href =
+                    `/reports/api/rim_factsheet_pdf_fetch/${slumId}/`;
 
-		}
-        else if(data.status==="blocked"){
-        	alert("Too many attempts. Please request a new OTP.")
-        }
-		else{
-			alert("Invalid OTP");
-		}
+            }
+            else if (data.status === "blocked") {
+                alert("Too many attempts. Please request a new OTP.")
+            }
+            else {
+                alert("Invalid OTP");
+            }
 
-	});
+        });
 
 });
