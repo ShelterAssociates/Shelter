@@ -1,467 +1,633 @@
-
 {% extends 'header.html' %}
-
 
 {% load static %}
 
 {% block scriptblock %}
-
-<link rel="stylesheet"  type="text/css" href="{% static "css/bootstrap.min.css" %}"/>
-<link rel="stylesheet"  type="text/css" href="{% static "css/jquery.dataTables.min.css" %}" />
-<link rel="stylesheet"  type="text/css" href="{% static "css/leaflet.css" %}" />
-<script>
-	const csrftoken = "{{ csrf_token }}";
-</script>
-<script src="{% static "js/jquery.min.js" %}"></script>
-<!-- <script type="text/javascript" src="http://www.google.com/jsapi" ></script> -->
-<script src="{% static "js/master_map_boundaries.js" %}"></script>
-<script src="{% static "js/master_map_breadcrumb.js" %}"></script>
-<script src="{% static "js/master_map_component.js" %}"></script>
-<script src="{% static "js/city_wise_map.js" %}"></script>
-<script src="{% static "js/leaflet.js" %}"></script>
-<script src="{% static "js/leaflet-google.js" %}"></script>
-<script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCs114b6ZNpVH5BGnrfgy0f1K49vfBK4gs&callback=initMap"
-async defer></script>
-<script src="{% static "js/bootstrap.min.js" %}"></script>
-<script src="{% static "js/jquery.dataTables.min.js" %}"></script>
-
+    <link rel="stylesheet" type="text/css" href="{% static 'css/bootstrap.min.css' %}" />
+    <link rel="stylesheet" type="text/css" href="{% static 'css/jquery.dataTables.min.css' %}" />
+    <link rel="stylesheet" type="text/css" href="{% static 'css/leaflet.css' %}" />
+    <script>
+        const csrftoken = '{{ csrf_token }}'
+    </script>
+    <script src="{% static 'js/jquery.min.js' %}"></script>
+    <!-- <script type="text/javascript" src="http://www.google.com/jsapi" ></script> -->
+    <script src="{% static 'js/master_map_boundaries.js' %}"></script>
+    <script src="{% static 'js/master_map_breadcrumb.js' %}"></script>
+    <script src="{% static 'js/master_map_component.js' %}"></script>
+    <script src="{% static 'js/city_wise_map.js' %}"></script>
+    <script src="{% static 'js/leaflet.js' %}"></script>
+    <script src="{% static 'js/leaflet-google.js' %}"></script>
+    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCs114b6ZNpVH5BGnrfgy0f1K49vfBK4gs&callback=initMap" async defer></script>
+    <script src="{% static 'js/bootstrap.min.js' %}"></script>
+    <script src="{% static 'js/jquery.dataTables.min.js' %}"></script>
 {% endblock %}
 
-{% block styleblock%}
-<style>
-/* ===== MAP ===== */
-#map {
-    height: 80vh;
-    width: 100%;
-    margin: 0px;
-    padding: 0px;
-    float: none;
-}
-
-/* ===== LOADING ===== */
-#loading-img {
-    background: url(/static/images/spinner.gif) center center no-repeat;
-    height: 100%;
-    width: 55%;
-    z-index: 20;
-}
-
-/* ===== OVERLAY ===== */
-.overlay {
-    background: #e9e9e9;
-    display: none;
-    position: absolute;
-    top: 0;
-    right: 0;
-    bottom: 0;
-    left: 0;
-    opacity: 0.5;
-    z-index: 1;
-}
-
-/* ===== CHECKBOX ===== */
-input.chk[type='checkbox'] {
-    -webkit-appearance: none;
-    -moz-appearance: none;
-    border: 1px solid black;
-    height: 1.2em;
-    width: 1.2em;
-}
-input[type='checkbox']:checked:before {
-    content: "\2713";
-    position: relative;
-}
-
-/* ===== TABLE ===== */
-.table > tbody > tr > td {
-    padding: 6px !important;
-}
-
-/* ===== JUMBOTRON ===== */
-.container .jumbotron,
-.container-fluid .jumbotron {
-    padding-left: 0px;
-    padding-right: 0px;
-}
-
-/* ===== MAP MARKER ICON ===== */
-.myDivIcon {
-    display: block;
-    border-radius: 3rem 3rem 0;
-    transform: rotate(45deg);
-    border: 1px solid #FFFFFF;
-}
-
-/* ===== RIM PREVIEW MODAL ===== */
-.preview-container {
-    width: 569px;
-    height: 607px;
-    border-radius: 12px;
-    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.08);
-    padding: 20px;
-    margin: 0 auto;
-    overflow-y: auto;
-    background: white;
-}
-
-.rim-preview-modal {
-    display: none;
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100vw;
-    height: 100vh;
-    background: rgba(0, 0, 0, 0.6);
-    z-index: 99999;
-}
-
-.rim-preview-content {
-    position: fixed;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    background: white;
-    border-radius: 12px;
-    width: 620px;
-    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.3);
-    overflow: hidden;
-}
-
-.rim-preview-header {
-    height: 45px;
-    background: #2c3e50;
-    color: white;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 0 15px;
-    font-weight: bold;
-}
-
-.rim-close {
-    cursor: pointer;
-    font-size: 22px;
-}
-
-/* ===== SPINNER ===== */
-@keyframes spin {
-    to { transform: rotate(360deg); }
-}
-.custom-spinner {
-    width: 50px;
-    height: 50px;
-    border: 5px solid #ddd;
-    border-top-color: #2c3e50;
-    border-radius: 50%;
-    animation: spin 1s linear infinite;
-}
-
-/* ===== OTP / DOWNLOAD FORM ===== */
-.rim-download-wrapper {
-    position: relative;
-    display: inline-block;
-}
-.rim-download-btn {
-    font-weight: 600;
-}
-.rim-download-form {
-    display: none;
-    position: absolute;
-    top: 42px;
-    right: 0;
-    width: 260px;
-    background: #ffffff;
-    border-radius: 6px;
-    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.25);
-    padding: 12px;
-    z-index: 9999;
-}
-.rim-form-header {
-    text-align: right;
-    margin-bottom: 6px;
-}
-.rim-form-close {
-    cursor: pointer;
-    font-size: 18px;
-    font-weight: bold;
-    color: #555;
-}
-.rim-form-close:hover {
-    color: #e74c3c;
-}
-.rim-input {
-    width: 100%;
-    padding: 6px 8px;
-    margin-bottom: 6px;
-    border: 1px solid #ccc;
-    border-radius: 4px;
-    font-size: 13px;
-    outline: none;
-    color: #000 !important;
-    background: #fff !important;
-}
-.rim-input:focus {
-    border-color: #2b7fc2;
-    box-shadow: 0 0 3px rgba(43, 127, 194, 0.4);
-}
-.rim-send-otp {
-    width: 100%;
-    margin-bottom: 6px;
-}
-.rim-otp-section {
-    display: none;
-}
-.rim-verify-btn {
-    width: 100%;
-}
-#rimMobile {
-    letter-spacing: 1px;
-}
-.rim-download-form.show {
-    display: block;
-    animation: rimDrop 0.2s ease-out;
-}
-@keyframes rimDrop {
-    from { transform: translateY(-8px); opacity: 0; }
-    to   { transform: translateY(0);    opacity: 1; }
-}
-
-/* ===== REFRESH CONFIRM DROPDOWN ===== */
-.refresh-confirm-box {
-    display: none;
-    position: absolute;
-    top: 100%;
-    left: 0;
-    right: 0;
-    background: white;
-    border-radius: 6px;
-    padding: 14px;
-    width: 100%;
-    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.25);
-    z-index: 9999;
-    margin-top: 4px;
-    box-sizing: border-box;
-}
-.refresh-confirm-box.show {
-    display: block;
-}
-.refresh-confirm-box h5 {
-    margin: 0 0 8px 0;
-    font-size: 13px;
-    font-weight: bold;
-    color: #2c3e50;
-}
-.refresh-confirm-box p {
-    font-size: 12px;
-    color: #555;
-    margin-bottom: 12px;
-    line-height: 1.5;
-}
-.refresh-confirm-actions {
-    display: flex;
-    gap: 8px;
-    justify-content: flex-end;
-}
-
-/* ===== RIGHT PANEL ===== */
-#right-panel {
-    display: flex;
-    flex-direction: column;
-    flex: 1;
-    min-width: 0;
-    height: 80vh;
-    border: 1.5px solid transparent;  /* hidden by default */
-    border-radius: 6px;
-    overflow: hidden;
-    background: #fff;
-    transition: border-color 0.3s ease;
-}
-
-#right-panel.active {
-    border-color: #bdc3c7;  /* visible when slum selected */
-}
-
-/* ===== REFRESH BUTTON ===== */
-#compochk_refresh button {
-    border-radius: 0 !important;
-    border-bottom: 1.5px solid #2471a3 !important;
-}
-
-/* ===== SEARCH BOX WRAPPER ===== */
-#household-search-wrapper {
-    border-bottom: 1.5px solid #bdc3c7;
-    padding: 6px 8px;
-    background: #fff;
-    flex-shrink: 0;
-}
-
-/* ===== HOUSEHOLD SEARCH INPUT ===== */
-#household-search-input {
-    width: 100%;
-    padding: 6px 10px;
-    border: 1px solid #ccc;
-    border-radius: 4px;
-    font-size: 13px;
-    box-sizing: border-box;
-    color: #000;
-    background: #fff;
-    outline: none;
-}
-#household-search-input:focus {
-    border-color: #2b7fc2;
-    box-shadow: 0 0 3px rgba(43, 127, 194, 0.4);
-}
-
-/* ===== HOUSEHOLD SEARCH DROPDOWN ===== */
-#household-search-dropdown {
-    display: none;
-    position: absolute;
-    top: 100%;
-    left: 0;
-    right: 0;
-    background: white;
-    border: 1px solid #ccc;
-    border-top: none;
-    border-radius: 0 0 4px 4px;
-    max-height: 200px;
-    overflow-y: auto;
-    z-index: 9999;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-}
-
-/* ===== COMPOCHK SCROLLABLE AREA ===== */
-#compochk {
-    overflow-y: auto;
-    flex: 1;
-    min-height: 0;
-    border-bottom: 1.5px solid #bdc3c7;
-}
-
-/* Each top-level group panel */
-#compochk > [name='div_group'] {
-    border-bottom: 1px solid #d5d8dc;
-    padding: 6px 8px;
-    background: #fff;
-    transition: background 0.15s;
-}
-#compochk > [name='div_group']:last-child {
-    border-bottom: none;
-}
-#compochk > [name='div_group']:hover {
-    background: #eaf2fb;
-}
-
-/* Inner child items */
-#compochk [name='div_group'] > [name='div_group'] {
-    border-top: 1px solid #eaecee;
-    padding: 4px 8px 4px 20px;
-    background: #fdfefe;
-}
-#compochk [name='div_group'] > [name='div_group']:hover {
-    background: #f2f3f4;
-}
-
-/* Group label links */
-#compochk a[name='chk_group'] {
-    color: #1a5276;
-    font-size: 13px;
-    text-decoration: none;
-}
-#compochk a[name='chk_group']:hover {
-    color: #2980b9;
-    text-decoration: underline;
-}
-
-/* Custom scrollbar */
-#compochk::-webkit-scrollbar {
-    width: 5px;
-}
-#compochk::-webkit-scrollbar-track {
-    background: #f1f1f1;
-}
-#compochk::-webkit-scrollbar-thumb {
-    background: #bdc3c7;
-    border-radius: 4px;
-}
-#compochk::-webkit-scrollbar-thumb:hover {
-    background: #2980b9;
-}
-
-/* ===== SPONSOR PINNED SECTION ===== */
-#sponsor-pinned {
-    display: none;
-    border-top: 1px solid #b8daf0;
-    background: #ffffff;
-    padding: 8px 10px;
-    border-radius: 0 0 6px 6px;
-    font-size: 13px;
-    flex-shrink: 0;
-}
-#sponsor-pinned [name='div_group'] {
-    border-bottom: 1px solid #d5d8dc;
-    padding: 4px 8px;
-}
-#sponsor-pinned [name='div_group']:last-child {
-    border-bottom: none;
-}
-#sponsor-pinned a[name='chk_group'] {
-    color: #1a5276;
-    font-weight: bold;
-    font-size: 13px;
-}
-</style>
-
+{% block styleblock %}
+    <style>
+        /* ===== MAP ===== */
+        #map {
+            height: 80vh;
+            width: 100%;
+            margin: 0px;
+            padding: 0px;
+            float: none;
+        }
+        
+        /* ===== LOADING ===== */
+        #loading-img {
+            background: url(/static/images/spinner.gif) center center no-repeat;
+            height: 100%;
+            width: 55%;
+            z-index: 20;
+        }
+        
+        /* ===== OVERLAY ===== */
+        .overlay {
+            background: #e9e9e9;
+            display: none;
+            position: absolute;
+            top: 0;
+            right: 0;
+            bottom: 0;
+            left: 0;
+            opacity: 0.5;
+            z-index: 1;
+        }
+        
+        /* ===== CHECKBOX ===== */
+        input.chk[type='checkbox'] {
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            border: 1px solid black;
+            height: 1.2em;
+            width: 1.2em;
+        }
+        input[type='checkbox']:checked:before {
+            content: '\2713';
+            position: relative;
+        }
+        
+        /* ===== TABLE ===== */
+        .table > tbody > tr > td {
+            padding: 6px !important;
+        }
+        
+        /* ===== JUMBOTRON ===== */
+        .container .jumbotron,
+        .container-fluid .jumbotron {
+            padding-left: 0px;
+            padding-right: 0px;
+        }
+        
+        /* ===== MAP MARKER ICON ===== */
+        .myDivIcon {
+            display: block;
+            border-radius: 3rem 3rem 0;
+            transform: rotate(45deg);
+            border: 1px solid #ffffff;
+        }
+        
+        /* ===== RIM PREVIEW MODAL ===== */
+        .preview-container {
+            width: 569px;
+            height: 607px;
+            border-radius: 12px;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.08);
+            padding: 20px;
+            margin: 0 auto;
+            overflow-y: auto;
+            background: white;
+        }
+        
+        .rim-preview-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: rgba(0, 0, 0, 0.6);
+            z-index: 99999;
+        }
+        
+        .rim-preview-content {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: white;
+            border-radius: 12px;
+            width: 620px;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+        }
+        
+        .rim-preview-header {
+            height: 45px;
+            background: #2c3e50;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 15px;
+            font-weight: bold;
+        }
+        
+        .rim-close {
+            cursor: pointer;
+            font-size: 22px;
+        }
+        
+        /* ===== SPINNER ===== */
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+        .custom-spinner {
+            width: 50px;
+            height: 50px;
+            border: 5px solid #ddd;
+            border-top-color: #2c3e50;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        
+        /* ===== OTP / DOWNLOAD FORM ===== */
+        .rim-download-wrapper {
+            position: relative;
+            display: inline-block;
+        }
+        .rim-download-btn {
+            font-weight: 600;
+        }
+        .rim-download-form {
+            display: none;
+            position: absolute;
+            top: 42px;
+            right: 0;
+            width: 260px;
+            background: #ffffff;
+            border-radius: 6px;
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.25);
+            padding: 12px;
+            z-index: 9999;
+        }
+        .rim-form-header {
+            text-align: right;
+            margin-bottom: 6px;
+        }
+        .rim-form-close {
+            cursor: pointer;
+            font-size: 18px;
+            font-weight: bold;
+            color: #555;
+        }
+        .rim-form-close:hover {
+            color: #e74c3c;
+        }
+        .rim-input {
+            width: 100%;
+            padding: 6px 8px;
+            margin-bottom: 6px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 13px;
+            outline: none;
+            color: #000 !important;
+            background: #fff !important;
+        }
+        .rim-input:focus {
+            border-color: #2b7fc2;
+            box-shadow: 0 0 3px rgba(43, 127, 194, 0.4);
+        }
+        .rim-send-otp {
+            width: 100%;
+            margin-bottom: 6px;
+        }
+        .rim-otp-section {
+            display: none;
+        }
+        .rim-verify-btn {
+            width: 100%;
+        }
+        #rimMobile {
+            letter-spacing: 1px;
+        }
+        .rim-download-form.show {
+            display: block;
+            animation: rimDrop 0.2s ease-out;
+        }
+        @keyframes rimDrop {
+            from {
+                transform: translateY(-8px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+        
+        /* ===== REFRESH CONFIRM DROPDOWN ===== */
+        .refresh-confirm-box {
+            display: none;
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: white;
+            border-radius: 6px;
+            padding: 14px;
+            width: 100%;
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.25);
+            z-index: 9999;
+            margin-top: 4px;
+            box-sizing: border-box;
+        }
+        .refresh-confirm-box.show {
+            display: block;
+        }
+        .refresh-confirm-box h5 {
+            margin: 0 0 8px 0;
+            font-size: 13px;
+            font-weight: bold;
+            color: #2c3e50;
+        }
+        .refresh-confirm-box p {
+            font-size: 12px;
+            color: #555;
+            margin-bottom: 12px;
+            line-height: 1.5;
+        }
+        .refresh-confirm-actions {
+            display: flex;
+            gap: 8px;
+            justify-content: flex-end;
+        }
+        
+        /* ===== RIGHT PANEL ===== */
+        #right-panel {
+            display: flex;
+            flex-direction: column;
+            flex: 1;
+            min-width: 0;
+            height: 80vh;
+            border: 1.5px solid transparent; /* hidden by default */
+            border-radius: 6px;
+            overflow: hidden;
+            background: #fff;
+            transition: border-color 0.3s ease;
+        }
+        
+        #right-panel.active {
+            border-color: #bdc3c7; /* visible when slum selected */
+        }
+        
+        /* ===== REFRESH BUTTON ===== */
+        #compochk_refresh button {
+            border-radius: 0 !important;
+            border-bottom: 1.5px solid #2471a3 !important;
+        }
+        
+        /* ===== SEARCH BOX WRAPPER ===== */
+        #household-search-wrapper {
+            border-bottom: 1.5px solid #bdc3c7;
+            padding: 6px 8px;
+            background: #fff;
+            flex-shrink: 0;
+        }
+        
+        /* ===== HOUSEHOLD SEARCH INPUT ===== */
+        #household-search-input {
+            width: 100%;
+            padding: 6px 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 13px;
+            box-sizing: border-box;
+            color: #000;
+            background: #fff;
+            outline: none;
+        }
+        #household-search-input:focus {
+            border-color: #2b7fc2;
+            box-shadow: 0 0 3px rgba(43, 127, 194, 0.4);
+        }
+        
+        /* ===== HOUSEHOLD SEARCH DROPDOWN ===== */
+        #household-search-dropdown {
+            display: none;
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: white;
+            border: 1px solid #ccc;
+            border-top: none;
+            border-radius: 0 0 4px 4px;
+            max-height: 200px;
+            overflow-y: auto;
+            z-index: 9999;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+        
+        /* ===== COMPOCHK SCROLLABLE AREA ===== */
+        #compochk {
+            overflow-y: auto;
+            flex: 1;
+            min-height: 0;
+            border-bottom: 1.5px solid #bdc3c7;
+        }
+        
+        /* Each top-level group panel */
+        #compochk > [name='div_group'] {
+            border-bottom: 1px solid #d5d8dc;
+            padding: 6px 8px;
+            background: #fff;
+            transition: background 0.15s;
+        }
+        #compochk > [name='div_group']:last-child {
+            border-bottom: none;
+        }
+        #compochk > [name='div_group']:hover {
+            background: #eaf2fb;
+        }
+        
+        /* Inner child items */
+        #compochk [name='div_group'] > [name='div_group'] {
+            border-top: 1px solid #eaecee;
+            padding: 4px 8px 4px 20px;
+            background: #fdfefe;
+        }
+        #compochk [name='div_group'] > [name='div_group']:hover {
+            background: #f2f3f4;
+        }
+        
+        /* Group label links */
+        #compochk a[name='chk_group'] {
+            color: #1a5276;
+            font-size: 13px;
+            text-decoration: none;
+        }
+        #compochk a[name='chk_group']:hover {
+            color: #2980b9;
+            text-decoration: underline;
+        }
+        
+        /* Custom scrollbar */
+        #compochk::-webkit-scrollbar {
+            width: 5px;
+        }
+        #compochk::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+        #compochk::-webkit-scrollbar-thumb {
+            background: #bdc3c7;
+            border-radius: 4px;
+        }
+        #compochk::-webkit-scrollbar-thumb:hover {
+            background: #2980b9;
+        }
+        
+        /* ===== SPONSOR PINNED SECTION ===== */
+        #sponsor-pinned {
+            display: none;
+            border-top: 1px solid #b8daf0;
+            background: #ffffff;
+            padding: 8px 10px;
+            border-radius: 0 0 6px 6px;
+            font-size: 13px;
+            flex-shrink: 0;
+        }
+        #sponsor-pinned [name='div_group'] {
+            border-bottom: 1px solid #d5d8dc;
+            padding: 4px 8px;
+        }
+        #sponsor-pinned [name='div_group']:last-child {
+            border-bottom: none;
+        }
+        #sponsor-pinned a[name='chk_group'] {
+            color: #1a5276;
+            font-weight: bold;
+            font-size: 13px;
+        }
+        /* ================= CONTAINER ================= */
+        #map-timeline-container {
+            position: absolute;
+            bottom: 12px;
+            left: 12px;
+            right: 12px;
+            display: none;
+            z-index: 999;
+            background: rgba(255, 255, 255, 0.96);
+            padding: 12px 18px;
+            border-radius: 14px;
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.14), 0 2px 8px rgba(0, 0, 0, 0.08);
+            border: 1px solid #e0e7ff;
+            backdrop-filter: blur(8px);
+        }
+        
+        /* ================= TIMELINE ROW ================= */
+        #map-timeline {
+            display: flex;
+            align-items: center;
+            justify-content: flex-start;
+            width: 100%;
+            gap: 4px;
+            overflow-x: auto;
+            scrollbar-width: none;
+            flex-wrap: nowrap;
+            padding: 2px 0;
+        }
+        
+        #map-timeline::-webkit-scrollbar {
+            display: none;
+        }
+        
+        /* ================= SHARED ================= */
+        .timeline-year,
+        .timeline-month {
+            flex-shrink: 0;
+            user-select: none;
+            transition: all 0.2s ease;
+        }
+        
+        /* ================= YEAR ================= */
+        .timeline-year {
+            color: #1e40af;
+            font-weight: 800;
+            font-size: 0.95rem;
+            letter-spacing: 0.4px;
+            cursor: pointer;
+            padding: 7px 13px;
+            border-radius: 10px;
+            border: 1.5px solid #bfdbfe;
+            background: #eff6ff;
+            white-space: nowrap;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            line-height: 1;
+        }
+        
+        .timeline-year small {
+            font-size: 0.58rem;
+            opacity: 0.6;
+            margin-top: 1px;
+            line-height: 1;
+            font-weight: 500;
+        }
+        
+        .timeline-year:hover {
+            background: #dbeafe;
+            border-color: #93c5fd;
+            color: #1e3a8a;
+            transform: translateY(-1px);
+            box-shadow: 0 3px 10px rgba(37, 99, 235, 0.15);
+        }
+        
+        .timeline-year.active-year {
+            background: linear-gradient(135deg, #2563eb, #1d4ed8);
+            color: #ffffff;
+            border-color: #2563eb;
+            box-shadow: 0 4px 14px rgba(37, 99, 235, 0.4);
+            transform: translateY(-1px);
+        }
+        
+        .timeline-year.active-year small {
+            opacity: 0.85;
+        }
+        
+        /* ================= MONTH (mid marker) ================= */
+        .timeline-month {
+            background: #f0f9ff;
+            color: #0369a1;
+            padding: 6px 11px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 0.75rem;
+            font-weight: 700;
+            border: 1.5px solid #bae6fd;
+            text-align: center;
+            white-space: nowrap;
+            line-height: 1.2;
+            flex-shrink: 0;
+            letter-spacing: 0.2px;
+        }
+        
+        .timeline-month:hover {
+            background: #e0f2fe;
+            border-color: #38bdf8;
+            color: #0c4a6e;
+            transform: translateY(-1px);
+            box-shadow: 0 3px 10px rgba(14, 165, 233, 0.2);
+        }
+        
+        .timeline-month.active {
+            background: linear-gradient(135deg, #0ea5e9, #0284c7);
+            color: #ffffff;
+            border-color: #0ea5e9;
+            box-shadow: 0 4px 12px rgba(14, 165, 233, 0.4);
+            transform: translateY(-1px);
+        }
+        
+        .timeline-month small {
+            display: block;
+            font-size: 0.6rem;
+            opacity: 0.7;
+            margin-top: 2px;
+            font-weight: 500;
+        }
+        
+        .timeline-month.active small {
+            opacity: 0.9;
+        }
+        
+        /* ================= DASH SEPARATOR ================= */
+        .timeline-dash {
+            color: #cbd5e1;
+            flex-shrink: 0;
+            font-size: 0.95rem;
+            line-height: 1;
+            pointer-events: none;
+            user-select: none;
+        }
+        
+        /* ================= TOGGLE BUTTON ================= */
+        #toggleTimeline {
+            background: linear-gradient(135deg, #2563eb, #1d4ed8);
+            color: #ffffff;
+            border: none;
+            padding: 8px 18px;
+            border-radius: 8px;
+            font-size: 0.85rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            z-index: 999;
+            position: relative;
+            letter-spacing: 0.3px;
+            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.35);
+            width: 100%;
+            margin-top: 6px;
+        }
+        
+        #toggleTimeline:hover {
+            background: linear-gradient(135deg, #3b82f6, #2563eb);
+            box-shadow: 0 6px 16px rgba(37, 99, 235, 0.45);
+            transform: translateY(-1px);
+        }
+        
+        #toggleTimeline:active {
+            transform: translateY(0px);
+            box-shadow: 0 2px 8px rgba(37, 99, 235, 0.3);
+        }
+    </style>
 {% endblock %}
-
 
 {% block content %}
+    <input type="text" class="hide" id="city_id" value="{{ city_id }}" />
+    <input type="text" class="hide" id="city_name" value="{{ city_name }}" />
+    <input type="text" class="hide" id="slum_name" value="{{ slum_name }}" />
 
-<input type="text" class="hide" id="city_id" value="{{city_id}}"/>
-<input type="text" class="hide" id="city_name" value="{{city_name}}"/>
-<input type="text" class="hide" id="slum_name" value="{{slum_name}}"/>
+    <div class="container">
+        <div class="jumbotron" style="background-color:white;">
+            <div class="main-header" id="main-header"></div>
+            <div class="overlay">
+                <div id="loading-img"></div>
+            </div>
+            <div id="maphead" style="margin-top:10px;"></div>
+            <div id="mapdesc" style="width: 750px"></div>
 
+            <div id="wdhead" style="width: 750px"></div>
+            <div id="wdaddress" style="width: 750px"></div>
+            <div id="wdofficer" style="width: 750px"></div>
 
+            <div id="maplink" style="margin-top:10px; padding-top:8px;"></div>
+            <div id="div_legend" style="padding-bottom:10px;">
+                <div style="float:left;width:15px;height:15px;border:1px solid red;background: red;"></div>
+                <div class="">&nbsp;Slums where household data is available</div>
+            </div>
 
-<div class="container">
-	<div class="jumbotron" style="background-color:white;">
-	<div class="main-header" id ="main-header"></div>
-	<div class="overlay">
-		<div id="loading-img"></div>
-	</div>
-	<div id="maphead"style="margin-top:10px;"></div>
-	<div id="mapdesc" style="width: 750px"></div>
+            <div style="display:flex; flex-direction:row; gap:15px; align-items:flex-start;">
+                <!-- Left: Map -->
+                <div style="flex:0 0 75%; min-width:0; display:flex; flex-direction:column; position:relative;">
+                    <!-- MAP -->
+                    <div id="map"></div>
+                    <div id="map-timeline-container">
+                        <div id="map-timeline"></div>
+                    </div>
+                </div>
+                <!-- Right: Refresh + Search + Components -->
+                <div id="right-panel">
+                    <!-- Refresh Button -->
+                    <div id="compochk_refresh" style="flex-shrink:0;"></div>
 
-	<div id="wdhead" style="width: 750px" ></div>
-	<div id="wdaddress" style="width: 750px" ></div>
-	<div id="wdofficer" style="width: 750px"></div>
-
-	<div id="maplink" style="margin-top:10px; padding-top:8px;"></div>
-	<div id="div_legend" style="padding-bottom:10px;">
-		<div style="float:left;width:15px;height:15px;border:1px solid red;background: red;"></div>
-		<div class="">&nbsp;Slums where household data is available</div>
-	</div>
-
-	<div style="display:flex; flex-direction:row; gap:15px; align-items:flex-start;">
-
-    <!-- Left: Map -->
-    <div style="flex:0 0 75%; min-width:0;">
-        <div id="map"></div>
-    </div>
-<!-- Right: Refresh + Search + Components -->
-<div id="right-panel">
-
-    <!-- Refresh Button -->
-    <div id="compochk_refresh" style="flex-shrink:0;"></div>
-
-    <!-- Search Box -->
-    <div id="household-search-wrapper" style="display:none; flex-shrink:0; margin-bottom:8px;">
-        <div style="position:relative;">
-            <input
-                type="text"
-                id="household-search-input"
-                placeholder="Search household number..."
-                autocomplete="off"
-                style="width:100%;
+                    <!-- Search Box -->
+                    <div id="household-search-wrapper" style="display:none; flex-shrink:0; margin-bottom:8px;">
+                        <div style="position:relative;">
+                            <input type="text" id="household-search-input" placeholder="Search household number..." autocomplete="off" style="width:100%;
                        padding:6px 10px;
                        border:1px solid #ccc;
                        border-radius:4px;
@@ -469,10 +635,8 @@ input[type='checkbox']:checked:before {
                        box-sizing:border-box;
                        color:#000;
                        background:#fff;
-                       outline:none;"
-            />
-            <div id="household-search-dropdown"
-                 style="display:none;
+                       outline:none;" />
+                            <div id="household-search-dropdown" style="display:none;
                         position:absolute;
                         top:100%; left:0; right:0;
                         background:white;
@@ -482,140 +646,126 @@ input[type='checkbox']:checked:before {
                         max-height:200px;
                         overflow-y:auto;
                         z-index:9999;
-                        box-shadow:0 4px 8px rgba(0,0,0,0.1);">
+                        box-shadow:0 4px 8px rgba(0,0,0,0.1);"></div>
+                        </div>
+                    </div>
+
+                    <!-- Scrollable Component Checkboxes -->
+                    <div id="compochk"></div>
+
+                    <!-- Sponsor pinned at bottom -->
+                    <div id="sponsor-pinned">
+                        <div id="sponsor-checkbox"></div>
+                        <div id="sponsor-slider"></div>
+                    </div>
+                </div>
             </div>
-        </div>
-    </div>
 
-    <!-- Scrollable Component Checkboxes -->
-    <div id="compochk"></div>
-
-    <!-- Sponsor pinned at bottom -->
-    <div id="sponsor-pinned"></div>
-
-</div>
-
-</div>
-
-<!-- Datatable below map -->
-<div style="width:75%; margin-top:10px;">
-    <div id="datatablecontainer">
-        <table id="datatable" class="display" style="width:100% !important;"></table>
-    </div>
-</div>
-
-<div id="rim"></div>
-
-<!-- Modal: RIM data -->
-<div class="modal fade" id="myModal" role="dialog">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div id="modelheader" class="modal-header">
-                <h4 class="modal-title">
-                    <label id="modelhdtext"></label>
-                    <button type="button" class="close" data-dismiss="modal"></button>
-                </h4>
+            <!-- Datatable below map -->
+            <div style="width:75%; margin-top:10px;">
+                <div id="datatablecontainer">
+                    <table id="datatable" class="display" style="width:100% !important;"></table>
+                </div>
             </div>
-            <div id="modelbody" class="modal-body" style="padding-top:0px;padding-bottom:0px;height:70%;overflow:auto;">
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
-            </div>
-        </div>
-    </div>
-</div>
 
-<!-- Modal: Household data -->
-<div class="modal fade" id="household_data" role="dialog">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div id="modelheader" class="modal-header">
-                <h4 class="modal-title">
-                    <label id="modelhdtext"></label>
-                    <button type="button" class="close" data-dismiss="modal"></button>
-                </h4>
+            <div id="rim"></div>
+
+            <!-- Modal: RIM data -->
+            <div class="modal fade" id="myModal" role="dialog">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <div id="modelheader" class="modal-header">
+                            <h4 class="modal-title">
+                                <label id="modelhdtext"></label>
+                                <button type="button" class="close" data-dismiss="modal"></button>
+                            </h4>
+                        </div>
+                        <div id="modelbody" class="modal-body" style="padding-top:0px;padding-bottom:0px;height:70%;overflow:auto;"></div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                        </div>
+                    </div>
+                </div>
             </div>
-            <div id="modelbody" class="modal-body" style="padding-top:0px;padding-bottom:0px;height:70%;overflow:auto;">
+
+            <!-- Modal: Household data -->
+            <div class="modal fade" id="household_data" role="dialog">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <div id="modelheader" class="modal-header">
+                            <h4 class="modal-title">
+                                <label id="modelhdtext"></label>
+                                <button type="button" class="close" data-dismiss="modal"></button>
+                            </h4>
+                        </div>
+                        <div id="modelbody" class="modal-body" style="padding-top:0px;padding-bottom:0px;height:70%;overflow:auto;"></div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                        </div>
+                    </div>
+                </div>
             </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
-            </div>
-        </div>
-    </div>
-</div>
-        <!-- Refresh Components Confirmation Popup -->
-        <div class="refresh-confirm-overlay" id="refreshConfirmOverlay">
-            <div class="refresh-confirm-box">
-                <h5>Refresh Components?</h5>
-                <p>
-                    Clicking <strong>Yes</strong> will clear the cached component
-                    data and reload a fresh copy from the server.<br><br>
-                    This may take a few seconds to complete.
-                </p>
-                <div class="refresh-confirm-actions">
-                    <button class="btn btn-default btn-sm" id="refreshConfirmNo">Cancel</button>
-                    <button class="btn btn-primary btn-sm" id="refreshConfirmYes">Yes, Refresh</button>
+            <!-- Refresh Components Confirmation Popup -->
+            <div class="refresh-confirm-overlay" id="refreshConfirmOverlay">
+                <div class="refresh-confirm-box">
+                    <h5>Refresh Components?</h5>
+                    <p>
+                        Clicking <strong>Yes</strong> will clear the cached component data and reload a fresh copy from the server.<br /><br />
+                        This may take a few seconds to complete.
+                    </p>
+                    <div class="refresh-confirm-actions">
+                        <button class="btn btn-default btn-sm" id="refreshConfirmNo">Cancel</button>
+                        <button class="btn btn-primary btn-sm" id="refreshConfirmYes">Yes, Refresh</button>
+                    </div>
                 </div>
             </div>
         </div>
-	</div>
-</div>
-<!-- RIM Preview Popup -->
-<!-- RIM Preview Modal -->
-<div id="rimPreviewModal" class="rim-preview-modal">
+    </div>
+    <!-- RIM Preview Popup -->
+    <!-- RIM Preview Modal -->
+    <div id="rimPreviewModal" class="rim-preview-modal">
+        <div class="rim-preview-content">
+            <!-- Header -->
+            <div class="rim-preview-header">
+                <span>RIM Factsheet Preview</span>
 
-    <div class="rim-preview-content">
+                <div>
+                    <div class="rim-download-wrapper">
+                        <button id="rimDownloadBtn" class="btn btn-sm btn-success rim-download-btn" disabled>Download PDF</button>
 
-        <!-- Header -->
-        <div class="rim-preview-header">
-            <span>RIM Factsheet Preview</span>
+                        <div id="rimDownloadForm" class="rim-download-form">
+                            <div class="rim-form-header">
+                                <span id="rimFormClose" class="rim-form-close">&times;</span>
+                            </div>
 
-            <div>
-				<div class="rim-download-wrapper">
-					<button id="rimDownloadBtn" class="btn btn-sm btn-success rim-download-btn" disabled>Download PDF</button>
+                            <input type="text" id="rimName" class="rim-input" placeholder="Full Name" />
+                            <input type="email" id="rimEmail" class="rim-input" placeholder="Email Address" />
+                            <input type="text" id="rimMobile" class="rim-input" placeholder="Mobile Number" maxlength="10" />
 
-					<div id="rimDownloadForm" class="rim-download-form">
-						<div class="rim-form-header">
-							<span id="rimFormClose" class="rim-form-close">&times;</span>
-						</div>
-					
-						<input type="text" id="rimName" class="rim-input" placeholder="Full Name">
-						<input type="email" id="rimEmail" class="rim-input" placeholder="Email Address">
-						<input type="text" id="rimMobile" class="rim-input" placeholder="Mobile Number" maxlength="10">
-					
-						<button id="rimSendOTP" class="btn btn-primary rim-send-otp">Send OTP</button>
-					
-						<div id="rimOTPSection" class="rim-otp-section">
-							<input type="text" id="rimOTP" class="rim-input" placeholder="Enter OTP">
-							<button id="rimVerifyOTP" class="btn btn-success rim-verify-btn">Verify & Download</button>
-						</div>
-					</div>
-				</div>	
-                <span class="rim-close">&times;</span>
+                            <button id="rimSendOTP" class="btn btn-primary rim-send-otp">Send OTP</button>
+
+                            <div id="rimOTPSection" class="rim-otp-section">
+                                <input type="text" id="rimOTP" class="rim-input" placeholder="Enter OTP" />
+                                <button id="rimVerifyOTP" class="btn btn-success rim-verify-btn">Verify & Download</button>
+                            </div>
+                        </div>
+                    </div>
+                    <span class="rim-close">&times;</span>
+                </div>
             </div>
-        </div>
 
-        <!-- Body -->
-        <div id="rimPreviewBody" class="preview-container">
-        </div>
+            <!-- Body -->
+            <div id="rimPreviewBody" class="preview-container"></div>
 
-        <!-- Note Section -->
-        <div style="padding:12px 18px;
+            <!-- Note Section -->
+            <div style="padding:12px 18px;
                     font-size:12px;
                     background:#f8f9fa;
                     border-top:1px solid #ddd;
                     color:#555;">
-            <strong>Note:</strong><br>
-            This is only a preview of the RIM Factsheet.  
-            The final PDF version may have slight design or formatting differences.  
-            The PDF download option may take approximately 2–3 minutes to generate.  
-            Please wait until the download button becomes active.
+                <strong>Note:</strong><br />
+                This is only a preview of the RIM Factsheet. The final PDF version may have slight design or formatting differences. The PDF download option may take approximately 2–3 minutes to generate. Please wait until the download button becomes active.
+            </div>
         </div>
-
     </div>
-</div>
-
-
-
-
 {% endblock %}

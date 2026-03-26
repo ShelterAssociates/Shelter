@@ -40,7 +40,9 @@ let TYPE_COMPONENT = {
 };
 var myCustomColour = '#583470'
 var markerHtmlStyles = 'background-color: myCustomColour;width: 3rem;height: 3rem;display: block;left: -1.5rem;top: -1.5rem;position: relative;border-radius: 3rem 3rem 0;transform: rotate(45deg);border: 1px solid #FFFFFF';
-
+let TIMELINE_YEARS = [];
+let TIMELINE_DATA = {};
+let CURRENT_INDEX = 0;
 
 //Parser to Initiates the objects depending on admin, elect, slum
 var Parser = (function () {
@@ -488,19 +490,7 @@ function generate_filter(globalJsonData, slumID, result) {
     initHouseholdSearch();
 }
 
-//Event handler for check/uncheck all boxes as per the section
-function checkAllGroup(grpchk) {
-    if ($(grpchk).is(':checked')) {
-        $(grpchk).parent().find('[name=chk1]:not(:checked)').click();
-        if ($(grpchk).parent().find('div.in').length == 0)
-            $(grpchk).parent().find('a[name=chk_group]').click();
-    }
-    else {
-        $(grpchk).parent().find('[name=chk1]:checked').click();
-        if ($(grpchk).parent().find('div.in').length > 0)
-            $(grpchk).parent().find('a[name=chk_group]').click();
-    }
-}
+
 //Event handler for checkbox selection for the filter ON / OFF
 function checkSingleGroup(singlechk) {
     /*if(arr_poly_disp.length > 0){
@@ -749,46 +739,19 @@ function checkAllGroup(grpchk) {
     }
 }
 
-function checkSingleGroup(singlechk) {
 
-    var chkchild = $(singlechk).val();
-
-    // If Structure checkbox is unchecked, clear household highlight
-    if (chkchild === 'Structure' && !$(singlechk).is(':checked')) {
-        clearHouseholdHighlight();
-    }
-
-    $.each(arr_poly_disp, function (k, v) {
-        map.removeLayer(v.shape);
-    });
-
-    var section = $(singlechk).attr('selection');
-    var component_type = $(singlechk).attr('component_type');
-
-    if ($(singlechk).is(':checked')) {
-        parse_component[chkchild].show();
-    }
-    else {
-        parse_component[chkchild].hide();
-    }
-
-    let flag = false;
-    if ($(singlechk).parent().parent().parent().find('[name=chk1]:checked').length > 0)
-        flag = true;
-    $(singlechk).parent().parent().parent().find('[name=grpchk]')[0].checked = flag;
-}
 
 function pinSponsorToBottom() {
 
     var sponsorPanel = null;
 
-    // Method 1: by panel-collapse name attribute
+    // Method 1
     var sponsorCollapse = $("#compochk div.panel-collapse[name='Sponsor']");
     if (sponsorCollapse.length > 0) {
         sponsorPanel = sponsorCollapse.closest("[name='div_group']");
     }
 
-    // Method 2: fallback by grpchk label text using indexOf (Option A)
+    // Method 2
     if (!sponsorPanel || sponsorPanel.length === 0) {
         $("#compochk > [name='div_group']").each(function () {
             var labelText = $(this).find("a[name='chk_group']").text().trim().toLowerCase();
@@ -799,7 +762,7 @@ function pinSponsorToBottom() {
         });
     }
 
-    // Method 3: fallback by chk1 checkbox value
+    // Method 3
     if (!sponsorPanel || sponsorPanel.length === 0) {
         $("#compochk [name='chk1']").each(function () {
             if ($(this).val().toLowerCase().indexOf("sponsor") !== -1) {
@@ -809,13 +772,391 @@ function pinSponsorToBottom() {
         });
     }
 
+    // ❌ Not found
     if (!sponsorPanel || sponsorPanel.length === 0) {
         $("#sponsor-pinned").hide();
         return;
     }
 
-    // Move to pinned area
+    // ✅ MOVE ONLY TO sponsor-checkbox
     var cloned = sponsorPanel.clone(true, true);
     sponsorPanel.remove();
-    $("#sponsor-pinned").html("").append(cloned).show();
+
+    $("#sponsor-checkbox").html("").append(cloned);
+
+    $("#sponsor-pinned").show();
+    $("#sponsor-slider").html(`
+    <div style="
+        font-size:11px;
+        font-weight:600;
+        margin-top:2px;
+        margin-bottom:6px;
+        color:#2471a3;
+    ">
+        Explore how your contribution created impact over time.
+    </div>
+
+    <button id="toggleTimeline" style="
+        width:100%;
+        padding:6px;
+        background:#2471a3;
+        color:white;
+        border:none;
+        border-radius:4px;
+        cursor:pointer;
+        font-size:12px;
+        font-weight:600;
+    ">
+        Show Impact Over Time 
+    </button>
+`);
+    if (global_slum_id) {
+        fetch(`/component/household-month-dates/?slum_id=${global_slum_id}`)
+            .then(res => res.json())
+            .then(data => {
+                TIMELINE_DATA = groupByYear(data.monthly_data);
+                TIMELINE_YEARS = Object.keys(TIMELINE_DATA).sort((a, b) => a - b);
+                CURRENT_INDEX = -1;
+                renderMapTimeline(); // renders into #map-timeline (hidden)
+            });
+    }
 }
+
+
+// ============================================================
+// Sponsor slider 
+// ============================================================
+let _timelineLayers = [];
+
+
+
+
+// ================= GROUP DATA =================
+function groupByYear(data) {
+
+    const result = {};
+
+    data.forEach(item => {
+        const year = new Date(item.month_end_date).getFullYear();
+        if (!result[year]) result[year] = [];
+        result[year].push(item);
+    });
+
+    return result;
+}
+
+
+// ================= BUILD MONTH GROUPS =================
+function buildMonthGroups(year) {
+
+    let months = TIMELINE_DATA[year] || [];
+    if (months.length === 0) return [];
+
+    let midIndex = Math.floor(months.length / 2);
+    let total = months.slice(0, midIndex + 1)
+        .reduce((sum, m) => sum + m.total, 0);
+
+    return [{
+        label: `Mid ${year}`,
+        total: total,
+        groupIndex: 0,
+        year: year,
+        endMonthIndex: midIndex
+    }];
+}
+
+
+// ================= RENDER =================
+function renderMapTimeline() {
+
+    let html = "";
+    let totalYears = TIMELINE_YEARS.length;
+
+    TIMELINE_YEARS.forEach((year, i) => {
+
+        let isActive = i === CURRENT_INDEX;
+        let isLastYear = i === totalYears - 1;
+        let isFirstYear = i === 0;
+
+        // ✅ FIRST YEAR — if data starts in second half, show Mid BEFORE year pill
+        if (isFirstYear) {
+
+            let months = TIMELINE_DATA[year] || [];
+
+            if (months.length > 0) {
+
+                let firstDate = new Date(months[0].month_end_date);
+                let firstMonthNum = firstDate.getMonth(); // 0=Jan 11=Dec
+
+                if (firstMonthNum >= 6) {
+
+                    let midEndIndex = Math.floor(months.length / 2);
+                    let midTotal = months.slice(0, midEndIndex + 1)
+                        .reduce((sum, m) => sum + m.total, 0);
+
+                    html += `
+                        <span class="timeline-month"
+                              data-year="${year}"
+                              data-group-index="0"
+                              data-end-month-index="${midEndIndex}">
+                            Mid ${year}
+                            <small>${midTotal}</small>
+                        </span>
+                        <span class="timeline-dash">—</span>
+                    `;
+                }
+            }
+        }
+
+        // ✅ YEAR PILL
+        html += `
+            <span class="timeline-year ${isActive ? 'active-year' : ''}"
+                  data-year="${year}"
+                  data-index="${i}">
+                ${year}
+                <small>${isActive ? '▲' : '▼'}</small>
+            </span>
+            <span class="timeline-dash">—</span>
+        `;
+
+        // ✅ MID PILL — only between years, not after last year
+        if (isActive && !isLastYear) {
+
+            let monthGroups = buildMonthGroups(year);
+
+            monthGroups.forEach(g => {
+                html += `
+                    <span class="timeline-month"
+                          data-year="${g.year}"
+                          data-group-index="${g.groupIndex}"
+                          data-end-month-index="${g.endMonthIndex}">
+                        ${g.label}
+                        <small>${g.total}</small>
+                    </span>
+                    <span class="timeline-dash">—</span>
+                `;
+            });
+        }
+
+        // ✅ LAST YEAR — if ongoing year and past July, show Mid as endpoint
+        if (isLastYear) {
+
+            let months = TIMELINE_DATA[year] || [];
+
+            if (months.length > 0) {
+
+                let lastDate = new Date(months[months.length - 1].month_end_date);
+                let lastMonth = lastDate.getMonth();
+
+                let midEndIndex = Math.floor(months.length / 2);
+                let midTotal = months.slice(0, midEndIndex + 1)
+                    .reduce((sum, m) => sum + m.total, 0);
+
+                let fullTotal = months
+                    .reduce((sum, m) => sum + m.total, 0);
+
+                // ✅ BEFORE JULY → show MID
+                if (lastMonth <= 5) {
+                    html += `
+                <span class="timeline-month"
+                      data-year="${year}"
+                      data-group-index="0"
+                      data-end-month-index="${midEndIndex}">
+                    Mid ${year}
+                    <small>${midTotal}</small>
+                </span>
+                <span class="timeline-dash">—</span>
+            `;
+                }
+
+                // ✅ AFTER JUNE → show END
+                else {
+                    html += `
+                <span class="timeline-month"
+                      data-year="${year}"
+                      data-group-index="1"
+                      data-end-month-index="${months.length - 1}">
+                    End ${year}
+                    <small>${fullTotal}</small>
+                </span>
+                <span class="timeline-dash">—</span>
+            `;
+                }
+            }
+        }
+    });
+
+    $("#map-timeline").html(html);
+}
+
+
+// ================= COLLECT HOUSES TILL YEAR =================
+function collectHousesTillYear(yearIndex) {
+
+    let houseList = [];
+
+    for (let i = 0; i <= yearIndex; i++) {
+        let y = TIMELINE_YEARS[i];
+        TIMELINE_DATA[y].forEach(m => {
+            houseList.push(...m.house_numbers);
+        });
+    }
+
+    return houseList;
+}
+
+
+// ================= COLLECT HOUSES TILL MONTH GROUP =================
+function collectHousesTillMonthGroup(year, endMonthIndex) {
+
+    let collected = [];
+    let yearIndex = TIMELINE_YEARS.indexOf(String(year));
+
+    for (let i = 0; i < yearIndex; i++) {
+        let y = TIMELINE_YEARS[i];
+        TIMELINE_DATA[y].forEach(m => {
+            collected.push(...m.house_numbers);
+        });
+    }
+
+    let months = TIMELINE_DATA[year] || [];
+    for (let i = 0; i <= endMonthIndex; i++) {
+        if (months[i]) collected.push(...months[i].house_numbers);
+    }
+
+    return collected;
+}
+
+
+// ================= YEAR CLICK =================
+$(document).off("click", ".timeline-year").on("click", ".timeline-year", function () {
+
+    let year = String($(this).data("year"));
+    let index = parseInt($(this).data("index"));
+
+    if (CURRENT_INDEX === index) {
+
+        CURRENT_INDEX = -1;
+
+        if (index <= 1) {
+            clearTimelineLayers();
+        } else {
+            let h = collectHousesTillYear(index - 2);
+            highlightMultipleHouses(h);
+        }
+
+    } else {
+
+        CURRENT_INDEX = index;
+
+        if (index === 0) {
+            clearTimelineLayers();
+        } else {
+            let h = collectHousesTillYear(index - 1);
+            highlightMultipleHouses(h);
+        }
+    }
+
+    renderMapTimeline();
+});
+
+
+// ================= MONTH CLICK =================
+$(document).off("click", ".timeline-month").on("click", ".timeline-month", function () {
+
+    $(".timeline-month").removeClass("active");
+    $(this).addClass("active");
+
+    let year = String($(this).data("year"));
+    let endMonthIndex = parseInt($(this).data("end-month-index"));
+
+    let collected = collectHousesTillMonthGroup(year, endMonthIndex);
+    highlightMultipleHouses(collected);
+});
+
+
+// ================= MAP HIGHLIGHT =================
+function highlightMultipleHouses(houseList) {
+
+    clearTimelineLayers();
+
+    let filter_houses = [];
+
+    houseList.forEach(function (houseNo) {
+        if (houseNo in houses) {
+            filter_houses.push(houses[houseNo]);
+        }
+    });
+
+    if (filter_houses.length === 0) return;
+
+    let layer = L.geoJson(filter_houses, {
+        style: {
+            color: "#000000",
+            opacity: 0.7,
+            weight: 0.25,
+            fillColor: "#eb349e",
+            fillOpacity: 2
+        },
+        onEachFeature: function (feature, layer) {
+            if (feature.properties && feature.properties.name) {
+                let name = feature.properties.name;
+                layer.bindPopup("House: " + name, { autoPan: true });
+                layer.on('mouseover', function () { this.openPopup(); });
+                layer.on('mouseout', function () { this.closePopup(); });
+                layer.on('click', function () { household_details(name); });
+            }
+        }
+    });
+
+    layer.addTo(map);
+    _timelineLayers.push(layer);
+}
+
+
+// ================= CLEAR TIMELINE LAYERS =================
+function clearTimelineLayers() {
+
+    _timelineLayers.forEach(function (layer) {
+        map.removeLayer(layer);
+    });
+
+    _timelineLayers = [];
+}
+
+
+// ================= TOGGLE BUTTON =================
+$(document).off("click", "#toggleTimeline").on("click", "#toggleTimeline", function () {
+    let container = $("#map-timeline-container");
+
+    if (container.is(":visible")) {
+        container.hide();
+        $(this).text("Show Impact Over Time");
+        clearTimelineLayers();
+        CURRENT_INDEX = -1;
+    } else {
+        // Data already loaded — just show
+        container.show();
+        $(this).text("Hide Impact Over Time");
+    }
+});
+
+
+// ================= STRUCTURE CHECKBOX WATCH =================
+$(document).off("click.structureWatch", '[name=chk1]')
+    .on("click.structureWatch", '[name=chk1]', function () {
+
+        if ($(this).val() === 'Structure' && !$(this).is(':checked')) {
+
+            let container = $("#map-timeline-container");
+
+            if (container.is(":visible")) {
+                container.hide();
+                $("#toggleTimeline").text("Show Timeline");
+                clearTimelineLayers();
+                CURRENT_INDEX = -1;
+            }
+        }
+    });
+
+
