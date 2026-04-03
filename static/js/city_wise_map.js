@@ -44,6 +44,26 @@ let TIMELINE_YEARS = [];
 let TIMELINE_DATA = {};
 let CURRENT_INDEX = 0;
 
+// ================= SLIDER STATE =================
+// _sliderStops is a flat ordered array of timeline positions.
+// The slider runs 0–100 (continuous) and maps to a stop index via
+// Math.round so the thumb glides smoothly instead of snapping.
+let _sliderStops = [];
+let _currentStopIndex = 0;
+
+// Map a continuous 0-100 slider value to a stop index
+function _sliderValToStopIndex(val) {
+    if (_sliderStops.length <= 1) return 0;
+    var ratio = val / 100;
+    return Math.round(ratio * (_sliderStops.length - 1));
+}
+
+// Map a stop index back to a 0-100 slider value
+function _stopIndexToSliderVal(idx) {
+    if (_sliderStops.length <= 1) return 0;
+    return Math.round((idx / (_sliderStops.length - 1)) * 100);
+}
+
 //Parser to Initiates the objects depending on admin, elect, slum
 var Parser = (function () {
     function Parser(index, data) {
@@ -170,7 +190,7 @@ function readJSONFile(filePath, callback, param1, param2) {
     return fetch(filePath)
         .then(response => response.json())
         .then(data => {
-            callback(data, param1, param2);  // Assign the JSON response to a global variable
+            callback(data, param1, param2);
         })
         .catch(error => {
             console.error('Error fetching JSON data:', error);
@@ -187,7 +207,6 @@ function slum_data_fetch(slumId) {
         window._householdHighlight = null;
     }
 
-    // Render refresh button in right panel
     // Render refresh button in right panel
     let compochk_refresh = $("#compochk_refresh");
 
@@ -222,12 +241,12 @@ function slum_data_fetch(slumId) {
                 </div>
             `);
             } else {
-                compochk_refresh.html(""); // ❌ hide if no permission
+                compochk_refresh.html(""); // hide if no permission
             }
 
         })
         .catch(err => {
-            compochk_refresh.html(""); // fail safe → hide
+            compochk_refresh.html(""); // fail safe -> hide
         });
 
     // Show confirm box below button
@@ -249,7 +268,7 @@ function slum_data_fetch(slumId) {
         }
     });
 
-    // Yes — do the refresh
+    // Yes - do the refresh
     $(document).off("click", "#refreshConfirmYes").on("click", "#refreshConfirmYes", function (e) {
         e.stopPropagation();
         $("#refreshConfirmBox").removeClass("show");
@@ -307,6 +326,7 @@ function slum_data_fetch(slumId) {
             }
         });
     });
+
     // Initial load
     let compochk = $("#compochk");
     compochk.html('<div style="height:300px;width:100%;display:flex;align-items:center;justify-content:center;"><div id="loading-img"></div></div>');
@@ -376,7 +396,7 @@ function generate_RIM(result) {
                     keys_headers1 = Object.keys(v[j]);
                     keys_headers2 = keys_headers2.concat(keys_headers1);
                 }
-                // Removing duplicates from  all keys_headers2 which available in toilet data.
+                // Removing duplicates from all keys_headers2 which available in toilet data.
                 function removeDuplicates(arr) {
                     return arr.filter((item,
                         index) => arr.indexOf(item) === index);
@@ -417,6 +437,7 @@ function generate_RIM(result) {
         $("div.panel-collapse[name='" + modelsection[k] + "']").prepend('<div name="div_group" >' + '&nbsp;&nbsp;&nbsp;' + '<span><a style="cursor:pointer;color:darkred;" data-toggle="modal" data-target="#' + k + '">View Tabular Data</a><span>' + '</div>');
     });
 }
+
 // Generates right filter
 function generate_filter(globalJsonData, slumID, result) {
     let compochk = $("#compochk");
@@ -483,7 +504,7 @@ function generate_filter(globalJsonData, slumID, result) {
         }
 
     }, 300); // small delay to ensure DOM is ready
-    // ← ADD THIS
+
     setTimeout(function () {
         pinSponsorToBottom();
     }, 400);
@@ -493,12 +514,7 @@ function generate_filter(globalJsonData, slumID, result) {
 
 //Event handler for checkbox selection for the filter ON / OFF
 function checkSingleGroup(singlechk) {
-    /*if(arr_poly_disp.length > 0){
-        arr_poly_disp[0].setMap(null);
-        arr_poly_disp = [];
-    } */
     $.each(arr_poly_disp, function (k, v) {
-        //v.setMap(null);
         map.removeLayer(v.shape);
     });
 
@@ -515,7 +531,6 @@ function checkSingleGroup(singlechk) {
     if ($(singlechk).parent().parent().parent().find('[name=chk1]:checked').length > 0)
         flag = true;
     $(singlechk).parent().parent().parent().find('[name=grpchk]')[0].checked = flag;
-    //    map.setZoom(l+1);
 }
 
 // ============================================================
@@ -620,7 +635,6 @@ function initHouseholdSearch() {
 
 // Focus the map on a given house number
 function focusHouseOnMap(houseNo) {
-    // Try both string and number lookup
     var shape = houses[houseNo] || houses[parseInt(houseNo)] || houses[String(houseNo)];
 
     if (!houses || !shape) {
@@ -629,7 +643,6 @@ function focusHouseOnMap(houseNo) {
     }
 
     try {
-        // Draw a temporary highlight layer
         var highlightStyle = {
             color: '#FFD700',
             weight: 4,
@@ -654,7 +667,6 @@ function focusHouseOnMap(houseNo) {
         var highlightLayer = L.geoJson(shape, {
             style: highlightStyle,
             onEachFeature: function (feature, layer) {
-                // Show house number on hover
                 layer.bindPopup('House: ' + houseNo, { autoPan: true });
 
                 layer.on('mouseover', function () {
@@ -664,7 +676,6 @@ function focusHouseOnMap(houseNo) {
                     this.closePopup();
                 });
 
-                // Show household details on click
                 layer.on('click', function () {
                     household_details(houseNo);
                 });
@@ -684,7 +695,6 @@ function focusHouseOnMap(houseNo) {
         if (bounds.isValid()) {
             map.fitBounds(bounds, { maxZoom: 19, padding: [40, 40] });
         } else {
-            // Fallback for Point geometry
             var coords = shape.coordinates;
             if (coords) {
                 var latlng;
@@ -696,8 +706,6 @@ function focusHouseOnMap(houseNo) {
                 if (latlng) map.setView(latlng, 19);
             }
         }
-
-        // highlight stays until next search or Structure checkbox interaction
 
     } catch (err) {
         console.error('Error focusing house on map:', err);
@@ -740,7 +748,6 @@ function checkAllGroup(grpchk) {
 }
 
 
-
 function pinSponsorToBottom() {
 
     var sponsorPanel = null;
@@ -772,13 +779,13 @@ function pinSponsorToBottom() {
         });
     }
 
-    // ❌ Not found
+    // Not found
     if (!sponsorPanel || sponsorPanel.length === 0) {
         $("#sponsor-pinned").hide();
         return;
     }
 
-    // ✅ MOVE ONLY TO sponsor-checkbox
+    // Move to sponsor-checkbox
     var cloned = sponsorPanel.clone(true, true);
     sponsorPanel.remove();
 
@@ -810,6 +817,7 @@ function pinSponsorToBottom() {
         Show Impact Over Time 
     </button>
 `);
+
     if (global_slum_id) {
         fetch(`/component/household-month-dates/?slum_id=${global_slum_id}`)
             .then(res => res.json())
@@ -817,38 +825,228 @@ function pinSponsorToBottom() {
                 TIMELINE_DATA = groupByYear(data.monthly_data);
                 TIMELINE_YEARS = Object.keys(TIMELINE_DATA).sort((a, b) => a - b);
                 CURRENT_INDEX = -1;
-                renderMapTimeline(); // renders into #map-timeline (hidden)
+
+                // Build flat stop list for slider
+                _sliderStops = buildSliderStops();
+                _currentStopIndex = 0;
+
+                // Slider runs 0-100 (continuous) for smooth glide;
+                // stop index is derived via _sliderValToStopIndex()
+                var slider = document.getElementById('timelineSlider');
+                if (slider) {
+                    slider.min = 0;
+                    slider.max = 100;
+                    slider.step = 1;
+                    slider.value = 0;
+                }
+                var readout = document.getElementById('sliderReadout');
+                if (readout) readout.textContent = 'Start';
+
+                // Update the static "End" label on the slider to show the last stop name
+                var endLabel = document.getElementById('sliderEndLabel');
+                if (endLabel && _sliderStops.length > 0) {
+                    endLabel.textContent = _sliderStops[_sliderStops.length - 1].label;
+                }
+
+                renderMapTimeline();
             });
     }
 }
 
 
 // ============================================================
-// Sponsor slider 
+// Sponsor slider
 // ============================================================
 let _timelineLayers = [];
 
 
-
-
 // ================= GROUP DATA =================
 function groupByYear(data) {
-
     const result = {};
-
     data.forEach(item => {
         const year = new Date(item.month_end_date).getFullYear();
         if (!result[year]) result[year] = [];
         result[year].push(item);
     });
-
     return result;
 }
 
 
-// ================= BUILD MONTH GROUPS =================
-function buildMonthGroups(year) {
+// ================= BUILD SLIDER STOPS =================
+// Handles all 3 cases for the last year's data endpoint:
+//
+//  Case A — last month <= May (ends first half):
+//    stops: ... [mid YN] [YN]
+//    YN stop = mid data only. No year pill shown for it. Slider far-right = YN (mid).
+//    (The "mid" stop IS the rightmost stop; the year stop holds mid data.)
+//
+//  Case B — last month Jun–Nov (ends second half, not Dec):
+//    stops: ... [mid YN] [YN] [end YN]
+//    YN = full year data shown as year pill. end = same data, shown as "End YYYY" pill.
+//    Slider far-right = end.
+//
+//  Case C — last month = Dec (complete year):
+//    stops: ... [mid YN] [YN]
+//    YN = full year. No extra end stop. Slider far-right = YN.
+//
+// For non-last years: mid stop before each year (except first), year stop = all months.
+function buildSliderStops() {
+    const stops = [];
+    stops.push({ type: 'start', label: 'Start', yearIndex: -1, endMonthIndex: -1 });
 
+    const totalYears = TIMELINE_YEARS.length;
+
+    TIMELINE_YEARS.forEach((year, yi) => {
+        const months = TIMELINE_DATA[year] || [];
+        const midIdx = Math.floor(months.length / 2);
+        const midTotal = months.slice(0, midIdx + 1).reduce((s, m) => s + m.total, 0);
+        const fullTotal = months.reduce((s, m) => s + m.total, 0);
+        const isLastYear = yi === totalYears - 1;
+
+        if (isLastYear && months.length > 0) {
+            const lastDate = new Date(months[months.length - 1].month_end_date);
+            const lastMonth = lastDate.getMonth(); // 0=Jan … 11=Dec
+
+            if (lastMonth <= 5) {
+                // Case A: data ends in first half — year pill represents mid data
+                // Mid stop inserted before year (skip for first year)
+                if (yi > 0) {
+                    stops.push({
+                        type: 'mid',
+                        label: 'Mid ' + year,
+                        year,
+                        yearIndex: yi,
+                        endMonthIndex: midIdx,
+                        total: midTotal
+                    });
+                }
+                // Year stop holds mid-point data (first-half endpoint)
+                stops.push({
+                    type: 'year',
+                    label: String(year),
+                    year,
+                    yearIndex: yi,
+                    endMonthIndex: midIdx,
+                    total: midTotal,
+                    isMidOnly: true   // flag so renderMapTimeline shows it as Mid pill
+                });
+
+            } else if (lastMonth <= 10) {
+                // Case B: data ends second half but not December — add End stop after year
+                if (yi > 0) {
+                    stops.push({
+                        type: 'mid',
+                        label: 'Mid ' + year,
+                        year,
+                        yearIndex: yi,
+                        endMonthIndex: midIdx,
+                        total: midTotal
+                    });
+                }
+                stops.push({
+                    type: 'year',
+                    label: String(year),
+                    year,
+                    yearIndex: yi,
+                    endMonthIndex: months.length - 1,
+                    total: fullTotal
+                });
+                stops.push({
+                    type: 'end',
+                    label: 'End ' + year,
+                    year,
+                    yearIndex: yi,
+                    endMonthIndex: months.length - 1,
+                    total: fullTotal
+                });
+
+            } else {
+                // Case C: complete year (December) — year stop is the terminus
+                if (yi > 0) {
+                    stops.push({
+                        type: 'mid',
+                        label: 'Mid ' + year,
+                        year,
+                        yearIndex: yi,
+                        endMonthIndex: midIdx,
+                        total: midTotal
+                    });
+                }
+                stops.push({
+                    type: 'year',
+                    label: String(year),
+                    year,
+                    yearIndex: yi,
+                    endMonthIndex: months.length - 1,
+                    total: fullTotal
+                });
+            }
+
+        } else {
+            // Non-last year: standard mid + year stops
+            if (yi > 0) {
+                stops.push({
+                    type: 'mid',
+                    label: 'Mid ' + year,
+                    year,
+                    yearIndex: yi,
+                    endMonthIndex: midIdx,
+                    total: midTotal
+                });
+            }
+            stops.push({
+                type: 'year',
+                label: String(year),
+                year,
+                yearIndex: yi,
+                endMonthIndex: months.length - 1,
+                total: fullTotal
+            });
+        }
+    });
+
+    return stops;
+}
+
+
+// ================= GO TO STOP (single source of truth) =================
+// ALL navigation — slider drag OR pill click — flows through here.
+// This guarantees slider thumb, pill active states, and map highlights
+// are always in sync regardless of which control was used.
+function goToTimelineStop(stopIndex, source) {
+    _currentStopIndex = stopIndex;
+    const stop = _sliderStops[stopIndex];
+
+    // Sync slider thumb — convert stop index back to 0-100 range
+    // but only when the call came from a pill click (not from the slider itself,
+    // to avoid fighting the thumb position while dragging)
+    if (source !== 'slider') {
+        var slider = document.getElementById('timelineSlider');
+        if (slider) slider.value = _stopIndexToSliderVal(stopIndex);
+    }
+
+    // Sync text readout beside slider
+    var readout = document.getElementById('sliderReadout');
+    if (readout) readout.textContent = stop ? stop.label : '—';
+
+    // Update map highlights
+    if (!stop || stop.type === 'start') {
+        clearTimelineLayers();
+        CURRENT_INDEX = -1;
+    } else {
+        var houseList = collectHousesTillMonthGroup(stop.year, stop.endMonthIndex);
+        highlightMultipleHouses(houseList);
+        // Keep legacy CURRENT_INDEX in sync
+        CURRENT_INDEX = stop.yearIndex;
+    }
+
+    // Re-render pills so active CSS classes update
+    renderMapTimeline();
+}
+
+
+// ================= BUILD MONTH GROUPS (legacy helper, kept for compatibility) =================
+function buildMonthGroups(year) {
     let months = TIMELINE_DATA[year] || [];
     if (months.length === 0) return [];
 
@@ -866,122 +1064,110 @@ function buildMonthGroups(year) {
 }
 
 
-// ================= RENDER =================
+// ================= RENDER TIMELINE PILLS =================
+// Rules:
+//  - Year pills are always visible for all years.
+//  - Mid pill between years: only visible when that year is the active stop's year.
+//  - Last year terminus pill (Mid YYYY or End YYYY):
+//      * Case A (isMidOnly): last year's year stop IS the mid data.
+//        Show "Mid YYYY" pill label for the year pill itself (handled via isMidOnly flag).
+//        No extra terminus pill needed.
+//      * Case B (end stop exists): show "End YYYY" pill after last year pill,
+//        visible when last year pill OR end stop is active.
+//      * Case C (complete year): no terminus pill.
 function renderMapTimeline() {
-
     let html = "";
     let totalYears = TIMELINE_YEARS.length;
 
+    const activeStop = _sliderStops[_currentStopIndex] || null;
+    const activeYearStr = activeStop ? String(activeStop.year) : null;
+
+    // Find end stop once (may be -1 if not present)
+    const endStopIdx = _sliderStops.findIndex(s => s.type === 'end');
+
     TIMELINE_YEARS.forEach((year, i) => {
+        const isLastYear = i === totalYears - 1;
+        const isFirstYear = i === 0;
+        const months = TIMELINE_DATA[year] || [];
+        const isThisYearActive = activeYearStr === String(year);
 
-        let isActive = i === CURRENT_INDEX;
-        let isLastYear = i === totalYears - 1;
-        let isFirstYear = i === 0;
+        // Find this year's stop objects
+        const yearStopIdx = _sliderStops.findIndex(
+            s => s.type === 'year' && String(s.year) === String(year)
+        );
+        const yearStop = yearStopIdx !== -1 ? _sliderStops[yearStopIdx] : null;
+        const midStopIdx = _sliderStops.findIndex(
+            s => s.type === 'mid' && String(s.year) === String(year)
+        );
 
-        // ✅ FIRST YEAR — if data starts in second half, show Mid BEFORE year pill
-        if (isFirstYear) {
-
-            let months = TIMELINE_DATA[year] || [];
-
-            if (months.length > 0) {
-
-                let firstDate = new Date(months[0].month_end_date);
-                let firstMonthNum = firstDate.getMonth(); // 0=Jan 11=Dec
-
-                if (firstMonthNum >= 6) {
-
-                    let midEndIndex = Math.floor(months.length / 2);
-                    let midTotal = months.slice(0, midEndIndex + 1)
-                        .reduce((sum, m) => sum + m.total, 0);
-
-                    html += `
-                        <span class="timeline-month"
-                              data-year="${year}"
-                              data-group-index="0"
-                              data-end-month-index="${midEndIndex}">
-                            Mid ${year}
-                            <small>${midTotal}</small>
-                        </span>
-                        <span class="timeline-dash">—</span>
-                    `;
-                }
-            }
-        }
-
-        // ✅ YEAR PILL
-        html += `
-            <span class="timeline-year ${isActive ? 'active-year' : ''}"
-                  data-year="${year}"
-                  data-index="${i}">
-                ${year}
-                <small>${isActive ? '▲' : '▼'}</small>
-            </span>
-            <span class="timeline-dash">—</span>
-        `;
-
-        // ✅ MID PILL — only between years, not after last year
-        if (isActive && !isLastYear) {
-
-            let monthGroups = buildMonthGroups(year);
-
-            monthGroups.forEach(g => {
+        // ── Mid pill (between years) ──────────────────────────────────────
+        // Show only when this year is active, not for first year
+        if (!isFirstYear && isThisYearActive && months.length > 0) {
+            if (midStopIdx !== -1) {
+                const midStop = _sliderStops[midStopIdx];
+                const isActive = _currentStopIndex === midStopIdx;
                 html += `
-                    <span class="timeline-month"
-                          data-year="${g.year}"
-                          data-group-index="${g.groupIndex}"
-                          data-end-month-index="${g.endMonthIndex}">
-                        ${g.label}
-                        <small>${g.total}</small>
+                    <span class="timeline-month${isActive ? ' active' : ''}"
+                          data-stop="${midStopIdx}"
+                          data-year="${year}">
+                        Mid ${year}
+                        <small>${midStop.total}</small>
                     </span>
                     <span class="timeline-dash">—</span>
                 `;
-            });
+            }
         }
 
-        // ✅ LAST YEAR — if ongoing year and past July, show Mid as endpoint
-        if (isLastYear) {
+        // ── Year pill ─────────────────────────────────────────────────────
+        // For Case A (isMidOnly), show as "Mid YYYY" styled as year pill
+        const isActiveYear = _currentStopIndex === yearStopIdx;
+        const isMidOnly = yearStop && yearStop.isMidOnly;
 
-            let months = TIMELINE_DATA[year] || [];
-
-            if (months.length > 0) {
-
-                let lastDate = new Date(months[months.length - 1].month_end_date);
-                let lastMonth = lastDate.getMonth();
-
-                let midEndIndex = Math.floor(months.length / 2);
-                let midTotal = months.slice(0, midEndIndex + 1)
-                    .reduce((sum, m) => sum + m.total, 0);
-
-                let fullTotal = months
-                    .reduce((sum, m) => sum + m.total, 0);
-
-                // ✅ BEFORE JULY → show MID
-                if (lastMonth <= 5) {
-                    html += `
-                <span class="timeline-month"
+        if (isMidOnly) {
+            // Last year, data ends first half — render year pill labeled as Mid
+            html += `
+                <span class="timeline-year${isActiveYear ? ' active-year' : ''}"
+                      data-stop="${yearStopIdx}"
                       data-year="${year}"
-                      data-group-index="0"
-                      data-end-month-index="${midEndIndex}">
+                      data-index="${i}">
                     Mid ${year}
-                    <small>${midTotal}</small>
+                    <small>${isActiveYear ? '▲' : '▼'}</small>
                 </span>
                 <span class="timeline-dash">—</span>
             `;
-                }
-
-                // ✅ AFTER JUNE → show END
-                else {
-                    html += `
-                <span class="timeline-month"
+        } else {
+            html += `
+                <span class="timeline-year${isActiveYear ? ' active-year' : ''}"
+                      data-stop="${yearStopIdx}"
                       data-year="${year}"
-                      data-group-index="1"
-                      data-end-month-index="${months.length - 1}">
-                    End ${year}
-                    <small>${fullTotal}</small>
+                      data-index="${i}">
+                    ${year}
+                    <small>${isActiveYear ? '▲' : '▼'}</small>
                 </span>
                 <span class="timeline-dash">—</span>
             `;
-                }
+        }
+
+        // ── Last year terminus pill (Case B only) ─────────────────────────
+        // "End YYYY" pill appears after the last year pill when endStopIdx exists.
+        // Visible when either the year stop or the end stop is active.
+        if (isLastYear && endStopIdx !== -1) {
+            const terminusVisible = (
+                _currentStopIndex === yearStopIdx ||
+                _currentStopIndex === endStopIdx
+            );
+            if (terminusVisible) {
+                const endStop = _sliderStops[endStopIdx];
+                const isActive = _currentStopIndex === endStopIdx;
+                html += `
+                    <span class="timeline-month${isActive ? ' active' : ''}"
+                          data-stop="${endStopIdx}"
+                          data-year="${year}">
+                        End ${year}
+                        <small>${endStop.total}</small>
+                    </span>
+                    <span class="timeline-dash">—</span>
+                `;
             }
         }
     });
@@ -992,7 +1178,6 @@ function renderMapTimeline() {
 
 // ================= COLLECT HOUSES TILL YEAR =================
 function collectHousesTillYear(yearIndex) {
-
     let houseList = [];
 
     for (let i = 0; i <= yearIndex; i++) {
@@ -1008,7 +1193,6 @@ function collectHousesTillYear(yearIndex) {
 
 // ================= COLLECT HOUSES TILL MONTH GROUP =================
 function collectHousesTillMonthGroup(year, endMonthIndex) {
-
     let collected = [];
     let yearIndex = TIMELINE_YEARS.indexOf(String(year));
 
@@ -1028,56 +1212,29 @@ function collectHousesTillMonthGroup(year, endMonthIndex) {
 }
 
 
-// ================= YEAR CLICK =================
-$(document).off("click", ".timeline-year").on("click", ".timeline-year", function () {
-
-    let year = String($(this).data("year"));
-    let index = parseInt($(this).data("index"));
-
-    if (CURRENT_INDEX === index) {
-
-        CURRENT_INDEX = -1;
-
-        if (index <= 1) {
-            clearTimelineLayers();
-        } else {
-            let h = collectHousesTillYear(index - 2);
-            highlightMultipleHouses(h);
+// ================= UNIFIED PILL CLICK HANDLER =================
+// Handles clicks on both .timeline-year and .timeline-month pills.
+// Routes through goToTimelineStop so slider stays in sync.
+$(document).off("click", ".timeline-year, .timeline-month")
+    .on("click", ".timeline-year, .timeline-month", function () {
+        var stopIdx = parseInt($(this).data("stop"));
+        if (!isNaN(stopIdx)) {
+            goToTimelineStop(stopIdx, 'pill');
         }
-
-    } else {
-
-        CURRENT_INDEX = index;
-
-        if (index === 0) {
-            clearTimelineLayers();
-        } else {
-            let h = collectHousesTillYear(index - 1);
-            highlightMultipleHouses(h);
-        }
-    }
-
-    renderMapTimeline();
-});
+    });
 
 
-// ================= MONTH CLICK =================
-$(document).off("click", ".timeline-month").on("click", ".timeline-month", function () {
-
-    $(".timeline-month").removeClass("active");
-    $(this).addClass("active");
-
-    let year = String($(this).data("year"));
-    let endMonthIndex = parseInt($(this).data("end-month-index"));
-
-    let collected = collectHousesTillMonthGroup(year, endMonthIndex);
-    highlightMultipleHouses(collected);
-});
+// ================= SLIDER INPUT HANDLER =================
+// Slider runs 0-100; map to nearest stop index for smooth continuous feel.
+$(document).off("input", "#timelineSlider")
+    .on("input", "#timelineSlider", function () {
+        var stopIndex = _sliderValToStopIndex(parseInt(this.value));
+        goToTimelineStop(stopIndex, 'slider');
+    });
 
 
 // ================= MAP HIGHLIGHT =================
 function highlightMultipleHouses(houseList) {
-
     clearTimelineLayers();
 
     let filter_houses = [];
@@ -1116,11 +1273,9 @@ function highlightMultipleHouses(houseList) {
 
 // ================= CLEAR TIMELINE LAYERS =================
 function clearTimelineLayers() {
-
     _timelineLayers.forEach(function (layer) {
         map.removeLayer(layer);
     });
-
     _timelineLayers = [];
 }
 
@@ -1133,9 +1288,15 @@ $(document).off("click", "#toggleTimeline").on("click", "#toggleTimeline", funct
         container.hide();
         $(this).text("Show Impact Over Time");
         clearTimelineLayers();
+        _currentStopIndex = 0;
         CURRENT_INDEX = -1;
+        // Reset slider
+        var slider = document.getElementById('timelineSlider');
+        if (slider) slider.value = 0;
+        var readout = document.getElementById('sliderReadout');
+        if (readout) readout.textContent = 'Start';
+        renderMapTimeline();
     } else {
-        // Data already loaded — just show
         container.show();
         $(this).text("Hide Impact Over Time");
     }
@@ -1147,16 +1308,20 @@ $(document).off("click.structureWatch", '[name=chk1]')
     .on("click.structureWatch", '[name=chk1]', function () {
 
         if ($(this).val() === 'Structure' && !$(this).is(':checked')) {
-
             let container = $("#map-timeline-container");
 
             if (container.is(":visible")) {
                 container.hide();
-                $("#toggleTimeline").text("Show Timeline");
+                $("#toggleTimeline").text("Show Impact Over Time");
                 clearTimelineLayers();
+                _currentStopIndex = 0;
                 CURRENT_INDEX = -1;
+                // Reset slider
+                var slider = document.getElementById('timelineSlider');
+                if (slider) slider.value = 0;
+                var readout = document.getElementById('sliderReadout');
+                if (readout) readout.textContent = 'Start';
+                renderMapTimeline();
             }
         }
     });
-
-
