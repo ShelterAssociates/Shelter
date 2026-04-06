@@ -63,6 +63,9 @@ def get_component(request, slum_id):
        Here sponsor data is fetch according to user role access rights
     '''
     slum = get_object_or_404(Slum, pk=slum_id)
+    print("Current status:", slum.current_status)
+    if slum.current_status == 'sra': return JsonResponse({"status": "sra", "data": None})
+    if slum.current_status == 'road_widening': return JsonResponse({"status": "road_widening", "data": None})
     city_name = list(Slum.objects.filter(id = slum.id).values_list('electoral_ward__administrative_ward__city__name__city_name', flat = True))[0]
     sponsor_slum_count = 0
     sponsors = []
@@ -242,7 +245,8 @@ def get_kobo_RIM_data(request, slum_id):
         slum = Slum.objects.get(pk=slum_id)
     except Slum.DoesNotExist:
         return HttpResponse(f"<h1>Slum with ID {slum_id} not found</h1>", content_type='text/html')
-
+    if slum.current_status == 'sra': return JsonResponse({"status": "sra", "data": None})
+    if slum.current_status == 'road_widening': return JsonResponse({"status": "road_widening", "data": None})
     try:
         output = get_kobo_RIM_detail(
             slum.electoral_ward.administrative_ward.city.id, 

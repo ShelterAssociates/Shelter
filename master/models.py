@@ -14,7 +14,11 @@ from django.contrib.contenttypes.fields import GenericRelation
 FACTSHEET_PHOTO="factsheet/"
 SHELTER_PHOTO="ShelterPhotos/"
 DRAINAGE_PHOTO="ShelterPhotos/FactsheetPhotos/"
-
+SLUM_STATUS_CHOICES = [
+    ('Active', 'Active'),
+	('sra', 'Gone for SRA'),
+	('road_widening', 'Gone for Road Widening'),
+]
 
 class CityReference(models.Model):
     """Worldwide City Database"""
@@ -137,7 +141,7 @@ class Slum(models.Model):
     associated_with_SA = models.BooleanField(default=False)
     odf_status = models.CharField(max_length=2048,choices=ODF_CHOICES,default=ODF_CHOICES)
     status = models.BooleanField(default=False)
-
+    current_status = models.CharField(max_length=50, choices=SLUM_STATUS_CHOICES, blank=True, null=True)
     components = GenericRelation(Component, related_query_name='component_slum',object_id_field="object_id")#Fields for reverse relationship
 
     def has_permission(self, user):

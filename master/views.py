@@ -414,6 +414,7 @@ def slummapdisplay(request,id):
 		slum_dict["factsheet"]=s.factsheet.url if s.factsheet else ''
 		slum_dict["photo"]=s.photo.url if s.photo else ''
 		slum_dict["associated"] = s.associated_with_SA
+		slum_dict["current_status"] = s.current_status
 		city_main["content"]\
 		[str(s.electoral_ward.administrative_ward.name)]["content"]\
 		[str(s.electoral_ward.name)]["content"].update({s.name : slum_dict })
