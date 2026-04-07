@@ -373,3 +373,35 @@ class drainage(models.Model):
             raise ValidationError("Max file size is %sMB" % str(megabyte_limit))
     slum_name = models.ForeignKey(Slum, on_delete=models.CASCADE)
     drainage_image = models.ImageField(upload_to=DRAINAGE_PHOTO,blank=True, null=True)
+
+def slum_photo_upload_path(instance, filename):
+    return f'slum_transformation/{instance.slum.id}/{filename}'
+
+class SlumTransformationPhoto(models.Model):
+    slum = models.ForeignKey(
+        'Slum', on_delete=models.CASCADE,
+        related_name='transformation_photos',
+        limit_choices_to={'current_status': 'sra'}
+    )
+    month_year = models.DateField(help_text="Month and year of photo e.g. 2019-06-01 (day is ignored)",null=True, blank=True)
+    photo = models.ImageField(upload_to=slum_photo_upload_path)
+    description = models.TextField(blank=True)
+    coordinates = models.JSONField(help_text='{"north": 16.6851, "south": 16.6825, "east": 74.1927, "west": 74.1887}')
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['month_year']
+    def clean(self):
+        if self.slum and self.slum.current_status != 'sra':
+            raise ValidationError(f"Only SRA slums allowed. '{self.slum}' is '{self.slum.current_status}'.")
+        if self.coordinates:
+            required = {"north", "south", "east", "west"}
+            missing = required - self.coordinates.keys()
+            if missing:
+                raise ValidationError(f"Missing keys: {missing}")
+            for k in required:
+                if not isinstance(self.coordinates[k], (int, float)):
+                    raise ValidationError(f"'{k}' must be a number. Got: {self.coordinates[k]}")
+
+    def __str__(self):
+        return f"{self.slum} — {self.month_year}"  # was self.year

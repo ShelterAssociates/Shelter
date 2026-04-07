@@ -67,6 +67,11 @@ var Breadcrumbs = (function () {
         }
         if (original == 3 && original > objBreadcrumb.val.length) {
             $("#compochk").find("input[type=checkbox][name=grpchk]:checked").click();
+            // Clean up SRA overlays
+            // Hide SRA transformation slider
+            $("#sra-timeline-container").hide();
+            if (window._sraOverlayA) { window._sraOverlayA.setMap(null); window._sraOverlayA = null; }
+            if (window._sraOverlayB) { window._sraOverlayB.setMap(null); window._sraOverlayB = null; }
             $("#compochk").html("");
             global_slum_id = 0;
             zindex = 0;

@@ -4,7 +4,7 @@
 from django.contrib import admin
 #from django.contrib.gis import admin
 from master.models import CityReference, City, \
-    AdministrativeWard, ElectoralWard, Slum, WardOfficeContact, ElectedRepresentative, Rapid_Slum_Appraisal, Survey, drainage
+    AdministrativeWard, ElectoralWard, Slum, WardOfficeContact, ElectedRepresentative, Rapid_Slum_Appraisal, Survey, drainage ,SlumTransformationPhoto
 from master.forms import CityFrom, AdministrativeWardFrom, ElectoralWardForm, SlumForm
 from django.contrib.auth.models import Group
 from django.utils.html import format_html
@@ -13,6 +13,7 @@ from django.conf.urls import include, url
 from django.http import HttpResponse
 import json
 from .kmllevelparser import KMLLevelParser
+from django import forms
 
 #Common filters for querying model depending on model type
 data_filter = {'CityReference': 'city_name__in',
@@ -356,3 +357,25 @@ admin.site.register(ElectedRepresentative, ElectedRepresentativeAdmin)
 admin.site.register(Rapid_Slum_Appraisal, RapidSlumAppraisalAdmin)
 
 admin.site.register(drainage)
+
+class SlumTransformationPhotoAdminForm(forms.ModelForm):
+    month_year = forms.DateField(
+        widget=forms.DateInput(attrs={'type': 'month'}),  # renders month/year picker in browser
+        input_formats=['%Y-%m'],
+        help_text="Pick month and year e.g. June 2019"
+    )
+    class Meta:
+        model = SlumTransformationPhoto
+        fields = '__all__'
+
+@admin.register(SlumTransformationPhoto)
+class SlumTransformationPhotoAdmin(admin.ModelAdmin):
+    form = SlumTransformationPhotoAdminForm
+    list_display  = ['slum', 'month_year', 'description']
+    list_filter   = ['month_year']
+    search_fields = ['slum__name']
+
+    def get_form(self, request, obj=None, **kwargs):
+        form = super().get_form(request, obj, **kwargs)
+        form.base_fields['slum'].queryset = Slum.objects.filter(current_status='sra')
+        return form

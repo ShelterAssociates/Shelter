@@ -171,7 +171,13 @@ function initMap() {
         map.setZoom(9);
     }
 
-    L.gridLayer.googleMutant({ type: "satellite" }).addTo(map);
+    var mutantLayer = L.gridLayer.googleMutant({ type: "satellite" });
+    mutantLayer.addTo(map);
+    map.on('layeradd', function (e) {
+        if (e.layer._mutant) {
+            window._googleMap = e.layer._mutant;
+        }
+    });
     addLegend(map);
     initMap12();
 }
@@ -228,16 +234,37 @@ function slum_data_fetch(slumId) {
         console.log("componentData:", componentData);
 
         const skipStatuses = ["inactive", "sra", "road_widening"];
-
         if (skipStatuses.includes(componentData.status)) {
             $("#filter-container").empty();
-            // Hide all right-panel UI elements — no components, search, factsheet, or sponsor
-            $("#right-panel").removeClass("active");
+            $("#right-panel").addClass("active");
             $("#factsheet-btn-slot").hide().html("");
             $("#household-search-wrapper").hide();
             $("#sponsor-pinned").hide();
             $("#compochk_refresh").html("");
-            $("#compochk").html("");
+
+            // ADD: hide all currently displayed polygons (the yellow SRA slum boundary)
+            $.each(arr_poly_disp, function (k, v) { map.removeLayer(v.shape); });
+            arr_poly_disp = [];
+
+
+            $("#compochk").html(
+                '<div style="height:300px;width:100%;display:flex;align-items:center;justify-content:center;">' +
+                '<div id="loading-img"></div></div>'
+            );
+
+            fetch("/admin/slum-transformation-photos/" + slumId)
+                .then(function (r) { return r.json(); })
+                .then(function (data) {
+                    var photosData = data[String(slumId)];
+                    if (!photosData || Object.keys(photosData).length === 0) {
+                        $("#compochk").html('<div style="padding:16px;color:#888;font-size:13px;">No transformation photos available.</div>');
+                        return;
+                    }
+                    buildTransformationSlider(slumId, photosData);
+                })
+                .catch(function () {
+                    $("#compochk").html('<div style="padding:16px;color:#888;font-size:13px;">Failed to load photos.</div>');
+                });
             return;
         }
         var visible = getQueryParam("mr");
@@ -991,3 +1018,89 @@ $(document).off("click.refreshYes", "#refreshConfirmYes")
             }
         });
     });
+
+
+/* ── SRA Transformation Slider ───────────────────────────────────────────── */
+function buildTransformationSlider(slumId, photosData) {
+    var months = Object.keys(photosData);
+    var total = months.length;
+    if (total === 0) return;
+
+    var overlayA = null;
+    var overlayB = null;
+
+    $("#right-panel").removeClass("active");
+
+    /* Build label pills */
+    var labelsHtml = months.map(function (m) {
+        return '<span style="flex:1;text-align:center;font-size:10px;">' + m + '</span>';
+    }).join('');
+
+    /* Populate top overlay container */
+    $("#sra-photo-label").text(months[0]);
+    $("#sra-photo-desc").text(photosData[months[0]].description || '');
+    $("#sra-slider").attr("max", total - 1).val(0);
+    $("#sra-slider-labels").html(labelsHtml);
+    $("#sra-timeline-container").show();
+
+    /* ── Helper: build a Leaflet imageOverlay from a month key ── */
+    function makeLeafletOverlay(month, opacity) {
+        var p = photosData[month];
+        var c = p.coordinates;
+
+        var bounds = [
+            [c.south, c.west],
+            [c.north, c.east]
+        ];
+
+        var overlay = L.imageOverlay(p.photo_url, bounds, {
+            opacity: opacity,
+            interactive: false,
+            bubblingMouseEvents: false,
+            crossOrigin: true,
+            className: 'sra-overlay-img'
+        });
+        overlay.addTo(map);
+        return overlay;
+    }
+
+    /* Fit Leaflet map to first photo bounds — tighter zoom */
+    var fc = photosData[months[0]].coordinates;
+    map.fitBounds([
+        [fc.south, fc.west],
+        [fc.north, fc.east]
+    ], { padding: [0, 0], maxZoom: 18 });
+    map.setZoom(map.getZoom() - 1);
+    /* Initial overlays */
+    overlayA = makeLeafletOverlay(months[0], 1);
+    overlayB = makeLeafletOverlay(months[Math.min(1, total - 1)], 0);
+
+    /* ── Slider crossfade ── */
+    $(document).off("input.sraSlider", "#sra-slider")
+        .on("input.sraSlider", "#sra-slider", function () {
+            var val = parseFloat(this.value);
+            var index = Math.floor(val);
+            var fraction = val - index;
+
+            var monthA = months[index];
+            var monthB = months[Math.min(index + 1, total - 1)];
+
+            /* Update label */
+            var activeMonth = fraction < 0.5 ? monthA : monthB;
+            $("#sra-photo-label").text(activeMonth);
+            $("#sra-photo-desc").text(photosData[activeMonth].description || '');
+
+            /* Remove old overlays cleanly */
+            if (overlayA) { map.removeLayer(overlayA); overlayA = null; }
+            if (overlayB) { map.removeLayer(overlayB); overlayB = null; }
+
+            /* Add new overlays at correct opacities */
+            overlayA = makeLeafletOverlay(monthA, 1 - fraction);
+            overlayB = makeLeafletOverlay(monthB, fraction);
+        });
+
+    /* ── Cleanup when leaving this slum ── */
+    /*  Store refs so slum_data_fetch / City.click can remove them */
+    window._sraOverlayA = overlayA;
+    window._sraOverlayB = overlayB;
+}

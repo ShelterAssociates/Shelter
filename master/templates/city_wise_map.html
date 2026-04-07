@@ -622,6 +622,58 @@
       border-radius: 50%;
       animation: spin 1s linear infinite;
     }
+    /* Remove Leaflet imageOverlay yellow focus outline */
+    .sra-overlay-img {
+      outline: none !important;
+      border: none !important;
+      box-shadow: none !important;
+    }
+    .leaflet-image-layer:focus {
+      outline: none !important;
+    }
+    
+    /*  ----------- SRA Timeline -----------     */
+    
+    .sra-container {
+      display: none;
+      position: absolute;
+      top: 12px;
+      right: 20px;
+      width: 760px; /* 🔥 control size here */
+      z-index: 999;
+      background: rgba(255, 255, 255, 0.96);
+      padding: 10px 16px;
+      border-radius: 14px;
+      box-shadow: 0 8px 30px rgba(0, 0, 0, 0.14);
+      border: 1px solid #e0e7ff;
+      backdrop-filter: blur(8px);
+    }
+    
+    .sra-label {
+      font-size: 12px;
+      font-weight: 700;
+      color: #2471a3;
+      margin-bottom: 4px;
+    }
+    
+    .sra-desc {
+      font-size: 11px;
+      color: #555;
+      margin-bottom: 8px;
+      line-height: 1.4;
+    }
+    
+    .sra-slider {
+      width: 100%;
+    }
+    
+    .sra-slider-labels {
+      display: flex;
+      justify-content: space-between;
+      font-size: 10px;
+      color: #888;
+      margin-top: 4px;
+    }
   </style>
 {% endblock %}
 
@@ -648,6 +700,13 @@
         <!-- Left: Map -->
         <div style="flex:0 0 75%; min-width:0; display:flex; flex-direction:column; position:relative;">
           <div id="map"></div>
+          <!-- SRA Transformation Slider — overlays top of map -->
+          <div id="sra-timeline-container" class="sra-container">
+            <div id="sra-photo-label" class="sra-label"></div>
+            <div id="sra-photo-desc" class="sra-desc"></div>
+            <input type="range" min="0" max="1" step="0.01" value="0" id="sra-slider" class="sra-slider" />
+            <div id="sra-slider-labels" class="sra-slider-labels"></div>
+          </div>
           <div id="map-timeline-container">
             <div id="map-timeline"></div>
             <div class="slider-row">

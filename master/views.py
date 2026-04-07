@@ -24,8 +24,8 @@ from django.views.decorators.clickjacking import xframe_options_exempt
 
 from master.models import Survey, CityReference, Rapid_Slum_Appraisal, \
 						  Slum, AdministrativeWard, ElectoralWard, City, \
-						  WardOfficeContact, ElectedRepresentative, drainage
-from master.forms import SurveyCreateForm, ReportForm, Rapid_Slum_AppraisalForm, DrainageForm, LoginForm
+						  WardOfficeContact, ElectedRepresentative, drainage ,SlumTransformationPhoto
+from master.forms import SurveyCreateForm, ReportForm, Rapid_Slum_AppraisalForm, DrainageForm, LoginForm 
 from sponsor.models import SponsorProjectDetails
 from django.contrib.auth import authenticate, login
 from django.contrib.auth import *
@@ -699,3 +699,18 @@ def rim_factsheet_available(request, slum_id):
     return JsonResponse({
         "available": rim_exists and slum_exists
     })
+
+def get_slum_transformation_photos(request, slum_id):
+    slum = get_object_or_404(Slum, pk=slum_id, current_status='sra')
+    photos = SlumTransformationPhoto.objects.filter(slum=slum).order_by('month_year')
+    
+    data = {}
+    for p in photos:
+        month_year_key = p.month_year.strftime("%B %Y") if p.month_year else "Unknown"
+        data[month_year_key] = {
+            "photo_url": request.build_absolute_uri(p.photo.url),
+            "description": p.description,
+            "coordinates": p.coordinates,
+        }
+
+    return JsonResponse({slum_id: data})
