@@ -1,0 +1,134 @@
+{% load static %}
+
+<style>
+	/* ================= RIM FACTSHEET HTML HEADER ================= */
+
+	.rim-header-html {
+		width: 100%;
+		height: 1.3cm;
+		background: #2f4e9b;
+		color: #ffffff;
+		font-family: Roboto, sans-serif;
+		box-sizing: border-box;
+	}
+
+	/* Full-width inside padded page */
+	.factsheet-page .rim-header-html {
+		margin-left: -0.3cm;
+		margin-right: -0.3cm;
+		padding-left: 0.3cm;
+		padding-right: 0.3cm;
+	}
+
+	/* ================= TABLE ================= */
+	.rim-table {
+		width: 100%;
+		height: 100%;
+		border-collapse: collapse;
+		table-layout: fixed;
+	}
+
+	.rim-table td {
+		vertical-align: middle;
+		box-sizing: border-box;
+	}
+
+	/* ================= COLUMNS ================= */
+	.col-logo {
+		width: 22%;
+	}
+
+	.col-center {
+		width: 40%;
+		text-align: center;
+	}
+
+	.col-right {
+		width: auto;
+		text-align: left;
+		padding-left: 2%;
+		padding-right: 3%;
+	}
+
+	/* ================= LOGO ================= */
+	.rim-logo {
+		height: 0.6cm;
+		margin-left: 10%;
+	}
+
+	/* ================= CENTER TEXT ================= */
+	.rim-title {
+		font-size: 9pt;
+		font-weight: 500;
+		line-height: 1.1;
+	}
+
+	.rim-subtitle {
+		font-size: 12pt;
+		font-weight: 900;
+		letter-spacing: 0.5px;
+	}
+
+	/* ================= RIGHT TEXT ================= */
+	.slum_name {
+		font-weight: 800;
+		margin-bottom: 0.15em;
+	}
+
+	.slum-short {
+		font-size: 9pt;
+	}
+
+	.slum-long {
+		font-size: 6pt;
+		line-height: 1.2;
+	}
+
+	.admin_ward,
+	.city_name {
+		font-size: 8pt;
+		font-weight: 400;
+		line-height: 1.25;
+	}
+
+	/* ================= SEPARATORS ================= */
+	.sep {
+		width: 0.3%;
+		background: rgba(255,255,255,0.75);
+	}
+</style>
+
+<div class="rim-header-html">
+	<table class="rim-table">
+		<tr>
+
+			<!-- LEFT : LOGO -->
+			<td class="col-logo">
+				<img
+					src="https://app.shelter-associates.org/static/images/SA%20Logo_White.png"
+					class="rim-logo"
+					alt="Shelter Associates">
+			</td>
+
+			<td class="sep"></td>
+
+			<!-- CENTER -->
+			<td class="col-center">
+				<div class="rim-title">Rapid Infrastructure Mapping</div>
+				<div class="rim-subtitle">FACTSHEET</div>
+			</td>
+
+			<td class="sep"></td>
+
+			<!-- RIGHT -->
+			<td class="col-right">
+				<div class="slum_name {% if meta_data.slum_name|length > 25 %}slum-long{% else %}slum-short{% endif %}">
+					{{ meta_data.slum_name }}
+				</div>
+				<div class="admin_ward">{{ meta_data.admin_ward }}</div>
+				<div class="city_name">{{ meta_data.city_name }}</div>
+			</td>
+
+		</tr>
+	</table>
+</div>

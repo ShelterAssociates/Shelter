@@ -1,0 +1,348 @@
+{% load static %}
+{% load tz %}
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <title>RIM Factsheet</title>
+
+    <style>
+        /* ================= PAGE ================= */
+        @page {
+            size: 14cm 15cm;
+            margin: 0.1cm;
+        }
+
+        body {
+            font-family: Roboto, sans-serif;
+            font-size: 9pt;
+            margin: 0;
+            padding: 0;
+        }
+
+        /* ================= FOOTER ================= */
+        .footer {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+        }
+
+        /* ================= SECTION ================= */
+        .section-page {
+            page-break-inside: avoid;
+            padding-top: 1.3cm;
+            /* header space */
+            padding-bottom: 1.8cm;
+            /* footer space */
+        }
+
+        .section-title {
+            font-size: 9pt;
+            font-weight: 900;
+            text-align: center;
+            text-transform: uppercase;
+            margin: 0 0 0 0;
+        }
+        .section-drainage .section-title {
+            font-size: 10pt;
+        }
+
+        .section-drainage .section-title ,
+        .section-gutter .section-title ,
+        .section-waste .section-title ,
+        .section-water .section-title {
+            margin-top: 0.08cm;
+        }
+
+        /* ================= TOP LAYOUT ================= */
+        .top-layout {
+            width: 100%;
+            border-collapse: collapse;
+            page-break-inside: avoid;
+        }
+
+        .top-layout td {
+            vertical-align: top;
+            padding: 0.3cm;
+        }
+
+        .section-general .top-layout td,
+        .section-toilet .top-layout td {
+        	padding: 0;
+        }
+        /* MAP */
+        .top-map {
+            width: auto;
+        }
+
+        .map-box {
+            width: 100%;
+            height: 6cm;
+            /* EXACT MAP HEIGHT */
+            border: 1px solid #ccc;
+            position: relative;
+        }
+
+        /* placeholder stays BELOW */
+        .map-placeholder {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: table;
+            color: #666;
+            font-size: 10pt;
+            border: 1px dashed #999;
+            z-index: 1;
+            background: #fff;
+        }
+
+        /* image comes ABOVE */
+        .map-img {
+            position: relative;
+            z-index: 2;
+            width: 100%;
+            height: 6cm;
+            object-fit: contain;
+        }
+
+        .map-placeholder {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 6cm;
+
+            display: flex;
+            align-items: center;
+            justify-content: center;
+
+            color: #666;
+            font-size: 14pt;
+            /* 👈 bigger font */
+            font-weight: 600;
+
+            border: 1px dashed #999;
+            background: #fff;
+            z-index: 1;
+        }
+
+        .map-placeholder span {
+            text-align: center;
+            letter-spacing: 0.5px;
+        }
+
+        /* PHOTOS */
+        .top-images {
+            width: 4cm;
+            /* fits 3.5cm images */
+        }
+
+        .top-images img {
+            width: 3.2cm;
+            height: 2.9cm;
+            object-fit: cover;
+            display: block;
+            margin-bottom: 0.1cm;
+            border: 1px solid #ccc;
+        }
+
+        /* ================= GREY BLOCK ================= */
+        .grey-block {
+            width: 13.5cm;
+            height: 5.5cm;
+            background: #f2f2f2;
+            margin: 0 auto;
+            /* equal margin left & right */
+            padding: 0.1cm;
+            /* INNER spacing for content */
+            box-sizing: border-box;
+            page-break-inside: avoid;
+        }
+
+        /* TABLE */
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 6pt;
+            margin-left: 0.02cm;
+        }
+
+        .section-waste .data-table,
+        .section-road .data-table,
+        .section-gutter .data-table{
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 7pt;
+            margin-left: 0.02cm;
+        }
+        .section-drainage .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 8pt;
+            margin-left: 0.02cm;
+        }
+        .data-table td {
+            border: 1px solid #ccc;
+            vertical-align: top;
+            margin-left: 0.02cm;
+        }
+        
+        /* OBSERVATION */
+        .observation-cell {
+            font-size: 6pt;
+            line-height: 1.2;
+            margin-top: 0.1cm;
+        }
+        .section-drainage .observation-cell {
+            font-size: 8pt;
+            line-height: 1.2;
+            margin-top: 0.1cm;
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- HEADER -->
+    {% include "reports/rim_factsheet/pdf/header.html" %}
+
+    <!-- FOOTER -->
+    <div class="footer">`
+        {% include "reports/rim_factsheet/pdf/footer.html" %}
+    </div>
+
+    <div class="content">
+
+        {% for section_name, section in sections.items %}
+
+        <div class="section-page section-{{ section_name|lower }}">
+
+            <div class="section-title">{{ section_name }}</div>
+
+            <!-- MAP + PHOTOS -->
+            <table class="top-layout">
+                <tr>
+
+                    {% if not section.meta.img1_ok and not section.meta.img2_ok %}
+                    <!-- MAP CENTERED (NO IMAGES) -->
+                    <td class="top-map center-map" colspan="2">
+                        <div class="map-box">
+
+                            {% if not section.meta.map_ok %}
+                            <div class="map-placeholder">
+                                <span>MAP NOT AVAILABLE</span>
+                            </div>
+                            {% endif %}
+
+                            {% if section.meta.map_ok %}
+                            {% for label, value in section.fields.items %}
+                            {% if forloop.first %}
+                            <img src="{{ value }}" class="map-img">
+                            {% endif %}
+                            {% endfor %}
+                            {% endif %}
+
+                        </div>
+                    </td>
+
+                    {% else %}
+                    <!-- NORMAL LAYOUT (MAP + IMAGES) -->
+
+                    <td class="top-map">
+                        <div class="map-box">
+
+                            {% if not section.meta.map_ok %}
+                            <div class="map-placeholder">
+                                <span>MAP NOT AVAILABLE</span>
+                            </div>
+                            {% endif %}
+
+                            {% if section.meta.map_ok %}
+                            {% for label, value in section.fields.items %}
+                            {% if forloop.first %}
+                            <img src="{{ value }}" class="map-img">
+                            {% endif %}
+                            {% endfor %}
+                            {% endif %}
+
+                        </div>
+                    </td>
+
+                    <td class="top-images">
+
+                        <!-- IMAGE 1 -->
+                        {% if section.meta.img1_ok %}
+                        {% for label, value in section.fields.items %}
+                        {% if value and "_bottom1" in label or "Photo1" in label %}
+                        <img src="{{ value }}">
+                        {% endif %}
+                        {% endfor %}
+                        {% endif %}
+
+                        <!-- IMAGE 2 -->
+                        {% if section.meta.img2_ok %}
+                        {% for label, value in section.fields.items %}
+                        {% if value and "_bottom2" in label or "Photo2" in label %}
+                        <img src="{{ value }}">
+                        {% endif %}
+                        {% endfor %}
+                        {% endif %}
+
+                    </td>
+
+                    {% endif %}
+
+                </tr>
+            </table>
+
+
+            <!-- GREY TABLE + OBSERVATION -->
+            <div class="grey-block">
+
+                <table class="data-table">
+                    <colgroup>
+                        <col style="width:45%;">
+                        <col style="width:55%;">
+                    </colgroup>
+
+                    {% for label, value in section.fields.items %}
+                    {% if value and not forloop.first and "_bottom" not in label and "_observation" not in label %}
+                    <tr>
+                        <td><strong>{{ label }}</strong></td>
+                        <td>{{ value }}</td>
+                    </tr>
+                    {% endif %}
+                    {% endfor %}
+                </table>
+
+                <div class="observation-cell">
+                    {% for label, value in section.fields.items %}
+                    {% if value and "_observation" in label %}
+                    <strong>{{ label|cut:"_observation"|upper }}</strong><br>
+                    {{ value }}
+                    {% endif %}
+                    {% endfor %}
+                </div>
+
+            </div>
+
+        </div>
+
+        {% if not forloop.last %}
+        <div style="page-break-after: always;"></div>
+        {% endif %}
+
+        {% endfor %}
+
+    </div>
+
+</body>
+
+</html>
+
+
+</html>

@@ -6,6 +6,8 @@ from django.core.exceptions import ValidationError
 from django.contrib.contenttypes.fields import GenericForeignKey
 from django.contrib.contenttypes.models import ContentType
 
+
+
 DISPLAY_TYPE_CHOICES = (
         ('M', 'Map'),
         ('T', 'Tabular'),
@@ -36,6 +38,9 @@ class Section(models.Model):
         """Section of the components"""
         verbose_name = 'Section'
         verbose_name_plural = 'Sections'
+        permissions = [
+            ("can_refresh_section", "Can refresh sections"),
+        ]
 
 class Metadata(models.Model):
     """Metadata of component and analysis"""
@@ -65,24 +70,24 @@ class Metadata(models.Model):
         verbose_name = 'Metadata'
         verbose_name_plural = 'Metadata'
 
+def get_default_slum_content_type():
+    return ContentType.objects.get(model='slum')
 # Create your models here.
 class Component(models.Model):
     """Drawable Component Database"""
     metadata = models.ForeignKey(Metadata, on_delete=models.CASCADE)
     housenumber = models.CharField(max_length=100)
     shape = models.GeometryField(srid=4326)
-    content_type = models.ForeignKey(ContentType, default=ContentType.objects.get(model='slum').id, on_delete=models.CASCADE)
-    object_id = models.PositiveIntegerField() #Fields for reverse relationship with slum and city table
-    content_object = GenericForeignKey('content_type','object_id')
+
+    content_type = models.ForeignKey(
+        ContentType,
+        on_delete=models.CASCADE,
+        default=get_default_slum_content_type
+    )
+
+    object_id = models.PositiveIntegerField()
+    content_object = GenericForeignKey('content_type', 'object_id')
 
     def __str__(self):
-        """Returns string representation of object"""
-        return self.content_type.model + ' - '+ self.metadata.name + ':'+ self.housenumber
+        return self.content_type.model + ' - ' + self.metadata.name + ':' + self.housenumber
 
-    class Meta:
-        """Metadata for class Component"""
-        permissions = (
-            ("can_upload_KML", "Can upload KML file"),
-        )
-        verbose_name = 'Component'
-        verbose_name_plural = 'Components'

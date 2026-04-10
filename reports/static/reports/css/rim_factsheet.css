@@ -1,0 +1,96 @@
+/* ================= PAGE ================= */
+@page {
+	size: A4;
+	margin: 1cm;
+}
+
+body {
+	font-family: 'Roboto', sans-serif;
+}
+
+/* ================= CARD ================= */
+.fact-card {
+	width: 5in;
+	height: 7in;
+	border: 1px solid #000;
+	box-sizing: border-box;
+	padding: 0.4cm;
+	margin-bottom: 1cm;
+	page-break-inside: avoid;
+}
+
+/* ================= HEADER ================= */
+.fact-header {
+	height: 2cm;
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	border-bottom: 1px solid #000;
+	margin-bottom: 0.3cm;
+}
+
+.section-title {
+	font-size: 14pt;
+	font-weight: bold;
+}
+
+.slum-name {
+	font-size: 10pt;
+	font-weight: bold;
+}
+
+/* ================= MAP ================= */
+.fact-map {
+	height: 6cm;
+	border: 1px solid #000;
+	margin-bottom: 0.3cm;
+}
+
+.fact-map img {
+	width: 100%;
+	height: 100%;
+	object-fit: cover;
+}
+
+/* ================= TABLE ================= */
+.fact-table {
+	width: 11.5cm;
+	height: 8cm;
+	border-collapse: collapse;
+	font-size: 9pt;
+}
+
+.fact-table td {
+	border: 1px solid #000;
+	padding: 0.2cm;
+	vertical-align: top;
+}
+
+.label-cell {
+	width: 45%;
+	font-weight: bold;
+}
+
+.value-cell {
+	width: 55%;
+}
+
+/* ================= OBSERVATION ================= */
+.fact-observation {
+	font-size: 9pt;
+	margin-top: 0.3cm;
+}
+
+/* ================= IMAGES ================= */
+.fact-images {
+	display: flex;
+	margin-top: 0.3cm;
+}
+
+.fact-images img {
+	width: 3.2cm;
+	height: 4cm;
+	object-fit: cover;
+	border: 1px solid #000;
+	margin-right: 0.2cm;
+}

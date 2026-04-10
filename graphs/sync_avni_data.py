@@ -53,18 +53,17 @@ class avni_sync():
         return slum[0], slum[1]
 
     def lastModifiedDateTime(self):
-        last_submission_date = HouseholdData.objects.latest('submission_date')
-        latest_date = last_submission_date.submission_date
-        latest_date = latest_date - timedelta(days=1)
+        #last_submission_date = HouseholdData.objects.latest('submission_date')
+        #latest_date = last_submission_date.submission_date
         #latest_date = datetime.today() + timedelta(days= -1)
-        #latest_date = datetime(2025, 12, 1) + timedelta(days=-1)
+        latest_date = datetime(2025, 11, 9) + timedelta(days=-1)
 
 
         print("Latest date before formatting:", latest_date)    
         latest_date = latest_date.strftime('%Y-%m-%dT00:00:00.000Z')
         #iso = "2024-07-05T05:40:00.000Z"
         #latest_date = "2025-10-10T05:40:00.000Z"
-        #print(latest_date)
+        print(latest_date)
         return(latest_date)
 
     def get_image(self, image_link):
@@ -216,7 +215,7 @@ class avni_sync():
         elif subject_type == "Household":
             obj = HouseholdData.objects.exclude(city__name__city_name__in=names).order_by('-submission_date').first()
 
-        latest_date = obj.submission_date + timedelta(days=1)
+        latest_date = obj.submission_date + timedelta(days=-1)
         latest_date = latest_date.strftime('%Y-%m-%dT00:00:00.000Z')
 
         household_path = 'api/subjects?lastModifiedDateTime=' + latest_date + '&subjectType=' + subject_type
@@ -837,9 +836,9 @@ class avni_sync():
         except Exception as e:
             print(e)
 
-    def SaveDataFromIds(self):
+    def SaveDataFromIds(self, IdList):
 
-        IdList = ['96b3fd71-d837-4837-b1b3-e521a64c05c4'] # 'cda4ce0e-f05c-4b49-ac6e-ed160eba1940']
+        # IdList = ['96b3fd71-d837-4837-b1b3-e521a64c05c4'] # 'cda4ce0e-f05c-4b49-ac6e-ed160eba1940'
 
         ''' There Are Three Types Of Flag We Use
         1 - Subject Type
@@ -847,7 +846,7 @@ class avni_sync():
         3 - Program Encounter
         Please provide flag when sync data using UUIDs'''
 
-        flag = 'Subject Type'
+        flag = 'Encounters'
 
         for i in IdList:
             try:
@@ -1537,6 +1536,7 @@ class avni_sync():
             data = json.load(f)
             error = []
             count = 1
+            print(len(data))
             for item in data:
                 try:
                     slum = Slum.objects.filter(name = item['slum'])
