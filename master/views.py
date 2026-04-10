@@ -24,7 +24,7 @@ from django.views.decorators.clickjacking import xframe_options_exempt
 
 from master.models import Survey, CityReference, Rapid_Slum_Appraisal, \
 						  Slum, AdministrativeWard, ElectoralWard, City, \
-						  WardOfficeContact, ElectedRepresentative, drainage ,SlumTransformationPhoto
+						  WardOfficeContact, ElectedRepresentative, drainage ,SlumTransformationPhase , SlumTransformationImage
 from master.forms import SurveyCreateForm, ReportForm, Rapid_Slum_AppraisalForm, DrainageForm, LoginForm 
 from sponsor.models import SponsorProjectDetails
 from django.contrib.auth import authenticate, login
@@ -702,13 +702,23 @@ def rim_factsheet_available(request, slum_id):
 
 def get_slum_transformation_photos(request, slum_id):
     slum = get_object_or_404(Slum, pk=slum_id, current_status='sra')
-    photos = SlumTransformationPhoto.objects.filter(slum=slum).order_by('month_year')
+    photos = SlumTransformationPhase.objects.filter(slum=slum).order_by('month_year').prefetch_related('images')
     
     data = {}
     for p in photos:
         month_year_key = p.month_year.strftime("%B %Y") if p.month_year else "Unknown"
+
+        # ✅ get main image or fallback to first image
+        image_url = None
+        if p.main_image:
+            image_url = request.build_absolute_uri(p.main_image.url)
+        else:
+            first_image = p.images.all().order_by('priority').first()
+            if first_image:
+                image_url = request.build_absolute_uri(first_image.image.url)
+
         data[month_year_key] = {
-            "photo_url": request.build_absolute_uri(p.photo.url),
+            "photo_url": image_url,  # ✅ same key
             "description": p.description,
             "coordinates": p.coordinates,
         }

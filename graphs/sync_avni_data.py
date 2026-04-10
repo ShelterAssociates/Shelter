@@ -836,9 +836,9 @@ class avni_sync():
         except Exception as e:
             print(e)
 
-    def SaveDataFromIds(self):
+    def SaveDataFromIds(self, IdList):
 
-        IdList = ['96b3fd71-d837-4837-b1b3-e521a64c05c4'] # 'cda4ce0e-f05c-4b49-ac6e-ed160eba1940']
+        # IdList = ['96b3fd71-d837-4837-b1b3-e521a64c05c4'] # 'cda4ce0e-f05c-4b49-ac6e-ed160eba1940'
 
         ''' There Are Three Types Of Flag We Use
         1 - Subject Type
@@ -846,7 +846,7 @@ class avni_sync():
         3 - Program Encounter
         Please provide flag when sync data using UUIDs'''
 
-        flag = 'Subject Type'
+        flag = 'Encounters'
 
         for i in IdList:
             try:

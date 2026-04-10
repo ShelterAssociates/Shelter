@@ -375,33 +375,100 @@ class drainage(models.Model):
     drainage_image = models.ImageField(upload_to=DRAINAGE_PHOTO,blank=True, null=True)
 
 def slum_photo_upload_path(instance, filename):
-    return f'slum_transformation/{instance.slum.id}/{filename}'
+    import uuid
+    ext = filename.split('.')[-1]
+    filename = f"{uuid.uuid4()}.{ext}"
 
-class SlumTransformationPhoto(models.Model):
+    if hasattr(instance, 'slum'):
+        slum = instance.slum
+    elif hasattr(instance, 'phase'):
+        slum = instance.phase.slum
+    else:
+        return f'slum_transformation/unknown/{filename}'
+
+    return f'slum_transformation/{slum.id}/{filename}'
+
+from django.db import models
+from django.core.exceptions import ValidationError
+
+
+class SlumTransformationPhase(models.Model):
     slum = models.ForeignKey(
-        'Slum', on_delete=models.CASCADE,
-        related_name='transformation_photos',
+        'Slum',
+        on_delete=models.CASCADE,
+        related_name='transformation_phases',
         limit_choices_to={'current_status': 'sra'}
     )
-    month_year = models.DateField(help_text="Month and year of photo e.g. 2019-06-01 (day is ignored)",null=True, blank=True)
-    photo = models.ImageField(upload_to=slum_photo_upload_path)
+    month_year = models.DateField(
+        help_text="Use first day of month (YYYY-MM-01)",
+        null=True,
+        blank=True
+    )
     description = models.TextField(blank=True)
-    coordinates = models.JSONField(help_text='{"north": 16.6851, "south": 16.6825, "east": 74.1927, "west": 74.1887}')
+    main_image = models.ImageField(
+        upload_to=slum_photo_upload_path,
+        blank=True
+    )
+    coordinates = models.JSONField(
+        help_text='{"north": ..., "south": ..., "east": ..., "west": ...}'
+    )
     created_at = models.DateTimeField(auto_now_add=True)
-
     class Meta:
         ordering = ['month_year']
+
     def clean(self):
+        # Allow only SRA slums
         if self.slum and self.slum.current_status != 'sra':
-            raise ValidationError(f"Only SRA slums allowed. '{self.slum}' is '{self.slum.current_status}'.")
+            raise ValidationError(
+                f"Only SRA slums allowed. '{self.slum}' is '{self.slum.current_status}'."
+            )
+
+        # Validate coordinates
         if self.coordinates:
             required = {"north", "south", "east", "west"}
             missing = required - self.coordinates.keys()
+
             if missing:
                 raise ValidationError(f"Missing keys: {missing}")
+
             for k in required:
                 if not isinstance(self.coordinates[k], (int, float)):
-                    raise ValidationError(f"'{k}' must be a number. Got: {self.coordinates[k]}")
+                    raise ValidationError(f"'{k}' must be a number.")
 
     def __str__(self):
-        return f"{self.slum} — {self.month_year}"  # was self.year
+        return f"{self.slum} — {self.month_year}"
+
+
+from django.core.exceptions import ValidationError
+
+class SlumTransformationImage(models.Model):
+    phase = models.ForeignKey(
+        SlumTransformationPhase,
+        on_delete=models.CASCADE,
+        related_name='images'
+    )
+    image = models.ImageField(upload_to=slum_photo_upload_path)
+    caption = models.TextField(blank=True)
+    priority = models.PositiveIntegerField(default=1)
+    created_at = models.DateTimeField(auto_now_add=True)
+    class Meta:
+        ordering = ['priority', 'created_at']
+        constraints = [
+            models.UniqueConstraint(
+                fields=['phase', 'priority'],
+                name='unique_priority_per_phase'
+            )
+        ]
+
+    def clean(self):
+        # extra validation (good for admin forms)
+        if SlumTransformationImage.objects.filter(
+            phase=self.phase,
+            priority=self.priority
+        ).exclude(pk=self.pk).exists():
+            raise ValidationError(
+                f"Priority {self.priority} already exists for this phase."
+            )
+
+    def __str__(self):
+        return f"{self.phase} (Priority: {self.priority})"

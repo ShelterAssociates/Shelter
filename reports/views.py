@@ -13,7 +13,9 @@ from reports.services.monthly_report_service import monthly_report_details
 # HTML preview for RIM Factsheet report home page
 def report_view(request):
 	"""Renders the report home page with factsheet data if provided."""
-	context = {}
+	context = {
+        "INTERNAL_TEAM_SECRET": settings.INTERNAL_TEAM_SECRET  
+    }
 
 	if request.method == "POST":
 		slum_id = request.POST.get("slum_id")
@@ -100,34 +102,52 @@ def rim_factsheet_preview(request, slum_id):
 
 # Download generated RIM Factsheet PDF
 def rim_factsheet_pdf_fetch(request, slum_id):
-	"""Fetches and forces download of generated RIM Factsheet PDF."""
-	try:
-		if not request.session.get("rim_otp_verified"):
-			return HttpResponseForbidden("OTP verification required")
-		
-		resp = requests.get(
-			f"{settings.PDF_FETCH_URL}?report_id={slum_id}&report_type=rim_factsheet",
-			headers={"X-PDF-KEY": settings.PDF_SECRET_KEY},
-			timeout=30
-		)
+    """Fetches and forces download of generated RIM Factsheet PDF.
+    
+    - Public users: require OTP verification
+    - Internal team: require X-Internal-Token header or ?internal_token=... param
+    """
+    
+    # ✅ Check if internal team request
+    internal_token = (
+        request.headers.get("X-Internal-Token") or 
+        request.GET.get("internal_token")
+    )
+    is_internal = internal_token == settings.INTERNAL_TEAM_SECRET
 
-		if resp.status_code == 200:
-			response = HttpResponse(resp.content, content_type="application/pdf")
-			content_disposition = resp.headers.get("Content-Disposition")
+    # 🔐 If not internal, enforce OTP
+    if not is_internal:
+        if not request.session.get("rim_otp_verified"):
+            return HttpResponseForbidden("OTP verification required")
 
-			if content_disposition:
-				response["Content-Disposition"] = content_disposition
-			else:
-				response["Content-Disposition"] = f'attachment; filename="report_{slum_id}.pdf"'
+    try:
+        resp = requests.get(
+            f"{settings.PDF_FETCH_URL}?report_id={slum_id}&report_type=rim_factsheet",
+            headers={"X-PDF-KEY": settings.PDF_SECRET_KEY},
+            timeout=30
+        )
 
-			response["Content-Length"] = len(resp.content)
-			request.session["rim_otp_verified"] = False
-			return response
+        if resp.status_code == 200:
+            response = HttpResponse(resp.content, content_type="application/pdf")
+            content_disposition = resp.headers.get("Content-Disposition")
 
-		return HttpResponse("PDF not ready", status=404)
+            if content_disposition:
+                response["Content-Disposition"] = content_disposition
+            else:
+                response["Content-Disposition"] = f'attachment; filename="RIM_Factsheet_{slum_id}.pdf"'
 
-	except requests.exceptions.Timeout:
-		return HttpResponse("PDF fetch timed out", status=504)
+            response["Content-Length"] = len(resp.content)
+
+            # Only invalidate OTP session for public users
+            if not is_internal:
+                request.session["rim_otp_verified"] = False
+
+            return response
+
+        return HttpResponse("PDF not ready", status=404)
+
+    except requests.exceptions.Timeout:
+        return HttpResponse("PDF fetch timed out", status=504)
 
 #====================== Donar Report Views ======================
 

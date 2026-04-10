@@ -4,7 +4,7 @@
 from django.contrib import admin
 #from django.contrib.gis import admin
 from master.models import CityReference, City, \
-    AdministrativeWard, ElectoralWard, Slum, WardOfficeContact, ElectedRepresentative, Rapid_Slum_Appraisal, Survey, drainage ,SlumTransformationPhoto
+    AdministrativeWard, ElectoralWard, Slum, WardOfficeContact, ElectedRepresentative, Rapid_Slum_Appraisal, Survey, drainage ,SlumTransformationPhase, SlumTransformationImage
 from master.forms import CityFrom, AdministrativeWardFrom, ElectoralWardForm, SlumForm
 from django.contrib.auth.models import Group
 from django.utils.html import format_html
@@ -358,22 +358,56 @@ admin.site.register(Rapid_Slum_Appraisal, RapidSlumAppraisalAdmin)
 
 admin.site.register(drainage)
 
-class SlumTransformationPhotoAdminForm(forms.ModelForm):
+
+# =========================
+# ✅ FORM (MUST BE FIRST)
+# =========================
+class SlumTransformationPhaseAdminForm(forms.ModelForm):
     month_year = forms.DateField(
-        widget=forms.DateInput(attrs={'type': 'month'}),  # renders month/year picker in browser
+        widget=forms.DateInput(attrs={'type': 'month'}),
         input_formats=['%Y-%m'],
-        help_text="Pick month and year e.g. June 2019"
+        required=False,
+        help_text="Pick month and year (e.g. 2019-06)"
     )
+
     class Meta:
-        model = SlumTransformationPhoto
+        model = SlumTransformationPhase
         fields = '__all__'
 
-@admin.register(SlumTransformationPhoto)
-class SlumTransformationPhotoAdmin(admin.ModelAdmin):
-    form = SlumTransformationPhotoAdminForm
+    def clean_month_year(self):
+        month_year = self.cleaned_data.get('month_year')
+
+        # Convert YYYY-MM → YYYY-MM-01
+        if month_year:
+            return month_year.replace(day=1)
+
+        # Preserve old value if editing
+        if self.instance.pk:
+            return self.instance.month_year
+
+        return month_year
+
+
+# =========================
+# ✅ INLINE IMAGES
+# =========================
+class SlumTransformationImageInline(admin.TabularInline):
+    model = SlumTransformationImage
+    extra = 1
+    fields = ['image', 'caption', 'priority']
+    ordering = ['priority']
+
+
+# =========================
+# ✅ MAIN ADMIN
+# =========================
+@admin.register(SlumTransformationPhase)
+class SlumTransformationPhaseAdmin(admin.ModelAdmin):
+    form = SlumTransformationPhaseAdminForm
     list_display  = ['slum', 'month_year', 'description']
     list_filter   = ['month_year']
     search_fields = ['slum__name']
+    inlines = [SlumTransformationImageInline]
 
     def get_form(self, request, obj=None, **kwargs):
         form = super().get_form(request, obj, **kwargs)

@@ -225,17 +225,13 @@ $('#generate').click(function(){
 
 
 /* ---------- DOWNLOAD button---------- */
+const INTERNAL_TOKEN = "{{ INTERNAL_TEAM_SECRET }}";
 
 $('#downloadBtn').click(function(){
-
-	if(selectedSlumId){
-		window.location.href =
-		`/reports/api/rim_factsheet_pdf_fetch/${selectedSlumId}/`
-		return
-	}
-
-
-
+    if(selectedSlumId){
+        window.location.href = `/reports/api/rim_factsheet_pdf_fetch/${selectedSlumId}/?internal_token=${INTERNAL_TOKEN}`
+        return
+    }
 })
 
 
