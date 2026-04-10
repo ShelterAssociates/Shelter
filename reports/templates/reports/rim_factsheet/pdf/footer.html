@@ -1,0 +1,104 @@
+{% load static %}
+{% load tz %}
+
+<style>
+/* ============ FOOTER – 3 PHASE LAYOUT (PAGE-SIZE AWARE) ============ */
+
+.rim-footer {
+	background: #004aad;
+	color: #ffffff;
+
+	width: 100%;
+	display: table;
+	box-sizing: border-box;
+	font-family: Roboto, sans-serif;
+}
+
+/* Footer table */
+.rim-footer-table {
+	width: 100%;
+	border-collapse: collapse;
+	table-layout: fixed;
+}
+
+/* Common cell styles */
+.rim-footer-table td {
+	vertical-align: middle;
+	padding: 0.8em 1.2em;   /* scales with page size */
+	font-size: 7pt;     /* relative to body font */
+	box-sizing: border-box;
+}
+
+/* LEFT : META DATA */
+.footer-left {
+	width: 35%;
+	text-align: left;
+	line-height: 1.35;
+}
+
+/* CENTER : COPYRIGHT */
+.footer-center {
+	width: 30%;
+	text-align: center;
+	font-weight: 600;
+}
+
+/* RIGHT : WEBSITE */
+.footer-right {
+	width: 35%;
+	text-align: right;
+	line-height: 1.35;
+}
+
+/* Meta text slightly lighter */
+.footer-meta {
+	font-size: 6pt;      /* slightly smaller than footer text */
+	opacity: 0.95;
+}
+
+/* Clickable link */
+.rim-footer a {
+	color: #ffffff;
+	text-decoration: none;
+	font-weight: 600;
+}
+
+.rim-footer a:hover {
+	text-decoration: underline;
+}
+</style>
+
+<div class="rim-footer">
+	<table class="rim-footer-table">
+		<tr>
+
+			<!-- PHASE 1 : META DATA -->
+			<td class="footer-left">
+				{% if meta_data.submission_date or meta_data.last_modified_on %}
+					<div class="footer-meta">
+						{% if meta_data.submission_date %}
+							Submission Date: {{ meta_data.submission_date }}<br>
+						{% endif %}
+						{% if meta_data.last_modified_on %}
+							Last Modified: {{ meta_data.last_modified_on }}
+						{% endif %}
+					</div>
+				{% endif %}
+			</td>
+
+			<!-- PHASE 2 : COPYRIGHT -->
+			<td class="footer-center">
+				© Copyright Shelter Associates, {% now "Y" %}
+			</td>
+
+			<!-- PHASE 3 : WEBSITE -->
+			<td class="footer-right">
+				For more information, please visit<br>
+				<a href="https://www.shelter-associates.org" target="_blank">
+					www.shelter-associates.org
+				</a>
+			</td>
+
+		</tr>
+	</table>
+</div>

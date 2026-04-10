@@ -24,8 +24,8 @@ from django.views.decorators.clickjacking import xframe_options_exempt
 
 from master.models import Survey, CityReference, Rapid_Slum_Appraisal, \
 						  Slum, AdministrativeWard, ElectoralWard, City, \
-						  WardOfficeContact, ElectedRepresentative, drainage
-from master.forms import SurveyCreateForm, ReportForm, Rapid_Slum_AppraisalForm, DrainageForm, LoginForm
+						  WardOfficeContact, ElectedRepresentative, drainage ,SlumTransformationPhase , SlumTransformationImage
+from master.forms import SurveyCreateForm, ReportForm, Rapid_Slum_AppraisalForm, DrainageForm, LoginForm 
 from sponsor.models import SponsorProjectDetails
 from django.contrib.auth import authenticate, login
 from django.contrib.auth import *
@@ -39,6 +39,8 @@ from django.core.exceptions import PermissionDenied
 from graphs.models import *
 from django.db.models import Avg
 from graphs.sync_avni_data import avni_sync
+
+
 
 @staff_member_required
 def index(request):
@@ -412,6 +414,7 @@ def slummapdisplay(request,id):
 		slum_dict["factsheet"]=s.factsheet.url if s.factsheet else ''
 		slum_dict["photo"]=s.photo.url if s.photo else ''
 		slum_dict["associated"] = s.associated_with_SA
+		slum_dict["current_status"] = s.current_status
 		city_main["content"]\
 		[str(s.electoral_ward.administrative_ward.name)]["content"]\
 		[str(s.electoral_ward.name)]["content"].update({s.name : slum_dict })
@@ -682,3 +685,42 @@ def get_translations(request):
     else:
         output = read_files("/srv/Shelter/master/translations/eng_translations.json")
     return JsonResponse(output)
+
+def rim_factsheet_available(request, slum_id):
+
+    rim_exists = Rapid_Slum_Appraisal.objects.filter(
+        slum_name_id=slum_id
+    ).exists()
+
+    slum_exists = SlumData.objects.filter(
+        slum_id=slum_id
+    ).exists()
+
+    return JsonResponse({
+        "available": rim_exists and slum_exists
+    })
+
+def get_slum_transformation_photos(request, slum_id):
+    slum = get_object_or_404(Slum, pk=slum_id, current_status='sra')
+    photos = SlumTransformationPhase.objects.filter(slum=slum).order_by('month_year').prefetch_related('images')
+    
+    data = {}
+    for p in photos:
+        month_year_key = p.month_year.strftime("%B %Y") if p.month_year else "Unknown"
+
+        # ✅ get main image or fallback to first image
+        image_url = None
+        if p.main_image:
+            image_url = request.build_absolute_uri(p.main_image.url)
+        else:
+            first_image = p.images.all().order_by('priority').first()
+            if first_image:
+                image_url = request.build_absolute_uri(first_image.image.url)
+
+        data[month_year_key] = {
+            "photo_url": image_url,  # ✅ same key
+            "description": p.description,
+            "coordinates": p.coordinates,
+        }
+
+    return JsonResponse({slum_id: data})

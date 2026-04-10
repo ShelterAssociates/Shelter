@@ -603,11 +603,13 @@ return false;]]></method>
                                 <list-property name="visibility">
                                     <structure>
                                         <property name="format">all</property>
-                                        <expression name="valueExpr" type="javascript">(row["sponsor_logo"]==null || row["sponsor_logo"]=="")</expression>
+                                        <expression name="valueExpr" type="javascript">row["sponsor_logo"]!=null &amp;&amp; row["sponsor_logo"]!=""</expression>
+
                                     </structure>
                                 </list-property>
                                 <property name="source">url</property>
-                                <expression name="uri" type="javascript">vars["var_report_prefix_sponsor_logo"].concat(row["sponsor_logo"])</expression>
+                                <expression name="uri" type="javascript">(row["sponsor_logo"] &amp;&amp; row["sponsor_logo"].startsWith("http")) ? row["sponsor_logo"] : vars["var_report_prefix_sponsor_logo"].concat(row["sponsor_logo"])</expression>
+
                             </image>
                         </cell>
                     </row>
@@ -914,11 +916,13 @@ return false;]]></method>
                         <list-property name="visibility">
                             <structure>
                                 <property name="format">all</property>
-                                <expression name="valueExpr" type="javascript">(row["family_photo"]==null || row["family_photo"]=="")</expression>
+                                <expression name="valueExpr" type="javascript">row["family_photo"]!=null &amp;&amp; row["family_photo"]!=""</expression>
+
                             </structure>
                         </list-property>
                         <property name="source">url</property>
-                        <expression name="uri" type="javascript">vars["var_report_prefix_image_path"].concat(row["family_photo"])</expression>
+                        <expression name="uri" type="javascript">(row["family_photo"] &amp;&amp; row["family_photo"].startsWith("http")) ? row["family_photo"] : vars["var_report_prefix_image_path"].concat(row["family_photo"])</expression>
+
                     </image>
                     <image id="228">
                         <property name="style">Images</property>
@@ -926,11 +930,13 @@ return false;]]></method>
                         <list-property name="visibility">
                             <structure>
                                 <property name="format">all</property>
-                                <expression name="valueExpr" type="javascript">(row["toilet_photo"]==null || row["toilet_photo"]=="")</expression>
+                                <expression name="valueExpr" type="javascript">row["toilet_photo"]!=null &amp;&amp; row["toilet_photo"]!=""</expression>
+
                             </structure>
                         </list-property>
                         <property name="source">url</property>
-                        <expression name="uri" type="javascript">vars["var_report_prefix_image_path"].concat(row["toilet_photo"])</expression>
+                        <expression name="uri" type="javascript">(row["toilet_photo"] &amp;&amp; row["toilet_photo"].startsWith("http")) ? row["toilet_photo"] : vars["var_report_prefix_image_path"].concat(row["toilet_photo"])</expression>
+
                     </image>
                 </cell>
                 <cell id="144">

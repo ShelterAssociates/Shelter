@@ -11,11 +11,30 @@ TTL = timedelta(hours=1)  # Cache expiration time
 
 def get_request_hash(request, slum_id):
     """
-    Generate a unique hash from slum_id and request GET parameters
+    Generate cache key based on:
+    - slum_id
+    - request GET params
+    - user identity
+        - authenticated → per-user cache
+        - anonymous → shared cache
     """
-    params = {"slum_id": slum_id, **request.GET.dict()}
+
+    if request.user.is_authenticated:
+        user_key = f"user:{request.user.id}"
+        print("Authenticated user cache:", user_key)
+    else:
+        # ALL anonymous users share the SAME cache
+        user_key = "anon"
+
+    params = {
+        "slum_id": slum_id,
+        "user": user_key,
+        **request.GET.dict()
+    }
+
     params_string = json.dumps(params, sort_keys=True)
     return hashlib.sha256(params_string.encode("utf-8")).hexdigest()
+
 
 
 def compute_and_update_cache(request, slum_id, req_hash):
@@ -47,6 +66,7 @@ def get_component_api(request, slum_id):
     """
     req_hash = get_request_hash(request, slum_id)
     flag = request.headers.get("Force-Refresh-Flag", "0")
+    print(f"Request hash: {req_hash}, Force refresh: {flag}")
 
     try:
         cache = APICache.objects.get(request_hash=req_hash)

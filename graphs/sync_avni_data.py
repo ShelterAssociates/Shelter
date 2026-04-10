@@ -43,7 +43,9 @@ class avni_sync():
         self.get_cognito_details()
         command_data = subprocess.Popen(['node', 'graphs/avni/token.js', self.poolId, self.clientId, settings.AVNI_USERNAME, settings.AVNI_PASSWORD], stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
         stdout, stderr = command_data.communicate()
-        self.token = stdout.decode("utf-8").replace('\n', '')
+        decoded = stdout.decode("utf-8")
+        lines = [line.strip() for line in decoded.splitlines() if line.strip()]
+        self.token = lines[-1]        
         return self.token
 
     def get_city_slum_ids(self, slum_name):
@@ -51,12 +53,17 @@ class avni_sync():
         return slum[0], slum[1]
 
     def lastModifiedDateTime(self):
-        last_submission_date = HouseholdData.objects.latest('submission_date')
-        #latest_date = last_submission_date.submission_date + timedelta(days=1)
-        latest_date = datetime.today() + timedelta(days= -1)
+        #last_submission_date = HouseholdData.objects.latest('submission_date')
+        #latest_date = last_submission_date.submission_date
+        #latest_date = datetime.today() + timedelta(days= -1)
+        latest_date = datetime(2025, 11, 9) + timedelta(days=-1)
+
+
+        print("Latest date before formatting:", latest_date)    
         latest_date = latest_date.strftime('%Y-%m-%dT00:00:00.000Z')
         #iso = "2024-07-05T05:40:00.000Z"
         #latest_date = "2025-10-10T05:40:00.000Z"
+        print(latest_date)
         return(latest_date)
 
     def get_image(self, image_link):
@@ -79,7 +86,11 @@ class avni_sync():
                        'group_el9cl08/Type_of_structure_of_the_house': 'Type of structure of the house_1',
                        'Parent_household_number': 'Parent household number',
                        'Type_of_structure_occupancy': 'Type of structure occupancy_1',
-                       'group_el9cl08/Do_you_have_any_girl_child_chi': 'Do you have any girl child/children under the age of 18?_'}
+                       'group_el9cl08/Do_you_have_any_girl_child_chi': 'Do you have any girl child/children under the age of 18?_',
+                       'group_oi8ts04/Current_place_of_defecation' : 'Current place of defecation',
+                       "group_el9cl08/Type_of_water_connection": "Water Sub Category",
+                       "group_el9cl08/Facility_of_solid_waste_collection":"How do you dispose your solid waste ?"                      
+                       }
 
         for k, v in change_keys.items():
             try:
@@ -173,7 +184,8 @@ class avni_sync():
             'group_oi8ts04/If_yes_why': 'If yes for individual toilet , why?',
             'group_oi8ts04/If_no_why': 'If no for individual toilet , why?',
             'group_oi8ts04/Which_Community_Toil_r_family_members_use': 'Which CTB do your family members use ?',
-            'group_el9cl08/Does_any_household_m_n_skills_given_below': 'Does any household member have any of the construction skills given below ?'}
+            'group_el9cl08/Does_any_household_m_n_skills_given_below': 'Does any household member have any of the construction skills given below ?'
+            }
         a = {}
         a.update(s)
         for k, v in map_toilet_keys.items():
@@ -203,9 +215,8 @@ class avni_sync():
         elif subject_type == "Household":
             obj = HouseholdData.objects.exclude(city__name__city_name__in=names).order_by('-submission_date').first()
 
-        latest_date = obj.submission_date + timedelta(days=-30)
+        latest_date = obj.submission_date + timedelta(days=-1)
         latest_date = latest_date.strftime('%Y-%m-%dT00:00:00.000Z')
-        print(latest_date)
 
         household_path = 'api/subjects?lastModifiedDateTime=' + latest_date + '&subjectType=' + subject_type
         result = requests.get(self.base_url + household_path, headers={'AUTH-TOKEN': self.get_cognito_token()})
@@ -213,9 +224,14 @@ class avni_sync():
         pages = json.loads(result.text)['totalPages']
         return pages, household_path
 
+
     def registrtation_data(self, HH_data):  # checked
         final_rhs_data = {}
         rhs_from_avni = HH_data['observations']
+        if rhs_from_avni.get('Functioning of the structure') == "Shop":
+            rhs_from_avni['Type_of_structure_occupancy'] = rhs_from_avni.pop('Functioning of the structure')
+        elif rhs_from_avni.get('Functioning of the structure') == "Individual home + shop":
+            rhs_from_avni['Type_of_structure_occupancy'] = rhs_from_avni.pop('Functioning of the structure')
         # household_number = str(int(rhs_from_avni['First name']))
         value = str(rhs_from_avni.get('First name', '')).strip()
 
@@ -235,23 +251,48 @@ class avni_sync():
             if not check_record:
                 rhs_data = {}
                 final_rhs_data = self.map_rhs_key(rhs_data, rhs_from_avni)
+                if final_rhs_data.get('Do you have a toilet at home?') == "Yes":
+                    final_rhs_data['Current place of defecation'] = "Own toilet"
+                if final_rhs_data.get('Ownership status of the house_1') == "Own house/Shop":
+                    final_rhs_data['Ownership status of the house_1'] = "Own house"
                 final_rhs_data.update({'rhs_uuid': HH_data['ID']})
                 if 'group_og5bx85/Type_of_survey' not in final_rhs_data:
                     final_rhs_data['group_og5bx85/Type_of_survey'] = 'RHS'
+                print(final_rhs_data)
                 update_record = HouseholdData.objects.create(household_number=household_number, slum_id=slum_id, city_id=city_id, submission_date=submission_date, rhs_data=final_rhs_data, created_date=created_date)
                 print('Household record created for', slum_name, household_number)
             else:
                 rhs_data = check_record.values_list('rhs_data', flat=True)[0]
+                if rhs_data.get('Functioning of the structure') == "Shop":
+                    rhs_data['Type_of_structure_occupancy'] = rhs_data.pop('Functioning of the structure')
+                elif rhs_data.get('Functioning of the structure') == "Individual home + shop":
+                    rhs_data['Type_of_structure_occupancy'] = rhs_data.pop('Functioning of the structure')
                 if rhs_data is None or len(rhs_data) == 0:
                     rhs_data = {}
+                if rhs_from_avni.get('Ownership status of the house_1') == "Own house/Shop":
+                    rhs_from_avni['Ownership status of the house_1'] = "Own house"
+                if rhs_from_avni.get('Do you have a toilet at home?') == "Yes":
+                    rhs_from_avni['Current place of defecation'] = "Own toilet" 
                 final_rhs_data = self.map_rhs_key(rhs_data, rhs_from_avni)
+               
                 final_rhs_data.update({'rhs_uuid': HH_data['ID']})
                 final_rhs_data['group_og5bx85/Type_of_survey'] = 'RHS'
+                print(final_rhs_data)
                 check_record.update(submission_date=submission_date, rhs_data=final_rhs_data, created_date=created_date)
                 print('Household record updated for', slum_name, household_number)
         except Exception as e:
             print('second exception', slum_name, e)
 
+    def SaveRhsData_byUUID(self, uuid):  # checked
+        Request = requests.get(self.base_url + 'api/subject/' + uuid ,headers={'AUTH-TOKEN': self.get_cognito_token()})
+        get_HH_data = json.loads(Request.text)
+        #print(get_HH_data)
+        if not (get_HH_data['Voided']):
+            print("Record is not voided")
+            print(get_HH_data)
+            self.registrtation_data(get_HH_data)
+        else:
+            print("Record is voided")
     
     def SaveRhsData_byIIDs(self):
         uuid = ['e1283832-c21c-49d0-a7ca-72a4d49755d6', 'c50d1c12-dced-4838-9922-1b588eb26175', '3fb191a0-6bc8-4e6a-8e71-3a47c79ac42c', '58f53187-0fa3-4de4-b3e7-ef6fa5883068', '41131705-5188-4df1-a2fc-cc316271abac', 'db3ef54e-3c8e-481c-ac2c-aba578528ba5', '102dec6d-b139-4912-b65f-cd0a95749f67']
@@ -700,11 +741,13 @@ class avni_sync():
 
     def SaveWaterData(self):  # checked
         pages, path = self.WaterEncounterData()
+        print(f"Saving water data for {pages} pages.")
         try:
             for i in range(pages):
                 send_request = requests.get(self.base_url + path + '&page=' + str(i),
                                             headers={'AUTH-TOKEN': self.get_cognito_token()})
                 data = json.loads(send_request.text)['content']
+                print(f"Processing page {i+1} with {len(data)} records.")
                 for j in data:
                     if not j['Voided'] and j['observations'] != {}:
                         water_data = j['observations']
@@ -727,10 +770,12 @@ class avni_sync():
 
     def SaveWasteData(self):  # checked
         pages, path = self.WasteEncounterData()
+        print(f"Saving waste data for {pages} pages.")
         try:
             for i in range(pages):
                 send_request = requests.get(self.base_url + path + '&page=' + str(i), headers={'AUTH-TOKEN': self.get_cognito_token()})
                 data = json.loads(send_request.text)['content']
+                print(f"Processing page {i+1} with {len(data)} records.")
                 for j in data:
                     if not j['Voided'] and j['observations'] != {}:
                         waste_data = j['observations']
@@ -775,11 +820,15 @@ class avni_sync():
 
     def SaveElectricityData(self):  # checked
         pages, path = self.ElectricityEncounterData()
+        print(f"Saving electricity data for {pages} pages.")
         try:
             for i in range(pages):
+
                 send_request = requests.get(self.base_url + path + '&page=' + str(i), headers={'AUTH-TOKEN': self.get_cognito_token()})
                 data = json.loads(send_request.text)['content']
+                print(f"Processing page {i+1} with {len(data)} records.")
                 for j in data:
+                    print(j)
                     if not j['Voided'] and j['observations'] != {}:
                         electricity_data = j['observations']
                         electricity_data.update({'Last_modified_date': j['audit']['Last modified at']})
@@ -787,9 +836,9 @@ class avni_sync():
         except Exception as e:
             print(e)
 
-    def SaveDataFromIds(self):
+    def SaveDataFromIds(self, IdList):
 
-        IdList = ['96b3fd71-d837-4837-b1b3-e521a64c05c4'] # 'cda4ce0e-f05c-4b49-ac6e-ed160eba1940']
+        # IdList = ['96b3fd71-d837-4837-b1b3-e521a64c05c4'] # 'cda4ce0e-f05c-4b49-ac6e-ed160eba1940'
 
         ''' There Are Three Types Of Flag We Use
         1 - Subject Type
@@ -797,7 +846,7 @@ class avni_sync():
         3 - Program Encounter
         Please provide flag when sync data using UUIDs'''
 
-        flag = 'Subject Type'
+        flag = 'Encounters'
 
         for i in IdList:
             try:
@@ -1394,13 +1443,15 @@ class avni_sync():
                     print(e)
         return Update_count
 
+
     def update_rim_data(self, get_text,slum_id):
         section_names = ['General' , 'Water', 'Waste', 'Drainage', 'Gutter', 'Road']
         Update_count = 0
         for data in get_text:
             if not data['Voided']:
+                print(get_text)
                 slum_name = data['location']['Slum']
-                last_modified_str = data['audit']['Last modified at']
+                last_modified_str = data['audit']['Last modified at']  # e.g. "2025-11-28T11:57:20.946Z"
                 last_modified_at = datetime.strptime(last_modified_str, "%Y-%m-%dT%H:%M:%S.%fZ")
                 with open('graphs/rim_questions_mapping.json') as datafile:
                     rim_data = {}
@@ -1409,6 +1460,7 @@ class avni_sync():
                         section_map_data = self.map_rim_data(data['observations'], rim_questions[section])
                         rim_data[section] = section_map_data
                     toilet_comment = data['observations'].get('Comment if any ?', "")
+                    rim_data['Toilet'] = []
                     rim_data['Toilet'] = [{"toilet_comment": toilet_comment}]
                     #slum_id, city_id = self.get_city_slum_ids(slum_name)
                     slum = Slum.objects.get(id=slum_id) 
@@ -1484,6 +1536,7 @@ class avni_sync():
             data = json.load(f)
             error = []
             count = 1
+            print(len(data))
             for item in data:
                 try:
                     slum = Slum.objects.filter(name = item['slum'])

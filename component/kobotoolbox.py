@@ -45,13 +45,16 @@ def get_household_analysis_data(city, slum_code, question_fields, kobo_survey=''
     covid_hh = list(set(covid_data))
     cpod_status = ['SBM (Installment)','SBM (Contractor)','Toilet by SA (SBM)','Toilet by other NGO (SBM)','Own toilet','Toilet by other NGO','Toilet by SA']
     for household, list_record in grouped_records:
+        # print(household)
+        # print(list_record)
         record_sorted = list(list_record) #sorted(list(list_record), key=lambda x:x['_submission_time'], reverse=False)
-        if slum_code == '1971' or slum_code == 1971:
+        if slum_code in ['1971' , '1972'] or slum_code in [1971, 1972]:
             household_no = household
         else:
             household_no = int(household)
         if len(record_sorted)>0:
             record = record_sorted[0]
+            
         # Here we are updating vaccination status for the household.
         if 'Type_of_structure_occupancy' in record and record['Type_of_structure_occupancy'] != 'Shop':
             if household_no in covid_hh:
@@ -90,6 +93,7 @@ def get_household_analysis_data(city, slum_code, question_fields, kobo_survey=''
         
         '''question_fields is the different types of parameter of RHS Data.'''
         for field in question_fields:
+
             '''field present in rhs data'''
             if field != "" and field in record and record[field] == record[field]:
                 '''RHS data is occupied in status or not.'''
@@ -106,12 +110,16 @@ def get_household_analysis_data(city, slum_code, question_fields, kobo_survey=''
                 else:
                     data = record[field]
                     for val in data if type(data)==list else data.split(','):
-                        if field not in output:
+                        if field not in output:                            
                             output[field] = {}
                         if val not in output[field]:
                             output[field][val]=[]
                         if household_no not in output[field][val]:
+                            # if data == "Shop":
+                            #     print("Adding Household No:", household_no, " to field:", field, " with value:", val)
                             output[field][val].append(str(household_no))
+                        # if data == "Shop":
+                        #     print("Output Data:", output[field])
             elif 'Type_of_structure_occupancy' in record and record['Type_of_structure_occupancy'] == 'Occupied house' and field in ['group_el9cl08/Type_of_water_connection', 'group_el9cl08/Facility_of_solid_waste_collection', 'group_oi8ts04/Current_place_of_defecation']:
                 ''' Checking encounter data not available if hh status is occupied.'''
                 if field in output:
@@ -121,6 +129,8 @@ def get_household_analysis_data(city, slum_code, question_fields, kobo_survey=''
                         output[field]['data_not_available'] = [str(household_no), ]
                 else:
                     output[field] = {'data_not_available' : [str(household_no), ]}
+                
+    # print("Final Output Data:", output)
                     
    
     return output

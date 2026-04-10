@@ -1,0 +1,181 @@
+{% extends "admin/base_site.html" %}
+{% load static %}
+
+{% block title %}Reports{% endblock %}
+
+{% block content %}
+
+{% include "report_styles.html" %}
+
+<!-- ================= REPORT TABS ================= -->
+<div class="reports-tabs-bar">
+
+	<div class="reports-tab active" onclick="switchReport('slum_rim', this)">
+		Slum RIM
+	</div>
+
+	<div class="reports-tab" onclick="switchReport('donor_report', this)">
+		Donor Report
+	</div>
+
+	<div class="reports-tab" onclick="switchReport('individual_family', this)">
+		Individual & Family
+	</div>
+
+</div>
+
+
+<!-- ================= DONOR REPORT ================= -->
+<div id="donor_report" class="report-section" style="display:none;">
+
+	<div class="report-layout">
+
+		<div class="report-container">
+
+			<div class="report-header">
+				<h1>Donor Monthly Report</h1>
+				<p>Select project and month to generate donor report</p>
+			</div>
+
+			<form id="donorForm">
+				{% csrf_token %}
+
+				<div class="report-row">
+					<label>Project</label>
+					<select id="donor_project">
+						<option value="">--- Select Project ---</option>
+					</select>
+				</div>
+
+				<div class="report-row">
+					<label>Month</label>
+					<select id="donor_month" disabled>
+						<option value="">--- Select Month ---</option>
+					</select>
+				</div>
+
+				<div class="report-actions">
+
+					<button type="button" id="generate_donor_report" disabled>
+						Generate Report
+					</button>
+
+					<button type="button" id="download_donor_report" disabled style="opacity:0.5">
+						Download PDF
+					</button>
+
+				</div>
+
+				<div class="notes">
+					<p>
+						<strong>Note:</strong>
+						If the month you want to download is not visible here,
+						go to <a href="/accounts/reports/" target="_blank">Admin → Sponsor Files</a>
+						and fill the monthly report for that month and mark it as
+						<b>Completed</b>. Only completed reports appear here.
+					</p>
+				</div>
+
+			</form>
+
+		</div>
+
+	</div>
+
+</div>
+
+
+<!-- ================= SLUM RIM ================= -->
+<div id="slum_rim" class="report-section" style="display:block;">
+
+	<div class="report-layout">
+
+		<!-- LEFT PANEL -->
+		<div class="report-container">
+
+			<div class="report-header">
+				<h1>RIM Report</h1>
+				<p>Select location details to generate RIM Factsheet</p>
+			</div>
+
+			<form id="rimForm">
+				{% csrf_token %}
+
+				<div class="report-row">
+					<label>City</label>
+					<select id="city">
+						<option value="">--- Select City ---</option>
+					</select>
+				</div>
+
+				<div class="report-row">
+					<label>Administrative Ward</label>
+					<select id="admin_ward" disabled>
+						<option value="">--- Select Administrative Ward ---</option>
+					</select>
+				</div>
+
+				<div class="report-row">
+					<label>Electoral Ward</label>
+					<select id="electoral_ward" disabled>
+						<option value="">--- Select Electoral Ward ---</option>
+					</select>
+				</div>
+
+				<div class="report-row">
+					<label>Slum</label>
+					<select id="slum" disabled>
+						<option value="">--- Select Slum ---</option>
+					</select>
+				</div>
+
+				<div class="report-actions">
+					<button type="button" id="generate" disabled>
+						Generate RIM Report
+					</button>
+
+					<button type="button" id="downloadBtn" disabled style="opacity:0.5">
+						Download PDF
+					</button>
+				</div>
+
+				<div class="notes">
+					<p>
+						<strong>Note:</strong>
+						This is only a preview of the RIM Factsheet.
+						The final PDF version may have slight design or formatting differences.
+						The PDF download option may take approximately 2–3 minutes to generate.
+						Please wait until the download button becomes active.
+					</p>
+				</div>
+
+			</form>
+
+		</div>
+
+
+		<!-- RIGHT PREVIEW -->
+		<div class="preview-container" id="rim_preview">
+			<div class="preview-placeholder">
+				Select a slum to preview RIM factsheet
+			</div>
+		</div>
+
+	</div>
+
+</div>
+
+
+<!-- ================= UPCOMING ================= -->
+<div id="individual_family" class="report-section" style="display:none;">
+	<div class="report-container">
+		<div class="upcoming">🚧 Individual & Family – Upcoming</div>
+	</div>
+</div>
+
+
+{% include "report_scripts.html" %}
+
+{% endblock %}
+
+{% block sidebar %}{% endblock %}

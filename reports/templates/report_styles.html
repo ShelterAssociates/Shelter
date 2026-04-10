@@ -1,0 +1,218 @@
+<style>
+
+/* ================= NOTES ================= */
+
+.notes{
+	margin-top: 22px;
+	font-size: 13px;
+	color: #374151;
+	line-height: 1.5;
+}
+
+
+/* ================= TABS ================= */
+
+.reports-tabs-bar{
+	display:flex;
+	background:#ffffff;
+	border-bottom:2px solid #dbeafe;
+	margin-bottom:24px;
+}
+
+.reports-tab{
+	padding:12px 20px;
+	cursor:pointer;
+	font-size:14px;
+	font-weight:600;
+	color:#374151;
+	border-right:1px solid #e5e7eb;
+	transition:all .2s ease;
+}
+
+.reports-tab:hover{
+	background:#f8fafc;
+}
+
+.reports-tab.active{
+	background:#eef6ff;
+	color:#1d4ed8;
+	border-bottom:3px solid #1d4ed8;
+}
+
+
+/* ================= LAYOUT ================= */
+
+.report-layout{
+	display:grid;
+	grid-template-columns:1fr 1fr;
+	gap:24px;
+	align-items:start;
+}
+
+
+/* ================= CONTAINERS ================= */
+
+.report-container,
+.preview-container{
+	width:569px;
+	height:607px;
+	border-radius:14px;
+	box-shadow:0 10px 28px rgba(0,0,0,0.08);
+	padding:24px;
+	margin:0 auto;
+	overflow-y:auto;
+}
+
+.report-container{
+	background:#ffffff;
+}
+
+.preview-container{
+	background:#f5f8fc;
+}
+
+
+/* ================= DONOR CENTER ================= */
+
+#donor_report .report-layout{
+	display:flex;
+	justify-content:center;
+	align-items:flex-start;
+}
+
+#donor_report .report-container{
+	max-width:520px;
+	width:100%;
+}
+
+
+/* ================= HEADER ================= */
+
+.report-header{
+	text-align:center;
+	margin-bottom:26px;
+}
+
+.report-header h1{
+	font-size:24px;
+	font-weight:700;
+	color:#1e3a8a;
+	margin-bottom:6px;
+}
+
+.report-header p{
+	color:#6b7280;
+	font-size:13px;
+}
+
+
+/* ================= FORM ROW ================= */
+
+.report-row{
+	display:flex;
+	align-items:center;
+	margin-bottom:14px;
+	background:#f9fafb;
+	padding:12px 14px;
+	border-radius:10px;
+	border:1px solid #eef2f7;
+}
+
+.report-row label{
+	width:150px;
+	font-weight:600;
+	color:#374151;
+}
+
+.report-row select{
+	flex:1;
+	padding:10px 12px;
+	height:38px;
+	border-radius:8px;
+	border:1px solid #d1d5db;
+	font-size:14px;
+	line-height:20px;
+	background:white;
+}
+
+.report-row select:focus{
+	outline:none;
+	border-color:#2563eb;
+	box-shadow:0 0 0 2px rgba(37,99,235,0.15);
+}
+
+
+/* ================= ACTION BUTTONS ================= */
+
+.report-actions{
+	text-align:center;
+	margin-top:22px;
+}
+
+.report-actions button{
+	padding:10px 26px;
+	font-weight:600;
+	border-radius:9px;
+	border:none;
+	background:#2563eb;
+	color:white;
+	font-size:13px;
+	transition:all .2s ease;
+}
+
+.report-actions button:hover{
+	background:#1d4ed8;
+}
+
+.report-actions button:disabled{
+	background:#9ca3af;
+	cursor:not-allowed;
+}
+
+
+/* ================= DOWNLOAD BUTTON READY ================= */
+
+#downloadBtn.ready{
+	background:#1d4ed8;
+	color:white;
+	cursor:pointer;
+}
+
+
+/* ================= PREVIEW PLACEHOLDER ================= */
+
+.preview-placeholder{
+	text-align:center;
+	color:#9ca3af;
+	font-size:14pt;
+	padding:80px 20px;
+	width:100%;
+}
+
+
+/* ================= UPCOMING SECTION ================= */
+
+.upcoming{
+	text-align:center;
+	padding:80px 0;
+	font-size:18px;
+	font-weight:700;
+	color:#9ca3af;
+}
+
+
+/* ================= RESPONSIVE ================= */
+
+@media (max-width:1024px){
+
+	.report-layout{
+		grid-template-columns:1fr;
+	}
+
+	.preview-container{
+		height:auto;
+	}
+
+}
+
+</style>

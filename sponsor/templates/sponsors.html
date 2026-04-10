@@ -1,5 +1,4 @@
 {% extends 'header.html' %}
-
 {% load static %}
 
 {% block mainblock %}
@@ -7,196 +6,169 @@
 
 <div class="container" style="padding-top:20px;">
 	<div class="jumbotron" style="background:white;padding-left: 0px;">
-		<style>
-			table, th, td
-			{
-    			border: 1px solid black;
-   				border-collapse: collapse;
-			}
-			th, td
-			{
-  				padding: 15px;
-    			text-align: left;
 
+	<style>
+		table, th, td {
+			border: 1px solid black;
+			border-collapse: collapse;
+		}
+		th, td {
+			padding: 15px;
+			text-align: left;
+		}
+	</style>
+
+	{% for entry in projects %}
+	<div class="w3-card">
+
+		{# ================= CAROUSEL (ONLY IF IMAGES EXIST) ================= #}
+		{% if entry.images and entry.images|length > 0 %}
+
+		<div id="myCarousel_{{ forloop.counter }}" class="carousel slide" data-ride="carousel">
+
+			<ol class="carousel-indicators">
+				{% for img in entry.images %}
+				<li data-target="#myCarousel_{{ forloop.parentloop.counter }}"
+				    data-slide-to="{{ forloop.counter0 }}"
+				    class="{% if forloop.first %}active{% endif %}">
+				</li>
+				{% endfor %}
+			</ol>
+
+			<style>
+				.carousel-inner {
+					height: 400px;
+					max-width: 100%;
+					border-radius: 4px;
+				}
+				.item > img {
+					height: 400px !important;
+					object-fit: contain;
+					margin: 0 auto;
+				}
+			</style>
+
+			<div class="carousel-inner">
+				{% for img in entry.images %}
+				<div class="item {% if forloop.first %}active{% endif %}">
+					<img src="{{ img.image.url }}">
+				</div>
+				{% endfor %}
+			</div>
+
+			<a class="left carousel-control"
+			   href="#myCarousel_{{ forloop.counter }}"
+			   data-slide="prev">
+				<span class="glyphicon glyphicon-chevron-left"></span>
+			</a>
+
+			<a class="right carousel-control"
+			   href="#myCarousel_{{ forloop.counter }}"
+			   data-slide="next">
+				<span class="glyphicon glyphicon-chevron-right"></span>
+			</a>
+
+		</div>
+		{% endif %}
+		{# ================= END CAROUSEL ================= #}
+
+		<style>
+			button.accordion {
+				background-color: #eee;
+				color: #444;
+				cursor: pointer;
+				padding: 18px;
+				width: 100%;
+				border: none;
+				text-align: left;
+				outline: none;
+				font-size: 15px;
+				transition: 0.4s;
+			}
+			button.accordion.active,
+			button.accordion:hover {
+				background-color: #ccc;
+			}
+			div.panel {
+				padding: 0px;
+				display: none;
+				background-color: white;
+			}
+			.ulslum, .ulhousehold {
+				padding-top: 5px;
+			}
+			.ulslum > li,
+			.ulhousehold > li {
+				padding-bottom: 5px;
 			}
 		</style>
 
-		{% for entry in projects %}
-		<div class="w3-card">
+		<button class="accordion">
+			<h4>{{ entry.project_Name }}</h4>
+		</button>
 
-				<div id="myCarousel" class="carousel slide" data-ride="carousel">
-				<ol class="carousel-indicators">
-				{%for img in entry.images%}
-					{% if forloop.first %}
-						<list class = "active" data-target="#myCarousel" data-slide-to = "{{forloop.counter0}}"></list>
-					{%else%}
-						<list data-target="#myCarousel" data-slide-to = "{{forloop.counter0}}"></list>
-					{% endif %}
-				{%endfor%}
-				</ol>
-				<style>
-				.carousel-inner {
-    						height: 400px;
-    						max-width: 100%;
-    						border-radius: 4px;
-				}
-				.item active > img{
- 					height: 400px !important;
- 	 				object-fit: contain;
- 	 				margin: 0 auto;
-				}
-				.item > img{
-					height: 400px !important;
- 	 				object-fit: contain;
- 	 				margin: 0 auto;
-				}
-				</style>
-				<div class="carousel-inner">
-					{% for img in entry.images%}
-						{% if forloop.first%}
-							<div class="item active">
-								<img src="{{img.image.url}}">
-							</div>
-						{%else%}
-							<div class="item">
-								<img src="{{img.image.url}}">
-							</div>
-						{%endif%}
-					{%endfor%}
-					<a class="left carousel-control" href="#myCarousel" data-slide="prev">
-						<span class="glyphicon glyphicon-chevron-left"></span>
-						<span class="sr-only">Previous</span>
-					</a>
+		<div class="panel" style="display: block;">
+			<table style="width:100%">
+				<tr>
+					<td>
+						<div style="width:100%; overflow-y:scroll; height:150px;">
+							<ul class="ulslum">
+								{% for slum in entry.slums_in_project %}
+								<li>
+									<b>{{ slum.name }}, {{ slum.cityname }}</b><br>
+									<div style="font-style:italic;">
+										(Click <a target="_blank"
+										href="/{{ slum.city_id_encrypted }}/{{ slum.name }}">here</a>
+										to see factsheet online)
+									</div>
+									<ul class="ulhousehold">
+										{% for zipfile in slum.subfields %}
+										<li>
+											No of households: {{ zipfile.household_code|length }}
+											{% if zipfile.zip_file %}
+											<span style="font-style:italic;">
+												(<a href="{{ zipfile.zip_file.url }}">Download</a>)
+											</span>
+											{% endif %}
+										</li>
+										{% endfor %}
+									</ul>
+								</li>
+								{% endfor %}
+							</ul>
+						</div>
+					</td>
 
-					<a class="right carousel-control" href="#myCarousel" data-slide="next">
-						<span class="glyphicon glyphicon-chevron-right"></span>
-						<span class="sr-only">Next</span>
-					</a>
-				</div>
-			</div>
+					<td align="center">
+						{{ entry.start_year.year }}<br>
+						Households Impacted: {{ entry.households_in_project }}<br>
+						Slums Impacted: {{ entry.slums_in_project|length }}<br><br>
 
-			<style>
-					button.accordion {
-    				background-color: #eee;
-    				color: #444;
-    				cursor: pointer;
-    				padding: 18px;
-    				width: 100%;
-    				border: none;
-    				text-align: left;
-    				outline: none;
-    				font-size: 15px;
-    				transition: 0.4s;
-					}
-
-					button.accordion.active, button.accordion:hover {
-    						background-color: #ccc;
-					}
-
-					div.panel {
-    					padding: 0px;
-   	 					display: none;
-    					background-color: white;
-					}
-					.ulslum{
-						padding-top: 5px;
-						padding-bottom:5px;
-					}
-
-					.ulhousehold{
-						padding-top: 5px;
-					}
-					.ulslum>li{
-						padding-bottom: 5px;
-					}
-
-					.ulhousehold>li{
-						padding-bottom: 5px;
-					}
-			</style>
-
-			<button class="accordion"><h4>{{ entry.project_Name }}</h4></button>
-
-			<div class = "panel" style="display: block;">
-				<table id ="SponsorTable"style="width:100%">
-					<tr >
-						<td align = "left">
-							<div  style = "width : 100%; overflow-y:scroll; height:150px;">
-							{% block content %}
-								<ul class="ulslum">
-
-							{%for slum in entry.slums_in_project%}
-
-
-									<li>
-										<b>{{slum.name}},{{slum.cityname}}</b><br>
-										<div style="font-style:italic;">(Click <a target="_blank" href="/{{slum.city_id_encrypted}}/{{slum.name}}">here</a> to see factsheet online)</div>
-										<ul class="ulhousehold">
-									{% for  zipfile in slum.subfields %}
-
-											<li>
-												<!--Do add Documents' link-->
-
-												No of households :{{zipfile.household_code|length}}
-												{% if zipfile.zip_file %}
-
-												<font class="hide" style="font-style:italic;">(Click <a href = "{{zipfile.zip_file.url}}">here</a>  to download all factsheet)</font>
-												{%else%}
-													(In Progress...)
-												{%endif%}
-											</li>
-
-									{% endfor %}
-											</ul>
-									</li>
-
-
-							{% endfor%}
-
-								</ul>
-							{% endblock%}
-							</div>
-						</td>
-						<td>
-							<div align="center">
-								{{entry.start_year.year}}<br>
-								Households Impacted : {{entry.households_in_project}}<br> Slums Impacted : {{ entry.slums_in_project|length}}<br>
-								{% for doc in entry.documents %}
-								{{doc.url}}
-									<a target='blank' href = "{{doc.document.url}}"> {{doc.givename}}</a><br/>
-
-								{%endfor%}
-							</div>
-						</td>
-					</tr>
-				</table>
-			</div>
+						{% for doc in entry.documents %}
+							<a target="_blank" href="{{ doc.document.url }}">
+								{{ doc.givename }}
+							</a><br>
+						{% endfor %}
+					</td>
+				</tr>
+			</table>
 		</div>
-		{% endfor%}
-		<script>
-				var acc = document.getElementsByClassName("accordion");
-				var i;
 
-				for (i = 0; i < acc.length; i++) {
-    				acc[i].onclick = function(){
-       					this.classList.toggle("active");
-        				var panel = this.nextElementSibling;
-        				if (panel.style.display === "block") {
-            				panel.style.display = "none";
-        				} else {
-           					panel.style.display = "block";
-        				}
-    				}
-				}
-		</script>
+	</div>
+	{% endfor %}
+
+	<script>
+		var acc = document.getElementsByClassName("accordion");
+		for (var i = 0; i < acc.length; i++) {
+			acc[i].onclick = function () {
+				this.classList.toggle("active");
+				var panel = this.nextElementSibling;
+				panel.style.display =
+					panel.style.display === "block" ? "none" : "block";
+			};
+		}
+	</script>
+
 	</div>
 </div>
 {% endblock %}
-
-
-
-
-
-
-
-

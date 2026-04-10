@@ -1,0 +1,257 @@
+import json
+import requests
+from django.http import HttpResponse, HttpResponseForbidden, JsonResponse
+from django.shortcuts import render
+from django.template.loader import render_to_string
+from django.conf import settings
+from django.core.cache import cache
+from .services.rim_factsheet import rim_factsheet_view
+from reports.models import SponsorProjectMonthlyReportDetails, SponsorProjectReportDetails
+from reports.services.monthly_report_service import monthly_report_details
+
+
+# HTML preview for RIM Factsheet report home page
+def report_view(request):
+	"""Renders the report home page with factsheet data if provided."""
+	context = {
+        "INTERNAL_TEAM_SECRET": settings.INTERNAL_TEAM_SECRET  
+    }
+
+	if request.method == "POST":
+		slum_id = request.POST.get("slum_id")
+		factsheet_context = rim_factsheet_view(slum_id)
+
+		if factsheet_context.get("meta_data", {}).get("_exists"):
+			context["factsheet"] = factsheet_context
+
+	return render(request, "report_home.html", context)
+
+
+# HTML preview for RIM Factsheet
+def rim_factsheet_html_report(request, slum_id):
+	"""Renders HTML preview for RIM Factsheet report."""
+	context = rim_factsheet_view(slum_id)
+	if not context.get("meta_data", {}).get("_exists"):
+		return HttpResponse("Slum not found", status=404)
+
+	return render(
+		request,
+		"reports/rim_factsheet/full_page/factsheet.html",
+		context
+	)
+
+
+# Trigger PDF generation for RIM Factsheet
+def rim_factsheet_pdf_generation(request, slum_id):
+	"""Generates PDF for RIM Factsheet and sends to PDF service."""
+	force_generate = request.GET.get("force_generate", "false").lower() == "true"
+	cache_key = f"rim_context_{slum_id}"
+	context = cache.get(cache_key)
+	
+	if context is None:
+		context = rim_factsheet_view(slum_id)
+		cache.set(cache_key, context, timeout=120)
+
+	if context.get("data") == "NA":
+		return HttpResponse("No data available for PDF generation", status=405)
+	elif context.get("meta_data", {}).get("_exists") == False:
+		return HttpResponse("Slum not found", status=406)
+			
+	html = render_to_string("reports/rim_factsheet/pdf/factsheet_pdf.html", context)
+	try:
+		resp = requests.post(
+			settings.PDF_SERVICE_URL,
+			headers={"X-PDF-KEY": settings.PDF_SECRET_KEY},
+			json={
+				"html": html,
+				"report_id": slum_id,
+				"file_name": f"RIM_Factsheet_{context.get('meta_data',{}).get('city_name','City').replace(' ','_').replace('/','_')}_{context.get('meta_data',{}).get('slum_name','Slum').replace(' ','_').replace('/','_')}",	
+				"force_generate": force_generate,
+				"report_type": "rim_factsheet",
+			},
+			timeout=120
+		)
+
+		if resp.status_code == 200:
+			return HttpResponse("PDF generated and saved successfully", status=202)
+
+		return HttpResponse("PDF generation failed", status=500)
+
+	except requests.exceptions.Timeout:
+		return HttpResponse("PDF generation timed out", status=504)
+
+
+# Preview generated RIM Factsheet PDF in browser
+def rim_factsheet_preview(request, slum_id):
+	"""Renders preview of RIM Factsheet PDF in browser without download."""
+	cache_key = f"rim_context_{slum_id}"
+	context = cache.get(cache_key)
+	
+	if context is None:
+		context = rim_factsheet_view(slum_id)
+		cache.set(cache_key, context, timeout=120)
+
+	if context.get("data") == "NA":
+		return HttpResponse("No data available for PDF generation", status=404)
+	elif context.get("meta_data", {}).get("_exists") == False:
+		return HttpResponse("Slum not found", status=404)
+			
+	html = render_to_string("reports/rim_factsheet/preview/factsheet_preview.html", context)
+	return HttpResponse(html)
+
+
+# Download generated RIM Factsheet PDF
+def rim_factsheet_pdf_fetch(request, slum_id):
+    """Fetches and forces download of generated RIM Factsheet PDF.
+    
+    - Public users: require OTP verification
+    - Internal team: require X-Internal-Token header or ?internal_token=... param
+    """
+    
+    # ✅ Check if internal team request
+    internal_token = (
+        request.headers.get("X-Internal-Token") or 
+        request.GET.get("internal_token")
+    )
+    is_internal = internal_token == settings.INTERNAL_TEAM_SECRET
+
+    # 🔐 If not internal, enforce OTP
+    if not is_internal:
+        if not request.session.get("rim_otp_verified"):
+            return HttpResponseForbidden("OTP verification required")
+
+    try:
+        resp = requests.get(
+            f"{settings.PDF_FETCH_URL}?report_id={slum_id}&report_type=rim_factsheet",
+            headers={"X-PDF-KEY": settings.PDF_SECRET_KEY},
+            timeout=30
+        )
+
+        if resp.status_code == 200:
+            response = HttpResponse(resp.content, content_type="application/pdf")
+            content_disposition = resp.headers.get("Content-Disposition")
+
+            if content_disposition:
+                response["Content-Disposition"] = content_disposition
+            else:
+                response["Content-Disposition"] = f'attachment; filename="RIM_Factsheet_{slum_id}.pdf"'
+
+            response["Content-Length"] = len(resp.content)
+
+            # Only invalidate OTP session for public users
+            if not is_internal:
+                request.session["rim_otp_verified"] = False
+
+            return response
+
+        return HttpResponse("PDF not ready", status=404)
+
+    except requests.exceptions.Timeout:
+        return HttpResponse("PDF fetch timed out", status=504)
+
+#====================== Donar Report Views ======================
+
+# Trigger PDF generation for monthly donor report
+def monthly_donor_report_pdf_generation(request, report_id):
+	"""Generates PDF for monthly donor report and sends to PDF service."""
+	cache_key = f"monthly_report_{report_id}"
+	context = cache.get(cache_key)
+
+	if context is None:
+		data = monthly_report_details(request, report_id)
+		context = {
+			"data": data,
+			"base_url": request.build_absolute_uri("/")[:-1]
+		}
+		cache.set(cache_key, context, timeout=120)
+	
+	if not context.get("data"):
+		return HttpResponse("No data available for PDF generation", status=405)
+	
+	html = render_to_string("reports/donor_report/monthly_report_pdf.html", context)
+	data = context.get("data")
+	
+	try:
+		resp = requests.post(
+			settings.PDF_SERVICE_URL,
+			headers={"X-PDF-KEY": settings.PDF_SECRET_KEY},
+			json={
+				"html": html,
+				"report_id": report_id,
+				"file_name": f"Donor_Monthly_Report_{data['project']['sponsor_name'].replace(' ', '_')}_{data['month'].replace(' ', '_')}",
+				"force_generate": True,
+				"report_type": "donor_report"
+			},
+			timeout=120
+		)
+
+		if resp.status_code == 200:
+			return HttpResponse("PDF generated and saved successfully", status=202)
+
+		return HttpResponse("PDF generation failed", status=500)
+
+	except requests.exceptions.Timeout:
+		return HttpResponse("PDF generation timed out", status=504)
+
+
+# Download generated monthly donor report PDF
+def monthly_donor_report_pdf_fetch(request, report_id):
+	"""Fetches and forces download of generated monthly donor report PDF."""
+	try:
+		resp = requests.get(
+			f"{settings.PDF_FETCH_URL}?report_id={report_id}&report_type=donor_report",
+			headers={"X-PDF-KEY": settings.PDF_SECRET_KEY},
+			timeout=30
+		)
+		
+		if resp.status_code == 200:
+			response = HttpResponse(resp.content, content_type="application/pdf")
+			content_disposition = resp.headers.get("Content-Disposition")
+
+			if content_disposition:
+				response["Content-Disposition"] = content_disposition
+			else:
+				response["Content-Disposition"] = f'attachment; filename="report_{report_id}.pdf"'
+
+			response["Content-Length"] = len(resp.content)
+			return response
+
+		return HttpResponse("PDF not ready", status=404)
+
+	except requests.exceptions.Timeout:
+		return HttpResponse("PDF fetch timed out", status=504)
+
+
+# Get all donor projects
+def donor_projects(request):
+	"""Retrieves list of all donor projects with IDs and names."""
+	projects = SponsorProjectReportDetails.objects.select_related(
+		"sponsor_project"
+	).all()
+
+	data = []
+	for project in projects:
+		data.append({
+			"id": project.id,
+			"name": str(project.sponsor_project)
+		})
+
+	return JsonResponse({"projects": data})
+
+
+# Get report months for a specific project
+def project_months(request, project_id):
+	"""Retrieves completed monthly reports for a specific project."""
+	monthly_reports = SponsorProjectMonthlyReportDetails.objects.filter(
+		project_report_id=project_id,
+		status="completed"
+	).order_by("month")
+
+	data = []
+	for report in monthly_reports:
+		data.append({
+			"id": report.id,
+			"month": report.month.strftime("%B %Y")
+		})
+
+	return JsonResponse({"months": data})

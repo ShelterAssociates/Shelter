@@ -4,7 +4,7 @@
 from django.contrib import admin
 #from django.contrib.gis import admin
 from master.models import CityReference, City, \
-    AdministrativeWard, ElectoralWard, Slum, WardOfficeContact, ElectedRepresentative, Rapid_Slum_Appraisal, Survey, drainage
+    AdministrativeWard, ElectoralWard, Slum, WardOfficeContact, ElectedRepresentative, Rapid_Slum_Appraisal, Survey, drainage ,SlumTransformationPhase, SlumTransformationImage
 from master.forms import CityFrom, AdministrativeWardFrom, ElectoralWardForm, SlumForm
 from django.contrib.auth.models import Group
 from django.utils.html import format_html
@@ -13,6 +13,7 @@ from django.conf.urls import include, url
 from django.http import HttpResponse
 import json
 from .kmllevelparser import KMLLevelParser
+from django import forms
 
 #Common filters for querying model depending on model type
 data_filter = {'CityReference': 'city_name__in',
@@ -21,7 +22,9 @@ data_filter = {'CityReference': 'city_name__in',
                'ElectoralWard': 'administrative_ward__city__name__city_name__in',
                'Slum': 'electoral_ward__administrative_ward__city__name__city_name__in',
                'WardOfficeContact': 'administrative_ward__city__name__city_name__in',
-               'ElectedRepresentative': 'electoral_ward__administrative_ward__city__name__city_name__in'}
+               'ElectedRepresentative': 'electoral_ward__administrative_ward__city__name__city_name__in',
+               'Rapid_Slum_Appraisal': 'slum_name__electoral_ward__administrative_ward__city__name__city_name__in'
+            }
 
 class UploadKMLBase(admin.ModelAdmin):
 
@@ -329,8 +332,84 @@ class ElectedRepresentativeAdmin(BaseModelAdmin):
 
     def city_name(self, obj):
         return obj.electoral_ward.administrative_ward.city.name.city_name
+    
+class RapidSlumAppraisalAdmin(BaseModelAdmin):
+	list_display = (
+		'slum_name',
+		'city_name',
+		'administrative_ward',
+	)
+	search_fields = (
+		'slum_name__name',
+		'slum_name__electoral_ward__name',
+		'slum_name__electoral_ward__administrative_ward__name',
+	)
+	ordering = ('slum_name__name',)
+
+	def administrative_ward(self, obj):
+		return obj.slum_name.electoral_ward.administrative_ward.name
+
+	def city_name(self, obj):
+		return obj.slum_name.electoral_ward.administrative_ward.city.name.city_name
 
 admin.site.register(ElectedRepresentative, ElectedRepresentativeAdmin)
 
-admin.site.register(Rapid_Slum_Appraisal)
+admin.site.register(Rapid_Slum_Appraisal, RapidSlumAppraisalAdmin)
+
 admin.site.register(drainage)
+
+
+# =========================
+# ✅ FORM (MUST BE FIRST)
+# =========================
+class SlumTransformationPhaseAdminForm(forms.ModelForm):
+    month_year = forms.DateField(
+        widget=forms.DateInput(attrs={'type': 'month'}),
+        input_formats=['%Y-%m'],
+        required=False,
+        help_text="Pick month and year (e.g. 2019-06)"
+    )
+
+    class Meta:
+        model = SlumTransformationPhase
+        fields = '__all__'
+
+    def clean_month_year(self):
+        month_year = self.cleaned_data.get('month_year')
+
+        # Convert YYYY-MM → YYYY-MM-01
+        if month_year:
+            return month_year.replace(day=1)
+
+        # Preserve old value if editing
+        if self.instance.pk:
+            return self.instance.month_year
+
+        return month_year
+
+
+# =========================
+# ✅ INLINE IMAGES
+# =========================
+class SlumTransformationImageInline(admin.TabularInline):
+    model = SlumTransformationImage
+    extra = 1
+    fields = ['image', 'caption', 'priority']
+    ordering = ['priority']
+
+
+# =========================
+# ✅ MAIN ADMIN
+# =========================
+@admin.register(SlumTransformationPhase)
+class SlumTransformationPhaseAdmin(admin.ModelAdmin):
+    form = SlumTransformationPhaseAdminForm
+    list_display  = ['slum', 'month_year', 'description']
+    list_filter   = ['month_year']
+    search_fields = ['slum__name']
+    inlines = [SlumTransformationImageInline]
+
+    def get_form(self, request, obj=None, **kwargs):
+        form = super().get_form(request, obj, **kwargs)
+        form.base_fields['slum'].queryset = Slum.objects.filter(current_status='sra')
+        return form
