@@ -3,6 +3,7 @@
 import colorfield.fields
 import django.contrib.gis.db.models.fields
 from django.db import migrations, models
+from jsonfield import JSONField
 import django.db.models.deletion
 
 
@@ -21,7 +22,7 @@ class Migration(migrations.Migration):
                 ('year', models.PositiveIntegerField(help_text='Year photo was taken e.g. 2019')),
                 ('photo', models.ImageField(upload_to='slum_transformation/%Y/')),
                 ('description', models.TextField(blank=True)),
-                ('coordinates', models.JSONField(help_text='{"top_left":[lat,lng],"top_right":[lat,lng],"bottom_right":[lat,lng],"bottom_left":[lat,lng]}')),
+                ('coordinates', JSONField(help_text='{"top_left":[lat,lng],"top_right":[lat,lng],"bottom_right":[lat,lng],"bottom_left":[lat,lng]}')),
                 ('created_at', models.DateTimeField(auto_now_add=True)),
                 ('slum', models.ForeignKey(limit_choices_to={'current_status': 'sra'}, on_delete=django.db.models.deletion.CASCADE, related_name='transformation_photos', to='master.slum')),
             ],

@@ -3,6 +3,7 @@
 from django.db import migrations, models
 import django.db.models.deletion
 import master.models
+from jsonfield import JSONField
 
 
 class Migration(migrations.Migration):
@@ -32,7 +33,7 @@ class Migration(migrations.Migration):
                 ('month_year', models.DateField(blank=True, help_text='Use first day of month (YYYY-MM-01)', null=True)),
                 ('description', models.TextField(blank=True)),
                 ('main_image', models.ImageField(blank=True, upload_to=master.models.slum_photo_upload_path)),
-                ('coordinates', models.JSONField(help_text='{"north": ..., "south": ..., "east": ..., "west": ...}')),
+                ('coordinates', JSONField(help_text='{"north": ..., "south": ..., "east": ..., "west": ...}')),
                 ('created_at', models.DateTimeField(auto_now_add=True)),
                 ('slum', models.ForeignKey(limit_choices_to={'current_status': 'sra'}, on_delete=django.db.models.deletion.CASCADE, related_name='transformation_phases', to='master.slum')),
             ],

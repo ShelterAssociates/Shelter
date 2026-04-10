@@ -5,6 +5,8 @@ import django.contrib.gis.db.models.fields
 from django.db import migrations, models
 import django.db.models.deletion
 
+from jsonfield import JSONField
+
 
 class Migration(migrations.Migration):
 
@@ -17,6 +19,6 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='slumtransformationphoto',
             name='coordinates',
-            field=models.JSONField(help_text='{"north": 16.6851, "south": 16.6825, "east": 74.1927, "west": 74.1887}'),
+            field=JSONField(help_text='{"north": 16.6851, "south": 16.6825, "east": 74.1927, "west": 74.1887}'),
         ),
     ]

@@ -3,7 +3,7 @@
 """The Django Models Page for master app"""
 
 import datetime
-
+from jsonfield import JSONField
 from django.contrib.gis.db import models
 from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
@@ -376,17 +376,25 @@ class drainage(models.Model):
 
 def slum_photo_upload_path(instance, filename):
     import uuid
+
     ext = filename.split('.')[-1]
     filename = f"{uuid.uuid4()}.{ext}"
 
-    if hasattr(instance, 'slum'):
-        slum = instance.slum
-    elif hasattr(instance, 'phase'):
-        slum = instance.phase.slum
-    else:
-        return f'slum_transformation/unknown/{filename}'
+    slum_id = None
 
-    return f'slum_transformation/{slum.id}/{filename}'
+    # Try direct slum
+    if hasattr(instance, 'slum') and instance.slum:
+        slum_id = instance.slum.id
+
+    # Try via phase
+    elif hasattr(instance, 'phase') and instance.phase and hasattr(instance.phase, 'slum'):
+        slum_id = instance.phase.slum.id
+
+    # Fallback (IMPORTANT)
+    if not slum_id:
+        return f'slum_transformation/temp/{filename}'
+
+    return f'slum_transformation/{slum_id}/{filename}'
 
 from django.db import models
 from django.core.exceptions import ValidationError
@@ -409,7 +417,7 @@ class SlumTransformationPhase(models.Model):
         upload_to=slum_photo_upload_path,
         blank=True
     )
-    coordinates = models.JSONField(
+    coordinates = JSONField(
         help_text='{"north": ..., "south": ..., "east": ..., "west": ...}'
     )
     created_at = models.DateTimeField(auto_now_add=True)

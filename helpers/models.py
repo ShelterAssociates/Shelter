@@ -1,6 +1,6 @@
 from django.db import models
 from django.utils import timezone
-
+from jsonfield import JSONField
 # Stores OTPs sent for different verification tasks (PDF download, email verification, etc.)
 # Each email + task combination will have only one OTP record which gets updated on new request
 class OTPVerification(models.Model):
@@ -25,7 +25,7 @@ class FormSubmission(models.Model):
 	email = models.EmailField()
 	mobile = models.CharField(max_length=15)
 	task = models.CharField(max_length=50)
-	extra_data = models.JSONField(blank=True, null=True)
+	extra_data = JSONField(blank=True, null=True)
 	otp_verified = models.BooleanField(default=False)
 	ip_address = models.GenericIPAddressField(null=True, blank=True)
 	user_agent = models.TextField(null=True, blank=True)
