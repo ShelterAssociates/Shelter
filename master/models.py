@@ -10,6 +10,7 @@ from django.core.exceptions import ValidationError
 from colorfield.fields import ColorField
 from component.models import Component
 from django.contrib.contenttypes.fields import GenericRelation
+from django.core.exceptions import ValidationError
 
 FACTSHEET_PHOTO="factsheet/"
 SHELTER_PHOTO="ShelterPhotos/"
@@ -375,30 +376,31 @@ class drainage(models.Model):
     drainage_image = models.ImageField(upload_to=DRAINAGE_PHOTO,blank=True, null=True)
 
 def slum_photo_upload_path(instance, filename):
-    import uuid
+	import uuid
+	import os
 
-    ext = filename.split('.')[-1]
-    filename = f"{uuid.uuid4()}.{ext}"
+	# Get extension safely
+	ext = os.path.splitext(filename)[1]
 
-    slum_id = None
+	# Generate unique filename
+	new_filename = f"{uuid.uuid4()}{ext}"
 
-    # Try direct slum
-    if hasattr(instance, 'slum') and instance.slum:
-        slum_id = instance.slum.id
+	slum_id = None
 
-    # Try via phase
-    elif hasattr(instance, 'phase') and instance.phase and hasattr(instance.phase, 'slum'):
-        slum_id = instance.phase.slum.id
+	# Case 1: Direct slum relation
+	if getattr(instance, 'slum', None) and getattr(instance.slum, 'id', None):
+		slum_id = instance.slum.id
 
-    # Fallback (IMPORTANT)
-    if not slum_id:
-        return f'slum_transformation/temp/{filename}'
+	# Case 2: Via phase → slum
+	elif getattr(instance, 'phase', None) and getattr(instance.phase, 'slum', None):
+		if getattr(instance.phase.slum, 'id', None):
+			slum_id = instance.phase.slum.id
 
-    return f'slum_transformation/{slum_id}/{filename}'
+	# Fallback (important when instance not fully saved)
+	if not slum_id:
+		return f"slum_transformation/temp/{new_filename}"
 
-from django.db import models
-from django.core.exceptions import ValidationError
-
+	return f"slum_transformation/{slum_id}/{new_filename}"
 
 class SlumTransformationPhase(models.Model):
     slum = models.ForeignKey(
@@ -447,7 +449,6 @@ class SlumTransformationPhase(models.Model):
         return f"{self.slum} — {self.month_year}"
 
 
-from django.core.exceptions import ValidationError
 
 class SlumTransformationImage(models.Model):
     phase = models.ForeignKey(

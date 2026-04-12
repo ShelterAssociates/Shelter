@@ -189,7 +189,7 @@ function addLegend(map) {
         div.innerHTML =
             '<div class="legend-item"><span class="legend-box red-border"></span><span>Household data available</span></div>' +
             '<div class="legend-item"><span class="legend-box blue-border"></span><span>Household data not available</span></div>' +
-            '<div class="legend-item"><span class="legend-box yellow-border"></span><span>Now in SRA (Previously surveyed)</span></div>';
+            '<div class="legend-item"><span class="legend-box yellow-border"></span><span>Now in Slum redevlopment (Previously surveyed)</span></div>';
         return div;
     };
     legendControl.addTo(map);
