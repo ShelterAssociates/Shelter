@@ -37,6 +37,15 @@ jobs:
           chmod 600 ~/.ssh/deploy_key
           ssh-keyscan -H ${{ secrets.SERVER_HOST }} >> ~/.ssh/known_hosts 2>/dev/null
 
+      - name: Debug SSH key
+        run: |
+          echo "=== Key file info ==="
+          wc -l ~/.ssh/deploy_key
+          head -1 ~/.ssh/deploy_key
+          tail -1 ~/.ssh/deploy_key
+          echo "=== Key char count ==="
+          wc -c ~/.ssh/deploy_key
+
       - name: Deploy to server via SSH
         run: |
           ssh -i ~/.ssh/deploy_key \
