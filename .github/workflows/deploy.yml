@@ -12,11 +12,13 @@ jobs:
 
     steps:
 
+      # ✅ Checkout latest code
       - name: Checkout code
         uses: actions/checkout@v3
         with:
           fetch-depth: 2
 
+      # ✅ Prevent accidental migration commits
       - name: Block migration files
         run: |
           MIGRATION_FILES=$(git diff --name-only HEAD~1 HEAD | grep '/migrations/[0-9]' || true)
@@ -27,56 +29,25 @@ jobs:
           fi
           echo "✅ No migration files — safe to deploy."
 
-      # ✅ FIX 1: Manual SSH setup (removed ssh-agent completely)
-      - name: Setup SSH key
+      # ✅ Setup SSH key (WORKING METHOD)
+      - name: Setup SSH
         run: |
           mkdir -p ~/.ssh
           printf "%s\n" "${{ secrets.SERVER_SSH_KEY }}" > ~/.ssh/id_rsa
           chmod 600 ~/.ssh/id_rsa
 
-      # ✅ FIX 2: Proper host scan with RSA
+      # ✅ Add server to known hosts
       - name: Add server to known_hosts
         run: |
           ssh-keyscan -H -t rsa ${{ secrets.SERVER_HOST }} >> ~/.ssh/known_hosts
 
-      # ✅ FIX 3: Correct SSH command (rsa support + correct key usage)
-      - name: Deploy to server
+      # ✅ Run deploy script from server HOME
+      - name: Deploy to server (run script)
         run: |
-          ssh \
+          ssh -tt \
             -o StrictHostKeyChecking=no \
             -o PubkeyAcceptedKeyTypes=+ssh-rsa \
             -i ~/.ssh/id_rsa \
             -p ${{ secrets.SERVER_PORT }} \
-            ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} << EOF
-
-            set -e
-
-            echo "──────────────────────────────────────────"
-            echo "  Shelter WebApp — Production Deployment  "
-            echo "──────────────────────────────────────────"
-
-            echo "🐍 Activating environment..."
-            source /srv/Shelter/ENV3/bin/activate
-
-            echo "📦 Pulling latest code..."
-            cd /srv/Shelter/
-            git fetch origin
-            git checkout master
-            git pull origin master
-
-            echo "🗄️ Running migrations..."
-            python manage.py migrate --noinput
-
-            echo "🗂️ Collecting static files..."
-            python manage.py collectstatic --noinput
-
-            echo "🔍 Running Django system checks..."
-            python manage.py check
-
-            echo "🔄 Restarting shelter service..."
-            sudo systemctl restart shelter
-
-            echo "✅ Deployment complete!"
-            echo "──────────────────────────────────────────"
-
-          EOF
+            ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} \
+            "bash -x ~/deploy/deploy.sh"
