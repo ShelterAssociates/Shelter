@@ -18,7 +18,7 @@ jobs:
         with:
           fetch-depth: 2
 
-      # ✅ Block migrations
+      # ✅ Block migration files
       - name: Block migration files
         run: |
           MIGRATION_FILES=$(git diff --name-only HEAD~1 HEAD | grep '/migrations/[0-9]' || true)
@@ -29,22 +29,27 @@ jobs:
           fi
           echo "✅ No migration files — safe to deploy."
 
-      # ✅ Setup SSH (FORCED KEY USAGE)
+      # 🔥 SETUP SSH USING BASE64 (FIXES YOUR ISSUE)
       - name: Setup SSH
         run: |
           mkdir -p ~/.ssh
-          printf "%s\n" "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
+
+          # Decode base64 key safely
+          echo "${{ secrets.SSH_PRIVATE_KEY_BASE64 }}" | base64 -d > ~/.ssh/id_rsa
+
           chmod 600 ~/.ssh/id_rsa
 
-          # 🔥 Force SSH to use ONLY this key
+          # Force SSH to use this key ONLY
           echo "Host *" > ~/.ssh/config
           echo "  IdentityFile ~/.ssh/id_rsa" >> ~/.ssh/config
           echo "  IdentitiesOnly yes" >> ~/.ssh/config
 
-      # 🔍 Debug fingerprint (optional but useful)
-      - name: Debug SSH key fingerprint
+      # 🔍 VERIFY KEY (debug - can remove later)
+      - name: Verify SSH key
         run: |
-          echo "Fingerprint from GitHub:"
+          echo "Key preview:"
+          head -n 2 ~/.ssh/id_rsa
+          echo "Fingerprint:"
           ssh-keygen -lf ~/.ssh/id_rsa
 
       # ✅ Add server to known hosts
@@ -52,7 +57,7 @@ jobs:
         run: |
           ssh-keyscan -H -t rsa ${{ secrets.SERVER_HOST }} >> ~/.ssh/known_hosts
 
-      # 🔍 TEST SSH (MUST PASS)
+      # 🔍 TEST SSH CONNECTION (must pass)
       - name: Test SSH connection
         run: |
           ssh -vvv \
@@ -70,4 +75,4 @@ jobs:
             -o PubkeyAcceptedKeyTypes=+ssh-rsa \
             -p ${{ secrets.SERVER_PORT }} \
             ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} \
-            "echo RUNNING_SCRIPT && ls -l ~/deploy && bash -x ~/deploy/deploy.sh"
+            "bash -x ~/deploy/deploy.sh"
