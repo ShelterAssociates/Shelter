@@ -14,43 +14,44 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
 
-      # 🔥 Setup SSH (FINAL FIX)
-      - name: Setup SSH
+      # 🔥 SETUP SSH (FINAL FIX)
+      - name: Setup SSH key
         run: |
           mkdir -p ~/.ssh
 
-          echo "${{ secrets.SSH_PRIVATE_KEY_BASE64 }}" | base64 -d > ~/.ssh/id_rsa
+          # Decode key safely (no newline / echo issues)
+          printf "%s" "${{ secrets.SSH_PRIVATE_KEY_BASE64 }}" | base64 --decode > ~/.ssh/id_rsa
 
           chmod 600 ~/.ssh/id_rsa
 
-          echo "Host *" > ~/.ssh/config
-          echo "  IdentityFile ~/.ssh/id_rsa" >> ~/.ssh/config
-          echo "  IdentitiesOnly yes" >> ~/.ssh/config
-
-      # 🔍 VERIFY (keep for now)
+      # 🔍 VERIFY KEY (CRITICAL)
       - name: Verify key
         run: |
-          echo "Preview:"
+          echo "---- KEY START ----"
           head -n 2 ~/.ssh/id_rsa
+          echo "---- KEY END ----"
+          tail -n 2 ~/.ssh/id_rsa
+          echo "---- FINGERPRINT ----"
+          ssh-keygen -lf ~/.ssh/id_rsa
 
-      # ✅ Add host
-      - name: Add known hosts
+      # 🔥 FORCE SSH TO USE THIS KEY
+      - name: Test SSH connection
         run: |
-          ssh-keyscan -H -t rsa ${{ secrets.SERVER_HOST }} >> ~/.ssh/known_hosts
-
-      # 🔍 TEST SSH (THIS MUST PASS)
-      - name: Test SSH
-        run: |
-          ssh -o StrictHostKeyChecking=no \
-              -o PubkeyAcceptedKeyTypes=+ssh-rsa \
-              -p ${{ secrets.SERVER_PORT }} \
-              ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} \
-              "echo SSH_OK"
+          ssh -vvv \
+            -i ~/.ssh/id_rsa \
+            -o IdentitiesOnly=yes \
+            -o StrictHostKeyChecking=no \
+            -o PubkeyAcceptedKeyTypes=+ssh-rsa \
+            -p ${{ secrets.SERVER_PORT }} \
+            ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} \
+            "echo SSH_OK"
 
       # 🚀 DEPLOY
-      - name: Run deploy
+      - name: Run deploy script
         run: |
           ssh -tt \
+            -i ~/.ssh/id_rsa \
+            -o IdentitiesOnly=yes \
             -o StrictHostKeyChecking=no \
             -o PubkeyAcceptedKeyTypes=+ssh-rsa \
             -p ${{ secrets.SERVER_PORT }} \
