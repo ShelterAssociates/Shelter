@@ -35,17 +35,20 @@ jobs:
           ssh-keygen -lf ~/.ssh/id_rsa
 
       # 🔥 FORCE SSH TO USE THIS KEY
-      - name: Test SSH connection
+      - name: Test SSH FINAL
         run: |
           ssh -vvv \
             -i ~/.ssh/id_rsa \
             -o IdentitiesOnly=yes \
             -o StrictHostKeyChecking=no \
-            -o PubkeyAcceptedKeyTypes=+ssh-rsa \
+            -o PubkeyAcceptedAlgorithms=+ssh-rsa \
+            -o HostKeyAlgorithms=+ssh-rsa \
+            -o KexAlgorithms=+diffie-hellman-group14-sha1 \
+            -o Ciphers=+aes128-cbc \
             -p ${{ secrets.SERVER_PORT }} \
             ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} \
             "echo SSH_OK"
-
+      
       # 🚀 DEPLOY
       - name: Run deploy script
         run: |
