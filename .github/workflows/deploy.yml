@@ -52,8 +52,6 @@ jobs:
           username:       ${{ secrets.SERVER_USER }}      # ubuntu
           key:            ${{ secrets.SERVER_SSH_KEY }}   # contents of ShelterAppsSecurity.pem
           port:           ${{ secrets.SERVER_PORT }}      # 22
-          request_pty:    true
-          ssh_extra_args: "-o PubkeyAcceptedKeyTypes=+ssh-rsa -o StrictHostKeyChecking=no"
           script: |
             set -e
 
