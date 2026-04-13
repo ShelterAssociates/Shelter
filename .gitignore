@@ -4,3 +4,5 @@ ENV
 .DS_Store
 node_modules
 package-lock.json
+*/migrations/0*.py
+
