@@ -27,17 +27,19 @@ jobs:
           fi
           echo "✅ No migration files — safe to deploy."
 
-      # 🔥 Use manual SSH setup (more reliable than ssh-agent)
-      - name: Setup SSH
+      # ✅ FIX 1: Manual SSH setup (removed ssh-agent completely)
+      - name: Setup SSH key
         run: |
           mkdir -p ~/.ssh
           printf "%s\n" "${{ secrets.SERVER_SSH_KEY }}" > ~/.ssh/id_rsa
           chmod 600 ~/.ssh/id_rsa
 
+      # ✅ FIX 2: Proper host scan with RSA
       - name: Add server to known_hosts
         run: |
           ssh-keyscan -H -t rsa ${{ secrets.SERVER_HOST }} >> ~/.ssh/known_hosts
 
+      # ✅ FIX 3: Correct SSH command (rsa support + correct key usage)
       - name: Deploy to server
         run: |
           ssh \
