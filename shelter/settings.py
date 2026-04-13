@@ -88,7 +88,6 @@ if DEBUG:
 # ---------------------------------------------------------------------------
 
 INSTALLED_APPS = (
-    'django_extensions',
     'admin_view_permission',
     'django.contrib.admin',
     'django.contrib.auth',
@@ -111,6 +110,27 @@ INSTALLED_APPS = (
     'drf_dynamic_fields',
     'widget_tweaks',
 )
+# INSTALLED_APPS = (
+#     'admin_view_permission',
+#     'django.contrib.admin',
+#     'django.contrib.auth',
+#     'django.contrib.contenttypes',
+#     'django.contrib.sessions',
+#     'django.contrib.messages',
+#     'django.contrib.staticfiles',
+#     'django.contrib.gis',
+#      #'south',
+#      'master',
+#      'component',
+#       #'Filter',
+#      'sponsor',
+#      'colorfield',
+#      'mastersheet',
+#      'graphs',
+#     'rest_framework',
+#     'rest_framework.authtoken',
+#     'rest_auth',
+# )
 
 
 # ---------------------------------------------------------------------------
