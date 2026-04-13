@@ -12,14 +12,13 @@ jobs:
 
     steps:
 
-
-      # ✅ Checkout latest code
+      # ✅ Checkout code
       - name: Checkout code
         uses: actions/checkout@v3
         with:
           fetch-depth: 2
 
-      # ✅ Prevent accidental migration commits
+      # ✅ Block migrations
       - name: Block migration files
         run: |
           MIGRATION_FILES=$(git diff --name-only HEAD~1 HEAD | grep '/migrations/[0-9]' || true)
@@ -30,20 +29,36 @@ jobs:
           fi
           echo "✅ No migration files — safe to deploy."
 
-      # ✅ Setup SSH key (WORKING METHOD)
+      # ✅ Setup SSH key (USE ONLY THIS SECRET)
       - name: Setup SSH
         run: |
           mkdir -p ~/.ssh
           printf "%s\n" "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
           chmod 600 ~/.ssh/id_rsa
 
-      # ✅ Add server to known hosts
+      # 🔍 Debug fingerprint (VERY IMPORTANT — confirms correct key)
+      - name: Debug SSH key fingerprint
+        run: |
+          echo "GitHub key fingerprint:"
+          ssh-keygen -lf ~/.ssh/id_rsa
+
+      # ✅ Add server host
       - name: Add server to known_hosts
         run: |
           ssh-keyscan -H -t rsa ${{ secrets.SERVER_HOST }} >> ~/.ssh/known_hosts
 
-      # ✅ Run deploy script from server HOME
-      - name: Deploy to server (run script)
+      # 🔍 TEST SSH FIRST (CRITICAL STEP)
+      - name: Test SSH connection
+        run: |
+          ssh -o StrictHostKeyChecking=no \
+              -o PubkeyAcceptedKeyTypes=+ssh-rsa \
+              -i ~/.ssh/id_rsa \
+              -p ${{ secrets.SERVER_PORT }} \
+              ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} \
+              "echo ✅ SSH WORKS"
+
+      # 🚀 RUN DEPLOY SCRIPT
+      - name: Run deploy script
         run: |
           ssh -tt \
             -o StrictHostKeyChecking=no \
