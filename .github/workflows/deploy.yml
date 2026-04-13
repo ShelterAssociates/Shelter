@@ -1,0 +1,87 @@
+name: Deploy to Production
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Confirmation happens ONCE locally via the post-merge git hook before push.
+# Everything here is fully automatic — no approval gates.
+# On failure, the terminal running the hook will show exactly what went wrong.
+# ─────────────────────────────────────────────────────────────────────────────
+
+on:
+  push:
+    branches:
+      - live
+
+jobs:
+  deploy:
+    name: Deploy to Production Server
+    runs-on: ubuntu-latest
+
+    steps:
+
+      # ── Checkout code ──────────────────────────────────────────────────────
+      - name: Checkout code
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 2
+
+      # ── Block migration files ──────────────────────────────────────────────
+      # Model files go to production — migration files never do.
+      # Migrations are generated and applied on the server itself.
+      - name: Block migration files
+        run: |
+          MIGRATION_FILES=$(git diff --name-only HEAD~1 HEAD | grep '/migrations/[0-9]' || true)
+          if [ -n "$MIGRATION_FILES" ]; then
+            echo "❌ ERROR: Migration files detected:"
+            echo "$MIGRATION_FILES"
+            echo ""
+            echo "Remove migration files from the live branch and push again."
+            echo "Migrations are generated and applied on the server automatically."
+            exit 1
+          fi
+          echo "✅ No migration files — safe to deploy."
+
+      # ── SSH into server and deploy ─────────────────────────────────────────
+      # Server  : ubuntu@3.90.10.80 (AWS EC2)
+      # Env     : /srv/Shelter/ENV3/bin/activate
+      # Code    : /srv/Shelter/app  (live branch)
+      # Service : systemctl restart shelter
+      - name: Deploy to server via SSH
+        uses: appleboy/ssh-action@v1.0.0
+        with:
+          host:           ${{ secrets.SERVER_HOST }}      # 3.90.10.80
+          username:       ${{ secrets.SERVER_USER }}      # ubuntu
+          key:            ${{ secrets.SERVER_SSH_KEY }}   # contents of ShelterAppsSecurity.pem
+          port:           ${{ secrets.SERVER_PORT }}      # 22
+          request_pty:    true
+          ssh_extra_args: "-o PubkeyAcceptedKeyTypes=+ssh-rsa -o StrictHostKeyChecking=no"
+          script: |
+            set -e
+
+            echo "──────────────────────────────────────────"
+            echo "  Shelter WebApp — Production Deployment  "
+            echo "──────────────────────────────────────────"
+
+            echo "🐍 Activating environment..."
+            source /srv/Shelter/ENV3/bin/activate
+
+            echo "📦 Pulling latest code into live branch..."
+            cd /srv/Shelter/
+            git fetch origin
+            git checkout live
+            git pull origin live
+
+            echo "🗄️  Running migrations..."
+            python manage.py migrate --noinput
+
+            echo "🗂️  Collecting static files..."
+            python manage.py collectstatic --noinput
+
+            echo "🔍 Running Django system checks..."
+            python manage.py check
+
+            echo "🔄 Restarting shelter service..."
+            sudo systemctl restart shelter
+
+            echo ""
+            echo "✅ Deployment complete!"
+            echo "──────────────────────────────────────────"
