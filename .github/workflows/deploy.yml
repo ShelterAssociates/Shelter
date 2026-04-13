@@ -70,4 +70,4 @@ jobs:
             -o PubkeyAcceptedKeyTypes=+ssh-rsa \
             -p ${{ secrets.SERVER_PORT }} \
             ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} \
-            "bash -x ~/deploy/deploy.sh"
+            "echo RUNNING_SCRIPT && ls -l ~/deploy && bash -x ~/deploy/deploy.sh"
