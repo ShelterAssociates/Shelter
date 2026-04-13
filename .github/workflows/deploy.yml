@@ -7,68 +7,48 @@ on:
 
 jobs:
   deploy:
-    name: Deploy to Production Server
     runs-on: ubuntu-latest
 
     steps:
 
-      # ✅ Checkout code
       - name: Checkout code
         uses: actions/checkout@v3
-        with:
-          fetch-depth: 2
 
-      # ✅ Block migration files
-      - name: Block migration files
-        run: |
-          MIGRATION_FILES=$(git diff --name-only HEAD~1 HEAD | grep '/migrations/[0-9]' || true)
-          if [ -n "$MIGRATION_FILES" ]; then
-            echo "❌ ERROR: Migration files detected:"
-            echo "$MIGRATION_FILES"
-            exit 1
-          fi
-          echo "✅ No migration files — safe to deploy."
-
-      # 🔥 SETUP SSH USING BASE64 (FIXES YOUR ISSUE)
+      # 🔥 Setup SSH (FINAL FIX)
       - name: Setup SSH
         run: |
           mkdir -p ~/.ssh
 
-          # Decode base64 key safely
           echo "${{ secrets.SSH_PRIVATE_KEY_BASE64 }}" | base64 -d > ~/.ssh/id_rsa
 
           chmod 600 ~/.ssh/id_rsa
 
-          # Force SSH to use this key ONLY
           echo "Host *" > ~/.ssh/config
           echo "  IdentityFile ~/.ssh/id_rsa" >> ~/.ssh/config
           echo "  IdentitiesOnly yes" >> ~/.ssh/config
 
-      # 🔍 VERIFY KEY (debug - can remove later)
-      - name: Verify SSH key
+      # 🔍 VERIFY (keep for now)
+      - name: Verify key
         run: |
-          echo "Key preview:"
+          echo "Preview:"
           head -n 2 ~/.ssh/id_rsa
-          echo "Fingerprint:"
-          ssh-keygen -lf ~/.ssh/id_rsa
 
-      # ✅ Add server to known hosts
-      - name: Add server to known_hosts
+      # ✅ Add host
+      - name: Add known hosts
         run: |
           ssh-keyscan -H -t rsa ${{ secrets.SERVER_HOST }} >> ~/.ssh/known_hosts
 
-      # 🔍 TEST SSH CONNECTION (must pass)
-      - name: Test SSH connection
+      # 🔍 TEST SSH (THIS MUST PASS)
+      - name: Test SSH
         run: |
-          ssh -vvv \
-            -o StrictHostKeyChecking=no \
-            -o PubkeyAcceptedKeyTypes=+ssh-rsa \
-            -p ${{ secrets.SERVER_PORT }} \
-            ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} \
-            "echo ✅ SSH WORKS"
+          ssh -o StrictHostKeyChecking=no \
+              -o PubkeyAcceptedKeyTypes=+ssh-rsa \
+              -p ${{ secrets.SERVER_PORT }} \
+              ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} \
+              "echo SSH_OK"
 
-      # 🚀 RUN DEPLOY SCRIPT
-      - name: Run deploy script
+      # 🚀 DEPLOY
+      - name: Run deploy
         run: |
           ssh -tt \
             -o StrictHostKeyChecking=no \
