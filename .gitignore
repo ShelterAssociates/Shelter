@@ -1,7 +1,4 @@
-media/
 *.pyc
-shelter/settings.py
-utils/utils_permission.py
 local_settings.py
 ENV
 .DS_Store
