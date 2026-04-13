@@ -429,3 +429,64 @@ class avni_sync():
         conn.commit()
         conn.close()
         print(final_list)
+
+    def fetch_encounter_details(self, uuid, only_observations=False):
+        """
+        Fetch encounter details from Avni using UUID.
+
+        Args:
+            uuid (str): Encounter UUID
+            only_observations (bool): If True, return only observations
+
+        Returns:
+            dict: Encounter data OR observations OR None if failed
+        """
+
+        try:
+            # Build URL
+            url = self.base_url + 'api/encounter/' + str(uuid)
+
+            # Get token
+            token = self.get_cognito_token()
+
+            headers = {
+                'AUTH-TOKEN': token
+            }
+
+            # API Call
+            response = requests.get(url, headers=headers)
+
+            # Check response
+            if response.status_code != 200:
+                print(f"[ERROR] Failed to fetch encounter: {uuid}")
+                print(f"Status Code: {response.status_code}")
+                print(response.text)
+                return None
+
+            data = response.json()
+
+            # Debug logs (optional but useful)
+            print("\n===== ENCOUNTER DEBUG =====")
+            print("UUID:", uuid)
+            print("Encounter Type:", data.get('Encounter type'))
+            print("Subject ID:", data.get('Subject ID'))
+            print("Voided:", data.get('Voided'))
+            print("===========================\n")
+
+            # Return only observations if requested
+            if only_observations:
+                return data.get('observations', {})
+
+            # Structured clean response
+            return {
+                'uuid': uuid,
+                'encounter_type': data.get('Encounter type'),
+                'subject_id': data.get('Subject ID'),
+                'observations': data.get('observations', {}),
+                'audit': data.get('audit', {}),
+                'raw': data  # full raw response (for deep debugging)
+            }
+
+        except Exception as e:
+            print(f"[EXCEPTION] Error fetching encounter {uuid}: {e}")
+            return None       

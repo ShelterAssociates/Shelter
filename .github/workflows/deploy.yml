@@ -23,28 +23,30 @@ jobs:
           if [ -n "$MIGRATION_FILES" ]; then
             echo "❌ ERROR: Migration files detected:"
             echo "$MIGRATION_FILES"
-            echo ""
-            echo "Remove migration files from the live branch and push again."
-            echo "Migrations are generated and applied on the server automatically."
             exit 1
           fi
           echo "✅ No migration files — safe to deploy."
 
-      - name: Setup SSH agent
-        uses: webfactory/ssh-agent@v0.9.0
-        with:
-          ssh-private-key: ${{ secrets.SERVER_SSH_KEY }}
-
-      - name: Add server to known hosts
+      # 🔥 Use manual SSH setup (more reliable than ssh-agent)
+      - name: Setup SSH
         run: |
-          ssh-keyscan -H ${{ secrets.SERVER_HOST }} >> ~/.ssh/known_hosts
+          mkdir -p ~/.ssh
+          printf "%s\n" "${{ secrets.SERVER_SSH_KEY }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
 
-      - name: Deploy to server via SSH
+      - name: Add server to known_hosts
+        run: |
+          ssh-keyscan -H -t rsa ${{ secrets.SERVER_HOST }} >> ~/.ssh/known_hosts
+
+      - name: Deploy to server
         run: |
           ssh \
             -o StrictHostKeyChecking=no \
+            -o PubkeyAcceptedKeyTypes=+ssh-rsa \
+            -i ~/.ssh/id_rsa \
             -p ${{ secrets.SERVER_PORT }} \
-            ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} << 'ENDSSH'
+            ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} << EOF
+
             set -e
 
             echo "──────────────────────────────────────────"
@@ -60,10 +62,10 @@ jobs:
             git checkout master
             git pull origin master
 
-            echo "🗄️  Running migrations..."
+            echo "🗄️ Running migrations..."
             python manage.py migrate --noinput
 
-            echo "🗂️  Collecting static files..."
+            echo "🗂️ Collecting static files..."
             python manage.py collectstatic --noinput
 
             echo "🔍 Running Django system checks..."
@@ -72,7 +74,7 @@ jobs:
             echo "🔄 Restarting shelter service..."
             sudo systemctl restart shelter
 
-            echo ""
             echo "✅ Deployment complete!"
             echo "──────────────────────────────────────────"
-          ENDSSH
+
+          EOF
