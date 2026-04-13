@@ -1,10 +1,10 @@
 #!/bin/bash
 
-MODE="${1:-auto}"   # auto (hook) or manual
+MODE="${1:-auto}"
 
 CURRENT_BRANCH=$(git symbolic-ref --short HEAD)
 
-# ── AUTO MODE (post-merge hook) ─────────────────────────────────
+# ── AUTO MODE ───────────────────────────────────────────────────
 
 if [ "$MODE" = "auto" ]; then
 if [ "$CURRENT_BRANCH" != "live" ]; then
@@ -45,13 +45,7 @@ SSH_OPTS=(
 # ── Helper: get PR ──────────────────────────────────────────────
 
 get_pr_number() {
-gh pr list 
---repo ShelterAssociates/Shelter 
---state open 
---limit 20 
---json number,headRefName,headRepositoryOwner 
--q '.[] | select(.headRepositoryOwner.login == "vsonje2102" and .headRefName == "live") | .number' 
-2>/dev/null
+gh pr list --repo ShelterAssociates/Shelter --state open --limit 20 --json number,headRefName,headRepositoryOwner -q '.[] | select(.headRepositoryOwner.login == "vsonje2102" and .headRefName == "live") | .number' 2>/dev/null
 }
 
 # ── STEP 1: Push to origin/live ─────────────────────────────────
@@ -67,12 +61,7 @@ PR_NUMBER=$(get_pr_number)
 
 if [ -z "$PR_NUMBER" ]; then
 echo "📨 Creating PR..."
-gh pr create 
---repo ShelterAssociates/Shelter 
---base master 
---head vsonje2102:live 
---title "Deploy: $(git log -1 --pretty=%s)" 
---body "Auto deploy PR"
+gh pr create --repo ShelterAssociates/Shelter --base master --head vsonje2102:live --title "Deploy: $(git log -1 --pretty=%s)" --body "Auto deploy PR"
 fi
 
 sleep 3
@@ -83,17 +72,13 @@ echo "❌ Could not find PR"
 exit 1
 fi
 
-PR_URL=$(gh pr view "$PR_NUMBER" 
---repo ShelterAssociates/Shelter 
---json url -q '.url')
+PR_URL=$(gh pr view "$PR_NUMBER" --repo ShelterAssociates/Shelter --json url -q '.url')
 
 echo "🔗 PR: $PR_URL"
 
 # ── STEP 3: Wait OR skip if already merged ──────────────────────
 
-STATE=$(gh pr view "$PR_NUMBER" 
---repo ShelterAssociates/Shelter 
---json state -q '.state')
+STATE=$(gh pr view "$PR_NUMBER" --repo ShelterAssociates/Shelter --json state -q '.state')
 
 if [ "$STATE" = "MERGED" ]; then
 echo "✅ PR already merged — deploying..."
@@ -101,9 +86,7 @@ else
 echo "⏳ Waiting for merge..."
 
 while true; do
-STATE=$(gh pr view "$PR_NUMBER" 
---repo ShelterAssociates/Shelter 
---json state -q '.state')
+STATE=$(gh pr view "$PR_NUMBER" --repo ShelterAssociates/Shelter --json state -q '.state')
 
 ```
 if [ "$STATE" = "MERGED" ]; then
