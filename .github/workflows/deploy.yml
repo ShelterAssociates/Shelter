@@ -29,33 +29,38 @@ jobs:
           fi
           echo "✅ No migration files — safe to deploy."
 
-      # ✅ Setup SSH key (USE ONLY THIS SECRET)
+      # ✅ Setup SSH (FORCED KEY USAGE)
       - name: Setup SSH
         run: |
           mkdir -p ~/.ssh
           printf "%s\n" "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
           chmod 600 ~/.ssh/id_rsa
 
-      # 🔍 Debug fingerprint (VERY IMPORTANT — confirms correct key)
+          # 🔥 Force SSH to use ONLY this key
+          echo "Host *" > ~/.ssh/config
+          echo "  IdentityFile ~/.ssh/id_rsa" >> ~/.ssh/config
+          echo "  IdentitiesOnly yes" >> ~/.ssh/config
+
+      # 🔍 Debug fingerprint (optional but useful)
       - name: Debug SSH key fingerprint
         run: |
-          echo "GitHub key fingerprint:"
+          echo "Fingerprint from GitHub:"
           ssh-keygen -lf ~/.ssh/id_rsa
 
-      # ✅ Add server host
+      # ✅ Add server to known hosts
       - name: Add server to known_hosts
         run: |
           ssh-keyscan -H -t rsa ${{ secrets.SERVER_HOST }} >> ~/.ssh/known_hosts
 
-      # 🔍 TEST SSH FIRST (CRITICAL STEP)
+      # 🔍 TEST SSH (MUST PASS)
       - name: Test SSH connection
         run: |
-          ssh -o StrictHostKeyChecking=no \
-              -o PubkeyAcceptedKeyTypes=+ssh-rsa \
-              -i ~/.ssh/id_rsa \
-              -p ${{ secrets.SERVER_PORT }} \
-              ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} \
-              "echo ✅ SSH WORKS"
+          ssh -vvv \
+            -o StrictHostKeyChecking=no \
+            -o PubkeyAcceptedKeyTypes=+ssh-rsa \
+            -p ${{ secrets.SERVER_PORT }} \
+            ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} \
+            "echo ✅ SSH WORKS"
 
       # 🚀 RUN DEPLOY SCRIPT
       - name: Run deploy script
@@ -63,7 +68,6 @@ jobs:
           ssh -tt \
             -o StrictHostKeyChecking=no \
             -o PubkeyAcceptedKeyTypes=+ssh-rsa \
-            -i ~/.ssh/id_rsa \
             -p ${{ secrets.SERVER_PORT }} \
             ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} \
             "bash -x ~/deploy/deploy.sh"
