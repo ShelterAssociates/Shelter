@@ -84,7 +84,6 @@
     }
     
     /* ── SHARED ACTION BUTTON (Factsheet + Timeline toggle) ─ */
-    /* Both buttons share this class for identical look       */
     .action-btn {
       display: block;
       width: 100%;
@@ -253,7 +252,6 @@
       font-size: 13px;
     }
     
-    /* ── TIMELINE CONTAINER ──────────────────────────────── */
     #map-timeline-container {
       position: absolute;
       bottom: 12px;
@@ -285,13 +283,14 @@
       display: none;
     }
     
-    .timeline-year,
-    .timeline-month {
+    /* CHANGE 3: generic pill class names tl-year / tl-month / tl-dash */
+    .tl-year,
+    .tl-month {
       flex-shrink: 0;
       user-select: none;
       transition: all 0.2s ease;
     }
-    .timeline-year {
+    .tl-year {
       color: #1e40af;
       font-weight: 800;
       font-size: 0.95rem;
@@ -307,31 +306,31 @@
       gap: 5px;
       line-height: 1;
     }
-    .timeline-year small {
+    .tl-year small {
       font-size: 0.58rem;
       opacity: 0.6;
       margin-top: 1px;
       font-weight: 500;
     }
-    .timeline-year:hover {
+    .tl-year:hover {
       background: #dbeafe;
       border-color: #93c5fd;
       color: #1e3a8a;
       transform: translateY(-1px);
       box-shadow: 0 3px 10px rgba(37, 99, 235, 0.15);
     }
-    .timeline-year.active-year {
+    .tl-year.active-year {
       background: linear-gradient(135deg, #2563eb, #1d4ed8);
       color: #ffffff;
       border-color: #2563eb;
       box-shadow: 0 4px 14px rgba(37, 99, 235, 0.4);
       transform: translateY(-1px);
     }
-    .timeline-year.active-year small {
+    .tl-year.active-year small {
       opacity: 0.85;
     }
     
-    .timeline-month {
+    .tl-month {
       background: #f0f9ff;
       color: #0369a1;
       padding: 6px 11px;
@@ -345,32 +344,32 @@
       line-height: 1.2;
       letter-spacing: 0.2px;
     }
-    .timeline-month small {
+    .tl-month small {
       display: block;
       font-size: 0.6rem;
       opacity: 0.7;
       margin-top: 2px;
       font-weight: 500;
     }
-    .timeline-month:hover {
+    .tl-month:hover {
       background: #e0f2fe;
       border-color: #38bdf8;
       color: #0c4a6e;
       transform: translateY(-1px);
       box-shadow: 0 3px 10px rgba(14, 165, 233, 0.2);
     }
-    .timeline-month.active {
+    .tl-month.active {
       background: linear-gradient(135deg, #0ea5e9, #0284c7);
       color: #ffffff;
       border-color: #0ea5e9;
       box-shadow: 0 4px 12px rgba(14, 165, 233, 0.4);
       transform: translateY(-1px);
     }
-    .timeline-month.active small {
+    .tl-month.active small {
       opacity: 0.9;
     }
     
-    .timeline-dash {
+    .tl-dash {
       color: #cbd5e1;
       flex-shrink: 0;
       font-size: 0.95rem;
@@ -378,8 +377,9 @@
       user-select: none;
     }
     
-    /* ── TIMELINE SLIDER ─────────────────────────────────── */
-    .slider-row {
+    /* ── GENERIC TIMELINE SLIDER ─────────────────────────── */
+    /* CHANGE 3: slider classes renamed to be generic          */
+    .tl-slider-row {
       display: flex;
       align-items: center;
       gap: 12px;
@@ -387,13 +387,13 @@
       padding-top: 12px;
       border-top: 0.5px solid #e0e7ff;
     }
-    .slider-label {
+    .tl-slider-label {
       font-size: 12px;
       color: #475569;
       white-space: nowrap;
       min-width: 40px;
     }
-    .slider-label.right {
+    .tl-slider-label.right {
       text-align: right;
     }
     #timelineSlider {
@@ -598,9 +598,11 @@
       width: 100%;
       margin-bottom: 6px;
     }
+    
     .rim-otp-section {
       display: none;
     }
+    
     .rim-verify-btn {
       width: 100%;
     }
@@ -622,8 +624,8 @@
       border-radius: 50%;
       animation: spin 1s linear infinite;
     }
-    /* Remove Leaflet imageOverlay yellow focus outline */
-    .sra-overlay-img {
+    
+    .map-overlay-img {
       outline: none !important;
       border: none !important;
       box-shadow: none !important;
@@ -631,15 +633,12 @@
     .leaflet-image-layer:focus {
       outline: none !important;
     }
-    
-    /*  ----------- SRA Timeline -----------     */
-    
-    .sra-container {
+    .photo-tl-container {
       display: none;
       position: absolute;
       top: 12px;
       right: 20px;
-      width: 760px; /* 🔥 control size here */
+      width: 760px;
       z-index: 999;
       background: rgba(255, 255, 255, 0.96);
       padding: 10px 16px;
@@ -648,26 +647,23 @@
       border: 1px solid #e0e7ff;
       backdrop-filter: blur(8px);
     }
-    
-    .sra-label {
+    .photo-tl-label {
       font-size: 12px;
       font-weight: 700;
       color: #2471a3;
       margin-bottom: 4px;
     }
-    
-    .sra-desc {
+    .photo-tl-desc {
       font-size: 11px;
       color: #555;
       margin-bottom: 8px;
       line-height: 1.4;
     }
-    
-    .sra-slider {
+    /* Generic slider class reused here */
+    .range-slider {
       width: 100%;
     }
-    
-    .sra-slider-labels {
+    .range-slider-labels {
       display: flex;
       justify-content: space-between;
       font-size: 10px;
@@ -700,19 +696,20 @@
         <!-- Left: Map -->
         <div style="flex:0 0 75%; min-width:0; display:flex; flex-direction:column; position:relative;">
           <div id="map"></div>
-          <!-- SRA Transformation Slider — overlays top of map -->
-          <div id="sra-timeline-container" class="sra-container">
-            <div id="sra-photo-label" class="sra-label"></div>
-            <div id="sra-photo-desc" class="sra-desc"></div>
-            <input type="range" min="0" max="1" step="0.01" value="0" id="sra-slider" class="sra-slider" />
-            <div id="sra-slider-labels" class="sra-slider-labels"></div>
+
+          <div id="photo-timeline-container" class="photo-tl-container">
+            <div id="sra-photo-label" class="photo-tl-label"></div>
+            <div id="sra-photo-desc" class="photo-tl-desc"></div>
+            <input type="range" min="0" max="1" step="0.01" value="0" id="sra-slider" class="range-slider" />
+            <div id="sra-slider-labels" class="range-slider-labels"></div>
           </div>
+
           <div id="map-timeline-container">
             <div id="map-timeline"></div>
-            <div class="slider-row">
-              <span class="slider-label">Start</span>
+            <div class="tl-slider-row">
+              <span class="tl-slider-label">Start</span>
               <input type="range" id="timelineSlider" min="0" value="0" step="1" />
-              <span class="slider-label right">End</span>
+              <span class="tl-slider-label right">End</span>
               <span id="sliderReadout">—</span>
             </div>
           </div>
@@ -736,11 +733,9 @@
 
           <!-- Scrollable component checkboxes -->
           <div id="compochk"></div>
-
-          <!-- Sponsor pinned at bottom -->
           <div id="sponsor-pinned">
             <div id="sponsor-checkbox"></div>
-            <div id="sponsor-slider"></div>
+            <div id="timeline-toggle-slot"></div>
           </div>
         </div>
       </div>

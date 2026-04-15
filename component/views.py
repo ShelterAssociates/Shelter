@@ -499,10 +499,16 @@ def get_household_month_end_dates(request):
         return build_response(toilets, scope='sponsor', slum_id=slum_id, user=request.user)
 
     # ----------------------------------------------------------------
-    # CASE 3: No valid role
+    # CASE 3: For anyonymous users or users without relevant permissions, return all toilets for the slum without filtering by household_number
     # ----------------------------------------------------------------
     else:
-        return JsonResponse({"error": "You do not have permission to access this data"}, status=403)
+        toilets = ToiletConstruction.objects.filter(**toilet_filter)
+        if not toilets.exists():
+            return {
+                "message": "No toilets found in this slum",
+                "data": []
+            }
+        return build_response(toilets, scope='all', slum_id=slum_id)
 
 
 def build_response(toilets, scope, slum_id, user=None):

@@ -1,7 +1,8 @@
 /*
- * master_map_component.js
+ * city_wise_map.js
  * Parses and displays: Admin Ward, Electoral Ward, Slum,
  * Component/Filter/Sponsor, and RIM data.
+ 
  */
 
 /* ── Global state ─────────────────────────────────────────────────────────── */
@@ -59,6 +60,14 @@ var legendControl;
 /* Slider state */
 var _sliderStops = [];
 var _currentStopIndex = 0;
+
+/*
+ * Timeline highlight colour — set by the API response scope:
+ *   scope = 'sponsor' or 'all' (superuser/normal)  → pink  (#eb349e)
+ *   scope = 'anonymous'                             → yellow (#FFD700)
+ * Default to pink; will be overwritten in initToiletTimeline.
+ */
+var _timelineHighlightColor = "#eb349e";
 
 function _sliderValToStopIndex(val) {
     if (_sliderStops.length <= 1) return 0;
@@ -231,8 +240,6 @@ function slum_data_fetch(slumId) {
     ]).then(function (result) {
         global_slum_id = slumId;
         var componentData = result[0];
-        console.log("componentData:", componentData);
-
         const skipStatuses = ["inactive", "sra", "road_widening"];
         if (skipStatuses.includes(componentData.status)) {
             $("#filter-container").empty();
@@ -242,10 +249,8 @@ function slum_data_fetch(slumId) {
             $("#sponsor-pinned").hide();
             $("#compochk_refresh").html("");
 
-            // ADD: hide all currently displayed polygons (the yellow SRA slum boundary)
             $.each(arr_poly_disp, function (k, v) { map.removeLayer(v.shape); });
             arr_poly_disp = [];
-
 
             $("#compochk").html(
                 '<div style="height:300px;width:100%;display:flex;align-items:center;justify-content:center;">' +
@@ -386,9 +391,6 @@ function generate_filter(globalJsonData, slumId, result) {
         })
         .catch(function () { compochk_refresh.html(""); });
 
-    /* ---- Refresh confirm events (attached once via document delegation) ---- */
-    /* NOTE: delegated handlers are registered once at the bottom of this file  */
-
     /* ---- Build component panel ---- */
     var compochk = $("#compochk");
     var counter = 0;
@@ -410,7 +412,7 @@ function generate_filter(globalJsonData, slumId, result) {
             var chkcolor = v1["blob"]["polycolor"];
             var inner_label = Object.keys(globalJsonData).length > 0 ? globalJsonData[k1] : k1;
             var child_length = k1 in length_of_components ? length_of_components[k1] + " mtr" : v1["child"].length;
-            var icon = v1["icon"] || "Not specified";
+            var icon = v1["icon"] || "";
 
             panel_component +=
                 '<div name="div_group">&nbsp;&nbsp;&nbsp;' +
@@ -421,7 +423,8 @@ function generate_filter(globalJsonData, slumId, result) {
                 ' type="checkbox" value="' + k1 + '"' +
                 ' onclick="checkSingleGroup(this);">' +
                 '<a>&nbsp;' + inner_label + '</a>&nbsp;(' + child_length + ')' +
-                ' <img src="' + icon + '"></input></div>';
+                (icon ? ' <img src="' + icon + '">' : '') +
+                '</div>';
 
             /* Build house lookup for Structure / Admin Ward Area */
             if (k1 === "Structure" || k1 === "Admin Ward Area") {
@@ -502,8 +505,6 @@ function initHouseholdSearch() {
     if (!wrapper) return;
     wrapper.style.display = "block";
 
-    /* Remove old input entirely and create a fresh one — avoids stale
-       references and stacked listeners without breaking the dropdown pointer */
     var oldInput = document.getElementById("household-search-input");
     var dropdown = document.getElementById("household-search-dropdown");
     if (!oldInput || !dropdown) return;
@@ -518,7 +519,6 @@ function initHouseholdSearch() {
     oldInput.parentNode.replaceChild(searchInput, oldInput);
 
     searchInput.addEventListener("input", function () {
-        /* Only clear the map highlight, NOT the input value */
         if (window._householdHighlight) {
             window._householdHighlight.closePopup();
             map.removeLayer(window._householdHighlight);
@@ -555,7 +555,6 @@ function initHouseholdSearch() {
         dropdown.style.display = "block";
     });
 
-    /* Outside-click closes dropdown */
     document.removeEventListener("click", window._householdOutsideClick);
     window._householdOutsideClick = function (e) {
         if (!searchInput.contains(e.target) && !dropdown.contains(e.target)) {
@@ -617,7 +616,6 @@ function focusHouseOnMap(houseNo) {
     }
 }
 
-/* clearHouseholdHighlight — removes map marker only. Does NOT wipe input. */
 function clearHouseholdHighlight() {
     if (window._householdHighlight) {
         window._householdHighlight.closePopup();
@@ -632,8 +630,6 @@ function clearHouseholdHighlight() {
     if (dd) dd.style.display = "none";
 }
 
-/* fullResetHouseholdSearch — clears map marker AND input value.
-   Call this only when switching slum or returning to city level. */
 function fullResetHouseholdSearch() {
     clearHouseholdHighlight();
     var si = document.getElementById("household-search-input");
@@ -642,20 +638,14 @@ function fullResetHouseholdSearch() {
 
 
 /* ── Sponsor pinned section ──────────────────────────────────────────────── */
-/*
- * slumId is passed in explicitly so the fetch inside uses the correct
- * value (previously there was a slumId/slumID naming bug here).
- */
 function pinSponsorToBottom(slumId) {
     var sponsorPanel = null;
 
-    /* Find the sponsor panel by its collapse name */
     var sponsorCollapse = $("#compochk div.panel-collapse[name='Sponsor']");
     if (sponsorCollapse.length > 0) {
         sponsorPanel = sponsorCollapse.closest("[name='div_group']");
     }
 
-    /* Fallback: label text contains "sponsor" */
     if (!sponsorPanel || sponsorPanel.length === 0) {
         $("#compochk > [name='div_group']").each(function () {
             if ($(this).find("a[name='chk_group']").text().trim().toLowerCase().indexOf("sponsor") !== -1) {
@@ -665,7 +655,6 @@ function pinSponsorToBottom(slumId) {
         });
     }
 
-    /* Fallback: checkbox value contains "sponsor" */
     if (!sponsorPanel || sponsorPanel.length === 0) {
         $("#compochk [name='chk1']").each(function () {
             if ($(this).val().toLowerCase().indexOf("sponsor") !== -1) {
@@ -675,40 +664,68 @@ function pinSponsorToBottom(slumId) {
         });
     }
 
-    if (!sponsorPanel || sponsorPanel.length === 0) { $("#sponsor-pinned").hide(); return; }
+    if (sponsorPanel && sponsorPanel.length > 0) {
+        var cloned = sponsorPanel.clone(true, true);
+        sponsorPanel.remove();
+        $("#sponsor-checkbox").html("").append(cloned);
+        $("#sponsor-pinned").show();
+    } else {
+        $("#sponsor-pinned").hide();
+    }
 
-    var cloned = sponsorPanel.clone(true, true);
-    sponsorPanel.remove();
-    $("#sponsor-checkbox").html("").append(cloned);
+    /* initToiletTimeline is now called for ALL users ── */
+    initToiletTimeline(slumId);
+}
+
+
+/* ── Timeline initialisation — now for ALL users ──────────────────────────*/
+function initToiletTimeline(slumId) {
+    if (!slumId) return;
     $("#sponsor-pinned").show();
-
-    /* Timeline toggle button — same .action-btn style as factsheet button */
-    $("#sponsor-slider").html(
+    /* Generic toggle button placed in the slot below sponsor section */
+    $("#timeline-toggle-slot").html(
         '<div style="font-size:11px;font-weight:600;margin-top:2px;margin-bottom:6px;color:#2471a3;">' +
-        "Explore how your contribution created impact over time.</div>" +
+        "Explore construction impact over time.</div>" +
         '<button id="toggleTimeline" class="action-btn">Show Impact Over Time</button>'
     );
 
-    if (slumId) {
-        fetch("/component/household-month-dates/?slum_id=" + slumId)
-            .then(function (res) { return res.json(); })
-            .then(function (data) {
-                TIMELINE_DATA = groupByYear(data.monthly_data);
-                TIMELINE_YEARS = Object.keys(TIMELINE_DATA).sort(function (a, b) { return a - b; });
-                CURRENT_INDEX = -1;
+    fetch("/component/household-month-dates/?slum_id=" + slumId)
+        .then(function (res) { return res.json(); })
+        .then(function (data) {
+            /* CHANGE 2: No data or empty → do not render timeline */
+            if (!data.monthly_data || data.monthly_data.length === 0) {
+                /* Hide the toggle button — there is nothing to show */
+                $("#timeline-toggle-slot").hide();
+                return;
+            }
 
-                _sliderStops = buildSliderStops();
-                _currentStopIndex = 0;
+            /* Show toggle button slot (in case it was hidden for a prior slum) */
+            $("#timeline-toggle-slot").show();
 
-                var slider = document.getElementById("timelineSlider");
-                if (slider) { slider.min = 0; slider.max = 100; slider.step = 1; slider.value = 0; }
+            /* Determine highlight colour from scope */
+            var scope = data.scope || "all";
+            _timelineHighlightColor = (scope === "all") ? "#FFD700" : "#eb349e";
 
-                var readout = document.getElementById("sliderReadout");
-                if (readout) readout.textContent = "Start";
+            TIMELINE_DATA = groupByYear(data.monthly_data);
+            TIMELINE_YEARS = Object.keys(TIMELINE_DATA).sort(function (a, b) { return a - b; });
+            CURRENT_INDEX = -1;
 
-                renderMapTimeline();
-            });
-    }
+            _sliderStops = buildSliderStops();
+            _currentStopIndex = 0;
+
+            var slider = document.getElementById("timelineSlider");
+            if (slider) { slider.min = 0; slider.max = 100; slider.step = 1; slider.value = 0; }
+
+            var readout = document.getElementById("sliderReadout");
+            if (readout) readout.textContent = "Start";
+            console.log("Timeline data loaded for slum ID:", slumId, "Scope:", scope, "Highlight color:", _timelineHighlightColor);
+            renderMapTimeline();
+        })
+        .catch(function () {
+            console.error("Failed to fetch timeline data for slum ID:", slumId);
+            /* Silently fail — timeline just won't appear */
+            $("#timeline-toggle-slot").hide();
+        });
 }
 
 
@@ -738,25 +755,27 @@ function buildSliderStops() {
         var fullTotal = months.reduce(function (s, m) { return s + m.total; }, 0);
         var isLast = yi === totalYears - 1;
 
+        var prevYear = TIMELINE_YEARS[yi - 1];
+        var prevMonths = TIMELINE_DATA[prevYear] || [];
+        var prevMidIdx = Math.floor(prevMonths.length / 2);
+        var prevMidTotal = prevMonths.slice(0, prevMidIdx + 1).reduce(function (s, m) { return s + m.total; }, 0);
+
         if (isLast && months.length > 0) {
             var lastMonth = new Date(months[months.length - 1].month_end_date).getMonth();
 
             if (lastMonth <= 5) {
-                /* Case A: ends first half */
-                if (yi > 0) stops.push({ type: "mid", label: "Mid " + year, year: year, yearIndex: yi, endMonthIndex: midIdx, total: midTotal });
+                if (yi > 0) stops.push({ type: "mid", label: "Mid " + prevYear, year: prevYear, yearIndex: yi - 1, endMonthIndex: prevMidIdx, total: prevMidTotal });
                 stops.push({ type: "year", label: String(year), year: year, yearIndex: yi, endMonthIndex: midIdx, total: midTotal, isMidOnly: true });
             } else if (lastMonth <= 10) {
-                /* Case B: ends second half, not December */
-                if (yi > 0) stops.push({ type: "mid", label: "Mid " + year, year: year, yearIndex: yi, endMonthIndex: midIdx, total: midTotal });
+                if (yi > 0) stops.push({ type: "mid", label: "Mid " + prevYear, year: prevYear, yearIndex: yi - 1, endMonthIndex: prevMidIdx, total: prevMidTotal });
                 stops.push({ type: "year", label: String(year), year: year, yearIndex: yi, endMonthIndex: months.length - 1, total: fullTotal });
                 stops.push({ type: "end", label: "End " + year, year: year, yearIndex: yi, endMonthIndex: months.length - 1, total: fullTotal });
             } else {
-                /* Case C: complete year */
-                if (yi > 0) stops.push({ type: "mid", label: "Mid " + year, year: year, yearIndex: yi, endMonthIndex: midIdx, total: midTotal });
+                if (yi > 0) stops.push({ type: "mid", label: "Mid " + prevYear, year: prevYear, yearIndex: yi - 1, endMonthIndex: prevMidIdx, total: prevMidTotal });
                 stops.push({ type: "year", label: String(year), year: year, yearIndex: yi, endMonthIndex: months.length - 1, total: fullTotal });
             }
         } else {
-            if (yi > 0) stops.push({ type: "mid", label: "Mid " + year, year: year, yearIndex: yi, endMonthIndex: midIdx, total: midTotal });
+            if (yi > 0) stops.push({ type: "mid", label: "Mid " + prevYear, year: prevYear, yearIndex: yi - 1, endMonthIndex: prevMidIdx, total: prevMidTotal });
             stops.push({ type: "year", label: String(year), year: year, yearIndex: yi, endMonthIndex: months.length - 1, total: fullTotal });
         }
     });
@@ -800,49 +819,82 @@ function buildMonthGroups(year) {
     }];
 }
 
+
 function renderMapTimeline() {
     var html = "";
     var totalYears = TIMELINE_YEARS.length;
-    var activeStop = _sliderStops[_currentStopIndex] || null;
-    var activeYearStr = activeStop ? String(activeStop.year) : null;
     var endStopIdx = _sliderStops.findIndex(function (s) { return s.type === "end"; });
+
+    // Track which mid stops have already been rendered
+    var renderedMidStops = {};
 
     TIMELINE_YEARS.forEach(function (year, i) {
         var isLastYear = i === totalYears - 1;
         var isFirstYear = i === 0;
-        var months = TIMELINE_DATA[year] || [];
-        var isThisYearActive = activeYearStr === String(year);
+        var prevYear = TIMELINE_YEARS[i - 1];
 
-        var yearStopIdx = _sliderStops.findIndex(function (s) { return s.type === "year" && String(s.year) === String(year); });
-        var yearStop = yearStopIdx !== -1 ? _sliderStops[yearStopIdx] : null;
-        var midStopIdx = _sliderStops.findIndex(function (s) { return s.type === "mid" && String(s.year) === String(year); });
+        var yearStopIdx = _sliderStops.findIndex(function (s) {
+            return s.type === "year" && String(s.year) === String(year);
+        });
 
-        /* Mid pill */
-        if (!isFirstYear && isThisYearActive && months.length > 0 && midStopIdx !== -1) {
-            var midStop = _sliderStops[midStopIdx];
-            var isActive = _currentStopIndex === midStopIdx;
-            html += '<span class="timeline-month' + (isActive ? " active" : "") + '" data-stop="' + midStopIdx + '" data-year="' + year + '">' +
-                "Mid " + year + "<small>" + midStop.total + "</small></span>" +
-                '<span class="timeline-dash">—</span>';
+        var prevMidStopIdx = !isFirstYear ? _sliderStops.findIndex(function (s) {
+            return s.type === "mid" && String(s.year) === String(prevYear);
+        }) : -1;
+
+        var currentMidStopIdx = _sliderStops.findIndex(function (s) {
+            return s.type === "mid" && String(s.year) === String(year);
+        });
+
+        var isYearActive = _currentStopIndex === yearStopIdx;
+        var isPrevMidActive = prevMidStopIdx !== -1 && _currentStopIndex === prevMidStopIdx;
+        var isCurrentMidActive = currentMidStopIdx !== -1 && _currentStopIndex === currentMidStopIdx;
+        var isBlockActive = isYearActive || isPrevMidActive || isCurrentMidActive;
+
+        /* ── PREVIOUS MID (only if not already rendered) ── */
+        if (isBlockActive && !isFirstYear && prevMidStopIdx !== -1 && !renderedMidStops[prevMidStopIdx]) {
+            var prevMidStop = _sliderStops[prevMidStopIdx];
+            renderedMidStops[prevMidStopIdx] = true;
+            html += '<span class="tl-month ' + (isPrevMidActive ? "active" : "") + '"' +
+                ' data-stop="' + prevMidStopIdx + '"' +
+                ' data-year="' + prevYear + '">' +
+                'Mid ' + prevYear + '<small>' + prevMidStop.total + '</small>' +
+                '</span>' +
+                '<span class="tl-dash">—</span>';
         }
 
-        /* Year pill */
-        var isActiveYear = _currentStopIndex === yearStopIdx;
-        var isMidOnly = yearStop && yearStop.isMidOnly;
-        var yearLabel = isMidOnly ? "Mid " + year : String(year);
-        html += '<span class="timeline-year' + (isActiveYear ? " active-year" : "") + '" data-stop="' + yearStopIdx + '" data-year="' + year + '" data-index="' + i + '">' +
-            yearLabel + '<small>' + (isActiveYear ? "▲" : "▼") + "</small></span>" +
-            '<span class="timeline-dash">—</span>';
+        /* ── YEAR ── */
+        html += '<span class="tl-year ' + (isYearActive ? "active-year" : "") + '"' +
+            ' data-stop="' + yearStopIdx + '"' +
+            ' data-year="' + year + '"' +
+            ' data-index="' + i + '">' +
+            year +
+            '<small>' + (isYearActive ? "▲" : "▼") + '</small>' +
+            '</span>' +
+            '<span class="tl-dash">—</span>';
 
-        /* End pill (Case B only) */
+        /* ── CURRENT MID (only if not already rendered) ── */
+        if (isBlockActive && currentMidStopIdx !== -1 && !renderedMidStops[currentMidStopIdx]) {
+            var currentMidStop = _sliderStops[currentMidStopIdx];
+            renderedMidStops[currentMidStopIdx] = true;
+            html += '<span class="tl-month ' + (isCurrentMidActive ? "active" : "") + '"' +
+                ' data-stop="' + currentMidStopIdx + '"' +
+                ' data-year="' + year + '">' +
+                'Mid ' + year + '<small>' + currentMidStop.total + '</small>' +
+                '</span>' +
+                '<span class="tl-dash">—</span>';
+        }
+
+        /* ── END ── */
         if (isLastYear && endStopIdx !== -1) {
-            var terminusVisible = (_currentStopIndex === yearStopIdx || _currentStopIndex === endStopIdx);
-            if (terminusVisible) {
+            var isEndActive = _currentStopIndex === endStopIdx;
+            if (isEndActive || isBlockActive) {
                 var endStop = _sliderStops[endStopIdx];
-                var isActive = _currentStopIndex === endStopIdx;
-                html += '<span class="timeline-month' + (isActive ? " active" : "") + '" data-stop="' + endStopIdx + '" data-year="' + year + '">' +
-                    "End " + year + "<small>" + endStop.total + "</small></span>" +
-                    '<span class="timeline-dash">—</span>';
+                html += '<span class="tl-month ' + (isEndActive ? "active" : "") + '"' +
+                    ' data-stop="' + endStopIdx + '"' +
+                    ' data-year="' + year + '">' +
+                    'End ' + year + '<small>' + endStop.total + '</small>' +
+                    '</span>' +
+                    '<span class="tl-dash">—</span>';
             }
         }
     });
@@ -876,8 +928,12 @@ function highlightMultipleHouses(houseList) {
     var filter_houses = houseList.filter(function (h) { return h in houses; }).map(function (h) { return houses[h]; });
     if (filter_houses.length === 0) return;
 
+    /* CHANGE 2: use _timelineHighlightColor (scope-dependent) */
+    var fillCol = _timelineHighlightColor;
+    var strokeCol = (fillCol === "#FFD700") ? "#b8860b" : "#000000";
+
     var layer = L.geoJson(filter_houses, {
-        style: { color: "#000000", opacity: 0.7, weight: 0.25, fillColor: "#eb349e", fillOpacity: 2 },
+        style: { color: strokeCol, opacity: 0.7, weight: 0.25, fillColor: fillCol, fillOpacity: 2 },
         onEachFeature: function (feature, layer) {
             if (feature.properties && feature.properties.name) {
                 var name = feature.properties.name;
@@ -909,11 +965,113 @@ function _resetTimeline() {
 }
 
 
+/* ═══════════════════════════════════════════════════════════════════════════
+ *OTP Flow helpers
+ *
+ *  sendOtpWithFeedback(btn)
+ *    - Immediately disables btn and sets text to "Sending OTP…"
+ *    - Calls the server (POST /rim/send-otp/)
+ *    - On success: shows OTP section + starts 30-s countdown
+ *    - On error:   re-enables button with original label
+ *
+ *  startResendCountdown(btn, seconds)
+ *    - Counts down in button text: "Resend OTP in Ns"
+ *    - After countdown: re-enables with "Resend OTP"
+ * ═══════════════════════════════════════════════════════════════════════════ */
+
+var _otpCountdownTimer = null;  /* module-level so we can clear on re-send */
+
+function startResendCountdown(btn, seconds) {
+    if (_otpCountdownTimer) { clearInterval(_otpCountdownTimer); }
+
+    var remaining = seconds;
+    btn.disabled = true;
+    btn.textContent = "Resend OTP in " + remaining + "s";
+
+    _otpCountdownTimer = setInterval(function () {
+        remaining--;
+        if (remaining <= 0) {
+            clearInterval(_otpCountdownTimer);
+            _otpCountdownTimer = null;
+            btn.disabled = false;
+            btn.textContent = "Resend OTP";
+        } else {
+            btn.textContent = "Resend OTP in " + remaining + "s";
+        }
+    }, 1000);
+}
+
+function sendOtpWithFeedback(btn) {
+    /* ── Immediate visual feedback — no alert ── */
+    btn.disabled = true;
+    var originalText = btn.textContent;
+    btn.textContent = "Sending OTP…";
+
+    var name = document.getElementById("rimName") ? document.getElementById("rimName").value.trim() : "";
+    var email = document.getElementById("rimEmail") ? document.getElementById("rimEmail").value.trim() : "";
+    var mobile = document.getElementById("rimMobile") ? document.getElementById("rimMobile").value.trim() : "";
+
+    fetch("/rim/send-otp/", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+            "X-CSRFToken": (typeof csrftoken !== "undefined" ? csrftoken : "")
+        },
+        body: JSON.stringify({ name: name, email: email, mobile: mobile })
+    })
+        .then(function (res) { return res.json(); })
+        .then(function (data) {
+            if (data && data.success) {
+                /* Show OTP input section — no alert */
+                var otpSection = document.getElementById("rimOTPSection");
+                if (otpSection) otpSection.style.display = "block";
+
+                /* Start 30-second resend countdown */
+                startResendCountdown(btn, 30);
+            } else {
+                /* Server-side error — restore button */
+                btn.disabled = false;
+                btn.textContent = originalText;
+                var msg = (data && data.error) ? data.error : "Failed to send OTP. Please try again.";
+                /* Display error inline rather than alert */
+                _showOtpInlineError(msg);
+            }
+        })
+        .catch(function () {
+            btn.disabled = false;
+            btn.textContent = originalText;
+            _showOtpInlineError("Network error. Please try again.");
+        });
+}
+
+/** Renders a small error message below the Send OTP button (no alert). */
+function _showOtpInlineError(msg) {
+    var existing = document.getElementById("otp-inline-error");
+    if (existing) existing.remove();
+
+    var errDiv = document.createElement("div");
+    errDiv.id = "otp-inline-error";
+    errDiv.style.cssText = "color:#c0392b;font-size:12px;margin-top:4px;";
+    errDiv.textContent = msg;
+
+    var sendBtn = document.getElementById("rimSendOTP");
+    if (sendBtn && sendBtn.parentNode) {
+        sendBtn.parentNode.insertBefore(errDiv, sendBtn.nextSibling);
+    }
+}
+
+
 /* ── Delegated event listeners (registered once) ─────────────────────────── */
 
-/* Timeline pill click */
-$(document).off("click.timelinePill", ".timeline-year, .timeline-month")
-    .on("click.timelinePill", ".timeline-year, .timeline-month", function () {
+/*  Replace direct click handler wiring with the new sendOtpWithFeedback */
+$(document).off("click.rimSendOTP", "#rimSendOTP")
+    .on("click.rimSendOTP", "#rimSendOTP", function () {
+        sendOtpWithFeedback(this);
+    });
+
+/* Timeline pill click — updated to generic class names tl-year / tl-month */
+$(document).off("click.timelinePill", ".tl-year, .tl-month")
+    .on("click.timelinePill", ".tl-year, .tl-month", function () {
         var stopIdx = parseInt($(this).data("stop"));
         if (!isNaN(stopIdx)) goToTimelineStop(stopIdx, "pill");
     });
@@ -980,7 +1138,7 @@ $(document).off("click.refreshYes", "#refreshConfirmYes")
         $("#refreshConfirmBox").removeClass("show");
 
         var btn = $("#refreshComponents");
-        var slumId = global_slum_id;   /* use the module-level variable — no naming bug */
+        var slumId = global_slum_id;
 
         btn.prop("disabled", true).text("Refreshing...");
         fullResetHouseholdSearch();
@@ -1020,7 +1178,43 @@ $(document).off("click.refreshYes", "#refreshConfirmYes")
     });
 
 
+/* ── Spinner helpers ── */
+function showSpinner() {
+    if ($("#sra-map-spinner").length === 0) {
+        $(".leaflet-container").css("position", "relative").append(
+            '<div id="sra-map-spinner" style="' +
+            'position:absolute;top:0;left:0;width:100%;height:100%;' +
+            'background:rgba(0,0,0,0.35);z-index:9999;' +
+            'display:flex;align-items:center;justify-content:center;">' +
+            '<svg width="56" height="56" viewBox="0 0 56 56" xmlns="http://www.w3.org/2000/svg">' +
+            '<circle cx="28" cy="28" r="22"' +
+            ' fill="none" stroke="rgba(255,255,255,0.15)" stroke-width="5"/>' +
+            '<circle cx="28" cy="28" r="22"' +
+            ' fill="none" stroke="#ffffff" stroke-width="5"' +
+            ' stroke-linecap="round"' +
+            ' stroke-dasharray="35 100"' +
+            ' style="animation:sra-spin 0.9s cubic-bezier(0.4,0,0.2,1) infinite;' +
+            'transform-origin:28px 28px;"/>' +
+            '</svg>' +
+            '</div>'
+        );
+    }
+    if ($("#sra-spin-style").length === 0) {
+        $("head").append(
+            '<style id="sra-spin-style">' +
+            '@keyframes sra-spin{to{transform:rotate(360deg)}}' +
+            '</style>'
+        );
+    }
+}
+
 /* ── SRA Transformation Slider ───────────────────────────────────────────── */
+
+/*
+ * DEV ONLY — set to 0 before deploying to production.
+ */
+var DEV_IMAGE_DELAY = 0;
+
 function buildTransformationSlider(slumId, photosData) {
     var months = Object.keys(photosData);
     var total = months.length;
@@ -1028,23 +1222,26 @@ function buildTransformationSlider(slumId, photosData) {
 
     var overlayA = null;
     var overlayB = null;
+    var loadingCount = 0;
 
     $("#right-panel").removeClass("active");
 
-    /* Build label pills */
+    function hideSpinner() {
+        $("#sra-map-spinner").remove();
+    }
+
     var labelsHtml = months.map(function (m) {
         return '<span style="flex:1;text-align:center;font-size:10px;">' + m + '</span>';
     }).join('');
 
-    /* Populate top overlay container */
     $("#sra-photo-label").text(months[0]);
     $("#sra-photo-desc").text(photosData[months[0]].description || '');
     $("#sra-slider").attr("max", total - 1).val(0);
     $("#sra-slider-labels").html(labelsHtml);
-    $("#sra-timeline-container").show();
+    /* CHANGE 3: generic id "photo-timeline-container" used in HTML */
+    $("#photo-timeline-container").show();
 
-    /* ── Helper: build a Leaflet imageOverlay from a month key ── */
-    function makeLeafletOverlay(month, opacity) {
+    function makeLeafletOverlay(month, opacity, onLoaded) {
         var p = photosData[month];
         var c = p.coordinates;
 
@@ -1053,29 +1250,55 @@ function buildTransformationSlider(slumId, photosData) {
             [c.north, c.east]
         ];
 
-        var overlay = L.imageOverlay(p.photo_url, bounds, {
-            opacity: opacity,
+        var overlay = L.imageOverlay("about:blank", bounds, {
+            opacity: 0,
             interactive: false,
             bubblingMouseEvents: false,
             crossOrigin: true,
-            className: 'sra-overlay-img'
+            className: 'map-overlay-img'
         });
+
         overlay.addTo(map);
+
+        loadingCount++;
+        showSpinner();
+
+        function attachLoadEvents(targetOpacity) {
+            overlay.once('load', function () {
+                overlay.setOpacity(targetOpacity);
+                loadingCount--;
+                if (loadingCount <= 0) { loadingCount = 0; hideSpinner(); }
+                if (typeof onLoaded === 'function') onLoaded();
+            });
+            overlay.once('error', function () {
+                loadingCount--;
+                if (loadingCount <= 0) { loadingCount = 0; hideSpinner(); }
+            });
+        }
+
+        if (DEV_IMAGE_DELAY > 0) {
+            setTimeout(function () {
+                overlay.setUrl(p.photo_url);
+                attachLoadEvents(opacity);
+            }, DEV_IMAGE_DELAY);
+        } else {
+            overlay.setUrl(p.photo_url);
+            attachLoadEvents(opacity);
+        }
+
         return overlay;
     }
 
-    /* Fit Leaflet map to first photo bounds — tighter zoom */
     var fc = photosData[months[0]].coordinates;
     map.fitBounds([
         [fc.south, fc.west],
         [fc.north, fc.east]
     ], { padding: [0, 0], maxZoom: 18 });
     map.setZoom(map.getZoom() - 1);
-    /* Initial overlays */
+
     overlayA = makeLeafletOverlay(months[0], 1);
     overlayB = makeLeafletOverlay(months[Math.min(1, total - 1)], 0);
 
-    /* ── Slider crossfade ── */
     $(document).off("input.sraSlider", "#sra-slider")
         .on("input.sraSlider", "#sra-slider", function () {
             var val = parseFloat(this.value);
@@ -1085,22 +1308,20 @@ function buildTransformationSlider(slumId, photosData) {
             var monthA = months[index];
             var monthB = months[Math.min(index + 1, total - 1)];
 
-            /* Update label */
             var activeMonth = fraction < 0.5 ? monthA : monthB;
             $("#sra-photo-label").text(activeMonth);
             $("#sra-photo-desc").text(photosData[activeMonth].description || '');
 
-            /* Remove old overlays cleanly */
             if (overlayA) { map.removeLayer(overlayA); overlayA = null; }
             if (overlayB) { map.removeLayer(overlayB); overlayB = null; }
 
-            /* Add new overlays at correct opacities */
             overlayA = makeLeafletOverlay(monthA, 1 - fraction);
             overlayB = makeLeafletOverlay(monthB, fraction);
+
+            window._sraOverlayA = overlayA;
+            window._sraOverlayB = overlayB;
         });
 
-    /* ── Cleanup when leaving this slum ── */
-    /*  Store refs so slum_data_fetch / City.click can remove them */
     window._sraOverlayA = overlayA;
     window._sraOverlayB = overlayB;
 }
