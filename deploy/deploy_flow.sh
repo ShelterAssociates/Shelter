@@ -117,7 +117,7 @@ fi
 echo ""
 echo "🔌 Deploying to server..."
 
-ssh -tt "${SSH_OPTS[@]}" "$SERVER_USER@$SERVER_HOST" "bash -x $DEPLOY_SCRIPT 'NONE'"
+ssh -tt "${SSH_OPTS[@]}" "$SERVER_USER@$SERVER_HOST" "bash  $DEPLOY_SCRIPT 'NONE'"
 DEPLOY_STATUS=$?
 
 # ── STEP 5: Fetch logs via rsync ────────────────────────────────
