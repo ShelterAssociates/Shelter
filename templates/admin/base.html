@@ -10,6 +10,139 @@
         list-style: none !important;
         list-style-type: none !important;
     }
+
+    .admin-mobile-toggle {
+        border: 1px solid #d1d5db;
+        background: #ffffff;
+        border-radius: 6px;
+        margin: 0;
+        padding: 8px 10px;
+    }
+
+    .admin-mobile-toggle .icon-bar {
+        display: block;
+        width: 18px;
+        height: 2px;
+        background: #374151;
+        margin: 3px 0;
+    }
+
+    @media (max-width: 767px) {
+        html,
+        body {
+            max-width: 100%;
+            overflow-x: hidden;
+        }
+
+        body {
+            padding-top: 0;
+        }
+
+        .navbar {
+            min-height: 0;
+            margin-bottom: 0;
+        }
+
+        .navbar-fixed-top {
+            position: relative;
+        }
+
+        #branding {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            max-width: 100%;
+            padding: 8px 12px;
+        }
+
+        #branding img {
+            max-width: calc(100% - 56px);
+            height: auto !important;
+            width: auto !important;
+        }
+
+        #branding:after {
+            content: "";
+            display: table;
+            clear: both;
+        }
+
+        .admin-mobile-toggle {
+            display: inline-block !important;
+            float: right;
+        }
+
+        #navbar {
+            width: 100%;
+            padding: 0 12px 12px;
+            border-top: 1px solid #e5e7eb;
+        }
+
+        #navbar.navbar-collapse {
+            max-height: none;
+            box-shadow: none;
+        }
+
+        #navbar .nav,
+        #navbar .navbar-nav,
+        #navbar .navbar-right {
+            float: none !important;
+            margin: 0 !important;
+        }
+
+        #navbar .nav > li,
+        #navbar .navbar-nav > li {
+            float: none;
+        }
+
+        #navbar .nav > li > a,
+        #navbar .navbar-nav > li > a {
+            padding-left: 0;
+            padding-right: 0;
+            white-space: normal;
+            word-break: break-word;
+        }
+
+        #navbar .dropdown-menu {
+            position: static;
+            float: none;
+            width: 100%;
+            border: 0;
+            box-shadow: none;
+            background: #f8fafc;
+            margin-bottom: 10px;
+            max-height: 50vh;
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        #navbar .navbar-right {
+            margin-top: 10px !important;
+        }
+
+        #user-tools {
+            line-height: 1.7;
+            display: block;
+            white-space: normal;
+            word-break: break-word;
+        }
+
+        div[style="margin-top:70px;"] {
+            margin-top: 16px !important;
+        }
+
+        .breadcrumbs,
+        #content,
+        .messagelist {
+            padding-left: 12px;
+            padding-right: 12px;
+        }
+
+        #content {
+            width: 100%;
+            min-width: 0;
+        }
+    }
 </style>
 
 <link rel="stylesheet"  type="text/css" href="{% static "css/bootstrap.min.css" %}"/>
@@ -47,9 +180,14 @@
 {% if user.is_authenticated %}
     <!-- Header -->
     <div class="navbar navbar-default navbar-fixed-top" id="">
-
         <!-- Logo -->
         <div id="branding">
+        <button type="button" class="admin-mobile-toggle navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar" aria-expanded="false" aria-controls="navbar">
+            <span class="sr-only">{% trans 'Toggle navigation' %}</span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+        </button>
         {% block branding %}{% endblock %}
         </div>
         <!-- END Logo -->
