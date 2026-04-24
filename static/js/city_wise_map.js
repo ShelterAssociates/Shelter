@@ -676,266 +676,221 @@ function pinSponsorToBottom(slumId) {
     /* initToiletTimeline is now called for ALL users ── */
     initToiletTimeline(slumId);
 }
+/* ── CLEAN TOILET TIMELINE ─────────────────────────────────────────────── */
 
-
-/* ── Timeline initialisation — now for ALL users ──────────────────────────*/
-function initToiletTimeline(slumId) {
-    if (!slumId) return;
-    $("#sponsor-pinned").show();
-    /* Generic toggle button placed in the slot below sponsor section */
-    $("#timeline-toggle-slot").html(
-        '<div style="font-size:11px;font-weight:600;margin-top:2px;margin-bottom:6px;color:#2471a3;">' +
-        "Explore construction impact over time.</div>" +
-        '<button id="toggleTimeline" class="action-btn">Show Impact Over Time</button>'
-    );
-
-    fetch("/component/household-month-dates/?slum_id=" + slumId)
-        .then(function (res) { return res.json(); })
-        .then(function (data) {
-            /* CHANGE 2: No data or empty → do not render timeline */
-            if (!data.monthly_data || data.monthly_data.length === 0) {
-                /* Hide the toggle button — there is nothing to show */
-                $("#timeline-toggle-slot").hide();
-                return;
-            }
-
-            /* Show toggle button slot (in case it was hidden for a prior slum) */
-            $("#timeline-toggle-slot").show();
-
-            /* Determine highlight colour from scope */
-            var scope = data.scope || "all";
-            _timelineHighlightColor = (scope === "all") ? "#FFD700" : "#eb349e";
-
-            TIMELINE_DATA = groupByYear(data.monthly_data);
-            TIMELINE_YEARS = Object.keys(TIMELINE_DATA).sort(function (a, b) { return a - b; });
-            CURRENT_INDEX = -1;
-
-            _sliderStops = buildSliderStops();
-            _currentStopIndex = 0;
-
-            var slider = document.getElementById("timelineSlider");
-            if (slider) { slider.min = 0; slider.max = 100; slider.step = 1; slider.value = 0; }
-
-            var readout = document.getElementById("sliderReadout");
-            if (readout) readout.textContent = "Start";
-            console.log("Timeline data loaded for slum ID:", slumId, "Scope:", scope, "Highlight color:", _timelineHighlightColor);
-            renderMapTimeline();
-        })
-        .catch(function () {
-            console.error("Failed to fetch timeline data for slum ID:", slumId);
-            /* Silently fail — timeline just won't appear */
-            $("#timeline-toggle-slot").hide();
-        });
-}
-
-
-/* ── Timeline layer helpers ──────────────────────────────────────────────── */
+var _timelineRows = [];
+var _timelineAllStops = [];
+var _timelineStartIndex = 0;
+var _timelineActiveIndex = 0;
 var _timelineLayers = [];
+var _timelineHighlightColor = "#eb349e";
 
-function groupByYear(data) {
-    var result = {};
-    data.forEach(function (item) {
-        var year = new Date(item.month_end_date).getFullYear();
-        if (!result[year]) result[year] = [];
-        result[year].push(item);
-    });
-    return result;
+/* ---------- DATE HELPERS ---------- */
+
+function _parseTimelineDate(value) {
+    var d = new Date(value);
+    return isNaN(d.getTime()) ? null : d;
 }
 
-function buildSliderStops() {
+function _cutoffJan(year) {
+    return new Date(year, 0, 1, 23, 59, 59, 999);
+}
+
+function _cutoffMid(year) {
+    return new Date(year, 5, 30, 23, 59, 59, 999);
+}
+
+/* ---------- DATA NORMALIZATION ---------- */
+
+function _normalizeTimelineRows(monthlyData) {
+    var rows = [];
+
+    (monthlyData || []).forEach(function (item) {
+        var d = _parseTimelineDate(item.month_end_date);
+        if (!d) return;
+
+        rows.push({
+            date: d,
+            month: item.month || "",
+            month_end_date: item.month_end_date,
+            house_numbers: Array.isArray(item.house_numbers) ? item.house_numbers.slice() : [],
+            total: typeof item.total === "number" ? item.total : (Array.isArray(item.house_numbers) ? item.house_numbers.length : 0)
+        });
+    });
+
+    rows.sort(function (a, b) {
+        return a.date.getTime() - b.date.getTime();
+    });
+
+    return rows;
+}
+
+/* ---------- CUMULATIVE HOUSE COLLECTION ---------- */
+
+function _collectHousesTillCutoff(rows, cutoffDate) {
+    var seen = {};
+    var out = [];
+
+    for (var i = 0; i < rows.length; i++) {
+        if (rows[i].date > cutoffDate) break;
+
+        var nums = rows[i].house_numbers || [];
+        for (var j = 0; j < nums.length; j++) {
+            var h = String(nums[j]);
+            if (!seen[h]) {
+                seen[h] = true;
+                out.push(h);
+            }
+        }
+    }
+
+    return out;
+}
+
+/* ---------- STOP BUILDER ---------- */
+/*
+    Build:
+    - Jan YYYY  => cumulative till 31 Dec previous year
+    - Mid YYYY  => cumulative till 30 Jun YYYY
+    We also build one extra year beyond the last data year so the slider can
+    show the next Jan/Mid around the last visible point.
+*/
+function _buildTimelineStops(rows) {
+    if (!rows || rows.length === 0) {
+        return { all: [], startIndex: 0 };
+    }
+
+    var firstDate = rows[0].date;
+    var lastDate = rows[rows.length - 1].date;
+
+    var firstYear = firstDate.getFullYear();
+    var lastYear = lastDate.getFullYear();
+
     var stops = [];
-    var totalYears = TIMELINE_YEARS.length;
+    var y;
 
-    stops.push({ type: "start", label: "Start", yearIndex: -1, endMonthIndex: -1 });
+    for (y = firstYear; y <= lastYear + 1; y++) {
+        var janCutoff = _cutoffJan(y);
+        stops.push({
+            type: "jan",
+            year: y,
+            label: "Jan " + y,
+            cutoff: janCutoff,
+            cutoffTime: janCutoff.getTime()
+        });
 
-    TIMELINE_YEARS.forEach(function (year, yi) {
-        var months = TIMELINE_DATA[year] || [];
-        var midIdx = Math.floor(months.length / 2);
-        var midTotal = months.slice(0, midIdx + 1).reduce(function (s, m) { return s + m.total; }, 0);
-        var fullTotal = months.reduce(function (s, m) { return s + m.total; }, 0);
-        var isLast = yi === totalYears - 1;
-
-        var prevYear = TIMELINE_YEARS[yi - 1];
-        var prevMonths = TIMELINE_DATA[prevYear] || [];
-        var prevMidIdx = Math.floor(prevMonths.length / 2);
-        var prevMidTotal = prevMonths.slice(0, prevMidIdx + 1).reduce(function (s, m) { return s + m.total; }, 0);
-
-        if (isLast && months.length > 0) {
-            var lastMonth = new Date(months[months.length - 1].month_end_date).getMonth();
-
-            if (lastMonth <= 5) {
-                if (yi > 0) stops.push({ type: "mid", label: "Mid " + prevYear, year: prevYear, yearIndex: yi - 1, endMonthIndex: prevMidIdx, total: prevMidTotal });
-                stops.push({ type: "year", label: String(year), year: year, yearIndex: yi, endMonthIndex: midIdx, total: midTotal, isMidOnly: true });
-            } else if (lastMonth <= 10) {
-                if (yi > 0) stops.push({ type: "mid", label: "Mid " + prevYear, year: prevYear, yearIndex: yi - 1, endMonthIndex: prevMidIdx, total: prevMidTotal });
-                stops.push({ type: "year", label: String(year), year: year, yearIndex: yi, endMonthIndex: months.length - 1, total: fullTotal });
-                stops.push({ type: "end", label: "End " + year, year: year, yearIndex: yi, endMonthIndex: months.length - 1, total: fullTotal });
-            } else {
-                if (yi > 0) stops.push({ type: "mid", label: "Mid " + prevYear, year: prevYear, yearIndex: yi - 1, endMonthIndex: prevMidIdx, total: prevMidTotal });
-                stops.push({ type: "year", label: String(year), year: year, yearIndex: yi, endMonthIndex: months.length - 1, total: fullTotal });
-            }
-        } else {
-            if (yi > 0) stops.push({ type: "mid", label: "Mid " + prevYear, year: prevYear, yearIndex: yi - 1, endMonthIndex: prevMidIdx, total: prevMidTotal });
-            stops.push({ type: "year", label: String(year), year: year, yearIndex: yi, endMonthIndex: months.length - 1, total: fullTotal });
-        }
-    });
-
-    return stops;
-}
-
-function goToTimelineStop(stopIndex, source) {
-    _currentStopIndex = stopIndex;
-    var stop = _sliderStops[stopIndex];
-
-    if (source !== "slider") {
-        var slider = document.getElementById("timelineSlider");
-        if (slider) slider.value = _stopIndexToSliderVal(stopIndex);
+        var midCutoff = _cutoffMid(y);
+        stops.push({
+            type: "mid",
+            year: y,
+            label: "Mid " + y,
+            cutoff: midCutoff,
+            cutoffTime: midCutoff.getTime()
+        });
     }
 
-    var readout = document.getElementById("sliderReadout");
-    if (readout) readout.textContent = stop ? stop.label : "—";
+    stops.sort(function (a, b) {
+        return a.cutoffTime - b.cutoffTime;
+    });
 
-    if (!stop || stop.type === "start") {
-        clearTimelineLayers();
-        CURRENT_INDEX = -1;
+    for (var i = 0; i < stops.length; i++) {
+        stops[i].house_numbers = _collectHousesTillCutoff(rows, stops[i].cutoff);
+        stops[i].total = stops[i].house_numbers.length;
+    }
+
+    /* First visible node:
+       - if first data month is Jan..Jun -> show Jan of that year
+       - if first data month is Jul..Dec -> show Mid of that year
+    */
+    var firstType = (firstDate.getMonth() <= 5) ? "jan" : "mid";
+    var startIndex = 0;
+
+    for (var k = 0; k < stops.length; k++) {
+        if (stops[k].type === firstType && stops[k].year === firstYear) {
+            startIndex = k;
+            break;
+        }
+    }
+
+    /* 🔥 FIX LAST NODE LOGIC */
+
+    var lastDate = rows[rows.length - 1].date;
+    var lastMonth = lastDate.getMonth(); // 0–11
+    var lastYear = lastDate.getFullYear();
+
+    /* determine final allowed stop */
+    var finalType;
+    var finalYear;
+
+    if (lastMonth <= 5) {
+        // Jan–June → Mid same year
+        finalType = "mid";
+        finalYear = lastYear;
     } else {
-        highlightMultipleHouses(collectHousesTillMonthGroup(stop.year, stop.endMonthIndex));
-        CURRENT_INDEX = stop.yearIndex;
+        // July–Dec → Jan next year
+        finalType = "jan";
+        finalYear = lastYear + 1;
     }
 
-    renderMapTimeline();
-}
-
-function buildMonthGroups(year) {
-    var months = TIMELINE_DATA[year] || [];
-    if (months.length === 0) return [];
-    var midIndex = Math.floor(months.length / 2);
-    return [{
-        label: "Mid " + year,
-        total: months.slice(0, midIndex + 1).reduce(function (sum, m) { return sum + m.total; }, 0),
-        groupIndex: 0,
-        year: year,
-        endMonthIndex: midIndex
-    }];
-}
-
-
-function renderMapTimeline() {
-    var html = "";
-    var totalYears = TIMELINE_YEARS.length;
-    var endStopIdx = _sliderStops.findIndex(function (s) { return s.type === "end"; });
-
-    // Track which mid stops have already been rendered
-    var renderedMidStops = {};
-
-    TIMELINE_YEARS.forEach(function (year, i) {
-        var isLastYear = i === totalYears - 1;
-        var isFirstYear = i === 0;
-        var prevYear = TIMELINE_YEARS[i - 1];
-
-        var yearStopIdx = _sliderStops.findIndex(function (s) {
-            return s.type === "year" && String(s.year) === String(year);
-        });
-
-        var prevMidStopIdx = !isFirstYear ? _sliderStops.findIndex(function (s) {
-            return s.type === "mid" && String(s.year) === String(prevYear);
-        }) : -1;
-
-        var currentMidStopIdx = _sliderStops.findIndex(function (s) {
-            return s.type === "mid" && String(s.year) === String(year);
-        });
-
-        var isYearActive = _currentStopIndex === yearStopIdx;
-        var isPrevMidActive = prevMidStopIdx !== -1 && _currentStopIndex === prevMidStopIdx;
-        var isCurrentMidActive = currentMidStopIdx !== -1 && _currentStopIndex === currentMidStopIdx;
-        var isBlockActive = isYearActive || isPrevMidActive || isCurrentMidActive;
-
-        /* ── PREVIOUS MID (only if not already rendered) ── */
-        if (isBlockActive && !isFirstYear && prevMidStopIdx !== -1 && !renderedMidStops[prevMidStopIdx]) {
-            var prevMidStop = _sliderStops[prevMidStopIdx];
-            renderedMidStops[prevMidStopIdx] = true;
-            html += '<span class="tl-month ' + (isPrevMidActive ? "active" : "") + '"' +
-                ' data-stop="' + prevMidStopIdx + '"' +
-                ' data-year="' + prevYear + '">' +
-                'Mid ' + prevYear + '<small>' + prevMidStop.total + '</small>' +
-                '</span>' +
-                '<span class="tl-dash">—</span>';
-        }
-
-        /* ── YEAR ── */
-        html += '<span class="tl-year ' + (isYearActive ? "active-year" : "") + '"' +
-            ' data-stop="' + yearStopIdx + '"' +
-            ' data-year="' + year + '"' +
-            ' data-index="' + i + '">' +
-            year +
-            '<small>' + (isYearActive ? "▲" : "▼") + '</small>' +
-            '</span>' +
-            '<span class="tl-dash">—</span>';
-
-        /* ── CURRENT MID (only if not already rendered) ── */
-        if (isBlockActive && currentMidStopIdx !== -1 && !renderedMidStops[currentMidStopIdx]) {
-            var currentMidStop = _sliderStops[currentMidStopIdx];
-            renderedMidStops[currentMidStopIdx] = true;
-            html += '<span class="tl-month ' + (isCurrentMidActive ? "active" : "") + '"' +
-                ' data-stop="' + currentMidStopIdx + '"' +
-                ' data-year="' + year + '">' +
-                'Mid ' + year + '<small>' + currentMidStop.total + '</small>' +
-                '</span>' +
-                '<span class="tl-dash">—</span>';
-        }
-
-        /* ── END ── */
-        if (isLastYear && endStopIdx !== -1) {
-            var isEndActive = _currentStopIndex === endStopIdx;
-            if (isEndActive || isBlockActive) {
-                var endStop = _sliderStops[endStopIdx];
-                html += '<span class="tl-month ' + (isEndActive ? "active" : "") + '"' +
-                    ' data-stop="' + endStopIdx + '"' +
-                    ' data-year="' + year + '">' +
-                    'End ' + year + '<small>' + endStop.total + '</small>' +
-                    '</span>' +
-                    '<span class="tl-dash">—</span>';
-            }
-        }
+    /* find index of this final stop */
+    var finalIndex = stops.findIndex(function (s) {
+        return s.type === finalType && s.year === finalYear;
     });
 
-    $("#map-timeline").html(html);
+    /* cut extra stops after this */
+    if (finalIndex !== -1) {
+        stops = stops.slice(0, finalIndex + 1);
+    }
+    return {
+        all: stops,
+        startIndex: startIndex
+    };
 }
 
-function collectHousesTillYear(yearIndex) {
-    var houseList = [];
-    for (var i = 0; i <= yearIndex; i++) {
-        TIMELINE_DATA[TIMELINE_YEARS[i]].forEach(function (m) { houseList.push.apply(houseList, m.house_numbers); });
-    }
-    return houseList;
-}
+/* ---------- MAP LAYERS ---------- */
 
-function collectHousesTillMonthGroup(year, endMonthIndex) {
-    var collected = [];
-    var yearIndex = TIMELINE_YEARS.indexOf(String(year));
-    for (var i = 0; i < yearIndex; i++) {
-        TIMELINE_DATA[TIMELINE_YEARS[i]].forEach(function (m) { collected.push.apply(collected, m.house_numbers); });
+function clearTimelineLayers() {
+    for (var i = 0; i < _timelineLayers.length; i++) {
+        map.removeLayer(_timelineLayers[i]);
     }
-    var months = TIMELINE_DATA[year] || [];
-    for (var i = 0; i <= endMonthIndex; i++) {
-        if (months[i]) collected.push.apply(collected, months[i].house_numbers);
-    }
-    return collected;
+    _timelineLayers = [];
 }
 
 function highlightMultipleHouses(houseList) {
     clearTimelineLayers();
-    var filter_houses = houseList.filter(function (h) { return h in houses; }).map(function (h) { return houses[h]; });
-    if (filter_houses.length === 0) return;
 
-    /* CHANGE 2: use _timelineHighlightColor (scope-dependent) */
+    if (!houseList || !houseList.length || !houses) return;
+
+    var filtered = [];
+    var seen = {};
+
+    for (var i = 0; i < houseList.length; i++) {
+        var key = String(houseList[i]);
+        if (seen[key]) continue;
+        seen[key] = true;
+
+        if (houses[key]) {
+            filtered.push(houses[key]);
+        } else if (houses[parseInt(key, 10)]) {
+            filtered.push(houses[parseInt(key, 10)]);
+        }
+    }
+
+    if (!filtered.length) return;
+
     var fillCol = _timelineHighlightColor;
-    var strokeCol = (fillCol === "#FFD700") ? "#b8860b" : "#000000";
+    var strokeCol = (fillCol === "#FFD700") ? "#b8860b" : "#eb349e";
 
-    var layer = L.geoJson(filter_houses, {
-        style: { color: strokeCol, opacity: 0.7, weight: 0.25, fillColor: fillCol, fillOpacity: 2 },
+    var layer = L.geoJson(filtered, {
+        style: {
+            color: strokeCol,
+            opacity: 0.8,
+            weight: 1,
+            fillColor: fillCol,
+            fillOpacity: 0.65
+        },
         onEachFeature: function (feature, layer) {
-            if (feature.properties && feature.properties.name) {
+            if (feature && feature.properties && feature.properties.name) {
                 var name = feature.properties.name;
                 layer.bindPopup("House: " + name, { autoPan: true });
                 layer.on("mouseover", function () { this.openPopup(); });
@@ -944,27 +899,240 @@ function highlightMultipleHouses(houseList) {
             }
         }
     });
+
     layer.addTo(map);
     _timelineLayers.push(layer);
 }
 
-function clearTimelineLayers() {
-    _timelineLayers.forEach(function (l) { map.removeLayer(l); });
-    _timelineLayers = [];
+/* ---------- SLIDER HELPERS ---------- */
+function _timelineSliderToIndex(value) {
+    if (!_timelineAllStops.length) return 0;
+
+    var maxIndex = _timelineAllStops.length - 1;
+    var span = maxIndex - _timelineStartIndex;
+
+    if (span <= 0) return _timelineStartIndex;
+
+    /* 🔥 FIX: use FLOOR instead of ROUND */
+    var i = _timelineStartIndex + Math.floor((value / 100) * (span + 1));
+
+    if (i > maxIndex) i = maxIndex;
+    if (i < _timelineStartIndex) i = _timelineStartIndex;
+
+    return i;
 }
 
-function _resetTimeline() {
+function _timelineIndexToSliderValue(index) {
+    if (!_timelineAllStops.length) return 0;
+
+    var maxIndex = _timelineAllStops.length - 1;
+    var span = maxIndex - _timelineStartIndex;
+
+    if (span <= 0) return 0;
+
+    return Math.round(((index - _timelineStartIndex) / span) * 100);
+}
+
+/* ---------- RENDER ---------- */
+function renderMapTimeline() {
+    var html = "";
+
+    if (!_timelineAllStops.length) return;
+
+    var active = _timelineActiveIndex;
+
+    /* 🔍 find previous MID */
+    var prevMid = -1;
+    for (var i = active - 1; i >= 0; i--) {
+        if (_timelineAllStops[i].type === "mid") {
+            prevMid = i;
+            break;
+        }
+    }
+
+    /* 🔍 find next MID */
+    var nextMid = -1;
+    for (var j = active + 1; j < _timelineAllStops.length; j++) {
+        if (_timelineAllStops[j].type === "mid") {
+            nextMid = j;
+            break;
+        }
+    }
+
+    for (var k = _timelineStartIndex; k < _timelineAllStops.length; k++) {
+
+        var stop = _timelineAllStops[k];
+
+        /* ✅ VISIBILITY RULE */
+        var show = false;
+
+        // ALWAYS show JAN
+        if (stop.type === "jan") show = true;
+
+        // show prev + next MID
+        if (k === prevMid || k === nextMid) show = true;
+
+        // 🔥 IMPORTANT: ALWAYS show ACTIVE NODE
+        if (k === active) show = true;
+
+        if (!show) continue;
+
+        /* ✅ ACTIVE HIGHLIGHT */
+        var isActive = (k === active);
+        var activeClass = "";
+
+        if (isActive) {
+            activeClass = (stop.type === "mid") ? " active" : " active-year";
+        }
+
+        html += '<span class="' +
+            (stop.type === "mid" ? "tl-month" : "tl-year") +
+            activeClass +
+            '" data-stop="' + k + '">' +
+            stop.label +
+            '<small>' + stop.total + '</small>' +
+            '</span>';
+
+        html += '<span class="tl-dash">—</span>';
+    }
+
+    /* remove last dash safely */
+    if (html.endsWith('—</span>')) {
+        html = html.slice(0, -8);
+    }
+
+    $("#map-timeline").html(html);
+}
+/* ---------- NAVIGATION ---------- */
+
+function goToTimelineStop(index, source) {
+    if (!_timelineAllStops.length) return;
+
+    var maxIndex = _timelineAllStops.length - 1;
+
+    if (index < _timelineStartIndex) index = _timelineStartIndex;
+    if (index > maxIndex) index = maxIndex;
+
+    _timelineActiveIndex = index;
+    CURRENT_INDEX = index;
+
+    var stop = _timelineAllStops[index];
+
     clearTimelineLayers();
-    _currentStopIndex = 0;
-    CURRENT_INDEX = -1;
+
+    if (stop && stop.house_numbers && stop.house_numbers.length) {
+        highlightMultipleHouses(stop.house_numbers);
+    }
     var slider = document.getElementById("timelineSlider");
-    if (slider) slider.value = 0;
+
+    /* 🔥 IMPORTANT: only update slider if NOT coming from slider */
+    if (slider && source !== "slider") {
+        slider.value = _timelineIndexToSliderValue(index);
+    }
+
     var readout = document.getElementById("sliderReadout");
-    if (readout) readout.textContent = "Start";
+    if (readout) {
+        readout.textContent = stop ? stop.label : "Start";
+    }
+
     renderMapTimeline();
 }
 
+/* ---------- INIT ---------- */
 
+function initToiletTimeline(slumId) {
+    if (!slumId) return;
+
+    $("#sponsor-pinned").show();
+
+    $("#timeline-toggle-slot").html(
+        '<div style="font-size:11px;font-weight:600;margin-top:2px;margin-bottom:6px;color:#2471a3;">' +
+        'Explore construction impact over time.</div>' +
+        '<button id="toggleTimeline" class="action-btn">Show Impact Over Time</button>'
+    );
+
+    fetch("/component/household-month-dates/?slum_id=" + encodeURIComponent(slumId))
+        .then(function (res) { return res.json(); })
+        .then(function (data) {
+            if (!data || !data.monthly_data || data.monthly_data.length === 0) {
+                $("#timeline-toggle-slot").hide();
+                return;
+            }
+
+            $("#timeline-toggle-slot").show();
+
+            var scope = String(data.scope || "").toLowerCase();
+            _timelineHighlightColor = (scope === "anonymous") ? "#FFD700" : "#eb349e";
+
+            _timelineRows = _normalizeTimelineRows(data.monthly_data);
+
+            var built = _buildTimelineStops(_timelineRows);
+            _timelineAllStops = built.all || [];
+            _timelineStartIndex = typeof built.startIndex === "number" ? built.startIndex : 0;
+
+            if (!_timelineAllStops.length) {
+                $("#timeline-toggle-slot").hide();
+                return;
+            }
+
+            _timelineActiveIndex = _timelineStartIndex;
+
+            var slider = document.getElementById("timelineSlider");
+            if (slider) {
+                slider.min = 0;
+                slider.max = 100;
+                slider.step = 1;
+                slider.value = 0;
+            }
+
+            var readout = document.getElementById("sliderReadout");
+            if (readout) {
+                readout.textContent = _timelineAllStops[_timelineStartIndex].label;
+            }
+
+            renderMapTimeline();
+            goToTimelineStop(_timelineStartIndex);
+        })
+        .catch(function () {
+            $("#timeline-toggle-slot").hide();
+        });
+}
+
+/* ---------- RESET ---------- */
+
+function _resetTimeline() {
+    clearTimelineLayers();
+
+    if (_timelineAllStops.length) {
+        _timelineActiveIndex = _timelineStartIndex;
+        CURRENT_INDEX = _timelineStartIndex;
+
+        var slider = document.getElementById("timelineSlider");
+        if (slider) slider.value = 0;
+
+        var readout = document.getElementById("sliderReadout");
+        if (readout) readout.textContent = _timelineAllStops[_timelineStartIndex].label;
+    }
+
+    renderMapTimeline();
+}
+
+/* ---------- EVENTS ---------- */
+
+$(document).off("click.timelineWindow click.timelinePill click.timeline", ".tl-year, .tl-month")
+    .on("click.timelineWindow", ".tl-year, .tl-month", function () {
+        var idx = parseInt($(this).data("stop"), 10);
+        if (!isNaN(idx)) {
+            goToTimelineStop(idx, "click");
+        }
+    });
+
+$(document).off("input.timelineWindow input.timelineSlider input.timeline", "#timelineSlider")
+    .on("input.timelineWindow", "#timelineSlider", function () {
+        var val = parseFloat(this.value) || 0;
+        var idx = _timelineSliderToIndex(val);
+        goToTimelineStop(idx, "slider");
+    });
 /* ═══════════════════════════════════════════════════════════════════════════
  *OTP Flow helpers
  *
@@ -1067,19 +1235,6 @@ function _showOtpInlineError(msg) {
 $(document).off("click.rimSendOTP", "#rimSendOTP")
     .on("click.rimSendOTP", "#rimSendOTP", function () {
         sendOtpWithFeedback(this);
-    });
-
-/* Timeline pill click — updated to generic class names tl-year / tl-month */
-$(document).off("click.timelinePill", ".tl-year, .tl-month")
-    .on("click.timelinePill", ".tl-year, .tl-month", function () {
-        var stopIdx = parseInt($(this).data("stop"));
-        if (!isNaN(stopIdx)) goToTimelineStop(stopIdx, "pill");
-    });
-
-/* Slider input */
-$(document).off("input.timelineSlider", "#timelineSlider")
-    .on("input.timelineSlider", "#timelineSlider", function () {
-        goToTimelineStop(_sliderValToStopIndex(parseInt(this.value)), "slider");
     });
 
 /* Toggle timeline show/hide */
