@@ -670,6 +670,29 @@
       color: #888;
       margin-top: 4px;
     }
+    
+    .tl-year,
+    .tl-month {
+      cursor: pointer;
+      padding: 6px 10px;
+      border-radius: 6px;
+      transition: all 0.2s ease;
+    }
+    
+    .active-node {
+      background: #2471a3;
+      color: #fff;
+      font-weight: bold;
+      transform: scale(1.05);
+    }
+    
+    .tl-month.active-node {
+      background: #eb349e;
+    }
+    
+    .tl-year.active-node {
+      background: #eb349e;
+    }
   </style>
 {% endblock %}
 
