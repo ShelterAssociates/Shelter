@@ -879,7 +879,7 @@ function highlightMultipleHouses(houseList) {
     if (!filtered.length) return;
 
     var fillCol = _timelineHighlightColor;
-    var strokeCol = (fillCol === "#FFD700") ? "#b8860b" : "#000000";
+    var strokeCol = (fillCol === "#FFD700") ? "#b8860b" : "#eb349e";
 
     var layer = L.geoJson(filtered, {
         style: {
@@ -1062,7 +1062,7 @@ function initToiletTimeline(slumId) {
             $("#timeline-toggle-slot").show();
 
             var scope = String(data.scope || "").toLowerCase();
-            _timelineHighlightColor = (scope === "all" || scope === "superuser") ? "#FFD700" : "#eb349e";
+            _timelineHighlightColor = (scope === "anonymous") ? "#FFD700" : "#eb349e";
 
             _timelineRows = _normalizeTimelineRows(data.monthly_data);
 
