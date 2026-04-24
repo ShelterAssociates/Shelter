@@ -2,6 +2,56 @@
 
 {% block title %} {{ site_title|default:_('Shelter site admin') }}{% endblock %}
 
+{% block extrastyle %}
+{{ block.super }}
+<style>
+@media (max-width: 767px) {
+    #branding {
+        justify-content: center !important;
+        text-align: center;
+        position: relative;
+        padding-top: 16px !important;
+        padding-bottom: 12px !important;
+    }
+
+    #branding a {
+        display: inline-block;
+    }
+
+    #branding img {
+        margin: 0 auto;
+    }
+
+    .admin-mobile-toggle {
+        position: absolute;
+        right: 12px;
+        top: 12px;
+    }
+
+    .nav.navbar-nav {
+        width: 100%;
+    }
+
+    .nav.navbar-nav > li {
+        width: 100%;
+        float: none !important;
+        text-align: center;
+        border-bottom: 1px solid #e5e7eb;
+    }
+
+    .nav.navbar-nav > li > a {
+        display: block;
+        width: 100%;
+        padding: 14px 12px !important;
+    }
+
+    .nav.navbar-nav .dropdown-menu {
+        text-align: left;
+    }
+}
+</style>
+{% endblock %}
+
 {% block branding %}
 <a href="/home"><img src="/static/images/shelter.png" height="40" width = "130" style="padding:5px;"/></a>
 {% endblock %}
