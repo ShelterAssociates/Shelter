@@ -63,7 +63,6 @@ def get_component(request, slum_id):
        Here sponsor data is fetch according to user role access rights
     '''
     slum = get_object_or_404(Slum, pk=slum_id)
-    print("Current status:", slum.current_status)
     if slum.current_status == 'sra': return JsonResponse({"status": "sra", "data": None})
     if slum.current_status == 'road_widening': return JsonResponse({"status": "road_widening", "data": None})
     city_name = list(Slum.objects.filter(id = slum.id).values_list('electoral_ward__administrative_ward__city__name__city_name', flat = True))[0]
@@ -79,8 +78,6 @@ def get_component(request, slum_id):
             .values_list("id", flat=True)
         )
     
-        print("Sponsor IDs:", sponsors)
-    
         sponsor_project_detail_ids = (
             SponsorProject.objects
             .filter(sponsor_id__in=sponsors)
@@ -93,7 +90,6 @@ def get_component(request, slum_id):
         metadata = Metadata.objects.filter(visible=True).exclude(name='Shops').order_by('section__order','order')
     else:
         metadata = Metadata.objects.filter(visible=True).exclude(name='Shop').order_by('section__order','order')
-    print(metadata)
     rhs_analysis = {}
 
     fields_code = metadata.filter(type='F').exclude(code="").values_list('code', flat=True)
@@ -128,8 +124,7 @@ def get_component(request, slum_id):
         #Filter
         elif metad.type == 'F' and metad.code != "":
             field = metad.code.split(':')
-            # print("Processing Filter:", metad.name, "with code:", metad.code)
-            # print("Field Details:", field)
+
             
             if city_name != 'Kolhapur' and field[0] == 'If individual water connection, type of water meter?':
                 pass
@@ -140,7 +135,6 @@ def get_component(request, slum_id):
                     component['child'] = list(set(sum(options,[])))
         # # Sponsor : Depending on superuser or sponsor render the data accordingly
         elif metad.type == 'S' and (metad.authenticate == False or not request.user.is_anonymous):
-            # print("Fetching Sponsor Data for Component:", metad.name) 
             if  metad.code!= "":
                 sponsor_households = []
                 sponsor_households = SponsorProjectDetails.objects.filter(sponsor_project__id=int(metad.code),slum=slum).values_list("household_code", flat=True)
@@ -387,14 +381,12 @@ def delete_component(request):
     if request.method == "POST":  # or "DELETE"
         object_id = request.POST.get("object_id")
         comp_name = request.POST.get("comp_name")
-        print(object_id , comp_name)
         if not object_id or not comp_name:
             return JsonResponse({"success": False, "message": "Missing object_id or comp_name"}, status=400)
 
         # Try to delete the component
         try:
             comp = Component.objects.filter(object_id=object_id, metadata__name=comp_name)
-            print("Component to be deleted:", comp)
             comp.delete()
             return JsonResponse({"success": True, "message": f'Component "{comp_name}" deleted successfully'})
         except Component.DoesNotExist:
@@ -405,110 +397,109 @@ def delete_component(request):
         return JsonResponse({"success": False, "message": "Invalid request method"}, status=405)
 
 # ================== New API for Sponsor Toilet Household Month End Dates ==================
+def extract_household_codes(qs):
+	all_codes = set()
+
+	for codes in qs:
+		if not codes:
+			continue
+
+		try:
+			if isinstance(codes, list):
+				all_codes.update(str(c) for c in codes)
+			else:
+				all_codes.update(str(c) for c in json.loads(codes))
+		except Exception:
+			continue
+
+	return all_codes
+
+
+def get_toilets_queryset(slum_id, household_codes=None):
+	filters = {
+		'completion_date__isnull': False,
+		'slum_id': slum_id
+	}
+
+	if household_codes:
+		filters['household_number__in'] = household_codes
+
+	return ToiletConstruction.objects.filter(**filters)
+
+
 def get_household_month_end_dates(request):
-    slum_id = request.GET.get('slum_id')
+	slum_id = request.GET.get('slum_id')
 
-    if not slum_id:
-        return JsonResponse({"error": "slum_id is required"}, status=400)
+	if not slum_id:
+		return JsonResponse({"error": "slum_id is required"}, status=400)
 
-    toilet_filter = {
-        'completion_date__isnull': False,
-        'slum_id': slum_id
-    }
+	user = request.user
 
-    # ----------------------------------------------------------------
-    # CASE 1: Superuser / staff → same logic as get_component
-    #         only toilets whose household_number exists in
-    #         SponsorProjectDetails.household_code for that slum
-    # ----------------------------------------------------------------
-    if request.user.is_superuser or request.user.is_staff:
+	# ------------------------------------------------------------
+	# CASE 1: Admin / Staff
+	# ------------------------------------------------------------
+	if user.is_superuser or user.is_staff:
 
-        # Fetch all household codes linked to this slum via SponsorProjectDetails
-        # (mirrors get_component sponsor logic)
-        sponsor_households_qs = SponsorProjectDetails.objects.filter(
-            slum_id=slum_id
-        ).values_list("household_code", flat=True)
+		household_qs = SponsorProjectDetails.objects.filter(
+			slum_id=slum_id
+		).values_list("household_code", flat=True)
 
-        all_house_codes = []
-        for codes in sponsor_households_qs:
-            if codes:
-                try:
-                    if isinstance(codes, list):
-                        all_house_codes.extend(codes)
-                    else:
-                        all_house_codes.extend(json.loads(codes))
-                except Exception:
-                    pass
+		household_codes = extract_household_codes(household_qs)
 
-        # Deduplicate — same as get_component uses set()
-        all_house_codes = list(set(str(c) for c in all_house_codes))
+		if not household_codes:
+			return JsonResponse({"error": "No sponsor-linked households found for this slum"}, status=404)
 
-        if not all_house_codes:
-            return JsonResponse({"error": "No sponsor-linked households found for this slum"}, status=404)
+		toilets = get_toilets_queryset(slum_id, household_codes)
 
-        toilet_filter['household_number__in'] = all_house_codes
-        toilets = ToiletConstruction.objects.filter(**toilet_filter)
-        return build_response(toilets, scope='all', slum_id=slum_id)
+		return build_response(toilets, scope='superuser', slum_id=slum_id)
 
-    # ----------------------------------------------------------------
-    # CASE 2: Sponsor user → only their sponsor project household codes
-    #         for that slum (same as get_component sponsor check)
-    # ----------------------------------------------------------------
-    elif request.user.groups.filter(name='sponsor').exists():
-        sponsor_name = request.GET.get('sponsor_name')
+	# ------------------------------------------------------------
+	# CASE 2: Sponsor user
+	# ------------------------------------------------------------
+	elif user.groups.filter(name='sponsor').exists():
 
-        # Get sponsor IDs linked to this user
-        sponsor_qs = request.user.sponsor_set.all()
-        if sponsor_name:
-            sponsor_qs = sponsor_qs.filter(organization_name=sponsor_name)
+		sponsor_name = request.GET.get('sponsor_name')
 
-        sponsor_ids = sponsor_qs.values_list('id', flat=True)
+		sponsor_qs = user.sponsor_set.all()
+		if sponsor_name:
+			sponsor_qs = sponsor_qs.filter(organization_name=sponsor_name)
 
-        if not sponsor_ids:
-            return JsonResponse({"error": "No sponsor linked to this user"}, status=403)
+		sponsor_ids = sponsor_qs.values_list('id', flat=True)
 
-        # Get sponsor project IDs for this user — mirrors get_component logic
-        sponsor_project_ids = SponsorProject.objects.filter(
-            sponsor_id__in=sponsor_ids
-        ).values_list("id", flat=True)
+		if not sponsor_ids:
+			return JsonResponse({"error": "No sponsor linked to this user"}, status=403)
 
-        # Fetch household codes only for sponsor's projects in this slum
-        sponsor_households_qs = SponsorProjectDetails.objects.filter(
-            sponsor_project_id__in=sponsor_project_ids,
-            slum_id=slum_id
-        ).values_list("household_code", flat=True)
+		sponsor_project_ids = SponsorProject.objects.filter(
+			sponsor_id__in=sponsor_ids
+		).values_list("id", flat=True)
 
-        all_house_codes = []
-        for codes in sponsor_households_qs:
-            if codes:
-                try:
-                    if isinstance(codes, list):
-                        all_house_codes.extend(codes)
-                    else:
-                        all_house_codes.extend(json.loads(codes))
-                except Exception:
-                    pass
+		household_qs = SponsorProjectDetails.objects.filter(
+			sponsor_project_id__in=sponsor_project_ids,
+			slum_id=slum_id
+		).values_list("household_code", flat=True)
 
-        all_house_codes = list(set(str(c) for c in all_house_codes))
+		household_codes = extract_household_codes(household_qs)
 
-        if not all_house_codes:
-            return JsonResponse({"error": "No households found for this sponsor in the given slum"}, status=404)
+		if not household_codes:
+			return JsonResponse({"error": "No households found for this sponsor in the given slum"}, status=404)
 
-        toilet_filter['household_number__in'] = all_house_codes
-        toilets = ToiletConstruction.objects.filter(**toilet_filter)
-        return build_response(toilets, scope='sponsor', slum_id=slum_id, user=request.user)
+		toilets = get_toilets_queryset(slum_id, household_codes)
 
-    # ----------------------------------------------------------------
-    # CASE 3: For anyonymous users or users without relevant permissions, return all toilets for the slum without filtering by household_number
-    # ----------------------------------------------------------------
-    else:
-        toilets = ToiletConstruction.objects.filter(**toilet_filter)
-        if not toilets.exists():
-            return {
-                "message": "No toilets found in this slum",
-                "data": []
-            }
-        return build_response(toilets, scope='all', slum_id=slum_id)
+		return build_response(toilets, scope='sponsor', slum_id=slum_id, user=user)
+
+	# ------------------------------------------------------------
+	# CASE 3: Public / Others
+	# ------------------------------------------------------------
+	else:
+		toilets = get_toilets_queryset(slum_id)
+
+		if not toilets.exists():
+			return JsonResponse({
+				"message": "No toilets found in this slum",
+				"data": []
+			})
+
+		return build_response(toilets, scope='all', slum_id=slum_id)
 
 
 def build_response(toilets, scope, slum_id, user=None):
