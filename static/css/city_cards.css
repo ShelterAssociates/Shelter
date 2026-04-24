@@ -356,6 +356,16 @@ span.l30 {
 .first-card {
   display: inline-block;
 }
+
+.city-cards-shell {
+  margin: 0;
+}
+
+.city-cards-list {
+  white-space: nowrap;
+  overflow-x: auto;
+  overflow-y: hidden;
+}
 #loading-img {
     background: url(/static/images/spinner.gif) center center no-repeat;
     height: 100%;
@@ -387,4 +397,44 @@ span.l30 {
   padding-top:170px;
   padding-right:0px;
   padding-left:0px;
+}
+
+@media (max-width: 767px) {
+  .cards {
+    float: none;
+    width: 100%;
+    padding: 12px;
+  }
+
+  .city-cards-list {
+    white-space: normal;
+    overflow: visible;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .first-card {
+    display: block;
+    width: 100%;
+    max-width: 340px;
+    height: auto;
+    min-height: 430px;
+    margin-right: 0;
+    margin-bottom: 16px;
+    padding: 28px 18px 22px;
+  }
+
+  .card-btn {
+    width: 100%;
+    margin-left: 0;
+  }
+
+  .average-img {
+    font-size: 26px;
+  }
+
+  .average-label {
+    font-size: 15px;
+  }
 }
