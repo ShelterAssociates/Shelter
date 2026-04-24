@@ -4,6 +4,9 @@ import json
 import random
 from datetime import timedelta
 
+from django.core.exceptions import ImproperlyConfigured
+from django.core.exceptions import ObjectDoesNotExist
+from django.contrib.admin.views.decorators import staff_member_required
 from django.http import JsonResponse
 from django.utils import timezone
 from django.views.decorators.csrf import csrf_exempt
@@ -11,6 +14,7 @@ from requests import request
 
 from helpers.services.send_email import send_otp_email
 from .models import OTPVerification
+from .services.google_drive import upload_photos_to_slum_drive_folder
 
 # ============= Digipin Generation =============
 
@@ -120,3 +124,61 @@ def verify_otp(request):
 	# mark session as verified for factsheet download
 	request.session["rim_otp_verified"] = True
 	return JsonResponse({"status":"verified"})
+
+
+@staff_member_required
+def photo_upload_page(request):
+	return render(request, "helpers/photo_upload.html")
+
+
+@csrf_exempt
+def upload_slum_photos_to_drive(request):
+	if request.method == "GET":
+		return render(request, "helpers/photo_upload.html")
+
+	if request.method != "POST":
+		return JsonResponse({"status": "error", "message": "Only GET and POST requests are allowed."}, status=405)
+
+	slum_id = request.POST.get("slum_id")
+	photo_category = request.POST.get("photo_category")
+	event_name = request.POST.get("event_name", "").strip()
+	uploaded_files = request.FILES.getlist("photos")
+	if not uploaded_files:
+		single_file = request.FILES.get("photo")
+		if single_file:
+			uploaded_files = [single_file]
+
+	if not slum_id:
+		return JsonResponse({"status": "error", "message": "slum_id is required."}, status=400)
+
+	if not uploaded_files:
+		return JsonResponse({"status": "error", "message": "At least one photo is required."}, status=400)
+
+	if len(uploaded_files) > 5:
+		return JsonResponse({"status": "error", "message": "You can upload a maximum of 5 photos at a time."}, status=400)
+
+	if not photo_category:
+		return JsonResponse({"status": "error", "message": "Photo type is required."}, status=400)
+
+	if photo_category in ("events", "other") and not event_name:
+		label = "event name" if photo_category == "events" else "name"
+		return JsonResponse({"status": "error", "message": "Please enter the {}.".format(label)}, status=400)
+
+	try:
+		result = upload_photos_to_slum_drive_folder(
+			slum_id,
+			uploaded_files,
+			photo_category=photo_category,
+			event_name=event_name,
+		)
+	except ObjectDoesNotExist:
+		return JsonResponse({"status": "error", "message": "Slum not found."}, status=404)
+	except ImproperlyConfigured as exc:
+		return JsonResponse({"status": "error", "message": str(exc)}, status=500)
+	except Exception as exc:
+		return JsonResponse(
+			{"status": "error", "message": "Photo upload service failed.", "details": str(exc)},
+			status=500
+		)
+
+	return JsonResponse({"status": "success", "data": result}, status=201)

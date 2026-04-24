@@ -2,13 +2,68 @@
 {% load i18n %}
 
 {% block breadcrumbs %}
+<style>
+	.home-hero {
+		min-height: calc(100vh - 140px);
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		padding: 32px 16px;
+	}
 
-<div class ="" style="height:520px;">
-	<div class="col-md-4"></div>
-	<div class="col-md-4 text-center" style="margin-top:20%;">Shelter Associates</div>
-	<div class="col-md-4"></div>
+	.home-hero-card {
+		width: 100%;
+		max-width: 520px;
+		text-align: center;
+		background: #ffffff;
+		border: 1px solid #e5e7eb;
+		border-radius: 18px;
+		box-shadow: 0 16px 40px rgba(15, 23, 42, 0.08);
+		padding: 40px 24px;
+	}
+
+	.home-hero-title {
+		margin: 0;
+		font-size: 34px;
+		font-weight: 700;
+		color: #0f172a;
+	}
+
+	.home-hero-subtitle {
+		margin: 12px 0 0;
+		font-size: 16px;
+		line-height: 1.6;
+		color: #475569;
+	}
+
+	@media (max-width: 767px) {
+		.home-hero {
+			min-height: calc(100vh - 110px);
+			padding: 20px 12px;
+		}
+
+		.home-hero-card {
+			padding: 28px 18px;
+			border-radius: 14px;
+		}
+
+		.home-hero-title {
+			font-size: 28px;
+			line-height: 1.2;
+		}
+
+		.home-hero-subtitle {
+			font-size: 14px;
+		}
+	}
+</style>
+
+<div class="home-hero">
+	<div class="home-hero-card">
+		<h1 class="home-hero-title">Shelter Associates</h1>
+		<p class="home-hero-subtitle">Use the admin menu to navigate reports, analytics, maps, and upload tools.</p>
+	</div>
 </div>
-
 
 {% endblock %}
 

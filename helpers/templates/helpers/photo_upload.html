@@ -1,0 +1,481 @@
+{% extends 'admin/base_site.html' %}
+{% load static %}
+
+{% block title %}
+  Photo Upload
+{% endblock %}
+
+{% block content %}
+  <style>
+    .photo-tabs-bar {
+      display: flex;
+      background: #ffffff;
+      border-bottom: 2px solid #dbeafe;
+      margin-bottom: 24px;
+    }
+    
+    .photo-tab {
+      padding: 12px 20px;
+      font-size: 14px;
+      font-weight: 600;
+      color: #1d4ed8;
+      background: #eef6ff;
+      border-bottom: 3px solid #1d4ed8;
+    }
+    
+    .photo-layout {
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+    }
+    
+    .photo-container {
+      max-width: 760px;
+      width: 100%;
+      background: #ffffff;
+      border-radius: 14px;
+      box-shadow: 0 10px 28px rgba(0, 0, 0, 0.08);
+      padding: 24px;
+      margin: 0 auto 24px;
+    }
+    
+    .photo-header {
+      text-align: center;
+      margin-bottom: 26px;
+    }
+    
+    .photo-header h1 {
+      font-size: 24px;
+      font-weight: 700;
+      color: #1e3a8a;
+      margin-bottom: 6px;
+    }
+    
+    .photo-header p {
+      color: #6b7280;
+      font-size: 13px;
+    }
+    
+    .photo-row {
+      display: flex;
+      align-items: center;
+      margin-bottom: 14px;
+      background: #f9fafb;
+      padding: 12px 14px;
+      border-radius: 10px;
+      border: 1px solid #eef2f7;
+    }
+    
+    .photo-row label {
+      width: 170px;
+      font-weight: 600;
+      color: #374151;
+    }
+    
+    .photo-row select,
+    .photo-row input[type='file'],
+    .photo-row input[type='text'] {
+      flex: 1;
+      padding: 10px 12px;
+      min-height: 38px;
+      border-radius: 8px;
+      border: 1px solid #d1d5db;
+      font-size: 14px;
+      line-height: 20px;
+      background: white;
+    }
+    
+    .photo-row select:focus,
+    .photo-row input[type='file']:focus,
+    .photo-row input[type='text']:focus {
+      outline: none;
+      border-color: #2563eb;
+      box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.15);
+    }
+    
+    .photo-row.hidden {
+      display: none;
+    }
+    
+    .photo-actions {
+      text-align: center;
+      margin-top: 22px;
+    }
+    
+    .photo-actions button {
+      padding: 10px 26px;
+      font-weight: 600;
+      border-radius: 9px;
+      border: none;
+      background: #2563eb;
+      color: white;
+      font-size: 13px;
+      transition: all 0.2s ease;
+    }
+    
+    .photo-actions button:hover {
+      background: #1d4ed8;
+    }
+    
+    .photo-actions button:disabled {
+      background: #9ca3af;
+      cursor: not-allowed;
+    }
+    
+    .notes {
+      margin-top: 22px;
+      font-size: 13px;
+      color: #374151;
+      line-height: 1.6;
+    }
+    
+    .upload-status {
+      margin-top: 22px;
+      padding: 14px 16px;
+      border-radius: 10px;
+      font-size: 14px;
+      display: none;
+    }
+    
+    .upload-status.success {
+      display: block;
+      background: #ecfdf5;
+      border: 1px solid #a7f3d0;
+      color: #065f46;
+    }
+    
+    .upload-status.error {
+      display: block;
+      background: #fef2f2;
+      border: 1px solid #fecaca;
+      color: #991b1b;
+    }
+    
+    .upload-status.loading {
+      display: block;
+      background: #eff6ff;
+      border: 1px solid #bfdbfe;
+      color: #1d4ed8;
+    }
+    
+    .upload-links {
+      margin-top: 10px;
+    }
+    
+    .upload-links a {
+      display: block;
+      margin-bottom: 6px;
+    }
+    
+    @media (max-width: 768px) {
+      .photo-row {
+        flex-direction: column;
+        align-items: stretch;
+      }
+    
+      .photo-row label {
+        width: auto;
+        margin-bottom: 8px;
+      }
+    }
+  </style>
+
+  <div class="photo-tabs-bar">
+    <div class="photo-tab">Photo Upload</div>
+  </div>
+
+  <div class="photo-layout">
+    <div class="photo-container">
+      <div class="photo-header">
+        <h1>Slum Photo Upload</h1>
+        <p>Select location details and upload photos to the secure upload service</p>
+      </div>
+
+      <form id="photoUploadForm" enctype="multipart/form-data">
+        {% csrf_token %}
+
+        <div class="photo-row">
+          <label for="city">City</label>
+          <select id="city">
+            <option value="">--- Select City ---</option>
+          </select>
+        </div>
+
+        <div class="photo-row">
+          <label for="admin_ward">Administrative Ward</label>
+          <select id="admin_ward" disabled>
+            <option value="">--- Select Administrative Ward ---</option>
+          </select>
+        </div>
+
+        <div class="photo-row">
+          <label for="electoral_ward">Electoral Ward</label>
+          <select id="electoral_ward" disabled>
+            <option value="">--- Select Electoral Ward ---</option>
+          </select>
+        </div>
+
+        <div class="photo-row">
+          <label for="slum">Slum</label>
+          <select id="slum" name="slum_id" disabled>
+            <option value="">--- Select Slum ---</option>
+          </select>
+        </div>
+
+        <div class="photo-row">
+          <label for="photo_category">Photo Type</label>
+          <select id="photo_category" name="photo_category" required>
+            <option value="">--- Select Photo Type ---</option>
+            <option value="mobilization">Mobilization</option>
+            <option value="toilet">OHOT</option>
+            <option value="mhm">MHM</option>
+            <option value="gis_map">GIS Map</option>
+            <option value="events">Events</option>
+            <option value="other">Other</option>
+          </select>
+        </div>
+
+        <div class="photo-row hidden" id="eventNameRow">
+          <label for="event_name" id="eventNameLabel">Event Name</label>
+          <input id="event_name" name="event_name" type="text" maxlength="120" placeholder="Enter event name" />
+        </div>
+
+        <div class="photo-row">
+          <label for="photos">Photos</label>
+          <input id="photos" name="photos" type="file" accept="image/*" multiple required />
+        </div>
+
+        <div class="photo-actions">
+          <button type="submit" id="uploadButton" disabled>Upload Photos</button>
+        </div>
+      </form>
+
+      <div id="uploadStatus" class="upload-status"></div>
+
+      <div class="notes">
+        <p>
+          <strong>Flow:</strong> Images are compressed, zipped, encrypted, and then sent securely to the upload service.
+        </p>
+        <p>
+          <strong>Folder structure:</strong> City / Administrative Ward / Electoral Ward / Slum / Selected Type or Event Name.
+        </p>
+        <p>
+          <strong>Photo naming:</strong> Each uploaded photo is renamed as <code>YYYY-MM-DD_1</code>, <code>YYYY-MM-DD_2</code>, and so on.
+        </p>
+        <p><strong>Upload limit:</strong> Maximum 5 photos per upload.</p>
+      </div>
+    </div>
+  </div>
+
+  <script src="{% static 'admin/js/vendor/jquery/jquery.js' %}"></script>
+  <script>
+    function resetSelect(id, text) {
+      $(id)
+        .html('<option value="">' + text + '</option>')
+        .prop('disabled', true)
+    }
+    
+    function showStatus(kind, html) {
+      $('#uploadStatus').removeClass('success error loading').addClass(kind).html(html)
+    }
+    
+    function updateUploadButton() {
+      const hasSlum = !!$('#slum').val()
+      const fileCount = $('#photos')[0].files.length
+      const hasFiles = fileCount > 0 && fileCount <= 5
+      const hasCategory = !!$('#photo_category').val()
+      const needsEventName = $('#photo_category').val() === 'events' || $('#photo_category').val() === 'other'
+      const hasEventName = !!$('#event_name').val().trim()
+      $('#uploadButton').prop('disabled', !(hasSlum && hasFiles && hasCategory && (!needsEventName || hasEventName)))
+    }
+    
+    function updateCategoryInput() {
+      const value = $('#photo_category').val()
+      const needsExtraText = value === 'events' || value === 'other'
+      const label = value === 'events' ? 'Event Name' : 'Other Name'
+      const placeholder = value === 'events' ? 'Enter event name' : 'Enter folder name'
+    
+      $('#eventNameLabel').text(label)
+      $('#event_name').attr('placeholder', placeholder).prop('required', needsExtraText)
+    
+      if (needsExtraText) {
+        $('#eventNameRow').removeClass('hidden')
+      } else {
+        $('#eventNameRow').addClass('hidden')
+        $('#event_name').val('')
+      }
+    
+      updateUploadButton()
+    }
+    
+    function escapeHtml(text) {
+      return $('<div>')
+        .text(text || '')
+        .html()
+    }
+    
+    $(document).ready(function () {
+      $.get("{% url 'master:cityList' %}", function (data) {
+        $.each(data.nameArray, function (i, name) {
+          $('#city').append('<option value="' + data.idArray[i] + '">' + name + '</option>')
+        })
+      })
+    
+      $('#city').change(function () {
+        resetSelect('#admin_ward', '--- Select Administrative Ward ---')
+        resetSelect('#electoral_ward', '--- Select Electoral Ward ---')
+        resetSelect('#slum', '--- Select Slum ---')
+        updateUploadButton()
+    
+        let id = $(this).val()
+        if (!id) return
+    
+        $.post(
+          "{% url 'master:administrativewardList' %}",
+          {
+            id: id,
+            csrfmiddlewaretoken: '{{ csrf_token }}'
+          },
+          function (data) {
+            $('#admin_ward').prop('disabled', false)
+            $.each(data.nameArray, function (i, name) {
+              $('#admin_ward').append('<option value="' + data.idArray[i] + '">' + name + '</option>')
+            })
+          }
+        )
+      })
+    
+      $('#admin_ward').change(function () {
+        resetSelect('#electoral_ward', '--- Select Electoral Ward ---')
+        resetSelect('#slum', '--- Select Slum ---')
+        updateUploadButton()
+    
+        let id = $(this).val()
+        if (!id) return
+    
+        $.post(
+          "{% url 'master:electoralWardList' %}",
+          {
+            id: id,
+            csrfmiddlewaretoken: '{{ csrf_token }}'
+          },
+          function (data) {
+            $('#electoral_ward').prop('disabled', false)
+            $.each(data.nameArray, function (i, name) {
+              $('#electoral_ward').append('<option value="' + data.idArray[i] + '">' + name + '</option>')
+            })
+          }
+        )
+      })
+    
+      $('#electoral_ward').change(function () {
+        resetSelect('#slum', '--- Select Slum ---')
+        updateUploadButton()
+    
+        let id = $(this).val()
+        if (!id) return
+    
+        $.post(
+          "{% url 'master:slumList' %}",
+          {
+            id: id,
+            csrfmiddlewaretoken: '{{ csrf_token }}'
+          },
+          function (data) {
+            $('#slum').prop('disabled', false)
+            $.each(data.nameArray, function (i, name) {
+              $('#slum').append('<option value="' + data.idArray[i] + '">' + name + '</option>')
+            })
+          }
+        )
+      })
+    
+      $('#slum, #photos, #photo_category').on('change', function () {
+        const files = $('#photos')[0].files
+        if (files.length > 5) {
+          showStatus('error', 'You can upload a maximum of 5 photos at a time.')
+        }
+        updateUploadButton()
+      })
+    
+      $('#photo_category').on('change', function () {
+        updateCategoryInput()
+      })
+    
+      $('#event_name').on('input', function () {
+        updateUploadButton()
+      })
+    
+      $('#photoUploadForm').on('submit', function (e) {
+        e.preventDefault()
+    
+        const formData = new FormData()
+        formData.append('slum_id', $('#slum').val())
+        formData.append('photo_category', $('#photo_category').val())
+        formData.append('event_name', $('#event_name').val().trim())
+
+        const files = $('#photos')[0].files
+        if (files.length > 5) {
+          showStatus('error', 'You can upload a maximum of 5 photos at a time.')
+          updateUploadButton()
+          return
+        }
+
+        for (let i = 0; i < files.length; i++) {
+          formData.append('photos', files[i])
+        }
+    
+        $('#uploadButton').prop('disabled', true).text('Uploading...')
+        showStatus('loading', 'Compressing, encrypting, and sending photos to the upload service...')
+    
+        $.ajax({
+          url: "{% url 'upload_slum_photos_to_drive' %}",
+          type: 'POST',
+          data: formData,
+          processData: false,
+          contentType: false,
+          success: function (response) {
+            const data = response.data || {}
+            let links = ''
+            if (data.files) {
+              for (let i = 0; i < data.files.length; i++) {
+                const file = data.files[i]
+                if (file.webViewLink) {
+                  links += '<a href="' + file.webViewLink + '" target="_blank">' + escapeHtml(file.name) + '</a>'
+                } else {
+                  links += '<div>' + escapeHtml(file.name) + '</div>'
+                }
+              }
+            }
+    
+            const categoryLabel = data.photo_category_folder || data.photo_category_label || ''
+            const hierarchy = data.hierarchy || []
+            const uploadedPath = hierarchy.join(' / ')
+    
+            showStatus('success', '<strong>Upload completed successfully.</strong><br>' + 'Uploaded to: ' + escapeHtml(uploadedPath || categoryLabel) + '<div class="upload-links">' + links + '</div>')
+            $('#uploadButton').text('Upload Photos')
+            updateUploadButton()
+          },
+          error: function (xhr) {
+            let message = 'Upload failed.'
+            if (xhr.responseJSON && xhr.responseJSON.message) {
+              message = xhr.responseJSON.message
+            }
+            if (xhr.responseJSON && xhr.responseJSON.details) {
+              message += '<br>' + xhr.responseJSON.details
+            }
+            showStatus('error', message)
+            $('#uploadButton').text('Upload Photos')
+            updateUploadButton()
+          }
+        })
+      })
+    
+      updateCategoryInput()
+    })
+  </script>
+{% endblock %}
+
+{% block sidebar %}
+
+{% endblock %}
