@@ -63,8 +63,8 @@ var _currentStopIndex = 0;
 
 /*
  * Timeline highlight colour — set by the API response scope:
- *   scope = 'sponsor' or 'all' (superuser/normal)  → pink  (#eb349e)
- *   scope = 'anonymous'                             → yellow (#FFD700)
+ *   scope = 'superuser' or 'sponsor' → pink   (#eb349e)
+ *   scope = 'all'                    → yellow (#FFD700)
  * Default to pink; will be overwritten in initToiletTimeline.
  */
 var _timelineHighlightColor = "#eb349e";
@@ -1047,7 +1047,7 @@ function initToiletTimeline(slumId) {
 
     $("#timeline-toggle-slot").html(
         '<div style="font-size:11px;font-weight:600;margin-top:2px;margin-bottom:6px;color:#2471a3;">' +
-        'Explore construction impact over time.</div>' +
+        'Explore toilet construction impact over time.</div>' +
         '<button id="toggleTimeline" class="action-btn">Show Impact Over Time</button>'
     );
 
@@ -1062,7 +1062,7 @@ function initToiletTimeline(slumId) {
             $("#timeline-toggle-slot").show();
 
             var scope = String(data.scope || "").toLowerCase();
-            _timelineHighlightColor = (scope === "anonymous") ? "#FFD700" : "#eb349e";
+            _timelineHighlightColor = (scope === "all") ? "#FFD700" : "#eb349e";
 
             _timelineRows = _normalizeTimelineRows(data.monthly_data);
 
