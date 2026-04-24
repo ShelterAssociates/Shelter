@@ -13,7 +13,8 @@ body {
   -o-background-size: cover !important;
   background-size: cover !important;
   font-family: 'Roboto', sans-serif !important;
-  margin-top: 12% !important;
+  margin-top: 0 !important;
+  min-height: 100vh;
 }
 .btn-primary {
 
@@ -29,12 +30,30 @@ body {
 
 .login-card {
   padding: 40px;
-  width: 32%;
-  background-color: #F7F7F7;
-  margin: 0 auto 10px;
-  border-radius: 2px;
-  box-shadow: 0px 2px 2px rgba(0, 0, 0, 0.3);
+  width: min(420px, calc(100% - 32px));
+  background-color: rgba(247, 247, 247, 0.96);
+  margin: 0 auto;
+  border-radius: 16px;
+  box-shadow: 0 18px 48px rgba(0, 0, 0, 0.24);
   overflow: hidden;
+}
+
+.login-shell {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px 16px;
+}
+
+.login-brand {
+  text-align: center;
+  margin-bottom: 18px;
+}
+
+.login-brand img {
+  width: min(220px, 70%);
+  height: auto;
 }
 
 .login-card h1 {
@@ -121,6 +140,45 @@ body {
   text-align: center;
   font-size: 12px;
 }
+
+@media (max-width: 768px) {
+	body {
+		background-attachment: scroll !important;
+		background-position: center top !important;
+	}
+
+	.login-shell {
+		align-items: flex-start;
+		padding: 20px 10px 24px;
+	}
+
+	.login-card {
+		width: 100%;
+		padding: 20px 14px;
+		border-radius: 14px;
+	}
+
+	.login-brand {
+		margin-bottom: 14px;
+	}
+
+	.login-brand img {
+		width: min(180px, 72%);
+	}
+
+	.login-card input[type=text],
+	.login-card input[type=password] {
+		font-size: 14px;
+		height: 42px;
+	}
+
+	.btn,
+	.login-submit,
+	.btn.btn-block {
+		width: 100%;
+		display: block;
+	}
+}
 </style>
 {% endblock %}
 
@@ -146,8 +204,9 @@ body {
         });
     });
 </script>
+<div class="login-shell">
 <div class="login-card">
-<div class="text-center"><h1 id="site-name"><img src="/static/images/shelter_footer.png" height="100"/></h1></div>
+<div class="login-brand"><img src="/static/images/shelter_footer.png" alt="Shelter Associates"/></div>
     {% if form.errors and not form.non_field_errors %}
         <p class="errornote">
         {% if form.errors.items|length == 1 %}{% trans "Please correct the error below." %}{% else %}{% trans "Please correct the errors below." %}{% endif %}
@@ -196,5 +255,6 @@ body {
               <a href="{% url 'password_reset' %}">Forgot Password</a>
         </div>
     </div>
+</div>
 </div>
 {% endblock %}
