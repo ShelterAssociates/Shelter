@@ -2,65 +2,222 @@
 {% load static %}
 
 {% block styleblock %}
-<link rel="stylesheet"  type="text/css" href="{% static "css/bootstrap.min.css" %}" />
+  <link rel="stylesheet" type="text/css" href="{% static 'css/bootstrap.min.css' %}" />
 
-<meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests"/>
-<link rel="stylesheet"  type="text/css" href="{% static "css/city_cards.css" %}"/>
+  <meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests" />
+  <link rel="stylesheet" type="text/css" href="{% static 'css/city_cards.css' %}" />
 
-<script src="{% static "js/bootstrap.min.js" %}"></script>
-<script src="{% static "js/jquery.min.js" %}"></script>
-<script src="{% static "js/slummapdisplay.js" %}"></script>
-<script src="{% static "js/external_dashboard_subheader.js" %}"></script>
+  <script src="{% static 'js/bootstrap.min.js' %}"></script>
+  <script src="{% static 'js/jquery.min.js' %}"></script>
+  <script src="{% static 'js/slummapdisplay.js' %}"></script>
+  <script src="{% static 'js/external_dashboard_subheader.js' %}"></script>
 {% endblock %}
-{%block content %}
-
-<div class="overlay">
+{% block content %}
+  <div class="overlay">
     <div id="loading-img"></div>
-</div>
+  </div>
 
-<!--<div class="container-fluid">-->
-<!--    <div class="row details">-->
-<!--        <div class="col-md-1 col-sm-1 arrow">-->
-<!--            <button class="btn btn-primary leftLst"><<</button>-->
-<!--        </div>-->
-<!--        <div class="col-md-10 col-sm-10 cards scrolling-wrapper">-->
-
-
-<!--        </div>-->
-<!--        <div class="col-md-1 col-sm-1 arrow">-->
-<!--            <button class="btn btn-primary rightLst">>></button>-->
-<!--        </div>-->
-<!--    </div>-->
-<!--</div>-->
-<div class="row-fluid city-cards-shell">
-    <div class="col-md-12 cards city-cards-list">
-
-    </div>
-</div>
-
-<div name="section_card_clone" class="first-card cards-bg hide">
-    <p class="city_name average-img">
-
-    </p>
-    <p class="average-val-label">
-        <span class="number-of-slums average-val-impact">0</span>
-        <span class="average-label">Surveyed slums / Total slums</span>
-    </p>
-    <p class="average-val-label">
-        <span class="household-count average-val-impact">0</span>
-        <span class="average-label">Number of Households</span>
-    </p>
-    <p class="average-val-label">
-        <span class="total-score average-val">0</span>
-        <span class="average-label">Score for quality of living</span>
-    </p>
-    <div class="average-val-label">
-        <div class="card-btn">
-           <a class="card-url dashboard-url" target="_blank" href=""> Dashboard</a>
+  <!-- Stats Bar — icon items with hidden original spans for JS compatibility -->
+  <div class="dashboard-statsbar new-statsbar">
+    <div class="dashboard-statsbar__inner">
+      <div class="statsbar-item">
+        <div class="statsbar-item__icon">
+          <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <path d="M7 2a1 1 0 0 0-1 1v5H4a1 1 0 0 0-1 1c0 3.87 2.46 7.16 6 8.48V19H8a1 1 0 0 0 0 2h8a1 1 0 0 0 0-2h-1v-2.52C18.54 15.16 21 11.87 21 8a1 1 0 0 0-1-1h-2V3a1 1 0 0 0-1-1H7Zm1 2h8v4H8V4Zm-2 6h12c-.45 3.05-2.9 5.5-6 5.94V19H12v-3.06C8.9 15.5 6.45 13.05 6 10Z" />
+          </svg>
         </div>
-        <div class="card-btn card-btn-right">
-            <a class="card-url gis-url" target="_blank" href="">Spatial data(GIS)</a>
+        <div class="statsbar-item__text">
+          <span class="statsbar-item__value" data-stat="toilets">—</span>
+          <span class="statsbar-item__label">Toilets</span>
         </div>
+      </div>
+
+      <div class="statsbar-item">
+        <div class="statsbar-item__icon">
+          <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <path d="M15 11V5l-3-3-3 3v2H3v13h18V11h-6Zm-8 8H5v-2h2v2Zm0-4H5v-2h2v2Zm0-4H5v-2h2v2Zm6 8h-2v-2h2v2Zm0-4h-2v-2h2v2Zm0-4h-2v-2h2v2Zm6 8h-2v-2h2v2Zm0-4h-2v-2h2v2Z" />
+          </svg>
+        </div>
+        <div class="statsbar-item__text">
+          <span class="statsbar-item__value" data-stat="slums">—</span>
+          <span class="statsbar-item__label">Slums</span>
+        </div>
+      </div>
+
+      <div class="statsbar-item">
+        <div class="statsbar-item__icon">
+          <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z" />
+          </svg>
+        </div>
+        <div class="statsbar-item__text">
+          <span class="statsbar-item__value" data-stat="households">—</span>
+          <span class="statsbar-item__label">Households</span>
+        </div>
+      </div>
+
+      <div class="statsbar-item">
+        <div class="statsbar-item__icon">
+          <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3Zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3Zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5Zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5Z" />
+          </svg>
+        </div>
+        <div class="statsbar-item__text">
+          <span class="statsbar-item__value" data-stat="population">—</span>
+          <span class="statsbar-item__label">Population</span>
+        </div>
+      </div>
     </div>
-</div>
+  </div>
+
+  <section class="homepage-layout" id="city-grid">
+    <div class="homepage-layout__inner">
+      <div class="homepage-layout__main">
+        <div class="section-heading">
+          <h2 class="section-heading__title">Slum Survey</h2>
+        </div>
+
+        <div class="city-cards-list" data-city-grid></div>
+      </div>
+
+      <aside class="homepage-layout__side">
+        <div class="section-heading section-heading--compact">
+          <span class="section-heading__eyebrow" style="display:inline-block;">City Level</span>
+          <h2 class="section-heading__title">City-wide Survey</h2>
+        </div>
+
+        <div class="citywide-cards-list">
+          <a class="citywide-card" target="_blank" href="/city::Banthara Town/Banthara Nagar Panchayat">
+            <div class="citywide-card__top">
+              <span class="citywide-card__badge">City-wide</span>
+            </div>
+            <div class="citywide-card__content">
+              <h3 class="citywide-card__title">Banthara Town</h3>
+              <p class="citywide-card__subtitle">Banthara Nagar Panchayat</p>
+            </div>
+            <span class="citywide-card__button">
+              <span class="button-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" focusable="false">
+                  <path d="M12 2c-4.14 0-7.5 3.14-7.5 7 0 4.84 6.66 12.38 6.94 12.7a.75.75 0 0 0 1.12 0c.28-.32 6.94-7.86 6.94-12.7 0-3.86-3.36-7-7.5-7Zm0 9.5A2.5 2.5 0 1 1 12 6a2.5 2.5 0 0 1 0 5.5Z" />
+                </svg>
+              </span>
+              <span>Spatial Data</span>
+            </span>
+          </a>
+
+          <a class="citywide-card" target="_blank" href="/city::Mohanlalganj%20City/Mohanlalganj%20Nagar%20Panchayat">
+            <div class="citywide-card__top">
+              <span class="citywide-card__badge">City-wide</span>
+            </div>
+            <div class="citywide-card__content">
+              <h3 class="citywide-card__title">Mohanlalganj City</h3>
+              <p class="citywide-card__subtitle">Mohanlalganj Nagar Panchayat</p>
+            </div>
+            <span class="citywide-card__button">
+              <span class="button-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" focusable="false">
+                  <path d="M12 2c-4.14 0-7.5 3.14-7.5 7 0 4.84 6.66 12.38 6.94 12.7a.75.75 0 0 0 1.12 0c.28-.32 6.94-7.86 6.94-12.7 0-3.86-3.36-7-7.5-7Zm0 9.5A2.5 2.5 0 1 1 12 6a2.5 2.5 0 0 1 0 5.5Z" />
+                </svg>
+              </span>
+              <span>Spatial Data</span>
+            </span>
+          </a>
+        </div>
+      </aside>
+    </div>
+  </section>
+
+  <div name="section_card_clone" class="city-card hide">
+    <div class="city-card__body">
+      <div class="city-card__header">
+        <p class="city_name city-card__title"></p>
+
+        <div class="city-card__actions city-card__actions--top">
+          <a class="card-url dashboard-url city-card__button" target="_blank" href="">
+            <span class="button-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" focusable="false">
+                <path d="M3 13.5h8v7H4.5A1.5 1.5 0 0 1 3 19v-5.5Zm10 7v-10h8V19a1.5 1.5 0 0 1-1.5 1.5H13Zm0-12V3.5h6.5A1.5 1.5 0 0 1 21 5v3.5h-8Zm-10 0V5A1.5 1.5 0 0 1 4.5 3.5H11v5H3Z" />
+              </svg>
+            </span>
+            <span>Dashboard</span>
+          </a>
+          <a class="card-url gis-url city-card__button city-card__button--secondary" target="_blank" href="">
+            <span class="button-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" focusable="false">
+                <path d="M12 2c-4.14 0-7.5 3.14-7.5 7 0 4.84 6.66 12.38 6.94 12.7a.75.75 0 0 0 1.12 0c.28-.32 6.94-7.86 6.94-12.7 0-3.86-3.36-7-7.5-7Zm0 9.5A2.5 2.5 0 1 1 12 6a2.5 2.5 0 0 1 0 5.5Z" />
+              </svg>
+            </span>
+            <span>Spatial Data</span>
+          </a>
+        </div>
+      </div>
+
+      <div class="city-card__metric city-card__metric--primary">
+        <span class="number-of-slums city-card__value">0 / 0</span>
+        <span class="city-card__label">Slums Surveyed</span>
+      </div>
+
+      <div class="city-card__metric">
+        <span class="household-count city-card__value city-card__value--secondary">0</span>
+        <span class="city-card__label">Households</span>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Hide the old subheader statsbar and mirror its values into our new icon bar
+    ;(function () {
+      // Order matches the sub-header's original output: Toilets, Slums, Households, Population
+      var ORDER = ['toilets', 'slums', 'households', 'population']
+    
+      function applyStats() {
+        // Find the OLD bar — it won't have .statsbar-item inside it
+        var allStatsBars = document.querySelectorAll('.dashboard-statsbar')
+        var oldBar = null
+        for (var i = 0; i < allStatsBars.length; i++) {
+          if (!allStatsBars[i].classList.contains('new-statsbar')) {
+            oldBar = allStatsBars[i]
+            break
+          }
+        }
+        if (!oldBar) return
+    
+        // Hide it
+        oldBar.style.cssText = 'display:none!important'
+    
+        // Get all value spans from old bar in DOM order
+        var vals = oldBar.querySelectorAll('.dashboard-statsbar__value')
+    
+        function mirror() {
+          vals.forEach(function (valSpan, idx) {
+            var stat = ORDER[idx]
+            if (!stat) return
+            var txt = valSpan.textContent.trim()
+            if (!txt || txt === '—') return
+            var target = document.querySelector('.new-statsbar [data-stat="' + stat + '"]')
+            if (target) target.textContent = txt
+          })
+        }
+    
+        mirror()
+    
+        // Watch for AJAX updates to the old spans
+        new MutationObserver(mirror).observe(oldBar, {
+          childList: true,
+          subtree: true,
+          characterData: true
+        })
+      }
+    
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', applyStats)
+      } else {
+        applyStats()
+      }
+      // Retry after JS has had time to populate values
+      setTimeout(applyStats, 300)
+      setTimeout(applyStats, 1000)
+      setTimeout(applyStats, 2500)
+    })()
+  </script>
 {% endblock %}
