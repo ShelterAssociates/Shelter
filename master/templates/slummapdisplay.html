@@ -3,21 +3,16 @@
 
 {% block styleblock %}
   <link rel="stylesheet" type="text/css" href="{% static 'css/bootstrap.min.css' %}" />
-
   <meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests" />
   <link rel="stylesheet" type="text/css" href="{% static 'css/city_cards.css' %}" />
-
-  <script src="{% static 'js/bootstrap.min.js' %}"></script>
-  <script src="{% static 'js/jquery.min.js' %}"></script>
-  <script src="{% static 'js/slummapdisplay.js' %}"></script>
-  <script src="{% static 'js/external_dashboard_subheader.js' %}"></script>
 {% endblock %}
+
 {% block content %}
   <div class="overlay">
     <div id="loading-img"></div>
   </div>
 
-  <!-- Stats Bar — icon items with hidden original spans for JS compatibility -->
+  <!-- New Stats Bar — directly populated by populate_new_statsbar() in slummapdisplay.js -->
   <div class="dashboard-statsbar new-statsbar">
     <div class="dashboard-statsbar__inner">
       <div class="statsbar-item">
@@ -127,6 +122,7 @@
     </div>
   </section>
 
+  <!-- Hidden card template — cloned by add_cards() in slummapdisplay.js -->
   <div name="section_card_clone" class="city-card hide">
     <div class="city-card__body">
       <div class="city-card__header">
@@ -164,60 +160,10 @@
     </div>
   </div>
 
-  <script>
-    // Hide the old subheader statsbar and mirror its values into our new icon bar
-    ;(function () {
-      // Order matches the sub-header's original output: Toilets, Slums, Households, Population
-      var ORDER = ['toilets', 'slums', 'households', 'population']
-    
-      function applyStats() {
-        // Find the OLD bar — it won't have .statsbar-item inside it
-        var allStatsBars = document.querySelectorAll('.dashboard-statsbar')
-        var oldBar = null
-        for (var i = 0; i < allStatsBars.length; i++) {
-          if (!allStatsBars[i].classList.contains('new-statsbar')) {
-            oldBar = allStatsBars[i]
-            break
-          }
-        }
-        if (!oldBar) return
-    
-        // Hide it
-        oldBar.style.cssText = 'display:none!important'
-    
-        // Get all value spans from old bar in DOM order
-        var vals = oldBar.querySelectorAll('.dashboard-statsbar__value')
-    
-        function mirror() {
-          vals.forEach(function (valSpan, idx) {
-            var stat = ORDER[idx]
-            if (!stat) return
-            var txt = valSpan.textContent.trim()
-            if (!txt || txt === '—') return
-            var target = document.querySelector('.new-statsbar [data-stat="' + stat + '"]')
-            if (target) target.textContent = txt
-          })
-        }
-    
-        mirror()
-    
-        // Watch for AJAX updates to the old spans
-        new MutationObserver(mirror).observe(oldBar, {
-          childList: true,
-          subtree: true,
-          characterData: true
-        })
-      }
-    
-      if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', applyStats)
-      } else {
-        applyStats()
-      }
-      // Retry after JS has had time to populate values
-      setTimeout(applyStats, 300)
-      setTimeout(applyStats, 1000)
-      setTimeout(applyStats, 2500)
-    })()
-  </script>
+  <!-- Scripts at bottom of content so DOM is ready and load order is guaranteed -->
+  <script src="{% static 'js/bootstrap.min.js' %}"></script>
+  <script src="{% static 'js/jquery.min.js' %}"></script>
+  <!-- external_dashboard_subheader MUST load before slummapdisplay so populate_top_bar exists -->
+  <script src="{% static 'js/external_dashboard_subheader.js' %}"></script>
+  <script src="{% static 'js/slummapdisplay.js' %}"></script>
 {% endblock %}
