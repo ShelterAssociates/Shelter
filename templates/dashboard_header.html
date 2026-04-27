@@ -1,5 +1,7 @@
 {% load static %}
 
+<link rel="stylesheet" type="text/css" href="{% static 'css/city_cards.css' %}" />
+
 {%block scriptblock %}
 <link rel="stylesheet"  type="text/css" href="{% static "css/bootstrap.min.css" %}"/>
 <script src="{% static "js/jquery.min.js" %}"></script>
@@ -23,38 +25,30 @@
 {% endblock %}
 
 <body>
-<div class="container-fluid" style="padding-top:50px;">
+<div class="dashboard-shell">
   {% block headerblock %}
   <!--Header starts here-->
-  <nav class="navbar navbar-default navbar-fixed-top" id="navbar">
-
-      <div class="container-fluid" >
-        <div class="navbar-header">
+  <nav class="dashboard-topbar" id="navbar">
+      <div class="dashboard-topbar__inner">
+        <div class="dashboard-topbar__brand">
             {% if user.is_authenticated %}
-            <a href="{% url 'login_success' %}">
-                {%else%}
-                <a href="/">
-                {%endif%}
-                <img src="/static/images/shelter.png" height="65" width="150" style="padding:5px;"/>
+            <a href="{% url 'login_success' %}" class="dashboard-topbar__brand-link">
+                {% else %}
+                <a href="/" class="dashboard-topbar__brand-link">
+                {% endif %}
+                <img src="{% static 'images/shelter.png' %}" alt="Shelter Associates" class="dashboard-topbar__logo"/>
             </a>
         </div>
-        <div class="navbar-collapse collapse">
-            <a style="padding-top: 10px;">
+        <div class="dashboard-topbar__actions">
             {% if user.is_authenticated %}
-                <a style="margin-top:5px;" href="{% url 'logout' %}?next={{ request.path }}">
-                        <button type="button" class="btn btn-default pull-right" style="margin-top:10px;" >logout</button> 
-                </a>
-                <div class="pull-right" style="padding:10px;"> <h5>Welcome {{user}} </h5> </div>
+                <span class="dashboard-topbar__welcome">Welcome {{user}}</span>
                 {% if user.is_superuser or user.username == "GIS" %}
-                <a style="margin-top:5px;" href="/admin">
-                        <button type="button" class="btn btn-default pull-right" style="margin-top:10px;" >Admin</button> 
-                </a>
+                <a href="/admin" class="dashboard-topbar__link">Admin</a>
                 {% endif %}
+                <a href="{% url 'logout' %}?next={{ request.path }}" class="dashboard-topbar__button">Logout</a>
             {% else %}
-                <a style="margin-top:5px;" href = "/accounts/login/?next={{ request.path }}"><button id="loggedin" type="button" class="btn btn-default pull-right"  data-toggle="popover">login</button></a>
+                <a href="/accounts/login/?next={{ request.path }}" id="loggedin" class="dashboard-topbar__button">Login</a>
             {% endif %}
-            
-            </div >
         </div>
       </div>
   </nav>

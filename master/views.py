@@ -669,9 +669,7 @@ def dashboard_view(request, key, slumname = None):
 		data['city_name'] = city.name.city_name
 	else:
 		data['error'] = "URL incorrect"
-	data["request"] = request
-	context = data
-	return HttpResponse(template.render(context))
+	return render(request, 'external_dashboard.html', data)
 
 def read_files(path):
     with open(path, 'r', encoding='utf-8') as datafile:
