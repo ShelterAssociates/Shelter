@@ -9,28 +9,54 @@ $(document).ready(function () {
 
     function formatNumber(value) {
         var number = parseInt(value, 10);
-        if (isNaN(number)) {
-            return '0';
+        if (isNaN(number)) return '0';
+
+        // Manual Indian number formatting — works on ALL browsers including
+        // WKWebView (iOS Chrome, Firefox, Brave) which doesn't support 'en-IN'
+        var s = number.toString();
+        var result = '';
+        var pos = s.length;
+
+        // Last 3 digits
+        result = s.substring(pos - 3);
+        pos -= 3;
+
+        // Every 2 digits before that (Indian format: XX,XX,XXX)
+        while (pos > 0) {
+            var start = Math.max(0, pos - 2);
+            result = s.substring(start, pos) + ',' + result;
+            pos -= 2;
         }
-        return number.toLocaleString('en-IN');
+
+        return result;
     }
 
     function add_cards(name, data) {
-        var template = $("div[name=section_card_clone]")[0];
+        var template = document.querySelector("div[name=section_card_clone]");
 
-        // Guard: if template missing, skip silently
         if (!template) {
             console.error("Card template (section_card_clone) not found in DOM.");
             return;
         }
 
-        var card = $(template.outerHTML).attr('name', 'card').removeClass('hide');
-        card.find(".city_name")[0].innerHTML = name;
-        card.find(".number-of-slums")[0].innerHTML = formatNumber(data['slum_count']) + " / " + formatNumber(data['total_slum_count']);
-        card.find(".household-count")[0].innerHTML = formatNumber(data['household_count__sum']);
-        card.find('.dashboard-url')[0].href = "/dashboard/" + data['city_id'];
-        card.find('.gis-url')[0].href = "/" + data['city_id'];
-        $(".city-cards-list").append(card);
+        // iOS Safari/Chrome fix: use cloneNode(true) instead of outerHTML
+        var cardEl = template.cloneNode(true);
+        cardEl.setAttribute('name', 'card');
+        cardEl.classList.remove('hide');
+
+        var cityNameEl = cardEl.querySelector('.city_name');
+        var slumsEl = cardEl.querySelector('.number-of-slums');
+        var householdsEl = cardEl.querySelector('.household-count');
+        var dashboardEl = cardEl.querySelector('.dashboard-url');
+        var gisEl = cardEl.querySelector('.gis-url');
+
+        if (cityNameEl) cityNameEl.innerHTML = name;
+        if (slumsEl) slumsEl.innerHTML = formatNumber(data['slum_count']) + " / " + formatNumber(data['total_slum_count']);
+        if (householdsEl) householdsEl.innerHTML = formatNumber(data['household_count__sum']);
+        if (dashboardEl) dashboardEl.href = "/dashboard/" + data['city_id'];
+        if (gisEl) gisEl.href = "/" + data['city_id'];
+
+        document.querySelector(".city-cards-list").appendChild(cardEl);
     }
 
     function populate_new_statsbar(data) {
@@ -46,10 +72,10 @@ $(document).ready(function () {
         }
 
         $.each(data, function (key, value) {
-            total_slums += value['slum_count'] == null ? 0 : value['slum_count'];
-            total_households += value['household_count__sum'] == null ? 0 : value['household_count__sum'];
-            total_population += value['slum_population__sum'] == null ? 0 : value['slum_population__sum'];
-            total_toilets += value['count_of_toilets_completed__sum'] == null ? 0 : value['count_of_toilets_completed__sum'];
+            total_slums += value['slum_count'] == null ? 0 : parseInt(value['slum_count'], 10);
+            total_households += value['household_count__sum'] == null ? 0 : parseInt(value['household_count__sum'], 10);
+            total_population += value['slum_population__sum'] == null ? 0 : parseInt(value['slum_population__sum'], 10);
+            total_toilets += value['count_of_toilets_completed__sum'] == null ? 0 : parseInt(value['count_of_toilets_completed__sum'], 10);
         });
 
         var bar = document.querySelector('.new-statsbar');
@@ -65,17 +91,21 @@ $(document).ready(function () {
         if (hEl) hEl.textContent = formatNumber(total_households);
         if (pEl) pEl.textContent = formatNumber(total_population);
 
-        // Hide the old subheader statsbar now that new one is fully populated
-        $('.dashboard-statsbar:not(.new-statsbar)').hide();
+        // Hide old subheader statsbar now that new one is fully populated
+        var oldBars = document.querySelectorAll('.dashboard-statsbar');
+        for (var i = 0; i < oldBars.length; i++) {
+            if (!oldBars[i].classList.contains('new-statsbar')) {
+                oldBars[i].style.cssText = 'display:none!important';
+            }
+        }
     }
 
     $.ajax({
         url: "/graphs/card/all/",
         type: "GET",
-        contentType: "application/json",
         success: function (json) {
-            // Clear existing cards first to avoid duplicates on re-runs
-            $(".city-cards-list").empty();
+            var cardsList = document.querySelector(".city-cards-list");
+            if (cardsList) cardsList.innerHTML = '';
 
             $.each(json['city'], function (key, value) {
                 if (value['household_count__sum'] > 0) {
@@ -83,12 +113,10 @@ $(document).ready(function () {
                 }
             });
 
-            // Update old subheader bar (desktop fallback) safely
             if (typeof populate_top_bar === 'function') {
                 populate_top_bar(json['city']);
             }
 
-            // Always directly update the new statsbar — works on both mobile and desktop
             populate_new_statsbar(json['city']);
         },
         error: function (xhr, status, error) {
