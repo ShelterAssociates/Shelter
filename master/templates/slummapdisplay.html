@@ -2,9 +2,11 @@
 {% load static %}
 
 {% block styleblock %}
+  {{ block.super }}
+  <!-- CSS only — no scripts here, scripts go at bottom of content -->
   <link rel="stylesheet" type="text/css" href="{% static 'css/bootstrap.min.css' %}" />
-  <meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests" />
   <link rel="stylesheet" type="text/css" href="{% static 'css/city_cards.css' %}" />
+  <meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests" />
 {% endblock %}
 
 {% block content %}
@@ -12,7 +14,7 @@
     <div id="loading-img"></div>
   </div>
 
-  <!-- New Stats Bar — directly populated by populate_new_statsbar() in slummapdisplay.js -->
+  <!-- New Stats Bar -->
   <div class="dashboard-statsbar new-statsbar">
     <div class="dashboard-statsbar__inner">
       <div class="statsbar-item">
@@ -71,7 +73,6 @@
         <div class="section-heading">
           <h2 class="section-heading__title">Slum Survey</h2>
         </div>
-
         <div class="city-cards-list" data-city-grid></div>
       </div>
 
@@ -127,7 +128,6 @@
     <div class="city-card__body">
       <div class="city-card__header">
         <p class="city_name city-card__title"></p>
-
         <div class="city-card__actions city-card__actions--top">
           <a class="card-url dashboard-url city-card__button" target="_blank" href="">
             <span class="button-icon" aria-hidden="true">
@@ -160,10 +160,12 @@
     </div>
   </div>
 
-  <!-- Scripts at bottom of content so DOM is ready and load order is guaranteed -->
-  <script src="{% static 'js/bootstrap.min.js' %}"></script>
-  <script src="{% static 'js/jquery.min.js' %}"></script>
-  <!-- external_dashboard_subheader MUST load before slummapdisplay so populate_top_bar exists -->
+  <!--     =====================================================
+       SCRIPTS AT BOTTOM — guarantees DOM ready on all
+       browsers including iOS WKWebView (Chrome/Firefox)
+       external_dashboard_subheader MUST come before
+       slummapdisplay so populate_top_bar() is defined
+       =====================================================     -->
   <script src="{% static 'js/external_dashboard_subheader.js' %}"></script>
   <script src="{% static 'js/slummapdisplay.js' %}"></script>
 {% endblock %}
