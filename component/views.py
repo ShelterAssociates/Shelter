@@ -1,5 +1,9 @@
 from urllib import request
 
+import logging
+import threading
+import uuid
+from types import SimpleNamespace
 from django.shortcuts import render, get_object_or_404
 from django.http import HttpResponse, JsonResponse
 from django.contrib import messages
@@ -14,9 +18,10 @@ import os
 import subprocess
 import tempfile
 import zipfile
+import time as pytime
 from concurrent.futures import ThreadPoolExecutor
 from calendar import monthrange
-from datetime import date
+from datetime import date, datetime
 from django.contrib.auth.decorators import login_required
 from .kobotoolbox import *
 from .forms import KMLUpload
@@ -28,15 +33,20 @@ from sponsor.models import SponsorProject, SponsorProjectDetails
 from graphs.sync_avni_data import *
 from utils.utils_permission import apply_permissions_ajax, access_right, deco_rhs_permission
 from django.core.exceptions import PermissionDenied
+from django.db import close_old_connections
 from django.db.models import F
 from django.db.models import Q
 from django.db.models.functions import TruncMonth
-from django.views.decorators.http import require_POST
+from django.views.decorators.http import require_GET, require_POST
 from django.utils.text import slugify
+from django.utils import timezone
 from mastersheet.models import ToiletConstruction
 from xml.sax.saxutils import escape
 
 from graphs.models import HouseholdData
+from helpers.services.send_email import send_email
+
+logger = logging.getLogger(__name__)
 
 slum_list = ['223', '1925', '1923', '1927', '1062', '1050', '1061', '1061', '1914', '763', '29', '672', '525', '686', '546', '547', '572', '529', '1363', '175', '514', '760', '639', '672', '820', '1026', '1008', '1169', '1639', '1644', '1647', '1171', '1645', '1170', '1640', '1641', '1136', '1164', '1137', '1642', '1142', '1069', '1026', '1034', '1012', '1048', '1050', '1054', '1057', '1119', '1020', '1030', '1028', '1057', '1652', '1283', '1288', '1095', '1096', '1097', '1099', '1100', '1101', '1098', '1104', '1107', '1111', '1079', '1080', '1342', '1083', '1672', '1673', '1085', '1086', '1087', '1077', '1091', '1092', '1665', '1081', '1082', '1338', '1084', '1074', '1340', '1350', '1088', '1089', '1075', '1076', '1090', '1093', '1344', '1094', '1349', '1102', '1103', '1666', '1105', '1106', '1343', '1108', '1109', '1346', '1078', '1112', '1115', '1116', '1113', '1341', '1117', '1339', '1110', '1375', '1259', '1198', '1293', '1200', '1288', '1283', '1971','1929','2019','2020','2021']
 
@@ -975,6 +985,141 @@ def _build_component_data_from_db(slum, slum_id, export_selection, selected_sect
     return component_data
 
 
+def _log_export_timing(stage, started_at, **details):
+    elapsed_ms = (pytime.perf_counter() - started_at) * 1000.0
+    extra = ""
+    if details:
+        extra = " | " + ", ".join("{}={}".format(key, value) for key, value in details.items())
+    message = "GIS export timing [{}]: {:.1f} ms{}".format(stage, elapsed_ms, extra)
+    logger.info(message)
+    print(message, flush=True)
+
+
+def _export_style_for_item(item_data, item_name):
+    return {
+        "name": item_name,
+        "polycolor": ((item_data.get("blob") or {}).get("polycolor")) or "#FFA3A3",
+        "linecolor": ((item_data.get("blob") or {}).get("linecolor")) or "#ff0000",
+        "linewidth": ((item_data.get("blob") or {}).get("linewidth")) or 1,
+        "fillflag": not (((item_data.get("blob") or {}).get("fillflag")) is False)
+    }
+
+
+def _save_export_response_to_media(response, slum, export_format):
+    export_id = uuid.uuid4().hex
+    export_dir = os.path.join(settings.MEDIA_ROOT, "gis_exports", export_id)
+    os.makedirs(export_dir, exist_ok=True)
+
+    file_ext = "zip"
+    file_name = "{}-export.{}".format(slugify(slum.name) or "slum", file_ext)
+    file_path = os.path.join(export_dir, file_name)
+    with open(file_path, "wb") as export_file:
+        export_file.write(response.content)
+
+    relative_path = os.path.relpath(file_path, settings.MEDIA_ROOT).replace(os.sep, "/")
+    return {
+        "export_id": export_id,
+        "file_path": file_path,
+        "relative_path": relative_path,
+        "download_url": None,
+        "filename": file_name,
+        "size": len(response.content),
+        "export_format": export_format,
+    }
+
+
+def _send_gis_export_email(email, slum, export_meta, base_url):
+    download_url = "{}/component/gis-export-download/{}/".format(base_url.rstrip("/"), export_meta["export_id"])
+    export_meta["download_url"] = download_url
+    context = {
+        "slum_name": slum.name,
+        "export_format": export_meta["export_format"].upper(),
+        "download_url": download_url,
+        "filename": export_meta["filename"],
+        "expiry_note": "This link will be valid until 11:59 PM today (local time). After that it will expire and you must request the export again.",
+    }
+    send_email(
+        [email],
+        "Your Shelter GIS export is ready",
+        "helpers/gis_export_ready_email.html",
+        context,
+        "Your GIS export is ready: {}".format(download_url)
+    )
+
+
+@require_GET
+def gis_export_download(request, export_id):
+    export_dir = os.path.join(settings.MEDIA_ROOT, "gis_exports", export_id)
+    if not os.path.isdir(export_dir):
+        return JsonResponse({"error": "Export not found or expired."}, status=404)
+
+    files = [
+        os.path.join(export_dir, file_name)
+        for file_name in os.listdir(export_dir)
+        if os.path.isfile(os.path.join(export_dir, file_name))
+    ]
+    if not files:
+        return JsonResponse({"error": "Export not found or expired."}, status=404)
+
+    file_path = files[0]
+    generated_date = datetime.fromtimestamp(os.path.getmtime(file_path)).date()
+    current_date = timezone.now().date()
+    if generated_date != current_date:
+        return JsonResponse({"error": "This download link has expired. Please request the export again."}, status=410)
+
+    with open(file_path, "rb") as export_file:
+        response = HttpResponse(export_file.read(), content_type="application/zip")
+        response["Content-Disposition"] = 'attachment; filename="{}"'.format(os.path.basename(file_path))
+        return response
+
+
+def _run_large_gis_export_job(user_id, slum_id, email, export_format, include_csv, base_url):
+    close_old_connections()
+    try:
+        logger.info("GIS export worker started: slum_id=%s email=%s export_format=%s include_csv=%s", slum_id, email, export_format, include_csv)
+        user = User.objects.get(pk=user_id)
+        request_stub = SimpleNamespace(user=user)
+        slum = Slum.objects.get(pk=slum_id)
+
+        component_response = get_component(request_stub, str(slum_id))
+        component_data = json.loads(component_response.content.decode("utf-8"))
+
+        selected_sections = list(component_data.keys())
+        export_selection = []
+        for section_name, section_items in (component_data or {}).items():
+            for item_name, item_data in (section_items or {}).items():
+                if not item_data:
+                    continue
+                export_selection.append({
+                    "metadata_name": item_name,
+                    "section_name": section_name,
+                    "metadata_type": item_data.get("type") or "",
+                    "style": _export_style_for_item(item_data, item_name)
+                })
+
+        export_rows = _build_export_rows_from_component_selection(
+            component_data=component_data,
+            slum=slum,
+            selected_filters=[],
+            selected_sections=selected_sections,
+            export_selection=export_selection
+        )
+
+        if export_format == "shp":
+            response = _build_shapefile_response(export_rows, slum, [], include_csv=include_csv)
+        else:
+            response = _build_kml_zip_response(export_rows, slum, [], include_csv=include_csv)
+
+        export_meta = _save_export_response_to_media(response, slum, export_format)
+        logger.info("GIS export file saved: slum_id=%s email=%s path=%s size=%s", slum_id, email, export_meta["relative_path"], export_meta["size"])
+        _send_gis_export_email(email, slum, export_meta, base_url)
+        logger.info("GIS export email sent: slum_id=%s email=%s file=%s", slum_id, email, export_meta["relative_path"])
+    except Exception:
+        logger.exception("GIS export email job failed: slum_id=%s email=%s", slum_id, email)
+    finally:
+        close_old_connections()
+
+
 def _build_export_rows_from_component_selection(component_data, slum, selected_filters, selected_sections, export_selection):
     selected_sections = set(selected_sections or [])
     selected_names = {
@@ -1222,6 +1367,7 @@ def _kml_document_from_rows(rows, document_name, description):
 
 def _build_kml_zip_response(export_rows, slum, selected_filters, include_csv=False):
     prefix = "{}-layer-export".format(slugify(slum.name) or "slum")
+    started_at = pytime.perf_counter()
     with tempfile.TemporaryDirectory() as tmp_dir:
         merged_name = prefix + "-merged.kml"
         merged_description = "Merged KML export for {}{}".format(
@@ -1230,10 +1376,12 @@ def _build_kml_zip_response(export_rows, slum, selected_filters, include_csv=Fal
         )
         with open(os.path.join(tmp_dir, merged_name), "w", encoding="utf-8") as merged_file:
             merged_file.write(_kml_document_from_rows(export_rows, "{} Merged Export".format(slum.name), merged_description))
+        _log_export_timing("kml_zip_merged_written", started_at, rows=len(export_rows))
 
         layer_groups = OrderedDict()
         for row in export_rows:
             layer_groups.setdefault(row["layer_name"], []).append(row)
+        _log_export_timing("kml_zip_groups_built", started_at, layers=len(layer_groups))
 
         for layer_name, rows in layer_groups.items():
             file_name = "{}.kml".format(_safe_file_name(layer_name))
@@ -1245,6 +1393,7 @@ def _build_kml_zip_response(export_rows, slum, selected_filters, include_csv=Fal
                         "Layer export for {}".format(layer_name)
                     )
                 )
+        _log_export_timing("kml_zip_layer_files_written", started_at, layers=len(layer_groups))
 
         summary_csv_rows = _build_filter_summary_csv_rows(export_rows)
         if summary_csv_rows:
@@ -1254,6 +1403,7 @@ def _build_kml_zip_response(export_rows, slum, selected_filters, include_csv=Fal
                 csv_file.write(",".join(_csv_escape(col) for col in summary_columns) + "\n")
                 for row in summary_csv_rows:
                     csv_file.write(",".join(_csv_escape(row.get(col, "")) for col in summary_columns) + "\n")
+        _log_export_timing("kml_zip_summary_csv_written", started_at, summary_rows=len(summary_csv_rows))
 
         csv_rows = [dict(row["extended_data"]) for row in export_rows]
         if include_csv and csv_rows:
@@ -1263,6 +1413,7 @@ def _build_kml_zip_response(export_rows, slum, selected_filters, include_csv=Fal
                 csv_file.write(",".join(_csv_escape(col) for col in csv_columns) + "\n")
                 for row in csv_rows:
                     csv_file.write(",".join(_csv_escape(row.get(col, "")) for col in csv_columns) + "\n")
+        _log_export_timing("kml_zip_detailed_csv_written", started_at, csv_rows=len(csv_rows), include_csv=include_csv)
 
         qml_dir = os.path.join(tmp_dir, "qml")
         os.makedirs(qml_dir, exist_ok=True)
@@ -1277,6 +1428,7 @@ def _build_kml_zip_response(export_rows, slum, selected_filters, include_csv=Fal
             geometry_type = rows[0].get("geometry", {}).get("type", "Polygon") if rows else "Polygon"
             with open(os.path.join(qml_dir, "{}.qml".format(_safe_file_name(layer_name))), "w", encoding="utf-8") as qml_file:
                 qml_file.write(_qml_content_for_layer(layer_name, rows[0]["style"], geometry_type))
+        _log_export_timing("kml_zip_qml_written", started_at, layers=len(layer_groups))
 
         zip_path = os.path.join(tmp_dir, prefix + ".zip")
         with zipfile.ZipFile(zip_path, "w", zipfile.ZIP_DEFLATED) as zip_file:
@@ -1287,10 +1439,12 @@ def _build_kml_zip_response(export_rows, slum, selected_filters, include_csv=Fal
                     zip_file.write(os.path.join(tmp_dir, file_name), arcname=file_name)
             for file_name in os.listdir(qml_dir):
                 zip_file.write(os.path.join(qml_dir, file_name), arcname=os.path.join("qml", file_name))
+        _log_export_timing("kml_zip_archive_created", started_at)
 
         with open(zip_path, "rb") as zip_file:
             response = HttpResponse(zip_file.read(), content_type="application/zip")
             response["Content-Disposition"] = 'attachment; filename="{}"'.format(prefix + ".zip")
+            _log_export_timing("kml_zip_response_ready", started_at)
             return response
 
 
@@ -1678,7 +1832,8 @@ def _build_shapefile_response(export_rows, slum, selected_filters, include_csv=F
 
 @require_POST
 def export_filtered_kml(request):
-    if not (request.user.is_superuser or request.user.username == "GIS"):
+    started_at = pytime.perf_counter()
+    if request.user.username != "GIS":
         return JsonResponse({"error": "You do not have permission to download GIS exports."}, status=403)
 
     payload = json.loads(request.body.decode("utf-8") or "{}")
@@ -1689,16 +1844,62 @@ def export_filtered_kml(request):
     export_selection = payload.get("export_selection") or []
     include_csv = bool(payload.get("include_csv"))
     export_format = str(payload.get("export_format") or "kml").lower()
+    email_export = bool(payload.get("email_export"))
+    email_address = (payload.get("email_address") or "").strip()
     style_map = payload.get("style_map") or {}
     fallback_style = payload.get("fallback_style") or {}
 
     if not slum_id:
         return JsonResponse({"error": "slum_id is required"}, status=400)
 
+    if email_export and not email_address:
+        return JsonResponse({"error": "email_address is required when email export is enabled."}, status=400)
+
     slum = get_object_or_404(Slum, pk=slum_id)
+    logger.info(
+        "GIS export request started: slum_id=%s export_format=%s export_selection=%s selected_sections=%d selected_filters=%d",
+        slum_id,
+        export_format,
+        bool(export_selection),
+        len(selected_sections),
+        len(selected_filters)
+    )
+    print(
+        "GIS export request started: slum_id={} export_format={} export_selection={} selected_sections={} selected_filters={}".format(
+            slum_id,
+            export_format,
+            bool(export_selection),
+            len(selected_sections),
+            len(selected_filters)
+        ),
+        flush=True
+    )
+
+    if email_export:
+        base_url = request.build_absolute_uri("/").rstrip("/")
+        worker = threading.Thread(
+            target=_run_large_gis_export_job,
+            args=(request.user.id, slum_id, email_address, export_format, include_csv, base_url),
+            daemon=False
+        )
+        worker.start()
+        _log_export_timing("email_export_queued", started_at, slum_id=slum_id, email=email_address, export_format=export_format)
+        return JsonResponse({
+            "status": "queued",
+            "message": "The export is being generated in the background. We will email the download link when it is ready."
+        })
 
     if export_selection:
+        component_started = pytime.perf_counter()
         component_data = _build_component_data_from_db(slum, str(slum_id), export_selection, selected_sections)
+        _log_export_timing(
+            "component_data_loaded",
+            component_started,
+            sections=len(component_data),
+            items=sum(len(items) for items in component_data.values())
+        )
+
+        rows_started = pytime.perf_counter()
         export_rows = _build_export_rows_from_component_selection(
             component_data=component_data,
             slum=slum,
@@ -1706,7 +1907,9 @@ def export_filtered_kml(request):
             selected_sections=selected_sections,
             export_selection=export_selection
         )
+        _log_export_timing("export_rows_built", rows_started, rows=len(export_rows))
     else:
+        rows_started = pytime.perf_counter()
         structure_components = list(
             slum.components.filter(metadata__name="Structure").order_by("housenumber")
         )
@@ -1729,10 +1932,12 @@ def export_filtered_kml(request):
                 component for component in structure_components
                 if _base_household_number(component.housenumber) in selected_households
             ]
+        _log_export_timing("structure_components_loaded", rows_started, rows=len(structure_components))
 
         if not structure_components:
             return JsonResponse({"error": "No matching structures found for the selected filters."}, status=404)
 
+        rows_started = pytime.perf_counter()
         export_rows = _build_export_rows(
             structure_components=structure_components,
             slum=slum,
@@ -1740,22 +1945,36 @@ def export_filtered_kml(request):
             style_map=style_map,
             fallback_style=fallback_style
         )
+        _log_export_timing("export_rows_built", rows_started, rows=len(export_rows))
 
     if not export_rows:
         return JsonResponse({"error": "No selected layers available to export."}, status=404)
 
+    _log_export_timing("export_rows_ready", started_at, rows=len(export_rows), export_selection=bool(export_selection), export_format=export_format)
+
     if export_format == "shp":
+        shp_started = pytime.perf_counter()
         try:
-            return _build_shapefile_response(export_rows, slum, selected_filters, include_csv=include_csv)
+            response = _build_shapefile_response(export_rows, slum, selected_filters, include_csv=include_csv)
+            _log_export_timing("shapefile_response_ready", shp_started, rows=len(export_rows))
+            return response
         except subprocess.CalledProcessError as exc:
             return JsonResponse({
                 "error": exc.stderr.decode("utf-8", errors="ignore") or "Shapefile export failed."
             }, status=500)
 
     if export_selection:
-        return _build_kml_zip_response(export_rows, slum, selected_filters, include_csv=include_csv)
+        zip_started = pytime.perf_counter()
+        response = _build_kml_zip_response(export_rows, slum, selected_filters, include_csv=include_csv)
+        _log_export_timing("kml_zip_response_complete", zip_started, rows=len(export_rows))
+        _log_export_timing("export_request_complete", started_at, rows=len(export_rows), export_selection=True)
+        return response
 
-    return _build_kml_response(export_rows, slum, selected_filters)
+    kml_started = pytime.perf_counter()
+    response = _build_kml_response(export_rows, slum, selected_filters)
+    _log_export_timing("kml_response_complete", kml_started, rows=len(export_rows))
+    _log_export_timing("export_request_complete", started_at, rows=len(export_rows), export_selection=False)
+    return response
 
 @login_required
 def can_refresh_section(request):

@@ -2,6 +2,9 @@ from django.core.mail import EmailMultiAlternatives
 from django.template.loader import render_to_string
 from django.conf import settings
 from email.utils import make_msgid
+import logging
+
+logger = logging.getLogger(__name__)
 
 def send_email(to_emails, subject, template_name=None, context=None, plain_message="", thread_message_id=None, cc=None, bcc=None):
     context = context or {}
@@ -13,4 +16,6 @@ def send_email(to_emails, subject, template_name=None, context=None, plain_messa
     msg.extra_headers = {"Message-ID": message_id}
     if thread_message_id: msg.extra_headers.update({"In-Reply-To": thread_message_id, "References": thread_message_id})
     msg.attach_alternative(html_content, "text/html")
-    msg.send(); return message_id
+    sent_count = msg.send(fail_silently=False)
+    logger.info("Email sent: subject=%s to=%s cc=%s bcc=%s sent_count=%s", subject, to_emails, cc, bcc, sent_count)
+    return message_id
