@@ -868,7 +868,6 @@ function triggerGISDownload(exportFormat, buttonSelector) {
     var originalText = button.text();
     var selectedFilters = _getSelectedItemNames();
     var selectedSections = _getSelectedSectionNames();
-    var houseNumbers = _collectSelectedHouseNumbers();
     var exportSelection = _buildExportSelection();
     var includeCsv = $("#includeCsvData").is(":checked");
 
@@ -887,7 +886,6 @@ function triggerGISDownload(exportFormat, buttonSelector) {
         },
         body: JSON.stringify({
             slum_id: global_slum_id,
-            house_numbers: houseNumbers,
             selected_filters: selectedFilters,
             selected_sections: selectedSections,
             export_selection: exportSelection,
