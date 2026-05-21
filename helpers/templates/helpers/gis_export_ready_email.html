@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <style>
+      body {
+        margin: 0;
+        padding: 0;
+        background: #eef1f5;
+        font-family: Arial, Helvetica, sans-serif;
+      }
+      .wrapper {
+        padding: 40px 0;
+      }
+      .card {
+        width: 640px;
+        background: #ffffff;
+        border-radius: 12px;
+        overflow: hidden;
+        box-shadow: 0 6px 20px rgba(0, 0, 0, 0.12);
+      }
+      .header {
+        background: #1a73e8;
+        color: #ffffff;
+        padding: 28px 36px;
+      }
+      .header h2 {
+        margin: 0;
+        font-size: 28px;
+        font-weight: 600;
+      }
+      .body-content {
+        padding: 36px;
+        color: #333;
+        font-size: 16px;
+        line-height: 1.8;
+      }
+      .success-box {
+        margin-top: 24px;
+        background: #f4f8ff;
+        border-left: 8px solid #1a73e8;
+        border-radius: 8px;
+        padding: 22px;
+        color: #333;
+        word-break: break-word;
+      }
+      .button {
+        display: inline-block;
+        margin-top: 18px;
+        background: #1a73e8;
+        color: #ffffff !important;
+        text-decoration: none;
+        padding: 12px 20px;
+        border-radius: 6px;
+        font-weight: 600;
+      }
+      .footer {
+        padding: 32px 36px;
+        background: #fafafa;
+        border-top: 1px solid #e5e5e5;
+      }
+      .logo img {
+        width: 180px;
+        max-width: 100%;
+        display: block;
+      }
+      .muted {
+        color: #6b7280;
+        font-size: 13px;
+        margin-top: 10px;
+      }
+    </style>
+  </head>
+  <body>
+    <table width="100%" cellpadding="0" cellspacing="0" class="wrapper">
+      <tr>
+        <td align="center">
+          <table cellpadding="0" cellspacing="0" class="card">
+            <tr>
+              <td class="header">
+                <h2>GIS Export Ready</h2>
+              </td>
+            </tr>
+            <tr>
+              <td class="body-content">
+                <p>Hello,</p>
+                <p>
+                  Your GIS export for <strong>{{ slum_name }}</strong> is ready.
+                </p>
+                <div class="success-box">
+                  File type: <strong>{{ export_format }}</strong><br />
+                  File name: <strong>{{ filename }}</strong><br />
+                  <strong>{{ expiry_note }}</strong><br />
+                  Download link:
+                  <br />
+                  <a class="button" href="{{ download_url }}">Download export</a>
+                  <div class="muted">
+                    If the button does not work, copy this link into your browser:<br />{{ download_url }}
+                  </div>
+                </div>
+                <p class="muted">This export was generated in the background because the slum dataset is large.</p>
+              </td>
+            </tr>
+            <tr>
+              <td class="footer">
+                <div class="logo">
+                  <img src="https://app.shelter-associates.org/static/images/shelter.png" alt="Shelter Associates" />
+                </div>
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+    </table>
+  </body>
+</html>

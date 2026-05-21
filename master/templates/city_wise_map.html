@@ -8,7 +8,7 @@
   <link rel="stylesheet" type="text/css" href="{% static 'css/leaflet.css' %}" />
   <script>
     const csrftoken = '{{ csrf_token }}'
-    const canGISExport = {% if user.is_superuser or user.username == "GIS" %}true{% else %}false{% endif %};
+    const canGISExport = {% if user.username == "GIS" %}true{% else %}false{% endif %};
   </script>
   <script src="{% static 'js/jquery.min.js' %}"></script>
   <script src="{% static 'js/master_map_boundaries.js' %}"></script>

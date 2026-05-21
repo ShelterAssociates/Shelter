@@ -853,6 +853,16 @@ function renderKMLDownloadButton() {
         "<span class='gis-export-checkbox__hint'>Contains all household and factsheet data available. This may take longer.</span>" +
         "</span>" +
         "</label>" +
+        "<label class='gis-export-checkbox' for='emailExportData'>" +
+        "<input type='checkbox' id='emailExportData'>" +
+        "<span class='gis-export-checkbox__text'>" +
+        "<span>Email download link for large slums only</span>" +
+        "<span class='gis-export-checkbox__hint'>Use this when the export is too heavy for direct download. The file will be generated in the background and emailed to you.</span>" +
+        "</span>" +
+        "</label>" +
+        "<div id='emailExportWrap' style='display:none; margin-top:10px;'>" +
+        "<input type='email' id='emailExportAddress' class='form-control' placeholder='Enter email address to receive the download link'>" +
+        "</div>" +
         "</div>"
     );
     updateActionButtonRow();
@@ -870,13 +880,20 @@ function triggerGISDownload(exportFormat, buttonSelector) {
     var selectedSections = _getSelectedSectionNames();
     var exportSelection = _buildExportSelection();
     var includeCsv = $("#includeCsvData").is(":checked");
+    var emailExport = $("#emailExportData").is(":checked");
+    var emailAddress = $("#emailExportAddress").val() || "";
 
     if (!exportSelection.length) {
         alert("Please select at least one layer or section to export.");
         return;
     }
 
-    button.prop("disabled", true).text(exportFormat === "shp" ? "Preparing ZIP..." : "Preparing KML...");
+    if (emailExport && !emailAddress.trim()) {
+        alert("Please enter an email address for the background export.");
+        return;
+    }
+
+    button.prop("disabled", true).text(emailExport ? "Queuing export..." : (exportFormat === "shp" ? "Preparing ZIP..." : "Preparing KML..."));
 
     fetch("/component/export-filtered-kml/", {
         method: "POST",
@@ -890,7 +907,9 @@ function triggerGISDownload(exportFormat, buttonSelector) {
             selected_sections: selectedSections,
             export_selection: exportSelection,
             include_csv: includeCsv,
-            export_format: exportFormat
+            export_format: exportFormat,
+            email_export: emailExport,
+            email_address: emailAddress
         })
     })
         .then(function (response) {
@@ -909,6 +928,12 @@ function triggerGISDownload(exportFormat, buttonSelector) {
                 });
             }
 
+            if (emailExport) {
+                return response.json().then(function (data) {
+                    return { queued: true, message: (data && data.message) || "The export is being generated in the background." };
+                });
+            }
+
             var disposition = response.headers.get("Content-Disposition") || "";
             var filenameMatch = disposition.match(/filename=\"?([^"]+)\"?/);
             var filename = filenameMatch ? filenameMatch[1] : "layer-export.zip";
@@ -918,6 +943,11 @@ function triggerGISDownload(exportFormat, buttonSelector) {
             });
         })
         .then(function (result) {
+            if (result && result.queued) {
+                alert(result.message);
+                return;
+            }
+
             var url = window.URL.createObjectURL(result.blob);
             var link = document.createElement("a");
             link.href = url;
@@ -943,6 +973,15 @@ $(document).off("click.downloadKML", "#downloadKMLBtn")
 $(document).off("click.downloadShape", "#downloadShapeBtn")
     .on("click.downloadShape", "#downloadShapeBtn", function () {
         triggerGISDownload("shp", "#downloadShapeBtn");
+    });
+
+$(document).off("change.emailExportData", "#emailExportData")
+    .on("change.emailExportData", "#emailExportData", function () {
+        if ($(this).is(":checked")) {
+            $("#emailExportWrap").show();
+        } else {
+            $("#emailExportWrap").hide();
+        }
     });
 
 
