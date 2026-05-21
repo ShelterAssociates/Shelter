@@ -1,6 +1,7 @@
 from django.db import models
 from django.utils import timezone
 from jsonfield import JSONField
+import uuid
 # Stores OTPs sent for different verification tasks (PDF download, email verification, etc.)
 # Each email + task combination will have only one OTP record which gets updated on new request
 class OTPVerification(models.Model):
@@ -38,3 +39,28 @@ class FormSubmission(models.Model):
 
 	def __str__(self):
 		return f"{self.email} - {self.task}"
+
+
+class ReminderTracker(models.Model):
+    uuid = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
+    STATUS_CHOICES = (("PENDING", "Pending"), ("COMPLETED", "Completed"))
+    reminder_type = models.CharField(max_length=100)
+    month = models.IntegerField()
+    year = models.IntegerField()
+    email = models.EmailField()
+    subject = models.TextField(null=True, blank=True)
+    recipient_data = models.JSONField(default=dict, blank=True)
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="PENDING")
+    reminder_sent_count = models.IntegerField(default=0)
+    last_reminder_sent_at = models.DateTimeField(null=True, blank=True)
+    completed_at = models.DateTimeField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    thread_message_id = models.TextField(null=True, blank=True)
+
+    class Meta:
+        db_table = "reminder_tracker"
+        unique_together = ("reminder_type", "month", "year", "email")
+
+    def __str__(self):
+        return f"{self.reminder_type} - {self.month}/{self.year} - {self.email}"
