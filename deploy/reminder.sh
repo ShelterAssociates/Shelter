@@ -1,8 +1,7 @@
 #!/bin/bash
 
-source /home/shelter/miniconda3/bin/activate pyenv36
-
-cd /home/shelter/Shelter/app || exit
+cd /srv/Shelter/
+source ENV3/bin/activate || exit
 
 python manage.py shell << 'EOF'
 
@@ -15,8 +14,8 @@ from helpers.models import ReminderTracker
 
 # ── Test Config (adjust these before each manual run) ────────────────────────
 REMINDER_TYPE  = "GIS_SERVER_DATA_SYNC"
-TO_EMAILS      = ["gis@shelter-associates.org"]
-CC_EMAILS      = ["info@shelter-associates.org" , "dhana@shelter-associates.org" ,"developer@shelter-associates.org" ]
+TO_EMAILS      = ["developer@shelter-associates.org"]
+CC_EMAILS      = ["sonjevrundavan2102@gmail.com" ]
 BCC_EMAILS     = []
 TEMPLATE       = "helpers/gis_reminder.html"
 PRIMARY_EMAIL  = TO_EMAILS[0]
