@@ -176,6 +176,7 @@ var Slum = (function (_super) {
 
     Slum.prototype.factsheet_click = function (element, slum_id) {
         $("#rimPreviewModal").fadeIn();
+        $("#rimDownloadForm").attr("data-slum-id", slum_id);
 
         $("#rimDownloadBtn")
             .prop("disabled", true)
@@ -495,6 +496,57 @@ $(document).on("click", "#rimSendOTP", function () {
                 btn.disabled = false;
                 btn.textContent = originalText;
                 _showOtpInlineError("Failed to send OTP. Please try again.");
+            }
+        })
+        .catch(function () {
+            btn.disabled = false;
+            btn.textContent = originalText;
+            _showOtpInlineError("Network error. Please try again.");
+        });
+});
+
+/* ── Verify OTP and trigger download ─────────────────────────────────────── */
+$(document).on("click", "#rimVerifyOTP", function () {
+    var btn = this;
+    var otp = $("#rimOTP").val().trim();
+    var name = $("#rimName").val().trim();
+    var email = $("#rimEmail").val().trim();
+    var mobile = $("#rimMobile").val().trim();
+    var slumId = $("#rimDownloadForm").attr("data-slum-id");
+
+    if (!otp) { _showOtpInlineError("Please enter OTP."); return; }
+    if (!slumId) { _showOtpInlineError("Session expired. Please reopen the form."); return; }
+
+    var originalText = btn.textContent;
+    btn.disabled = true;
+    btn.textContent = "Verifying…";
+
+    fetch("/helpers/api/verify-otp/", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+            "X-CSRFToken": csrftoken
+        },
+        body: JSON.stringify({
+            name: name,
+            email: email,
+            mobile: mobile,
+            otp: otp,
+            task: "FACTSHEET_DOWNLOAD"
+        })
+    })
+        .then(function (res) { return res.json(); })
+        .then(function (data) {
+            if (data.status === "verified") {
+                window.location.href = "/reports/api/rim_factsheet_pdf_fetch/" + slumId + "/";
+            } else if (data.status === "blocked") {
+                btn.disabled = false;
+                btn.textContent = originalText;
+                _showOtpInlineError("Too many attempts. Please request a new OTP.");
+            } else {
+                btn.disabled = false;
+                btn.textContent = originalText;
+                _showOtpInlineError("Invalid OTP. Please try again.");
             }
         })
         .catch(function () {
