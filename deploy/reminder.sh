@@ -49,7 +49,7 @@ if not created and tracker.last_reminder_sent_at:
 reminder_count = tracker.reminder_sent_count + 1
 
 subject = (
-    f"[TEST] GIS Server Data Sync Reminder - {last_month_date.strftime('%B')} "
+    f"GIS Server Data Sync Reminder - {last_month_date.strftime('%B')} "
     f"{last_month_date.year} - Reminder {reminder_count}"
 )
 
