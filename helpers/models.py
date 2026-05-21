@@ -49,7 +49,7 @@ class ReminderTracker(models.Model):
     year = models.IntegerField()
     email = models.EmailField()
     subject = models.TextField(null=True, blank=True)
-    recipient_data = models.JSONField(default=dict, blank=True)
+    recipient_data = JSONField(default=dict, blank=True)
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="PENDING")
     reminder_sent_count = models.IntegerField(default=0)
     last_reminder_sent_at = models.DateTimeField(null=True, blank=True)
