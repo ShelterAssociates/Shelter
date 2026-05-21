@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <style>
+      body {
+        margin: 0;
+        padding: 0;
+        background: #eef1f5;
+        font-family: Arial, Helvetica, sans-serif;
+      }
+      
+      .wrapper {
+        padding: 40px 0;
+      }
+      .card {
+        width: 640px;
+        background: #ffffff;
+        border-radius: 12px;
+        overflow: hidden;
+        box-shadow: 0 6px 20px rgba(0, 0, 0, 0.12);
+      }
+      
+      .header {
+        background: #1a73e8;
+        color: #ffffff;
+        padding: 28px 36px;
+      }
+      
+      .header h2 {
+        margin: 0;
+        font-size: 28px;
+        font-weight: 600;
+      }
+      .header p {
+        margin: 10px 0 0;
+        font-size: 15px;
+        opacity: 0.95;
+      }
+      
+      .body-content {
+        padding: 36px;
+        color: #333;
+        font-size: 16px;
+        line-height: 1.8;
+      }
+      
+      .lead {
+        margin-top: 0;
+        font-size: 24px;
+        font-weight: 500;
+      }
+      .checklist {
+        padding-left: 22px;
+        margin-top: 16px;
+      }
+      .checklist li {
+        margin-bottom: 12px;
+      }
+      .confirm-btn {
+        margin-top: 30px;
+      }
+      
+      .confirm-btn a {
+        display: inline-block;
+        padding: 14px 24px;
+        background: #1a73e8;
+        color: #ffffff;
+        text-decoration: none;
+        border-radius: 6px;
+        font-weight: bold;
+      }
+      
+      .notice {
+        margin: 32px 0;
+        background: #fff3cd;
+        border-left: 8px solid #f0ad4e;
+        border-radius: 8px;
+        padding: 22px;
+        font-size: 16px;
+        color: #664d03;
+        line-height: 1.7;
+      }
+      
+      .notice-title {
+        margin: 0 0 12px;
+      }
+      .notice-text {
+        margin: 0 0 12px;
+      }
+      .notice-highlight {
+        margin: 0;
+        font-weight: 700;
+      }
+      
+      .footer {
+        padding: 32px 36px;
+        background: #fafafa;
+        border-top: 1px solid #e5e5e5;
+      }
+      
+      .logo {
+        margin-bottom: 22px;
+      }
+      .logo img {
+        width: 180px;
+        max-width: 100%;
+        display: block;
+      }
+      .signature {
+        margin: 0;
+        color: #333;
+        font-size: 15px;
+        line-height: 1.8;
+      }
+      .signature p {
+        margin: 0;
+      }
+      .signature .spacer {
+        margin-top: 16px;
+      }
+      .signature a {
+        color: #1a73e8;
+        text-decoration: none;
+      }
+      
+      .disclaimer {
+        margin-top: 24px;
+        font-size: 12px;
+        color: #666;
+        line-height: 1.6;
+      }
+    </style>
+  </head>
+  <body>
+    <table width="100%" cellpadding="0" cellspacing="0" class="wrapper">
+      <tr>
+        <td align="center">
+          <table cellpadding="0" cellspacing="0" class="card">
+            <tr>
+              <td class="header">
+                <h2>Monthly Data Sync Reminder</h2>
+                <p>Sent on {{ DATE_TODAY }} - Reminder {{ reminder_count }}</p>
+              </td>
+            </tr>
+            <tr>
+              <td class="body-content">
+                <p class="lead">Hello Team,</p>
+                <p>Just a quick reminder to please ensure the following:</p>
+                <ul class="checklist">
+                  <li>
+                    All <strong>local server data for {{ MONTH_NAME }} {{ YEAR }}</strong> is fully synced to the <strong>Microsoft account</strong>
+                  </li>
+                  <li>There are no pending or failed syncs on the local server</li>
+                  <li>No important data is left only on local machines</li>
+                  <li>Temporary or unnecessary data is cleaned up, if any</li>
+                </ul>
+                <p style="margin-top:24px;">Please confirm once this is completed by clicking below button.</p>
+                <div class="confirm-btn">
+                  <a href="{{ confirm_url }}">Mark As Synced</a>
+                </div>
+                <div class="notice">
+                  <p class="notice-title">
+                    <strong>⚠ Important Notice</strong>
+                  </p>
+                  <p class="notice-text">
+                    Please ensure that <strong>no important files</strong> are kept in temporary folders.
+                  </p>
+                  <p class="notice-highlight">Temporary folders should be cleaned regularly, and unnecessary data should be removed.</p>
+                </div>
+              </td>
+            </tr>
+            <tr>
+              <td class="footer">
+                <div class="logo">
+                  <img src="https://app.shelter-associates.org/static/images/shelter.png" alt="Shelter Associates" />
+                </div>
+                <div class="signature">
+                  <p>
+                    <strong>Thanks & Regards,</strong>
+                  </p>
+                  <p class="spacer">
+                    <strong>Vrundavan Sonje</strong>
+                  </p>
+                  <p>Software Developer</p>
+                  <p>
+                    <strong>Shelter Associates</strong>
+                  </p>
+                  <p>Kanha, Plot no.340, Lane no.18,</p>
+                  <p>Mahatma Society, Kothrud,</p>
+                  <p>Pune 411038</p>
+                  <p class="spacer">
+                    🌐 Website: <a href="https://www.shelter-associates.org" target="_blank">www.shelter-associates.org</a>
+                  </p>
+                  <p>📞 Tele: 9823102949</p>
+                </div>
+                <p class="disclaimer">This communication is confidential and intended solely for the recipient. If you are not the intended recipient, please delete this email and notify Shelter Associates immediately.</p>
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+    </table>
+  </body>
+</html>

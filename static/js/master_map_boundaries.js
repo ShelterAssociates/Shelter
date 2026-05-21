@@ -407,59 +407,99 @@ $(document).on("click", function (e) {
     }
 });
 
-
 /* ── Send OTP ─────────────────────────────────────────────────────────────── */
+var _otpCountdownTimer = null;
+
+function startResendCountdown(btn, seconds) {
+    if (_otpCountdownTimer) { clearInterval(_otpCountdownTimer); }
+    var remaining = seconds;
+    btn.disabled = true;
+    btn.textContent = "Resend OTP in " + remaining + "s";
+    _otpCountdownTimer = setInterval(function () {
+        remaining--;
+        if (remaining <= 0) {
+            clearInterval(_otpCountdownTimer);
+            _otpCountdownTimer = null;
+            btn.disabled = false;
+            btn.textContent = "Send OTP";
+        } else {
+            btn.textContent = "Resend OTP in " + remaining + "s";
+        }
+    }, 1000);
+}
+
+function _showOtpInlineError(msg) {
+    var existing = document.getElementById("otp-inline-error");
+    if (existing) existing.remove();
+    var errDiv = document.createElement("div");
+    errDiv.id = "otp-inline-error";
+    errDiv.style.cssText = "color:#c0392b;font-size:12px;margin-top:4px;";
+    errDiv.textContent = msg;
+    var sendBtn = document.getElementById("rimSendOTP");
+    if (sendBtn && sendBtn.parentNode) {
+        sendBtn.parentNode.insertBefore(errDiv, sendBtn.nextSibling);
+    }
+}
+
 $(document).on("click", "#rimSendOTP", function () {
+    var btn = this;
     var name = $("#rimName").val().trim();
     var email = $("#rimEmail").val().trim();
     var mobile = $("#rimMobile").val().trim();
 
-    if (!name) { alert("Please enter your name"); return; }
-    if (!email) { alert("Please enter email"); return; }
-    if (!mobile || mobile.length !== 10) { alert("Enter valid 10 digit mobile number"); return; }
+    /* ── Validations ── */
+    if (!name) { _showOtpInlineError("Please enter your name."); return; }
+    if (!email) { _showOtpInlineError("Please enter your email."); return; }
+
+    var emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
+    if (!emailRegex.test(email)) {
+        _showOtpInlineError("Please enter a valid email address.");
+        return;
+    }
+    if (!mobile || mobile.length !== 10) {
+        _showOtpInlineError("Enter valid 10 digit mobile number.");
+        return;
+    }
+
+    /* ── Sending state ── */
+    var originalText = btn.textContent;
+    btn.disabled = true;
+    btn.textContent = "Sending OTP…";
+
+    /* ── Clear previous errors ── */
+    var existing = document.getElementById("otp-inline-error");
+    if (existing) existing.remove();
 
     fetch("/helpers/api/send-otp/", {
         method: "POST",
-        headers: { "Content-Type": "application/json", "X-CSRFToken": csrftoken },
-        body: JSON.stringify({ email: email, mobile: mobile, task: "FACTSHEET_DOWNLOAD" })
+        headers: {
+            "Content-Type": "application/json",
+            "X-CSRFToken": csrftoken
+        },
+        body: JSON.stringify({
+            email: email,
+            mobile: mobile,
+            task: "FACTSHEET_DOWNLOAD"
+        })
     })
         .then(function (res) { return res.json(); })
         .then(function (data) {
             if (data.status === "otp_sent") {
-                alert("OTP sent to your email");
                 $("#rimOTPSection").show();
+                startResendCountdown(btn, 30);
             } else if (data.status === "wait") {
-                alert(data.message);
+                btn.disabled = false;
+                btn.textContent = originalText;
+                _showOtpInlineError(data.message || "Please wait before requesting another OTP.");
             } else {
-                alert("Failed to send OTP");
+                btn.disabled = false;
+                btn.textContent = originalText;
+                _showOtpInlineError("Failed to send OTP. Please try again.");
             }
-        });
-});
-
-
-/* ── Verify OTP and trigger download ─────────────────────────────────────── */
-$(document).on("click", "#rimVerifyOTP", function () {
-    var otp = $("#rimOTP").val().trim();
-    var name = $("#rimName").val().trim();
-    var email = $("#rimEmail").val().trim();
-    var mobile = $("#rimMobile").val().trim();
-    var slumId = $("#rimDownloadForm").attr("data-slum-id");
-
-    if (!otp) { alert("Please enter OTP"); return; }
-
-    fetch("/helpers/api/verify-otp/", {
-        method: "POST",
-        headers: { "Content-Type": "application/json", "X-CSRFToken": csrftoken },
-        body: JSON.stringify({ name: name, email: email, mobile: mobile, otp: otp, task: "FACTSHEET_DOWNLOAD" })
-    })
-        .then(function (res) { return res.json(); })
-        .then(function (data) {
-            if (data.status === "verified") {
-                window.location.href = "/reports/api/rim_factsheet_pdf_fetch/" + slumId + "/";
-            } else if (data.status === "blocked") {
-                alert("Too many attempts. Please request a new OTP.");
-            } else {
-                alert("Invalid OTP");
-            }
+        })
+        .catch(function () {
+            btn.disabled = false;
+            btn.textContent = originalText;
+            _showOtpInlineError("Network error. Please try again.");
         });
 });
