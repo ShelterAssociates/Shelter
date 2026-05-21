@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+
+    <style>
+      body {
+        margin: 0;
+        padding: 0;
+        background: #eef1f5;
+        font-family: Arial, Helvetica, sans-serif;
+      }
+      
+      .wrapper {
+        padding: 40px 0;
+      }
+      
+      .card {
+        width: 640px;
+        background: #ffffff;
+        border-radius: 12px;
+        overflow: hidden;
+        box-shadow: 0 6px 20px rgba(0, 0, 0, 0.12);
+      }
+      
+      .header {
+        background: #1a73e8;
+        color: #ffffff;
+        padding: 28px 36px;
+      }
+      
+      .header h2 {
+        margin: 0;
+        font-size: 28px;
+        font-weight: 600;
+      }
+      
+      .body-content {
+        padding: 36px;
+        color: #333;
+        font-size: 16px;
+        line-height: 1.8;
+      }
+      
+      .success-box {
+        margin-top: 24px;
+        background: #f4f8ff;
+        border-left: 8px solid #1a73e8;
+        border-radius: 8px;
+        padding: 22px;
+        color: #333;
+      }
+      
+      .footer {
+        padding: 32px 36px;
+        background: #fafafa;
+        border-top: 1px solid #e5e5e5;
+      }
+      
+      .logo img {
+        width: 180px;
+        max-width: 100%;
+        display: block;
+      }
+    </style>
+  </head>
+
+  <body>
+    <table width="100%" cellpadding="0" cellspacing="0" class="wrapper">
+      <tr>
+        <td align="center">
+          <table cellpadding="0" cellspacing="0" class="card">
+            <tr>
+              <td class="header">
+                <h2>GIS Sync Confirmed</h2>
+              </td>
+            </tr>
+
+            <tr>
+              <td class="body-content">
+                <p>Hello Team,</p>
+
+                <p>Thank you for your response.</p>
+
+                <div class="success-box">
+                  We confirm that GIS data for
+                  <strong>{{ MONTH_NAME }} {{ YEAR }}</strong>
+                  has been successfully synced.
+
+                  <br /><br />
+
+                  Confirmation received on:
+                  <strong>{{ COMPLETED_AT }}</strong>
+
+                  <br /><br />
+
+                  Thank you for following timelines and ensuring successful data synchronization.
+                </div>
+              </td>
+            </tr>
+
+            <tr>
+              <td class="footer">
+                <div class="logo">
+                  <img src="https://app.shelter-associates.org/static/images/shelter.png" alt="Shelter Associates" />
+                </div>
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+    </table>
+  </body>
+</html>

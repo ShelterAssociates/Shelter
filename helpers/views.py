@@ -2,19 +2,23 @@ from django.shortcuts import render
 import hashlib
 import json
 import random
-from datetime import timedelta
-
+from datetime import datetime, timedelta
+from django.contrib.auth.decorators import login_required
 from django.core.exceptions import ImproperlyConfigured
 from django.core.exceptions import ObjectDoesNotExist
 from django.contrib.admin.views.decorators import staff_member_required
 from django.http import JsonResponse
+from django.urls import reverse
 from django.utils import timezone
 from django.views.decorators.csrf import csrf_exempt
 from requests import request
+from scipy import record
 
-from helpers.services.send_email import send_otp_email
-from .models import OTPVerification
+from helpers.services.send_email import send_email
+from shelter import settings
+from .models import OTPVerification ,ReminderTracker
 from .services.google_drive import upload_photos_to_slum_drive_folder
+from django.http import HttpResponse
 
 # ============= Digipin Generation =============
 
@@ -43,6 +47,7 @@ def digipin_generate(request):
 # {status:"otp_sent"} when OTP email successfully triggered
 # {status:"wait"} when rate limit prevents new OTP request
 # ----------------------------------------------------------------------
+@csrf_exempt
 def send_otp(request):
 	if request.method != "POST":
 		return JsonResponse({"status": "error", "message": "Invalid request"}, status=400)
@@ -54,10 +59,7 @@ def send_otp(request):
 	record = OTPVerification.objects.filter(email=email, task=task).first()
 	if record and (timezone.now() - record.created_at).seconds < 30:
 		return JsonResponse({"status": "wait","message": "Please wait 30 seconds before requesting another OTP"})
-	if record and record.expiry_time > timezone.now():
-		otp = record.otp_plain
-	else:
-		otp = str(random.randint(100000, 999999))
+	otp = str(random.randint(100000, 999999))
 	expiry = timezone.now() + timedelta(minutes=5)
 	hashed_otp = hashlib.sha256(otp.encode()).hexdigest()
 	obj, created = OTPVerification.objects.update_or_create(
@@ -69,7 +71,11 @@ def send_otp(request):
 			"is_verified": False,
 		}
 	)
-	send_otp_email(email, otp)
+	subject = "Shelter Associates - OTP Verification"
+	template_name = "helpers/otp_email.html"
+	context = {"otp": otp}
+	plain_message = f"Your OTP is {otp}"
+	send_email([email], subject, template_name, context, plain_message)
 	return JsonResponse({"status": "otp_sent"})
 
 # ----------------------------------------------------------------------
@@ -110,11 +116,15 @@ def verify_otp(request):
 		record=OTPVerification.objects.get(email=email,task=task)
 	except OTPVerification.DoesNotExist:
 		return JsonResponse({"status":"invalid"})
+
 	if record.is_verified:
 		return JsonResponse({"status":"invalid"})
+
 	if record.expiry_time<timezone.now():
 		return JsonResponse({"status":"expired"})
+
 	input_hash=hashlib.sha256(otp.encode()).hexdigest()
+
 	if record.otp!=input_hash:
 		request.session[session_key]=attempts+1
 		return JsonResponse({"status":"invalid"})
@@ -133,6 +143,7 @@ def photo_upload_page(request):
 
 @csrf_exempt
 def upload_slum_photos_to_drive(request):
+    
 	if request.method == "GET":
 		return render(request, "helpers/photo_upload.html")
 
@@ -182,3 +193,84 @@ def upload_slum_photos_to_drive(request):
 		)
 
 	return JsonResponse({"status": "success", "data": result}, status=201)
+
+def send_reminder(request, to_emails, reminder_type, template_name, subject, context, cc=None, bcc=None):
+	"""Create or update a monthly reminder tracker and send the reminder email."""
+
+	current_date = datetime.now()
+	primary_email = to_emails[0]
+
+	tracker, _ = ReminderTracker.objects.get_or_create(
+		reminder_type=reminder_type,
+		month=current_date.month,
+		year=current_date.year,
+		email=primary_email,
+	)
+
+	if tracker.status == "COMPLETED":
+		return
+
+	confirm_path = reverse("confirm_reminder")
+	confirm_url = f"{settings.BASE_APP_URL}{confirm_path}?uuid={tracker.uuid}"
+	context["confirm_url"] = confirm_url
+
+	plain_message = subject
+	message_id = send_email(
+		to_emails,
+		subject,
+		template_name,
+		context,
+		plain_message,
+		tracker.thread_message_id,
+		cc,
+		bcc,
+	)
+
+	if not tracker.thread_message_id:
+		tracker.thread_message_id = message_id
+	if not tracker.subject:
+		tracker.subject = subject
+
+	tracker.recipient_data = {"to": to_emails, "cc": cc or [], "bcc": bcc or []}
+	tracker.reminder_sent_count += 1
+	tracker.last_reminder_sent_at = timezone.now()
+	tracker.save()
+
+
+def confirm_reminder(request):
+	"""Mark a reminder as completed and notify recipients with a confirmation email."""
+
+	reminder_uuid = request.GET.get("uuid")
+	tracker = ReminderTracker.objects.filter(uuid=reminder_uuid).first()
+
+	if not tracker:
+		return HttpResponse("Reminder not found")
+	if tracker.status == "COMPLETED":
+		return HttpResponse("Reminder already completed")
+
+	tracker.status = "COMPLETED"
+	tracker.completed_at = timezone.now()
+	tracker.save()
+
+	context = {
+		"DATE_TODAY": datetime.now().strftime("%d %B %Y"),
+		"MONTH_NAME": datetime(1900, tracker.month, 1).strftime("%B"),
+		"YEAR": tracker.year,
+		"COMPLETED_AT": timezone.localtime(tracker.completed_at).strftime("%d %B %Y %I:%M %p"),
+	}
+
+	plain_message = "GIS Sync Confirmation"
+	recipient_data = tracker.recipient_data or {}
+
+	send_email(
+		recipient_data.get("to", []),
+		tracker.subject,
+		"helpers/gis_confirmation_email.html",
+		context,
+		plain_message,
+		tracker.thread_message_id,
+		recipient_data.get("cc", []),
+		recipient_data.get("bcc", []),
+	)
+
+	return HttpResponse("Reminder confirmed successfully")
