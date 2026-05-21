@@ -16,5 +16,6 @@ urlpatterns = [
     url(r'^get_kobo_FF_report_data/(?P<key>{})'.format(base64_pattern), views.get_kobo_FF_report_data, name='get_kobo_FF_report_data'),
     url(r'^get_kobo_drainage_report_data/(?P<slum_id>\d+)$', views.get_kobo_drainage_report_data, name='get_kobo_drainage_report_data'),
     url(r'^household-month-dates/$', views.get_household_month_end_dates, name='get_household_month_end_dates'),
+    url(r'^export-filtered-kml/$', views.export_filtered_kml, name='export_filtered_kml'),
     url(r'^can-refresh-section/$', views.can_refresh_section, name='can_refresh_section'),
 ]

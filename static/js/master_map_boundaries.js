@@ -148,6 +148,7 @@ var Slum = (function (_super) {
         var _this = this;
         /* Clear any previously shown button immediately */
         $("#factsheet-btn-slot").hide().html("");
+        updateActionButtonRow();
 
         fetch("/admin/api/rim_factsheet_available/" + this.slumId + "/")
             .then(function (res) { return res.json(); })
@@ -172,6 +173,7 @@ var Slum = (function (_super) {
             "View Factsheet" +
             "</button>"
         ).show();
+        updateActionButtonRow();
     };
 
     Slum.prototype.factsheet_click = function (element, slum_id) {
@@ -256,7 +258,7 @@ var Slum = (function (_super) {
                         if (skipStatuses.includes(cd.status)) {
                             /* Ensure right panel, factsheet and sponsor shadow are all hidden */
                             $("#right-panel").removeClass("active");
-                            $("#factsheet-btn-slot").hide().html("");
+                            clearActionButtons();
                             $("#household-search-wrapper").hide();
                             $("#sponsor-pinned").hide();
                             $("#compochk_refresh").html("");
@@ -344,7 +346,7 @@ var City = (function () {
 
     City.prototype.click = function () {
         $("#right-panel").removeClass("active");
-        $("#factsheet-btn-slot").hide().html("");
+        clearActionButtons();
         $("#compochk").html("");
         $("#household-search-wrapper").hide();
         $("#sponsor-pinned").hide();

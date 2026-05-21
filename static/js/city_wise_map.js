@@ -31,6 +31,7 @@ var global_slum_id = 0;
 var lst_sponsor = [];
 var parse_component = {};
 var globalJsonData = {};
+var currentSlumComponentData = {};
 
 var modelsection = {
     "General": "General information",
@@ -208,6 +209,38 @@ function getQueryParam(param) {
     return new URLSearchParams(window.location.search).get(param);
 }
 
+function updateActionButtonRow() {
+    var hasFactsheet = $("#factsheet-btn-slot").children().length > 0;
+    var hasKml = $("#kml-btn-slot").children().length > 0;
+
+    $("#factsheet-btn-slot").toggle(hasFactsheet);
+    $("#kml-btn-slot").toggle(hasKml);
+    $("#action-btn-row").css("display", hasFactsheet || hasKml ? "flex" : "none");
+}
+
+function clearActionButtons() {
+    $("#factsheet-btn-slot").hide().html("");
+    $("#kml-btn-slot").hide().html("");
+    updateActionButtonRow();
+}
+
+function _getSelectedItemNames() {
+    return $("[name=chk1]:checked").map(function () {
+        return $(this).val();
+    }).get();
+}
+
+function _getSelectedSectionNames() {
+    var names = [];
+    $("[name=grpchk]:checked").each(function () {
+        var sectionName = $(this).parent().find("div.panel-collapse").attr("name");
+        if (sectionName) {
+            names.push(sectionName);
+        }
+    });
+    return names;
+}
+
 function readJSONFile(filePath, callback, param1, param2) {
     return fetch(filePath)
         .then(function (r) { return r.json(); })
@@ -244,7 +277,7 @@ function slum_data_fetch(slumId) {
         if (skipStatuses.includes(componentData.status)) {
             $("#filter-container").empty();
             $("#right-panel").addClass("active");
-            $("#factsheet-btn-slot").hide().html("");
+            clearActionButtons();
             $("#household-search-wrapper").hide();
             $("#sponsor-pinned").hide();
             $("#compochk_refresh").html("");
@@ -364,6 +397,7 @@ function generate_RIM(result) {
 
 /* ── Filter / right panel generation ────────────────────────────────────── */
 function generate_filter(globalJsonData, slumId, result) {
+    currentSlumComponentData = result || {};
 
     /* ---- Refresh button ---- */
     var compochk_refresh = $("#compochk_refresh");
@@ -443,6 +477,7 @@ function generate_filter(globalJsonData, slumId, result) {
     });
 
     compochk.html(panel_component);
+    renderKMLDownloadButton();
 
     /* Auto-select boundary checkbox */
     setTimeout(function () {
@@ -635,6 +670,282 @@ function fullResetHouseholdSearch() {
     var si = document.getElementById("household-search-input");
     if (si) si.value = "";
 }
+
+
+function _findStructureEntry() {
+    var structureEntry = null;
+
+    $.each(currentSlumComponentData || {}, function (_, sectionItems) {
+        $.each(sectionItems || {}, function (itemName, itemData) {
+            if (!itemData || itemData.type !== "C") return;
+
+            var normalizedName = String(itemName || "").toLowerCase();
+            if (
+                normalizedName === "structure" ||
+                normalizedName === "housebaselayer" ||
+                normalizedName === "house base layer"
+            ) {
+                structureEntry = itemData;
+                return false;
+            }
+
+            if (!structureEntry && itemData.child && itemData.child.length && itemData.child[0].housenumber !== undefined) {
+                structureEntry = itemData;
+            }
+        });
+
+        if (structureEntry) return false;
+    });
+
+    return structureEntry;
+}
+
+function _collectSelectedHouseNumbers() {
+    var householdMap = {};
+    var selectedLabels = _getSelectedItemNames();
+    var selectedSections = _getSelectedSectionNames();
+
+    $.each(currentSlumComponentData || {}, function (sectionName, sectionItems) {
+        $.each(sectionItems || {}, function (itemName, itemData) {
+            var sectionSelected = selectedSections.indexOf(sectionName) !== -1;
+            var itemSelected = selectedLabels.indexOf(itemName) !== -1;
+
+            if ((!sectionSelected && !itemSelected) || !itemData || itemData.type === "C") {
+                return;
+            }
+
+            $.each(itemData.child || [], function (_, houseNo) {
+                if (houseNo !== undefined && houseNo !== null && String(houseNo).trim() !== "") {
+                    householdMap[String(houseNo).split(".")[0].trim()] = true;
+                }
+            });
+        });
+    });
+
+    return Object.keys(householdMap).sort(function (a, b) {
+        return String(a).localeCompare(String(b), undefined, { numeric: true });
+    });
+}
+
+function _getStructureStyle() {
+    var structureEntry = _findStructureEntry();
+    if (!structureEntry || !structureEntry.blob) return {};
+
+    return {
+        name: structureEntry.name || "Structure",
+        polycolor: structureEntry.blob.polycolor || "#FFA3A3",
+        linecolor: structureEntry.blob.linecolor || "#ff0000",
+        linewidth: structureEntry.blob.linewidth || 1,
+        fillflag: structureEntry.blob.fillflag !== false
+    };
+}
+
+function _buildHouseholdStyleMap() {
+    var styleMap = {};
+    var selectedLabels = _getSelectedItemNames();
+    var selectedSections = _getSelectedSectionNames();
+
+    $.each(currentSlumComponentData || {}, function (sectionName, sectionItems) {
+        $.each(sectionItems || {}, function (itemName, itemData) {
+            var sectionSelected = selectedSections.indexOf(sectionName) !== -1;
+            var itemSelected = selectedLabels.indexOf(itemName) !== -1;
+
+            if ((!sectionSelected && !itemSelected) || !itemData || itemData.type === "C") {
+                return;
+            }
+
+            $.each(itemData.child || [], function (_, houseNo) {
+                var key = String(houseNo).split(".")[0].trim();
+                if (!key || styleMap[key]) return;
+
+                styleMap[key] = {
+                    name: itemName,
+                    polycolor: itemData.blob && itemData.blob.polycolor ? itemData.blob.polycolor : "#FFA3A3",
+                    linecolor: itemData.blob && itemData.blob.linecolor ? itemData.blob.linecolor : "#ff0000",
+                    linewidth: itemData.blob && itemData.blob.linewidth ? itemData.blob.linewidth : 1,
+                    fillflag: !(itemData.blob && itemData.blob.fillflag === false)
+                };
+            });
+        });
+    });
+
+    return styleMap;
+}
+
+function _cloneShape(shape) {
+    return JSON.parse(JSON.stringify(shape));
+}
+
+function _selectedLayerEntries() {
+    var entries = [];
+    var addedNames = {};
+    var selectedItems = _getSelectedItemNames();
+    var selectedSections = _getSelectedSectionNames();
+
+    $.each(currentSlumComponentData || {}, function (sectionName, sectionItems) {
+        $.each(sectionItems || {}, function (itemName, itemData) {
+            var sectionSelected = selectedSections.indexOf(sectionName) !== -1;
+            var itemSelected = selectedItems.indexOf(itemName) !== -1;
+
+            if ((!sectionSelected && !itemSelected) || !itemData || addedNames[itemName]) {
+                return;
+            }
+
+            addedNames[itemName] = true;
+            entries.push({
+                section_name: sectionName,
+                item_name: itemName,
+                item_data: itemData
+            });
+        });
+    });
+
+    return entries;
+}
+
+function _buildExportSelection() {
+    var selection = [];
+    var selectedEntries = _selectedLayerEntries();
+
+    $.each(selectedEntries, function (_, entry) {
+        var itemData = entry.item_data || {};
+        selection.push({
+            metadata_name: entry.item_name,
+            section_name: entry.section_name,
+            metadata_type: itemData.type || "",
+            style: {
+                name: entry.item_name,
+                polycolor: itemData.blob && itemData.blob.polycolor ? itemData.blob.polycolor : "#FFA3A3",
+                linecolor: itemData.blob && itemData.blob.linecolor ? itemData.blob.linecolor : "#ff0000",
+                linewidth: itemData.blob && itemData.blob.linewidth ? itemData.blob.linewidth : 1,
+                fillflag: !(itemData.blob && itemData.blob.fillflag === false)
+            }
+        });
+    });
+
+    return selection;
+}
+
+function renderKMLDownloadButton() {
+    if (typeof canGISExport !== "undefined" && !canGISExport) {
+        $("#kml-btn-slot").hide().html("");
+        updateActionButtonRow();
+        return;
+    }
+
+    var structureEntry = _findStructureEntry();
+    if (!structureEntry || !structureEntry.child || !structureEntry.child.length) {
+        $("#kml-btn-slot").hide().html("");
+        updateActionButtonRow();
+        return;
+    }
+
+    $("#kml-btn-slot").html(
+        "<div class='gis-action-grid'>" +
+        "<button id='downloadKMLBtn' class='action-btn secondary-action-btn'>Download KML</button>" +
+        "<button id='downloadShapeBtn' class='action-btn secondary-action-btn'>Download SHP</button>" +
+        "</div>" +
+        "<div class='gis-export-options'>" +
+        "<label class='gis-export-checkbox' for='includeCsvData'>" +
+        "<input type='checkbox' id='includeCsvData'>" +
+        "<span class='gis-export-checkbox__text'>" +
+        "<span>Include detailed HH/FF CSV data</span>" +
+        "<span class='gis-export-checkbox__hint'>Contains all household and factsheet data available. This may take longer.</span>" +
+        "</span>" +
+        "</label>" +
+        "</div>"
+    );
+    updateActionButtonRow();
+}
+
+function triggerGISDownload(exportFormat, buttonSelector) {
+    var button = $(buttonSelector);
+    if (!global_slum_id) {
+        alert("Slum is not selected.");
+        return;
+    }
+
+    var originalText = button.text();
+    var selectedFilters = _getSelectedItemNames();
+    var selectedSections = _getSelectedSectionNames();
+    var houseNumbers = _collectSelectedHouseNumbers();
+    var exportSelection = _buildExportSelection();
+    var includeCsv = $("#includeCsvData").is(":checked");
+
+    if (!exportSelection.length) {
+        alert("Please select at least one layer or section to export.");
+        return;
+    }
+
+    button.prop("disabled", true).text(exportFormat === "shp" ? "Preparing ZIP..." : "Preparing KML...");
+
+    fetch("/component/export-filtered-kml/", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+            "X-CSRFToken": csrftoken
+        },
+        body: JSON.stringify({
+            slum_id: global_slum_id,
+            house_numbers: houseNumbers,
+            selected_filters: selectedFilters,
+            selected_sections: selectedSections,
+            export_selection: exportSelection,
+            include_csv: includeCsv,
+            export_format: exportFormat
+        })
+    })
+        .then(function (response) {
+            if (!response.ok) {
+                return response.text().then(function (text) {
+                    var message = "Download failed.";
+                    try {
+                        var data = JSON.parse(text);
+                        message = data.error || message;
+                    } catch (e) {
+                        if (text) {
+                            message = text.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim().slice(0, 220) || message;
+                        }
+                    }
+                    throw new Error(message);
+                });
+            }
+
+            var disposition = response.headers.get("Content-Disposition") || "";
+            var filenameMatch = disposition.match(/filename=\"?([^"]+)\"?/);
+            var filename = filenameMatch ? filenameMatch[1] : "layer-export.zip";
+
+            return response.blob().then(function (blob) {
+                return { blob: blob, filename: filename };
+            });
+        })
+        .then(function (result) {
+            var url = window.URL.createObjectURL(result.blob);
+            var link = document.createElement("a");
+            link.href = url;
+            link.download = result.filename;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            window.URL.revokeObjectURL(url);
+        })
+        .catch(function (error) {
+            alert(error.message || "Download failed.");
+        })
+        .finally(function () {
+            button.prop("disabled", false).text(originalText);
+        });
+}
+
+$(document).off("click.downloadKML", "#downloadKMLBtn")
+    .on("click.downloadKML", "#downloadKMLBtn", function () {
+        triggerGISDownload("kml", "#downloadKMLBtn");
+    });
+
+$(document).off("click.downloadShape", "#downloadShapeBtn")
+    .on("click.downloadShape", "#downloadShapeBtn", function () {
+        triggerGISDownload("shp", "#downloadShapeBtn");
+    });
 
 
 /* ── Sponsor pinned section ──────────────────────────────────────────────── */

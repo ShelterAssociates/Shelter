@@ -80,7 +80,7 @@ var Breadcrumbs = (function () {
 
             // Hide entire right panel UI when leaving slum level
             $("#right-panel").removeClass("active");
-            $("#factsheet-btn-slot").hide().html("");
+            clearActionButtons();
             $("#household-search-wrapper").hide();
             $("#sponsor-pinned").hide();
             $("#compochk_refresh").html("");

@@ -9,12 +9,7 @@
   <meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests" />
 {% endblock %}
 
-{% block content %}
-  <div class="overlay">
-    <div id="loading-img"></div>
-  </div>
-
-  <!-- New Stats Bar -->
+{% block subheader %}
   <div class="dashboard-statsbar new-statsbar">
     <div class="dashboard-statsbar__inner">
       <div class="statsbar-item">
@@ -65,6 +60,12 @@
         </div>
       </div>
     </div>
+  </div>
+{% endblock %}
+
+{% block content %}
+  <div class="overlay">
+    <div id="loading-img"></div>
   </div>
 
   <section class="homepage-layout" id="city-grid">
