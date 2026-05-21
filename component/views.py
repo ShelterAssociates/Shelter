@@ -1036,7 +1036,7 @@ def _send_gis_export_email(email, slum, export_meta, base_url):
         "export_format": export_meta["export_format"].upper(),
         "download_url": download_url,
         "filename": export_meta["filename"],
-        "expiry_note": "This link will be valid until 11:59 PM today (local time). After that it will expire and you must request the export again.",
+        "expiry_note": "This link will remain available until it is removed by our cleanup job. If it no longer works, please request the export again.",
     }
     send_email(
         [email],
@@ -1062,10 +1062,6 @@ def gis_export_download(request, export_id):
         return JsonResponse({"error": "Export not found or expired."}, status=404)
 
     file_path = files[0]
-    generated_date = datetime.fromtimestamp(os.path.getmtime(file_path)).date()
-    current_date = timezone.now().date()
-    if generated_date != current_date:
-        return JsonResponse({"error": "This download link has expired. Please request the export again."}, status=410)
 
     with open(file_path, "rb") as export_file:
         response = HttpResponse(export_file.read(), content_type="application/zip")
@@ -1659,6 +1655,7 @@ def _qml_content_for_merged(layer_styles, geometry_family):
 
 def _build_shapefile_response(export_rows, slum, selected_filters, include_csv=False):
     prefix = "{}-layer-export".format(slugify(slum.name) or "slum")
+    started_at = pytime.perf_counter()
 
     with tempfile.TemporaryDirectory() as tmp_dir:
         shp_dir = os.path.join(tmp_dir, "shp")
@@ -1679,6 +1676,8 @@ def _build_shapefile_response(export_rows, slum, selected_filters, include_csv=F
                     "rows": []
                 }
             layer_groups[key]["rows"].append(row)
+
+        _log_export_timing("shp_layer_groups_built", started_at, layers=len(layer_groups), rows=len(export_rows))
 
         merged_groups = OrderedDict()
         for row in export_rows:
@@ -1747,6 +1746,8 @@ def _build_shapefile_response(export_rows, slum, selected_filters, include_csv=F
             with open(qml_path, "w", encoding="utf-8") as qml_file:
                 qml_file.write(_qml_content_for_layer(layer_name, layer_style, "Point" if family == "point" else "LineString" if family == "line" else "Polygon"))
 
+        _log_export_timing("shp_layer_files_written", started_at, layers=len(layer_groups))
+
         for family, rows in merged_groups.items():
             layer_prefix = "all_layers_merged_{}".format(family)
             layer_geojson = os.path.join(tmp_dir, layer_prefix + ".geojson")
@@ -1799,6 +1800,8 @@ def _build_shapefile_response(export_rows, slum, selected_filters, include_csv=F
             with open(qml_path, "w", encoding="utf-8") as qml_file:
                 qml_file.write(_qml_content_for_merged(merged_layer_styles, family))
 
+        _log_export_timing("shp_merged_layer_files_written", started_at, layers=len(merged_groups))
+
         summary_csv_rows = _build_filter_summary_csv_rows(export_rows)
         summary_csv_path = os.path.join(shp_dir, prefix + "_filter_summary.csv")
         if summary_csv_rows:
@@ -1807,6 +1810,7 @@ def _build_shapefile_response(export_rows, slum, selected_filters, include_csv=F
                 csv_file.write(",".join(_csv_escape(col) for col in summary_columns) + "\n")
                 for row in summary_csv_rows:
                     csv_file.write(",".join(_csv_escape(row.get(col, "")) for col in summary_columns) + "\n")
+        _log_export_timing("shp_summary_csv_written", started_at, summary_rows=len(summary_csv_rows))
 
         csv_path = os.path.join(shp_dir, prefix + "_detailed_hh_ff_data.csv")
         if include_csv and csv_rows:
@@ -1815,6 +1819,7 @@ def _build_shapefile_response(export_rows, slum, selected_filters, include_csv=F
                 csv_file.write(",".join(_csv_escape(col) for col in csv_columns) + "\n")
                 for row in csv_rows:
                     csv_file.write(",".join(_csv_escape(row.get(col, "")) for col in csv_columns) + "\n")
+        _log_export_timing("shp_detailed_csv_written", started_at, csv_rows=len(csv_rows), include_csv=include_csv)
 
         zip_path = os.path.join(tmp_dir, prefix + ".zip")
         with zipfile.ZipFile(zip_path, "w", zipfile.ZIP_DEFLATED) as zip_file:
@@ -1824,9 +1829,12 @@ def _build_shapefile_response(export_rows, slum, selected_filters, include_csv=F
                     arcname = os.path.relpath(full_path, shp_dir)
                     zip_file.write(full_path, arcname=arcname)
 
+        _log_export_timing("shp_zip_archive_created", started_at)
+
         with open(zip_path, "rb") as zip_file:
             response = HttpResponse(zip_file.read(), content_type="application/zip")
             response["Content-Disposition"] = 'attachment; filename="{}"'.format(prefix + ".zip")
+            _log_export_timing("shp_zip_response_ready", started_at)
             return response
 
 
@@ -1877,12 +1885,43 @@ def export_filtered_kml(request):
 
     if email_export:
         base_url = request.build_absolute_uri("/").rstrip("/")
-        worker = threading.Thread(
-            target=_run_large_gis_export_job,
-            args=(request.user.id, slum_id, email_address, export_format, include_csv, base_url),
-            daemon=False
-        )
+        def _worker_wrapper():
+            logger.info(
+                "GIS export worker thread entered: slum_id=%s email=%s export_format=%s",
+                slum_id,
+                email_address,
+                export_format,
+            )
+            print(
+                "GIS export worker thread entered: slum_id={} email={} export_format={}".format(
+                    slum_id,
+                    email_address,
+                    export_format,
+                ),
+                flush=True,
+            )
+            try:
+                _run_large_gis_export_job(request.user.id, slum_id, email_address, export_format, include_csv, base_url)
+            finally:
+                logger.info(
+                    "GIS export worker thread exited: slum_id=%s email=%s export_format=%s",
+                    slum_id,
+                    email_address,
+                    export_format,
+                )
+                print(
+                    "GIS export worker thread exited: slum_id={} email={} export_format={}".format(
+                        slum_id,
+                        email_address,
+                        export_format,
+                    ),
+                    flush=True,
+                )
+
+        worker = threading.Thread(target=_worker_wrapper, daemon=False)
         worker.start()
+        logger.info("GIS export worker thread started: name=%s alive=%s", worker.name, worker.is_alive())
+        print("GIS export worker thread started: name={} alive={}".format(worker.name, worker.is_alive()), flush=True)
         _log_export_timing("email_export_queued", started_at, slum_id=slum_id, email=email_address, export_format=export_format)
         return JsonResponse({
             "status": "queued",
