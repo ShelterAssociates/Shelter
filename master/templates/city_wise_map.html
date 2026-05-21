@@ -8,6 +8,7 @@
   <link rel="stylesheet" type="text/css" href="{% static 'css/leaflet.css' %}" />
   <script>
     const csrftoken = '{{ csrf_token }}'
+    const canGISExport = {% if user.is_superuser or user.username == "GIS" %}true{% else %}false{% endif %};
   </script>
   <script src="{% static 'js/jquery.min.js' %}"></script>
   <script src="{% static 'js/master_map_boundaries.js' %}"></script>
@@ -133,11 +134,76 @@
       border-color: #bdc3c7;
     }
     
-    /* ── FACTSHEET BUTTON SLOT ───────────────────────────── */
-    #factsheet-btn-slot {
+    /* ── ACTION BUTTON ROW ───────────────────────────────── */
+    #action-btn-row {
       display: none;
       flex-shrink: 0;
       padding: 4px 8px 0;
+      gap: 8px;
+      box-sizing: border-box;
+    }
+    #action-btn-row {
+      flex-direction: column;
+    }
+    #factsheet-btn-slot,
+    #kml-btn-slot {
+      display: none;
+      width: 100%;
+      box-sizing: border-box;
+    }
+    .gis-action-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 8px;
+      width: 100%;
+      align-items: stretch;
+    }
+    .gis-export-options {
+      margin-top: 8px;
+      padding: 8px 10px;
+      background: #f7fbff;
+      border: 1px solid #d7e5f3;
+      border-radius: 6px;
+      width: 100%;
+      box-sizing: border-box;
+    }
+    .gis-export-checkbox {
+      display: flex;
+      align-items: flex-start;
+      gap: 8px;
+      margin: 0;
+      color: #1f4e79;
+      font-size: 12px;
+      line-height: 1.35;
+      font-weight: 600;
+    }
+    .gis-export-checkbox input {
+      margin-top: 1px;
+      flex-shrink: 0;
+      width: 14px;
+      height: 14px;
+      accent-color: #1f5f7a;
+    }
+    .gis-export-checkbox__text {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+    .gis-export-checkbox__hint {
+      font-size: 11px;
+      line-height: 1.3;
+      color: #5d7288;
+      font-weight: 500;
+    }
+    .secondary-action-btn {
+      background: #1f5f7a;
+      box-shadow: 0 4px 12px rgba(31, 95, 122, 0.28);
+      margin-top: 0;
+      font-size: 12px;
+      padding: 7px 10px;
+      min-height: 42px;
+      white-space: normal;
+      line-height: 1.25;
     }
     
     /* ── HOUSEHOLD SEARCH ────────────────────────────────── */
@@ -743,8 +809,11 @@
           <!-- Refresh button -->
           <div id="compochk_refresh" style="flex-shrink:0;"></div>
 
-          <!-- Factsheet button (same style as timeline toggle) -->
-          <div id="factsheet-btn-slot"></div>
+          <!-- Factsheet / KML action buttons -->
+          <div id="action-btn-row">
+            <div id="factsheet-btn-slot"></div>
+            <div id="kml-btn-slot"></div>
+          </div>
 
           <!-- Household search -->
           <div id="household-search-wrapper">
