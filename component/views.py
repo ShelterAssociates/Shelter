@@ -29,6 +29,7 @@ from graphs.sync_avni_data import *
 from utils.utils_permission import apply_permissions_ajax, access_right, deco_rhs_permission
 from django.core.exceptions import PermissionDenied
 from django.db.models import F
+from django.db.models import Q
 from django.db.models.functions import TruncMonth
 from django.views.decorators.http import require_POST
 from django.utils.text import slugify
@@ -909,6 +910,71 @@ def _build_export_rows_from_layers(layers, slum, selected_filters):
     return export_rows
 
 
+def _build_component_data_from_db(slum, slum_id, export_selection, selected_sections):
+    selected_sections = {
+        str(section_name).strip()
+        for section_name in (selected_sections or [])
+        if str(section_name).strip()
+    }
+    selected_names = {
+        (item.get("metadata_name") or item.get("item_name") or "").strip()
+        for item in (export_selection or [])
+        if (item.get("metadata_name") or item.get("item_name") or "").strip()
+    }
+    query_names = set(selected_names)
+
+    if slum_id in ["1971", "1972"] and "Town boundary" in query_names:
+        query_names.add("Slum boundary")
+
+    if not selected_sections and not selected_names:
+        return OrderedDict()
+
+    metadata_qs = Metadata.objects.filter(visible=True)
+    if slum_id in slum_list:
+        metadata_qs = metadata_qs.exclude(name="Shops")
+    else:
+        metadata_qs = metadata_qs.exclude(name="Shop")
+
+    metadata_qs = metadata_qs.filter(
+        Q(section__name__in=selected_sections) | Q(name__in=query_names)
+    ).select_related("section").order_by("section__order", "order")
+
+    components = (
+        slum.components.filter(metadata__in=metadata_qs)
+        .select_related("metadata", "metadata__section")
+        .order_by("metadata__section__order", "metadata__order", "housenumber")
+    )
+
+    component_data = OrderedDict()
+    for component in components:
+        metadata = component.metadata
+        section_name = metadata.section.name
+        item_name = "Town boundary" if metadata.name == "Slum boundary" and slum_id in ["1971", "1972"] else metadata.name
+
+        section_bucket = component_data.setdefault(section_name, OrderedDict())
+        item = section_bucket.get(item_name)
+        if item is None:
+            item = {
+                "name": item_name,
+                "level": metadata.level,
+                "section": section_name,
+                "section_order": metadata.section.order,
+                "type": metadata.type,
+                "order": metadata.order,
+                "blob": metadata.blob,
+                "icon": str(metadata.icon.url) if metadata.icon else "",
+                "child": [],
+            }
+            section_bucket[item_name] = item
+
+        item["child"].append({
+            "housenumber": component.housenumber,
+            "shape": json.loads(component.shape.json),
+        })
+
+    return component_data
+
+
 def _build_export_rows_from_component_selection(component_data, slum, selected_filters, selected_sections, export_selection):
     selected_sections = set(selected_sections or [])
     selected_names = {
@@ -1632,8 +1698,7 @@ def export_filtered_kml(request):
     slum = get_object_or_404(Slum, pk=slum_id)
 
     if export_selection:
-        component_response = get_component(request, str(slum_id))
-        component_data = json.loads(component_response.content.decode("utf-8"))
+        component_data = _build_component_data_from_db(slum, str(slum_id), export_selection, selected_sections)
         export_rows = _build_export_rows_from_component_selection(
             component_data=component_data,
             slum=slum,
