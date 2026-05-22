@@ -1038,6 +1038,24 @@ def _send_gis_export_email(email, slum, export_meta, base_url):
         "filename": export_meta["filename"],
         "expiry_note": "This link will remain available until it is removed by our cleanup job. If it no longer works, please request the export again.",
     }
+    logger.info(
+        "GIS export email preparing: slum_id=%s email=%s export_format=%s export_id=%s download_url=%s",
+        slum.pk,
+        email,
+        export_meta["export_format"],
+        export_meta["export_id"],
+        download_url,
+    )
+    print(
+        "GIS export email preparing: slum_id={} email={} export_format={} export_id={} download_url={}".format(
+            slum.pk,
+            email,
+            export_meta["export_format"],
+            export_meta["export_id"],
+            download_url,
+        ),
+        flush=True,
+    )
     send_email(
         [email],
         "Your Shelter GIS export is ready",
@@ -1073,12 +1091,31 @@ def _run_large_gis_export_job(user_id, slum_id, email, export_format, include_cs
     close_old_connections()
     try:
         logger.info("GIS export worker started: slum_id=%s email=%s export_format=%s include_csv=%s", slum_id, email, export_format, include_csv)
+        print(
+            "GIS export worker started: slum_id={} email={} export_format={} include_csv={}".format(
+                slum_id,
+                email,
+                export_format,
+                include_csv,
+            ),
+            flush=True,
+        )
         user = User.objects.get(pk=user_id)
+        logger.info("GIS export worker loaded user: slum_id=%s user_id=%s email=%s export_format=%s", slum_id, user_id, email, export_format)
         request_stub = SimpleNamespace(user=user)
         slum = Slum.objects.get(pk=slum_id)
+        logger.info("GIS export worker loaded slum: slum_id=%s email=%s export_format=%s", slum_id, email, export_format)
 
+        logger.info("GIS export worker loading component data: slum_id=%s email=%s export_format=%s", slum_id, email, export_format)
         component_response = get_component(request_stub, str(slum_id))
         component_data = json.loads(component_response.content.decode("utf-8"))
+        logger.info(
+            "GIS export worker component data loaded: slum_id=%s email=%s export_format=%s sections=%s",
+            slum_id,
+            email,
+            export_format,
+            len(component_data),
+        )
 
         selected_sections = list(component_data.keys())
         export_selection = []
@@ -1093,6 +1130,14 @@ def _run_large_gis_export_job(user_id, slum_id, email, export_format, include_cs
                     "style": _export_style_for_item(item_data, item_name)
                 })
 
+        logger.info(
+            "GIS export worker building export rows: slum_id=%s email=%s export_format=%s sections=%s selection=%s",
+            slum_id,
+            email,
+            export_format,
+            len(selected_sections),
+            len(export_selection),
+        )
         export_rows = _build_export_rows_from_component_selection(
             component_data=component_data,
             slum=slum,
@@ -1100,16 +1145,52 @@ def _run_large_gis_export_job(user_id, slum_id, email, export_format, include_cs
             selected_sections=selected_sections,
             export_selection=export_selection
         )
+        logger.info(
+            "GIS export worker export rows ready: slum_id=%s email=%s export_format=%s rows=%s",
+            slum_id,
+            email,
+            export_format,
+            len(export_rows),
+        )
 
+        logger.info("GIS export worker building response: slum_id=%s email=%s export_format=%s", slum_id, email, export_format)
         if export_format == "shp":
             response = _build_shapefile_response(export_rows, slum, [], include_csv=include_csv)
         else:
             response = _build_kml_zip_response(export_rows, slum, [], include_csv=include_csv)
+        logger.info(
+            "GIS export worker response built: slum_id=%s email=%s export_format=%s bytes=%s",
+            slum_id,
+            email,
+            export_format,
+            len(response.content),
+        )
 
+        logger.info("GIS export worker saving response: slum_id=%s email=%s export_format=%s", slum_id, email, export_format)
         export_meta = _save_export_response_to_media(response, slum, export_format)
         logger.info("GIS export file saved: slum_id=%s email=%s path=%s size=%s", slum_id, email, export_meta["relative_path"], export_meta["size"])
+        print(
+            "GIS export file saved: slum_id={} email={} export_format={} path={} size={}".format(
+                slum_id,
+                email,
+                export_format,
+                export_meta["relative_path"],
+                export_meta["size"],
+            ),
+            flush=True,
+        )
+        logger.info("GIS export worker sending email: slum_id=%s email=%s export_format=%s", slum_id, email, export_format)
         _send_gis_export_email(email, slum, export_meta, base_url)
         logger.info("GIS export email sent: slum_id=%s email=%s file=%s", slum_id, email, export_meta["relative_path"])
+        print(
+            "GIS export email sent: slum_id={} email={} export_format={} file={}".format(
+                slum_id,
+                email,
+                export_format,
+                export_meta["relative_path"],
+            ),
+            flush=True,
+        )
     except Exception:
         logger.exception("GIS export email job failed: slum_id=%s email=%s", slum_id, email)
     finally:
@@ -1421,7 +1502,10 @@ def _build_kml_zip_response(export_rows, slum, selected_filters, include_csv=Fal
             qml_file.write(_qml_content_for_merged(merged_layer_styles, "polygon"))
 
         for layer_name, rows in layer_groups.items():
-            geometry_type = rows[0].get("geometry", {}).get("type", "Polygon") if rows else "Polygon"
+            geometry = rows[0].get("geometry") if rows else None
+            if geometry is None and rows and rows[0].get("component") is not None:
+                geometry = json.loads(rows[0]["component"].shape.geojson)
+            geometry_type = geometry.get("type", "Polygon") if geometry else "Polygon"
             with open(os.path.join(qml_dir, "{}.qml".format(_safe_file_name(layer_name))), "w", encoding="utf-8") as qml_file:
                 qml_file.write(_qml_content_for_layer(layer_name, rows[0]["style"], geometry_type))
         _log_export_timing("kml_zip_qml_written", started_at, layers=len(layer_groups))
@@ -1698,53 +1782,76 @@ def _build_shapefile_response(export_rows, slum, selected_filters, include_csv=F
             features = []
             layer_style = rows[0]["style"] if rows else {}
 
-            for row in rows:
-                feature_properties = dict(row["extended_data"])
-                feature_properties["style_name"] = row["style"].get("name", "")
-                feature_properties["polycolor"] = row["style"].get("polycolor", "")
-                feature_properties["linecolor"] = row["style"].get("linecolor", "")
-                feature_properties["section_name"] = row.get("section_name", "")
-                feature_properties["META_NAME"] = row.get("layer_name", "")
-                feature_properties["P_COLOR"] = _normalize_hex_color(row["style"].get("polycolor", "#de81ff"))
-                feature_properties["L_COLOR"] = _normalize_hex_color(row["style"].get("linecolor", "#000000"))
-                feature_properties["L_WIDTH"] = str(row["style"].get("linewidth") or 0.25)
+            try:
+                _log_export_timing("shp_layer_start", started_at, layer=layer_name, rows=len(rows), family=family)
 
-                geometry = row.get("geometry")
-                if geometry is None and row.get("component") is not None:
-                    geometry = json.loads(row["component"].shape.geojson)
+                for row in rows:
+                    feature_properties = dict(row["extended_data"])
+                    feature_style = row.get("style") or {}
+                    feature_properties["style_name"] = feature_style.get("name", "")
+                    feature_properties["polycolor"] = feature_style.get("polycolor", "")
+                    feature_properties["linecolor"] = feature_style.get("linecolor", "")
+                    feature_properties["section_name"] = row.get("section_name", "")
+                    feature_properties["META_NAME"] = row.get("layer_name", "")
+                    feature_properties["P_COLOR"] = _normalize_hex_color(feature_style.get("polycolor", "#de81ff"))
+                    feature_properties["L_COLOR"] = _normalize_hex_color(feature_style.get("linecolor", "#000000"))
+                    feature_properties["L_WIDTH"] = str(feature_style.get("linewidth") or 0.25)
 
-                features.append({
-                    "type": "Feature",
-                    "geometry": geometry,
-                    "properties": _shape_safe_properties(feature_properties)
-                })
+                    geometry = row.get("geometry")
+                    if geometry is None and row.get("component") is not None:
+                        geometry = json.loads(row["component"].shape.geojson)
 
-                csv_rows.append(feature_properties)
+                    features.append({
+                        "type": "Feature",
+                        "geometry": geometry,
+                        "properties": _shape_safe_properties(feature_properties)
+                    })
 
-            with open(layer_geojson, "w", encoding="utf-8") as geojson_file:
-                json.dump({
-                    "type": "FeatureCollection",
-                    "features": features
-                }, geojson_file, ensure_ascii=False)
+                    csv_rows.append(feature_properties)
 
-            layer_dir = os.path.join(shp_dir, layer_prefix)
-            os.makedirs(layer_dir, exist_ok=True)
-            output_shp = os.path.join(layer_dir, layer_prefix + ".shp")
-            subprocess.run(
-                ["ogr2ogr", "-f", "ESRI Shapefile", output_shp, layer_geojson],
-                check=True,
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE
-            )
+                with open(layer_geojson, "w", encoding="utf-8") as geojson_file:
+                    json.dump({
+                        "type": "FeatureCollection",
+                        "features": features
+                    }, geojson_file, ensure_ascii=False)
 
-            sld_path = os.path.join(layer_dir, layer_prefix + ".sld")
-            sld_content = _sld_content_for_layer(layer_name, layer_style, "Point" if family == "point" else "LineString" if family == "line" else "Polygon")
-            with open(sld_path, "w", encoding="utf-8") as sld_file:
-                sld_file.write(sld_content)
+                layer_dir = os.path.join(shp_dir, layer_prefix)
+                os.makedirs(layer_dir, exist_ok=True)
+                output_shp = os.path.join(layer_dir, layer_prefix + ".shp")
+                try:
+                    completed = subprocess.run(
+                        ["ogr2ogr", "-f", "ESRI Shapefile", output_shp, layer_geojson],
+                        check=True,
+                        stdout=subprocess.PIPE,
+                        stderr=subprocess.PIPE,
+                        universal_newlines=True
+                    )
+                    if completed.stdout:
+                        logger.info("ogr2ogr stdout for %s: %s", layer_name, completed.stdout)
+                    if completed.stderr:
+                        logger.info("ogr2ogr stderr for %s: %s", layer_name, completed.stderr)
+                except subprocess.CalledProcessError as exc:
+                    logger.exception(
+                        "ogr2ogr failed for SHP layer=%s returncode=%s stderr=%s",
+                        layer_name,
+                        exc.returncode,
+                        exc.stderr,
+                    )
+                    raise
 
-            qml_path = os.path.join(layer_dir, layer_prefix + ".qml")
-            with open(qml_path, "w", encoding="utf-8") as qml_file:
-                qml_file.write(_qml_content_for_layer(layer_name, layer_style, "Point" if family == "point" else "LineString" if family == "line" else "Polygon"))
+                sld_path = os.path.join(layer_dir, layer_prefix + ".sld")
+                sld_content = _sld_content_for_layer(layer_name, layer_style, "Point" if family == "point" else "LineString" if family == "line" else "Polygon")
+                with open(sld_path, "w", encoding="utf-8") as sld_file:
+                    sld_file.write(sld_content)
+
+                qml_path = os.path.join(layer_dir, layer_prefix + ".qml")
+                with open(qml_path, "w", encoding="utf-8") as qml_file:
+                    qml_file.write(_qml_content_for_layer(layer_name, layer_style, "Point" if family == "point" else "LineString" if family == "line" else "Polygon"))
+
+                _log_export_timing("shp_layer_done", started_at, layer=layer_name, rows=len(rows), family=family)
+            except Exception:
+                logger.exception("Failed while building SHP layer: layer=%s family=%s rows=%s", layer_name, family, len(rows))
+                raise
 
         _log_export_timing("shp_layer_files_written", started_at, layers=len(layer_groups))
 
@@ -1754,51 +1861,74 @@ def _build_shapefile_response(export_rows, slum, selected_filters, include_csv=F
             features = []
             merged_layer_styles = OrderedDict()
 
-            for row in rows:
-                feature_properties = dict(row["extended_data"])
-                feature_properties["style_name"] = row["style"].get("name", "")
-                feature_properties["polycolor"] = row["style"].get("polycolor", "")
-                feature_properties["linecolor"] = row["style"].get("linecolor", "")
-                feature_properties["section_name"] = row.get("section_name", "")
-                feature_properties["META_NAME"] = row.get("layer_name", "")
-                feature_properties["P_COLOR"] = _normalize_hex_color(row["style"].get("polycolor", "#de81ff"))
-                feature_properties["L_COLOR"] = _normalize_hex_color(row["style"].get("linecolor", "#000000"))
-                feature_properties["L_WIDTH"] = str(row["style"].get("linewidth") or 0.25)
+            try:
+                _log_export_timing("shp_merged_layer_start", started_at, family=family, rows=len(rows))
 
-                geometry = row.get("geometry")
-                if geometry is None and row.get("component") is not None:
-                    geometry = json.loads(row["component"].shape.geojson)
+                for row in rows:
+                    feature_style = row.get("style") or {}
+                    feature_properties = dict(row["extended_data"])
+                    feature_properties["style_name"] = feature_style.get("name", "")
+                    feature_properties["polycolor"] = feature_style.get("polycolor", "")
+                    feature_properties["linecolor"] = feature_style.get("linecolor", "")
+                    feature_properties["section_name"] = row.get("section_name", "")
+                    feature_properties["META_NAME"] = row.get("layer_name", "")
+                    feature_properties["P_COLOR"] = _normalize_hex_color(feature_style.get("polycolor", "#de81ff"))
+                    feature_properties["L_COLOR"] = _normalize_hex_color(feature_style.get("linecolor", "#000000"))
+                    feature_properties["L_WIDTH"] = str(feature_style.get("linewidth") or 0.25)
 
-                features.append({
-                    "type": "Feature",
-                    "geometry": geometry,
-                    "properties": _shape_safe_properties(feature_properties)
-                })
-                merged_layer_styles[row.get("layer_name", "")] = row["style"]
+                    geometry = row.get("geometry")
+                    if geometry is None and row.get("component") is not None:
+                        geometry = json.loads(row["component"].shape.geojson)
 
-            with open(layer_geojson, "w", encoding="utf-8") as geojson_file:
-                json.dump({
-                    "type": "FeatureCollection",
-                    "features": features
-                }, geojson_file, ensure_ascii=False)
+                    features.append({
+                        "type": "Feature",
+                        "geometry": geometry,
+                        "properties": _shape_safe_properties(feature_properties)
+                    })
+                    merged_layer_styles[row.get("layer_name", "")] = feature_style
 
-            layer_dir = os.path.join(shp_dir, layer_prefix)
-            os.makedirs(layer_dir, exist_ok=True)
-            output_shp = os.path.join(layer_dir, layer_prefix + ".shp")
-            subprocess.run(
-                ["ogr2ogr", "-f", "ESRI Shapefile", output_shp, layer_geojson],
-                check=True,
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE
-            )
+                with open(layer_geojson, "w", encoding="utf-8") as geojson_file:
+                    json.dump({
+                        "type": "FeatureCollection",
+                        "features": features
+                    }, geojson_file, ensure_ascii=False)
 
-            sld_path = os.path.join(layer_dir, layer_prefix + ".sld")
-            with open(sld_path, "w", encoding="utf-8") as sld_file:
-                sld_file.write(_sld_content_for_merged(merged_layer_styles, "Point" if family == "point" else "LineString" if family == "line" else "Polygon"))
+                layer_dir = os.path.join(shp_dir, layer_prefix)
+                os.makedirs(layer_dir, exist_ok=True)
+                output_shp = os.path.join(layer_dir, layer_prefix + ".shp")
+                try:
+                    completed = subprocess.run(
+                        ["ogr2ogr", "-f", "ESRI Shapefile", output_shp, layer_geojson],
+                        check=True,
+                        stdout=subprocess.PIPE,
+                        stderr=subprocess.PIPE,
+                        universal_newlines=True
+                    )
+                    if completed.stdout:
+                        logger.info("ogr2ogr stdout for merged %s: %s", family, completed.stdout)
+                    if completed.stderr:
+                        logger.info("ogr2ogr stderr for merged %s: %s", family, completed.stderr)
+                except subprocess.CalledProcessError as exc:
+                    logger.exception(
+                        "ogr2ogr failed for merged SHP family=%s returncode=%s stderr=%s",
+                        family,
+                        exc.returncode,
+                        exc.stderr,
+                    )
+                    raise
 
-            qml_path = os.path.join(layer_dir, layer_prefix + ".qml")
-            with open(qml_path, "w", encoding="utf-8") as qml_file:
-                qml_file.write(_qml_content_for_merged(merged_layer_styles, family))
+                sld_path = os.path.join(layer_dir, layer_prefix + ".sld")
+                with open(sld_path, "w", encoding="utf-8") as sld_file:
+                    sld_file.write(_sld_content_for_merged(merged_layer_styles, "Point" if family == "point" else "LineString" if family == "line" else "Polygon"))
+
+                qml_path = os.path.join(layer_dir, layer_prefix + ".qml")
+                with open(qml_path, "w", encoding="utf-8") as qml_file:
+                    qml_file.write(_qml_content_for_merged(merged_layer_styles, family))
+
+                _log_export_timing("shp_merged_layer_done", started_at, family=family, rows=len(rows))
+            except Exception:
+                logger.exception("Failed while building merged SHP layer: family=%s rows=%s", family, len(rows))
+                raise
 
         _log_export_timing("shp_merged_layer_files_written", started_at, layers=len(merged_groups))
 
