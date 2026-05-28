@@ -4,6 +4,7 @@ from django.test.utils import override_settings
 
 from helpers.services.google_drive import (
     BinaryAESCipher,
+    build_drive_path,
     build_upload_file_name,
     clean_drive_name,
     get_slum_hierarchy,
@@ -36,16 +37,44 @@ class PhotoUploadHelpersTests(SimpleTestCase):
         self.assertNotEqual(encrypted, raw)
         self.assertEqual(cipher.decrypt_bytes(encrypted), raw)
 
-    def test_get_upload_context_uses_event_name_for_events(self):
-        upload_context = get_upload_context("events", "Health Camp 2026")
-        self.assertEqual(upload_context["category_key"], "events")
-        self.assertEqual(upload_context["category_folder"], "Health Camp 2026")
+    def test_get_upload_context_uses_path_nodes(self):
+        root = type("Node", (), {"name": "Activity"})()
+        leaf = type("Node", (), {"name": "Festival"})()
 
-    def test_get_upload_context_uses_label_for_regular_categories(self):
-        upload_context = get_upload_context("mhm")
-        self.assertEqual(upload_context["category_label"], "MHM")
-        self.assertEqual(upload_context["category_folder"], "MHM")
+        class PhotoType:
+            name = "Festival"
 
-    def test_build_upload_file_name_uses_today_and_sequence(self):
-        generated_name = build_upload_file_name(2, "photo.PNG")
-        self.assertRegex(generated_name, r"^\d{4}-\d{2}-\d{2}_2\.png$")
+            def path_nodes(self):
+                return [root, leaf]
+
+        upload_context = get_upload_context(PhotoType())
+        self.assertEqual(upload_context["category_label"], "Festival")
+        self.assertEqual(upload_context["category_path"], ["Activity", "Festival"])
+
+    def test_build_upload_file_name_uses_uuid_and_preserves_extension(self):
+        generated_name = build_upload_file_name("photo.PNG")
+        self.assertRegex(generated_name, r"^[0-9a-f-]{36}\.png$")
+
+    def test_build_drive_path_supports_normal_city_level_and_custom_uploads(self):
+        city_reference = type("CityReference", (), {"city_name": "Pune"})()
+        city = type("City", (), {"name": city_reference})()
+        admin_ward = type("AdministrativeWard", (), {"name": "A12", "city": city})()
+        electoral_ward = type("ElectoralWard", (), {"name": "E5", "administrative_ward": admin_ward})()
+        slum = type("Slum", (), {"name": "GaneshNagar", "electoral_ward": electoral_ward})()
+
+        class PhotoType:
+            name = "Festival"
+
+            def path_nodes(self):
+                return [type("Node", (), {"name": "Activity"})(), type("Node", (), {"name": "Festival"})()]
+
+        photo_type = PhotoType()
+
+        normal = build_drive_path("2026-05-28", photo_type_item=photo_type, slum=slum)
+        self.assertEqual(normal["drive_path_parts"], ["Pune", "GaneshNagar_A12_E5", "Activity", "Festival", "2026-05-28"])
+
+        city_level = build_drive_path("2026-05-28", photo_type_item=photo_type, city=city, is_city_level=True)
+        self.assertEqual(city_level["drive_path_parts"], ["Pune", "Activity", "Festival", "2026-05-28"])
+
+        custom = build_drive_path("2026-05-28", is_other_upload=True, custom_folder_name="FloodReliefPhotos")
+        self.assertEqual(custom["drive_path_parts"], ["FloodReliefPhotos", "2026-05-28"])

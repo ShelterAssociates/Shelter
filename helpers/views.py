@@ -2,7 +2,7 @@ from django.shortcuts import render
 import hashlib
 import json
 import random
-from datetime import datetime, timedelta
+from datetime import date, datetime, timedelta
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import ImproperlyConfigured
 from django.core.exceptions import ObjectDoesNotExist
@@ -140,7 +140,10 @@ def verify_otp(request):
 
 @staff_member_required
 def photo_upload_page(request):
-	return render(request, "helpers/photo_upload.html", {"is_superuser": request.user.is_superuser})
+	return render(request, "helpers/photo_upload.html", {
+		"is_superuser": request.user.is_superuser,
+		"default_photo_date": date.today().isoformat(),
+	})
 
 
 @staff_member_required
@@ -286,22 +289,31 @@ def sponsor_project_list(request):
 def upload_slum_photos_to_drive(request):
     
 	if request.method == "GET":
-		return render(request, "helpers/photo_upload.html")
+		return render(request, "helpers/photo_upload.html", {
+			"default_photo_date": date.today().isoformat(),
+			"is_superuser": request.user.is_superuser,
+		})
 
 	if request.method != "POST":
 		return JsonResponse({"status": "error", "message": "Only GET and POST requests are allowed."}, status=405)
 
 	slum_id = request.POST.get("slum_id")
+	city_id = request.POST.get("city_id")
 	photo_type_item_id = request.POST.get("photo_type_item_id")
 	sponsor_project_id = request.POST.get("sponsor_project_id")
+	photo_date = request.POST.get("photo_date")
+	is_city_level = str(request.POST.get("is_city_level") or "").lower() in ("1", "true", "on", "yes")
+	is_other_upload = str(request.POST.get("is_other_upload") or "").lower() in ("1", "true", "on", "yes")
+	custom_folder_name = (request.POST.get("custom_folder_name") or "").strip()
+	if not is_city_level and city_id and not slum_id and not custom_folder_name:
+		is_city_level = True
+	if not is_other_upload and custom_folder_name and not slum_id and not city_id:
+		is_other_upload = True
 	uploaded_files = request.FILES.getlist("photos")
 	if not uploaded_files:
 		single_file = request.FILES.get("photo")
 		if single_file:
 			uploaded_files = [single_file]
-
-	if not slum_id:
-		return JsonResponse({"status": "error", "message": "slum_id is required."}, status=400)
 
 	if not uploaded_files:
 		return JsonResponse({"status": "error", "message": "At least one photo is required."}, status=400)
@@ -309,23 +321,50 @@ def upload_slum_photos_to_drive(request):
 	if len(uploaded_files) > 5:
 		return JsonResponse({"status": "error", "message": "You can upload a maximum of 5 photos at a time."}, status=400)
 
-	if not photo_type_item_id:
-		return JsonResponse({"status": "error", "message": "Photo type is required."}, status=400)
+	if is_city_level and is_other_upload:
+		return JsonResponse({"status": "error", "message": "City level upload and other upload cannot both be enabled."}, status=400)
 
-	photo_type_item = PhotoTypeItem.objects.filter(id=photo_type_item_id, is_visible=True).select_related("parent").first()
-	if not photo_type_item:
-		return JsonResponse({"status": "error", "message": "Please select a valid visible category."}, status=400)
-	if photo_type_item.has_visible_children():
-		return JsonResponse({"status": "error", "message": "Please choose the most specific sub-category."}, status=400)
+	if not is_city_level and not is_other_upload and not slum_id:
+		return JsonResponse({"status": "error", "message": "slum_id is required."}, status=400)
 
-	photo_type_path = photo_type_item.full_path()
+	if not photo_date:
+		return JsonResponse({"status": "error", "message": "Photo date is required."}, status=400)
+	try:
+		selected_photo_date = datetime.strptime(photo_date, "%Y-%m-%d").date()
+	except ValueError:
+		return JsonResponse({"status": "error", "message": "Photo date must be in YYYY-MM-DD format."}, status=400)
+	if selected_photo_date > date.today():
+		return JsonResponse({"status": "error", "message": "Photo date cannot be in the future."}, status=400)
+
+	photo_type_item = None
+	if not is_other_upload:
+		if not photo_type_item_id:
+			return JsonResponse({"status": "error", "message": "Photo type is required."}, status=400)
+
+		photo_type_item = PhotoTypeItem.objects.filter(id=photo_type_item_id, is_visible=True).select_related("parent").first()
+		if not photo_type_item:
+			return JsonResponse({"status": "error", "message": "Please select a valid visible category."}, status=400)
+		if photo_type_item.has_visible_children():
+			return JsonResponse({"status": "error", "message": "Please choose the most specific sub-category."}, status=400)
+		if is_city_level and not city_id:
+			return JsonResponse({"status": "error", "message": "City is required for city level upload."}, status=400)
+	else:
+		if not custom_folder_name:
+			return JsonResponse({"status": "error", "message": "Custom folder name is required for other upload."}, status=400)
+
+	photo_type_path = photo_type_item.full_path() if photo_type_item else ""
 
 	try:
 		result = upload_photos_to_slum_drive_folder(
-			slum_id,
-			uploaded_files,
+			slum_id=slum_id if not is_city_level and not is_other_upload else None,
+			uploaded_files=uploaded_files,
 			photo_type_item=photo_type_item,
 			sponsor_project_id=sponsor_project_id,
+			photo_date=photo_date,
+			is_city_level=is_city_level,
+			is_other_upload=is_other_upload,
+			custom_folder_name=custom_folder_name,
+			city_id=city_id if is_city_level else None,
 		)
 	except ObjectDoesNotExist:
 		return JsonResponse({"status": "error", "message": "Slum not found."}, status=404)
@@ -338,7 +377,7 @@ def upload_slum_photos_to_drive(request):
 		)
 
 	slum = Slum.objects.filter(id=slum_id).first()
-	if not slum:
+	if not slum and not is_city_level and not is_other_upload:
 		return JsonResponse({"status": "error", "message": "Slum not found."}, status=404)
 	hierarchy = result.get("hierarchy") or []
 	hierarchy_path = " / ".join([item for item in hierarchy if item])
@@ -346,12 +385,16 @@ def upload_slum_photos_to_drive(request):
 	upload_batch = SlumPhotoUpload.objects.create(
 		slum=slum,
 		photo_type_item=photo_type_item,
-		photo_type_item_name=photo_type_item.name,
+		photo_type_item_name=photo_type_item.name if photo_type_item else "",
 		photo_type_path=photo_type_path,
 		sponsor_project_id=sponsor_project_id or None,
 		event_name="",
 		uploaded_by=request.user if request.user.is_authenticated else None,
 		hierarchy_path=hierarchy_path,
+		photo_date=selected_photo_date,
+		is_city_level=is_city_level,
+		is_other_upload=is_other_upload,
+		custom_folder_name=custom_folder_name,
 	)
 
 	files_response = []
@@ -384,11 +427,16 @@ def upload_slum_photos_to_drive(request):
 		"upload_batch_id": upload_batch.id,
 		"files": files_response,
 		"hierarchy": hierarchy,
+		"photo_date": selected_photo_date.isoformat(),
+		"is_city_level": is_city_level,
+		"is_other_upload": is_other_upload,
+		"custom_folder_name": custom_folder_name,
 		"photo_type_path": photo_type_path,
-		"photo_type_item_name": photo_type_item.name,
+		"photo_type_item_name": photo_type_item.name if photo_type_item else "",
 		"photo_category": result.get("photo_category"),
 		"photo_category_label": result.get("photo_category_label"),
 		"photo_category_folder": result.get("photo_category_folder"),
+		"drive_path_display": result.get("drive_path_display"),
 	}
 
 	return JsonResponse({"status": "success", "data": response_data}, status=200)

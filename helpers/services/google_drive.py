@@ -4,7 +4,8 @@ import json
 import logging
 import re
 import zipfile
-from datetime import date
+import uuid
+from datetime import date, datetime
 
 import requests
 from Crypto import Random
@@ -23,10 +24,30 @@ DEFAULT_IMAGE_MAX_WIDTH = 1600
 DEFAULT_IMAGE_MAX_HEIGHT = 1600
 DEFAULT_UPLOAD_TIMEOUT = 180
 DEFAULT_UPLOAD_RETRY_COUNT = 2
+
+
 def clean_drive_name(value):
     cleaned_value = re.sub(r"[\\/:*?\"<>|]+", "_", str(value or "").strip())
     cleaned_value = re.sub(r"\s+", " ", cleaned_value)
     return cleaned_value or "Unknown"
+
+
+def parse_photo_date(photo_date_value):
+    if isinstance(photo_date_value, date):
+        parsed_date = photo_date_value
+    else:
+        photo_date_value = str(photo_date_value or "").strip()
+        if not photo_date_value:
+            raise ImproperlyConfigured("photo_date is required for photo upload.")
+        try:
+            parsed_date = datetime.strptime(photo_date_value, "%Y-%m-%d").date()
+        except ValueError as exc:
+            raise ImproperlyConfigured("photo_date must be a valid date in YYYY-MM-DD format.") from exc
+
+    if parsed_date > date.today():
+        raise ImproperlyConfigured("photo_date cannot be in the future.")
+
+    return parsed_date
 
 
 def get_upload_context(photo_type_item):
@@ -54,6 +75,91 @@ def get_upload_context(photo_type_item):
         "category_path": path_parts,
         "category_path_display": path_display,
         "details": item_name,
+    }
+
+
+def build_drive_path(
+    photo_date,
+    photo_type_item=None,
+    slum=None,
+    city=None,
+    is_city_level=False,
+    is_other_upload=False,
+    custom_folder_name="",
+):
+    photo_date_value = parse_photo_date(photo_date)
+    date_folder = photo_date_value.isoformat()
+
+    if is_other_upload:
+        custom_folder = clean_drive_name(custom_folder_name)
+        if custom_folder == "Unknown":
+            raise ImproperlyConfigured("A custom folder name is required for other photo upload.")
+
+        folder_parts = [custom_folder, date_folder]
+        return {
+            "mode": "other",
+            "photo_date": date_folder,
+            "drive_path_parts": folder_parts,
+            "drive_path_display": " / ".join(folder_parts),
+            "root_folder": custom_folder,
+            "city_name": "",
+            "slum_folder": "",
+            "category_path_parts": [],
+            "category_path_display": "",
+            "category_label": "",
+            "category_folder": "",
+            "custom_folder_name": custom_folder,
+        }
+
+    upload_context = get_upload_context(photo_type_item)
+    category_path_parts = upload_context["category_path"]
+
+    if is_city_level:
+        if city is None:
+            raise ImproperlyConfigured("A city is required for city level photo upload.")
+
+        city_name = clean_drive_name(getattr(getattr(city, "name", None), "city_name", None))
+        folder_parts = [city_name] + category_path_parts + [date_folder]
+        return {
+            "mode": "city_level",
+            "photo_date": date_folder,
+            "drive_path_parts": folder_parts,
+            "drive_path_display": " / ".join(folder_parts),
+            "root_folder": city_name,
+            "city_name": city_name,
+            "slum_folder": "",
+            "category_path_parts": category_path_parts,
+            "category_path_display": upload_context["category_path_display"],
+            "category_label": upload_context["category_label"],
+            "category_folder": upload_context["category_folder"],
+            "custom_folder_name": "",
+        }
+
+    if slum is None:
+        raise ImproperlyConfigured("A slum is required for photo upload.")
+
+    hierarchy = get_slum_hierarchy(slum)
+    slum_folder = clean_drive_name(
+        "{}_{}_{}".format(
+            hierarchy["slum"],
+            hierarchy["administrative_ward"],
+            hierarchy["electoral_ward"],
+        )
+    )
+    folder_parts = [hierarchy["city"], slum_folder] + category_path_parts + [date_folder]
+    return {
+        "mode": "normal",
+        "photo_date": date_folder,
+        "drive_path_parts": folder_parts,
+        "drive_path_display": " / ".join(folder_parts),
+        "root_folder": hierarchy["city"],
+        "city_name": hierarchy["city"],
+        "slum_folder": slum_folder,
+        "category_path_parts": category_path_parts,
+        "category_path_display": upload_context["category_path_display"],
+        "category_label": upload_context["category_label"],
+        "category_folder": upload_context["category_folder"],
+        "custom_folder_name": "",
     }
 
 
@@ -92,14 +198,14 @@ def merge_service_file_links(files, service_response):
     return files
 
 
-def build_upload_file_name(index, original_name):
+def build_upload_file_name(original_name):
     extension = ""
     original_name = str(original_name or "")
     if "." in original_name:
         extension = "." + original_name.rsplit(".", 1)[1].lower()
     if not extension:
         extension = ".jpg"
-    return "{}_{}{}".format(date.today().isoformat(), index, extension)
+    return "{}{}".format(uuid.uuid4(), extension)
 
 
 def get_slum_hierarchy(slum):
@@ -180,7 +286,7 @@ def build_encrypted_zip_payload(uploaded_files):
     with zipfile.ZipFile(zip_buffer, "w", zipfile.ZIP_DEFLATED) as zip_file:
         for index, uploaded_file in enumerate(uploaded_files, start=1):
             compressed_bytes, file_name, content_type = compress_uploaded_image(uploaded_file)
-            safe_file_name = clean_drive_name(build_upload_file_name(index, file_name))
+            safe_file_name = clean_drive_name(build_upload_file_name(file_name))
             zip_file.writestr(safe_file_name, compressed_bytes)
             file_summaries.append({
                 "name": safe_file_name,
@@ -200,30 +306,61 @@ def post_to_upload_service(payload):
     timeout = getattr(settings, "PHOTO_UPLOAD_SERVICE_TIMEOUT", DEFAULT_UPLOAD_TIMEOUT)
     retry_count = getattr(settings, "PHOTO_UPLOAD_SERVICE_RETRY_COUNT", DEFAULT_UPLOAD_RETRY_COUNT)
 
+    print("\n========== PHOTO UPLOAD SERVICE ==========")
+    print("Upload URL:", upload_service_url)
+    print("Timeout:", timeout)
+    print("Retry Count:", retry_count)
+    print("Payload:", payload)
+
     if not upload_service_url or not upload_service_secret:
+        print("ERROR: Upload service configuration missing")
         raise ImproperlyConfigured(
             "PHOTO_UPLOAD_SERVICE_URL and PHOTO_UPLOAD_SERVICE_SECRET must be set in local_settings.py."
         )
 
     last_exception = None
+
     headers = {
         "X-UPLOAD-KEY": upload_service_secret,
         "Content-Type": "application/json",
     }
 
+    print("Headers:", {
+        "X-UPLOAD-KEY": "***hidden***",
+        "Content-Type": "application/json",
+    })
+
     for attempt in range(retry_count + 1):
         try:
+            print(f"\nAttempt {attempt + 1}/{retry_count + 1}")
+
             response = requests.post(
                 upload_service_url,
                 headers=headers,
                 json=payload,
                 timeout=timeout,
             )
+
+            print("Response Status Code:", response.status_code)
+            print("Response Headers:", dict(response.headers))
+            print("Response Text:", response.text[:1000])
+
             if response.status_code in (200, 201, 202):
+                print("SUCCESS: Upload service call successful")
+
                 try:
-                    return response.json()
+                    response_json = response.json()
+                    print("Parsed JSON Response:", response_json)
+                    return response_json
+
                 except ValueError:
+                    print("WARNING: Response is not JSON")
                     return {"message": response.text}
+
+            print(
+                "ERROR: Upload service returned bad status:",
+                response.status_code,
+            )
 
             if attempt == retry_count:
                 raise Exception(
@@ -232,27 +369,70 @@ def post_to_upload_service(payload):
                         response.text[:500],
                     )
                 )
+
         except requests.exceptions.RequestException as exc:
             last_exception = exc
-            logger.warning("Photo upload service attempt %s failed: %s", attempt + 1, exc)
+
+            print("EXCEPTION OCCURRED:")
+            print(str(exc))
+
             if attempt == retry_count:
+                print("ERROR: All retry attempts exhausted")
                 raise
 
     if last_exception:
+        print("Raising last exception:", str(last_exception))
         raise last_exception
 
+    print("ERROR: Upload service failed without a response")
     raise Exception("Photo upload service failed without a response.")
 
+def upload_photos_to_slum_drive_folder(
+    slum_id=None,
+    uploaded_files=None,
+    photo_type_item=None,
+    sponsor_project_id=None,
+    photo_date=None,
+    is_city_level=False,
+    is_other_upload=False,
+    custom_folder_name="",
+    city_id=None,
+):
+    slum = None
+    city = None
+    if slum_id:
+        slum = Slum.objects.select_related(
+            "electoral_ward__administrative_ward__city__name"
+        ).get(id=slum_id)
+        if slum.electoral_ward and slum.electoral_ward.administrative_ward:
+            city = slum.electoral_ward.administrative_ward.city
+    elif city_id:
+        from master.models import City
 
-def upload_photos_to_slum_drive_folder(slum_id, uploaded_files, photo_type_item=None, sponsor_project_id=None):
-    slum = Slum.objects.select_related(
-        "electoral_ward__administrative_ward__city__name"
-    ).get(id=slum_id)
-    hierarchy = get_slum_hierarchy(slum)
-    upload_context = get_upload_context(photo_type_item)
+        city = City.objects.select_related("name").filter(id=city_id).first()
+
+    drive_context = build_drive_path(
+        photo_date=photo_date,
+        photo_type_item=photo_type_item,
+        slum=slum,
+        city=city,
+        is_city_level=is_city_level,
+        is_other_upload=is_other_upload,
+        custom_folder_name=custom_folder_name,
+    )
     encrypted_zip, files, zip_size = build_encrypted_zip_payload(uploaded_files)
 
-    location = dict(hierarchy)
+    hierarchy = drive_context["drive_path_parts"]
+    location = {
+        "city": drive_context["city_name"],
+        "slum": drive_context["slum_folder"],
+        "photo_category": drive_context["category_label"],
+        "photo_category_label": drive_context["category_label"],
+        "photo_category_folder": drive_context["category_folder"],
+        "photo_category_path": drive_context["category_path_display"],
+        "photo_date": drive_context["photo_date"],
+        "event_name": "",
+    }
     sponsor_name = ""
     sponsor_project_name = ""
     if sponsor_project_id:
@@ -264,34 +444,36 @@ def upload_photos_to_slum_drive_folder(slum_id, uploaded_files, photo_type_item=
             sponsor_name = sponsor_project.sponsor.organization_name if sponsor_project.sponsor else ""
 
     location.update({
-        "photo_category": upload_context["category_label"],
-        "photo_category_label": upload_context["category_label"],
-        "photo_category_folder": upload_context["category_folder"],
-        "photo_category_path": upload_context["category_path_display"],
-        "event_name": "",
         "sponsor_project": sponsor_project_name,
         "sponsor_name": sponsor_name,
+        "custom_folder_name": drive_context["custom_folder_name"],
+        "drive_path_display": drive_context["drive_path_display"],
+        "drive_path_parts": hierarchy,
+        "is_city_level": is_city_level,
+        "is_other_upload": is_other_upload,
     })
 
     payload = {
-        "slum_id": slum.id,
+        "slum_id": slum.id if slum else None,
         "location": location,
         "zip_file": encrypted_zip,
-        "zip_file_name": "{}_{}_{}.zip".format(
-            hierarchy["city"],
-            hierarchy["slum"],
-            upload_context["category_folder"],
-        ),
+        "zip_file_name": clean_drive_name("{}_{}.zip".format(drive_context["root_folder"], drive_context["photo_date"])),
         "files": files,
         "meta": {
             "source": "shelter_django",
             "zip_size": zip_size,
             "file_count": len(files),
-            "photo_category": upload_context["category_label"],
-            "photo_category_label": upload_context["category_label"],
-            "photo_category_folder": upload_context["category_folder"],
-            "photo_category_path": upload_context["category_path_display"],
-            "photo_category_path_parts": upload_context["category_path"],
+            "photo_date": drive_context["photo_date"],
+            "is_city_level": is_city_level,
+            "is_other_upload": is_other_upload,
+            "custom_folder_name": drive_context["custom_folder_name"],
+            "drive_path_display": drive_context["drive_path_display"],
+            "drive_path_parts": hierarchy,
+            "photo_category": drive_context["category_label"],
+            "photo_category_label": drive_context["category_label"],
+            "photo_category_folder": drive_context["category_folder"],
+            "photo_category_path": drive_context["category_path_display"],
+            "photo_category_path_parts": drive_context["category_path_parts"],
             "event_name": "",
             "sponsor_project": sponsor_project_name,
             "sponsor_name": sponsor_name,
@@ -300,29 +482,34 @@ def upload_photos_to_slum_drive_folder(slum_id, uploaded_files, photo_type_item=
 
     service_response = post_to_upload_service(payload)
     files = merge_service_file_links(files, service_response)
+    slum_name = slum.name if slum else ""
+    city_name = drive_context["city_name"]
+    slum_log_value = slum.id if slum else getattr(city, "id", None)
     logger.info(
         "Photo upload forwarded for slum_id=%s city=%s slum=%s file_count=%s",
-        slum.id,
-        hierarchy["city"],
-        hierarchy["slum"],
+        slum_log_value,
+        city_name,
+        drive_context["slum_folder"] or slum_name,
         len(files),
     )
 
     return {
-        "slum_id": slum.id,
-        "slum_name": slum.name,
-        "hierarchy": [
-            hierarchy["city"],
-            hierarchy["administrative_ward"],
-            hierarchy["electoral_ward"],
-            hierarchy["slum"],
-            upload_context["category_folder"],
-        ],
-        "photo_category": upload_context["category_label"],
-        "photo_category_label": upload_context["category_label"],
-        "photo_category_folder": upload_context["category_folder"],
-        "photo_category_path": upload_context["category_path_display"],
-        "photo_category_path_parts": upload_context["category_path"],
+        "slum_id": slum.id if slum else None,
+        "slum_name": slum_name,
+        "city_id": getattr(city, "id", None),
+        "city_name": drive_context["city_name"],
+        "hierarchy": hierarchy,
+        "drive_path_display": drive_context["drive_path_display"],
+        "drive_path_parts": hierarchy,
+        "photo_date": drive_context["photo_date"],
+        "is_city_level": is_city_level,
+        "is_other_upload": is_other_upload,
+        "custom_folder_name": drive_context["custom_folder_name"],
+        "photo_category": drive_context["category_label"],
+        "photo_category_label": drive_context["category_label"],
+        "photo_category_folder": drive_context["category_folder"],
+        "photo_category_path": drive_context["category_path_display"],
+        "photo_category_path_parts": drive_context["category_path_parts"],
         "event_name": "",
         "sponsor_project": sponsor_project_name,
         "sponsor_name": sponsor_name,

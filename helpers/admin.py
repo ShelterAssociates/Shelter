@@ -60,7 +60,7 @@ class SlumPhotoInline(admin.TabularInline):
 
 @admin.register(SlumPhotoUpload)
 class SlumPhotoUploadAdmin(admin.ModelAdmin):
-	list_display = ("slum", "photo_type_item_display", "sponsor_project", "uploaded_by", "uploaded_at")
+	list_display = ("slum", "photo_date", "is_city_level", "is_other_upload", "photo_type_item_display", "sponsor_project", "uploaded_by", "uploaded_at")
 	list_filter = ("sponsor_project", "uploaded_at")
 	search_fields = ("slum__name", "photo_type_item_name")
 	inlines = (SlumPhotoInline,)

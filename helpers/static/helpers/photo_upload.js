@@ -17,6 +17,7 @@
             manageToggleUrl: $c.data('manage-toggle-url'),
             manageAddUrl: $c.data('manage-add-url'),
             uploadUrl: $c.data('upload-url'),
+            defaultPhotoDate: $c.data('default-photo-date'),
             csrfToken: $('input[name="csrfmiddlewaretoken"]').val()
         }
     }
@@ -51,14 +52,18 @@
         $sel.prop('disabled', true)
     }
 
+    function loadCities() {
+        $.get(cfg.cityListUrl, function (data) {
+            populateSelect($('#city'), data, '— Select City —')
+        })
+    }
+
     /* ════════════════════════════════════════
        1. LOCATION CASCADE
        ════════════════════════════════════════ */
 
     /* Load cities on page load */
-    $.get(cfg.cityListUrl, function (data) {
-        populateSelect($('#city'), data, '— Select City —')
-    })
+    loadCities()
 
     /* Load sponsor projects on page load */
     $.get(cfg.sponsorProjectListUrl, function (data) {
@@ -111,6 +116,16 @@
     var $picker = $('#photoTypePicker')
     var $hiddenTypeId = $('#photo_type_item_id')
     var $summary = $('#photoTypeSummary')
+    var $cityLevel = $('#is_city_level')
+    var $otherUpload = $('#is_other_upload')
+    var $photoDate = $('#photo_date')
+    var $customFolder = $('#custom_folder_name')
+
+    if ($photoDate.length) {
+        var today = cfg.defaultPhotoDate || new Date().toISOString().slice(0, 10)
+        $photoDate.val(today)
+        $photoDate.attr('max', today)
+    }
 
     function clearLevelsAfter(levelIndex) {
         $picker.find('.photo-type-level-row').each(function () {
@@ -189,6 +204,62 @@
         return labels[index] || 'Level ' + (index + 1)
     }
 
+    function setUploadMode() {
+        var isOther = $otherUpload.is(':checked')
+        var isCityLevel = $cityLevel.is(':checked') && !isOther
+
+        if (isOther) {
+            $cityLevel.prop('checked', false)
+        }
+        if (isCityLevel) {
+            $otherUpload.prop('checked', false)
+        }
+
+        if (isOther) {
+            $('#cityField, #adminWardField, #electoralWardField, #slumField, #photoTypeField').addClass('pu-hidden')
+            $('#customFolderField').removeClass('pu-hidden')
+            disableSelect($('#city'), '— Select City —')
+            disableSelect($('#admin_ward'), '— Select Administrative Ward —')
+            disableSelect($('#electoral_ward'), '— Select Electoral Ward —')
+            disableSelect($('#slum'), '— Select Slum —')
+            $hiddenTypeId.val('')
+            $picker.empty()
+            $summary.text('Other upload selected. Enter a custom folder name.')
+        } else {
+            $('#cityField, #adminWardField, #electoralWardField, #slumField, #photoTypeField').removeClass('pu-hidden')
+            $('#customFolderField').addClass('pu-hidden')
+            $('#city').prop('disabled', false)
+
+            if ($('#city option').length <= 1) {
+                loadCities()
+            }
+
+            if (isCityLevel) {
+                disableSelect($('#admin_ward'), '— Select Administrative Ward —')
+                disableSelect($('#electoral_ward'), '— Select Electoral Ward —')
+                disableSelect($('#slum'), '— Select Slum —')
+                $summary.text('City level activity selected. Choose a city and photo type.')
+            } else {
+                $('#admin_ward').prop('disabled', false)
+                $('#electoral_ward').prop('disabled', false)
+                $('#slum').prop('disabled', false)
+                if (!$picker.children().length) {
+                    initPhotoTypePicker()
+                }
+            }
+        }
+
+        checkUploadReady()
+    }
+
+    $cityLevel.on('change', function () {
+        setUploadMode()
+    })
+
+    $otherUpload.on('change', function () {
+        setUploadMode()
+    })
+
     function initPhotoTypePicker() {
         $picker.empty()
         $hiddenTypeId.val('')
@@ -211,14 +282,23 @@
        ════════════════════════════════════════ */
 
     function checkUploadReady() {
+        var isOther = $otherUpload.is(':checked')
+        var isCityLevel = $cityLevel.is(':checked') && !isOther
+        var photoDate = $photoDate.val()
         var slumId = $('#slum').val()
         var typeId = $hiddenTypeId.val()
         var hasPhotos = $('#photos')[0] && $('#photos')[0].files && $('#photos')[0].files.length > 0
-        $('#uploadButton').prop('disabled', !(slumId && typeId && hasPhotos))
+        var today = new Date().toISOString().slice(0, 10)
+        var validDate = photoDate && photoDate <= today
+        var customFolderValid = !isOther || ($('#custom_folder_name').val() && $('#custom_folder_name').val().trim())
+        var locationValid = isOther ? true : (isCityLevel ? $('#city').val() : slumId)
+        var typeValid = isOther ? true : typeId
+        $('#uploadButton').prop('disabled', !(locationValid && typeValid && hasPhotos && validDate && customFolderValid))
     }
 
     $('#slum, #photo_type_item_id').on('change', checkUploadReady)
     $('#photos').on('change', checkUploadReady)
+    $('#city, #photo_date, #custom_folder_name').on('change keyup', checkUploadReady)
 
     /* Also hook slum select since it's a regular select not hidden */
     $(document).on('change', '#slum', checkUploadReady)
@@ -230,6 +310,160 @@
             $('html, body').animate({ scrollTop: $s.offset().top - 20 }, 300)
         }
     }
+
+    var $confirmModal = $('#photoUploadConfirmModal')
+    var $confirmDate = $('#photoUploadConfirmDate')
+    var $confirmSummary = $('#photoUploadConfirmSummary')
+    var confirmAccepted = false
+
+    function escapeHtml(value) {
+        return $('<div>').text(value == null ? '' : String(value)).html()
+    }
+
+    function selectedText($element, fallback) {
+        if (!$element.length) return fallback || '—'
+        var value = $.trim($element.find('option:selected').text())
+        return value && value !== '— Select —' ? value : (fallback || '—')
+    }
+
+    function selectedPhotoTypePath() {
+        var parts = []
+        $picker.find('.photo-type-level-row select').each(function () {
+            var text = $.trim($(this).find('option:selected').text())
+            if (text && text !== '— Select —') {
+                parts.push(text)
+            }
+        })
+        return parts.length ? parts.join(' / ') : '—'
+    }
+
+    function selectedFilesSummary() {
+        var fileInput = $('#photos')[0]
+        if (!fileInput || !fileInput.files || !fileInput.files.length) return '—'
+        var names = []
+        $.each(fileInput.files, function (i, file) {
+            names.push(file.name)
+        })
+        return names.join(', ')
+    }
+
+    function buildConfirmationSummary() {
+        var isOther = $otherUpload.is(':checked')
+        var isCityLevel = $cityLevel.is(':checked') && !isOther
+        var rows = []
+
+        function addRow(label, value) {
+            rows.push('<div class="pu-confirm-row"><div class="pu-confirm-key">' + escapeHtml(label) + '</div><div class="pu-confirm-value">' + escapeHtml(value || '—') + '</div></div>')
+        }
+
+        addRow('Mode', isOther ? 'Other upload' : (isCityLevel ? 'City level activity' : 'Slum upload'))
+        addRow('City', isOther ? '—' : selectedText($('#city'), '—'))
+        addRow('Administrative ward', isOther ? '—' : selectedText($('#admin_ward'), '—'))
+        addRow('Electoral ward', isOther ? '—' : selectedText($('#electoral_ward'), '—'))
+        addRow('Slum', isOther ? '—' : selectedText($('#slum'), '—'))
+        addRow('Photo type', isOther ? '—' : selectedPhotoTypePath())
+        addRow('Sponsor project', selectedText($('#sponsor_project'), '—'))
+        addRow('Custom folder', isOther ? ($('#custom_folder_name').val() || '—') : '—')
+        addRow('Photos', selectedFilesSummary())
+
+        $confirmDate.text($('#photo_date').val())
+        $confirmSummary.html(rows.join(''))
+    }
+
+    function openConfirmModal() {
+        buildConfirmationSummary()
+        $confirmModal.removeClass('pu-hidden').attr('aria-hidden', 'false')
+        $('body').css('overflow', 'hidden')
+        $confirmModal.find('#photoUploadConfirmProceed').trigger('focus')
+    }
+
+    function closeConfirmModal() {
+        $confirmModal.addClass('pu-hidden').attr('aria-hidden', 'true')
+        $('body').css('overflow', '')
+    }
+
+    function performUpload() {
+        var today = new Date().toISOString().slice(0, 10)
+        var formData = new FormData($('#photoUploadForm')[0])
+        var isOther = $otherUpload.is(':checked')
+        var isCityLevel = $cityLevel.is(':checked') && !isOther
+
+        formData.set('is_city_level', isCityLevel ? '1' : '0')
+        formData.set('is_other_upload', isOther ? '1' : '0')
+        formData.set('custom_folder_name', $('#custom_folder_name').val() || '')
+        formData.set('photo_date', $('#photo_date').val() || '')
+
+        $('#uploadButton').prop('disabled', true)
+        setStatus('loading', '⏳ Uploading and encrypting photos…')
+
+        $.ajax({
+            url: cfg.uploadUrl,
+            method: 'POST',
+            data: formData,
+            processData: false,
+            contentType: false,
+            success: function (resp) {
+                var payload = resp && resp.data ? resp.data : resp
+                var isSuccess = resp && (resp.status === 'success' || resp.success)
+
+                if (isSuccess) {
+                    var link = payload && payload.folder_url
+                        ? ' <a href="' + payload.folder_url + '" target="_blank">View folder ↗</a>'
+                        : ''
+                    setStatus('success', '✅ ' + ((payload && payload.message) || (resp && resp.message) || 'Photos uploaded successfully!') + link)
+                    $('#photoUploadForm')[0].reset()
+                    $photoDate.val(cfg.defaultPhotoDate || today)
+                    $photoDate.attr('max', today)
+                    $customFolder.val('')
+                    $cityLevel.prop('checked', false)
+                    $otherUpload.prop('checked', false)
+                    loadCities()
+                    initPhotoTypePicker()
+                    disableSelect($('#admin_ward'), '— Select Administrative Ward —')
+                    disableSelect($('#electoral_ward'), '— Select Electoral Ward —')
+                    disableSelect($('#slum'), '— Select Slum —')
+                    $('#customFolderField').addClass('pu-hidden')
+                    $('#cityField, #adminWardField, #electoralWardField, #slumField, #photoTypeField').removeClass('pu-hidden')
+                } else {
+                    setStatus('error', '❌ ' + (resp && resp.message ? resp.message : 'Upload failed. Please try again.'))
+                }
+                $('#uploadButton').prop('disabled', false)
+                checkUploadReady()
+                closeConfirmModal()
+                confirmAccepted = false
+            },
+            error: function (xhr) {
+                var msg = 'Upload failed.'
+                try {
+                    var r = JSON.parse(xhr.responseText)
+                    if (r && r.message) msg = r.message
+                } catch (ex) { }
+                setStatus('error', '❌ ' + msg)
+                $('#uploadButton').prop('disabled', false)
+                checkUploadReady()
+                closeConfirmModal()
+                confirmAccepted = false
+            }
+        })
+    }
+
+    $('#photoUploadConfirmProceed').on('click', function () {
+        confirmAccepted = true
+        closeConfirmModal()
+        performUpload()
+    })
+
+    $('#photoUploadConfirmCancel, .pu-modal [data-modal-close]').on('click', function () {
+        closeConfirmModal()
+        confirmAccepted = false
+    })
+
+    $(document).on('keydown', function (e) {
+        if (e.key === 'Escape' && !$confirmModal.hasClass('pu-hidden')) {
+            closeConfirmModal()
+            confirmAccepted = false
+        }
+    })
 
     $('#photoUploadForm').on('submit', function (e) {
         e.preventDefault()
@@ -243,56 +477,55 @@
             setStatus('error', 'Maximum 5 photos per upload.')
             return
         }
-        if (!$('#slum').val()) {
-            setStatus('error', 'Please select a slum.')
+
+        var isOther = $otherUpload.is(':checked')
+        var isCityLevel = $cityLevel.is(':checked') && !isOther
+        var today = new Date().toISOString().slice(0, 10)
+
+        if (!$('#photo_date').val()) {
+            setStatus('error', 'Please select a photo date.')
             return
         }
-        if (!$hiddenTypeId.val()) {
-            setStatus('error', 'Please complete the photo type selection.')
+        if ($('#photo_date').val() > today) {
+            setStatus('error', 'Photo date cannot be in the future.')
             return
         }
 
-        $('#uploadButton').prop('disabled', true)
-        setStatus('loading', '⏳ Uploading and encrypting photos…')
-
-        var formData = new FormData(this)
-
-        $.ajax({
-            url: cfg.uploadUrl,
-            method: 'POST',
-            data: formData,
-            processData: false,
-            contentType: false,
-            success: function (resp) {
-                if (resp && resp.success) {
-                    var link = resp.folder_url
-                        ? ' <a href="' + resp.folder_url + '" target="_blank">View folder ↗</a>'
-                        : ''
-                    setStatus('success', '✅ ' + (resp.message || 'Photos uploaded successfully!') + link)
-                    /* reset form */
-                    $('#photoUploadForm')[0].reset()
-                    initPhotoTypePicker()
-                    disableSelect($('#admin_ward'), '— Select Administrative Ward —')
-                    disableSelect($('#electoral_ward'), '— Select Electoral Ward —')
-                    disableSelect($('#slum'), '— Select Slum —')
-                } else {
-                    setStatus('error', '❌ ' + (resp && resp.message ? resp.message : 'Upload failed. Please try again.'))
-                }
-                $('#uploadButton').prop('disabled', false)
-                checkUploadReady()
-            },
-            error: function (xhr) {
-                var msg = 'Upload failed.'
-                try {
-                    var r = JSON.parse(xhr.responseText)
-                    if (r && r.message) msg = r.message
-                } catch (ex) { }
-                setStatus('error', '❌ ' + msg)
-                $('#uploadButton').prop('disabled', false)
-                checkUploadReady()
+        if (isOther) {
+            if (!$('#custom_folder_name').val() || !$('#custom_folder_name').val().trim()) {
+                setStatus('error', 'Please enter a custom folder name.')
+                return
             }
-        })
+        } else if (isCityLevel) {
+            if (!$('#city').val()) {
+                setStatus('error', 'Please select a city.')
+                return
+            }
+            if (!$hiddenTypeId.val()) {
+                setStatus('error', 'Please complete the photo type selection.')
+                return
+            }
+        } else {
+            if (!$('#slum').val()) {
+                setStatus('error', 'Please select a slum.')
+                return
+            }
+            if (!$hiddenTypeId.val()) {
+                setStatus('error', 'Please complete the photo type selection.')
+                return
+            }
+        }
+
+        if (!confirmAccepted) {
+            openConfirmModal()
+            return
+        }
+
+        confirmAccepted = false
+        performUpload()
     })
+
+    setUploadMode()
 
     /* ════════════════════════════════════════
        4. SUPERUSER MANAGEMENT TREE

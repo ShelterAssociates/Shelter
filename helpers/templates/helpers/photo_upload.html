@@ -6,776 +6,7 @@
 {% endblock %}
 
 {% block content %}
-  <style>
-    @import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&family=DM+Mono:wght@400;500&display=swap');
-    
-    :root {
-      --pu-blue: #1d4ed8;
-      --pu-blue-light: #eff6ff;
-      --pu-blue-mid: #dbeafe;
-      --pu-blue-dark: #1e3a8a;
-      --pu-green: #065f46;
-      --pu-green-bg: #ecfdf5;
-      --pu-green-bd: #a7f3d0;
-      --pu-red: #991b1b;
-      --pu-red-bg: #fef2f2;
-      --pu-red-bd: #fecaca;
-      --pu-amber: #b45309;
-      --pu-amber-bg: #fffbeb;
-      --pu-amber-bd: #fde68a;
-      --pu-g50: #f9fafb;
-      --pu-g100: #f3f4f6;
-      --pu-g200: #e5e7eb;
-      --pu-g300: #d1d5db;
-      --pu-g400: #9ca3af;
-      --pu-g600: #4b5563;
-      --pu-g700: #374151;
-      --pu-g900: #111827;
-      --pu-r: 10px;
-      --pu-rl: 14px;
-      --pu-sh: 0 1px 3px rgba(0, 0, 0, 0.07), 0 4px 16px rgba(0, 0, 0, 0.05);
-      --pu-font: 'DM Sans', sans-serif;
-      --pu-mono: 'DM Mono', monospace;
-    }
-    
-    /* ── reset & wrap ── */
-    .pu-wrap {
-      font-family: var(--pu-font);
-      padding: 0 16px 48px;
-      width: min(100%, 1680px);
-      max-width: 1680px;
-      margin: 0 auto;
-    }
-    
-    /* ── top bar ── */
-    .pu-topbar {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      padding: 14px 0 18px;
-      border-bottom: 1.5px solid var(--pu-blue-mid);
-      margin-bottom: 24px;
-    }
-    .pu-topbar-icon {
-      width: 36px;
-      height: 36px;
-      background: var(--pu-blue);
-      border-radius: 9px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      flex-shrink: 0;
-    }
-    .pu-topbar-icon svg {
-      width: 18px;
-      height: 18px;
-      stroke: #fff;
-      fill: none;
-      stroke-width: 2;
-    }
-    .pu-topbar h2 {
-      font-size: 17px;
-      font-weight: 700;
-      color: var(--pu-blue-dark);
-      margin: 0;
-    }
-    .pu-topbar p {
-      font-size: 12px;
-      color: var(--pu-g400);
-      margin: 0;
-    }
-    
-    /* ── two-column grid ── */
-    .pu-grid {
-      display: grid;
-      grid-template-columns: minmax(450px, 700px) minmax(0, 1fr);
-      gap: 28px;
-      align-items: start;
-    }
-    @media (max-width: 960px) {
-      .pu-grid {
-        grid-template-columns: 1fr;
-      }
-    }
-    
-    /* ── card ── */
-    .pu-card {
-      background: #fff;
-      border-radius: var(--pu-rl);
-      border: 1px solid var(--pu-g200);
-      box-shadow: var(--pu-sh);
-      overflow: hidden;
-    }
-    .pu-card-head {
-      padding: 15px 20px 13px;
-      border-bottom: 1px solid var(--pu-g200);
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      background: var(--pu-g50);
-    }
-    .pu-card-head-icon {
-      width: 28px;
-      height: 28px;
-      border-radius: 7px;
-      background: var(--pu-blue-light);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      flex-shrink: 0;
-    }
-    .pu-card-head-icon svg {
-      width: 14px;
-      height: 14px;
-      stroke: var(--pu-blue);
-      fill: none;
-      stroke-width: 2;
-    }
-    .pu-card-head h3 {
-      font-size: 14px;
-      font-weight: 700;
-      color: var(--pu-blue-dark);
-      margin: 0;
-    }
-    .pu-card-head p {
-      font-size: 11px;
-      color: var(--pu-g400);
-      margin: 0;
-    }
-    .pu-card-body {
-      padding: 18px 24px 22px;
-    }
-    
-    /* ── form fields ── */
-    .pu-field {
-      margin-bottom: 13px;
-    }
-    .pu-field > label {
-      display: block;
-      font-size: 11px;
-      font-weight: 700;
-      color: var(--pu-g600);
-      margin-bottom: 5px;
-      letter-spacing: 0.04em;
-      text-transform: uppercase;
-    }
-    .pu-field select {
-      width: 100%;
-      box-sizing: border-box;
-      padding: 12px 40px 12px 14px;
-      border: 1.5px solid var(--pu-g200);
-      border-radius: var(--pu-r);
-      font-size: 14px;
-      font-family: var(--pu-font);
-      color: var(--pu-g900);
-    
-      background: var(--pu-g50) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%239ca3af' stroke-width='2.5'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E") no-repeat right 11px center;
-    
-      appearance: none;
-      -webkit-appearance: none;
-    
-      transition: border-color 0.15s, box-shadow 0.15s;
-      display: block;
-    
-      min-height: 48px;
-    
-      white-space: nowrap;
-      overflow: visible;
-      text-overflow: unset;
-    }
-    .pu-field select:focus {
-      outline: none;
-      border-color: var(--pu-blue);
-      box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
-      background-color: #fff;
-    }
-    .pu-field select:disabled {
-      opacity: 0.45;
-      cursor: not-allowed;
-    }
-    .pu-field input[type='text'],
-    .pu-field input[type='file'] {
-      width: 100%;
-      box-sizing: border-box;
-      padding: 9px 11px;
-      border: 1.5px solid var(--pu-g200);
-      border-radius: var(--pu-r);
-      font-size: 13.5px;
-      font-family: var(--pu-font);
-      color: var(--pu-g900);
-      background: var(--pu-g50);
-      transition: border-color 0.15s, box-shadow 0.15s;
-      display: block;
-    }
-    .pu-field input[type='file'] {
-      padding: 7px 11px;
-      cursor: pointer;
-    }
-    .pu-field input[type='text']:focus,
-    .pu-field input[type='file']:focus {
-      outline: none;
-      border-color: var(--pu-blue);
-      box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
-      background: #fff;
-    }
-    
-    /* photo-row rows injected by JS */
-    #photoTypePicker .photo-row {
-      display: flex;
-      flex-direction: column;
-      margin-bottom: 10px;
-      animation: slideIn 0.15s ease;
-    }
-    @keyframes slideIn {
-      from {
-        opacity: 0;
-        transform: translateY(-4px);
-      }
-      to {
-        opacity: 1;
-        transform: none;
-      }
-    }
-    #photoTypePicker .photo-row label {
-      display: block;
-      font-size: 11px;
-      font-weight: 700;
-      color: var(--pu-g600);
-      margin-bottom: 5px;
-      letter-spacing: 0.04em;
-      text-transform: uppercase;
-    }
-    #photoTypePicker .photo-row select {
-      width: 100%;
-      box-sizing: border-box;
-      padding: 9px 32px 9px 11px;
-      border: 1.5px solid var(--pu-blue-mid);
-      border-radius: var(--pu-r);
-      font-size: 13.5px;
-      font-family: var(--pu-font);
-      color: var(--pu-g900);
-      background: var(--pu-blue-light) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%239ca3af' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E") no-repeat right 10px center;
-      appearance: none;
-      -webkit-appearance: none;
-      transition: border-color 0.15s, box-shadow 0.15s;
-    }
-    #photoTypePicker .photo-row select:focus {
-      outline: none;
-      border-color: var(--pu-blue);
-      box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
-      background-color: #fff;
-    }
-    .photo-type-summary {
-      margin-top: 8px;
-      padding: 8px 11px;
-      border-radius: var(--pu-r);
-      border: 1px solid var(--pu-blue-mid);
-      background: #f8fbff;
-      color: var(--pu-g600);
-      font-size: 12px;
-      line-height: 1.5;
-    }
-    .photo-type-summary strong {
-      color: var(--pu-blue-dark);
-    }
-    
-    /* upload button */
-    .pu-btn {
-      width: 100%;
-      padding: 11px;
-      background: var(--pu-blue);
-      color: #fff;
-      border: none;
-      border-radius: var(--pu-r);
-      font-size: 14px;
-      font-weight: 700;
-      font-family: var(--pu-font);
-      cursor: pointer;
-      transition: background 0.15s, transform 0.1s, opacity 0.15s;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 7px;
-      margin-top: 6px;
-      letter-spacing: 0.01em;
-    }
-    .pu-btn:hover:not(:disabled) {
-      background: #1d40b0;
-    }
-    .pu-btn:active:not(:disabled) {
-      transform: scale(0.99);
-    }
-    .pu-btn:disabled {
-      opacity: 0.45;
-      cursor: not-allowed;
-    }
-    .pu-btn svg {
-      width: 16px;
-      height: 16px;
-      stroke: #fff;
-      fill: none;
-      stroke-width: 2.2;
-    }
-    
-    /* status */
-    .pu-status {
-      margin-top: 14px;
-      padding: 12px 14px;
-      border-radius: var(--pu-r);
-      font-size: 13px;
-      display: none;
-      line-height: 1.6;
-    }
-    .pu-status.success {
-      display: block;
-      background: var(--pu-green-bg);
-      border: 1px solid var(--pu-green-bd);
-      color: var(--pu-green);
-    }
-    .pu-status.error {
-      display: block;
-      background: var(--pu-red-bg);
-      border: 1px solid var(--pu-red-bd);
-      color: var(--pu-red);
-    }
-    .pu-status.loading {
-      display: block;
-      background: var(--pu-blue-light);
-      border: 1px solid var(--pu-blue-mid);
-      color: var(--pu-blue);
-    }
-    .pu-status a {
-      color: inherit;
-      font-weight: 700;
-    }
-    
-    /* info list */
-    .pu-info-list {
-      margin-top: 16px;
-    }
-    .pu-info-item {
-      display: flex;
-      align-items: flex-start;
-      gap: 8px;
-      font-size: 12px;
-      color: var(--pu-g600);
-      margin-bottom: 8px;
-      line-height: 1.5;
-    }
-    .pu-info-item svg {
-      width: 14px;
-      height: 14px;
-      stroke: var(--pu-blue);
-      fill: none;
-      stroke-width: 2;
-      flex-shrink: 0;
-      margin-top: 1px;
-    }
-    .pu-info-item code {
-      font-family: var(--pu-mono);
-      font-size: 11px;
-      background: var(--pu-g100);
-      padding: 1px 5px;
-      border-radius: 4px;
-    }
-    
-    /* ═══════════════════════════════
-                                 MANAGEMENT TREE (superuser)
-                              ═══════════════════════════════ */
-    .mgmt-toolbar {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      margin-bottom: 16px;
-    }
-    .mgmt-toolbar h4 {
-      font-size: 12px;
-      font-weight: 400;
-      color: var(--pu-g400);
-      margin: 0;
-    }
-    .btn-add-root {
-      display: flex;
-      align-items: center;
-      gap: 5px;
-      padding: 7px 13px;
-      font-size: 12px;
-      font-weight: 700;
-      font-family: var(--pu-font);
-      background: var(--pu-blue);
-      color: #fff;
-      border: none;
-      border-radius: 8px;
-      cursor: pointer;
-      transition: background 0.15s;
-    }
-    .btn-add-root:hover {
-      background: #1d40b0;
-    }
-    .btn-add-root svg {
-      width: 13px;
-      height: 13px;
-      stroke: #fff;
-      fill: none;
-      stroke-width: 2.5;
-    }
-    
-    .tree-node {
-      margin-bottom: 3px;
-    }
-    .tree-row {
-      display: flex;
-      align-items: center;
-      padding: 7px 10px;
-      border-radius: 8px;
-      border: 1px solid transparent;
-      transition: background 0.12s, border-color 0.12s;
-      gap: 6px;
-    }
-    .tree-row:hover {
-      background: var(--pu-g50);
-      border-color: var(--pu-g200);
-    }
-    .tree-toggle {
-      width: 20px;
-      height: 20px;
-      flex-shrink: 0;
-      background: none;
-      border: none;
-      cursor: pointer;
-      padding: 0;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      border-radius: 4px;
-      transition: background 0.12s;
-      color: var(--pu-g400);
-    }
-    .tree-toggle:hover {
-      background: var(--pu-g200);
-    }
-    .tree-toggle svg {
-      width: 13px;
-      height: 13px;
-      stroke: currentColor;
-      fill: none;
-      stroke-width: 2.5;
-      transition: transform 0.2s;
-    }
-    .tree-toggle.open svg {
-      transform: rotate(90deg);
-    }
-    .tree-toggle.leaf {
-      cursor: default;
-      pointer-events: none;
-    }
-    .tree-toggle.leaf svg {
-      stroke: var(--pu-g200);
-    }
-    .tree-name {
-      flex: 1;
-      font-size: 13px;
-      color: var(--pu-g900);
-      font-weight: 500;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-    .tree-name.hidden-item {
-      opacity: 0.4;
-      text-decoration: line-through;
-    }
-    .tree-badge {
-      font-size: 10px;
-      padding: 2px 7px;
-      border-radius: 20px;
-      font-weight: 700;
-      margin-right: 2px;
-    }
-    .tree-badge.root {
-      background: var(--pu-blue-light);
-      color: var(--pu-blue);
-    }
-    .tree-badge.child {
-      background: var(--pu-g100);
-      color: var(--pu-g600);
-    }
-    .tree-actions {
-      display: flex;
-      gap: 4px;
-      flex-shrink: 0;
-    }
-    .tree-btn {
-      padding: 4px 9px;
-      font-size: 11px;
-      font-weight: 700;
-      font-family: var(--pu-font);
-      border-radius: 6px;
-      cursor: pointer;
-      border: 1px solid var(--pu-g200);
-      background: #fff;
-      color: var(--pu-g700);
-      transition: background 0.12s, border-color 0.12s;
-      display: flex;
-      align-items: center;
-      gap: 3px;
-    }
-    .tree-btn:hover {
-      background: var(--pu-g100);
-      border-color: var(--pu-g400);
-    }
-    .tree-btn svg {
-      width: 11px;
-      height: 11px;
-      stroke: currentColor;
-      fill: none;
-      stroke-width: 2.5;
-    }
-    .tree-btn.hide-btn {
-      color: var(--pu-amber);
-      border-color: var(--pu-amber-bd);
-      background: var(--pu-amber-bg);
-    }
-    .tree-btn.hide-btn:hover {
-      background: #fef3c7;
-    }
-    .tree-btn.show-btn {
-      color: var(--pu-green);
-      border-color: var(--pu-green-bd);
-      background: var(--pu-green-bg);
-    }
-    .tree-btn.show-btn:hover {
-      background: #d1fae5;
-    }
-    .tree-children {
-      margin-left: 20px;
-      padding-left: 12px;
-      border-left: 1.5px solid var(--pu-g200);
-      margin-top: 2px;
-    }
-    .tree-empty {
-      text-align: center;
-      padding: 32px 20px;
-      color: var(--pu-g400);
-      font-size: 13px;
-    }
-    .tree-empty svg {
-      width: 32px;
-      height: 32px;
-      stroke: var(--pu-g200);
-      fill: none;
-      stroke-width: 1.5;
-      display: block;
-      margin: 0 auto 10px;
-    }
-    
-    /* ═══════════════════════════════
-                                 FLOWCHART GUIDE (non-superuser right panel)
-                              ═══════════════════════════════ */
-    .fc-panel {
-      height: 100%;
-    }
-    .fc-card {
-      background: #fff;
-      border-radius: var(--pu-rl);
-      border: 1px solid var(--pu-g200);
-      box-shadow: var(--pu-sh);
-      overflow: hidden;
-      height: 100%;
-      display: flex;
-      flex-direction: column;
-    }
-    .fc-card-head {
-      padding: 15px 20px 13px;
-      border-bottom: 1px solid var(--pu-g200);
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      background: var(--pu-g50);
-      flex-shrink: 0;
-    }
-    .fc-card-head-icon {
-      width: 28px;
-      height: 28px;
-      border-radius: 7px;
-      background: var(--pu-blue-light);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      flex-shrink: 0;
-    }
-    .fc-card-head-icon svg {
-      width: 14px;
-      height: 14px;
-      stroke: var(--pu-blue);
-      fill: none;
-      stroke-width: 2;
-    }
-    .fc-card-head h3 {
-      font-size: 14px;
-      font-weight: 700;
-      color: var(--pu-blue-dark);
-      margin: 0;
-    }
-    .fc-card-head p {
-      font-size: 11px;
-      color: var(--pu-g400);
-      margin: 0;
-    }
-    .fc-card-body {
-      padding: 20px;
-      overflow: auto;
-      flex: 1;
-    }
-    
-    /* flowchart tree structure */
-    #photoTypeFlowchart {
-      display: flex;
-      flex-direction: column;
-      gap: 24px;
-    }
-    
-    .fc-root-block {
-      border-radius: 12px;
-      overflow: hidden;
-      border: 1.5px solid var(--pu-g200);
-    }
-    .fc-root-label {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      padding: 10px 16px;
-      font-size: 13px;
-      font-weight: 700;
-      border-bottom: 1.5px solid var(--pu-g200);
-    }
-    .fc-root-label svg {
-      width: 15px;
-      height: 15px;
-      stroke: currentColor;
-      fill: none;
-      stroke-width: 2.2;
-      flex-shrink: 0;
-    }
-    .fc-root-body {
-      padding: 14px 16px;
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-    }
-    
-    .fc-mid-block {
-      border-radius: 8px;
-      border: 1px solid var(--pu-g200);
-      overflow: hidden;
-      background: var(--pu-g50);
-    }
-    .fc-mid-label {
-      display: flex;
-      align-items: center;
-      gap: 7px;
-      padding: 7px 12px;
-      font-size: 12px;
-      font-weight: 700;
-      border-bottom: 1px solid var(--pu-g200);
-    }
-    .fc-mid-label svg {
-      width: 13px;
-      height: 13px;
-      stroke: currentColor;
-      fill: none;
-      stroke-width: 2;
-      flex-shrink: 0;
-    }
-    .fc-mid-body {
-      padding: 10px 12px;
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-    }
-    
-    .fc-deep-block {
-      border-radius: 6px;
-      border: 1px dashed var(--pu-g300);
-      padding: 7px 10px;
-      background: #fff;
-    }
-    .fc-deep-label {
-      font-size: 11px;
-      font-weight: 700;
-      color: var(--pu-g600);
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      margin-bottom: 6px;
-    }
-    .fc-deep-label svg {
-      width: 12px;
-      height: 12px;
-      stroke: currentColor;
-      fill: none;
-      stroke-width: 2;
-      flex-shrink: 0;
-    }
-    
-    .fc-leaf-pills {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 5px;
-    }
-    .fc-leaf-pill {
-      font-size: 11px;
-      font-weight: 600;
-      padding: 3px 9px;
-      border-radius: 20px;
-      white-space: nowrap;
-      cursor: default;
-      border: 1px solid transparent;
-      transition: transform 0.1s;
-    }
-    .fc-leaf-pill:hover {
-      transform: scale(1.04);
-    }
-    
-    /* direct leaves from a root/mid level */
-    .fc-direct-leaves {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 5px;
-      padding: 4px 0;
-    }
-    
-    .fc-legend {
-      margin-top: 18px;
-      display: flex;
-      align-items: center;
-      gap: 14px;
-      font-size: 11px;
-      color: var(--pu-g600);
-      flex-wrap: wrap;
-      padding-top: 14px;
-      border-top: 1px solid var(--pu-g200);
-    }
-    .fc-legend-item {
-      display: flex;
-      align-items: center;
-      gap: 5px;
-    }
-    .fc-legend-dot {
-      width: 12px;
-      height: 12px;
-      border-radius: 3px;
-      display: inline-block;
-      flex-shrink: 0;
-    }
-    
-    .fc-loading {
-      text-align: center;
-      padding: 30px;
-      color: var(--pu-g400);
-      font-size: 13px;
-    }
-  </style>
+  <link rel="stylesheet" href="{% static 'helpers/photo_upload.css' %}" />
 
   <div class="pu-wrap">
     <!-- top bar -->
@@ -794,10 +25,10 @@
     </div>
 
     <!-- two-column grid -->
-    <div class="pu-grid" id="photoUploadContainer" data-is-superuser="{{ is_superuser|yesno:'true,false' }}" data-city-list-url="{% url 'master:cityList' %}" data-administrative-ward-list-url="{% url 'master:administrativewardList' %}" data-electoral-ward-list-url="{% url 'master:electoralWardList' %}" data-slum-list-url="{% url 'master:slumList' %}" data-sponsor-project-list-url="{% url 'sponsor_project_list' %}" data-photo-type-items-url="{% url 'photo_type_items' %}" data-manage-tree-url="{% url 'manage_photo_type_items' %}" data-manage-toggle-url="{% url 'manage_toggle_photo_type_item' %}" data-manage-add-url="{% url 'manage_add_photo_type_item' %}" data-photo-type-tree-url="{% url 'photo_type_tree' %}" data-upload-url="{% url 'upload_slum_photos_to_drive' %}">
-      <!--        ╔══════════════════════════════╗
+    <div class="pu-grid" id="photoUploadContainer" data-is-superuser="{{ is_superuser|yesno:'true,false' }}" data-city-list-url="{% url 'master:cityList' %}" data-administrative-ward-list-url="{% url 'master:administrativewardList' %}" data-electoral-ward-list-url="{% url 'master:electoralWardList' %}" data-slum-list-url="{% url 'master:slumList' %}" data-sponsor-project-list-url="{% url 'sponsor_project_list' %}" data-photo-type-items-url="{% url 'photo_type_items' %}" data-manage-tree-url="{% url 'manage_photo_type_items' %}" data-manage-toggle-url="{% url 'manage_toggle_photo_type_item' %}" data-manage-add-url="{% url 'manage_add_photo_type_item' %}" data-photo-type-tree-url="{% url 'photo_type_tree' %}" data-upload-url="{% url 'upload_slum_photos_to_drive' %}" data-default-photo-date="{{ default_photo_date }}">
+      <!--             ╔══════════════════════════════╗
          ║  LEFT — Upload Form          ║
-         ╚══════════════════════════════╝        -->
+         ╚══════════════════════════════╝             -->
       <div>
         <div class="pu-card">
           <div class="pu-card-head">
@@ -817,28 +48,38 @@
             <form id="photoUploadForm" enctype="multipart/form-data">
               {% csrf_token %}
 
-              <div class="pu-field">
+              <div class="pu-toggle-row">
+                <label class="pu-check" for="is_city_level"><input type="checkbox" id="is_city_level" name="is_city_level" value="1" />This is a city level activity</label>
+                <label class="pu-check" for="is_other_upload"><input type="checkbox" id="is_other_upload" name="is_other_upload" value="1" />Other photo upload</label>
+              </div>
+
+              <div class="pu-field" id="photoDateField">
+                <label for="photo_date">Photo Date *</label>
+                <input id="photo_date" name="photo_date" type="date" required />
+              </div>
+
+              <div class="pu-field" id="cityField">
                 <label for="city">City</label>
-                <select id="city">
+                <select id="city" name="city_id">
                   <option value="">— Select City —</option>
                 </select>
               </div>
 
-              <div class="pu-field">
+              <div class="pu-field" id="adminWardField">
                 <label for="admin_ward">Administrative Ward</label>
-                <select id="admin_ward" disabled>
+                <select id="admin_ward" name="admin_ward_id" disabled>
                   <option value="">— Select Administrative Ward —</option>
                 </select>
               </div>
 
-              <div class="pu-field">
+              <div class="pu-field" id="electoralWardField">
                 <label for="electoral_ward">Electoral Ward</label>
-                <select id="electoral_ward" disabled>
+                <select id="electoral_ward" name="electoral_ward_id" disabled>
                   <option value="">— Select Electoral Ward —</option>
                 </select>
               </div>
 
-              <div class="pu-field">
+              <div class="pu-field" id="slumField">
                 <label for="slum">Slum</label>
                 <select id="slum" name="slum_id" disabled>
                   <option value="">— Select Slum —</option>
@@ -852,15 +93,20 @@
                 </select>
               </div>
 
-              <div class="pu-field">
+              <div class="pu-field" id="photoTypeField">
                 <label>Photo Type</label>
                 <div id="photoTypePicker"></div>
                 <div id="photoTypeSummary" class="photo-type-summary">Select a photo type to see the full path here.</div>
                 <input type="hidden" id="photo_type_item_id" name="photo_type_item_id" />
               </div>
 
+              <div class="pu-field pu-hidden" id="customFolderField">
+                <label for="custom_folder_name">Custom Folder Name</label>
+                <input id="custom_folder_name" name="custom_folder_name" type="text" placeholder="FloodReliefPhotos" />
+              </div>
+
               <div class="pu-field">
-                <label for="photos">Photos <small style="font-weight:400;text-transform:none;color:var(--pu-g400)">(max 5)</small></label>
+                <label for="photos">Photos <small class="pu-note-small">(max 5)</small></label>
                 <input id="photos" name="photos" type="file" accept="image/*" multiple required />
               </div>
 
@@ -885,23 +131,23 @@
                 <svg viewBox="0 0 24 24">
                   <path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z" />
                   <polyline points="9 22 9 12 15 12 15 22" />
-                </svg>Folder: City / Admin Ward / Electoral Ward / Slum / Type Path
+                </svg>Folder: City / Slum_AdminWard_ElectoralWard / Category Path / Date or custom root / Date
               </div>
               <div class="pu-info-item">
                 <svg viewBox="0 0 24 24">
                   <rect x="3" y="3" width="18" height="18" rx="2" />
                   <path d="M3 9h18M9 21V9" />
-                </svg>Each photo renamed as <code>YYYY-MM-DD_1</code>, <code>YYYY-MM-DD_2</code>…
+                </svg>Each photo renamed with a UUID filename and preserved extension.
               </div>
             </div>
           </div>
         </div>
       </div>
 
-      <!--        ╔════════════════════════════════════════╗
+      <!--             ╔════════════════════════════════════════╗
          ║  RIGHT — Superuser: Management Tree    ║
          ║          Others:    Flowchart Guide     ║
-         ╚════════════════════════════════════════╝        -->
+         ╚════════════════════════════════════════╝             -->
       <div>
         {% if is_superuser %}
           <!-- SUPERUSER: management tree -->
@@ -951,15 +197,15 @@
                 </div>
                 <div class="fc-legend">
                   <div class="fc-legend-item">
-                    <span class="fc-legend-dot" style="background:#dbeafe;border:1.5px solid #60a5fa;"></span>
+                    <span class="fc-legend-dot fc-legend-dot-root"></span>
                     Root category
                   </div>
                   <div class="fc-legend-item">
-                    <span class="fc-legend-dot" style="background:#f0fdf4;border:1px solid #4ade80;"></span>
+                    <span class="fc-legend-dot fc-legend-dot-sub"></span>
                     Sub-category
                   </div>
                   <div class="fc-legend-item">
-                    <span class="fc-legend-dot" style="background:#1d4ed8;border-radius:20px;"></span>
+                    <span class="fc-legend-dot fc-legend-dot-leaf"></span>
                     Selectable type — choose this in the form
                   </div>
                 </div>
@@ -973,167 +219,191 @@
   </div>
   <!-- .pu-wrap -->
 
+  <div id="photoUploadConfirmModal" class="pu-modal pu-hidden" aria-hidden="true">
+    <div class="pu-modal-backdrop" data-modal-close></div>
+    <div class="pu-modal-dialog" role="dialog" aria-modal="true" aria-labelledby="photoUploadConfirmTitle">
+      <div class="pu-modal-head">
+        <h3 id="photoUploadConfirmTitle">Confirm upload</h3>
+        <button type="button" class="pu-modal-close" data-modal-close aria-label="Close">×</button>
+      </div>
+      <div class="pu-modal-body">
+        <div class="pu-confirm-date-wrap">
+          <div class="pu-confirm-date-label">Photo date</div>
+          <div id="photoUploadConfirmDate" class="pu-confirm-date"></div>
+        </div>
+        <div id="photoUploadConfirmSummary" class="pu-confirm-summary"></div>
+      </div>
+      <div class="pu-modal-foot">
+        <button type="button" id="photoUploadConfirmCancel" class="pu-btn pu-btn-secondary">Cancel</button>
+        <button type="button" id="photoUploadConfirmProceed" class="pu-btn">Submit upload</button>
+      </div>
+    </div>
+  </div>
+
   <script src="{% static 'admin/js/vendor/jquery/jquery.js' %}"></script>
   <script src="{% static 'helpers/photo_upload.js' %}"></script>
+  <script src="{% static 'helpers/photo_upload_flowchart.js' %}"></script>
 
   {% if not is_superuser %}
     <script>
-      /* ── Flowchart Guide (non-superuser only) ── */
-      /* Uses /helpers/photo-type-tree/ which returns full nested tree:
-                                             [{id, name, has_children, children:[...]}, ...]
-                                             Falls back to building tree client-side from flat API if needed */
-      ;(function ($) {
-        var treeUrl = $('#photoUploadContainer').data('photo-type-tree-url')
-        var flatUrl = $('#photoUploadContainer').data('photo-type-items-url')
+      if (!window.PHOTO_UPLOAD_FLOWCHART_EXTERNAL) {
+        /* ── Flowchart Guide (non-superuser only) ── */
+        /* Uses /helpers/photo-type-tree/ which returns full nested tree:
+                                                                           [{id, name, has_children, children:[...]}, ...]
+                                                                           Falls back to building tree client-side from flat API if needed */
+        ;(function ($) {
+          var treeUrl = $('#photoUploadContainer').data('photo-type-tree-url')
+          var flatUrl = $('#photoUploadContainer').data('photo-type-items-url')
       
-        var PALETTES = [
-          { rootBg: '#dbeafe', rootBd: '#3b82f6', rootTxt: '#1e3a8a', midBg: '#eff6ff', midBd: '#93c5fd', midTxt: '#1e40af', leafBg: '#1d4ed8', leafTxt: '#fff', leafBd: '#1d4ed8' },
-          { rootBg: '#dcfce7', rootBd: '#22c55e', rootTxt: '#14532d', midBg: '#f0fdf4', midBd: '#86efac', midTxt: '#065f46', leafBg: '#16a34a', leafTxt: '#fff', leafBd: '#16a34a' },
-          { rootBg: '#ede9fe', rootBd: '#8b5cf6', rootTxt: '#4c1d95', midBg: '#faf5ff', midBd: '#c4b5fd', midTxt: '#581c87', leafBg: '#7c3aed', leafTxt: '#fff', leafBd: '#7c3aed' },
-          { rootBg: '#fef3c7', rootBd: '#f59e0b', rootTxt: '#78350f', midBg: '#fffbeb', midBd: '#fde68a', midTxt: '#92400e', leafBg: '#d97706', leafTxt: '#fff', leafBd: '#d97706' },
-          { rootBg: '#cffafe', rootBd: '#06b6d4', rootTxt: '#164e63', midBg: '#ecfeff', midBd: '#67e8f9', midTxt: '#155e75', leafBg: '#0891b2', leafTxt: '#fff', leafBd: '#0891b2' }
-        ]
+          var PALETTES = [
+            { rootBg: '#dbeafe', rootBd: '#3b82f6', rootTxt: '#1e3a8a', midBg: '#eff6ff', midBd: '#93c5fd', midTxt: '#1e40af', leafBg: '#1d4ed8', leafTxt: '#fff', leafBd: '#1d4ed8' },
+            { rootBg: '#dcfce7', rootBd: '#22c55e', rootTxt: '#14532d', midBg: '#f0fdf4', midBd: '#86efac', midTxt: '#065f46', leafBg: '#16a34a', leafTxt: '#fff', leafBd: '#16a34a' },
+            { rootBg: '#ede9fe', rootBd: '#8b5cf6', rootTxt: '#4c1d95', midBg: '#faf5ff', midBd: '#c4b5fd', midTxt: '#581c87', leafBg: '#7c3aed', leafTxt: '#fff', leafBd: '#7c3aed' },
+            { rootBg: '#fef3c7', rootBd: '#f59e0b', rootTxt: '#78350f', midBg: '#fffbeb', midBd: '#fde68a', midTxt: '#92400e', leafBg: '#d97706', leafTxt: '#fff', leafBd: '#d97706' },
+            { rootBg: '#cffafe', rootBd: '#06b6d4', rootTxt: '#164e63', midBg: '#ecfeff', midBd: '#67e8f9', midTxt: '#155e75', leafBg: '#0891b2', leafTxt: '#fff', leafBd: '#0891b2' }
+          ]
       
-        /* ── build nested tree from flat [{id,name,parent_id,has_children}] ── */
-        function buildTreeFromFlat(items) {
-          var map = {}
-          var roots = []
-          items.forEach(function (item) {
-            map[item.id] = { id: item.id, name: item.name, has_children: item.has_children, children: [] }
-          })
-          items.forEach(function (item) {
-            if (item.parent_id && map[item.parent_id]) {
-              map[item.parent_id].children.push(map[item.id])
-            } else if (!item.parent_id) {
-              roots.push(map[item.id])
-            }
-          })
-          return roots
-        }
-      
-        /* ── fetch full flat tree (all items) then build nested ── */
-        function fetchAllItems(callback) {
-          /* Fetch roots first, then recursively fetch all children */
-          var allItems = []
-          var pending = 0
-      
-          function fetchLevel(parentId) {
-            pending++
-            var params = parentId ? { parent_id: parentId } : {}
-            $.get(flatUrl, params, function (data) {
-              if (data && data.length) {
-                data.forEach(function (item) {
-                  allItems.push(item)
-                  if (item.has_children) fetchLevel(item.id)
-                })
+          /* ── build nested tree from flat [{id,name,parent_id,has_children}] ── */
+          function buildTreeFromFlat(items) {
+            var map = {}
+            var roots = []
+            items.forEach(function (item) {
+              map[item.id] = { id: item.id, name: item.name, has_children: item.has_children, children: [] }
+            })
+            items.forEach(function (item) {
+              if (item.parent_id && map[item.parent_id]) {
+                map[item.parent_id].children.push(map[item.id])
+              } else if (!item.parent_id) {
+                roots.push(map[item.id])
               }
-              pending--
-              if (pending === 0) callback(buildTreeFromFlat(allItems))
+            })
+            return roots
+          }
+      
+          /* ── fetch full flat tree (all items) then build nested ── */
+          function fetchAllItems(callback) {
+            /* Fetch roots first, then recursively fetch all children */
+            var allItems = []
+            var pending = 0
+      
+            function fetchLevel(parentId) {
+              pending++
+              var params = parentId ? { parent_id: parentId } : {}
+              $.get(flatUrl, params, function (data) {
+                if (data && data.length) {
+                  data.forEach(function (item) {
+                    allItems.push(item)
+                    if (item.has_children) fetchLevel(item.id)
+                  })
+                }
+                pending--
+                if (pending === 0) callback(buildTreeFromFlat(allItems))
+              }).fail(function () {
+                pending--
+                if (pending === 0) callback(buildTreeFromFlat(allItems))
+              })
+            }
+      
+            fetchLevel(null)
+          }
+      
+          /* ── render one node block ── */
+          function buildBlock(node, pal, depth) {
+            var hasKids = node.children && node.children.length > 0
+      
+            if (depth === 0) {
+              var $block = $('<div class="fc-root-block">').css({ background: pal.rootBg, borderColor: pal.rootBd })
+              var $lbl = $('<div class="fc-root-label">').css({ background: pal.rootBg, color: pal.rootTxt, borderBottomColor: pal.rootBd }).html('<svg viewBox="0 0 24 24"><path d="M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2z"/></svg>').append($('<span>').text(node.name))
+              $block.append($lbl)
+      
+              if (hasKids) {
+                var $body = $('<div class="fc-root-body">')
+                var leaves = node.children.filter(function (c) {
+                  return !c.has_children && (!c.children || !c.children.length)
+                })
+                var mids = node.children.filter(function (c) {
+                  return c.has_children || (c.children && c.children.length)
+                })
+                mids.forEach(function (c) {
+                  $body.append(buildBlock(c, pal, 1))
+                })
+                if (leaves.length) {
+                  var $pills = $('<div class="fc-direct-leaves">')
+                  leaves.forEach(function (l) {
+                    $pills.append($('<span class="fc-leaf-pill">').css({ background: pal.leafBg, color: pal.leafTxt }).text(l.name))
+                  })
+                  $body.append($pills)
+                }
+                $block.append($body)
+              }
+              return $block
+            }
+      
+            if (depth === 1) {
+              var $mid = $('<div class="fc-mid-block">').css({ background: pal.midBg, borderColor: pal.midBd })
+              var $ml = $('<div class="fc-mid-label">').css({ background: pal.midBg, color: pal.midTxt, borderBottomColor: pal.midBd }).html('<svg viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg>').append($('<span>').text(node.name))
+              $mid.append($ml)
+      
+              if (hasKids) {
+                var $mb = $('<div class="fc-mid-body">')
+                var lk = node.children.filter(function (c) {
+                  return !c.has_children && (!c.children || !c.children.length)
+                })
+                var dk = node.children.filter(function (c) {
+                  return c.has_children || (c.children && c.children.length)
+                })
+                dk.forEach(function (c) {
+                  $mb.append(buildBlock(c, pal, 2))
+                })
+                if (lk.length) {
+                  var $lp = $('<div class="fc-leaf-pills">')
+                  lk.forEach(function (l) {
+                    $lp.append($('<span class="fc-leaf-pill">').css({ background: pal.leafBg, color: pal.leafTxt }).text(l.name))
+                  })
+                  $mb.append($lp)
+                }
+                $mid.append($mb)
+              }
+              return $mid
+            }
+      
+            /* depth >= 2 */
+            var $deep = $('<div class="fc-deep-block">')
+            var $dl = $('<div class="fc-deep-label">').css({ color: pal.midTxt }).html('<svg viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg>').append($('<span>').text(node.name))
+            $deep.append($dl)
+            if (hasKids) {
+              var $lp2 = $('<div class="fc-leaf-pills">')
+              node.children.forEach(function (l) {
+                $lp2.append($('<span class="fc-leaf-pill">').css({ background: pal.leafBg, color: pal.leafTxt }).text(l.name))
+              })
+              $deep.append($lp2)
+            }
+            return $deep
+          }
+      
+          function renderTree(roots) {
+            var $fc = $('#photoTypeFlowchart').empty()
+            if (!roots || !roots.length) {
+              $fc.html('<div class="fc-loading">No photo types configured yet.</div>')
+              return
+            }
+            roots.forEach(function (root, i) {
+              $fc.append(buildBlock(root, PALETTES[i % PALETTES.length], 0))
+            })
+          }
+      
+          /* Try the dedicated tree endpoint first; fall back to building from flat API */
+          if (treeUrl) {
+            $.get(treeUrl, function (data) {
+              renderTree($.isArray(data) ? data : data.items || [])
             }).fail(function () {
-              pending--
-              if (pending === 0) callback(buildTreeFromFlat(allItems))
+              fetchAllItems(renderTree)
             })
-          }
-      
-          fetchLevel(null)
-        }
-      
-        /* ── render one node block ── */
-        function buildBlock(node, pal, depth) {
-          var hasKids = node.children && node.children.length > 0
-      
-          if (depth === 0) {
-            var $block = $('<div class="fc-root-block">').css({ background: pal.rootBg, borderColor: pal.rootBd })
-            var $lbl = $('<div class="fc-root-label">').css({ background: pal.rootBg, color: pal.rootTxt, borderBottomColor: pal.rootBd }).html('<svg viewBox="0 0 24 24"><path d="M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2z"/></svg>').append($('<span>').text(node.name))
-            $block.append($lbl)
-      
-            if (hasKids) {
-              var $body = $('<div class="fc-root-body">')
-              var leaves = node.children.filter(function (c) {
-                return !c.has_children && (!c.children || !c.children.length)
-              })
-              var mids = node.children.filter(function (c) {
-                return c.has_children || (c.children && c.children.length)
-              })
-              mids.forEach(function (c) {
-                $body.append(buildBlock(c, pal, 1))
-              })
-              if (leaves.length) {
-                var $pills = $('<div class="fc-direct-leaves">')
-                leaves.forEach(function (l) {
-                  $pills.append($('<span class="fc-leaf-pill">').css({ background: pal.leafBg, color: pal.leafTxt }).text(l.name))
-                })
-                $body.append($pills)
-              }
-              $block.append($body)
-            }
-            return $block
-          }
-      
-          if (depth === 1) {
-            var $mid = $('<div class="fc-mid-block">').css({ background: pal.midBg, borderColor: pal.midBd })
-            var $ml = $('<div class="fc-mid-label">').css({ background: pal.midBg, color: pal.midTxt, borderBottomColor: pal.midBd }).html('<svg viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg>').append($('<span>').text(node.name))
-            $mid.append($ml)
-      
-            if (hasKids) {
-              var $mb = $('<div class="fc-mid-body">')
-              var lk = node.children.filter(function (c) {
-                return !c.has_children && (!c.children || !c.children.length)
-              })
-              var dk = node.children.filter(function (c) {
-                return c.has_children || (c.children && c.children.length)
-              })
-              dk.forEach(function (c) {
-                $mb.append(buildBlock(c, pal, 2))
-              })
-              if (lk.length) {
-                var $lp = $('<div class="fc-leaf-pills">')
-                lk.forEach(function (l) {
-                  $lp.append($('<span class="fc-leaf-pill">').css({ background: pal.leafBg, color: pal.leafTxt }).text(l.name))
-                })
-                $mb.append($lp)
-              }
-              $mid.append($mb)
-            }
-            return $mid
-          }
-      
-          /* depth >= 2 */
-          var $deep = $('<div class="fc-deep-block">')
-          var $dl = $('<div class="fc-deep-label">').css({ color: pal.midTxt }).html('<svg viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg>').append($('<span>').text(node.name))
-          $deep.append($dl)
-          if (hasKids) {
-            var $lp2 = $('<div class="fc-leaf-pills">')
-            node.children.forEach(function (l) {
-              $lp2.append($('<span class="fc-leaf-pill">').css({ background: pal.leafBg, color: pal.leafTxt }).text(l.name))
-            })
-            $deep.append($lp2)
-          }
-          return $deep
-        }
-      
-        function renderTree(roots) {
-          var $fc = $('#photoTypeFlowchart').empty()
-          if (!roots || !roots.length) {
-            $fc.html('<div class="fc-loading">No photo types configured yet.</div>')
-            return
-          }
-          roots.forEach(function (root, i) {
-            $fc.append(buildBlock(root, PALETTES[i % PALETTES.length], 0))
-          })
-        }
-      
-        /* Try the dedicated tree endpoint first; fall back to building from flat API */
-        if (treeUrl) {
-          $.get(treeUrl, function (data) {
-            renderTree($.isArray(data) ? data : data.items || [])
-          }).fail(function () {
+          } else {
             fetchAllItems(renderTree)
-          })
-        } else {
-          fetchAllItems(renderTree)
-        }
-      })(jQuery)
+          }
+        })(jQuery)
+      }
     </script>
   {% endif %}
 {% endblock %}
