@@ -15,8 +15,10 @@ from requests import request
 from scipy import record
 
 from helpers.services.send_email import send_email
+from master.models import Slum
+from sponsor.models import SponsorProject
 from shelter import settings
-from .models import OTPVerification ,ReminderTracker
+from .models import OTPVerification, PhotoTypeItem, ReminderTracker, SlumPhoto, SlumPhotoUpload
 from .services.google_drive import upload_photos_to_slum_drive_folder
 from django.http import HttpResponse
 
@@ -138,7 +140,146 @@ def verify_otp(request):
 
 @staff_member_required
 def photo_upload_page(request):
-	return render(request, "helpers/photo_upload.html")
+	return render(request, "helpers/photo_upload.html", {"is_superuser": request.user.is_superuser})
+
+
+@staff_member_required
+def photo_type_groups(request):
+	roots = PhotoTypeItem.objects.filter(parent__isnull=True, is_visible=True).order_by("order", "name")
+	groups = [{"id": node.id, "name": node.name} for node in roots]
+	return JsonResponse(groups, safe=False)
+
+
+@staff_member_required
+def photo_type_items(request):
+	parent_id = request.GET.get("parent_id")
+	queryset = PhotoTypeItem.objects.filter(is_visible=True)
+	if parent_id:
+		queryset = queryset.filter(parent_id=parent_id)
+	else:
+		queryset = queryset.filter(parent__isnull=True)
+	items = []
+	for node in queryset.order_by("order", "name"):
+		items.append({
+			"id": node.id,
+			"name": node.name,
+			"parent_id": node.parent_id,
+			"has_children": node.children.filter(is_visible=True).exists(),
+			"full_path": node.full_path(),
+		})
+	return JsonResponse(items, safe=False)
+
+
+def _serialize_photo_type_tree(node):
+	children = [
+		_serialize_photo_type_tree(child)
+		for child in node.children.all().order_by("order", "name")
+	]
+	return {
+		"id": node.id,
+		"name": node.name,
+		"parent_id": node.parent_id,
+		"is_visible": node.is_visible,
+		"order": node.order,
+		"full_path": node.full_path(),
+		"children": children,
+	}
+
+
+@staff_member_required
+def manage_photo_type_items(request):
+	if not request.user.is_superuser:
+		return JsonResponse({"status": "error", "message": "Forbidden"}, status=403)
+	roots = PhotoTypeItem.objects.filter(parent__isnull=True).order_by("order", "name")
+	return JsonResponse([_serialize_photo_type_tree(node) for node in roots], safe=False)
+
+
+@staff_member_required
+def manage_toggle_photo_type_item(request):
+	if not request.user.is_superuser:
+		return JsonResponse({"status": "error", "message": "Forbidden"}, status=403)
+	# support both JSON and form POSTs; if is_visible not provided, toggle current state
+	item_id = None
+	is_visible = None
+	if request.content_type and request.content_type.startswith('application/json'):
+		try:
+			data = json.loads(request.body)
+			item_id = data.get('id') or data.get('item_id')
+			is_visible = data.get('is_visible')
+		except Exception:
+			return JsonResponse({"status": "error", "message": "Invalid payload"}, status=400)
+	else:
+		item_id = request.POST.get('item_id') or request.POST.get('id')
+
+	item = PhotoTypeItem.objects.filter(id=item_id).first()
+	if not item:
+		return JsonResponse({"status": "error", "message": "Item not found"}, status=404)
+	if is_visible is None:
+		item.is_visible = not item.is_visible
+	else:
+		item.is_visible = bool(is_visible)
+	item.save()
+	return JsonResponse({"status": "ok"})
+
+
+@staff_member_required
+def manage_add_photo_type_item(request):
+	if not request.user.is_superuser:
+		return JsonResponse({"status": "error", "message": "Forbidden"}, status=403)
+	try:
+		if request.content_type and request.content_type.startswith('application/json'):
+			data = json.loads(request.body)
+			parent_id = data.get("parent_id")
+			name = (data.get("name") or "").strip()
+			order = int(data.get("order") or 0)
+		else:
+			parent_id = request.POST.get("parent_id")
+			name = (request.POST.get("name") or "").strip()
+			order = int(request.POST.get("order") or 0)
+	except Exception:
+		return JsonResponse({"status": "error", "message": "Invalid payload"}, status=400)
+
+	if not name:
+		return JsonResponse({"status": "error", "message": "Name is required"}, status=400)
+	if len(name) > 200:
+		return JsonResponse({"status": "error", "message": "Name too long"}, status=400)
+
+	parent = None
+	if parent_id:
+		parent = PhotoTypeItem.objects.filter(id=parent_id).first()
+		if not parent:
+			return JsonResponse({"status": "error", "message": "Parent item not found"}, status=404)
+
+	obj = PhotoTypeItem.objects.create(parent=parent, name=name, is_visible=True, order=order)
+	return JsonResponse({"status": "ok", "id": obj.id, "name": obj.name, "parent_id": obj.parent_id})
+
+
+@staff_member_required
+def photo_type_list(request):
+	# Deprecated: replaced by photo_type_groups/photo_type_items
+	return JsonResponse([], safe=False)
+
+
+@staff_member_required
+def event_list(request):
+	return JsonResponse([], safe=False)
+
+
+@staff_member_required
+def sponsor_project_list(request):
+	projects = SponsorProject.objects.filter(
+		photo_config__is_visible_in_photo_upload=True
+	).select_related("sponsor").values("id", "name", "sponsor__organization_name")
+
+	response_data = []
+	for project in projects:
+		response_data.append({
+			"id": project.get("id"),
+			"name": project.get("name"),
+			"sponsor_name": project.get("sponsor__organization_name") or "",
+		})
+
+	return JsonResponse(response_data, safe=False)
 
 
 @csrf_exempt
@@ -151,8 +292,8 @@ def upload_slum_photos_to_drive(request):
 		return JsonResponse({"status": "error", "message": "Only GET and POST requests are allowed."}, status=405)
 
 	slum_id = request.POST.get("slum_id")
-	photo_category = request.POST.get("photo_category")
-	event_name = request.POST.get("event_name", "").strip()
+	photo_type_item_id = request.POST.get("photo_type_item_id")
+	sponsor_project_id = request.POST.get("sponsor_project_id")
 	uploaded_files = request.FILES.getlist("photos")
 	if not uploaded_files:
 		single_file = request.FILES.get("photo")
@@ -168,19 +309,23 @@ def upload_slum_photos_to_drive(request):
 	if len(uploaded_files) > 5:
 		return JsonResponse({"status": "error", "message": "You can upload a maximum of 5 photos at a time."}, status=400)
 
-	if not photo_category:
+	if not photo_type_item_id:
 		return JsonResponse({"status": "error", "message": "Photo type is required."}, status=400)
 
-	if photo_category in ("events", "other") and not event_name:
-		label = "event name" if photo_category == "events" else "name"
-		return JsonResponse({"status": "error", "message": "Please enter the {}.".format(label)}, status=400)
+	photo_type_item = PhotoTypeItem.objects.filter(id=photo_type_item_id, is_visible=True).select_related("parent").first()
+	if not photo_type_item:
+		return JsonResponse({"status": "error", "message": "Please select a valid visible category."}, status=400)
+	if photo_type_item.has_visible_children():
+		return JsonResponse({"status": "error", "message": "Please choose the most specific sub-category."}, status=400)
+
+	photo_type_path = photo_type_item.full_path()
 
 	try:
 		result = upload_photos_to_slum_drive_folder(
 			slum_id,
 			uploaded_files,
-			photo_category=photo_category,
-			event_name=event_name,
+			photo_type_item=photo_type_item,
+			sponsor_project_id=sponsor_project_id,
 		)
 	except ObjectDoesNotExist:
 		return JsonResponse({"status": "error", "message": "Slum not found."}, status=404)
@@ -192,7 +337,61 @@ def upload_slum_photos_to_drive(request):
 			status=500
 		)
 
-	return JsonResponse({"status": "success", "data": result}, status=201)
+	slum = Slum.objects.filter(id=slum_id).first()
+	if not slum:
+		return JsonResponse({"status": "error", "message": "Slum not found."}, status=404)
+	hierarchy = result.get("hierarchy") or []
+	hierarchy_path = " / ".join([item for item in hierarchy if item])
+
+	upload_batch = SlumPhotoUpload.objects.create(
+		slum=slum,
+		photo_type_item=photo_type_item,
+		photo_type_item_name=photo_type_item.name,
+		photo_type_path=photo_type_path,
+		sponsor_project_id=sponsor_project_id or None,
+		event_name="",
+		uploaded_by=request.user if request.user.is_authenticated else None,
+		hierarchy_path=hierarchy_path,
+	)
+
+	files_response = []
+	for file_info in result.get("files", []):
+		web_view_link = file_info.get("web_view_link") or file_info.get("webViewLink") or ""
+		web_content_link = file_info.get("web_content_link") or file_info.get("webContentLink") or ""
+		drive_file_id = file_info.get("drive_file_id") or file_info.get("driveFileId") or ""
+
+		SlumPhoto.objects.create(
+			upload_batch=upload_batch,
+			file_name=file_info.get("name", ""),
+			web_view_link=web_view_link,
+			web_content_link=web_content_link,
+			drive_file_id=drive_file_id,
+			size_bytes=file_info.get("size"),
+			content_type=file_info.get("content_type", ""),
+		)
+
+		files_response.append({
+			"name": file_info.get("name", ""),
+			"web_view_link": web_view_link,
+			"web_content_link": web_content_link,
+			"drive_file_id": drive_file_id,
+			"webViewLink": web_view_link,
+			"webContentLink": web_content_link,
+			"driveFileId": drive_file_id,
+		})
+
+	response_data = {
+		"upload_batch_id": upload_batch.id,
+		"files": files_response,
+		"hierarchy": hierarchy,
+		"photo_type_path": photo_type_path,
+		"photo_type_item_name": photo_type_item.name,
+		"photo_category": result.get("photo_category"),
+		"photo_category_label": result.get("photo_category_label"),
+		"photo_category_folder": result.get("photo_category_folder"),
+	}
+
+	return JsonResponse({"status": "success", "data": response_data}, status=200)
 
 def send_reminder(request, to_emails, reminder_type, template_name, subject, context, cc=None, bcc=None):
 	"""Create or update a monthly reminder tracker and send the reminder email."""
@@ -274,3 +473,47 @@ def confirm_reminder(request):
 	)
 
 	return HttpResponse("Reminder confirmed successfully")
+
+
+
+@staff_member_required
+def photo_type_tree(request):
+    """
+    Returns the full PhotoTypeItem tree as nested JSON.
+    Used by the flowchart guide on the photo upload page.
+
+    Response format:
+    [
+        {
+            "id": 1,
+            "name": "Activity",
+            "has_children": true,
+            "children": [
+                {
+                    "id": 5,
+                    "name": "Formal activity",
+                    "has_children": true,
+                    "children": [ ... ]
+                },
+                ...
+            ]
+        },
+        ...
+    ]
+    """
+    from helpers.models import PhotoTypeItem   # local import in case not at top
+
+    def build_node(item):
+        children = PhotoTypeItem.objects.filter(parent=item, is_visible=True).order_by('order', 'name')
+        child_nodes = [build_node(c) for c in children]
+        return {
+            'id': item.id,
+            'name': item.name,
+            'has_children': len(child_nodes) > 0,
+            'children': child_nodes,
+        }
+
+    roots = PhotoTypeItem.objects.filter(parent__isnull=True, is_visible=True).order_by('order', 'name')
+    tree = [build_node(r) for r in roots]
+    return JsonResponse(tree, safe=False)
+

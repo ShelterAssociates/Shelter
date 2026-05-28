@@ -55,6 +55,9 @@ DEBUG       = False   # overridden to True in local_settings.py for dev
 SECRET_KEY  = ''      # MUST be set in local_settings.py
 ALLOWED_HOSTS = []    # MUST be set in local_settings.py
 
+# Use BigAutoField by default to avoid Django warnings about auto-created PK types
+DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
 
 # ---------------------------------------------------------------------------
 # IMPORT LOCAL SETTINGS

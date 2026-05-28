@@ -23,38 +23,73 @@ DEFAULT_IMAGE_MAX_WIDTH = 1600
 DEFAULT_IMAGE_MAX_HEIGHT = 1600
 DEFAULT_UPLOAD_TIMEOUT = 180
 DEFAULT_UPLOAD_RETRY_COUNT = 2
-PHOTO_CATEGORY_LABELS = {
-    "mobilization": "Mobilization",
-    "toilet": "Toilet",
-    "mhm": "MHM",
-    "gis_map": "GIS Map",
-    "events": "Events",
-    "other": "Other",
-}
-
-
 def clean_drive_name(value):
     cleaned_value = re.sub(r"[\\/:*?\"<>|]+", "_", str(value or "").strip())
     cleaned_value = re.sub(r"\s+", " ", cleaned_value)
     return cleaned_value or "Unknown"
 
 
-def get_upload_context(photo_category, event_name=None):
-    category_key = str(photo_category or "").strip().lower()
-    if category_key not in PHOTO_CATEGORY_LABELS:
+def get_upload_context(photo_type_item):
+    if photo_type_item is None:
         raise ImproperlyConfigured("A valid photo category is required for photo upload.")
 
-    details_value = clean_drive_name(event_name) if event_name else ""
-    if category_key in ("events", "other") and not details_value:
-        raise ImproperlyConfigured("Event name is required for Events and Other photo uploads.")
+    if hasattr(photo_type_item, "path_nodes"):
+        path_nodes = photo_type_item.path_nodes()
+        item_name = getattr(photo_type_item, "name", "")
+    else:
+        # Accept a plain string path for compatibility with older callers.
+        path_nodes = []
+        item_name = str(photo_type_item or "").strip()
+        for part in [piece.strip() for piece in item_name.split("/") if piece.strip()]:
+            path_nodes.append(type("Node", (), {"name": part})())
 
-    category_folder = details_value or PHOTO_CATEGORY_LABELS[category_key]
+    path_parts = [clean_drive_name(node.name) for node in path_nodes if getattr(node, "name", None)]
+    if not path_parts:
+        raise ImproperlyConfigured("A valid photo category is required for photo upload.")
+
+    path_display = " / ".join(path_parts)
     return {
-        "category_key": category_key,
-        "category_label": PHOTO_CATEGORY_LABELS[category_key],
-        "category_folder": category_folder,
-        "details": details_value,
+        "category_label": path_parts[-1],
+        "category_folder": path_parts[-1],
+        "category_path": path_parts,
+        "category_path_display": path_display,
+        "details": item_name,
     }
+
+
+def merge_service_file_links(files, service_response):
+    service_files = []
+    if isinstance(service_response, dict):
+        candidate_files = service_response.get("files")
+        if isinstance(candidate_files, list):
+            service_files = candidate_files
+
+    files_by_name = {}
+    for service_file in service_files:
+        if not isinstance(service_file, dict):
+            continue
+        service_name = clean_drive_name(service_file.get("name") or service_file.get("file_name") or "")
+        if service_name:
+            files_by_name[service_name] = service_file
+
+    for index, file_info in enumerate(files):
+        service_file = {}
+        by_name = files_by_name.get(clean_drive_name(file_info.get("name")))
+        if isinstance(by_name, dict):
+            service_file = by_name
+        elif index < len(service_files) and isinstance(service_files[index], dict):
+            service_file = service_files[index]
+
+        file_info["web_view_link"] = service_file.get("web_view_link") or service_file.get("webViewLink") or ""
+        file_info["web_content_link"] = service_file.get("web_content_link") or service_file.get("webContentLink") or ""
+        file_info["drive_file_id"] = service_file.get("drive_file_id") or service_file.get("driveFileId") or ""
+
+        # Keep backward compatibility with existing frontend keys.
+        file_info["webViewLink"] = file_info["web_view_link"]
+        file_info["webContentLink"] = file_info["web_content_link"]
+        file_info["driveFileId"] = file_info["drive_file_id"]
+
+    return files
 
 
 def build_upload_file_name(index, original_name):
@@ -209,20 +244,33 @@ def post_to_upload_service(payload):
     raise Exception("Photo upload service failed without a response.")
 
 
-def upload_photos_to_slum_drive_folder(slum_id, uploaded_files, photo_category, event_name=None):
+def upload_photos_to_slum_drive_folder(slum_id, uploaded_files, photo_type_item=None, sponsor_project_id=None):
     slum = Slum.objects.select_related(
         "electoral_ward__administrative_ward__city__name"
     ).get(id=slum_id)
     hierarchy = get_slum_hierarchy(slum)
-    upload_context = get_upload_context(photo_category, event_name)
+    upload_context = get_upload_context(photo_type_item)
     encrypted_zip, files, zip_size = build_encrypted_zip_payload(uploaded_files)
 
     location = dict(hierarchy)
+    sponsor_name = ""
+    sponsor_project_name = ""
+    if sponsor_project_id:
+        from sponsor.models import SponsorProject
+
+        sponsor_project = SponsorProject.objects.select_related("sponsor").filter(id=sponsor_project_id).first()
+        if sponsor_project:
+            sponsor_project_name = sponsor_project.name or ""
+            sponsor_name = sponsor_project.sponsor.organization_name if sponsor_project.sponsor else ""
+
     location.update({
-        "photo_category": upload_context["category_key"],
+        "photo_category": upload_context["category_label"],
         "photo_category_label": upload_context["category_label"],
         "photo_category_folder": upload_context["category_folder"],
-        "event_name": upload_context["details"],
+        "photo_category_path": upload_context["category_path_display"],
+        "event_name": "",
+        "sponsor_project": sponsor_project_name,
+        "sponsor_name": sponsor_name,
     })
 
     payload = {
@@ -239,14 +287,19 @@ def upload_photos_to_slum_drive_folder(slum_id, uploaded_files, photo_category, 
             "source": "shelter_django",
             "zip_size": zip_size,
             "file_count": len(files),
-            "photo_category": upload_context["category_key"],
+            "photo_category": upload_context["category_label"],
             "photo_category_label": upload_context["category_label"],
             "photo_category_folder": upload_context["category_folder"],
-            "event_name": upload_context["details"],
+            "photo_category_path": upload_context["category_path_display"],
+            "photo_category_path_parts": upload_context["category_path"],
+            "event_name": "",
+            "sponsor_project": sponsor_project_name,
+            "sponsor_name": sponsor_name,
         },
     }
 
     service_response = post_to_upload_service(payload)
+    files = merge_service_file_links(files, service_response)
     logger.info(
         "Photo upload forwarded for slum_id=%s city=%s slum=%s file_count=%s",
         slum.id,
@@ -265,10 +318,14 @@ def upload_photos_to_slum_drive_folder(slum_id, uploaded_files, photo_category, 
             hierarchy["slum"],
             upload_context["category_folder"],
         ],
-        "photo_category": upload_context["category_key"],
+        "photo_category": upload_context["category_label"],
         "photo_category_label": upload_context["category_label"],
         "photo_category_folder": upload_context["category_folder"],
-        "event_name": upload_context["details"],
+        "photo_category_path": upload_context["category_path_display"],
+        "photo_category_path_parts": upload_context["category_path"],
+        "event_name": "",
+        "sponsor_project": sponsor_project_name,
+        "sponsor_name": sponsor_name,
         "files": files,
         "upload_service_response": service_response,
     }
