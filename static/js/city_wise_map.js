@@ -839,13 +839,21 @@ function renderKMLDownloadButton() {
         updateActionButtonRow();
         return;
     }
-
     $("#kml-btn-slot").html(
         "<div class='gis-action-grid'>" +
         "<button id='downloadKMLBtn' class='action-btn secondary-action-btn'>Download KML</button>" +
-        "<button id='downloadShapeBtn' class='action-btn secondary-action-btn'>Download SHP</button>" +
+
+        "<button id='downloadShapeBtn' " +
+        "class='action-btn secondary-action-btn disabled-action-btn' " +
+        "disabled " +
+        "title='SHP export will be available in the upcoming revamp'>" +
+        "Download SHP (Coming Soon)" +
+        "</button>" +
+
         "</div>" +
+
         "<div class='gis-export-options'>" +
+
         "<label class='gis-export-checkbox' for='includeCsvData'>" +
         "<input type='checkbox' id='includeCsvData'>" +
         "<span class='gis-export-checkbox__text'>" +
@@ -853,6 +861,7 @@ function renderKMLDownloadButton() {
         "<span class='gis-export-checkbox__hint'>Contains all household and factsheet data available. This may take longer.</span>" +
         "</span>" +
         "</label>" +
+
         "<label class='gis-export-checkbox' for='emailExportData'>" +
         "<input type='checkbox' id='emailExportData'>" +
         "<span class='gis-export-checkbox__text'>" +
@@ -860,9 +869,11 @@ function renderKMLDownloadButton() {
         "<span class='gis-export-checkbox__hint'>Use this when the export is too heavy for direct download. The file will be generated in the background and emailed to you.</span>" +
         "</span>" +
         "</label>" +
+
         "<div id='emailExportWrap' style='display:none; margin-top:10px;'>" +
         "<input type='email' id='emailExportAddress' class='form-control' placeholder='Enter email address to receive the download link'>" +
         "</div>" +
+
         "</div>"
     );
     updateActionButtonRow();
