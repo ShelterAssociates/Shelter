@@ -76,7 +76,7 @@
         {% endif %}
 
         <!-- Reports -->
-        {% if perms.master.can_generate_reports %}
+        {% if user.is_staff %}
           <div class="nav-drop">
             <button class="nav-btn">Reports <span class="nav-caret"></span></button>
             <ul class="drop-menu">
@@ -98,7 +98,7 @@
         {% endif %}
 
         <!-- Tools -->
-        {% if perms.master.can_generate_reports %}
+        {% if user.is_staff %}
           <div class="nav-drop">
             <button class="nav-btn">Tools <span class="nav-caret"></span></button>
             <ul class="drop-menu">
@@ -164,7 +164,7 @@
         {% endif %}
       {% endif %}
 
-      {% if perms.master.can_generate_reports %}
+      {% if user.is_staff %}
         <div class="drop-div"></div>
         <span class="drop-label">Reports</span>
         <a class="drop-item" href="/reports">Reports</a>
