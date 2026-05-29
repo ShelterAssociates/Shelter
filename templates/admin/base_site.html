@@ -1,82 +1,186 @@
-{% extends "admin/base.html" %}
+{% extends 'admin/base.html' %}
+{% load i18n static %}
 
-{% block title %} {{ site_title|default:_('Shelter site admin') }}{% endblock %}
-
-{% block branding %}
-<a href="/home"><img src="/static/images/shelter.png" height="40" width = "130" style="padding:5px;"/></a>
+{% block title %}
+  {{ site_title|default:_('Shelter site admin') }}
 {% endblock %}
 
-{% block menubar %}
-<ul class="nav navbar-nav">
-    <li class="dropdown" id="admin-menu">
-        <a href="#admin-menu" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="true">
-            Admin
-            <span class="caret"></span>
-        </a>
-        <ul class="dropdown-menu">
+{% block nav %}
+  {% if user.is_authenticated %}
+    <nav id="shelter-nav" aria-label="Main navigation">
+      <a class="nav-brand" href="/home"><img src="{% static 'images/shelter.png' %}" alt="Shelter" /></a>
+      <div class="nav-sep"></div>
 
-            <li><a href="/accounts/">Database Adminstration </a></li>
-            <li role="separator" class="divider"></li>
-            {%if perms.master.view_survey%}
-                <li><a href="/admin/surveymapping/">Survey Mapping </a></li>
-            {%endif%}
-            {%if perms.master.view_rapid_slum_appraisal%}
-            <li><a href="/admin/sluminformation/rim/display/">RIM additional Info</a></li>
-            {%endif%}
+      <div class="nav-items">
+        <!-- Admin -->
+        <div class="nav-drop">
+          <button class="nav-btn">Admin <span class="nav-caret"></span></button>
+          <ul class="drop-menu">
+            <li class="drop-label">System</li>
+            <li>
+              <a class="drop-item" href="/accounts/">Database administration</a>
+            </li>
+            <li class="drop-div"></li>
+            <li class="drop-label">Data</li>
+            {% if perms.master.view_survey %}
+              <li>
+                <a class="drop-item" href="/admin/surveymapping/">Survey mapping</a>
+              </li>
+            {% endif %}
+            {% if perms.master.view_rapid_slum_appraisal %}
+              <li>
+                <a class="drop-item" href="/admin/sluminformation/rim/display/">RIM additional info</a>
+              </li>
+            {% endif %}
+            {% if perms.component.can_upload_KML %}
+              <li>
+                <a class="drop-item" href="/component/">Upload KML</a>
+              </li>
+            {% endif %}
+          </ul>
+        </div>
 
-            {%if perms.component.can_upload_KML%}
-            <li>
-                <a href="/component/" >Upload KML</a>
-            </li>
-            {%endif%}
-        </ul>
-    </li>
+        <!-- Analytics -->
+        {% if perms.mastersheet.can_view_mastersheet or perms.mastersheet.can_view_mastersheet_report %}
+          <div class="nav-drop">
+            <button class="nav-btn">Analytics <span class="nav-caret"></span></button>
+            <ul class="drop-menu">
+              <li class="drop-label">Graphs</li>
+              <li>
+                <a class="drop-item" href="/graphs/type/toilet_construction/">Toilet construction</a>
+              </li>
+              <li>
+                <a class="drop-item" href="/graphs/type/community_mobilization/">Community mobilization</a>
+              </li>
+              <li>
+                <a class="drop-item" href="/graphs/covid_data">Covid data</a>
+              </li>
+              <li>
+                <a class="drop-item" href="/graphs/member_data">Member data</a>
+              </li>
+              {% if perms.mastersheet.can_view_mastersheet %}
+                <li class="drop-div"></li>
+                <li class="drop-label">Mastersheets</li>
+                <li>
+                  <a class="drop-item" href="/mastersheet/show/mastersheet/">Progress tracking</a>
+                </li>
+                <li>
+                  <a class="drop-item" href="/mastersheet/show/summery/">Summary view</a>
+                </li>
+                <li>
+                  <a class="drop-item" href="/mastersheet/report/">Reports</a>
+                </li>
+              {% endif %}
+            </ul>
+          </div>
+        {% endif %}
 
-    {% if perms.mastersheet.can_view_mastersheet or perms.mastersheet.can_view_mastersheet_report or perms.master.can_generate_reports or perms.master.can_generate_reports%}
-    <li class="dropdown" id="report-menu">
-        <a href="#report-menu" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="true">
-            Analytics
-            <span class="caret"></span>
-        </a>
-        <ul class="dropdown-menu">
-            <li class="dropdown-header">Graphs</li>
-            <li><a href="/graphs/type/toilet_construction/">Toilet Construction</a></li>
-            <li><a href="/graphs/type/community_mobilization/">Community Mobilization</a></li>
-        <li><a href="/graphs/covid_data">Covid Data</a></li>
-        <li><a href="/graphs/member_data">Member Data</a></li>
-            {% if perms.mastersheet.can_view_mastersheet or perms.mastersheet.can_view_mastersheet_report%}
-                <li role="separator" class="divider"></li>
-                <li class="dropdown-header">Mastersheets</li>
-            {%endif%}
-            {% if perms.mastersheet.can_view_mastersheet%}
-            <li>
-                <a href="/mastersheet/show/mastersheet/" >Progress Tracking</a>
-            </li>
-            <li>
-                <a href="/mastersheet/show/summery/" >Summary view</a>
-            </li>
-            <li>
-                <a href="/mastersheet/report/" >Reports</a>
-            </li>
-            {%endif%}
-            {% if perms.master.can_generate_reports %}
-            <li role="separator" class="divider"></li>
-            <li class="dropdown-header">Documents</li>
-            <li><a href="/reports">Reports (NEW)</a></li>
-            <li><a href="/admin/report/">Factsheet Report</a></li>
-            <li><a href="/admin/vulnerabilityReport/" target="__blank">Vulnerability Report</a></li>
-            <li><a href="/graphs/factsheet_data">City Wise Factsheet Data</a></li>
-            {%endif%}
-            {% if perms.master.can_generate_reports %}
-            <li role="separator" class="divider"></li>
-            <li class="dropdown-header">Additional Tools</li>
-            <li><a href="/helpers/digipin_generate/">Generate Digipin</a></li>
-            <li><a href="/helpers/photo-upload/">Photo Upload</a></li>
-            {%endif%}
-        </ul>
-    </li>
-</ul>
-{%endif%}
-{% endblock%}
+        <!-- Reports -->
+        {% if perms.master.can_generate_reports %}
+          <div class="nav-drop">
+            <button class="nav-btn">Reports <span class="nav-caret"></span></button>
+            <ul class="drop-menu">
+              <li class="drop-label">Documents</li>
+              <li>
+                <a class="drop-item" href="/reports">Reports <span class="new-badge">New</span></a>
+              </li>
+              <li>
+                <a class="drop-item" href="/admin/report/">Factsheet report</a>
+              </li>
+              <li>
+                <a class="drop-item" href="/admin/vulnerabilityReport/" target="_blank">Vulnerability report</a>
+              </li>
+              <li>
+                <a class="drop-item" href="/graphs/factsheet_data">City-wise factsheet data</a>
+              </li>
+            </ul>
+          </div>
+        {% endif %}
 
-{% block nav-global %}{% endblock %}
+        <!-- Tools -->
+        {% if perms.master.can_generate_reports %}
+          <div class="nav-drop">
+            <button class="nav-btn">Tools <span class="nav-caret"></span></button>
+            <ul class="drop-menu">
+              <li class="drop-label drop-label-emphasis">Utilities</li>
+              <li>
+                <a class="drop-item" href="/helpers/digipin_generate/">Generate Digipin</a>
+              </li>
+              <li>
+                <a class="drop-item" href="/helpers/photo-upload/">Photo upload</a>
+              </li>
+            </ul>
+          </div>
+        {% endif %}
+      </div>
+
+      <!-- User dropdown -->
+      <div class="nav-end">
+        <div class="nav-drop">
+          <button class="nav-user-btn">
+            <div class="nav-avatar">{{ user.get_short_name|default:user.get_username|slice:':2'|upper }}</div>
+            <span class="nav-uname">{% firstof user.get_short_name user.get_username %}</span>
+            <span class="nav-caret"></span>
+          </button>
+          <ul class="drop-menu drop-menu-right" style="min-width:160px;">
+            {% if user.has_usable_password %}
+              <li>
+                <a class="drop-item" href="{% url 'admin:password_change' %}">Change password</a>
+              </li>
+              <li class="drop-div"></li>
+            {% endif %}
+            <li>
+              <a class="drop-item" href="{% url 'admin:logout' %}">Log out</a>
+            </li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- Hamburger -->
+      <button class="nav-hamburger" aria-label="Toggle menu" aria-controls="mobile-nav"><span></span><span></span><span></span></button>
+    </nav>
+
+    <!-- Mobile panel -->
+    <div id="mobile-nav" aria-hidden="true">
+      <span class="drop-label">Admin</span>
+      <a class="drop-item" href="/accounts/">Database administration</a>
+      {% if perms.master.view_survey %}
+        <a class="drop-item" href="/admin/surveymapping/">Survey mapping</a>
+      {% endif %}
+      {% if perms.component.can_upload_KML %}
+        <a class="drop-item" href="/component/">Upload KML</a>
+      {% endif %}
+
+      {% if perms.mastersheet.can_view_mastersheet or perms.mastersheet.can_view_mastersheet_report %}
+        <div class="drop-div"></div>
+        <span class="drop-label">Analytics</span>
+        <a class="drop-item" href="/graphs/type/toilet_construction/">Toilet construction</a>
+        <a class="drop-item" href="/graphs/type/community_mobilization/">Community mobilization</a>
+        <a class="drop-item" href="/graphs/covid_data">Covid data</a>
+        <a class="drop-item" href="/graphs/member_data">Member data</a>
+        {% if perms.mastersheet.can_view_mastersheet %}
+          <a class="drop-item" href="/mastersheet/show/mastersheet/">Progress tracking</a>
+          <a class="drop-item" href="/mastersheet/show/summery/">Summary view</a>
+        {% endif %}
+      {% endif %}
+
+      {% if perms.master.can_generate_reports %}
+        <div class="drop-div"></div>
+        <span class="drop-label">Reports</span>
+        <a class="drop-item" href="/reports">Reports</a>
+        <a class="drop-item" href="/admin/report/">Factsheet report</a>
+        <a class="drop-item" href="/admin/vulnerabilityReport/">Vulnerability report</a>
+        <div class="drop-div"></div>
+        <span class="drop-label">Tools</span>
+        <a class="drop-item" href="/helpers/digipin_generate/">Generate Digipin</a>
+        <a class="drop-item" href="/helpers/photo-upload/">Photo upload</a>
+      {% endif %}
+
+      <div class="drop-div"></div>
+      {% if user.has_usable_password %}
+        <a class="drop-item" href="{% url 'admin:password_change' %}">Change password</a>
+      {% endif %}
+      <a class="drop-item" href="{% url 'admin:logout' %}">Log out</a>
+    </div>
+  {% endif %}
+{% endblock %}
