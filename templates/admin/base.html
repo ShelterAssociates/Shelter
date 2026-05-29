@@ -1,272 +1,346 @@
 <!DOCTYPE html>
 {% load i18n static %}
-{% get_current_language as LANGUAGE_CODE %}{% get_current_language_bidi as LANGUAGE_BIDI %}
+{% get_current_language as LANGUAGE_CODE %}
+{% get_current_language_bidi as LANGUAGE_BIDI %}
 <html lang="{{ LANGUAGE_CODE|default:"en-us" }}" {% if LANGUAGE_BIDI %}dir="rtl"{% endif %}>
 <head>
 <title>{% block title %}{% endblock %}</title>
-<style>
-    .dropdown-menu li
-    {
-        list-style: none !important;
-        list-style-type: none !important;
-    }
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+{% block blockbots %}<meta name="robots" content="NONE,NOARCHIVE">{% endblock %}
 
-    .admin-mobile-toggle {
-        border: 1px solid #d1d5db;
-        background: #ffffff;
-        border-radius: 6px;
-        margin: 0;
-        padding: 8px 10px;
-    }
-
-    .admin-mobile-toggle .icon-bar {
-        display: block;
-        width: 18px;
-        height: 2px;
-        background: #374151;
-        margin: 3px 0;
-    }
-
-    @media (max-width: 767px) {
-        html,
-        body {
-            max-width: 100%;
-            overflow-x: hidden;
-        }
-
-        body {
-            padding-top: 0;
-        }
-
-        .navbar {
-            min-height: 0;
-            margin-bottom: 0;
-        }
-
-        .navbar-fixed-top {
-            position: relative;
-        }
-
-        #branding {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            max-width: 100%;
-            padding: 8px 12px;
-        }
-
-        #branding img {
-            max-width: calc(100% - 56px);
-            height: auto !important;
-            width: auto !important;
-        }
-
-        #branding:after {
-            content: "";
-            display: table;
-            clear: both;
-        }
-
-        .admin-mobile-toggle {
-            display: inline-block !important;
-            float: right;
-        }
-
-        #navbar {
-            width: 100%;
-            padding: 0 12px 12px;
-            border-top: 1px solid #e5e7eb;
-        }
-
-        #navbar.navbar-collapse {
-            max-height: none;
-            box-shadow: none;
-        }
-
-        #navbar .nav,
-        #navbar .navbar-nav,
-        #navbar .navbar-right {
-            float: none !important;
-            margin: 0 !important;
-        }
-
-        #navbar .nav > li,
-        #navbar .navbar-nav > li {
-            float: none;
-        }
-
-        #navbar .nav > li > a,
-        #navbar .navbar-nav > li > a {
-            padding-left: 0;
-            padding-right: 0;
-            white-space: normal;
-            word-break: break-word;
-        }
-
-        #navbar .dropdown-menu {
-            position: static;
-            float: none;
-            width: 100%;
-            border: 0;
-            box-shadow: none;
-            background: #f8fafc;
-            margin-bottom: 10px;
-            max-height: 50vh;
-            overflow-y: auto;
-            -webkit-overflow-scrolling: touch;
-        }
-
-        #navbar .navbar-right {
-            margin-top: 10px !important;
-        }
-
-        #user-tools {
-            line-height: 1.7;
-            display: block;
-            white-space: normal;
-            word-break: break-word;
-        }
-
-        div[style="margin-top:70px;"] {
-            margin-top: 16px !important;
-        }
-
-        .breadcrumbs,
-        #content,
-        .messagelist {
-            padding-left: 12px;
-            padding-right: 12px;
-        }
-
-        #content {
-            width: 100%;
-            min-width: 0;
-        }
-    }
-</style>
-
-<link rel="stylesheet"  type="text/css" href="{% static "css/bootstrap.min.css" %}"/>
-<link rel="stylesheet" type="text/css" href="{% block stylesheet %}{% static "admin/css/base.css" %}{% endblock %}" />
+<link rel="stylesheet" href="{% static "admin/css/base.css" %}">
 {% block extrastyle %}{% endblock %}
-<!--[if lte IE 7]><link rel="stylesheet" type="text/css" href="{% block stylesheet_ie %}{% static "admin/css/ie.css" %}{% endblock %}" /><![endif]-->
-{% if LANGUAGE_BIDI %}<link rel="stylesheet" type="text/css" href="{% block stylesheet_rtl %}{% static "admin/css/rtl.css" %}{% endblock %}" />{% endif %}
-<script type="text/javascript">window.__admin_media_prefix__ = "{% filter escapejs %}{% static "admin/" %}{% endfilter %}";</script>
-<script type="text/javascript">window.__admin_utc_offset__ = "{% filter escapejs %}{% now "Z" %}{% endfilter %}";</script>
+{% if LANGUAGE_BIDI %}
+<link rel="stylesheet" href="{% static "admin/css/rtl.css" %}">
+{% endif %}
+
+<script>window.__admin_media_prefix__ = "{% filter escapejs %}{% static "admin/" %}{% endfilter %}";</script>
+<script>window.__admin_utc_offset__ = "{% filter escapejs %}{% now "Z" %}{% endfilter %}";</script>
 <script src="{% static "js/jquery.min.js" %}"></script>
-<script src="{% static "js/bootstrap.min.js" %}"></script>
-    <!-- Global site tag (gtag.js) - Google Analytics -->
-<script async src="https://www.googletagmanager.com/gtag/js?id=UA-156545676-1"></script>
-<script>
-  window.dataLayer = window.dataLayer || [];
-  function gtag(){dataLayer.push(arguments);}
-  gtag('js', new Date());
-
-  gtag('config', 'UA-156545676-1');
-</script>
 {% block extrahead %}{% endblock %}
-{% block responsive %}
-    <meta name="viewport" content="user-scalable=no, width=device-width, initial-scale=1.0, maximum-scale=1.0">
-    <link rel="stylesheet" type="text/css" href="{% static "admin/css/responsive.css" %}">
-    {% if LANGUAGE_BIDI %}<link rel="stylesheet" type="text/css" href="{% static "admin/css/responsive_rtl.css" %}">{% endif %}
-{% endblock %}
 
-{% block blockbots %}<meta name="robots" content="NONE,NOARCHIVE" />{% endblock %}
+<style>
+/* ── Reset ── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+/* ── Hide Django's own header and remove its spacing ── */
+#header {
+  display: none !important;
+}
+#container {
+  padding-top: 0 !important;
+}
+
+/* ── Kill Django admin's global list bullet styles ── */
+#shelter-nav ul,
+#shelter-nav ul li,
+#mobile-nav ul,
+#mobile-nav ul li,
+.drop-menu,
+.drop-menu li {
+  list-style: none !important;
+  list-style-type: none !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  background-image: none !important;
+}
+#shelter-nav li::before,
+#shelter-nav li::after,
+#mobile-nav li::before,
+#mobile-nav li::after,
+.drop-menu li::before,
+.drop-menu li::after {
+  content: none !important;
+  display: none !important;
+}
+
+/* ── Navbar ── */
+#shelter-nav {
+  position: fixed; top: 0; left: 0; right: 0;
+  z-index: 9999;
+  background: #fff;
+  border-bottom: 1px solid #e5e7eb;
+  display: flex; align-items: center;
+  height: 52px; padding: 0 16px; gap: 4px;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
+
+/* Brand */
+.nav-brand {
+  display: flex; align-items: center;
+  text-decoration: none; margin-right: 12px; flex-shrink: 0;
+}
+.nav-brand img { height: 36px; width: auto; display: block; }
+.nav-sep {
+  width: 1px; height: 22px;
+  background: #e5e7eb; margin: 0 8px; flex-shrink: 0;
+}
+
+/* Nav items */
+.nav-items { display: flex; align-items: center; gap: 2px; }
+.nav-drop {
+  position: relative;
+  padding-bottom: 10px;
+  margin-bottom: -10px;
+}
+
+.nav-btn {
+  display: flex; align-items: center; gap: 6px;
+  padding: 0 11px; height: 34px;
+  border-radius: 7px; border: none;
+  background: transparent;
+  font-size: 13.5px; font-weight: 500;
+  color: #1f2937; cursor: pointer;
+  font-family: inherit;
+  transition: background .12s;
+  white-space: nowrap;
+}
+.nav-btn:hover,
+.nav-drop:hover > .nav-btn { background: #f3f4f6; }
+
+.nav-caret {
+  display: inline-block;
+  width: 7px; height: 7px;
+  border-right: 1.5px solid #9ca3af;
+  border-bottom: 1.5px solid #9ca3af;
+  transform: rotate(45deg);
+  margin-top: -3px;
+}
+
+/* ── Dropdown menus ── */
+.drop-menu {
+  display: block;
+  position: absolute;
+  top: calc(100% - 2px);
+  left: 0;
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  padding: 8px 8px 10px !important;
+  min-width: 210px;
+  z-index: 9999;
+  box-shadow: 0 8px 24px rgba(0,0,0,.07);
+  list-style: none !important;
+  visibility: hidden;
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(6px);
+  transition: opacity .12s ease, transform .12s ease, visibility 0s linear .12s;
+}
+.drop-menu::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: -10px;
+  height: 10px;
+}
+.nav-drop:hover .drop-menu {
+  visibility: visible;
+  opacity: 1;
+  pointer-events: auto;
+  transform: translateY(0);
+  transition-delay: 0s;
+}
+
+.drop-label {
+  display: block;
+  font-size: 11px; font-weight: 700;
+  color: #6b7280;
+  text-transform: uppercase;
+  letter-spacing: .08em;
+  padding: 12px 10px 4px 14px !important;
+  list-style: none;
+  background-image: none !important;
+}
+.drop-label:first-child {
+  padding-top: 8px !important;
+}
+
+.drop-div {
+  height: 1px;
+  background: #f3f4f6;
+  margin: 4px 2px;
+  list-style: none;
+  background-image: none !important;
+}
+
+.drop-item {
+  display: flex !important;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 10px !important;
+  border-radius: 6px;
+  font-size: 13px;
+  color: #111827;
+  font-weight: 500;
+  text-decoration: none;
+  transition: background .1s;
+  list-style: none !important;
+  background-image: none !important;
+}
+.drop-label-emphasis {
+  color: #111827;
+}
+.drop-item:hover { background: #f3f4f6 !important; color: #111827; }
+
+.new-badge {
+  margin-left: auto;
+  font-size: 10px; font-weight: 600;
+  background: #dcfce7; color: #15803d;
+  padding: 2px 7px; border-radius: 99px;
+}
+
+/* ── Right end — user pill ── */
+.nav-end { margin-left: auto; }
+
+.nav-user-btn {
+  display: flex; align-items: center; gap: 7px;
+  padding: 4px 10px 4px 4px;
+  border: 1px solid #e5e7eb;
+  border-radius: 99px;
+  background: transparent; cursor: pointer;
+  font-family: inherit;
+  transition: background .1s;
+  height: auto;
+}
+.nav-user-btn:hover { background: #f3f4f6; }
+
+.nav-avatar {
+  width: 26px; height: 26px; border-radius: 50%;
+  background: #dbeafe; color: #1e40af;
+  font-size: 10px; font-weight: 700;
+  display: flex; align-items: center; justify-content: center;
+}
+.nav-uname { font-size: 13px; color: #111827; font-weight: 500; }
+.drop-menu-right { left: auto !important; right: 0; }
+
+/* ── Mobile hamburger ── */
+.nav-hamburger {
+  display: none;
+  margin-left: auto;
+  width: 34px; height: 34px;
+  border: 1px solid #e5e7eb; border-radius: 7px;
+  background: transparent; cursor: pointer;
+  flex-direction: column; align-items: center;
+  justify-content: center; gap: 4px;
+}
+.nav-hamburger span {
+  display: block;
+  width: 16px; height: 1.5px;
+  background: #6b7280;
+}
+
+/* ── Mobile nav panel ── */
+#mobile-nav {
+  display: none;
+  position: fixed; top: 52px; left: 0; right: 0;
+  background: #fff;
+  border-bottom: 1px solid #e5e7eb;
+  padding: 10px 14px 16px;
+  z-index: 9998;
+  max-height: calc(100vh - 52px);
+  overflow-y: auto;
+}
+#mobile-nav .drop-item { white-space: normal; }
+#mobile-nav .drop-label {
+  padding: 10px 0 3px 10px !important;
+  background-image: none !important;
+}
+#mobile-nav .drop-div {
+  margin: 4px 0;
+  background-image: none !important;
+}
+
+/* ── Page layout ── */
+.page-wrapper { margin-top: 52px; }
+
+.breadcrumbs {
+  padding: 10px 20px;
+  background: #fff;
+  border-bottom: 1px solid #e5e7eb;
+  font-size: 13px; color: #6b7280;
+}
+.breadcrumbs a { color: #2563eb; text-decoration: none; }
+
+.messagelist {
+  list-style: none !important;
+  background-image: none !important;
+  padding: 0 20px; margin: 12px 0;
+}
+.messagelist li {
+  background-image: none !important;
+  list-style: none !important;
+}
+.messagelist li::before,
+.messagelist li::after {
+  content: none !important;
+  display: none !important;
+}
+
+#content { padding: 24px 20px; }
+#content h1 {
+  font-size: 22px; font-weight: 500;
+  color: #111827; margin-bottom: 8px;
+}
+
+/* ── Mobile breakpoint ── */
+@media (max-width: 680px) {
+  .nav-items,
+  .nav-sep,
+  .nav-end { display: none; }
+  .nav-hamburger { display: flex; }
+}
+</style>
 </head>
-{% load i18n %}
 
 <body class="{% if is_popup %}popup {% endif %}{% block bodyclass %}{% endblock %}">
 
-<!-- Container -->
-{% if user.is_authenticated %}
-    <!-- Header -->
-    <div class="navbar navbar-default navbar-fixed-top" id="">
-        <!-- Logo -->
-        <div id="branding">
-        <button type="button" class="admin-mobile-toggle navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar" aria-expanded="false" aria-controls="navbar">
-            <span class="sr-only">{% trans 'Toggle navigation' %}</span>
-            <span class="icon-bar"></span>
-            <span class="icon-bar"></span>
-            <span class="icon-bar"></span>
-        </button>
-        {% block branding %}{% endblock %}
-        </div>
-        <!-- END Logo -->
+{% block nav %}{% endblock %}
 
-        <!-- Menu -->
-        <div id="navbar" class="navbar-collapse collapse">
-
-            <!-- Left Menu -->
-            {% block menubar %}{% endblock %}
-            <!-- END Left Menu -->
-
-            <!-- Right Menu -->
-            <div class="nav navbar-nav navbar-right" style="margin-right:15px;margin-top:15px;">
-                {% block usertools %}
-                <div id="user-tools">
-                    {% block welcome-msg %}
-                        {% trans 'Welcome,' %}
-                        <strong>{% firstof user.get_short_name user.get_username %}</strong>.
-                    {% endblock %}
-                    {% block userlinks %}
-                        {% if site_url %}
-                            <a href="{{ site_url }}">{% trans 'View site' %}</a> /
-                        {% endif %}
-                        {% if user.is_active and user.is_staff %}
-                            {% url 'django-admindocs-docroot' as docsroot %}
-                            {% if docsroot %}
-                                <a href="{{ docsroot }}">{% trans 'Documentation' %}</a> /
-                            {% endif %}
-                        {% endif %}
-                        {% if user.has_usable_password %}
-                        <a href="{% url 'admin:password_change' %}">{% trans 'Change password' %}</a> /
-                        {% endif %}
-                        <a href="{% url 'admin:logout' %}">{% trans 'Log out' %}</a>
-                    {% endblock %}
-                </div>
-                {% endblock %}
-                {% block nav-global %}{% endblock %}
-            </div>
-            <!-- END Right Menu -->
-        </div>
-        <!-- END Menu -->
-    </div>
-    <!-- END Header -->
-{%endif%}
-
-
-<div style="margin-top:70px;">
-    {% block breadcrumbs %}
-    <div class="breadcrumbs">
+<div class="page-wrapper">
+  {% block breadcrumbs %}
+  <div class="breadcrumbs">
     <a href="{% url 'master:index' %}">{% trans 'Home' %}</a>
-    {% if title %} &rsaquo; {{ title }}{% endif %}
-    </div>
+    {% if title %} › {{ title }}{% endif %}
+  </div>
+  {% endblock %}
+
+  {% block messages %}
+  {% if messages %}
+  <ul class="messagelist">
+    {% for message in messages %}
+    <li {% if message.tags %}class="{{ message.tags }}"{% endif %}>{{ message|capfirst }}</li>
+    {% endfor %}
+  </ul>
+  {% endif %}
+  {% endblock %}
+
+  <div id="content" class="{% block coltype %}colM{% endblock %}">
+    {% block pretitle %}{% endblock %}
+    {% block content_title %}{% if title %}<h1>{{ title }}</h1>{% endif %}{% endblock %}
+    {% block content %}
+    {% block object-tools %}{% endblock %}
+    {{ content }}
     {% endblock %}
-   
+    {% block sidebar %}{% endblock %}
+  </div>
 
-    {% block messages %}
-        {% if messages %}
-        <ul class="messagelist">{% for message in messages %}
-          <li {% if message.tags %} class="{{ message.tags }}"{% endif %}>{{ message|capfirst }}</li>
-        {% endfor %}</ul>
-        {% endif %}
-    {% endblock messages %}
-
-    <!-- Content -->
-    <div id="content" class="{% block coltype %}colM{% endblock %}">
-        {% block pretitle %}{% endblock %}
-        {% block content_title %}{% if title %}<h1>{{ title }}</h1>{% endif %}{% endblock %}
-        {% block content %}
-        {% block object-tools %}{% endblock %}
-        {{ content }}
-        {% endblock %}
-        {% block sidebar %}{% endblock %}
-        <br class="clear" />
-    </div>
-    <!-- END Content -->
-
-    {% block footer %}<div id="footer"></div>{% endblock %}
+  {% block footer %}<div id="footer"></div>{% endblock %}
 </div>
-<!-- END Container -->
 
+<script>
+  const ham = document.querySelector('.nav-hamburger');
+  const mob = document.getElementById('mobile-nav');
+  if (ham && mob) {
+    ham.addEventListener('click', () => {
+      const open = mob.style.display === 'block';
+      mob.style.display = open ? 'none' : 'block';
+      mob.setAttribute('aria-hidden', String(open));
+    });
+  }
+</script>
+
+{% block nav_global %}{% endblock %}
 </body>
 </html>

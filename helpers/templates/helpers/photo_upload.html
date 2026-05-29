@@ -26,9 +26,9 @@
 
     <!-- two-column grid -->
     <div class="pu-grid" id="photoUploadContainer" data-is-superuser="{{ is_superuser|yesno:'true,false' }}" data-city-list-url="{% url 'master:cityList' %}" data-administrative-ward-list-url="{% url 'master:administrativewardList' %}" data-electoral-ward-list-url="{% url 'master:electoralWardList' %}" data-slum-list-url="{% url 'master:slumList' %}" data-sponsor-project-list-url="{% url 'sponsor_project_list' %}" data-photo-type-items-url="{% url 'photo_type_items' %}" data-manage-tree-url="{% url 'manage_photo_type_items' %}" data-manage-toggle-url="{% url 'manage_toggle_photo_type_item' %}" data-manage-add-url="{% url 'manage_add_photo_type_item' %}" data-photo-type-tree-url="{% url 'photo_type_tree' %}" data-upload-url="{% url 'upload_slum_photos_to_drive' %}" data-default-photo-date="{{ default_photo_date }}">
-      <!--                       ╔══════════════════════════════╗
+      <!--                            ╔══════════════════════════════╗
          ║  LEFT — Upload Form          ║
-         ╚══════════════════════════════╝                       -->
+         ╚══════════════════════════════╝                            -->
       <div>
         <div class="pu-card">
           <div class="pu-card-head">
@@ -102,7 +102,7 @@
 
               <div class="pu-field pu-hidden" id="customFolderField">
                 <label for="custom_folder_name">Custom Folder Name</label>
-                <input id="custom_folder_name" name="custom_folder_name" type="text" placeholder="FloodReliefPhotos" />
+                <input id="custom_folder_name" name="custom_folder_name" type="text" placeholder="Workshop_Photos" />
               </div>
 
               <div class="pu-field">
@@ -144,10 +144,10 @@
         </div>
       </div>
 
-      <!--                       ╔════════════════════════════════════════╗
+      <!--                            ╔════════════════════════════════════════╗
          ║  RIGHT — Superuser: Management Tree    ║
          ║          Others:    Flowchart Guide     ║
-         ╚════════════════════════════════════════╝                       -->
+         ╚════════════════════════════════════════╝                            -->
       <div>
         {% if is_superuser %}
           <!-- SUPERUSER: management tree -->
@@ -249,8 +249,8 @@
       if (!window.PHOTO_UPLOAD_FLOWCHART_EXTERNAL) {
         /* ── Flowchart Guide (non-superuser only) ── */
         /* Uses /helpers/photo-type-tree/ which returns full nested tree:
-                                                                                                                                       [{id, name, has_children, children:[...]}, ...]
-                                                                                                                                       Falls back to building tree client-side from flat API if needed */
+                                                                                                                                                                     [{id, name, has_children, children:[...]}, ...]
+                                                                                                                                                                     Falls back to building tree client-side from flat API if needed */
         ;(function ($) {
           var treeUrl = $('#photoUploadContainer').data('photo-type-tree-url')
           var flatUrl = $('#photoUploadContainer').data('photo-type-items-url')
