@@ -42,7 +42,7 @@
         <div class="dashboard-topbar__actions">
             {% if user.is_authenticated %}
                 <span class="dashboard-topbar__welcome">Welcome {{user}}</span>
-                {% if user.is_superuser or user.username == "GIS" %}
+                {% if user.is_staff %}
                 <a href="/admin" class="dashboard-topbar__link">Admin</a>
                 {% endif %}
                 <a href="{% url 'logout' %}?next={{ request.path }}" class="dashboard-topbar__button">Logout</a>
