@@ -886,6 +886,8 @@
 }
 
 .pu-modal {
+    overflow-y: auto;
+
     position: fixed;
     inset: 0;
     z-index: 9999;
@@ -1006,5 +1008,31 @@
 
     .pu-confirm-row {
         grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 640px) {
+    .pu-modal {
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .pu-modal-dialog {
+        width: calc(100vw - 20px);
+        margin: 10px auto;
+        max-height: 90vh;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .pu-modal-body {
+        flex: 1;
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .pu-modal-foot {
+        flex-shrink: 0;
+        background: white;
     }
 }
