@@ -301,6 +301,9 @@ def upload_slum_photos_to_drive(request):
 	city_id = request.POST.get("city_id")
 	photo_type_item_id = request.POST.get("photo_type_item_id")
 	sponsor_project_id = request.POST.get("sponsor_project_id")
+	project_type = (request.POST.get("project_type") or "").strip()
+	project_type_other = (request.POST.get("project_type_other") or "").strip()
+	photo_comment = (request.POST.get("photo_comment") or "").strip()
 	photo_date = request.POST.get("photo_date")
 	is_city_level = str(request.POST.get("is_city_level") or "").lower() in ("1", "true", "on", "yes")
 	is_other_upload = str(request.POST.get("is_other_upload") or "").lower() in ("1", "true", "on", "yes")
@@ -336,6 +339,16 @@ def upload_slum_photos_to_drive(request):
 	if selected_photo_date > date.today():
 		return JsonResponse({"status": "error", "message": "Photo date cannot be in the future."}, status=400)
 
+	valid_project_types = {"PHOT", "MHM", "Housing", "Other"}
+	if not project_type:
+		return JsonResponse({"status": "error", "message": "Project type is required."}, status=400)
+	if project_type not in valid_project_types:
+		return JsonResponse({"status": "error", "message": "Please select a valid project type."}, status=400)
+	if project_type == "Other" and not project_type_other:
+		return JsonResponse({"status": "error", "message": "Specify Project Type is required when Project Type is Other."}, status=400)
+	if project_type != "Other":
+		project_type_other = ""
+
 	photo_type_item = None
 	if not is_other_upload:
 		if not photo_type_item_id:
@@ -358,6 +371,8 @@ def upload_slum_photos_to_drive(request):
 		result = upload_photos_to_slum_drive_folder(
 			slum_id=slum_id if not is_city_level and not is_other_upload else None,
 			uploaded_files=uploaded_files,
+			project_type=project_type,
+			project_type_other=project_type_other,
 			photo_type_item=photo_type_item,
 			sponsor_project_id=sponsor_project_id,
 			photo_date=photo_date,
@@ -384,6 +399,8 @@ def upload_slum_photos_to_drive(request):
 
 	upload_batch = SlumPhotoUpload.objects.create(
 		slum=slum,
+		project_type=project_type,
+		project_type_other=project_type_other,
 		photo_type_item=photo_type_item,
 		photo_type_item_name=photo_type_item.name if photo_type_item else "",
 		photo_type_path=photo_type_path,
@@ -395,6 +412,7 @@ def upload_slum_photos_to_drive(request):
 		is_city_level=is_city_level,
 		is_other_upload=is_other_upload,
 		custom_folder_name=custom_folder_name,
+		photo_comment=photo_comment,
 	)
 
 	files_response = []
@@ -437,6 +455,9 @@ def upload_slum_photos_to_drive(request):
 		"photo_category_label": result.get("photo_category_label"),
 		"photo_category_folder": result.get("photo_category_folder"),
 		"drive_path_display": result.get("drive_path_display"),
+		"project_type": project_type,
+		"project_type_other": project_type_other,
+		"photo_comment": photo_comment,
 	}
 
 	return JsonResponse({"status": "success", "data": response_data}, status=200)
@@ -564,4 +585,3 @@ def photo_type_tree(request):
     roots = PhotoTypeItem.objects.filter(parent__isnull=True, is_visible=True).order_by('order', 'name')
     tree = [build_node(r) for r in roots]
     return JsonResponse(tree, safe=False)
-

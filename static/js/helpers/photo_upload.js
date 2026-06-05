@@ -120,6 +120,11 @@
     var $otherUpload = $('#is_other_upload')
     var $photoDate = $('#photo_date')
     var $customFolder = $('#custom_folder_name')
+    var $projectType = $('#project_type')
+    var $projectTypeOtherField = $('#projectTypeOtherField')
+    var $projectTypeOther = $('#project_type_other')
+    var $photoComment = $('#photo_comment')
+    var photoTypePickerRequestId = 0
 
     if ($photoDate.length) {
         var today = cfg.defaultPhotoDate || new Date().toISOString().slice(0, 10)
@@ -148,6 +153,19 @@
             $summary.html('<strong>Selected path:</strong> ' + $('<div>').text(parts.join(' / ')).html())
         } else {
             $summary.text('Select a photo type to see the full path here.')
+        }
+    }
+
+    function syncProjectTypeOtherField() {
+        var isOtherProjectType = $projectType.val() === 'Other'
+
+        if (isOtherProjectType) {
+            $projectTypeOtherField.removeClass('pu-hidden')
+            $projectTypeOther.prop('required', true)
+        } else {
+            $projectTypeOtherField.addClass('pu-hidden')
+            $projectTypeOther.prop('required', false)
+            $projectTypeOther.val('')
         }
     }
 
@@ -261,21 +279,25 @@
     })
 
     function initPhotoTypePicker() {
+        var requestId = ++photoTypePickerRequestId
         $picker.empty()
         $hiddenTypeId.val('')
         updateSummary()
         $.get(cfg.photoTypeItemsUrl, function (data) {
+            if (requestId !== photoTypePickerRequestId) return
             if (data && data.length > 0) {
                 addLevelRow(data, 0, getLevelLabel(0))
             } else {
                 $picker.html('<div style="font-size:12px;color:#9ca3af;padding:6px 0;">No photo types available.</div>')
             }
         }).fail(function (xhr) {
+            if (requestId !== photoTypePickerRequestId) return
             $picker.html('<div style="font-size:12px;color:#991b1b;padding:6px 0;">Error loading photo types.</div>')
         })
     }
 
     initPhotoTypePicker()
+    syncProjectTypeOtherField()
 
     /* ════════════════════════════════════════
        3. UPLOAD READINESS & SUBMIT
@@ -287,18 +309,25 @@
         var photoDate = $photoDate.val()
         var slumId = $('#slum').val()
         var typeId = $hiddenTypeId.val()
+        var projectType = $projectType.val()
+        var projectTypeOtherValid = projectType !== 'Other' || ($projectTypeOther.val() && $projectTypeOther.val().trim())
         var hasPhotos = $('#photos')[0] && $('#photos')[0].files && $('#photos')[0].files.length > 0
         var today = new Date().toISOString().slice(0, 10)
         var validDate = photoDate && photoDate <= today
         var customFolderValid = !isOther || ($('#custom_folder_name').val() && $('#custom_folder_name').val().trim())
         var locationValid = isOther ? true : (isCityLevel ? $('#city').val() : slumId)
         var typeValid = isOther ? true : typeId
-        $('#uploadButton').prop('disabled', !(locationValid && typeValid && hasPhotos && validDate && customFolderValid))
+        var projectTypeValid = !!projectType
+        $('#uploadButton').prop('disabled', !(locationValid && typeValid && projectTypeValid && projectTypeOtherValid && hasPhotos && validDate && customFolderValid))
     }
 
     $('#slum, #photo_type_item_id').on('change', checkUploadReady)
     $('#photos').on('change', checkUploadReady)
-    $('#city, #photo_date, #custom_folder_name').on('change keyup', checkUploadReady)
+    $('#city, #photo_date, #custom_folder_name, #project_type, #project_type_other').on('change keyup', function () {
+        syncProjectTypeOtherField()
+        checkUploadReady()
+    })
+    $('#photo_comment').on('change keyup', checkUploadReady)
 
     /* Also hook slum select since it's a regular select not hidden */
     $(document).on('change', '#slum', checkUploadReady)
@@ -350,6 +379,7 @@
     function buildConfirmationSummary() {
         var isOther = $otherUpload.is(':checked')
         var isCityLevel = $cityLevel.is(':checked') && !isOther
+        var projectType = $projectType.val() || '—'
         var rows = []
 
         function addRow(label, value) {
@@ -362,8 +392,10 @@
         addRow('Electoral ward', isOther ? '—' : selectedText($('#electoral_ward'), '—'))
         addRow('Slum', isOther ? '—' : selectedText($('#slum'), '—'))
         addRow('Photo type', isOther ? '—' : selectedPhotoTypePath())
+        addRow('Project type', projectType === 'Other' ? projectType + ' / ' + ($projectTypeOther.val() || '—') : projectType)
         addRow('Sponsor project', selectedText($('#sponsor_project'), '—'))
         addRow('Custom folder', isOther ? ($('#custom_folder_name').val() || '—') : '—')
+        addRow('Photo comment', $('#photo_comment').val() || '—')
         addRow('Photos', selectedFilesSummary())
 
         $confirmDate.text($('#photo_date').val())
@@ -387,11 +419,15 @@
         var formData = new FormData($('#photoUploadForm')[0])
         var isOther = $otherUpload.is(':checked')
         var isCityLevel = $cityLevel.is(':checked') && !isOther
+        var projectType = $projectType.val() || ''
 
         formData.set('is_city_level', isCityLevel ? '1' : '0')
         formData.set('is_other_upload', isOther ? '1' : '0')
         formData.set('custom_folder_name', $('#custom_folder_name').val() || '')
         formData.set('photo_date', $('#photo_date').val() || '')
+        formData.set('project_type', projectType)
+        formData.set('project_type_other', projectType === 'Other' ? ($projectTypeOther.val() || '') : '')
+        formData.set('photo_comment', $('#photo_comment').val() || '')
 
         $('#uploadButton').prop('disabled', true)
         setStatus('loading', '⏳ Uploading and encrypting photos…')
@@ -415,8 +451,12 @@
                     $photoDate.val(cfg.defaultPhotoDate || today)
                     $photoDate.attr('max', today)
                     $customFolder.val('')
+                    $projectType.val('')
+                    $projectTypeOther.val('')
+                    $photoComment.val('')
                     $cityLevel.prop('checked', false)
                     $otherUpload.prop('checked', false)
+                    syncProjectTypeOtherField()
                     loadCities()
                     initPhotoTypePicker()
                     disableSelect($('#admin_ward'), '— Select Administrative Ward —')
@@ -488,6 +528,15 @@
         }
         if ($('#photo_date').val() > today) {
             setStatus('error', 'Photo date cannot be in the future.')
+            return
+        }
+
+        if (!$projectType.val()) {
+            setStatus('error', 'Please select a project type.')
+            return
+        }
+        if ($projectType.val() === 'Other' && (!$projectTypeOther.val() || !$projectTypeOther.val().trim())) {
+            setStatus('error', 'Please specify the project type.')
             return
         }
 
