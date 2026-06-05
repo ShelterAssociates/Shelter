@@ -86,6 +86,22 @@
                 </select>
               </div>
 
+              <div class="pu-field" id="projectTypeField">
+                <label for="project_type">Project Type *</label>
+                <select id="project_type" name="project_type" required>
+                  <option value="">— Select Project Type —</option>
+                  <option value="PHOT">PHOT</option>
+                  <option value="MHM">MHM</option>
+                  <option value="Housing">Housing</option>
+                  <option value="Other">Other</option>
+                </select>
+              </div>
+
+              <div class="pu-field pu-hidden" id="projectTypeOtherField">
+                <label for="project_type_other">Specify Project Type *</label>
+                <input id="project_type_other" name="project_type_other" type="text" placeholder="Example: Livelihood" />
+              </div>
+
               <div class="pu-field">
                 <label for="sponsor_project">Sponsor Project</label>
                 <select id="sponsor_project" name="sponsor_project_id">
@@ -103,6 +119,11 @@
               <div class="pu-field pu-hidden" id="customFolderField">
                 <label for="custom_folder_name">Custom Folder Name</label>
                 <input id="custom_folder_name" name="custom_folder_name" type="text" placeholder="Workshop_Photos" />
+              </div>
+
+              <div class="pu-field">
+                <label for="photo_comment">Photo Comment</label>
+                <textarea id="photo_comment" name="photo_comment" rows="3" placeholder="Add a note about this upload"></textarea>
               </div>
 
               <div class="pu-field">
@@ -131,7 +152,7 @@
                 <svg viewBox="0 0 24 24">
                   <path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z" />
                   <polyline points="9 22 9 12 15 12 15 22" />
-                </svg>Folder: City / Slum_AdminWard_ElectoralWard / Category Path / Date or custom root / Date
+                </svg>Folder: Project Type / City / Slum_AdminWard_ElectoralWard / Category Path / Date or Project Type / Custom root / Date
               </div>
               <div class="pu-info-item">
                 <svg viewBox="0 0 24 24">
