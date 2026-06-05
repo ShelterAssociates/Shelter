@@ -192,7 +192,8 @@
 
 .pu-field input[type='text'],
 .pu-field input[type='date'],
-.pu-field input[type='file'] {
+.pu-field input[type='file'],
+.pu-field textarea {
     width: 100%;
     box-sizing: border-box;
     padding: 9px 11px;
@@ -206,6 +207,11 @@
     display: block;
 }
 
+.pu-field textarea {
+    resize: vertical;
+    min-height: 88px;
+}
+
 .pu-field input[type='file'] {
     padding: 7px 11px;
     cursor: pointer;
@@ -213,7 +219,8 @@
 
 .pu-field input[type='text']:focus,
 .pu-field input[type='date']:focus,
-.pu-field input[type='file']:focus {
+.pu-field input[type='file']:focus,
+.pu-field textarea:focus {
     outline: none;
     border-color: var(--pu-blue);
     box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);

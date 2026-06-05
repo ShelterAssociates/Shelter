@@ -128,7 +128,16 @@ class SponsorProjectPhotoConfig(models.Model):
 
 
 class SlumPhotoUpload(models.Model):
+	PROJECT_TYPE_CHOICES = (
+		("OHOT", "OHOT"),
+		("MHM", "MHM"),
+		("Housing", "Housing"),
+		("Other", "Other"),
+	)
+
 	slum = models.ForeignKey("master.Slum", null=True, blank=True, on_delete=models.CASCADE, related_name="photo_uploads")
+	project_type = models.CharField(max_length=20, choices=PROJECT_TYPE_CHOICES, default="PHOT")
+	project_type_other = models.CharField(max_length=200, blank=True)
 	photo_type_item = models.ForeignKey(
 		"helpers.PhotoTypeItem",
 		null=True,
@@ -141,6 +150,7 @@ class SlumPhotoUpload(models.Model):
 	is_city_level = models.BooleanField(default=False)
 	is_other_upload = models.BooleanField(default=False)
 	custom_folder_name = models.CharField(max_length=200, blank=True)
+	photo_comment = models.TextField(blank=True)
 	sponsor_project = models.ForeignKey(
 		"sponsor.SponsorProject",
 		null=True,

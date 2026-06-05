@@ -78,8 +78,34 @@ def get_upload_context(photo_type_item):
     }
 
 
+def get_project_type_context(project_type, project_type_other=""):
+    project_type_value = clean_drive_name(project_type)
+    if project_type_value == "Unknown":
+        raise ImproperlyConfigured("project_type is required for photo upload.")
+
+    if project_type_value == "Other":
+        other_value = clean_drive_name(project_type_other)
+        if other_value == "Unknown":
+            raise ImproperlyConfigured("project_type_other is required when project_type is Other.")
+        return {
+            "project_type": project_type_value,
+            "project_type_other": other_value,
+            "project_type_path": [project_type_value, other_value],
+            "project_type_path_display": " / ".join([project_type_value, other_value]),
+        }
+
+    return {
+        "project_type": project_type_value,
+        "project_type_other": "",
+        "project_type_path": [project_type_value],
+        "project_type_path_display": project_type_value,
+    }
+
+
 def build_drive_path(
     photo_date,
+    project_type="",
+    project_type_other="",
     photo_type_item=None,
     slum=None,
     city=None,
@@ -89,19 +115,21 @@ def build_drive_path(
 ):
     photo_date_value = parse_photo_date(photo_date)
     date_folder = photo_date_value.isoformat()
+    project_type_context = get_project_type_context(project_type, project_type_other)
+    project_type_path = project_type_context["project_type_path"]
 
     if is_other_upload:
         custom_folder = clean_drive_name(custom_folder_name)
         if custom_folder == "Unknown":
             raise ImproperlyConfigured("A custom folder name is required for other photo upload.")
 
-        folder_parts = [custom_folder, date_folder]
+        folder_parts = project_type_path + [custom_folder, date_folder]
         return {
             "mode": "other",
             "photo_date": date_folder,
             "drive_path_parts": folder_parts,
             "drive_path_display": " / ".join(folder_parts),
-            "root_folder": custom_folder,
+            "root_folder": project_type_path[0],
             "city_name": "",
             "slum_folder": "",
             "category_path_parts": [],
@@ -109,6 +137,10 @@ def build_drive_path(
             "category_label": "",
             "category_folder": "",
             "custom_folder_name": custom_folder,
+            "project_type": project_type_context["project_type"],
+            "project_type_other": project_type_context["project_type_other"],
+            "project_type_path": project_type_path,
+            "project_type_path_display": project_type_context["project_type_path_display"],
         }
 
     upload_context = get_upload_context(photo_type_item)
@@ -119,13 +151,13 @@ def build_drive_path(
             raise ImproperlyConfigured("A city is required for city level photo upload.")
 
         city_name = clean_drive_name(getattr(getattr(city, "name", None), "city_name", None))
-        folder_parts = [city_name] + category_path_parts + [date_folder]
+        folder_parts = project_type_path + [city_name] + category_path_parts + [date_folder]
         return {
             "mode": "city_level",
             "photo_date": date_folder,
             "drive_path_parts": folder_parts,
             "drive_path_display": " / ".join(folder_parts),
-            "root_folder": city_name,
+            "root_folder": project_type_path[0],
             "city_name": city_name,
             "slum_folder": "",
             "category_path_parts": category_path_parts,
@@ -133,6 +165,10 @@ def build_drive_path(
             "category_label": upload_context["category_label"],
             "category_folder": upload_context["category_folder"],
             "custom_folder_name": "",
+            "project_type": project_type_context["project_type"],
+            "project_type_other": project_type_context["project_type_other"],
+            "project_type_path": project_type_path,
+            "project_type_path_display": project_type_context["project_type_path_display"],
         }
 
     if slum is None:
@@ -146,13 +182,13 @@ def build_drive_path(
             hierarchy["electoral_ward"],
         )
     )
-    folder_parts = [hierarchy["city"], slum_folder] + category_path_parts + [date_folder]
+    folder_parts = project_type_path + [hierarchy["city"], slum_folder] + category_path_parts + [date_folder]
     return {
         "mode": "normal",
         "photo_date": date_folder,
         "drive_path_parts": folder_parts,
         "drive_path_display": " / ".join(folder_parts),
-        "root_folder": hierarchy["city"],
+        "root_folder": project_type_path[0],
         "city_name": hierarchy["city"],
         "slum_folder": slum_folder,
         "category_path_parts": category_path_parts,
@@ -160,6 +196,10 @@ def build_drive_path(
         "category_label": upload_context["category_label"],
         "category_folder": upload_context["category_folder"],
         "custom_folder_name": "",
+        "project_type": project_type_context["project_type"],
+        "project_type_other": project_type_context["project_type_other"],
+        "project_type_path": project_type_path,
+        "project_type_path_display": project_type_context["project_type_path_display"],
     }
 
 
@@ -390,6 +430,8 @@ def post_to_upload_service(payload):
 def upload_photos_to_slum_drive_folder(
     slum_id=None,
     uploaded_files=None,
+    project_type="",
+    project_type_other="",
     photo_type_item=None,
     sponsor_project_id=None,
     photo_date=None,
@@ -413,6 +455,8 @@ def upload_photos_to_slum_drive_folder(
 
     drive_context = build_drive_path(
         photo_date=photo_date,
+        project_type=project_type,
+        project_type_other=project_type_other,
         photo_type_item=photo_type_item,
         slum=slum,
         city=city,
@@ -432,6 +476,8 @@ def upload_photos_to_slum_drive_folder(
         "photo_category_path": drive_context["category_path_display"],
         "photo_date": drive_context["photo_date"],
         "event_name": "",
+        "project_type": drive_context["project_type"],
+        "project_type_other": drive_context["project_type_other"],
     }
     sponsor_name = ""
     sponsor_project_name = ""
@@ -451,6 +497,8 @@ def upload_photos_to_slum_drive_folder(
         "drive_path_parts": hierarchy,
         "is_city_level": is_city_level,
         "is_other_upload": is_other_upload,
+        "project_type": drive_context["project_type"],
+        "project_type_other": drive_context["project_type_other"],
     })
 
     payload = {
@@ -477,7 +525,11 @@ def upload_photos_to_slum_drive_folder(
             "event_name": "",
             "sponsor_project": sponsor_project_name,
             "sponsor_name": sponsor_name,
+            "project_type": drive_context["project_type"],
+            "project_type_other": drive_context["project_type_other"],
         },
+        "project_type": drive_context["project_type"],
+        "project_type_other": drive_context["project_type_other"],
     }
 
     service_response = post_to_upload_service(payload)
@@ -513,6 +565,8 @@ def upload_photos_to_slum_drive_folder(
         "event_name": "",
         "sponsor_project": sponsor_project_name,
         "sponsor_name": sponsor_name,
+        "project_type": drive_context["project_type"],
+        "project_type_other": drive_context["project_type_other"],
         "files": files,
         "upload_service_response": service_response,
     }
