@@ -129,14 +129,14 @@ class SponsorProjectPhotoConfig(models.Model):
 
 class SlumPhotoUpload(models.Model):
 	PROJECT_TYPE_CHOICES = (
-		("PHOT", "PHOT"),
+		("OHOT", "OHOT"),
 		("MHM", "MHM"),
 		("Housing", "Housing"),
 		("Other", "Other"),
 	)
 
 	slum = models.ForeignKey("master.Slum", null=True, blank=True, on_delete=models.CASCADE, related_name="photo_uploads")
-	project_type = models.CharField(max_length=20, choices=PROJECT_TYPE_CHOICES, default="PHOT")
+	project_type = models.CharField(max_length=20, choices=PROJECT_TYPE_CHOICES, default="OHOT")
 	project_type_other = models.CharField(max_length=200, blank=True)
 	photo_type_item = models.ForeignKey(
 		"helpers.PhotoTypeItem",
