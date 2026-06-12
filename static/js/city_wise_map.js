@@ -396,8 +396,26 @@ function generate_RIM(result) {
 
 
 /* ── Filter / right panel generation ────────────────────────────────────── */
+function resetComponentSelectionState() {
+    var selectedItems = $("#compochk").find("[name=chk1]:checked");
+
+    selectedItems.each(function () {
+        $(this).click();
+    });
+
+    $.each(arr_poly_disp, function (k, v) {
+        if (v && v.shape) {
+            map.removeLayer(v.shape);
+        }
+    });
+
+    arr_poly_disp = [];
+}
+
 function generate_filter(globalJsonData, slumId, result) {
     currentSlumComponentData = result || {};
+
+    resetComponentSelectionState();
 
     /* ---- Refresh button ---- */
     var compochk_refresh = $("#compochk_refresh");
@@ -1554,6 +1572,7 @@ $(document).off("click.refreshYes", "#refreshConfirmYes")
 
         btn.prop("disabled", true).text("Refreshing...");
         fullResetHouseholdSearch();
+        resetComponentSelectionState();
         $("#compochk").html(
             '<div style="height:300px;width:100%;display:flex;align-items:center;justify-content:center;">' +
             '<div id="loading-img"></div></div>'
