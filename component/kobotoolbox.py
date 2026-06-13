@@ -6,9 +6,11 @@ from itertools import chain
 from collections import Counter
 from master.models import SURVEYTYPE_CHOICES, Survey
 from django.shortcuts import get_object_or_404
+from django.db import connection
 from graphs.models import *
 import itertools
 from graphs.sync_avni_data import *
+import time as pytime
 
 def survey_mapping(survey_type):
     def real_decorator(function):
@@ -26,24 +28,61 @@ def survey_mapping(survey_type):
     return real_decorator
 
 
+def _log_analysis_timing(stage, started_at, started_queries, **details):
+    elapsed_ms = (pytime.perf_counter() - started_at) * 1000.0
+    query_delta = len(connection.queries) - started_queries
+    extra = ""
+    if details:
+        extra = " | " + ", ".join("{}={}".format(key, value) for key, value in details.items())
+    print("Household analysis timing [{}]: {:.1f} ms, queries=+{}{}".format(stage, elapsed_ms, query_delta, extra), flush=True)
+
+
 #@survey_mapping(SURVEYTYPE_CHOICES[1][0])
 def get_household_analysis_data(city, slum_code, question_fields, kobo_survey=''):
     '''Gets the kobotoolbox RHS data for selected questions
     '''
+    request_started_at = pytime.perf_counter()
+    request_started_queries = len(connection.queries)
     output = {}
     slum = get_object_or_404(Slum, id=slum_code)
     hide_houdehold_data = [1303807, 1303809, 1303815, 1302608, 1445969, 1303816, 1302615, 1302656, 1302659, 1302664, 1302674, 1302690, 1302691, 1302693, 1302696, 1302697, 1302698, 1302700, 1302701, 1302702, 1302704, 1302706, 1302707, 1302708, 1302709, 1302710, 1302712, 1302716, 1302717, 1302718, 1302719, 1302720, 1302723, 1302724, 1302725, 1302727, 1302728, 1302731, 1302732, 1302733, 1302734, 1302735, 1302736, 1302737, 1302738, 1302739, 1302740, 1302742, 1302743, 1302744, 1302745, 1302747, 1302748, 1302749, 1302750, 1302751, 1302752, 1302757, 1302758, 1302759, 1302760, 1302761, 1302762, 1302763, 1302764, 1302765, 1302766, 1302771, 1302772, 1302773, 1302774, 1302775, 1302778, 1302779, 1302780, 1302781, 1302782, 1302783, 1302784, 1302785, 1302786, 1302787, 1302788, 1302789, 1302790, 1302791, 1302792, 1302793, 1302794, 1302905, 1302906, 1302908, 1302912, 1302913, 1302914, 1302917, 1302918, 1302925, 1302928, 1302930, 1302931, 1302932, 1302943, 1302945, 1302946, 1302947, 1302948, 1302951, 1302952, 1302954, 1302958, 1302959, 1302960, 1302961, 1302968, 1302975, 1302979, 1302980, 1302981, 1302982, 1302983, 1302986, 1302989, 1302992, 1302995, 1302998, 1302999, 1303004, 1303005, 1303006, 1303008, 1303010, 1303013, 1303016, 1303019, 1303023, 1451254, 1303037, 1303039, 1303066, 1303067, 1303072, 1303076, 1303078, 1451266, 1451273, 1448770, 1448771, 1448774, 1448775, 1448776, 1448777, 1448780, 1448781, 1448782, 1448784, 1448785, 1448787, 1448788, 1448790, 1448791, 1448792, 1448793, 1448803, 1448805, 1448806, 1448807, 1448810, 1448854, 1448867, 1448869, 1448875, 1448876, 1448878, 1450960, 1448917, 1448918, 1450977, 1450979, 1448936, 1450986, 1448940, 1450988, 1451000, 1451001, 1451002, 1451003, 1451004, 1451005, 1451006, 1451007, 1448958, 1305605, 1305607, 1305608, 1451023, 1451024, 1451027, 1451028, 1451029, 1451030, 1305620, 1451041, 1305634, 1451042, 1451044, 1451043, 1451046, 1451047, 1451048, 1451045, 1451050, 1451051, 1469484, 1305645, 1451054, 1451055, 1451056, 1451057, 1451058, 1451059, 1451060, 1305653, 1451061, 1305655, 1451062, 1305680, 1305681, 1305682, 1305684, 1305685, 1305692, 1305694, 1305695, 1305696, 1305697, 1305699, 1305700, 1305701, 1305705, 1305706, 1305707, 1305708, 1305709, 1305711, 1305712, 1305713, 1305716, 1305717, 1305718, 1305723, 1305728, 1305729, 1305730, 1305751, 1305754, 1305756, 1305757, 1305759, 1305776, 1305777, 1305790, 1305791, 1303749, 1303750, 1303754, 1303756, 1303758, 1303762, 1303763, 1303764, 1303766, 1303768, 1303772, 1303773, 1303774, 1451231, 1451232, 1451233, 1451234, 1451235, 1451236, 1303780, 1451238, 1451239, 1451240, 1451241, 1303782, 1451237, 1303783, 1303784, 1451242, 1451246, 1303792, 1451249, 1451250, 1451251, 1451252, 1303797, 1451253, 1451255, 1451256, 1451257, 1303801, 1303803, 1303804, 1451261, 1451262, 1451263, 1451264, 1451265, 1303810, 1451267, 1451268, 1303811, 1451269, 1303813, 1303814, 1451270, 1451271, 1451272, 1303818, 1451274, 1451276, 1451277, 1451278, 1303825, 1303819, 1303824, 1451275, 1303821, 1451279, 1451280, 1303828, 1451289, 1451281, 1451288, 1451286, 1451287, 1451290, 1451291, 1451292, 1451293, 1451294, 1451296, 1451297, 1451298, 1451299, 1451300, 1451301, 1451302, 1451303, 1451305, 1451306, 1451307, 1451308, 1451309, 1451310, 1451311, 1451312, 1451313, 1451314, 1451315, 1451316, 1451317, 1451318, 1305907, 1305906, 1451324, 1305926, 1305942, 1447259, 1447260, 1447261, 1306027, 1306075, 1306120, 1306128, 1306135, 1445421, 1445422, 1445423, 1445424, 1445426, 1445440, 1445441, 1445446, 1445450, 1445451, 1451654, 1451680, 1451695, 1451696, 1451697, 1451698, 1451699, 1451701, 1451703, 1451704, 1451707, 1451718, 1435440, 1303775, 1303781, 1303785, 1303790, 1303795]
-    household_data = HouseholdData.objects.filter(slum=slum).exclude(id__in = hide_houdehold_data)
-    records = map(lambda x:x.rhs_data, household_data)
-    records = filter(lambda x: x!=None, records)
+    household_rows_started_at = pytime.perf_counter()
+    household_rows_started_queries = len(connection.queries)
+    household_rows = list(HouseholdData.objects.filter(slum=slum).exclude(id__in=hide_houdehold_data))
+    records = [row.rhs_data for row in household_rows if row.rhs_data is not None]
+    _log_analysis_timing('household_rows', household_rows_started_at, household_rows_started_queries, row_count=len(household_rows), record_count=len(records))
 
-    grouped_records = itertools.groupby(sorted(records, key=lambda x:(x['Household_number'])), key=lambda x:(x["Household_number"]))
+    grouped_records = itertools.groupby(sorted(records, key=lambda x: (x['Household_number'])), key=lambda x: (x['Household_number']))
 
     # For Covid Data
-    covid_data = CovidData.objects.filter(slum = slum, age__gt = 17).exclude(household_number = 9999).values_list('household_number',flat = True)
-    Toilet_data = list(ToiletConstruction.objects.filter(slum = slum, status = 6).values_list('household_number', flat = True))
-    covid_hh = list(set(covid_data))
+    covid_rows_started_at = pytime.perf_counter()
+    covid_rows_started_queries = len(connection.queries)
+    covid_rows = list(
+        CovidData.objects
+        .filter(slum=slum, age__gt=17)
+        .exclude(household_number=9999)
+        .values_list('household_number', 'take_first_dose', 'take_second_dose')
+    )
+    Toilet_data = {
+        str(household_number)
+        for household_number in ToiletConstruction.objects.filter(slum=slum, status=6).values_list('household_number', flat=True)
+    }
+    covid_counts = Counter(str(household_number) for household_number, _, _ in covid_rows)
+    full_vaccinated_counts = Counter(
+        str(household_number)
+        for household_number, take_first_dose, take_second_dose in covid_rows
+        if take_first_dose == 'Yes' and take_second_dose == 'Yes'
+    )
+    partial_vaccinated_counts = Counter(
+        str(household_number)
+        for household_number, take_first_dose, take_second_dose in covid_rows
+        if take_first_dose == 'Yes'
+    )
+    covid_hh = set(covid_counts)
+    _log_analysis_timing('covid_and_toilet_rows', covid_rows_started_at, covid_rows_started_queries, covid_count=len(covid_rows), toilet_count=len(Toilet_data))
     cpod_status = ['SBM (Installment)','SBM (Contractor)','Toilet by SA (SBM)','Toilet by other NGO (SBM)','Own toilet','Toilet by other NGO','Toilet by SA']
+    process_started_at = pytime.perf_counter()
+    process_started_queries = len(connection.queries)
     for household, list_record in grouped_records:
         # print(household)
         # print(list_record)
@@ -52,19 +91,19 @@ def get_household_analysis_data(city, slum_code, question_fields, kobo_survey=''
             household_no = household
         else:
             household_no = int(household)
-        if len(record_sorted)>0:
-            record = record_sorted[0]
+        if not record_sorted:
+            continue
+        record = record_sorted[0]
             
         # Here we are updating vaccination status for the household.
+        household_no_key = str(household_no)
         if 'Type_of_structure_occupancy' in record and record['Type_of_structure_occupancy'] != 'Shop':
-            if household_no in covid_hh:
-                cnt_mem = list(covid_data).count(household_no)
+            if household_no_key in covid_hh:
+                cnt_mem = covid_counts.get(household_no_key, 0)
                 # we use (__lte for lessthen equal to __lt for lessthen, __ if ouput is emptygte for graterthen equal to, __gt for graterthen)
-                query_ = CovidData.objects.filter(household_number = household_no, slum = slum, take_first_dose = 'Yes', take_second_dose = 'Yes', age__gt = 17).values_list('household_number')
-                query_1 = CovidData.objects.filter(household_number = household_no, slum = slum, take_first_dose = 'Yes', age__gt = 17).values_list('household_number')
-                if query_ and query_.count() == cnt_mem:
+                if full_vaccinated_counts.get(household_no_key, 0) == cnt_mem and cnt_mem:
                     record['vaccination_status'] = 'full_vaccinated'
-                elif query_1 and query_1.count() > 0:
+                elif partial_vaccinated_counts.get(household_no_key, 0) > 0:
                     record['vaccination_status'] = 'partial_vaccinated'
                 else:
                     record['vaccination_status'] = 'not_vaccinated'
@@ -75,7 +114,7 @@ def get_household_analysis_data(city, slum_code, question_fields, kobo_survey=''
         if 'group_oi8ts04/Current_place_of_defecation' in record and record['group_oi8ts04/Current_place_of_defecation'] in cpod_status[:4] and slum_code != 1971:
             record['Final_status'] = 'SBM'
             record['group_oi8ts04/Current_place_of_defecation'] = 'Use CTB'
-        if str(household_no) in Toilet_data:
+        if household_no_key in Toilet_data:
             if 'group_oi8ts04/Current_place_of_defecation' in record and record['group_oi8ts04/Current_place_of_defecation'] in cpod_status and slum_code != 1971:
                 record['group_oi8ts04/Current_place_of_defecation'] = 'Use CTB'
             record['Final_status'] = 'Completed'
@@ -102,12 +141,12 @@ def get_household_analysis_data(city, slum_code, question_fields, kobo_survey=''
                         # here we will check only for occupancy field.
                         data = record[field]
                         if field not in output:
-                            output[field] = {data:[str(household_no), ]}
+                            output[field] = {data:[household_no_key, ]}
                         else:
                             if data not in output[field]:
-                                output[field][data] = [str(household_no), ]
+                                output[field][data] = [household_no_key, ]
                             else:
-                                output[field][data].append(str(household_no))
+                                output[field][data].append(household_no_key)
                 else:
                     data = record[field]
                     for val in data if type(data)==list else data.split(','):
@@ -115,25 +154,27 @@ def get_household_analysis_data(city, slum_code, question_fields, kobo_survey=''
                             output[field] = {}
                         if val not in output[field]:
                             output[field][val]=[]
-                        if household_no not in output[field][val]:
+                        if household_no_key not in output[field][val]:
                             # if data == "Shop":
                             #     print("Adding Household No:", household_no, " to field:", field, " with value:", val)
-                            output[field][val].append(str(household_no))
+                            output[field][val].append(household_no_key)
                         # if data == "Shop":
                         #     print("Output Data:", output[field])
             elif 'Type_of_structure_occupancy' in record and record['Type_of_structure_occupancy'] == 'Occupied house' and field in ['group_el9cl08/Type_of_water_connection', 'group_el9cl08/Facility_of_solid_waste_collection', 'group_oi8ts04/Current_place_of_defecation']:
                 ''' Checking encounter data not available if hh status is occupied.'''
                 if field in output:
                     if  'data_not_available' in output[field]:
-                        output[field]['data_not_available'].append(str(household_no))
+                        output[field]['data_not_available'].append(household_no_key)
                     else:
-                        output[field]['data_not_available'] = [str(household_no), ]
+                        output[field]['data_not_available'] = [household_no_key, ]
                 else:
-                    output[field] = {'data_not_available' : [str(household_no), ]}
+                    output[field] = {'data_not_available' : [household_no_key, ]}
                 
     # print("Final Output Data:", output)
                     
    
+    _log_analysis_timing('process_grouped_records', process_started_at, process_started_queries, household_count=len(household_rows), output_fields=len(output))
+    _log_analysis_timing('analysis_total', request_started_at, request_started_queries, household_rows=len(household_rows), output_fields=len(output))
     return output
 
 def format_data(rhs_data, slum_id,toilet_by_sa = False):

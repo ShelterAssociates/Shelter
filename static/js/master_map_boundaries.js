@@ -244,33 +244,20 @@ var Slum = (function (_super) {
                 _super.prototype.show.call(_this);
                 map.fitBounds(_this.shape.getBounds());
 
-                /* Check factsheet availability on-demand and show button.
-                   global_slum_id is set by slum_data_fetch (called just above)
-                   so the String comparison in _loadFactsheetBtn will match.
-                   Skip entirely for SRA / inactive / road_widening slums —
-                   those statuses hide the whole right panel already. */
+                /* Check factsheet availability using the already-loaded slum status.
+                   This avoids a second /component/get_component/ request on click. */
                 var skipStatuses = ["inactive", "sra", "road_widening"];
-                fetch("/component/get_component/" + _this.slumId, {
-                    headers: { "Force-Refresh-Flag": "0" }
-                })
-                    .then(function (r) { return r.json(); })
-                    .then(function (cd) {
-                        if (skipStatuses.includes(cd.status)) {
-                            /* Ensure right panel, factsheet and sponsor shadow are all hidden */
-                            $("#right-panel").removeClass("active");
-                            clearActionButtons();
-                            $("#household-search-wrapper").hide();
-                            $("#sponsor-pinned").hide();
-                            $("#compochk_refresh").html("");
-                            $("#compochk").html("");
-                        } else {
-                            _this._loadFactsheetBtn(_this.slumId);
-                        }
-                    })
-                    .catch(function () {
-                        /* On error fall back to normal behaviour */
-                        _this._loadFactsheetBtn(_this.slumId);
-                    });
+                if (skipStatuses.includes(_this.current_status)) {
+                    /* Ensure right panel, factsheet and sponsor shadow are all hidden */
+                    $("#right-panel").removeClass("active");
+                    clearActionButtons();
+                    $("#household-search-wrapper").hide();
+                    $("#sponsor-pinned").hide();
+                    $("#compochk_refresh").html("");
+                    $("#compochk").html("");
+                } else {
+                    _this._loadFactsheetBtn(_this.slumId);
+                }
             }
         });
     };

@@ -33,7 +33,7 @@ from sponsor.models import SponsorProject, SponsorProjectDetails
 from graphs.sync_avni_data import *
 from utils.utils_permission import apply_permissions_ajax, access_right, deco_rhs_permission
 from django.core.exceptions import PermissionDenied
-from django.db import close_old_connections
+from django.db import close_old_connections, connection
 from django.db.models import F
 from django.db.models import Q
 from django.db.models.functions import TruncMonth
@@ -49,6 +49,17 @@ from graphs.models import HouseholdData
 from helpers.services.send_email import send_email
 
 logger = logging.getLogger(__name__)
+
+
+def _log_component_timing(stage, started_at, started_queries, **details):
+    elapsed_ms = (pytime.perf_counter() - started_at) * 1000.0
+    query_delta = len(connection.queries) - started_queries
+    extra = ""
+    if details:
+        extra = " | " + ", ".join("{}={}".format(key, value) for key, value in details.items())
+    message = "Component timing [{}]: {:.1f} ms, queries=+{}{}".format(stage, elapsed_ms, query_delta, extra)
+    logger.info(message)
+    print(message, flush=True)
 
 slum_list = ['223', '1925', '1923', '1927', '1062', '1050', '1061', '1061', '1914', '763', '29', '672', '525', '686', '546', '547', '572', '529', '1363', '175', '514', '760', '639', '672', '820', '1026', '1008', '1169', '1639', '1644', '1647', '1171', '1645', '1170', '1640', '1641', '1136', '1164', '1137', '1642', '1142', '1069', '1026', '1034', '1012', '1048', '1050', '1054', '1057', '1119', '1020', '1030', '1028', '1057', '1652', '1283', '1288', '1095', '1096', '1097', '1099', '1100', '1101', '1098', '1104', '1107', '1111', '1079', '1080', '1342', '1083', '1672', '1673', '1085', '1086', '1087', '1077', '1091', '1092', '1665', '1081', '1082', '1338', '1084', '1074', '1340', '1350', '1088', '1089', '1075', '1076', '1090', '1093', '1344', '1094', '1349', '1102', '1103', '1666', '1105', '1106', '1343', '1108', '1109', '1346', '1078', '1112', '1115', '1116', '1113', '1341', '1117', '1339', '1110', '1375', '1259', '1198', '1293', '1200', '1288', '1283', '1971','1972','1929','2019','2020','2021']
 
@@ -84,47 +95,104 @@ def get_component(request, slum_id):
     '''Get component/filter/sponsor data for the selected slum.
        Here sponsor data is fetch according to user role access rights
     '''
-    slum = get_object_or_404(Slum, pk=slum_id)
-    if slum.current_status == 'sra': return JsonResponse({"status": "sra", "data": None})
-    if slum.current_status == 'road_widening': return JsonResponse({"status": "road_widening", "data": None})
-    city_name = list(Slum.objects.filter(id = slum.id).values_list('electoral_ward__administrative_ward__city__name__city_name', flat = True))[0]
-    sponsor_slum_count = 0
+    request_started_at = pytime.perf_counter()
+    request_started_queries = len(connection.queries)
+
+    slum_lookup_started_at = pytime.perf_counter()
+    slum_lookup_started_queries = len(connection.queries)
+    slum = get_object_or_404(
+        Slum.objects.select_related('electoral_ward__administrative_ward__city__name'),
+        pk=slum_id,
+    )
+    _log_component_timing('slum_lookup', slum_lookup_started_at, slum_lookup_started_queries, slum_id=slum_id)
+
+    if slum.current_status == 'sra':
+        _log_component_timing('early_exit_sra', request_started_at, request_started_queries, slum_id=slum_id)
+        return JsonResponse({"status": "sra", "data": None})
+    if slum.current_status == 'road_widening':
+        _log_component_timing('early_exit_road_widening', request_started_at, request_started_queries, slum_id=slum_id)
+        return JsonResponse({"status": "road_widening", "data": None})
+
+    city_name = slum.electoral_ward.administrative_ward.city.name.city_name
+
+    sponsor_lookup_started_at = pytime.perf_counter()
+    sponsor_lookup_started_queries = len(connection.queries)
     sponsors = []
-    sponsor_project_detail_ids = []
-    
+    sponsor_project_detail_ids = set()
+
     if not request.user.is_anonymous:
         # Exclude sponsor ID 10 (Toilet Facilitation under SBM Toilets)
         sponsors = list(
             request.user.sponsor_set
             .exclude(id=10)
-            .values_list("id", flat=True)
+            .values_list('id', flat=True)
         )
-    
-        sponsor_project_detail_ids = (
+        sponsor_project_detail_ids = set(
             SponsorProject.objects
             .filter(sponsor_id__in=sponsors)
-            .values_list("id", flat=True)
+            .values_list('id', flat=True)
         )
-       #sponsor_slum_count = SponsorProjectDetails.objects.filter(slum = slum).count()
-    #Fetch filter and sponsor metadata
+    _log_component_timing('sponsor_lookup', sponsor_lookup_started_at, sponsor_lookup_started_queries, sponsor_count=len(sponsors), sponsor_project_count=len(sponsor_project_detail_ids))
+
     # if slum in slum_list we fetch Shop data from mastersheet else we fetch Shops data from kml data.
+    metadata_lookup_started_at = pytime.perf_counter()
+    metadata_lookup_started_queries = len(connection.queries)
     if slum_id in slum_list:
-        metadata = Metadata.objects.filter(visible=True).exclude(name='Shops').order_by('section__order','order')
+        metadata_qs = Metadata.objects.filter(visible=True).exclude(name='Shops').select_related('section').order_by('section__order', 'order')
     else:
-        metadata = Metadata.objects.filter(visible=True).exclude(name='Shop').order_by('section__order','order')
+        metadata_qs = Metadata.objects.filter(visible=True).exclude(name='Shop').select_related('section').order_by('section__order', 'order')
+    metadata = list(metadata_qs)
+    _log_component_timing('metadata_lookup', metadata_lookup_started_at, metadata_lookup_started_queries, metadata_count=len(metadata))
+
+    fields_code = [metad.code for metad in metadata if metad.type == 'F' and metad.code]
+    fields = list({str(code.split(':')[0]) for code in fields_code})
+
+    rhs_lookup_started_at = pytime.perf_counter()
+    rhs_lookup_started_queries = len(connection.queries)
     rhs_analysis = {}
+    if fields:
+        rhs_analysis = get_household_analysis_data(slum.electoral_ward.administrative_ward.city.id, slum.id, fields)
+    _log_component_timing('rhs_analysis', rhs_lookup_started_at, rhs_lookup_started_queries, field_count=len(fields), analysis_keys=len(rhs_analysis))
 
-    fields_code = metadata.filter(type='F').exclude(code="").values_list('code', flat=True)
-    fields = list(set([str(x.split(':')[0]) for x in fields_code]))
-    rhs_analysis = get_household_analysis_data(slum.electoral_ward.administrative_ward.city.id,slum.id, fields)
+    component_lookup_started_at = pytime.perf_counter()
+    component_lookup_started_queries = len(connection.queries)
+    component_metadata_ids = [metad.id for metad in metadata if metad.type == 'C']
+    component_map = {}
+    if component_metadata_ids:
+        component_qs = (
+            slum.components.filter(metadata_id__in=component_metadata_ids)
+            .select_related('metadata', 'metadata__section')
+            .order_by('metadata__section__order', 'metadata__order', 'housenumber')
+        )
+        for comp in component_qs:
+            component_map.setdefault(comp.metadata_id, []).append(comp)
 
-    lstcomponent = [] 
+    sponsor_metadata_codes = sorted({int(metad.code) for metad in metadata if metad.type == 'S' and metad.code})
+    sponsor_details_by_project = {}
+    if sponsor_metadata_codes:
+        sponsor_details_qs = (
+            SponsorProjectDetails.objects
+            .filter(slum=slum, sponsor_project_id__in=sponsor_metadata_codes)
+            .values_list('sponsor_project_id', 'household_code')
+        )
+        for sponsor_project_id, household_code in sponsor_details_qs:
+            sponsor_households = []
+            if household_code:
+                try:
+                    sponsor_households = sum(list(household_code), [])
+                except Exception:
+                    sponsor_households = sum(map(lambda x: json.loads(x), household_code), [])
+            sponsor_details_by_project[sponsor_project_id] = sponsor_households
+
+    _log_component_timing('component_prefetch', component_lookup_started_at, component_lookup_started_queries, component_metadata_count=len(component_metadata_ids), sponsor_project_count=len(sponsor_metadata_codes))
+
+    lstcomponent = []
     sponsor_houses = []
-    #Iterate through each filter and assign answers to child if available
+    # Iterate through each filter and assign answers to child if available
     for metad in metadata:
         component = {}
         component['name'] = metad.name
-        if component['name'] == 'Slum boundary' and slum_id in ['1971','1972']:
+        if component['name'] == 'Slum boundary' and slum_id in ['1971', '1972']:
             component['name'] = 'Town boundary'
         component['level'] = metad.level
         component['section'] = metad.section.name
@@ -132,61 +200,54 @@ def get_component(request, slum_id):
         component['type'] = metad.type
         component['order'] = metad.order
         component['blob'] = metad.blob
-        component['icon'] = str(metad.icon.url) if metad.icon else ""
+        component['icon'] = str(metad.icon.url) if metad.icon else ''
         component['child'] = []
-        com_list =[]
-        #Component
+
         if metad.type == 'C':
-            if metad.name == 'Shops':
-                for comp in slum.components.filter(metadata=metad):
-                    com_list.append(comp.housenumber)
-            #Fetch component for selected filter and slum , assign it finally to child
-            for comp in slum.components.filter(metadata=metad):
-                component['child'].append({'housenumber':comp.housenumber, 'shape':json.loads(comp.shape.json)})
-        #Filter
-        elif metad.type == 'F' and metad.code != "":
+            for comp in component_map.get(metad.id, []):
+                component['child'].append({'housenumber': comp.housenumber, 'shape': json.loads(comp.shape.json)})
+        elif metad.type == 'F' and metad.code != '':
             field = metad.code.split(':')
 
-            
             if city_name != 'Kolhapur' and field[0] == 'If individual water connection, type of water meter?':
                 pass
             else:
                 if field[0] in rhs_analysis:
-                    options = []
                     options = [rhs_analysis[field[0]][option] for option in field[1].split('|,|') if option in rhs_analysis[field[0]]]
-                    component['child'] = list(set(sum(options,[])))
+                    component['child'] = list(set(sum(options, [])))
         # # Sponsor : Depending on superuser or sponsor render the data accordingly
         elif metad.type == 'S' and (metad.authenticate == False or not request.user.is_anonymous):
-            if  metad.code!= "":
-                sponsor_households = []
-                sponsor_households = SponsorProjectDetails.objects.filter(sponsor_project__id=int(metad.code),slum=slum).values_list("household_code", flat=True)
-                if len(sponsor_households)>0:
-                    try:
-                        sponsor_households = sum(list(sponsor_households), [])
-                    except Exception as e:
-                        sponsor_households = sum(map(lambda x : json.loads(x),sponsor_households),[])
-                if metad.section.name=="Sponsor":
+            if metad.code != '':
+                sponsor_households = sponsor_details_by_project.get(int(metad.code), [])
+                if metad.section.name == 'Sponsor':
                     sponsor_houses.extend(sponsor_households)
-                if request.user.is_superuser or int(metad.code) in sponsor_project_detail_ids or metad.authenticate == False :
+                if request.user.is_superuser or int(metad.code) in sponsor_project_detail_ids or metad.authenticate == False:
                     component['child'] = sponsor_households
             else:
                 component['child'] = sponsor_houses
+
         if len(component['child']) > 0:
-            component['count']=len(component['child'])
+            component['count'] = len(component['child'])
             lstcomponent.append(component)
-    # sponsor_houses = sponsor_houses.pop(0)
-    lstcomponent = sorted(lstcomponent, key=lambda x:x['section_order'])
+
+    build_started_at = pytime.perf_counter()
+    build_started_queries = len(connection.queries)
+    lstcomponent = sorted(lstcomponent, key=lambda x: x['section_order'])
     dtcomponent = OrderedDict()
-    #Ordering the filter/components/sponsors according to the section they below to.
-    for key, comp in  groupby(lstcomponent, key=lambda x:x['section']):
+    # Ordering the filter/components/sponsors according to the section they below to.
+    for key, comp in groupby(lstcomponent, key=lambda x: x['section']):
         if key not in dtcomponent:
             dtcomponent[key] = OrderedDict()
         for c in comp:
             dtcomponent[key][c['name']] = c
+    _log_component_timing('component_build', build_started_at, build_started_queries, component_count=len(lstcomponent), section_count=len(dtcomponent))
 
-    # with open('/home/shelter/Desktop/Shelter_New/component/dtcomponent.json', 'w') as f:
-    #     json.dump(dtcomponent, f, indent=4)
-    return HttpResponse(json.dumps(dtcomponent),content_type='application/json')
+    response_started_at = pytime.perf_counter()
+    response_started_queries = len(connection.queries)
+    response_body = json.dumps(dtcomponent)
+    _log_component_timing('response_serialization', response_started_at, response_started_queries, payload_size=len(response_body))
+    _log_component_timing('get_component_total', request_started_at, request_started_queries, slum_id=slum_id, response_bytes=len(response_body))
+    return HttpResponse(response_body, content_type='application/json')
 
 def format_data(rhs_data):
     new_rhs = {}
