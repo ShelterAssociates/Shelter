@@ -221,39 +221,70 @@ def format_data(rhs_data):
         except Exception as e:pass
     return new_rhs
 
-# @deco_rhs_permission
-def get_kobo_RHS_data(request, slum_id,house_num):
-     output = OrderedDict()
-     slum = get_object_or_404(Slum, id=slum_id)
-     project_details = False
-     if slum_id != '1971':
-         output['admin_ward'] = slum.electoral_ward.administrative_ward.name
-     output['slum_name'] = slum.name
-     output['house_no'] = house_num         
+def get_kobo_RHS_data(request, slum_id, house_num):
+    output = OrderedDict()
+    slum = get_object_or_404(Slum, id=slum_id)
+    project_details = False
 
-     if request.user.is_superuser or request.user.groups.filter(name__in=['ulb']).exists():
-         project_details = True
-         output.update(get_kobo_RHS_list(slum.electoral_ward.administrative_ward.city.id, slum,slum_id ,house_num))
-     elif (request.user.is_superuser or request.user.groups.filter(name='MLG').exists()) and slum_id=='1971':
-         project_details = True
-         output.update(get_kobo_RHS_list(slum.electoral_ward.administrative_ward.city.id, slum, slum_id,house_num))
-     elif request.user.groups.filter(name='sponsor').exists():
-         project_details = SponsorProjectDetails.objects.filter(slum=slum, sponsor__user=request.user, household_code__contains=int(house_num)).exists()
-     if request.user.groups.filter(name='ulb').exists():
-         project_details = False
-     
-     if project_details:
-          project_details = project_details = SponsorProjectDetails.objects.filter(slum=slum,  household_code__contains=int(house_num)).exists()
+    is_house_part = any(c.isalpha() for c in str(house_num))
 
-     #Adding code fetch pluscode from RHS data.
-     if slum_id != '1971':   
-        plus_code = getPlusCodeDetails(slum_id, house_num)
-        if plus_code:
-            output['PlusCode'] = plus_code
-     # output['Household_details']= json.dumps(rhs_data)
-     output['FFReport'] = project_details
-     return HttpResponse(json.dumps(output),content_type='application/json')
+    if slum_id != '1971':
+        output['admin_ward'] = slum.electoral_ward.administrative_ward.name
 
+    output['slum_name'] = slum.name
+    output['house_no'] = house_num
+
+    if request.user.is_superuser or request.user.groups.filter(name__in=['ulb']).exists():
+        project_details = True
+        output.update(
+            get_kobo_RHS_list(
+                slum.electoral_ward.administrative_ward.city.id,
+                slum,
+                slum_id,
+                house_num
+            )
+        )
+
+    elif (
+        request.user.is_superuser
+        or request.user.groups.filter(name='MLG').exists()
+    ) and slum_id in ['1971', '1972']:
+        project_details = True
+        output.update(
+            get_kobo_RHS_list(
+                slum.electoral_ward.administrative_ward.city.id,
+                slum,
+                slum_id,
+                house_num
+            )
+        )
+
+    elif request.user.groups.filter(name='sponsor').exists():
+        if not is_house_part:
+            project_details = SponsorProjectDetails.objects.filter(
+                slum=slum,
+                sponsor__user=request.user,
+                household_code__contains=int(house_num)
+            ).exists()
+        else:
+            project_details = False
+
+    if request.user.groups.filter(name='ulb').exists():
+        project_details = False
+
+    if project_details and not is_house_part:
+        project_details = SponsorProjectDetails.objects.filter(
+            slum=slum,
+            household_code__contains=int(house_num)
+        ).exists()
+
+    output['FFReport'] = project_details
+
+    return HttpResponse(
+        json.dumps(output),
+        content_type='application/json'
+    )
+    
 #@user_passes_test(lambda u: u.is_superuser)
 # @access_right
 def get_kobo_RIM_data(request, slum_id):

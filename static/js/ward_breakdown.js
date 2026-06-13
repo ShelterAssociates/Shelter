@@ -46,6 +46,25 @@ function _wbSetStripVisible(visible) {
     }
 }
 
+function _wbSetLoadingVisible(visible) {
+    var loading = document.getElementById("wb-loading-wrap");
+    var toggle = document.getElementById("wb-toggle-btn");
+
+    if (loading) {
+        loading.style.display = visible ? "block" : "none";
+    }
+    if (toggle) {
+        toggle.disabled = !!visible;
+    }
+}
+
+function _wbSetReadyVisible(visible) {
+    var ready = document.getElementById("wb-ready-wrap");
+    if (ready) {
+        ready.style.display = visible ? "block" : "none";
+    }
+}
+
 function _wbSyncToggleButton() {
     var btn = document.getElementById("wb-toggle-btn");
     if (!btn) { return; }
@@ -287,17 +306,15 @@ function _wbRenderWardOverlay() {
             layer = L.geoJson(shape, {
                 style: String(_wb.activeWardId) === String(wardId) ? {
                     color: "#7acb6f",
-                    weight: 3,
+                    weight: 5,
                     opacity: 1,
                     fillColor: "#ffffff",
                     fillOpacity: 0,
-                    dashArray: "4,4"
                 } : {
-                    color: "#c9e7c9",
-                    weight: 1.2,
-                    opacity: 0.9,
-                    fillColor: "#edf8ed",
-                    fillOpacity: 0.45
+                    color: "transparent",
+                    weight: 0,
+                    opacity: 0,
+                    fillOpacity: 0
                 }
             });
             layer.addTo(map);
@@ -424,6 +441,13 @@ function _wbEnsureDOM() {
         '<div style="font-size:11px; font-weight:600; color:#2471a3; margin-bottom:4px;">' +
         'Admin ward breakdown' +
         '</div>' +
+        '<div id="wb-loading-wrap" style="display:none; margin:6px 0 8px;">' +
+        '<div style="height:6px; width:100%; border-radius:999px; overflow:hidden; background:#d9e8f5;">' +
+        '<div style="height:100%; width:42%; border-radius:999px; background:linear-gradient(90deg, #2471a3 0%, #5dade2 50%, #2471a3 100%); animation:wb-loading-slide 1.1s ease-in-out infinite; background-size:200% 100%;"></div>' +
+        '</div>' +
+        '<div style="margin-top:4px; font-size:11px; color:#5d6d7e;">Loading ward breakdown...</div>' +
+        '</div>' +
+        '<div id="wb-ready-wrap" style="display:none;">' +
         '<div style="display:flex; gap:6px; align-items:center; flex-wrap:wrap;">' +
         '<button id="wb-toggle-btn" type="button" style="background:#fff; border:1px solid #c8d8ea;' +
         ' border-radius:4px; padding:5px 10px; font-size:12px; cursor:pointer; color:#1a5276; font-weight:600;">' +
@@ -437,6 +461,7 @@ function _wbEnsureDOM() {
         '<span id="wb-active-label" style="font-size:12px; font-weight:600; color:#1a5276;"></span>' +
         '</div>' +
         '<div id="wb-ward-strip" style="display:none; gap:6px; flex-wrap:wrap; margin-top:6px;"></div>' +
+        '</div>' +
         '</div>';
 
     if (refresh && refresh.parentNode) {
@@ -482,6 +507,14 @@ function _wbEnsureDOM() {
         });
     }
 
+    if ($("#wb-loading-style").length === 0) {
+        $("head").append(
+            '<style id="wb-loading-style">' +
+            '@keyframes wb-loading-slide{0%{transform:translateX(-60%)}50%{transform:translateX(110%)}100%{transform:translateX(-60%)}}' +
+            '</style>'
+        );
+    }
+
     _wbSyncToggleButton();
 }
 
@@ -521,14 +554,19 @@ function initWardBreakdownPanel(slumId) {
     _wb.loadedSlumId = String(slumId);
     _wbEnsureDOM();
     _wbSetToggleVisible(false);
+    _wbSetReadyVisible(false);
     _wbSetStripVisible(false);
     _wbUpdateActiveLabel();
     _buildWardShapesFromComponentData();
     _wbComputeSlumBounds();
 
     if (slumId === undefined || slumId === null || String(slumId) === "") {
+        _wbSetLoadingVisible(false);
         return;
     }
+
+    _wbSetToggleVisible(true);
+    _wbSetLoadingVisible(true);
 
     fetch("/component/get-ward-wise-data/?slum_id=" + encodeURIComponent(String(slumId)))
         .then(function (res) { return res.json(); })
@@ -540,6 +578,10 @@ function initWardBreakdownPanel(slumId) {
             normalized = _wbNormalizeWardResponse(data);
             keys = Object.keys(normalized || {});
             if (!keys.length) {
+                _wbSetLoadingVisible(false);
+                _wbSetReadyVisible(true);
+                _wbSetStripVisible(true);
+                _wbRenderWardStrip();
                 console.warn("Ward breakdown counts response was empty for slum", slumId);
                 return;
             }
@@ -557,11 +599,15 @@ function initWardBreakdownPanel(slumId) {
             }
 
             _wbSetToggleVisible(true);
+            _wbSetLoadingVisible(false);
+            _wbSetReadyVisible(true);
             _wbRenderWardStrip();
             _wbUpdateFilterCounts();
         })
         .catch(function (err) {
             if (String(_wb.loadedSlumId) !== String(slumId)) { return; }
+            _wbSetLoadingVisible(false);
+            _wbSetReadyVisible(true);
             console.warn("Failed to load ward breakdown counts for slum " + slumId + ":", err);
         });
 }
@@ -573,6 +619,7 @@ function refreshWardBreakdownCounts() {
 
 function resetWardBreakdownPanel() {
     _wbReset();
+    _wbSetLoadingVisible(false);
     var wrap = document.getElementById("wb-toggle-wrap");
     if (wrap) {
         wrap.style.display = "none";
