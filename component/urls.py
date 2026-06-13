@@ -19,4 +19,5 @@ urlpatterns = [
     url(r'^gis-export-download/(?P<export_id>[A-Za-z0-9]+)/$', views.gis_export_download, name='gis_export_download'),
     url(r'^export-filtered-kml/$', views.export_filtered_kml, name='export_filtered_kml'),
     url(r'^can-refresh-section/$', views.can_refresh_section, name='can_refresh_section'),
+    url(r'^get-ward-wise-data/$', views.get_ward_wise_data, name='get_ward_wise_data'),
 ]

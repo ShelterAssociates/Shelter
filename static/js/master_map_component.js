@@ -165,8 +165,23 @@ var BaseShape = (function () {
         // FIX 4: 'let' keeps list_draw local
         let list_draw = [];
         let parse_child = {};
+        let wardSet = null;
+
+        if (typeof _wbGetWardHouseSet === "function") {
+            wardSet = _wbGetWardHouseSet();
+        }
+
         $.each(child, function (k, v) {
-            list_draw.push(v.shape);
+            var houseKey = String(v && v.housenumber !== undefined ? v.housenumber : k).split(".")[0].trim();
+            var isAdminBoundary = v && v.shape && v.shape.properties && v.shape.properties.Level === "Admin";
+
+            if (wardSet && !isAdminBoundary && !Object.prototype.hasOwnProperty.call(wardSet, houseKey)) {
+                return;
+            }
+
+            if (v && v.shape) {
+                list_draw.push(v.shape);
+            }
         });
         parse_child = L.geoJson(list_draw, this.style_geo_geometry(child[0].shape));
         // Add this after L.geoJson
@@ -186,9 +201,24 @@ var BaseShape = (function () {
         console.log("fillflag:", this.fillflag);
         let parse_child = {};
         let filter_houses = [];
+        let wardSet = null;
+
+        if (typeof _wbGetWardHouseSet === "function") {
+            wardSet = _wbGetWardHouseSet();
+        }
+
         $.each(child, function (k, v) {
-            if (v in houses) {
-                filter_houses.push(houses[v]);
+            var houseKey = String(v).split(".")[0].trim();
+            var houseKeyInt = parseInt(houseKey, 10);
+            if (wardSet && !Object.prototype.hasOwnProperty.call(wardSet, houseKey)) {
+                return;
+            }
+            if (houses[houseKey]) {
+                filter_houses.push(houses[houseKey]);
+            } else if (houses[String(houseKey)]) {
+                filter_houses.push(houses[String(houseKey)]);
+            } else if (!isNaN(houseKeyInt) && houses[houseKeyInt]) {
+                filter_houses.push(houses[houseKeyInt]);
             }
         });
 
@@ -227,3 +257,67 @@ var Sponsor = (function (_super) {
     function Sponsor(obj_sponsor) { _super.call(this, obj_sponsor) || this; }
     return Sponsor;
 }(BaseShape));
+
+// ── Point-in-polygon helper (ray casting) ──────────────────────────────────
+function _polygonContainsPoint(polygonGeoJson, lat, lng) {
+    try {
+        var coords;
+        if (polygonGeoJson.type === "Polygon") {
+            coords = polygonGeoJson.coordinates[0];
+        } else if (polygonGeoJson.type === "MultiPolygon") {
+            // check each polygon ring
+            for (var p = 0; p < polygonGeoJson.coordinates.length; p++) {
+                if (_ringContainsPoint(polygonGeoJson.coordinates[p][0], lat, lng)) return true;
+            }
+            return false;
+        } else {
+            return false;
+        }
+        return _ringContainsPoint(coords, lat, lng);
+    } catch (e) {
+        return false;
+    }
+}
+
+function _ringContainsPoint(ring, lat, lng) {
+    // ring is array of [lng, lat] pairs (GeoJSON order)
+    var inside = false;
+    var x = lng, y = lat;
+    for (var i = 0, j = ring.length - 1; i < ring.length; j = i++) {
+        var xi = ring[i][0], yi = ring[i][1];
+        var xj = ring[j][0], yj = ring[j][1];
+        var intersect = ((yi > y) !== (yj > y)) &&
+            (x < (xj - xi) * (y - yi) / (yj - yi) + xi);
+        if (intersect) inside = !inside;
+    }
+    return inside;
+}
+
+// Get centroid of a GeoJSON geometry
+function _getGeometryCentroid(shape) {
+    try {
+        if (shape.type === "Point") {
+            return { lat: shape.coordinates[1], lng: shape.coordinates[0] };
+        }
+        if (shape.type === "Polygon") {
+            var ring = shape.coordinates[0];
+            var latSum = 0, lngSum = 0;
+            for (var i = 0; i < ring.length; i++) {
+                lngSum += ring[i][0];
+                latSum += ring[i][1];
+            }
+            return { lat: latSum / ring.length, lng: lngSum / ring.length };
+        }
+        if (shape.type === "MultiPolygon") {
+            // use first polygon's first ring
+            var ring = shape.coordinates[0][0];
+            var latSum = 0, lngSum = 0;
+            for (var i = 0; i < ring.length; i++) {
+                lngSum += ring[i][0];
+                latSum += ring[i][1];
+            }
+            return { lat: latSum / ring.length, lng: lngSum / ring.length };
+        }
+    } catch (e) { }
+    return null;
+}

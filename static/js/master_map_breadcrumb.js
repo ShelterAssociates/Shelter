@@ -83,6 +83,7 @@ var Breadcrumbs = (function () {
             clearActionButtons();
             $("#household-search-wrapper").hide();
             $("#sponsor-pinned").hide();
+            resetWardBreakdownPanel();
             $("#compochk_refresh").html("");
             // Restore legend when leaving slum level
             if (legendControl && map) {

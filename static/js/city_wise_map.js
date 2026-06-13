@@ -280,6 +280,7 @@ function slum_data_fetch(slumId) {
             clearActionButtons();
             $("#household-search-wrapper").hide();
             $("#sponsor-pinned").hide();
+            resetWardBreakdownPanel();
             $("#compochk_refresh").html("");
 
             $.each(arr_poly_disp, function (k, v) { map.removeLayer(v.shape); });
@@ -467,14 +468,20 @@ function generate_filter(globalJsonData, slumId, result) {
             var icon = v1["icon"] || "";
 
             panel_component +=
-                '<div name="div_group">&nbsp;&nbsp;&nbsp;' +
+                '<div name="div_group" class="wb-filter-row">&nbsp;&nbsp;&nbsp;' +
                 '<input name="chk1" class="chk"' +
                 ' style="background:' + chkcolor + ';background-color:' + chkcolor + ';"' +
                 ' selection="' + k + '"' +
+                ' data-section-name="' + k + '"' +
                 ' component_type="' + v1["type"] + '"' +
+                ' data-filter-name="' + k1 + '"' +
                 ' type="checkbox" value="' + k1 + '"' +
                 ' onclick="checkSingleGroup(this);">' +
-                '<a>&nbsp;' + inner_label + '</a>&nbsp;(' + child_length + ')' +
+                '<a class="wb-filter-label">&nbsp;' + inner_label + '</a>&nbsp;' +
+                '<span class="wb-item-count" data-item-name="' + k1 + '"' +
+                ' data-section-name="' + k + '"' +
+                ' data-item-type="' + v1["type"] + '"' +
+                ' data-total-count="' + child_length + '">(' + child_length + ')</span>' +
                 (icon ? ' <img src="' + icon + '">' : '') +
                 '</div>';
 
@@ -512,6 +519,7 @@ function generate_filter(globalJsonData, slumId, result) {
 
     /* Pin sponsor section */
     setTimeout(function () { pinSponsorToBottom(slumId); }, 400);
+    setTimeout(function () { initWardBreakdownPanel(slumId); }, 600);
 
     initHouseholdSearch();
 }
@@ -523,13 +531,24 @@ function checkSingleGroup(singlechk) {
 
     var chkchild = $(singlechk).val();
     if ($(singlechk).is(":checked")) {
-        parse_component[chkchild].show();
+        // If a ward is active, re-render the component filtered to that ward
+        if (_wb.activeWardId) {
+            _showComponentForActiveWard(chkchild);
+        } else {
+            parse_component[chkchild].show();
+        }
     } else {
         parse_component[chkchild].hide();
+        // Also remove any ward-scoped layer we added
+        if (_wb.activeWardId && window._wardScopedLayers && window._wardScopedLayers[chkchild]) {
+            map.removeLayer(window._wardScopedLayers[chkchild]);
+            delete window._wardScopedLayers[chkchild];
+        }
     }
 
     var flag = $(singlechk).parent().parent().parent().find("[name=chk1]:checked").length > 0;
     $(singlechk).parent().parent().parent().find("[name=grpchk]")[0].checked = flag;
+    refreshWardBreakdownCounts();
 }
 
 function checkAllGroup(grpchk) {
@@ -544,6 +563,7 @@ function checkAllGroup(grpchk) {
             $(grpchk).parent().find("a[name=chk_group]").click();
         }
     }
+    refreshWardBreakdownCounts();
 }
 
 
@@ -684,6 +704,7 @@ function clearHouseholdHighlight() {
 }
 
 function fullResetHouseholdSearch() {
+    resetWardBreakdownPanel();
     clearHouseholdHighlight();
     var si = document.getElementById("household-search-input");
     if (si) si.value = "";
