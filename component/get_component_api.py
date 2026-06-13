@@ -1,13 +1,25 @@
 from . import views
 from graphs.models import APICache
 from django.http import JsonResponse
+from django.db import connection, close_old_connections
 from django.utils import timezone
 from datetime import timedelta
 import threading
 import json
 import hashlib
+import time as pytime
 
 TTL = timedelta(hours=1)  # Cache expiration time
+
+
+def _log_cache_timing(stage, started_at, started_queries, **details):
+    elapsed_ms = (pytime.perf_counter() - started_at) * 1000.0
+    query_delta = len(connection.queries) - started_queries
+    extra = ""
+    if details:
+        extra = " | " + ", ".join("{}={}".format(key, value) for key, value in details.items())
+    message = "Component cache timing [{}]: {:.1f} ms, queries=+{}{}".format(stage, elapsed_ms, query_delta, extra)
+    print(message, flush=True)
 
 def get_request_hash(request, slum_id):
     """
@@ -41,48 +53,58 @@ def compute_and_update_cache(request, slum_id, req_hash):
     """
     Compute fresh response by calling original view
     """
-    # Call the original view to get JsonResponse
-    response = views.get_component(request, slum_id)
+    close_old_connections()
+    started_at = pytime.perf_counter()
+    started_queries = len(connection.queries)
+    try:
+        # Call the original view to get JsonResponse
+        response = views.get_component(request, slum_id)
 
-    # Convert JsonResponse to dict for storing
-    if hasattr(response, "data"):  # If DRF Response
-        data = response.data
-    else:  # If JsonResponse
-        data = json.loads(response.content)
+        # Convert JsonResponse to dict for storing
+        if hasattr(response, "data"):  # If DRF Response
+            data = response.data
+        else:  # If JsonResponse
+            data = json.loads(response.content)
 
-    # Update or create cache
-    APICache.objects.update_or_create(
-        request_hash=req_hash,
-        defaults={
-            "response": data,
-            "expires_at": timezone.now() + TTL
-        }
-    )
+        # Update or create cache
+        APICache.objects.update_or_create(
+            request_hash=req_hash,
+            defaults={
+                "response": data,
+                "expires_at": timezone.now() + TTL
+            }
+        )
+    finally:
+        _log_cache_timing("background_refresh", started_at, started_queries, slum_id=slum_id)
+        close_old_connections()
 
 
 def get_component_api(request, slum_id):
     """
     Wrapper view with stale-while-revalidate caching
     """
+    started_at = pytime.perf_counter()
+    started_queries = len(connection.queries)
     req_hash = get_request_hash(request, slum_id)
     flag = request.headers.get("Force-Refresh-Flag", "0")
     print(f"Request hash: {req_hash}, Force refresh: {flag}")
 
     try:
         cache = APICache.objects.get(request_hash=req_hash)
-        #print("Cache hit")
+        _log_cache_timing("cache_lookup_hit", started_at, started_queries, slum_id=slum_id, expired=cache.is_expired(), force_refresh=flag)
+
         # If cache is expired, start background refresh
         if cache.is_expired() or flag == "1":
-            # Start background refresh
-           # print("Cache expired, refreshing in background...")
-            threading.Thread(target=compute_and_update_cache, args=(request, slum_id, req_hash)).start()
+            refresh_thread = threading.Thread(target=compute_and_update_cache, args=(request, slum_id, req_hash))
+            refresh_thread.daemon = True
+            refresh_thread.start()
 
         # Return cached response immediately (even if stale)
-        threading.Thread(target=compute_and_update_cache, args=(request, slum_id, req_hash)).start()
         return JsonResponse(cache.response)
 
     except APICache.DoesNotExist:
-        #print("Cache miss, computing response...")
+        _log_cache_timing("cache_lookup_miss", started_at, started_queries, slum_id=slum_id)
+
         # No cache → compute synchronously
         response = views.get_component(request, slum_id)
         if hasattr(response, "data"):
@@ -95,4 +117,5 @@ def get_component_api(request, slum_id):
             response=data,
             expires_at=timezone.now() + TTL
         )
+        _log_cache_timing("cache_miss_compute", started_at, started_queries, slum_id=slum_id)
         return JsonResponse(data)
