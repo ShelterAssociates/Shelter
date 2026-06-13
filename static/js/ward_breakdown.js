@@ -402,7 +402,7 @@ function _wbRenderWardStrip() {
     if (!strip) { return; }
 
     if (_wb.wardIds.length === 0) {
-        strip.innerHTML = '<div style="font-size:12px;color:#6b7c93;">No ward data loaded.</div>';
+        strip.innerHTML = "";
         return;
     }
 
@@ -599,10 +599,10 @@ function initWardBreakdownPanel(slumId) {
             keys = Object.keys(normalized || {});
             if (!keys.length) {
                 _wbSetLoadingVisible(false);
-                _wbSetReadyVisible(true);
-                _wbSetStripVisible(true);
+                _wbSetReadyVisible(false);
+                _wbSetStripVisible(false);
+                _wbSetToggleVisible(false);
                 _wbRenderWardStrip();
-                console.warn("Ward breakdown counts response was empty for slum", slumId);
                 return;
             }
 

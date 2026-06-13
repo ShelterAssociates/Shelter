@@ -178,10 +178,20 @@ def get_component(request, slum_id):
         for sponsor_project_id, household_code in sponsor_details_qs:
             sponsor_households = []
             if household_code:
-                try:
-                    sponsor_households = sum(list(household_code), [])
-                except Exception:
-                    sponsor_households = sum(map(lambda x: json.loads(x), household_code), [])
+                for item in household_code:
+                    if isinstance(item, list):
+                        sponsor_households.extend(item)
+                    elif isinstance(item, int):
+                        sponsor_households.append(item)
+                    elif isinstance(item, (str, bytes, bytearray)):
+                        try:
+                            parsed = json.loads(item)
+                            if isinstance(parsed, list):
+                                sponsor_households.extend(parsed)
+                            else:
+                                sponsor_households.append(parsed)
+                        except Exception:
+                            pass
             sponsor_details_by_project[sponsor_project_id] = sponsor_households
 
     _log_component_timing('component_prefetch', component_lookup_started_at, component_lookup_started_queries, component_metadata_count=len(component_metadata_ids), sponsor_project_count=len(sponsor_metadata_codes))
