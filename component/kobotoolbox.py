@@ -204,7 +204,7 @@ def format_data(rhs_data, slum_id,toilet_by_sa = False):
                     "Do you use any other sources ?": "Sources of the water",
                     "Comment if any ?" : "Comment if any ?"
     }
-    if slum_id == '1971':
+    if slum_id in ['1971','1972']:
         seq = seq_up
     else:
         seq = seq_old
@@ -249,10 +249,14 @@ def get_kobo_RHS_list(city, slum, slum_id ,house_number, kobo_survey=''):
     Toilet_data = list(ToiletConstruction.objects.filter(slum = slum, status = 6).values_list('household_number', flat = True))
     
     if len(household_data)>0:
-        if str(int(house_number)) in Toilet_data:
+        print("RHS data found for Slum:", slum, " and Household Number:", house_number)
+        print("RHS data:", household_data[0].rhs_data)
+        if str(house_number) in map(str, Toilet_data):
             output = format_data(household_data[0].rhs_data, slum_id, True)
         else:
             output = format_data(household_data[0].rhs_data, slum_id)
+    else:
+        print("No RHS data found for Slum:", slum, " and Household Number:", house_number)
     return output
 
 
