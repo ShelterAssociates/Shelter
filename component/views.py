@@ -289,27 +289,18 @@ def get_kobo_RHS_data(request, slum_id, house_num):
 
     is_house_part = any(c.isalpha() for c in str(house_num))
 
-    if slum_id != '1971':
+    if slum_id not in ['1971','1972']:
         output['admin_ward'] = slum.electoral_ward.administrative_ward.name
-
-    output['slum_name'] = slum.name
+        
+    if slum_id not in ['1971','1972']:
+        output['slum_name'] = slum.name
+    else:
+        output['town_name'] = slum.name
+    
     output['house_no'] = house_num
 
-    if request.user.is_superuser or request.user.groups.filter(name__in=['ulb']).exists():
-        project_details = True
-        output.update(
-            get_kobo_RHS_list(
-                slum.electoral_ward.administrative_ward.city.id,
-                slum,
-                slum_id,
-                house_num
-            )
-        )
-
-    elif (
-        request.user.is_superuser
-        or request.user.groups.filter(name='MLG').exists()
-    ) and slum_id in ['1971', '1972']:
+    if (
+        request.user.is_superuser or request.user.groups.filter(name='MLG').exists()) and slum_id in ['1971', '1972']:
         project_details = True
         output.update(
             get_kobo_RHS_list(

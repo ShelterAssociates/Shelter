@@ -276,7 +276,13 @@ def format_data(rhs_data, slum_id,toilet_by_sa = False):
                 new_rhs[v] =  (rhs_data[k] + " " + rhs_data["Plus Code Part"]) if "Plus Code Part" in rhs_data else rhs_data[k]
             else:
                 if k in rhs_data:
+                    value = rhs_data[k]
                     new_rhs[v] = rhs_data[k]
+                    if v == "Contact number" and (not value or str(value).strip() == "0"):
+                        new_rhs[v] = "Not Available"
+                    else:
+                        new_rhs[v] = value
+                    
                     
         except Exception as e:
             pass
@@ -290,8 +296,8 @@ def get_kobo_RHS_list(city, slum, slum_id ,house_number, kobo_survey=''):
     Toilet_data = list(ToiletConstruction.objects.filter(slum = slum, status = 6).values_list('household_number', flat = True))
     
     if len(household_data)>0:
-        print("RHS data found for Slum:", slum, " and Household Number:", house_number)
-        print("RHS data:", household_data[0].rhs_data)
+        # print("RHS data found for Slum:", slum, " and Household Number:", house_number)
+        # print("RHS data:", household_data[0].rhs_data)
         if str(house_number) in map(str, Toilet_data):
             output = format_data(household_data[0].rhs_data, slum_id, True)
         else:
