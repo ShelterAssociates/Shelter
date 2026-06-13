@@ -507,6 +507,26 @@ function _wbEnsureDOM() {
         });
     }
 
+    if (document.getElementById("wb-chip-style") === null) {
+        $("head").append(
+            '<style id="wb-chip-style">' +
+            '#wb-ward-strip .wb-ward-chip{' +
+            'background:#fff;border:1px solid #c8d8ea;border-radius:999px;color:#1a5276;' +
+            'padding:5px 10px;font-size:12px;font-weight:600;cursor:pointer;transition:background-color .18s ease,color .18s ease,border-color .18s ease,box-shadow .18s ease;' +
+            '}' +
+            '#wb-ward-strip .wb-ward-chip:hover{' +
+            'background:#f4f8fc;border-color:#9cc2df;' +
+            '}' +
+            '#wb-ward-strip .wb-ward-chip.is-active{' +
+            'background:#d6eaf8;border-color:#2471a3;color:#2471a3;box-shadow:inset 0 0 0 1px rgba(36,113,163,.12);' +
+            '}' +
+            '#wb-ward-strip .wb-ward-chip.is-active:hover{' +
+            'background:#cfe3f4;border-color:#2471a3;' +
+            '}' +
+            '</style>'
+        );
+    }
+
     if ($("#wb-loading-style").length === 0) {
         $("head").append(
             '<style id="wb-loading-style">' +
