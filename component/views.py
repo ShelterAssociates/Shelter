@@ -42,6 +42,8 @@ from django.utils.text import slugify
 from django.utils import timezone
 from mastersheet.models import ToiletConstruction
 from xml.sax.saxutils import escape
+from component.models import Component
+from component.services.helper import _get_ward_wise_data
 
 from graphs.models import HouseholdData
 from helpers.services.send_email import send_email
@@ -2151,3 +2153,16 @@ def can_refresh_section(request):
         "can_refresh": request.user.has_perm("component.can_refresh_section")
     }
     return JsonResponse(result)
+
+
+def get_ward_wise_data(request):
+    slum_id = request.GET.get("slum_id") or request.GET.get("slumId")
+    if not slum_id:
+        return JsonResponse({"error": "slum_id is required"}, status=400)
+
+    slum = get_object_or_404(Slum, pk=slum_id)
+    if slum.current_status in ("sra", "road_widening"):
+        return JsonResponse({})
+
+    ward_data = _get_ward_wise_data(slum)
+    return JsonResponse(ward_data)

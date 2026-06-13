@@ -99,7 +99,6 @@ def get_household_analysis_data(city, slum_code, question_fields, kobo_survey=''
                 '''RHS data is occupied in status or not.'''
                 if 'Type_of_structure_occupancy' in record and record['Type_of_structure_occupancy'] != 'Occupied house':
                     if field in ['Type_of_structure_occupancy', 'Functioning of the structure']:
-                        print(record['Functioning of the structure'])
                         # here we will check only for occupancy field.
                         data = record[field]
                         if field not in output:
