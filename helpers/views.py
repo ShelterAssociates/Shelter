@@ -339,7 +339,7 @@ def upload_slum_photos_to_drive(request):
 	if selected_photo_date > date.today():
 		return JsonResponse({"status": "error", "message": "Photo date cannot be in the future."}, status=400)
 
-	valid_project_types = {"PHOT", "MHM", "Housing", "Other"}
+	valid_project_types = {"OHOT", "MHM", "Housing", "Other"}
 	if not project_type:
 		return JsonResponse({"status": "error", "message": "Project type is required."}, status=400)
 	if project_type not in valid_project_types:
