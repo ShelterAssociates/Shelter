@@ -1548,7 +1548,7 @@ class avni_sync():
                     update_data_values['created_date'] = datetime.strptime(item['created_date'], '%Y-%m-%d').date()
                     update_data_values['submission_date'] = datetime.strptime(item['submission_date'], '%Y-%m-%d').date()
                     update_data_values['date_of_birth'] = datetime.strptime(item['date_of_birth'], '%B %d, %Y').date()
-                    update_data_values['household_number'] = int(item['household_number'])
+                    update_data_values['household_number'] = str(item['household_number']).strip() if item['household_number'] else None
                     update_data_values['gender'] = "1" if item['gender'] == 'Male' else "2" if item['gender'] == "Female" else "3"
                     item.update(update_data_values)
                     # delete extra keys ....

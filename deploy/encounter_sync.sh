@@ -23,7 +23,7 @@ if [ "$ENV_CHOICE" = "1" ]; then
 
 elif [ "$ENV_CHOICE" = "2" ]; then
     echo "Activating Local Environment"
-    cd "$HOME/Desktop/Shelter_New" || exit 1
+    cd "$HOME/Shelter/app" || exit 1
     # activate your local env here if needed, e.g.:
     # conda activate pyenv36
 else
