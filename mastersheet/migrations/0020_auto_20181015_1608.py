@@ -11,7 +11,7 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        
+
         migrations.AlterField(
             model_name='invoiceitems',
             name='quantity',
@@ -32,7 +32,7 @@ class Migration(migrations.Migration):
             name='total',
             field=models.FloatField(default=0),
         ),
-        
+
         migrations.RemoveField(
             model_name='vendor',
             name='vendor_type',

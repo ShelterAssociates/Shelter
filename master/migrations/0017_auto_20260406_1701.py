@@ -26,5 +26,5 @@ class Migration(migrations.Migration):
             name='month_year',
             field=models.DateField(blank=True, help_text='Month and year of photo e.g. 2019-06-01 (day is ignored)', null=True),
         ),
- 
+
     ]

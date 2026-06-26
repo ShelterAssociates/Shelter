@@ -45,61 +45,61 @@ xform_name='Impact_Assessment_V2'
 
 
 def postgresmigration():
-	
-	conn1 = psycopg2.connect(database='dockerlive1',
-                            user='postgres',
-                            password='softcorner',
-                            host='172.17.0.2',
-			    port='5432')
-			
-	#/******************** Code For Postgres ******************************************/
-	jsonid_arr=[]
-	jsonid=""
-	xmldata=""
-	jsondata={}
-	
-		
-	try:
-	    cursor = conn1.cursor()	
-	    query="select  id,json,xml from logger_instance_copy where xform_id="+xform_id_old+";"
-	    cursor.execute(query)
-	except  e:
-	    print e
+    
+    conn1 = psycopg2.connect(database='dockerlive1',
+                             user='postgres',
+                             password='softcorner',
+                             host='172.17.0.2',
+                             port='5432')
+            
+    #/******************** Code For Postgres ******************************************/
+    jsonid_arr=[]
+    jsonid=""
+    xmldata=""
+    jsondata={}
+    
+        
+    try:
+        cursor = conn1.cursor() 
+        query="select  id,json,xml from logger_instance_copy where xform_id="+xform_id_old+";"
+        cursor.execute(query)
+    except  e:
+        print(e)
 
-	jsonCursor = cursor.fetchall()
-	for jsontupal in  jsonCursor:
-	    for json2 in jsontupal:
-		if type(json2)==int:				
-		    jsonid=json2		   
-		elif type(json2)==dict :
-	       	    jsondata={}							
-		    for key,data in json2.items():
-		        if key =="_xform_id_string":
-			    data=xform_id_string 	  					
-			if key == "formhub/uuid" :
-			    data=formhub_uid 	  				
-			if data:			   
-			    data=str(data).replace("\u20b9","")
-			    data=data.replace("'","")			
-			jsondata[key]=data
-		    		
-		elif type(json2)==str :		   
-		    val='<'+xform_id_string+'  id="'+xform_id_string+'" version="'+version_id+'"><__version__>'+version_id+'</__version__>'	
-		    xmldata=json2.replace('<?xml version=\'1.0\' ?>', '<?xml version="1.0" ?>')\
-                                     .replace(str(xml_form_string),str(val) )\
-				     .replace(formhub_old_uid,formhub_uid)\
-				     .replace('/'+xml_form_id,'/'+xform_id_string+'')\
-				     .replace("'","")
-	
-	  
-	    updatequery="Update logger_instance_copy set json='"+json.dumps(jsondata)+"', xml='"+xmldata+"',xform_id='"+xform_id+"',survey_type_id='"+xform_survey_id+"'  where id="+str(jsonid)+";"			
-	    
-	    try:
-	        cursor.execute(updatequery)
-		conn1.commit()
-		
-	    except Exception as inste:
-		print ("Query Error ", inste)
+    jsonCursor = cursor.fetchall()
+    for jsontupal in  jsonCursor:
+        for json2 in jsontupal:
+        if type(json2)==int:                
+            jsonid=json2           
+        elif type(json2)==dict :
+            jsondata={}                         
+            for key,data in json2.items():
+                if key =="_xform_id_string":
+                data=xform_id_string                        
+            if key == "formhub/uuid" :
+                data=formhub_uid                    
+            if data:               
+                data=str(data).replace("\u20b9","")
+                data=data.replace("'","")           
+            jsondata[key]=data
+                    
+        elif type(json2)==str :        
+            val='<'+xform_id_string+'  id="'+xform_id_string+'" version="'+version_id+'"><__version__>'+version_id+'</__version__>' 
+            xmldata=json2.replace('<?xml version=\'1.0\' ?>', '<?xml version="1.0" ?>')\
+                .replace(str(xml_form_string),str(val) )\
+                .replace(formhub_old_uid,formhub_uid)\
+                .replace('/'+xml_form_id,'/'+xform_id_string+'')\
+                .replace("'","")
+    
+      
+        updatequery="Update logger_instance_copy set json='"+json.dumps(jsondata)+"', xml='"+xmldata+"',xform_id='"+xform_id+"',survey_type_id='"+xform_survey_id+"'  where id="+str(jsonid)+";"            
+        
+        try:
+            cursor.execute(updatequery)
+        conn1.commit()
+        
+        except Exception as inste:
+        print(("Query Error ", inste))
 
  
 #***********************************************************************
@@ -114,38 +114,38 @@ psql dockerlive1 -c "\copy (SELECT id, json, xml, date_created, date_modified, d
 #********************************************************************
 
 
-def mongodbmigration():	
-	try:
-	    client = MongoClient('mongodb://172.17.0.4:27017/')
-	    dockermongodb = client['formhub']
-	except Exception as e:
-	    print ("Docker Mongo Database Connection error ",e)
-		
-	mogocursor=dict()
-	
-	try:
-            client = MongoClient('mongodb://172.17.0.4:27017/')
-            oldkobomongodb = client['dockerlive1']
-	    mogocursor=oldkobomongodb.instances.find({"_xform_id_string" : str(xform_name) }).sort("_id",1);
+def mongodbmigration(): 
+    try:
+        client = MongoClient('mongodb://172.17.0.4:27017/')
+        dockermongodb = client['formhub']
+    except Exception as e:
+        print(("Docker Mongo Database Connection error ",e))
+        
+    mogocursor=dict()
+    
+    try:
+        client = MongoClient('mongodb://172.17.0.4:27017/')
+        oldkobomongodb = client['dockerlive1']
+        mogocursor=oldkobomongodb.instances.find({"_xform_id_string" : str(xform_name) }).sort("_id",1);
         except Exception as ex:
-            print ("Old Kobotoolbox Mongo Database Connection error",ex)	
+            print(("Old Kobotoolbox Mongo Database Connection error",ex)    )
 
 
-	for mongodata in  mogocursor:		
-            mongodata['_xform_id_string']=xform_id_string
-	    mongodata['formhub/uuid']=formhub_uid
-	    mongodata['_userform_id']='shelter_'+xform_id_string	   
-	  
-	    try:
-		dockermongodb.instances.insert(mongodata)		
-	    except Exception as ex:
-		print ("Docker mongo Query Error ", ex)
+    for mongodata in  mogocursor:       
+        mongodata['_xform_id_string']=xform_id_string
+        mongodata['formhub/uuid']=formhub_uid
+        mongodata['_userform_id']='shelter_'+xform_id_string       
+      
+        try:
+        dockermongodb.instances.insert(mongodata)       
+        except Exception as ex:
+        print(("Docker mongo Query Error ", ex))
 
 
 if __name__ == "__main__":
     postgresmigration()
     #mongodbmigration()
-	
-	
+    
+    
 
 

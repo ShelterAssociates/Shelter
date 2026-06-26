@@ -3,14 +3,14 @@ from django.dispatch import receiver
 
 from reports.models import (
     SponsorProjectReportDetails,
-    SponsorProjectMonthlyReportDetails
+    SponsorProjectMonthlyReportDetails,
 )
 
 from reports.services.monthly_report_service import (
     create_monthly_reports,
     initialize_monthly_work_progress,
     initialize_beneficiary_values,
-    initialize_deliverables
+    initialize_deliverables,
 )
 
 

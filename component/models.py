@@ -1,34 +1,33 @@
-
 from django.contrib.gis.db import models
-#from picklefield.fields import PickledObjectField
+
+# from picklefield.fields import PickledObjectField
 from jsonfield import JSONField
 from django.core.exceptions import ValidationError
 from django.contrib.contenttypes.fields import GenericForeignKey
 from django.contrib.contenttypes.models import ContentType
 
-
-
 DISPLAY_TYPE_CHOICES = (
-        ('M', 'Map'),
-        ('T', 'Tabular'),
-    )
-LEVEL_CHOICES  = (
-        ('C', 'City'),
-        ('S', 'Slum'),
-        ('H', 'Household'),
-    )
+    ("M", "Map"),
+    ("T", "Tabular"),
+)
+LEVEL_CHOICES = (
+    ("C", "City"),
+    ("S", "Slum"),
+    ("H", "Household"),
+)
 META_TYPE_CHOICES = (
-        ('C', 'Component'),
-        ('F', 'Filter'),
-        ('S', 'Sponsor'),
-    )
+    ("C", "Component"),
+    ("F", "Filter"),
+    ("S", "Sponsor"),
+)
 COMPONENT_ICON = "componentIcons/"
 
 
 class Section(models.Model):
     """Section data"""
-    name  = models.CharField(max_length=2048)
-    order  = models.FloatField()
+
+    name = models.CharField(max_length=2048)
+    order = models.FloatField()
 
     def __str__(self):
         """Returns string representation of object"""
@@ -36,14 +35,17 @@ class Section(models.Model):
 
     class Meta:
         """Section of the components"""
-        verbose_name = 'Section'
-        verbose_name_plural = 'Sections'
+
+        verbose_name = "Section"
+        verbose_name_plural = "Sections"
         permissions = [
             ("can_refresh_section", "Can refresh sections"),
         ]
 
+
 class Metadata(models.Model):
     """Metadata of component and analysis"""
+
     # def validate_image(fieldfile_obj):
     #     filesize = fieldfile_obj.file.size
     #     megabyte_limit = 1.0
@@ -51,15 +53,17 @@ class Metadata(models.Model):
     #         raise ValidationError("Max file size is %sMB" % str(megabyte_limit))
     name = models.CharField(max_length=2048)
     section = models.ForeignKey(Section, on_delete=models.CASCADE)
-    level  = models.CharField(max_length=1, choices=LEVEL_CHOICES) # slum/household
-    type  = models.CharField(max_length=1, choices=META_TYPE_CHOICES) # component/filter
-    display_type  = models.CharField(max_length=1, choices=DISPLAY_TYPE_CHOICES) #map/table
-    visible  = models.BooleanField() # BooleanField
+    level = models.CharField(max_length=1, choices=LEVEL_CHOICES)  # slum/household
+    type = models.CharField(max_length=1, choices=META_TYPE_CHOICES)  # component/filter
+    display_type = models.CharField(
+        max_length=1, choices=DISPLAY_TYPE_CHOICES
+    )  # map/table
+    visible = models.BooleanField()  # BooleanField
     authenticate = models.BooleanField(default=False)
-    order  = models.FloatField()
-    blob  = JSONField()
-    icon = models.ImageField(upload_to=COMPONENT_ICON ,blank=True, null=True)
-    code = models.CharField(max_length=512,blank=True,null=True)
+    order = models.FloatField()
+    blob = JSONField()
+    icon = models.ImageField(upload_to=COMPONENT_ICON, blank=True, null=True)
+    code = models.CharField(max_length=512, blank=True, null=True)
 
     def __str__(self):
         """Returns string representation of object"""
@@ -67,27 +71,35 @@ class Metadata(models.Model):
 
     class Meta:
         """Component metadata"""
-        verbose_name = 'Metadata'
-        verbose_name_plural = 'Metadata'
+
+        verbose_name = "Metadata"
+        verbose_name_plural = "Metadata"
+
 
 def get_default_slum_content_type():
-    return ContentType.objects.get(model='slum')
+    return ContentType.objects.get(model="slum")
+
+
 # Create your models here.
 class Component(models.Model):
     """Drawable Component Database"""
+
     metadata = models.ForeignKey(Metadata, on_delete=models.CASCADE)
     housenumber = models.CharField(max_length=100)
     shape = models.GeometryField(srid=4326)
 
     content_type = models.ForeignKey(
-        ContentType,
-        on_delete=models.CASCADE,
-        default=get_default_slum_content_type
+        ContentType, on_delete=models.CASCADE, default=get_default_slum_content_type
     )
 
     object_id = models.PositiveIntegerField()
-    content_object = GenericForeignKey('content_type', 'object_id')
+    content_object = GenericForeignKey("content_type", "object_id")
 
     def __str__(self):
-        return self.content_type.model + ' - ' + self.metadata.name + ':' + self.housenumber
-
+        return (
+            self.content_type.model
+            + " - "
+            + self.metadata.name
+            + ":"
+            + self.housenumber
+        )

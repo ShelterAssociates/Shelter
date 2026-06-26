@@ -16,7 +16,6 @@ from django.core.exceptions import ImproperlyConfigured
 
 from master.models import Slum
 
-
 logger = logging.getLogger(__name__)
 
 DEFAULT_IMAGE_QUALITY = 72
@@ -42,7 +41,9 @@ def parse_photo_date(photo_date_value):
         try:
             parsed_date = datetime.strptime(photo_date_value, "%Y-%m-%d").date()
         except ValueError as exc:
-            raise ImproperlyConfigured("photo_date must be a valid date in YYYY-MM-DD format.") from exc
+            raise ImproperlyConfigured(
+                "photo_date must be a valid date in YYYY-MM-DD format."
+            ) from exc
 
     if parsed_date > date.today():
         raise ImproperlyConfigured("photo_date cannot be in the future.")
@@ -52,7 +53,9 @@ def parse_photo_date(photo_date_value):
 
 def get_upload_context(photo_type_item):
     if photo_type_item is None:
-        raise ImproperlyConfigured("A valid photo category is required for photo upload.")
+        raise ImproperlyConfigured(
+            "A valid photo category is required for photo upload."
+        )
 
     if hasattr(photo_type_item, "path_nodes"):
         path_nodes = photo_type_item.path_nodes()
@@ -64,9 +67,15 @@ def get_upload_context(photo_type_item):
         for part in [piece.strip() for piece in item_name.split("/") if piece.strip()]:
             path_nodes.append(type("Node", (), {"name": part})())
 
-    path_parts = [clean_drive_name(node.name) for node in path_nodes if getattr(node, "name", None)]
+    path_parts = [
+        clean_drive_name(node.name)
+        for node in path_nodes
+        if getattr(node, "name", None)
+    ]
     if not path_parts:
-        raise ImproperlyConfigured("A valid photo category is required for photo upload.")
+        raise ImproperlyConfigured(
+            "A valid photo category is required for photo upload."
+        )
 
     path_display = " / ".join(path_parts)
     return {
@@ -86,7 +95,9 @@ def get_project_type_context(project_type, project_type_other=""):
     if project_type_value == "Other":
         other_value = clean_drive_name(project_type_other)
         if other_value == "Unknown":
-            raise ImproperlyConfigured("project_type_other is required when project_type is Other.")
+            raise ImproperlyConfigured(
+                "project_type_other is required when project_type is Other."
+            )
         return {
             "project_type": project_type_value,
             "project_type_other": other_value,
@@ -121,7 +132,9 @@ def build_drive_path(
     if is_other_upload:
         custom_folder = clean_drive_name(custom_folder_name)
         if custom_folder == "Unknown":
-            raise ImproperlyConfigured("A custom folder name is required for other photo upload.")
+            raise ImproperlyConfigured(
+                "A custom folder name is required for other photo upload."
+            )
 
         folder_parts = project_type_path + [custom_folder, date_folder]
         return {
@@ -140,7 +153,9 @@ def build_drive_path(
             "project_type": project_type_context["project_type"],
             "project_type_other": project_type_context["project_type_other"],
             "project_type_path": project_type_path,
-            "project_type_path_display": project_type_context["project_type_path_display"],
+            "project_type_path_display": project_type_context[
+                "project_type_path_display"
+            ],
         }
 
     upload_context = get_upload_context(photo_type_item)
@@ -148,10 +163,16 @@ def build_drive_path(
 
     if is_city_level:
         if city is None:
-            raise ImproperlyConfigured("A city is required for city level photo upload.")
+            raise ImproperlyConfigured(
+                "A city is required for city level photo upload."
+            )
 
-        city_name = clean_drive_name(getattr(getattr(city, "name", None), "city_name", None))
-        folder_parts = project_type_path + [city_name] + category_path_parts + [date_folder]
+        city_name = clean_drive_name(
+            getattr(getattr(city, "name", None), "city_name", None)
+        )
+        folder_parts = (
+            project_type_path + [city_name] + category_path_parts + [date_folder]
+        )
         return {
             "mode": "city_level",
             "photo_date": date_folder,
@@ -168,7 +189,9 @@ def build_drive_path(
             "project_type": project_type_context["project_type"],
             "project_type_other": project_type_context["project_type_other"],
             "project_type_path": project_type_path,
-            "project_type_path_display": project_type_context["project_type_path_display"],
+            "project_type_path_display": project_type_context[
+                "project_type_path_display"
+            ],
         }
 
     if slum is None:
@@ -182,7 +205,12 @@ def build_drive_path(
             hierarchy["electoral_ward"],
         )
     )
-    folder_parts = project_type_path + [hierarchy["city"], slum_folder] + category_path_parts + [date_folder]
+    folder_parts = (
+        project_type_path
+        + [hierarchy["city"], slum_folder]
+        + category_path_parts
+        + [date_folder]
+    )
     return {
         "mode": "normal",
         "photo_date": date_folder,
@@ -214,7 +242,9 @@ def merge_service_file_links(files, service_response):
     for service_file in service_files:
         if not isinstance(service_file, dict):
             continue
-        service_name = clean_drive_name(service_file.get("name") or service_file.get("file_name") or "")
+        service_name = clean_drive_name(
+            service_file.get("name") or service_file.get("file_name") or ""
+        )
         if service_name:
             files_by_name[service_name] = service_file
 
@@ -226,9 +256,17 @@ def merge_service_file_links(files, service_response):
         elif index < len(service_files) and isinstance(service_files[index], dict):
             service_file = service_files[index]
 
-        file_info["web_view_link"] = service_file.get("web_view_link") or service_file.get("webViewLink") or ""
-        file_info["web_content_link"] = service_file.get("web_content_link") or service_file.get("webContentLink") or ""
-        file_info["drive_file_id"] = service_file.get("drive_file_id") or service_file.get("driveFileId") or ""
+        file_info["web_view_link"] = (
+            service_file.get("web_view_link") or service_file.get("webViewLink") or ""
+        )
+        file_info["web_content_link"] = (
+            service_file.get("web_content_link")
+            or service_file.get("webContentLink")
+            or ""
+        )
+        file_info["drive_file_id"] = (
+            service_file.get("drive_file_id") or service_file.get("driveFileId") or ""
+        )
 
         # Keep backward compatibility with existing frontend keys.
         file_info["webViewLink"] = file_info["web_view_link"]
@@ -255,8 +293,12 @@ def get_slum_hierarchy(slum):
 
     return {
         "city": clean_drive_name(city.name.city_name if city and city.name else None),
-        "administrative_ward": clean_drive_name(administrative_ward.name if administrative_ward else None),
-        "electoral_ward": clean_drive_name(electoral_ward.name if electoral_ward else None),
+        "administrative_ward": clean_drive_name(
+            administrative_ward.name if administrative_ward else None
+        ),
+        "electoral_ward": clean_drive_name(
+            electoral_ward.name if electoral_ward else None
+        ),
         "slum": clean_drive_name(slum.name),
     }
 
@@ -265,7 +307,9 @@ class BinaryAESCipher(object):
     def __init__(self):
         cipher_key = getattr(settings, "CIPHER_KEY", None)
         if not cipher_key:
-            raise ImproperlyConfigured("CIPHER_KEY is required for photo upload encryption.")
+            raise ImproperlyConfigured(
+                "CIPHER_KEY is required for photo upload encryption."
+            )
         self.block_size = 16
         self.key = cipher_key.encode("utf-8")
 
@@ -277,9 +321,9 @@ class BinaryAESCipher(object):
 
     def decrypt_bytes(self, encrypted_text):
         encrypted_bytes = base64.b64decode(encrypted_text)
-        iv = encrypted_bytes[:AES.block_size]
+        iv = encrypted_bytes[: AES.block_size]
         cipher = AES.new(self.key, AES.MODE_CBC, iv)
-        return self._unpad(cipher.decrypt(encrypted_bytes[AES.block_size:]))
+        return self._unpad(cipher.decrypt(encrypted_bytes[AES.block_size :]))
 
     def _pad(self, raw_bytes):
         pad_length = self.block_size - len(raw_bytes) % self.block_size
@@ -287,7 +331,7 @@ class BinaryAESCipher(object):
 
     @staticmethod
     def _unpad(padded_bytes):
-        return padded_bytes[:-padded_bytes[-1]]
+        return padded_bytes[: -padded_bytes[-1]]
 
 
 def compress_uploaded_image(uploaded_file):
@@ -297,14 +341,20 @@ def compress_uploaded_image(uploaded_file):
         image.load()
     except Exception:
         uploaded_file.seek(0)
-        return uploaded_file.read(), uploaded_file.name, uploaded_file.content_type or "application/octet-stream"
+        return (
+            uploaded_file.read(),
+            uploaded_file.name,
+            uploaded_file.content_type or "application/octet-stream",
+        )
 
     image_format = image.format or "JPEG"
     image_format = image_format.upper()
     if image.mode not in ("RGB", "L") and image_format in ("JPEG", "JPG"):
         image = image.convert("RGB")
 
-    image.thumbnail((DEFAULT_IMAGE_MAX_WIDTH, DEFAULT_IMAGE_MAX_HEIGHT), Image.ANTIALIAS)
+    image.thumbnail(
+        (DEFAULT_IMAGE_MAX_WIDTH, DEFAULT_IMAGE_MAX_HEIGHT), Image.ANTIALIAS
+    )
 
     output = io.BytesIO()
     save_kwargs = {"format": image_format}
@@ -315,7 +365,9 @@ def compress_uploaded_image(uploaded_file):
         save_kwargs["optimize"] = True
 
     image.save(output, **save_kwargs)
-    content_type = uploaded_file.content_type or Image.MIME.get(image_format, "application/octet-stream")
+    content_type = uploaded_file.content_type or Image.MIME.get(
+        image_format, "application/octet-stream"
+    )
     return output.getvalue(), uploaded_file.name, content_type
 
 
@@ -325,15 +377,19 @@ def build_encrypted_zip_payload(uploaded_files):
 
     with zipfile.ZipFile(zip_buffer, "w", zipfile.ZIP_DEFLATED) as zip_file:
         for index, uploaded_file in enumerate(uploaded_files, start=1):
-            compressed_bytes, file_name, content_type = compress_uploaded_image(uploaded_file)
+            compressed_bytes, file_name, content_type = compress_uploaded_image(
+                uploaded_file
+            )
             safe_file_name = clean_drive_name(build_upload_file_name(file_name))
             zip_file.writestr(safe_file_name, compressed_bytes)
-            file_summaries.append({
-                "name": safe_file_name,
-                "original_name": clean_drive_name(file_name),
-                "content_type": content_type,
-                "size": len(compressed_bytes),
-            })
+            file_summaries.append(
+                {
+                    "name": safe_file_name,
+                    "original_name": clean_drive_name(file_name),
+                    "content_type": content_type,
+                    "size": len(compressed_bytes),
+                }
+            )
 
     zip_bytes = zip_buffer.getvalue()
     encrypted_zip = BinaryAESCipher().encrypt_bytes(zip_bytes)
@@ -344,16 +400,11 @@ def post_to_upload_service(payload):
     upload_service_url = getattr(settings, "PHOTO_UPLOAD_SERVICE_URL", None)
     upload_service_secret = getattr(settings, "PHOTO_UPLOAD_SERVICE_SECRET", None)
     timeout = getattr(settings, "PHOTO_UPLOAD_SERVICE_TIMEOUT", DEFAULT_UPLOAD_TIMEOUT)
-    retry_count = getattr(settings, "PHOTO_UPLOAD_SERVICE_RETRY_COUNT", DEFAULT_UPLOAD_RETRY_COUNT)
-
-    print("\n========== PHOTO UPLOAD SERVICE ==========")
-    print("Upload URL:", upload_service_url)
-    print("Timeout:", timeout)
-    print("Retry Count:", retry_count)
-    print("Payload:", payload)
+    retry_count = getattr(
+        settings, "PHOTO_UPLOAD_SERVICE_RETRY_COUNT", DEFAULT_UPLOAD_RETRY_COUNT
+    )
 
     if not upload_service_url or not upload_service_secret:
-        print("ERROR: Upload service configuration missing")
         raise ImproperlyConfigured(
             "PHOTO_UPLOAD_SERVICE_URL and PHOTO_UPLOAD_SERVICE_SECRET must be set in local_settings.py."
         )
@@ -365,14 +416,8 @@ def post_to_upload_service(payload):
         "Content-Type": "application/json",
     }
 
-    print("Headers:", {
-        "X-UPLOAD-KEY": "***hidden***",
-        "Content-Type": "application/json",
-    })
-
     for attempt in range(retry_count + 1):
         try:
-            print(f"\nAttempt {attempt + 1}/{retry_count + 1}")
 
             response = requests.post(
                 upload_service_url,
@@ -381,26 +426,15 @@ def post_to_upload_service(payload):
                 timeout=timeout,
             )
 
-            print("Response Status Code:", response.status_code)
-            print("Response Headers:", dict(response.headers))
-            print("Response Text:", response.text[:1000])
-
             if response.status_code in (200, 201, 202):
-                print("SUCCESS: Upload service call successful")
 
                 try:
                     response_json = response.json()
-                    print("Parsed JSON Response:", response_json)
                     return response_json
 
                 except ValueError:
-                    print("WARNING: Response is not JSON")
+                    logger.error("WARNING: Response is not JSON")
                     return {"message": response.text}
-
-            print(
-                "ERROR: Upload service returned bad status:",
-                response.status_code,
-            )
 
             if attempt == retry_count:
                 raise Exception(
@@ -413,19 +447,18 @@ def post_to_upload_service(payload):
         except requests.exceptions.RequestException as exc:
             last_exception = exc
 
-            print("EXCEPTION OCCURRED:")
-            print(str(exc))
+            logger.error("EXCEPTION OCCURRED:")
+            logger.error(str(exc))
 
             if attempt == retry_count:
-                print("ERROR: All retry attempts exhausted")
+                logger.error("ERROR: All retry attempts exhausted")
                 raise
 
     if last_exception:
-        print("Raising last exception:", str(last_exception))
         raise last_exception
 
-    print("ERROR: Upload service failed without a response")
     raise Exception("Photo upload service failed without a response.")
+
 
 def upload_photos_to_slum_drive_folder(
     slum_id=None,
@@ -484,28 +517,42 @@ def upload_photos_to_slum_drive_folder(
     if sponsor_project_id:
         from sponsor.models import SponsorProject
 
-        sponsor_project = SponsorProject.objects.select_related("sponsor").filter(id=sponsor_project_id).first()
+        sponsor_project = (
+            SponsorProject.objects.select_related("sponsor")
+            .filter(id=sponsor_project_id)
+            .first()
+        )
         if sponsor_project:
             sponsor_project_name = sponsor_project.name or ""
-            sponsor_name = sponsor_project.sponsor.organization_name if sponsor_project.sponsor else ""
+            sponsor_name = (
+                sponsor_project.sponsor.organization_name
+                if sponsor_project.sponsor
+                else ""
+            )
 
-    location.update({
-        "sponsor_project": sponsor_project_name,
-        "sponsor_name": sponsor_name,
-        "custom_folder_name": drive_context["custom_folder_name"],
-        "drive_path_display": drive_context["drive_path_display"],
-        "drive_path_parts": hierarchy,
-        "is_city_level": is_city_level,
-        "is_other_upload": is_other_upload,
-        "project_type": drive_context["project_type"],
-        "project_type_other": drive_context["project_type_other"],
-    })
+    location.update(
+        {
+            "sponsor_project": sponsor_project_name,
+            "sponsor_name": sponsor_name,
+            "custom_folder_name": drive_context["custom_folder_name"],
+            "drive_path_display": drive_context["drive_path_display"],
+            "drive_path_parts": hierarchy,
+            "is_city_level": is_city_level,
+            "is_other_upload": is_other_upload,
+            "project_type": drive_context["project_type"],
+            "project_type_other": drive_context["project_type_other"],
+        }
+    )
 
     payload = {
         "slum_id": slum.id if slum else None,
         "location": location,
         "zip_file": encrypted_zip,
-        "zip_file_name": clean_drive_name("{}_{}.zip".format(drive_context["root_folder"], drive_context["photo_date"])),
+        "zip_file_name": clean_drive_name(
+            "{}_{}.zip".format(
+                drive_context["root_folder"], drive_context["photo_date"]
+            )
+        ),
         "files": files,
         "meta": {
             "source": "shelter_django",

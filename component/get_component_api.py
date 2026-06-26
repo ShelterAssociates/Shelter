@@ -17,9 +17,13 @@ def _log_cache_timing(stage, started_at, started_queries, **details):
     query_delta = len(connection.queries) - started_queries
     extra = ""
     if details:
-        extra = " | " + ", ".join("{}={}".format(key, value) for key, value in details.items())
-    message = "Component cache timing [{}]: {:.1f} ms, queries=+{}{}".format(stage, elapsed_ms, query_delta, extra)
-    print(message, flush=True)
+        extra = " | " + ", ".join(
+            "{}={}".format(key, value) for key, value in details.items()
+        )
+    message = "Component cache timing [{}]: {:.1f} ms, queries=+{}{}".format(
+        stage, elapsed_ms, query_delta, extra
+    )
+
 
 def get_request_hash(request, slum_id):
     """
@@ -33,20 +37,14 @@ def get_request_hash(request, slum_id):
 
     if request.user.is_authenticated:
         user_key = f"user:{request.user.id}"
-        print("Authenticated user cache:", user_key)
     else:
         # ALL anonymous users share the SAME cache
         user_key = "anon"
 
-    params = {
-        "slum_id": slum_id,
-        "user": user_key,
-        **request.GET.dict()
-    }
+    params = {"slum_id": slum_id, "user": user_key, **request.GET.dict()}
 
     params_string = json.dumps(params, sort_keys=True)
     return hashlib.sha256(params_string.encode("utf-8")).hexdigest()
-
 
 
 def compute_and_update_cache(request, slum_id, req_hash):
@@ -69,13 +67,12 @@ def compute_and_update_cache(request, slum_id, req_hash):
         # Update or create cache
         APICache.objects.update_or_create(
             request_hash=req_hash,
-            defaults={
-                "response": data,
-                "expires_at": timezone.now() + TTL
-            }
+            defaults={"response": data, "expires_at": timezone.now() + TTL},
         )
     finally:
-        _log_cache_timing("background_refresh", started_at, started_queries, slum_id=slum_id)
+        _log_cache_timing(
+            "background_refresh", started_at, started_queries, slum_id=slum_id
+        )
         close_old_connections()
 
 
@@ -87,15 +84,23 @@ def get_component_api(request, slum_id):
     started_queries = len(connection.queries)
     req_hash = get_request_hash(request, slum_id)
     flag = request.headers.get("Force-Refresh-Flag", "0")
-    print(f"Request hash: {req_hash}, Force refresh: {flag}")
 
     try:
         cache = APICache.objects.get(request_hash=req_hash)
-        _log_cache_timing("cache_lookup_hit", started_at, started_queries, slum_id=slum_id, expired=cache.is_expired(), force_refresh=flag)
+        _log_cache_timing(
+            "cache_lookup_hit",
+            started_at,
+            started_queries,
+            slum_id=slum_id,
+            expired=cache.is_expired(),
+            force_refresh=flag,
+        )
 
         # If cache is expired, start background refresh
         if cache.is_expired() or flag == "1":
-            refresh_thread = threading.Thread(target=compute_and_update_cache, args=(request, slum_id, req_hash))
+            refresh_thread = threading.Thread(
+                target=compute_and_update_cache, args=(request, slum_id, req_hash)
+            )
             refresh_thread.daemon = True
             refresh_thread.start()
 
@@ -103,7 +108,9 @@ def get_component_api(request, slum_id):
         return JsonResponse(cache.response)
 
     except APICache.DoesNotExist:
-        _log_cache_timing("cache_lookup_miss", started_at, started_queries, slum_id=slum_id)
+        _log_cache_timing(
+            "cache_lookup_miss", started_at, started_queries, slum_id=slum_id
+        )
 
         # No cache → compute synchronously
         response = views.get_component(request, slum_id)
@@ -113,9 +120,9 @@ def get_component_api(request, slum_id):
             data = json.loads(response.content)
 
         APICache.objects.create(
-            request_hash=req_hash,
-            response=data,
-            expires_at=timezone.now() + TTL
+            request_hash=req_hash, response=data, expires_at=timezone.now() + TTL
         )
-        _log_cache_timing("cache_miss_compute", started_at, started_queries, slum_id=slum_id)
+        _log_cache_timing(
+            "cache_miss_compute", started_at, started_queries, slum_id=slum_id
+        )
         return JsonResponse(data)

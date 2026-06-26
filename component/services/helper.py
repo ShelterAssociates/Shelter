@@ -2,7 +2,6 @@ from collections import OrderedDict
 
 from graphs.models import HouseholdData
 
-
 _HOUSEHOLD_JSON_FIELDS = []
 for _field_name in ("hh_data", "rhs_data", "ff_data"):
     try:
@@ -94,7 +93,11 @@ def _get_ward_wise_data(slum):
         ward_alias_map[_normalize_text(ward_id)] = ward_id
 
         # Be tolerant if the JSON stores the same label in a slightly different form.
-        ward_label = getattr(getattr(ward, "shape", None), "properties", {}).get("name") if getattr(ward, "shape", None) else ""
+        ward_label = (
+            getattr(getattr(ward, "shape", None), "properties", {}).get("name")
+            if getattr(ward, "shape", None)
+            else ""
+        )
         if ward_label:
             ward_alias_map[_normalize_text(ward_label)] = ward_id
 
