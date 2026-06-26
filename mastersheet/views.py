@@ -911,7 +911,7 @@ def sync_kobo_data(request):
     except Exception as e:
         data['flag'] = False
         data['msg'] = "Error occurred while sync from kobo. Please contact administrator." + str(e)
-    return HttpResponse(json.dumps(data), content_type="application/json")
+    return HttpResponse(json.dumps(data, ensure_ascii=False).encode('utf-8'), content_type="application/json; charset=utf-8")
 
 ''' Mastersheet Report Tab '''
 @permission_required('mastersheet.can_view_mastersheet_report', raise_exception=True)
