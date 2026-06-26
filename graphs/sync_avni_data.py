@@ -1449,7 +1449,6 @@ class avni_sync():
         Update_count = 0
         for data in get_text:
             if not data['Voided']:
-                print(get_text)
                 slum_name = data['location']['Slum']
                 last_modified_str = data['audit']['Last modified at']  # e.g. "2025-11-28T11:57:20.946Z"
                 last_modified_at = datetime.strptime(last_modified_str, "%Y-%m-%dT%H:%M:%S.%fZ")
@@ -1468,26 +1467,21 @@ class avni_sync():
                     city_id = city.id
 		 
                     slum_rim_obj = SlumData.objects.filter(slum_id = slum_id)
-                    print(slum_id)
-                    print(city_id)
+
                     if slum_rim_obj.exists():
                         slum_rim_obj.update(rim_data = rim_data, modified_on = last_modified_at)
-                        print("Slum_data Updated for slum : ", slum_name)
                     else:
                         created_at = dateparser.parse(data['audit']['Created at'])
                         SlumData.objects.create(slum_id = slum_id, city_id = city_id,
                                                 submission_date = last_modified_at,
                                                 rim_data = rim_data, created_on = created_at,
                                                 modified_on = last_modified_at)
-                        print("Slum_data Created for slum : ", slum_name)
                     Update_count += 1
                     # Checking RIM images.
                     rim_add_data = self.get_rim_images(data['observations'])
                     rim_add_flag = False
-                    print(rim_add_data)
                     if rim_add_data != {}:
                         rim_add_obj = Rapid_Slum_Appraisal.objects.filter(slum_name_id = slum_id)
-                        print(rim_add_obj)
                         if rim_add_obj.exists():
                             rim_add_obj.update(**rim_add_data)
                             rim_add_flag = True
