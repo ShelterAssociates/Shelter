@@ -28,6 +28,10 @@ from graphs.models import *
 from django.core import serializers
 from django.contrib.postgres.aggregates import ArrayAgg
 from graphs.export_data import exportMethods
+import traceback
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 # The views in this file correspond to the mastersheet functionality of shelter app.
@@ -910,6 +914,7 @@ def sync_kobo_data(request):
             
     except Exception as e:
         data['flag'] = False
+        logger.error("SYNC KOBO ERROR: %s", traceback.format_exc())
         data['msg'] = "Error occurred while sync from kobo. Please contact administrator." + str(e)
     return HttpResponse(json.dumps(data, ensure_ascii=False).encode('utf-8'), content_type="application/json; charset=utf-8")
 
