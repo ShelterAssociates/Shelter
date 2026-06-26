@@ -26,7 +26,6 @@ import os
 import builtins
 import inspect
 
-
 # ---------------------------------------------------------------------------
 # PATHS
 #
@@ -40,7 +39,7 @@ import inspect
 #              keeping them outside the codebase.
 # ---------------------------------------------------------------------------
 
-BASE_DIR   = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 PARENT_DIR = os.path.dirname(BASE_DIR)
 
 
@@ -51,12 +50,12 @@ PARENT_DIR = os.path.dirname(BASE_DIR)
 # If local_settings.py is ever missing a key, production stays safe.
 # ---------------------------------------------------------------------------
 
-DEBUG       = False   # overridden to True in local_settings.py for dev
-SECRET_KEY  = ''      # MUST be set in local_settings.py
-ALLOWED_HOSTS = []    # MUST be set in local_settings.py
+DEBUG = False  # overridden to True in local_settings.py for dev
+SECRET_KEY = ""  # MUST be set in local_settings.py
+ALLOWED_HOSTS = []  # MUST be set in local_settings.py
 
 # Use BigAutoField by default to avoid Django warnings about auto-created PK types
-DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 
 # ---------------------------------------------------------------------------
@@ -67,7 +66,6 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 # ---------------------------------------------------------------------------
 
 from shelter.local_settings import *  # noqa
-
 
 # ---------------------------------------------------------------------------
 # DEBUG PRINT HELPER
@@ -91,27 +89,27 @@ if DEBUG:
 # ---------------------------------------------------------------------------
 
 INSTALLED_APPS = (
-    'admin_view_permission',
-    'django.contrib.admin',
-    'django.contrib.auth',
-    'django.contrib.contenttypes',
-    'django.contrib.sessions',
-    'django.contrib.messages',
-    'django.contrib.staticfiles',
-    'django.contrib.gis',
-    'master',
-    'component',
-    'sponsor',
-    'colorfield',
-    'mastersheet',
-    'graphs',
-    'helpers',
-    'reports.apps.ReportsConfig',
-    'rest_framework',
-    'rest_framework.authtoken',
-    'rest_auth',
-    'drf_dynamic_fields',
-    'widget_tweaks',
+    "admin_view_permission",
+    "django.contrib.admin",
+    "django.contrib.auth",
+    "django.contrib.contenttypes",
+    "django.contrib.sessions",
+    "django.contrib.messages",
+    "django.contrib.staticfiles",
+    "django.contrib.gis",
+    "master",
+    "component",
+    "sponsor",
+    "colorfield",
+    "mastersheet",
+    "graphs",
+    "helpers",
+    "reports.apps.ReportsConfig",
+    "rest_framework",
+    "rest_framework.authtoken",
+    "rest_auth",
+    "drf_dynamic_fields",
+    "widget_tweaks",
 )
 # INSTALLED_APPS = (
 #     'admin_view_permission',
@@ -141,13 +139,11 @@ INSTALLED_APPS = (
 # ---------------------------------------------------------------------------
 
 REST_FRAMEWORK = {
-    'DEFAULT_AUTHENTICATION_CLASSES': (
-        'rest_framework.authentication.BasicAuthentication',
-        'rest_framework.authentication.TokenAuthentication',
+    "DEFAULT_AUTHENTICATION_CLASSES": (
+        "rest_framework.authentication.BasicAuthentication",
+        "rest_framework.authentication.TokenAuthentication",
     ),
-    'DEFAULT_PERMISSION_CLASSES': (
-        'rest_framework.permissions.AllowAny',
-    ),
+    "DEFAULT_PERMISSION_CLASSES": ("rest_framework.permissions.AllowAny",),
 }
 
 
@@ -156,10 +152,10 @@ REST_FRAMEWORK = {
 # ---------------------------------------------------------------------------
 
 ADMIN_VIEW_PERMISSION_MODELS = [
-    'auth.User',
-    'master.Survey',
-    'master.Slum',
-    'master.Rapid_Slum_Appraisal',
+    "auth.User",
+    "master.Survey",
+    "master.Slum",
+    "master.Rapid_Slum_Appraisal",
 ]
 
 
@@ -168,14 +164,14 @@ ADMIN_VIEW_PERMISSION_MODELS = [
 # ---------------------------------------------------------------------------
 
 MIDDLEWARE = (
-    'django.middleware.gzip.GZipMiddleware',
-    'django.contrib.sessions.middleware.SessionMiddleware',
-    'django.middleware.common.CommonMiddleware',
-    'django.middleware.csrf.CsrfViewMiddleware',
-    'django.contrib.auth.middleware.AuthenticationMiddleware',
-    'django.contrib.messages.middleware.MessageMiddleware',
-    'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    'django.middleware.security.SecurityMiddleware',
+    "django.middleware.gzip.GZipMiddleware",
+    "django.contrib.sessions.middleware.SessionMiddleware",
+    "django.middleware.common.CommonMiddleware",
+    "django.middleware.csrf.CsrfViewMiddleware",
+    "django.contrib.auth.middleware.AuthenticationMiddleware",
+    "django.contrib.messages.middleware.MessageMiddleware",
+    "django.middleware.clickjacking.XFrameOptionsMiddleware",
+    "django.middleware.security.SecurityMiddleware",
 )
 
 
@@ -183,8 +179,8 @@ MIDDLEWARE = (
 # URL & WSGI
 # ---------------------------------------------------------------------------
 
-ROOT_URLCONF      = 'shelter.urls'
-WSGI_APPLICATION  = 'shelter.wsgi.application'
+ROOT_URLCONF = "shelter.urls"
+WSGI_APPLICATION = "shelter.wsgi.application"
 
 
 # ---------------------------------------------------------------------------
@@ -193,15 +189,15 @@ WSGI_APPLICATION  = 'shelter.wsgi.application'
 
 TEMPLATES = [
     {
-        'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [os.path.join(BASE_DIR, 'templates')],
-        'APP_DIRS': True,
-        'OPTIONS': {
-            'context_processors': [
-                'django.template.context_processors.debug',
-                'django.template.context_processors.request',
-                'django.contrib.auth.context_processors.auth',
-                'django.contrib.messages.context_processors.messages',
+        "BACKEND": "django.template.backends.django.DjangoTemplates",
+        "DIRS": [os.path.join(BASE_DIR, "templates")],
+        "APP_DIRS": True,
+        "OPTIONS": {
+            "context_processors": [
+                "django.template.context_processors.debug",
+                "django.template.context_processors.request",
+                "django.contrib.auth.context_processors.auth",
+                "django.contrib.messages.context_processors.messages",
             ],
         },
     },
@@ -221,11 +217,11 @@ POSTGIS_VERSION = (2, 0, 3)
 # INTERNATIONALISATION
 # ---------------------------------------------------------------------------
 
-LANGUAGE_CODE = 'en-us'
-TIME_ZONE     = 'Asia/Kolkata'
-USE_I18N      = True
-USE_L10N      = True
-USE_TZ        = True
+LANGUAGE_CODE = "en-us"
+TIME_ZONE = "Asia/Kolkata"
+USE_I18N = True
+USE_L10N = True
+USE_TZ = True
 
 
 # ---------------------------------------------------------------------------
@@ -237,14 +233,12 @@ USE_TZ        = True
 # STATIC_URL       → URL prefix browsers use to request static files
 # ---------------------------------------------------------------------------
 
-STATIC_URL  = '/static/'
-SITE_URL    = '/'
+STATIC_URL = "/static/"
+SITE_URL = "/"
 
-STATICFILES_DIRS = (
-    os.path.join(BASE_DIR, 'static'),
-)
+STATICFILES_DIRS = (os.path.join(BASE_DIR, "static"),)
 
-STATIC_ROOT = os.path.join(PARENT_DIR, 'static_collected/')
+STATIC_ROOT = os.path.join(PARENT_DIR, "static_collected/")
 
 
 # ---------------------------------------------------------------------------
@@ -262,8 +256,8 @@ STATIC_ROOT = os.path.join(PARENT_DIR, 'static_collected/')
 # MEDIA_URL  → URL prefix browsers use to request uploaded files
 # ---------------------------------------------------------------------------
 
-MEDIA_URL  = '/media/'
-MEDIA_ROOT = os.path.join(PARENT_DIR, 'media/')
+MEDIA_URL = "/media/"
+MEDIA_ROOT = os.path.join(PARENT_DIR, "media/")
 
 
 # ---------------------------------------------------------------------------
@@ -277,4 +271,4 @@ ADMIN_SITE_HEADER = "Shelter Administration"
 # AUTH
 # ---------------------------------------------------------------------------
 
-LOGIN_REDIRECT_URL = 'login_success'
+LOGIN_REDIRECT_URL = "login_success"

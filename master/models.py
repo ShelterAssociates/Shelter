@@ -12,17 +12,19 @@ from component.models import Component
 from django.contrib.contenttypes.fields import GenericRelation
 from django.core.exceptions import ValidationError
 
-FACTSHEET_PHOTO="factsheet/"
-SHELTER_PHOTO="ShelterPhotos/"
-DRAINAGE_PHOTO="ShelterPhotos/FactsheetPhotos/"
+FACTSHEET_PHOTO = "factsheet/"
+SHELTER_PHOTO = "ShelterPhotos/"
+DRAINAGE_PHOTO = "ShelterPhotos/FactsheetPhotos/"
 SLUM_STATUS_CHOICES = [
-    ('Active', 'Active'),
-	('sra', 'Gone for SRA'),
-	('road_widening', 'Gone for Road Widening'),
+    ("Active", "Active"),
+    ("sra", "Gone for SRA"),
+    ("road_widening", "Gone for Road Widening"),
 ]
+
 
 class CityReference(models.Model):
     """Worldwide City Database"""
+
     city_name = models.CharField(max_length=2048)
     city_code = models.CharField(max_length=2048)
     district_name = models.CharField(max_length=2048)
@@ -37,6 +39,7 @@ class CityReference(models.Model):
 
 class City(models.Model):
     """Shelter City Database"""
+
     name = models.ForeignKey(CityReference, on_delete=models.CASCADE)
     city_code = models.CharField(max_length=2048)
     state_name = models.CharField(max_length=2048)
@@ -44,12 +47,14 @@ class City(models.Model):
     district_name = models.CharField(max_length=2048)
     district_code = models.CharField(max_length=2048)
     shape = models.PolygonField(srid=4326)
-    border_color = ColorField(default='#94BBFF')
-    background_color = ColorField(default='#94BBFF')
+    border_color = ColorField(default="#94BBFF")
+    background_color = ColorField(default="#94BBFF")
     created_by = models.ForeignKey(User, on_delete=models.DO_NOTHING)
     created_on = models.DateTimeField(default=datetime.datetime.now)
 
-    components = GenericRelation(Component, related_query_name='component_city',object_id_field="object_id") #Fields for reverse relationship
+    components = GenericRelation(
+        Component, related_query_name="component_city", object_id_field="object_id"
+    )  # Fields for reverse relationship
 
     def __str__(self):
         """Returns string representation of object"""
@@ -57,23 +62,26 @@ class City(models.Model):
 
     class Meta:
         """Metadata for class City"""
-        verbose_name = 'City'
-        verbose_name_plural = 'Cities'
+
+        verbose_name = "City"
+        verbose_name_plural = "Cities"
 
 
-SURVEYTYPE_CHOICES = (('Slum Level', 'Slum Level'),
-                      ('Household Level', 'Household Level'),
-                      ('Household Member Level', 'Household Member Level'),
-                      ('Family Factsheet', 'Family Factsheet'))
+SURVEYTYPE_CHOICES = (
+    ("Slum Level", "Slum Level"),
+    ("Household Level", "Household Level"),
+    ("Household Member Level", "Household Member Level"),
+    ("Family Factsheet", "Family Factsheet"),
+)
 
 
 class Survey(models.Model):
     """Shelter Survey Database"""
+
     name = models.CharField(max_length=2048)
     description = models.CharField(max_length=2048)
     city = models.ForeignKey(City, on_delete=models.CASCADE)
-    survey_type = models.CharField(max_length=2048,
-                                   choices=SURVEYTYPE_CHOICES)
+    survey_type = models.CharField(max_length=2048, choices=SURVEYTYPE_CHOICES)
     analysis_threshold = models.IntegerField()
     kobotool_survey_id = models.CharField(max_length=2048)
     kobotool_survey_url = models.CharField(max_length=2048, null=True, blank=True)
@@ -84,19 +92,22 @@ class Survey(models.Model):
 
     class Meta:
         """Metadata for class Survey"""
-        verbose_name = 'Survey'
-        verbose_name_plural = 'Surveys'
+
+        verbose_name = "Survey"
+        verbose_name_plural = "Surveys"
+
 
 class AdministrativeWard(models.Model):
     """Administrative Ward Database"""
-    city = models.ForeignKey(City,related_name='admin_ward', on_delete=models.CASCADE)
+
+    city = models.ForeignKey(City, related_name="admin_ward", on_delete=models.CASCADE)
     name = models.CharField(max_length=2048, default="")
     shape = models.PolygonField(srid=4326, default="")
     ward_no = models.CharField(max_length=2048, default="")
-    description = models.TextField(max_length=2048,blank=True,null=True)
-    office_address = models.CharField(max_length=2048,blank=True,null=True)
-    border_color = ColorField(default='#BFFFD0')
-    background_color = ColorField(default='#BFFFD0')
+    description = models.TextField(max_length=2048, blank=True, null=True)
+    office_address = models.CharField(max_length=2048, blank=True, null=True)
+    border_color = ColorField(default="#BFFFD0")
+    background_color = ColorField(default="#BFFFD0")
 
     def __str__(self):
         """Returns string representation of object"""
@@ -104,20 +115,28 @@ class AdministrativeWard(models.Model):
 
     class Meta:
         """Metadata for class Administrative Ward"""
-        verbose_name = 'Administrative Ward'
-        verbose_name_plural = 'Administrative Wards'
+
+        verbose_name = "Administrative Ward"
+        verbose_name_plural = "Administrative Wards"
 
 
 class ElectoralWard(models.Model):
     """Electoral Ward Database"""
-    administrative_ward = models.ForeignKey(AdministrativeWard,related_name='electoral_ward',blank=True, null=True, on_delete=models.CASCADE)
+
+    administrative_ward = models.ForeignKey(
+        AdministrativeWard,
+        related_name="electoral_ward",
+        blank=True,
+        null=True,
+        on_delete=models.CASCADE,
+    )
     name = models.CharField(max_length=2048, default="")
     shape = models.PolygonField(srid=4326, default="")
     ward_no = models.CharField(max_length=2048, default="", null=True, blank=True)
     ward_code = models.TextField(max_length=2048, default="", null=True, blank=True)
-    extra_info = models.CharField(max_length=2048,blank=True,null=True)
-    border_color = ColorField(default='#FFEFA1')
-    background_color = ColorField(default='#FFEFA1')
+    extra_info = models.CharField(max_length=2048, blank=True, null=True)
+    border_color = ColorField(default="#FFEFA1")
+    background_color = ColorField(default="#FFEFA1")
 
     def __str__(self):
         """Returns string representation of object"""
@@ -125,32 +144,57 @@ class ElectoralWard(models.Model):
 
     class Meta:
         """Metadata for class ElectoralWard"""
-        verbose_name = 'Electoral Ward'
-        verbose_name_plural = 'Electoral Wards'
 
-ODF_CHOICES =(('',''), ('OD', 'OD'), ('ODF','ODF'),('ODF+','ODF+'),('ODF++','ODF++'))
+        verbose_name = "Electoral Ward"
+        verbose_name_plural = "Electoral Wards"
+
+
+ODF_CHOICES = (
+    ("", ""),
+    ("OD", "OD"),
+    ("ODF", "ODF"),
+    ("ODF+", "ODF+"),
+    ("ODF++", "ODF++"),
+)
+
 
 class Slum(models.Model):
     """Slum Database"""
-    electoral_ward = models.ForeignKey(ElectoralWard,related_name='slum_name',blank=True, null=True, on_delete=models.CASCADE)
+
+    electoral_ward = models.ForeignKey(
+        ElectoralWard,
+        related_name="slum_name",
+        blank=True,
+        null=True,
+        on_delete=models.CASCADE,
+    )
     name = models.CharField(max_length=2048)
     shape = models.PolygonField(srid=4326)
-    description = models.TextField(max_length=2048,blank=True,null=True)
-    shelter_slum_code = models.CharField(max_length=2048,blank=True,null=True)
-    factsheet = models.FileField(upload_to=FACTSHEET_PHOTO ,blank=True,null=True)
-    photo = models.ImageField(upload_to=FACTSHEET_PHOTO,blank=True, null=True)
+    description = models.TextField(max_length=2048, blank=True, null=True)
+    shelter_slum_code = models.CharField(max_length=2048, blank=True, null=True)
+    factsheet = models.FileField(upload_to=FACTSHEET_PHOTO, blank=True, null=True)
+    photo = models.ImageField(upload_to=FACTSHEET_PHOTO, blank=True, null=True)
     associated_with_SA = models.BooleanField(default=False)
-    odf_status = models.CharField(max_length=2048,choices=ODF_CHOICES,default=ODF_CHOICES)
+    odf_status = models.CharField(
+        max_length=2048, choices=ODF_CHOICES, default=ODF_CHOICES
+    )
     status = models.BooleanField(default=False)
-    current_status = models.CharField(max_length=50, choices=SLUM_STATUS_CHOICES, blank=True, null=True)
-    components = GenericRelation(Component, related_query_name='component_slum',object_id_field="object_id")#Fields for reverse relationship
+    current_status = models.CharField(
+        max_length=50, choices=SLUM_STATUS_CHOICES, blank=True, null=True
+    )
+    components = GenericRelation(
+        Component, related_query_name="component_slum", object_id_field="object_id"
+    )  # Fields for reverse relationship
 
     def has_permission(self, user):
         if user.is_superuser:
             return True
-        group_perm = user.groups.values_list('name', flat=True)
-        group_perm = map(lambda x:x.split(':')[-1].strip(), group_perm)
-        if self.electoral_ward.administrative_ward.city.name.city_name.strip() in group_perm:
+        group_perm = user.groups.values_list("name", flat=True)
+        group_perm = map(lambda x: x.split(":")[-1].strip(), group_perm)
+        if (
+            self.electoral_ward.administrative_ward.city.name.city_name.strip()
+            in group_perm
+        ):
             return True
         return False
 
@@ -160,17 +204,22 @@ class Slum(models.Model):
 
     class Meta:
         """Metadata for class Slum"""
-        verbose_name = 'Slum'
-        verbose_name_plural = 'Slums'
-        ordering = ['name']
+
+        verbose_name = "Slum"
+        verbose_name_plural = "Slums"
+        ordering = ["name"]
+
 
 class WardOfficeContact(models.Model):
     """Ward Office Contact Database"""
-    administrative_ward = models.ForeignKey(AdministrativeWard, on_delete=models.CASCADE)
+
+    administrative_ward = models.ForeignKey(
+        AdministrativeWard, on_delete=models.CASCADE
+    )
     title = models.CharField(max_length=2048)
     name = models.CharField(max_length=2048)
     address_info = models.CharField(max_length=2048, default="")
-    telephone = models.CharField(max_length=2048,blank=True,null=True)
+    telephone = models.CharField(max_length=2048, blank=True, null=True)
 
     def __str__(self):
         """Returns string representation of object"""
@@ -178,18 +227,20 @@ class WardOfficeContact(models.Model):
 
     class Meta:
         """Metadata for WardOfficeContact"""
-        verbose_name = 'Ward Officer Contact'
-        verbose_name_plural = 'Ward Officer Contacts'
+
+        verbose_name = "Ward Officer Contact"
+        verbose_name_plural = "Ward Officer Contacts"
 
 
 class ElectedRepresentative(models.Model):
     """Elected Reresentative Database"""
+
     electoral_ward = models.ForeignKey(ElectoralWard, on_delete=models.CASCADE)
     name = models.CharField(max_length=2048)
     tel_nos = models.CharField(max_length=2048)
     address = models.CharField(max_length=2048)
     post_code = models.CharField(max_length=2048)
-    additional_info = models.CharField(max_length=2048,blank=True,null=True)
+    additional_info = models.CharField(max_length=2048, blank=True, null=True)
     elected_rep_Party = models.CharField(max_length=2048)
 
     def __str__(self):
@@ -198,23 +249,27 @@ class ElectedRepresentative(models.Model):
 
     class Meta:
         """Metadata for class ElectedRepresentative"""
-        verbose_name = 'Elected Representative'
-        verbose_name_plural = 'Elected Representatives'
+
+        verbose_name = "Elected Representative"
+        verbose_name_plural = "Elected Representatives"
 
 
 class ShapeCode(models.Model):
     """Shape Code Database"""
+
     code = models.CharField(max_length=2048)
     description = models.CharField(max_length=2048)
 
     class Meta:
         """Metadata for class ShapeCode"""
-        verbose_name = 'Shape Code'
-        verbose_name_plural = 'Shape Codes'
+
+        verbose_name = "Shape Code"
+        verbose_name_plural = "Shape Codes"
 
 
 class DrawableComponent(models.Model):
     """Drawable Component Database"""
+
     name = models.CharField(max_length=2048)
     color = models.CharField(max_length=2048)
     extra = models.CharField(max_length=2048)
@@ -227,12 +282,14 @@ class DrawableComponent(models.Model):
 
     class Meta:
         """Metadata for class Drawable Component"""
-        verbose_name = 'Drawable Component'
-        verbose_name_plural = 'Drawable Components'
+
+        verbose_name = "Drawable Component"
+        verbose_name_plural = "Drawable Components"
 
 
 class PlottedShape(models.Model):
     """Plotted Shape Database"""
+
     slum = models.CharField(max_length=2048)
     name = models.CharField(max_length=2048)
     lat_long = models.CharField(max_length=2048)
@@ -246,13 +303,17 @@ class PlottedShape(models.Model):
 
     class Meta:
         """Metadata for class PlottedShape"""
-        verbose_name = 'Plotted Shape'
-        verbose_name_plural = 'Plotted Shapes'
 
-CHOICES_ALL = (('0', 'None'), ('1', 'All'), ('2', 'Allow Selection'))
+        verbose_name = "Plotted Shape"
+        verbose_name_plural = "Plotted Shapes"
+
+
+CHOICES_ALL = (("0", "None"), ("1", "All"), ("2", "Allow Selection"))
+
 
 class RoleMaster(models.Model):
     """Role Master Database"""
+
     name = models.CharField(max_length=2048)
     city = models.IntegerField(choices=CHOICES_ALL)
     slum = models.IntegerField(choices=CHOICES_ALL)
@@ -268,11 +329,14 @@ class RoleMaster(models.Model):
 
     class Meta:
         """Metadata for class RoleMaster"""
-        verbose_name = 'Role Master'
-        verbose_name_plural = 'Role Masters'
+
+        verbose_name = "Role Master"
+        verbose_name_plural = "Role Masters"
+
 
 class UserRoleMaster(models.Model):
     """User Role Master Database"""
+
     user = models.ForeignKey(User, on_delete=models.DO_NOTHING)
     role_master = models.ForeignKey(RoleMaster, on_delete=models.CASCADE)
     city = models.ForeignKey(City, on_delete=models.DO_NOTHING)
@@ -280,26 +344,33 @@ class UserRoleMaster(models.Model):
 
     class Meta:
         """Metadata for class UserRoleMaster"""
-        verbose_name = 'User Role Master'
-        verbose_name_plural = 'User Role Masters'
+
+        verbose_name = "User Role Master"
+        verbose_name_plural = "User Role Masters"
 
 
 class ProjectMaster(models.Model):
     """Project Master Database"""
+
     created_user = models.CharField(max_length=2048)
     created_date = models.DateTimeField(default=datetime.datetime.now)
 
     class Meta:
         """Metadata for class ProjectMaster"""
-        verbose_name = 'Project Master'
-        verbose_name_plural = 'Project Masters'
+
+        verbose_name = "Project Master"
+        verbose_name_plural = "Project Masters"
+
 
 def validate_image(fieldfile_obj):
     filesize = fieldfile_obj.file.size
     megabyte_limit = 3.0
-    if filesize > megabyte_limit*1024*1024:
+    if filesize > megabyte_limit * 1024 * 1024:
         raise ValidationError("Max file size is %sMB" % str(megabyte_limit))
+
+
 import os
+
 
 def rapid_slum_upload_path(instance, filename):
     """
@@ -308,10 +379,18 @@ def rapid_slum_upload_path(instance, filename):
     """
     try:
         slum = instance.slum_name
-        city_name = slum.electoral_ward.administrative_ward.city.name.city_name.strip().replace(" ", "_")
-        admin_ward_name = slum.electoral_ward.administrative_ward.name.strip().replace(" ", "_")
+        city_name = (
+            slum.electoral_ward.administrative_ward.city.name.city_name.strip().replace(
+                " ", "_"
+            )
+        )
+        admin_ward_name = slum.electoral_ward.administrative_ward.name.strip().replace(
+            " ", "_"
+        )
         slum_name = slum.name.strip().replace(" ", "_")
-        return os.path.join("ShelterPhotos", city_name, admin_ward_name, slum_name, filename)
+        return os.path.join(
+            "ShelterPhotos", city_name, admin_ward_name, slum_name, filename
+        )
     except AttributeError:
         # fallback path if relationships are missing
         return os.path.join("ShelterPhotos", "Unknown", filename)
@@ -321,114 +400,247 @@ class Rapid_Slum_Appraisal(models.Model):
     def validate_image(fieldfile_obj):
         filesize = fieldfile_obj.file.size
         megabyte_limit = 3.0
-        if filesize > megabyte_limit*1024*1024:
+        if filesize > megabyte_limit * 1024 * 1024:
             raise ValidationError("Max file size is %sMB" % str(megabyte_limit))
+
     slum_name = models.ForeignKey(Slum, on_delete=models.CASCADE)
-    approximate_population=models.CharField(max_length=2048,blank=True, null=True)
-    toilet_cost=models.CharField(max_length=2048,blank=True, null=True)
-    toilet_seat_to_persons_ratio = models.CharField(max_length=2048,blank=True, null=True)
-    percentage_with_an_individual_water_connection = models.CharField(max_length=2048,blank=True, null=True)
-    frequency_of_clearance_of_waste_containers = models.CharField(max_length=2048,blank=True, null=True)
-    general_info_left_image = models.ImageField(validate_image,upload_to=rapid_slum_upload_path,blank=True, null=True,max_length=255)
-    toilet_info_left_image = models.ImageField(validate_image,upload_to=rapid_slum_upload_path,blank=True, null=True,max_length=255)
-    waste_management_info_left_image = models.ImageField(validate_image,upload_to=rapid_slum_upload_path,blank=True, null=True,max_length=255)
-    water_info_left_image = models.ImageField(validate_image,upload_to=rapid_slum_upload_path,blank=True, null=True,max_length=255)
-    roads_and_access_info_left_image = models.ImageField(validate_image,upload_to=rapid_slum_upload_path,blank=True, null=True,max_length=255)
-    drainage_info_left_image = models.ImageField(validate_image,upload_to=rapid_slum_upload_path,blank=True, null=True,max_length=255)
-    gutter_info_left_image = models.ImageField(validate_image,upload_to=rapid_slum_upload_path,blank=True, null=True,max_length=255)
-    general_image_bottomdown1 = models.ImageField(validate_image,upload_to=rapid_slum_upload_path,blank=True, null=True,max_length=255)
-    general_image_bottomdown2 = models.ImageField(validate_image,upload_to=rapid_slum_upload_path,blank=True, null=True,max_length=255)
-    toilet_image_bottomdown1 = models.ImageField(validate_image,upload_to=rapid_slum_upload_path,blank=True, null=True,max_length=255)
-    toilet_image_bottomdown2 = models.ImageField(validate_image,upload_to=rapid_slum_upload_path,blank=True, null=True,max_length=255)
-    waste_management_image_bottomdown1 = models.ImageField(validate_image,upload_to=rapid_slum_upload_path,blank=True, null=True,max_length=255)
-    waste_management_image_bottomdown2 = models.ImageField(validate_image,upload_to=rapid_slum_upload_path,blank=True, null=True,max_length=255)
-    water_image_bottomdown1  = models.ImageField(validate_image,upload_to=rapid_slum_upload_path,blank=True, null=True,max_length=255)
-    water_image_bottomdown2 = models.ImageField(validate_image,upload_to=rapid_slum_upload_path,blank=True, null=True,max_length=255)
-    roads_image_bottomdown1 = models.ImageField(validate_image,upload_to=rapid_slum_upload_path,blank=True, null=True,max_length=255)
-    road_image_bottomdown2  = models.ImageField(validate_image,upload_to=rapid_slum_upload_path,blank=True, null=True,max_length=255)
-    drainage_image_bottomdown1 = models.ImageField(validate_image,upload_to=rapid_slum_upload_path,blank=True, null=True,max_length=255)
-    drainage_image_bottomdown2 = models.ImageField(validate_image,upload_to=rapid_slum_upload_path,blank=True, null=True,max_length=255)
-    gutter_image_bottomdown1  = models.ImageField(validate_image,upload_to=rapid_slum_upload_path,blank=True, null=True,max_length=255)
-    gutter_image_bottomdown2 = models.ImageField(validate_image,upload_to=rapid_slum_upload_path,blank=True, null=True,max_length=255)
-    drainage_report_image = models.ImageField(upload_to=rapid_slum_upload_path,blank=True, null=True,max_length=255)
-    location_of_defecation = models.CharField(max_length=2048,blank=True, null=True)
-    percentage_with_individual_toilet = models.CharField(max_length=2048,blank=True, null=True)
+    approximate_population = models.CharField(max_length=2048, blank=True, null=True)
+    toilet_cost = models.CharField(max_length=2048, blank=True, null=True)
+    toilet_seat_to_persons_ratio = models.CharField(
+        max_length=2048, blank=True, null=True
+    )
+    percentage_with_an_individual_water_connection = models.CharField(
+        max_length=2048, blank=True, null=True
+    )
+    frequency_of_clearance_of_waste_containers = models.CharField(
+        max_length=2048, blank=True, null=True
+    )
+    general_info_left_image = models.ImageField(
+        validate_image,
+        upload_to=rapid_slum_upload_path,
+        blank=True,
+        null=True,
+        max_length=255,
+    )
+    toilet_info_left_image = models.ImageField(
+        validate_image,
+        upload_to=rapid_slum_upload_path,
+        blank=True,
+        null=True,
+        max_length=255,
+    )
+    waste_management_info_left_image = models.ImageField(
+        validate_image,
+        upload_to=rapid_slum_upload_path,
+        blank=True,
+        null=True,
+        max_length=255,
+    )
+    water_info_left_image = models.ImageField(
+        validate_image,
+        upload_to=rapid_slum_upload_path,
+        blank=True,
+        null=True,
+        max_length=255,
+    )
+    roads_and_access_info_left_image = models.ImageField(
+        validate_image,
+        upload_to=rapid_slum_upload_path,
+        blank=True,
+        null=True,
+        max_length=255,
+    )
+    drainage_info_left_image = models.ImageField(
+        validate_image,
+        upload_to=rapid_slum_upload_path,
+        blank=True,
+        null=True,
+        max_length=255,
+    )
+    gutter_info_left_image = models.ImageField(
+        validate_image,
+        upload_to=rapid_slum_upload_path,
+        blank=True,
+        null=True,
+        max_length=255,
+    )
+    general_image_bottomdown1 = models.ImageField(
+        validate_image,
+        upload_to=rapid_slum_upload_path,
+        blank=True,
+        null=True,
+        max_length=255,
+    )
+    general_image_bottomdown2 = models.ImageField(
+        validate_image,
+        upload_to=rapid_slum_upload_path,
+        blank=True,
+        null=True,
+        max_length=255,
+    )
+    toilet_image_bottomdown1 = models.ImageField(
+        validate_image,
+        upload_to=rapid_slum_upload_path,
+        blank=True,
+        null=True,
+        max_length=255,
+    )
+    toilet_image_bottomdown2 = models.ImageField(
+        validate_image,
+        upload_to=rapid_slum_upload_path,
+        blank=True,
+        null=True,
+        max_length=255,
+    )
+    waste_management_image_bottomdown1 = models.ImageField(
+        validate_image,
+        upload_to=rapid_slum_upload_path,
+        blank=True,
+        null=True,
+        max_length=255,
+    )
+    waste_management_image_bottomdown2 = models.ImageField(
+        validate_image,
+        upload_to=rapid_slum_upload_path,
+        blank=True,
+        null=True,
+        max_length=255,
+    )
+    water_image_bottomdown1 = models.ImageField(
+        validate_image,
+        upload_to=rapid_slum_upload_path,
+        blank=True,
+        null=True,
+        max_length=255,
+    )
+    water_image_bottomdown2 = models.ImageField(
+        validate_image,
+        upload_to=rapid_slum_upload_path,
+        blank=True,
+        null=True,
+        max_length=255,
+    )
+    roads_image_bottomdown1 = models.ImageField(
+        validate_image,
+        upload_to=rapid_slum_upload_path,
+        blank=True,
+        null=True,
+        max_length=255,
+    )
+    road_image_bottomdown2 = models.ImageField(
+        validate_image,
+        upload_to=rapid_slum_upload_path,
+        blank=True,
+        null=True,
+        max_length=255,
+    )
+    drainage_image_bottomdown1 = models.ImageField(
+        validate_image,
+        upload_to=rapid_slum_upload_path,
+        blank=True,
+        null=True,
+        max_length=255,
+    )
+    drainage_image_bottomdown2 = models.ImageField(
+        validate_image,
+        upload_to=rapid_slum_upload_path,
+        blank=True,
+        null=True,
+        max_length=255,
+    )
+    gutter_image_bottomdown1 = models.ImageField(
+        validate_image,
+        upload_to=rapid_slum_upload_path,
+        blank=True,
+        null=True,
+        max_length=255,
+    )
+    gutter_image_bottomdown2 = models.ImageField(
+        validate_image,
+        upload_to=rapid_slum_upload_path,
+        blank=True,
+        null=True,
+        max_length=255,
+    )
+    drainage_report_image = models.ImageField(
+        upload_to=rapid_slum_upload_path, blank=True, null=True, max_length=255
+    )
+    location_of_defecation = models.CharField(max_length=2048, blank=True, null=True)
+    percentage_with_individual_toilet = models.CharField(
+        max_length=2048, blank=True, null=True
+    )
     drainage_coverage = models.IntegerField(blank=True, null=True)
 
     def __str__(self):
-        return (self.slum_name.name)
+        return self.slum_name.name
 
     class Meta:
-        permissions = (
-            ("can_generate_reports", "Can generate reports"),
-        )
-        ordering = ['slum_name']
-
+        permissions = (("can_generate_reports", "Can generate reports"),)
+        ordering = ["slum_name"]
 
 
 class drainage(models.Model):
     def validate_image(fieldfile_obj):
         filesize = fieldfile_obj.file.size
         megabyte_limit = 3.0
-        if filesize > megabyte_limit*1024*1024:
+        if filesize > megabyte_limit * 1024 * 1024:
             raise ValidationError("Max file size is %sMB" % str(megabyte_limit))
+
     slum_name = models.ForeignKey(Slum, on_delete=models.CASCADE)
-    drainage_image = models.ImageField(upload_to=DRAINAGE_PHOTO,blank=True, null=True)
+    drainage_image = models.ImageField(upload_to=DRAINAGE_PHOTO, blank=True, null=True)
+
 
 def slum_photo_upload_path(instance, filename):
-	import uuid
-	import os
+    import uuid
+    import os
 
-	# Get extension safely
-	ext = os.path.splitext(filename)[1]
+    # Get extension safely
+    ext = os.path.splitext(filename)[1]
 
-	# Generate unique filename
-	new_filename = f"{uuid.uuid4()}{ext}"
+    # Generate unique filename
+    new_filename = f"{uuid.uuid4()}{ext}"
 
-	slum_id = None
+    slum_id = None
 
-	# Case 1: Direct slum relation
-	if getattr(instance, 'slum', None) and getattr(instance.slum, 'id', None):
-		slum_id = instance.slum.id
+    # Case 1: Direct slum relation
+    if getattr(instance, "slum", None) and getattr(instance.slum, "id", None):
+        slum_id = instance.slum.id
 
-	# Case 2: Via phase → slum
-	elif getattr(instance, 'phase', None) and getattr(instance.phase, 'slum', None):
-		if getattr(instance.phase.slum, 'id', None):
-			slum_id = instance.phase.slum.id
+    # Case 2: Via phase → slum
+    elif getattr(instance, "phase", None) and getattr(instance.phase, "slum", None):
+        if getattr(instance.phase.slum, "id", None):
+            slum_id = instance.phase.slum.id
 
-	# Fallback (important when instance not fully saved)
-	if not slum_id:
-		return f"slum_transformation/temp/{new_filename}"
+    # Fallback (important when instance not fully saved)
+    if not slum_id:
+        return f"slum_transformation/temp/{new_filename}"
 
-	return f"slum_transformation/{slum_id}/{new_filename}"
+    return f"slum_transformation/{slum_id}/{new_filename}"
+
 
 class SlumTransformationPhase(models.Model):
     slum = models.ForeignKey(
-        'Slum',
+        "Slum",
         on_delete=models.CASCADE,
-        related_name='transformation_phases',
-        limit_choices_to={'current_status': 'sra'}
+        related_name="transformation_phases",
+        limit_choices_to={"current_status": "sra"},
     )
     month_year = models.DateField(
-        help_text="Use first day of month (YYYY-MM-01)",
-        null=True,
-        blank=True
+        help_text="Use first day of month (YYYY-MM-01)", null=True, blank=True
     )
     description = models.TextField(blank=True)
-    main_image = models.ImageField(
-        upload_to=slum_photo_upload_path,
-        blank=True
-    )
+    main_image = models.ImageField(upload_to=slum_photo_upload_path, blank=True)
     coordinates = JSONField(
         help_text='{"north": ..., "south": ..., "east": ..., "west": ...}'
     )
     created_at = models.DateTimeField(auto_now_add=True)
+
     class Meta:
-        ordering = ['month_year']
+        ordering = ["month_year"]
 
     def clean(self):
         # Allow only SRA slums
-        if self.slum and self.slum.current_status != 'sra':
+        if self.slum and self.slum.current_status != "sra":
             raise ValidationError(
                 f"Only SRA slums allowed. '{self.slum}' is '{self.slum.current_status}'."
             )
@@ -449,32 +661,32 @@ class SlumTransformationPhase(models.Model):
         return f"{self.slum} — {self.month_year}"
 
 
-
 class SlumTransformationImage(models.Model):
     phase = models.ForeignKey(
-        SlumTransformationPhase,
-        on_delete=models.CASCADE,
-        related_name='images'
+        SlumTransformationPhase, on_delete=models.CASCADE, related_name="images"
     )
     image = models.ImageField(upload_to=slum_photo_upload_path)
     caption = models.TextField(blank=True)
     priority = models.PositiveIntegerField(default=1)
     created_at = models.DateTimeField(auto_now_add=True)
+
     class Meta:
-        ordering = ['priority', 'created_at']
+        ordering = ["priority", "created_at"]
         constraints = [
             models.UniqueConstraint(
-                fields=['phase', 'priority'],
-                name='unique_priority_per_phase'
+                fields=["phase", "priority"], name="unique_priority_per_phase"
             )
         ]
 
     def clean(self):
         # extra validation (good for admin forms)
-        if SlumTransformationImage.objects.filter(
-            phase=self.phase,
-            priority=self.priority
-        ).exclude(pk=self.pk).exists():
+        if (
+            SlumTransformationImage.objects.filter(
+                phase=self.phase, priority=self.priority
+            )
+            .exclude(pk=self.pk)
+            .exists()
+        ):
             raise ValidationError(
                 f"Priority {self.priority} already exists for this phase."
             )

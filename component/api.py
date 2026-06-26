@@ -4,26 +4,27 @@ from rest_framework.permissions import IsAuthenticated
 from .serializers import MetadataSerializer
 from .models import Metadata
 
+
 class MetadataViewSet(viewsets.ModelViewSet):
     """
-        Returns a list ['id','name','level','blob','type','component_data', 'count_of_component'] of metadata's with component details.
+    Returns a list ['id','name','level','blob','type','component_data', 'count_of_component'] of metadata's with component details.
 
-        input param - slum_id,
-                 metadata_id,
-                 fields(optional) : fields to be included,
-                 omit(optional) : fields to be omitted
+    input param - slum_id,
+             metadata_id,
+             fields(optional) : fields to be included,
+             omit(optional) : fields to be omitted
     """
+
     serializer_class = MetadataSerializer
     permission_classes = (IsAuthenticated,)
-    queryset = Metadata.objects.filter(type = 'C')
-    
+    queryset = Metadata.objects.filter(type="C")
+
     def get_queryset(self):
-        queryset = Metadata.objects.filter(type = 'C')
-        shelter_metadata_id = self.request.query_params.get('metadata_id', None)
-        slum_id = self.request.query_params.get('slum_id', None)
+        queryset = Metadata.objects.filter(type="C")
+        shelter_metadata_id = self.request.query_params.get("metadata_id", None)
+        slum_id = self.request.query_params.get("slum_id", None)
         if slum_id == None:
             raise exceptions.NotFound("Missing slum_id filters.")
         if shelter_metadata_id:
-            queryset = queryset.filter(id__in = shelter_metadata_id.split(','))
+            queryset = queryset.filter(id__in=shelter_metadata_id.split(","))
         return queryset
-

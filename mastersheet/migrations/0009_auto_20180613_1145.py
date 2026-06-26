@@ -21,7 +21,7 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        
+
         migrations.AddField(
             model_name='toiletconstruction',
             name='p1_material_shifted_to',

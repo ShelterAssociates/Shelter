@@ -19,5 +19,3 @@ class FilterMasterAdmin(admin.ModelAdmin):
 		obj.save()   
 admin.site.register(FilterMaster,FilterMasterAdmin)
 """
-
-

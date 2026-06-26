@@ -31,7 +31,11 @@ from .cipher import *
 from master.models import Slum, Rapid_Slum_Appraisal, drainage
 from sponsor.models import SponsorProject, SponsorProjectDetails
 from graphs.sync_avni_data import *
-from utils.utils_permission import apply_permissions_ajax, access_right, deco_rhs_permission
+from utils.utils_permission import (
+    apply_permissions_ajax,
+    access_right,
+    deco_rhs_permission,
+)
 from django.core.exceptions import PermissionDenied
 from django.db import close_old_connections, connection
 from django.db.models import F
@@ -56,61 +60,221 @@ def _log_component_timing(stage, started_at, started_queries, **details):
     query_delta = len(connection.queries) - started_queries
     extra = ""
     if details:
-        extra = " | " + ", ".join("{}={}".format(key, value) for key, value in details.items())
-    message = "Component timing [{}]: {:.1f} ms, queries=+{}{}".format(stage, elapsed_ms, query_delta, extra)
+        extra = " | " + ", ".join(
+            "{}={}".format(key, value) for key, value in details.items()
+        )
+    message = "Component timing [{}]: {:.1f} ms, queries=+{}{}".format(
+        stage, elapsed_ms, query_delta, extra
+    )
     logger.info(message)
-    print(message, flush=True)
 
-slum_list = ['223', '1925', '1923', '1927', '1062', '1050', '1061', '1061', '1914', '763', '29', '672', '525', '686', '546', '547', '572', '529', '1363', '175', '514', '760', '639', '672', '820', '1026', '1008', '1169', '1639', '1644', '1647', '1171', '1645', '1170', '1640', '1641', '1136', '1164', '1137', '1642', '1142', '1069', '1026', '1034', '1012', '1048', '1050', '1054', '1057', '1119', '1020', '1030', '1028', '1057', '1652', '1283', '1288', '1095', '1096', '1097', '1099', '1100', '1101', '1098', '1104', '1107', '1111', '1079', '1080', '1342', '1083', '1672', '1673', '1085', '1086', '1087', '1077', '1091', '1092', '1665', '1081', '1082', '1338', '1084', '1074', '1340', '1350', '1088', '1089', '1075', '1076', '1090', '1093', '1344', '1094', '1349', '1102', '1103', '1666', '1105', '1106', '1343', '1108', '1109', '1346', '1078', '1112', '1115', '1116', '1113', '1341', '1117', '1339', '1110', '1375', '1259', '1198', '1293', '1200', '1288', '1283', '1971','1972','1929','2019','2020','2021']
+
+slum_list = [
+    "223",
+    "1925",
+    "1923",
+    "1927",
+    "1062",
+    "1050",
+    "1061",
+    "1061",
+    "1914",
+    "763",
+    "29",
+    "672",
+    "525",
+    "686",
+    "546",
+    "547",
+    "572",
+    "529",
+    "1363",
+    "175",
+    "514",
+    "760",
+    "639",
+    "672",
+    "820",
+    "1026",
+    "1008",
+    "1169",
+    "1639",
+    "1644",
+    "1647",
+    "1171",
+    "1645",
+    "1170",
+    "1640",
+    "1641",
+    "1136",
+    "1164",
+    "1137",
+    "1642",
+    "1142",
+    "1069",
+    "1026",
+    "1034",
+    "1012",
+    "1048",
+    "1050",
+    "1054",
+    "1057",
+    "1119",
+    "1020",
+    "1030",
+    "1028",
+    "1057",
+    "1652",
+    "1283",
+    "1288",
+    "1095",
+    "1096",
+    "1097",
+    "1099",
+    "1100",
+    "1101",
+    "1098",
+    "1104",
+    "1107",
+    "1111",
+    "1079",
+    "1080",
+    "1342",
+    "1083",
+    "1672",
+    "1673",
+    "1085",
+    "1086",
+    "1087",
+    "1077",
+    "1091",
+    "1092",
+    "1665",
+    "1081",
+    "1082",
+    "1338",
+    "1084",
+    "1074",
+    "1340",
+    "1350",
+    "1088",
+    "1089",
+    "1075",
+    "1076",
+    "1090",
+    "1093",
+    "1344",
+    "1094",
+    "1349",
+    "1102",
+    "1103",
+    "1666",
+    "1105",
+    "1106",
+    "1343",
+    "1108",
+    "1109",
+    "1346",
+    "1078",
+    "1112",
+    "1115",
+    "1116",
+    "1113",
+    "1341",
+    "1117",
+    "1339",
+    "1110",
+    "1375",
+    "1259",
+    "1198",
+    "1293",
+    "1200",
+    "1288",
+    "1283",
+    "1971",
+    "1972",
+    "1929",
+    "2019",
+    "2020",
+    "2021",
+]
+
 
 @staff_member_required
-@permission_required('component.can_upload_KML', raise_exception=True)
+@permission_required("component.can_upload_KML", raise_exception=True)
 def kml_upload(request):
     context_data = {}
-    if request.method == 'POST':
-        form = KMLUpload(request.POST or None,request.FILES)
+    if request.method == "POST":
+        form = KMLUpload(request.POST or None, request.FILES)
         if form.is_valid():
-            docFile = request.FILES['kml_file'].read()
-            data = form.cleaned_data['slum_name']
-            if form.cleaned_data['level'] == 'City':
-                data = form.cleaned_data['City']
-            objKML = KMLParser(docFile, data, form.cleaned_data['delete_flag'])
+            docFile = request.FILES["kml_file"].read()
+            data = form.cleaned_data["slum_name"]
+            if form.cleaned_data["level"] == "City":
+                data = form.cleaned_data["City"]
+            objKML = KMLParser(docFile, data, form.cleaned_data["delete_flag"])
             try:
                 parsed_data = objKML.other_components()
-                context_data['parsed'] = [k for k,v in parsed_data.items() if v==True]
-                context_data['unparsed'] = [k for k,v in parsed_data.items() if v==False]
-                messages.success(request,'KML uploaded successfully')
+                context_data["parsed"] = [
+                    k for k, v in parsed_data.items() if v == True
+                ]
+                context_data["unparsed"] = [
+                    k for k, v in parsed_data.items() if v == False
+                ]
+                messages.success(request, "KML uploaded successfully")
             except Exception as e:
-                messages.error(request, 'Some error occurred while parsing. KML file is not in the required format ('+str(e)+')')
+                messages.error(
+                    request,
+                    "Some error occurred while parsing. KML file is not in the required format ("
+                    + str(e)
+                    + ")",
+                )
     else:
         form = KMLUpload()
-    metadata_component = Metadata.objects.filter(type='C').values_list('code', flat=True)
-    context_data['component'] = metadata_component
-    context_data['form'] = form
-    return render(request, 'kml_upload.html', context_data)
+    metadata_component = Metadata.objects.filter(type="C").values_list(
+        "code", flat=True
+    )
+    context_data["component"] = metadata_component
+    context_data["form"] = form
+    return render(request, "kml_upload.html", context_data)
 
-#@user_passes_test(lambda u: u.is_superuser)
+
+# @user_passes_test(lambda u: u.is_superuser)
 # @access_right
 def get_component(request, slum_id):
-    '''Get component/filter/sponsor data for the selected slum.
-       Here sponsor data is fetch according to user role access rights
-    '''
+    """Get component/filter/sponsor data for the selected slum.
+    Here sponsor data is fetch according to user role access rights
+    """
     request_started_at = pytime.perf_counter()
     request_started_queries = len(connection.queries)
 
     slum_lookup_started_at = pytime.perf_counter()
     slum_lookup_started_queries = len(connection.queries)
     slum = get_object_or_404(
-        Slum.objects.select_related('electoral_ward__administrative_ward__city__name'),
+        Slum.objects.select_related("electoral_ward__administrative_ward__city__name"),
         pk=slum_id,
     )
-    _log_component_timing('slum_lookup', slum_lookup_started_at, slum_lookup_started_queries, slum_id=slum_id)
+    _log_component_timing(
+        "slum_lookup",
+        slum_lookup_started_at,
+        slum_lookup_started_queries,
+        slum_id=slum_id,
+    )
 
-    if slum.current_status == 'sra':
-        _log_component_timing('early_exit_sra', request_started_at, request_started_queries, slum_id=slum_id)
+    if slum.current_status == "sra":
+        _log_component_timing(
+            "early_exit_sra",
+            request_started_at,
+            request_started_queries,
+            slum_id=slum_id,
+        )
         return JsonResponse({"status": "sra", "data": None})
-    if slum.current_status == 'road_widening':
-        _log_component_timing('early_exit_road_widening', request_started_at, request_started_queries, slum_id=slum_id)
+    if slum.current_status == "road_widening":
+        _log_component_timing(
+            "early_exit_road_widening",
+            request_started_at,
+            request_started_queries,
+            slum_id=slum_id,
+        )
         return JsonResponse({"status": "road_widening", "data": None})
 
     city_name = slum.electoral_ward.administrative_ward.city.name.city_name
@@ -123,58 +287,85 @@ def get_component(request, slum_id):
     if not request.user.is_anonymous:
         # Exclude sponsor ID 10 (Toilet Facilitation under SBM Toilets)
         sponsors = list(
-            request.user.sponsor_set
-            .exclude(id=10)
-            .values_list('id', flat=True)
+            request.user.sponsor_set.exclude(id=10).values_list("id", flat=True)
         )
         sponsor_project_detail_ids = set(
-            SponsorProject.objects
-            .filter(sponsor_id__in=sponsors)
-            .values_list('id', flat=True)
+            SponsorProject.objects.filter(sponsor_id__in=sponsors).values_list(
+                "id", flat=True
+            )
         )
-    _log_component_timing('sponsor_lookup', sponsor_lookup_started_at, sponsor_lookup_started_queries, sponsor_count=len(sponsors), sponsor_project_count=len(sponsor_project_detail_ids))
+    _log_component_timing(
+        "sponsor_lookup",
+        sponsor_lookup_started_at,
+        sponsor_lookup_started_queries,
+        sponsor_count=len(sponsors),
+        sponsor_project_count=len(sponsor_project_detail_ids),
+    )
 
     # if slum in slum_list we fetch Shop data from mastersheet else we fetch Shops data from kml data.
     metadata_lookup_started_at = pytime.perf_counter()
     metadata_lookup_started_queries = len(connection.queries)
     if slum_id in slum_list:
-        metadata_qs = Metadata.objects.filter(visible=True).exclude(name='Shops').select_related('section').order_by('section__order', 'order')
+        metadata_qs = (
+            Metadata.objects.filter(visible=True)
+            .exclude(name="Shops")
+            .select_related("section")
+            .order_by("section__order", "order")
+        )
     else:
-        metadata_qs = Metadata.objects.filter(visible=True).exclude(name='Shop').select_related('section').order_by('section__order', 'order')
+        metadata_qs = (
+            Metadata.objects.filter(visible=True)
+            .exclude(name="Shop")
+            .select_related("section")
+            .order_by("section__order", "order")
+        )
     metadata = list(metadata_qs)
-    _log_component_timing('metadata_lookup', metadata_lookup_started_at, metadata_lookup_started_queries, metadata_count=len(metadata))
+    _log_component_timing(
+        "metadata_lookup",
+        metadata_lookup_started_at,
+        metadata_lookup_started_queries,
+        metadata_count=len(metadata),
+    )
 
-    fields_code = [metad.code for metad in metadata if metad.type == 'F' and metad.code]
-    fields = list({str(code.split(':')[0]) for code in fields_code})
+    fields_code = [metad.code for metad in metadata if metad.type == "F" and metad.code]
+    fields = list({str(code.split(":")[0]) for code in fields_code})
 
     rhs_lookup_started_at = pytime.perf_counter()
     rhs_lookup_started_queries = len(connection.queries)
     rhs_analysis = {}
     if fields:
-        rhs_analysis = get_household_analysis_data(slum.electoral_ward.administrative_ward.city.id, slum.id, fields)
-    _log_component_timing('rhs_analysis', rhs_lookup_started_at, rhs_lookup_started_queries, field_count=len(fields), analysis_keys=len(rhs_analysis))
+        rhs_analysis = get_household_analysis_data(
+            slum.electoral_ward.administrative_ward.city.id, slum.id, fields
+        )
+    _log_component_timing(
+        "rhs_analysis",
+        rhs_lookup_started_at,
+        rhs_lookup_started_queries,
+        field_count=len(fields),
+        analysis_keys=len(rhs_analysis),
+    )
 
     component_lookup_started_at = pytime.perf_counter()
     component_lookup_started_queries = len(connection.queries)
-    component_metadata_ids = [metad.id for metad in metadata if metad.type == 'C']
+    component_metadata_ids = [metad.id for metad in metadata if metad.type == "C"]
     component_map = {}
     if component_metadata_ids:
         component_qs = (
             slum.components.filter(metadata_id__in=component_metadata_ids)
-            .select_related('metadata', 'metadata__section')
-            .order_by('metadata__section__order', 'metadata__order', 'housenumber')
+            .select_related("metadata", "metadata__section")
+            .order_by("metadata__section__order", "metadata__order", "housenumber")
         )
         for comp in component_qs:
             component_map.setdefault(comp.metadata_id, []).append(comp)
 
-    sponsor_metadata_codes = sorted({int(metad.code) for metad in metadata if metad.type == 'S' and metad.code})
+    sponsor_metadata_codes = sorted(
+        {int(metad.code) for metad in metadata if metad.type == "S" and metad.code}
+    )
     sponsor_details_by_project = {}
     if sponsor_metadata_codes:
-        sponsor_details_qs = (
-            SponsorProjectDetails.objects
-            .filter(slum=slum, sponsor_project_id__in=sponsor_metadata_codes)
-            .values_list('sponsor_project_id', 'household_code')
-        )
+        sponsor_details_qs = SponsorProjectDetails.objects.filter(
+            slum=slum, sponsor_project_id__in=sponsor_metadata_codes
+        ).values_list("sponsor_project_id", "household_code")
         for sponsor_project_id, household_code in sponsor_details_qs:
             sponsor_households = []
             if household_code:
@@ -194,103 +385,175 @@ def get_component(request, slum_id):
                             pass
             sponsor_details_by_project[sponsor_project_id] = sponsor_households
 
-    _log_component_timing('component_prefetch', component_lookup_started_at, component_lookup_started_queries, component_metadata_count=len(component_metadata_ids), sponsor_project_count=len(sponsor_metadata_codes))
+    _log_component_timing(
+        "component_prefetch",
+        component_lookup_started_at,
+        component_lookup_started_queries,
+        component_metadata_count=len(component_metadata_ids),
+        sponsor_project_count=len(sponsor_metadata_codes),
+    )
 
     lstcomponent = []
     sponsor_houses = []
     # Iterate through each filter and assign answers to child if available
     for metad in metadata:
         component = {}
-        component['name'] = metad.name
-        if component['name'] == 'Slum boundary' and slum_id in ['1971', '1972']:
-            component['name'] = 'Town boundary'
-        component['level'] = metad.level
-        component['section'] = metad.section.name
-        component['section_order'] = metad.section.order
-        component['type'] = metad.type
-        component['order'] = metad.order
-        component['blob'] = metad.blob
-        component['icon'] = str(metad.icon.url) if metad.icon else ''
-        component['child'] = []
+        component["name"] = metad.name
+        if component["name"] == "Slum boundary" and slum_id in ["1971", "1972"]:
+            component["name"] = "Town boundary"
+        component["level"] = metad.level
+        component["section"] = metad.section.name
+        component["section_order"] = metad.section.order
+        component["type"] = metad.type
+        component["order"] = metad.order
+        component["blob"] = metad.blob
+        component["icon"] = str(metad.icon.url) if metad.icon else ""
+        component["child"] = []
 
-        if metad.type == 'C':
+        if metad.type == "C":
             for comp in component_map.get(metad.id, []):
-                component['child'].append({'housenumber': comp.housenumber, 'shape': json.loads(comp.shape.json)})
-        elif metad.type == 'F' and metad.code != '':
-            field = metad.code.split(':')
+                component["child"].append(
+                    {
+                        "housenumber": comp.housenumber,
+                        "shape": json.loads(comp.shape.json),
+                    }
+                )
+        elif metad.type == "F" and metad.code != "":
+            field = metad.code.split(":")
 
-            if city_name != 'Kolhapur' and field[0] == 'If individual water connection, type of water meter?':
+            if (
+                city_name != "Kolhapur"
+                and field[0] == "If individual water connection, type of water meter?"
+            ):
                 pass
             else:
                 if field[0] in rhs_analysis:
-                    options = [rhs_analysis[field[0]][option] for option in field[1].split('|,|') if option in rhs_analysis[field[0]]]
-                    component['child'] = list(set(sum(options, [])))
+                    options = [
+                        rhs_analysis[field[0]][option]
+                        for option in field[1].split("|,|")
+                        if option in rhs_analysis[field[0]]
+                    ]
+                    component["child"] = list(set(sum(options, [])))
         # # Sponsor : Depending on superuser or sponsor render the data accordingly
-        elif metad.type == 'S' and (metad.authenticate == False or not request.user.is_anonymous):
-            if metad.code != '':
+        elif metad.type == "S" and (
+            metad.authenticate == False or not request.user.is_anonymous
+        ):
+            if metad.code != "":
                 sponsor_households = sponsor_details_by_project.get(int(metad.code), [])
-                if metad.section.name == 'Sponsor':
+                if metad.section.name == "Sponsor":
                     sponsor_houses.extend(sponsor_households)
-                if request.user.is_superuser or int(metad.code) in sponsor_project_detail_ids or metad.authenticate == False:
-                    component['child'] = sponsor_households
+                if (
+                    request.user.is_superuser
+                    or int(metad.code) in sponsor_project_detail_ids
+                    or metad.authenticate == False
+                ):
+                    component["child"] = sponsor_households
             else:
-                component['child'] = sponsor_houses
+                component["child"] = sponsor_houses
 
-        if len(component['child']) > 0:
-            component['count'] = len(component['child'])
+        if len(component["child"]) > 0:
+            component["count"] = len(component["child"])
             lstcomponent.append(component)
 
     build_started_at = pytime.perf_counter()
     build_started_queries = len(connection.queries)
-    lstcomponent = sorted(lstcomponent, key=lambda x: x['section_order'])
+    lstcomponent = sorted(lstcomponent, key=lambda x: x["section_order"])
     dtcomponent = OrderedDict()
     # Ordering the filter/components/sponsors according to the section they below to.
-    for key, comp in groupby(lstcomponent, key=lambda x: x['section']):
+    for key, comp in groupby(lstcomponent, key=lambda x: x["section"]):
         if key not in dtcomponent:
             dtcomponent[key] = OrderedDict()
         for c in comp:
-            dtcomponent[key][c['name']] = c
-    _log_component_timing('component_build', build_started_at, build_started_queries, component_count=len(lstcomponent), section_count=len(dtcomponent))
+            dtcomponent[key][c["name"]] = c
+    _log_component_timing(
+        "component_build",
+        build_started_at,
+        build_started_queries,
+        component_count=len(lstcomponent),
+        section_count=len(dtcomponent),
+    )
 
     response_started_at = pytime.perf_counter()
     response_started_queries = len(connection.queries)
     response_body = json.dumps(dtcomponent)
-    _log_component_timing('response_serialization', response_started_at, response_started_queries, payload_size=len(response_body))
-    _log_component_timing('get_component_total', request_started_at, request_started_queries, slum_id=slum_id, response_bytes=len(response_body))
-    return HttpResponse(response_body, content_type='application/json')
+    _log_component_timing(
+        "response_serialization",
+        response_started_at,
+        response_started_queries,
+        payload_size=len(response_body),
+    )
+    _log_component_timing(
+        "get_component_total",
+        request_started_at,
+        request_started_queries,
+        slum_id=slum_id,
+        response_bytes=len(response_body),
+    )
+    return HttpResponse(response_body, content_type="application/json")
+
 
 def format_data(rhs_data):
     new_rhs = {}
-    remove_list = ['Name_s_of_the_surveyor_s', 'Date_of_survey', '_xform_id_string', 'meta/instanceID', 'end', 'start',
-    'Enter_household_number_again','_geolocation', 'meta/deprecatedID', '_uuid', '_submitted_by', 'admin_ward', '_status',
-    'formhub/uuid', '__version__','_submission_time', '_id', '_notes', '_bamboo_dataset_id', '_tags', 'slum_name', '_attachments',
-    'OD1', 'C1', 'C2', 'C3','Household_number', '_validation_status']
+    remove_list = [
+        "Name_s_of_the_surveyor_s",
+        "Date_of_survey",
+        "_xform_id_string",
+        "meta/instanceID",
+        "end",
+        "start",
+        "Enter_household_number_again",
+        "_geolocation",
+        "meta/deprecatedID",
+        "_uuid",
+        "_submitted_by",
+        "admin_ward",
+        "_status",
+        "formhub/uuid",
+        "__version__",
+        "_submission_time",
+        "_id",
+        "_notes",
+        "_bamboo_dataset_id",
+        "_tags",
+        "slum_name",
+        "_attachments",
+        "OD1",
+        "C1",
+        "C2",
+        "C3",
+        "Household_number",
+        "_validation_status",
+    ]
 
-    seq = {'group_el9cl08/Number_of_household_members': 'Number of household members',
-     'group_oi8ts04/Have_you_applied_for_individua': 'Have you applied for an individual toilet under SBM?',
-     'group_oi8ts04/Current_place_of_defecation': 'Current place of defecation',
-     'group_el9cl08/Type_of_structure_of_the_house': 'Type of structure of the house',
-     'group_oi8ts04/What_is_the_toilet_connected_to': 'What is the toilet connected to',
-     'Household_number': 'Household number',
-     'group_el9cl08/Type_of_water_connection': 'Type of water connection',
-     'group_el9cl08/Facility_of_solid_waste_collection': 'Facility of solid waste collection',
-     'group_el9cl08/Ownership_status_of_the_house': 'Ownership status of the house',
-     'group_el9cl08/Does_any_household_m_n_skills_given_below': 'Does any household member have any of the construction skills given below?',
-     'group_el9cl08/Enter_the_10_digit_mobile_number':'Mobile number',
-     'group_el9cl08/House_area_in_sq_ft': 'House area in sq. ft.','group_og5bx85/Type_of_survey': 'Type of survey',
-     'group_og5bx85/Full_name_of_the_head_of_the_household': 'Full name of the head of the household',
-     'group_el9cl08/Do_you_have_any_girl_child_chi': 'Do you have any girl child/children under the age of 18?',
-     'Type_of_structure_occupancy': 'Type of structure of the house',
-     'group_oi8ts04/Are_you_interested_in_an_indiv': 'Are you interested in an individual toilet?'
-     }
+    seq = {
+        "group_el9cl08/Number_of_household_members": "Number of household members",
+        "group_oi8ts04/Have_you_applied_for_individua": "Have you applied for an individual toilet under SBM?",
+        "group_oi8ts04/Current_place_of_defecation": "Current place of defecation",
+        "group_el9cl08/Type_of_structure_of_the_house": "Type of structure of the house",
+        "group_oi8ts04/What_is_the_toilet_connected_to": "What is the toilet connected to",
+        "Household_number": "Household number",
+        "group_el9cl08/Type_of_water_connection": "Type of water connection",
+        "group_el9cl08/Facility_of_solid_waste_collection": "Facility of solid waste collection",
+        "group_el9cl08/Ownership_status_of_the_house": "Ownership status of the house",
+        "group_el9cl08/Does_any_household_m_n_skills_given_below": "Does any household member have any of the construction skills given below?",
+        "group_el9cl08/Enter_the_10_digit_mobile_number": "Mobile number",
+        "group_el9cl08/House_area_in_sq_ft": "House area in sq. ft.",
+        "group_og5bx85/Type_of_survey": "Type of survey",
+        "group_og5bx85/Full_name_of_the_head_of_the_household": "Full name of the head of the household",
+        "group_el9cl08/Do_you_have_any_girl_child_chi": "Do you have any girl child/children under the age of 18?",
+        "Type_of_structure_occupancy": "Type of structure of the house",
+        "group_oi8ts04/Are_you_interested_in_an_indiv": "Are you interested in an individual toilet?",
+    }
     for i in remove_list:
         if i in rhs_data:
             rhs_data.pop(i)
     for k, v in seq.items():
         try:
             new_rhs[v] = rhs_data[k]
-        except Exception as e:pass
+        except Exception as e:
+            pass
     return new_rhs
+
 
 def get_kobo_RHS_data(request, slum_id, house_num):
     output = OrderedDict()
@@ -299,88 +562,117 @@ def get_kobo_RHS_data(request, slum_id, house_num):
 
     is_house_part = any(c.isalpha() for c in str(house_num))
 
-    if slum_id not in ['1971','1972']:
-        output['admin_ward'] = slum.electoral_ward.administrative_ward.name
-        
-    if slum_id not in ['1971','1972']:
-        output['slum_name'] = slum.name
+    if slum_id not in ["1971", "1972"]:
+        output["admin_ward"] = slum.electoral_ward.administrative_ward.name
+
+    if slum_id not in ["1971", "1972"]:
+        output["slum_name"] = slum.name
     else:
-        output['town_name'] = slum.name
-    
-    output['house_no'] = house_num
+        output["town_name"] = slum.name
+
+    output["house_no"] = house_num
 
     if (
-        request.user.is_superuser or request.user.groups.filter(name='MLG').exists()) and slum_id in ['1971', '1972']:
+        request.user.is_superuser or request.user.groups.filter(name="MLG").exists()
+    ) and slum_id in ["1971", "1972"]:
         project_details = True
         output.update(
             get_kobo_RHS_list(
                 slum.electoral_ward.administrative_ward.city.id,
                 slum,
                 slum_id,
-                house_num
+                house_num,
             )
         )
 
-    elif request.user.groups.filter(name='sponsor').exists():
+    elif request.user.groups.filter(name="sponsor").exists():
         if not is_house_part:
             project_details = SponsorProjectDetails.objects.filter(
                 slum=slum,
                 sponsor__user=request.user,
-                household_code__contains=int(house_num)
+                household_code__contains=int(house_num),
             ).exists()
         else:
             project_details = False
 
-    if request.user.groups.filter(name='ulb').exists():
+    if request.user.groups.filter(name="ulb").exists():
         project_details = False
 
     if project_details and not is_house_part:
         project_details = SponsorProjectDetails.objects.filter(
-            slum=slum,
-            household_code__contains=int(house_num)
+            slum=slum, household_code__contains=int(house_num)
         ).exists()
 
-    output['FFReport'] = project_details
+    output["FFReport"] = project_details
 
-    return HttpResponse(
-        json.dumps(output),
-        content_type='application/json'
-    )
-    
-#@user_passes_test(lambda u: u.is_superuser)
+    return HttpResponse(json.dumps(output), content_type="application/json")
+
+
+# @user_passes_test(lambda u: u.is_superuser)
 # @access_right
 def get_kobo_RIM_data(request, slum_id):
     try:
         slum = Slum.objects.get(pk=slum_id)
     except Slum.DoesNotExist:
-        return HttpResponse(f"<h1>Slum with ID {slum_id} not found</h1>", content_type='text/html')
-    if slum.current_status == 'sra': return JsonResponse({"status": "sra", "data": None})
-    if slum.current_status == 'road_widening': return JsonResponse({"status": "road_widening", "data": None})
+        return HttpResponse(
+            f"<h1>Slum with ID {slum_id} not found</h1>", content_type="text/html"
+        )
+    if slum.current_status == "sra":
+        return JsonResponse({"status": "sra", "data": None})
+    if slum.current_status == "road_widening":
+        return JsonResponse({"status": "road_widening", "data": None})
     try:
         output = get_kobo_RIM_detail(
-            slum.electoral_ward.administrative_ward.city.id, 
-            slum.shelter_slum_code
+            slum.electoral_ward.administrative_ward.city.id, slum.shelter_slum_code
         )
     except:
         output = {}
 
-    return HttpResponse(json.dumps(output), content_type='application/json')
+    return HttpResponse(json.dumps(output), content_type="application/json")
+
 
 def get_image(image_name, image_link, cognito_token):
-    path = 'https://app.avniproject.org/media/signedUrl?url='
-    request_1 = requests.get(path + image_link, headers={'AUTH-TOKEN': cognito_token})
+    path = "https://app.avniproject.org/media/signedUrl?url="
+    request_1 = requests.get(path + image_link, headers={"AUTH-TOKEN": cognito_token})
     return image_name, request_1.text
+
 
 def fetch_images_and_update_urls(image_dict, cognito_token):
     with ThreadPoolExecutor() as executor:
         # Submit tasks with Cognito token included
-        tasks = [executor.submit(get_image, name, link, cognito_token) for name, link in image_dict.items()]
+        tasks = [
+            executor.submit(get_image, name, link, cognito_token)
+            for name, link in image_dict.items()
+        ]
         updated_dict = {task.result()[0]: task.result()[1] for task in tasks}
     return updated_dict
 
 
 def get_avni_image_urls(rim_obj):
-    fields_to_modify= ['toilet_image_bottomdown1', 'toilet_image_bottomdown2', 'water_image_bottomdown1', 'water_image_bottomdown2', 'waste_management_image_bottomdown1', 'waste_management_image_bottomdown2', 'drainage_image_bottomdown1', 'drainage_image_bottomdown2', 'gutter_image_bottomdown1', 'gutter_image_bottomdown2', 'roads_image_bottomdown1', 'road_image_bottomdown2', 'general_image_bottomdown1', 'general_image_bottomdown2', 'general_info_left_image', 'toilet_info_left_image', 'waste_management_info_left_image', 'water_info_left_image', 'roads_and_access_info_left_image', 'drainage_info_left_image', 'gutter_info_left_image', 'drainage_report_image']
+    fields_to_modify = [
+        "toilet_image_bottomdown1",
+        "toilet_image_bottomdown2",
+        "water_image_bottomdown1",
+        "water_image_bottomdown2",
+        "waste_management_image_bottomdown1",
+        "waste_management_image_bottomdown2",
+        "drainage_image_bottomdown1",
+        "drainage_image_bottomdown2",
+        "gutter_image_bottomdown1",
+        "gutter_image_bottomdown2",
+        "roads_image_bottomdown1",
+        "road_image_bottomdown2",
+        "general_image_bottomdown1",
+        "general_image_bottomdown2",
+        "general_info_left_image",
+        "toilet_info_left_image",
+        "waste_management_info_left_image",
+        "water_info_left_image",
+        "roads_and_access_info_left_image",
+        "drainage_info_left_image",
+        "gutter_info_left_image",
+        "drainage_report_image",
+    ]
     image_dict = {}
     a = avni_sync()
     for field in fields_to_modify:
@@ -389,7 +681,7 @@ def get_avni_image_urls(rim_obj):
             if "https://s3.ap-south-1.amazonaws.com/" in old_link:
                 image_dict[field] = old_link
             elif "ShelterPhotos" in old_link:
-                prefix = 'https://app.shelter-associates.org/media/'
+                prefix = "https://app.shelter-associates.org/media/"
                 rim_obj[field] = prefix + old_link
             else:
                 continue
@@ -399,7 +691,8 @@ def get_avni_image_urls(rim_obj):
     rim_obj.update(updated_image_dict)
     return rim_obj
 
-def get_kobo_RIM_report_data(request, slum_id,rawa=False):
+
+def get_kobo_RIM_report_data(request, slum_id, rawa=False):
     try:
         slum = Slum.objects.filter(shelter_slum_code=slum_id)
     except:
@@ -408,88 +701,116 @@ def get_kobo_RIM_report_data(request, slum_id,rawa=False):
         rim_image = Rapid_Slum_Appraisal.objects.filter(slum_name=slum[0]).values()
     except:
         rim_image = []
-    output = {"status":False, "image":False}
-    if slum and len(slum)>0:
-        output = get_kobo_RIM_report_detail(slum[0].electoral_ward.administrative_ward.city.id, slum[0].shelter_slum_code)
+    output = {"status": False, "image": False}
+    if slum and len(slum) > 0:
+        output = get_kobo_RIM_report_detail(
+            slum[0].electoral_ward.administrative_ward.city.id,
+            slum[0].shelter_slum_code,
+        )
         output["status"] = False
         if len(output.keys()) > 1:
-            output['status'] = True
-        output['admin_ward'] = slum[0].electoral_ward.administrative_ward.name
-        output['electoral_ward'] = slum[0].electoral_ward.name
-        output['slum_name'] = slum[0].name
+            output["status"] = True
+        output["admin_ward"] = slum[0].electoral_ward.administrative_ward.name
+        output["electoral_ward"] = slum[0].electoral_ward.name
+        output["slum_name"] = slum[0].name
         if rim_image and len(rim_image) > 0:
-            """Handling the Scenario where Slums Lack Community Toilet Block Availability: 
-                Removing CTB Information from RIM Additional Info."""
-            if 'number_of_community_toilet_blo' in output and output['number_of_community_toilet_blo'] == 0:
-                del_keys = ['toilet_seat_to_persons_ratio', 'toilet_cost']
+            """Handling the Scenario where Slums Lack Community Toilet Block Availability:
+            Removing CTB Information from RIM Additional Info."""
+            if (
+                "number_of_community_toilet_blo" in output
+                and output["number_of_community_toilet_blo"] == 0
+            ):
+                del_keys = ["toilet_seat_to_persons_ratio", "toilet_cost"]
                 for key in del_keys:
                     if key in rim_image[0]:
                         del rim_image[0][key]
             # Check if there are avni images available.
             rim_image_updated = get_avni_image_urls(rim_image[0])
             output.update(rim_image_updated)
-            output['image'] = True
+            output["image"] = True
     if rawa:
         return output
-    return HttpResponse(json.dumps(output),content_type='application/json')
+    return HttpResponse(json.dumps(output), content_type="application/json")
 
-#@user_passes_test(lambda u: u.is_superuser)
+
+# @user_passes_test(lambda u: u.is_superuser)
 def get_kobo_FF_report_data(request, key):
-     output = {"status":False}
-     cipher = AESCipher()
-     slum, user = None, None
-     try:
-         (slum_id, house_num, user_id) = cipher.decrypt(key).split('|')
-         slum = Slum.objects.filter(shelter_slum_code=slum_id)
-         user = User.objects.get(id=user_id)
-     except:
-         user = None
-     if user and (user.is_superuser or user.groups.filter(name="sponsor").exists()) and slum and len(slum)>0:
-         filter_data ={"slum":slum[0], "household_code__contains":int(house_num)}
-         if user.groups.filter(name="sponsor").exists():
-             filter_data["sponsor__user"] = user
-         project_details = SponsorProjectDetails.objects.filter(**filter_data)
-         output = get_kobo_FF_report_detail(slum[0].electoral_ward.administrative_ward.city.id, slum[0].shelter_slum_code, house_num)
-         output["status"] = False
-         if len(output.keys()) > 1:
-             output['status'] = True
-         output['admin_ward'] = slum[0].electoral_ward.administrative_ward.name
-         output['slum_name'] = slum[0].name
-         output['Household_number'] = house_num
+    output = {"status": False}
+    cipher = AESCipher()
+    slum, user = None, None
+    try:
+        slum_id, house_num, user_id = cipher.decrypt(key).split("|")
+        slum = Slum.objects.filter(shelter_slum_code=slum_id)
+        user = User.objects.get(id=user_id)
+    except:
+        user = None
+    if (
+        user
+        and (user.is_superuser or user.groups.filter(name="sponsor").exists())
+        and slum
+        and len(slum) > 0
+    ):
+        filter_data = {"slum": slum[0], "household_code__contains": int(house_num)}
+        if user.groups.filter(name="sponsor").exists():
+            filter_data["sponsor__user"] = user
+        project_details = SponsorProjectDetails.objects.filter(**filter_data)
+        output = get_kobo_FF_report_detail(
+            slum[0].electoral_ward.administrative_ward.city.id,
+            slum[0].shelter_slum_code,
+            house_num,
+        )
+        output["status"] = False
+        if len(output.keys()) > 1:
+            output["status"] = True
+        output["admin_ward"] = slum[0].electoral_ward.administrative_ward.name
+        output["slum_name"] = slum[0].name
+        output["Household_number"] = house_num
 
-         if len(project_details)>0:
-             output['sponsor_logo'] = project_details[0].sponsor.logo.url if project_details[0].sponsor.logo else ""
-     return HttpResponse(json.dumps(output),content_type='application/json')
+        if len(project_details) > 0:
+            output["sponsor_logo"] = (
+                project_details[0].sponsor.logo.url
+                if project_details[0].sponsor.logo
+                else ""
+            )
+    return HttpResponse(json.dumps(output), content_type="application/json")
 
-#@user_passes_test(lambda u: u.is_superuser)
+
+# @user_passes_test(lambda u: u.is_superuser)
 def get_kobo_drainage_report_data(request, slum_id):
-     output = {"status":False, "image":False}
-     try:
-         slum = Slum.objects.filter(shelter_slum_code=slum_id)
-     except:
-         slum = None
-     if slum and len(slum)>0:
-         output = get_kobo_RIM_report_detail(slum[0].electoral_ward.administrative_ward.city.id, slum[0].shelter_slum_code)
-         output["status"] = False
-         if len(output.keys()) > 1:
-             output['status'] = True
-         output["image"] = False
-         drainage_image = Rapid_Slum_Appraisal.objects.filter(slum_name = slum[0]).values()
-         if drainage_image and len(drainage_image) > 0:
-             output.update(drainage_image[0])
-             output["image"] = True
-         output['admin_ward'] = slum[0].electoral_ward.administrative_ward.name
-         output['electoral_ward'] = slum[0].electoral_ward.name
-         output['slum_name'] = slum[0].name
-     return HttpResponse(json.dumps(output),content_type='application/json')
+    output = {"status": False, "image": False}
+    try:
+        slum = Slum.objects.filter(shelter_slum_code=slum_id)
+    except:
+        slum = None
+    if slum and len(slum) > 0:
+        output = get_kobo_RIM_report_detail(
+            slum[0].electoral_ward.administrative_ward.city.id,
+            slum[0].shelter_slum_code,
+        )
+        output["status"] = False
+        if len(output.keys()) > 1:
+            output["status"] = True
+        output["image"] = False
+        drainage_image = Rapid_Slum_Appraisal.objects.filter(slum_name=slum[0]).values()
+        if drainage_image and len(drainage_image) > 0:
+            output.update(drainage_image[0])
+            output["image"] = True
+        output["admin_ward"] = slum[0].electoral_ward.administrative_ward.name
+        output["electoral_ward"] = slum[0].electoral_ward.name
+        output["slum_name"] = slum[0].name
+    return HttpResponse(json.dumps(output), content_type="application/json")
+
 
 def get_component_list(request):
     """Get unique component names from Metadata for a given object_id, with count numbers."""
-    object_id = request.GET.get('object_id')
-    components = Component.objects.filter(object_id=object_id).values_list('metadata__name', flat=True)
+    object_id = request.GET.get("object_id")
+    components = Component.objects.filter(object_id=object_id).values_list(
+        "metadata__name", flat=True
+    )
     unique_names = sorted(set(components))
-    data = [{'id': i + 1, 'name': name} for i, name in enumerate(unique_names)]
+    data = [{"id": i + 1, "name": name} for i, name in enumerate(unique_names)]
     return JsonResponse(data, safe=False)
+
 
 def delete_component(request):
 
@@ -497,124 +818,140 @@ def delete_component(request):
         object_id = request.POST.get("object_id")
         comp_name = request.POST.get("comp_name")
         if not object_id or not comp_name:
-            return JsonResponse({"success": False, "message": "Missing object_id or comp_name"}, status=400)
+            return JsonResponse(
+                {"success": False, "message": "Missing object_id or comp_name"},
+                status=400,
+            )
 
         # Try to delete the component
         try:
-            comp = Component.objects.filter(object_id=object_id, metadata__name=comp_name)
+            comp = Component.objects.filter(
+                object_id=object_id, metadata__name=comp_name
+            )
             comp.delete()
-            return JsonResponse({"success": True, "message": f'Component "{comp_name}" deleted successfully'})
+            return JsonResponse(
+                {
+                    "success": True,
+                    "message": f'Component "{comp_name}" deleted successfully',
+                }
+            )
         except Component.DoesNotExist:
-            return JsonResponse({"success": False, "message": "Component not found"}, status=404)
+            return JsonResponse(
+                {"success": False, "message": "Component not found"}, status=404
+            )
         except Exception as e:
             return JsonResponse({"success": False, "message": str(e)}, status=500)
     else:
-        return JsonResponse({"success": False, "message": "Invalid request method"}, status=405)
+        return JsonResponse(
+            {"success": False, "message": "Invalid request method"}, status=405
+        )
+
 
 # ================== New API for Sponsor Toilet Household Month End Dates ==================
 def extract_household_codes(qs):
-	all_codes = set()
+    all_codes = set()
 
-	for codes in qs:
-		if not codes:
-			continue
+    for codes in qs:
+        if not codes:
+            continue
 
-		try:
-			if isinstance(codes, list):
-				all_codes.update(str(c) for c in codes)
-			else:
-				all_codes.update(str(c) for c in json.loads(codes))
-		except Exception:
-			continue
+        try:
+            if isinstance(codes, list):
+                all_codes.update(str(c) for c in codes)
+            else:
+                all_codes.update(str(c) for c in json.loads(codes))
+        except Exception:
+            continue
 
-	return all_codes
+    return all_codes
 
 
 def get_toilets_queryset(slum_id, household_codes=None):
-	filters = {
-		'completion_date__isnull': False,
-		'slum_id': slum_id
-	}
+    filters = {"completion_date__isnull": False, "slum_id": slum_id}
 
-	if household_codes:
-		filters['household_number__in'] = household_codes
+    if household_codes:
+        filters["household_number__in"] = household_codes
 
-	return ToiletConstruction.objects.filter(**filters)
+    return ToiletConstruction.objects.filter(**filters)
 
 
 def get_household_month_end_dates(request):
-	slum_id = request.GET.get('slum_id')
+    slum_id = request.GET.get("slum_id")
 
-	if not slum_id:
-		return JsonResponse({"error": "slum_id is required"}, status=400)
+    if not slum_id:
+        return JsonResponse({"error": "slum_id is required"}, status=400)
 
-	user = request.user
+    user = request.user
 
-	# ------------------------------------------------------------
-	# CASE 1: Admin / Staff
-	# ------------------------------------------------------------
-	if user.is_superuser or user.is_staff:
+    # ------------------------------------------------------------
+    # CASE 1: Admin / Staff
+    # ------------------------------------------------------------
+    if user.is_superuser or user.is_staff:
 
-		household_qs = SponsorProjectDetails.objects.filter(
-			slum_id=slum_id
-		).values_list("household_code", flat=True)
+        household_qs = SponsorProjectDetails.objects.filter(
+            slum_id=slum_id
+        ).values_list("household_code", flat=True)
 
-		household_codes = extract_household_codes(household_qs)
+        household_codes = extract_household_codes(household_qs)
 
-		if not household_codes:
-			return JsonResponse({"error": "No sponsor-linked households found for this slum"}, status=404)
+        if not household_codes:
+            return JsonResponse(
+                {"error": "No sponsor-linked households found for this slum"},
+                status=404,
+            )
 
-		toilets = get_toilets_queryset(slum_id, household_codes)
+        toilets = get_toilets_queryset(slum_id, household_codes)
 
-		return build_response(toilets, scope='superuser', slum_id=slum_id)
+        return build_response(toilets, scope="superuser", slum_id=slum_id)
 
-	# ------------------------------------------------------------
-	# CASE 2: Sponsor user
-	# ------------------------------------------------------------
-	elif user.groups.filter(name='sponsor').exists():
+    # ------------------------------------------------------------
+    # CASE 2: Sponsor user
+    # ------------------------------------------------------------
+    elif user.groups.filter(name="sponsor").exists():
 
-		sponsor_name = request.GET.get('sponsor_name')
+        sponsor_name = request.GET.get("sponsor_name")
 
-		sponsor_qs = user.sponsor_set.all()
-		if sponsor_name:
-			sponsor_qs = sponsor_qs.filter(organization_name=sponsor_name)
+        sponsor_qs = user.sponsor_set.all()
+        if sponsor_name:
+            sponsor_qs = sponsor_qs.filter(organization_name=sponsor_name)
 
-		sponsor_ids = sponsor_qs.values_list('id', flat=True)
+        sponsor_ids = sponsor_qs.values_list("id", flat=True)
 
-		if not sponsor_ids:
-			return JsonResponse({"error": "No sponsor linked to this user"}, status=403)
+        if not sponsor_ids:
+            return JsonResponse({"error": "No sponsor linked to this user"}, status=403)
 
-		sponsor_project_ids = SponsorProject.objects.filter(
-			sponsor_id__in=sponsor_ids
-		).values_list("id", flat=True)
+        sponsor_project_ids = SponsorProject.objects.filter(
+            sponsor_id__in=sponsor_ids
+        ).values_list("id", flat=True)
 
-		household_qs = SponsorProjectDetails.objects.filter(
-			sponsor_project_id__in=sponsor_project_ids,
-			slum_id=slum_id
-		).values_list("household_code", flat=True)
+        household_qs = SponsorProjectDetails.objects.filter(
+            sponsor_project_id__in=sponsor_project_ids, slum_id=slum_id
+        ).values_list("household_code", flat=True)
 
-		household_codes = extract_household_codes(household_qs)
+        household_codes = extract_household_codes(household_qs)
 
-		if not household_codes:
-			return JsonResponse({"error": "No households found for this sponsor in the given slum"}, status=404)
+        if not household_codes:
+            return JsonResponse(
+                {"error": "No households found for this sponsor in the given slum"},
+                status=404,
+            )
 
-		toilets = get_toilets_queryset(slum_id, household_codes)
+        toilets = get_toilets_queryset(slum_id, household_codes)
 
-		return build_response(toilets, scope='sponsor', slum_id=slum_id, user=user)
+        return build_response(toilets, scope="sponsor", slum_id=slum_id, user=user)
 
-	# ------------------------------------------------------------
-	# CASE 3: Public / Others
-	# ------------------------------------------------------------
-	else:
-		toilets = get_toilets_queryset(slum_id)
+    # ------------------------------------------------------------
+    # CASE 3: Public / Others
+    # ------------------------------------------------------------
+    else:
+        toilets = get_toilets_queryset(slum_id)
 
-		if not toilets.exists():
-			return JsonResponse({
-				"message": "No toilets found in this slum",
-				"data": []
-			})
+        if not toilets.exists():
+            return JsonResponse(
+                {"message": "No toilets found in this slum", "data": []}
+            )
 
-		return build_response(toilets, scope='all', slum_id=slum_id)
+        return build_response(toilets, scope="all", slum_id=slum_id)
 
 
 def build_response(toilets, scope, slum_id, user=None):
@@ -630,7 +967,7 @@ def build_response(toilets, scope, slum_id, user=None):
             grouped[month_key] = {
                 "month_end_date": month_end_str,
                 "house_numbers": [],
-                "total": 0
+                "total": 0,
             }
         grouped[month_key]["house_numbers"].append(t.household_number)
         grouped[month_key]["total"] += 1
@@ -646,20 +983,22 @@ def build_response(toilets, scope, slum_id, user=None):
                 "month": month,
                 "month_end_date": data["month_end_date"],
                 "house_numbers": sorted(data["house_numbers"]),
-                "total": data["total"]
+                "total": data["total"],
             }
             for month, data in sorted_months
-        ]
+        ],
     }
 
-    if user and scope == 'sponsor':
-        response["sponsors"] = list(user.sponsor_set.all().values_list('organization_name', flat=True))
+    if user and scope == "sponsor":
+        response["sponsors"] = list(
+            user.sponsor_set.all().values_list("organization_name", flat=True)
+        )
 
     return JsonResponse(response)
 
 
 def _base_household_number(value):
-    return str(value).split('.')[0].strip()
+    return str(value).split(".")[0].strip()
 
 
 def _flatten_export_data(value, prefix=""):
@@ -684,7 +1023,10 @@ def _shape_safe_properties(data):
     properties = {}
 
     for key, value in data.items():
-        safe_key = slugify(str(key).replace("/", "_")).replace("-", "_").upper()[:10] or "FIELD"
+        safe_key = (
+            slugify(str(key).replace("/", "_")).replace("-", "_").upper()[:10]
+            or "FIELD"
+        )
         original_key = safe_key
         index = 1
         while safe_key in properties:
@@ -741,7 +1083,7 @@ def _kml_style(style_data):
         line_color=line_color,
         line_width=escape(line_width),
         fill_color=fill_color,
-        fill="1" if style_data.get("fillflag", True) else "0"
+        fill="1" if style_data.get("fillflag", True) else "0",
     )
 
 
@@ -772,11 +1114,13 @@ def _geometry_family(geometry_type):
 
 
 def _build_filter_summary_csv_rows(export_rows):
-    section_columns = sorted({
-        row.get("section_name", "")
-        for row in export_rows
-        if row.get("household_number") and row.get("section_name")
-    })
+    section_columns = sorted(
+        {
+            row.get("section_name", "")
+            for row in export_rows
+            if row.get("household_number") and row.get("section_name")
+        }
+    )
 
     rows_by_household = OrderedDict()
     for row in export_rows:
@@ -792,7 +1136,7 @@ def _build_filter_summary_csv_rows(export_rows):
             rows_by_household[household_number] = {
                 "household_number": household_number,
                 "slum_name": data.get("slum_name", ""),
-                "city_name": data.get("city_name", "")
+                "city_name": data.get("city_name", ""),
             }
             for column in section_columns:
                 rows_by_household[household_number][column] = []
@@ -805,11 +1149,15 @@ def _build_filter_summary_csv_rows(export_rows):
         final_row = {
             "household_number": row["household_number"],
             "slum_name": row["slum_name"],
-            "city_name": row["city_name"]
+            "city_name": row["city_name"],
         }
         for column in section_columns:
             values = row[column]
-            final_row[column] = ", ".join(sorted(set(values), key=lambda x: x.lower())) if values else ""
+            final_row[column] = (
+                ", ".join(sorted(set(values), key=lambda x: x.lower()))
+                if values
+                else ""
+            )
         final_rows.append(final_row)
 
     return final_rows
@@ -839,7 +1187,11 @@ def _geometry_to_kml(shape):
                 )
             )
 
-        outer = "<outerBoundaryIs>{}</outerBoundaryIs>".format(boundaries[0]) if boundaries else ""
+        outer = (
+            "<outerBoundaryIs>{}</outerBoundaryIs>".format(boundaries[0])
+            if boundaries
+            else ""
+        )
         inner = "".join(
             "<innerBoundaryIs>{}</innerBoundaryIs>".format(ring)
             for ring in boundaries[1:]
@@ -856,7 +1208,11 @@ def _geometry_to_kml(shape):
                         _kml_coordinates(ring)
                     )
                 )
-            outer = "<outerBoundaryIs>{}</outerBoundaryIs>".format(boundaries[0]) if boundaries else ""
+            outer = (
+                "<outerBoundaryIs>{}</outerBoundaryIs>".format(boundaries[0])
+                if boundaries
+                else ""
+            )
             inner = "".join(
                 "<innerBoundaryIs>{}</innerBoundaryIs>".format(ring)
                 for ring in boundaries[1:]
@@ -895,8 +1251,7 @@ def _extended_data_kml(data):
             continue
         data_rows.append(
             '<Data name="{key}"><value>{value}</value></Data>'.format(
-                key=escape(str(key)),
-                value=escape(str(value))
+                key=escape(str(key)), value=escape(str(value))
             )
         )
 
@@ -906,16 +1261,19 @@ def _extended_data_kml(data):
     return "<ExtendedData>{}</ExtendedData>".format("".join(data_rows))
 
 
-def _build_export_rows(structure_components, slum, selected_filters, style_map, fallback_style):
-    household_numbers = sorted({
-        _base_household_number(component.housenumber)
-        for component in structure_components
-    })
+def _build_export_rows(
+    structure_components, slum, selected_filters, style_map, fallback_style
+):
+    household_numbers = sorted(
+        {
+            _base_household_number(component.housenumber)
+            for component in structure_components
+        }
+    )
     household_map = {
         household.household_number: household
         for household in HouseholdData.objects.filter(
-            slum=slum,
-            household_number__in=household_numbers
+            slum=slum, household_number__in=household_numbers
         )
     }
 
@@ -941,28 +1299,33 @@ def _build_export_rows(structure_components, slum, selected_filters, style_map, 
             extended_data.update(_flatten_export_data(household.ff_data or {}, "ff_"))
 
         style_data = style_map.get(base_household) or fallback_style or {}
-        export_rows.append({
-            "component": component,
-            "household_number": base_household,
-            "extended_data": extended_data,
-            "style": style_data
-        })
+        export_rows.append(
+            {
+                "component": component,
+                "household_number": base_household,
+                "extended_data": extended_data,
+                "style": style_data,
+            }
+        )
 
     return export_rows
 
 
 def _build_export_rows_from_layers(layers, slum, selected_filters):
-    household_numbers = sorted({
-        _base_household_number(feature.get("household_number") or feature.get("structure_number"))
-        for layer in layers
-        for feature in (layer.get("features") or [])
-        if feature.get("household_number") or feature.get("structure_number")
-    })
+    household_numbers = sorted(
+        {
+            _base_household_number(
+                feature.get("household_number") or feature.get("structure_number")
+            )
+            for layer in layers
+            for feature in (layer.get("features") or [])
+            if feature.get("household_number") or feature.get("structure_number")
+        }
+    )
     household_map = {
         household.household_number: household
         for household in HouseholdData.objects.filter(
-            slum=slum,
-            household_number__in=household_numbers
+            slum=slum, household_number__in=household_numbers
         )
     }
 
@@ -978,8 +1341,14 @@ def _build_export_rows_from_layers(layers, slum, selected_filters):
             if not geometry:
                 continue
 
-            structure_number = str(feature.get("structure_number") or feature.get("household_number") or metadata_name)
-            household_number = _base_household_number(feature.get("household_number") or structure_number)
+            structure_number = str(
+                feature.get("structure_number")
+                or feature.get("household_number")
+                or metadata_name
+            )
+            household_number = _base_household_number(
+                feature.get("household_number") or structure_number
+            )
             household = household_map.get(household_number)
 
             extended_data = {
@@ -999,18 +1368,24 @@ def _build_export_rows_from_layers(layers, slum, selected_filters):
             if household:
                 extended_data["submission_date"] = household.submission_date
                 extended_data["created_date"] = household.created_date
-                extended_data.update(_flatten_export_data(household.rhs_data or {}, "rhs_"))
-                extended_data.update(_flatten_export_data(household.ff_data or {}, "ff_"))
+                extended_data.update(
+                    _flatten_export_data(household.rhs_data or {}, "rhs_")
+                )
+                extended_data.update(
+                    _flatten_export_data(household.ff_data or {}, "ff_")
+                )
 
-            export_rows.append({
-                "component": None,
-                "geometry": geometry,
-                "layer_name": metadata_name,
-                "section_name": section_name,
-                "household_number": household_number,
-                "extended_data": extended_data,
-                "style": style_data
-            })
+            export_rows.append(
+                {
+                    "component": None,
+                    "geometry": geometry,
+                    "layer_name": metadata_name,
+                    "section_name": section_name,
+                    "household_number": household_number,
+                    "extended_data": extended_data,
+                    "style": style_data,
+                }
+            )
 
     return export_rows
 
@@ -1040,9 +1415,13 @@ def _build_component_data_from_db(slum, slum_id, export_selection, selected_sect
     else:
         metadata_qs = metadata_qs.exclude(name="Shop")
 
-    metadata_qs = metadata_qs.filter(
-        Q(section__name__in=selected_sections) | Q(name__in=query_names)
-    ).select_related("section").order_by("section__order", "order")
+    metadata_qs = (
+        metadata_qs.filter(
+            Q(section__name__in=selected_sections) | Q(name__in=query_names)
+        )
+        .select_related("section")
+        .order_by("section__order", "order")
+    )
 
     components = (
         slum.components.filter(metadata__in=metadata_qs)
@@ -1054,7 +1433,11 @@ def _build_component_data_from_db(slum, slum_id, export_selection, selected_sect
     for component in components:
         metadata = component.metadata
         section_name = metadata.section.name
-        item_name = "Town boundary" if metadata.name == "Slum boundary" and slum_id in ["1971", "1972"] else metadata.name
+        item_name = (
+            "Town boundary"
+            if metadata.name == "Slum boundary" and slum_id in ["1971", "1972"]
+            else metadata.name
+        )
 
         section_bucket = component_data.setdefault(section_name, OrderedDict())
         item = section_bucket.get(item_name)
@@ -1072,10 +1455,12 @@ def _build_component_data_from_db(slum, slum_id, export_selection, selected_sect
             }
             section_bucket[item_name] = item
 
-        item["child"].append({
-            "housenumber": component.housenumber,
-            "shape": json.loads(component.shape.json),
-        })
+        item["child"].append(
+            {
+                "housenumber": component.housenumber,
+                "shape": json.loads(component.shape.json),
+            }
+        )
 
     return component_data
 
@@ -1084,10 +1469,11 @@ def _log_export_timing(stage, started_at, **details):
     elapsed_ms = (pytime.perf_counter() - started_at) * 1000.0
     extra = ""
     if details:
-        extra = " | " + ", ".join("{}={}".format(key, value) for key, value in details.items())
+        extra = " | " + ", ".join(
+            "{}={}".format(key, value) for key, value in details.items()
+        )
     message = "GIS export timing [{}]: {:.1f} ms{}".format(stage, elapsed_ms, extra)
     logger.info(message)
-    print(message, flush=True)
 
 
 def _export_style_for_item(item_data, item_name):
@@ -1096,7 +1482,7 @@ def _export_style_for_item(item_data, item_name):
         "polycolor": ((item_data.get("blob") or {}).get("polycolor")) or "#FFA3A3",
         "linecolor": ((item_data.get("blob") or {}).get("linecolor")) or "#ff0000",
         "linewidth": ((item_data.get("blob") or {}).get("linewidth")) or 1,
-        "fillflag": not (((item_data.get("blob") or {}).get("fillflag")) is False)
+        "fillflag": not (((item_data.get("blob") or {}).get("fillflag")) is False),
     }
 
 
@@ -1124,7 +1510,9 @@ def _save_export_response_to_media(response, slum, export_format):
 
 
 def _send_gis_export_email(email, slum, export_meta, base_url):
-    download_url = "{}/component/gis-export-download/{}/".format(base_url.rstrip("/"), export_meta["export_id"])
+    download_url = "{}/component/gis-export-download/{}/".format(
+        base_url.rstrip("/"), export_meta["export_id"]
+    )
     export_meta["download_url"] = download_url
     context = {
         "slum_name": slum.name,
@@ -1141,22 +1529,12 @@ def _send_gis_export_email(email, slum, export_meta, base_url):
         export_meta["export_id"],
         download_url,
     )
-    print(
-        "GIS export email preparing: slum_id={} email={} export_format={} export_id={} download_url={}".format(
-            slum.pk,
-            email,
-            export_meta["export_format"],
-            export_meta["export_id"],
-            download_url,
-        ),
-        flush=True,
-    )
     send_email(
         [email],
         "Your Shelter GIS export is ready",
         "helpers/gis_export_ready_email.html",
         context,
-        "Your GIS export is ready: {}".format(download_url)
+        "Your GIS export is ready: {}".format(download_url),
     )
 
 
@@ -1178,30 +1556,47 @@ def gis_export_download(request, export_id):
 
     with open(file_path, "rb") as export_file:
         response = HttpResponse(export_file.read(), content_type="application/zip")
-        response["Content-Disposition"] = 'attachment; filename="{}"'.format(os.path.basename(file_path))
+        response["Content-Disposition"] = 'attachment; filename="{}"'.format(
+            os.path.basename(file_path)
+        )
         return response
 
 
-def _run_large_gis_export_job(user_id, slum_id, email, export_format, include_csv, base_url):
+def _run_large_gis_export_job(
+    user_id, slum_id, email, export_format, include_csv, base_url
+):
     close_old_connections()
     try:
-        logger.info("GIS export worker started: slum_id=%s email=%s export_format=%s include_csv=%s", slum_id, email, export_format, include_csv)
-        print(
-            "GIS export worker started: slum_id={} email={} export_format={} include_csv={}".format(
-                slum_id,
-                email,
-                export_format,
-                include_csv,
-            ),
-            flush=True,
+        logger.info(
+            "GIS export worker started: slum_id=%s email=%s export_format=%s include_csv=%s",
+            slum_id,
+            email,
+            export_format,
+            include_csv,
         )
         user = User.objects.get(pk=user_id)
-        logger.info("GIS export worker loaded user: slum_id=%s user_id=%s email=%s export_format=%s", slum_id, user_id, email, export_format)
+        logger.info(
+            "GIS export worker loaded user: slum_id=%s user_id=%s email=%s export_format=%s",
+            slum_id,
+            user_id,
+            email,
+            export_format,
+        )
         request_stub = SimpleNamespace(user=user)
         slum = Slum.objects.get(pk=slum_id)
-        logger.info("GIS export worker loaded slum: slum_id=%s email=%s export_format=%s", slum_id, email, export_format)
+        logger.info(
+            "GIS export worker loaded slum: slum_id=%s email=%s export_format=%s",
+            slum_id,
+            email,
+            export_format,
+        )
 
-        logger.info("GIS export worker loading component data: slum_id=%s email=%s export_format=%s", slum_id, email, export_format)
+        logger.info(
+            "GIS export worker loading component data: slum_id=%s email=%s export_format=%s",
+            slum_id,
+            email,
+            export_format,
+        )
         component_response = get_component(request_stub, str(slum_id))
         component_data = json.loads(component_response.content.decode("utf-8"))
         logger.info(
@@ -1218,12 +1613,14 @@ def _run_large_gis_export_job(user_id, slum_id, email, export_format, include_cs
             for item_name, item_data in (section_items or {}).items():
                 if not item_data:
                     continue
-                export_selection.append({
-                    "metadata_name": item_name,
-                    "section_name": section_name,
-                    "metadata_type": item_data.get("type") or "",
-                    "style": _export_style_for_item(item_data, item_name)
-                })
+                export_selection.append(
+                    {
+                        "metadata_name": item_name,
+                        "section_name": section_name,
+                        "metadata_type": item_data.get("type") or "",
+                        "style": _export_style_for_item(item_data, item_name),
+                    }
+                )
 
         logger.info(
             "GIS export worker building export rows: slum_id=%s email=%s export_format=%s sections=%s selection=%s",
@@ -1238,7 +1635,7 @@ def _run_large_gis_export_job(user_id, slum_id, email, export_format, include_cs
             slum=slum,
             selected_filters=[],
             selected_sections=selected_sections,
-            export_selection=export_selection
+            export_selection=export_selection,
         )
         logger.info(
             "GIS export worker export rows ready: slum_id=%s email=%s export_format=%s rows=%s",
@@ -1248,11 +1645,20 @@ def _run_large_gis_export_job(user_id, slum_id, email, export_format, include_cs
             len(export_rows),
         )
 
-        logger.info("GIS export worker building response: slum_id=%s email=%s export_format=%s", slum_id, email, export_format)
+        logger.info(
+            "GIS export worker building response: slum_id=%s email=%s export_format=%s",
+            slum_id,
+            email,
+            export_format,
+        )
         if export_format == "shp":
-            response = _build_shapefile_response(export_rows, slum, [], include_csv=include_csv)
+            response = _build_shapefile_response(
+                export_rows, slum, [], include_csv=include_csv
+            )
         else:
-            response = _build_kml_zip_response(export_rows, slum, [], include_csv=include_csv)
+            response = _build_kml_zip_response(
+                export_rows, slum, [], include_csv=include_csv
+            )
         logger.info(
             "GIS export worker response built: slum_id=%s email=%s export_format=%s bytes=%s",
             slum_id,
@@ -1261,38 +1667,44 @@ def _run_large_gis_export_job(user_id, slum_id, email, export_format, include_cs
             len(response.content),
         )
 
-        logger.info("GIS export worker saving response: slum_id=%s email=%s export_format=%s", slum_id, email, export_format)
-        export_meta = _save_export_response_to_media(response, slum, export_format)
-        logger.info("GIS export file saved: slum_id=%s email=%s path=%s size=%s", slum_id, email, export_meta["relative_path"], export_meta["size"])
-        print(
-            "GIS export file saved: slum_id={} email={} export_format={} path={} size={}".format(
-                slum_id,
-                email,
-                export_format,
-                export_meta["relative_path"],
-                export_meta["size"],
-            ),
-            flush=True,
+        logger.info(
+            "GIS export worker saving response: slum_id=%s email=%s export_format=%s",
+            slum_id,
+            email,
+            export_format,
         )
-        logger.info("GIS export worker sending email: slum_id=%s email=%s export_format=%s", slum_id, email, export_format)
+        export_meta = _save_export_response_to_media(response, slum, export_format)
+        logger.info(
+            "GIS export file saved: slum_id=%s email=%s path=%s size=%s",
+            slum_id,
+            email,
+            export_meta["relative_path"],
+            export_meta["size"],
+        )
+        logger.info(
+            "GIS export worker sending email: slum_id=%s email=%s export_format=%s",
+            slum_id,
+            email,
+            export_format,
+        )
         _send_gis_export_email(email, slum, export_meta, base_url)
-        logger.info("GIS export email sent: slum_id=%s email=%s file=%s", slum_id, email, export_meta["relative_path"])
-        print(
-            "GIS export email sent: slum_id={} email={} export_format={} file={}".format(
-                slum_id,
-                email,
-                export_format,
-                export_meta["relative_path"],
-            ),
-            flush=True,
+        logger.info(
+            "GIS export email sent: slum_id=%s email=%s file=%s",
+            slum_id,
+            email,
+            export_meta["relative_path"],
         )
     except Exception:
-        logger.exception("GIS export email job failed: slum_id=%s email=%s", slum_id, email)
+        logger.exception(
+            "GIS export email job failed: slum_id=%s email=%s", slum_id, email
+        )
     finally:
         close_old_connections()
 
 
-def _build_export_rows_from_component_selection(component_data, slum, selected_filters, selected_sections, export_selection):
+def _build_export_rows_from_component_selection(
+    component_data, slum, selected_filters, selected_sections, export_selection
+):
     selected_sections = set(selected_sections or [])
     selected_names = {
         (item.get("metadata_name") or item.get("item_name") or "").strip(): item
@@ -1309,7 +1721,10 @@ def _build_export_rows_from_component_selection(component_data, slum, selected_f
             if not item_data or item_data.get("type") != "C":
                 continue
             for child in item_data.get("child") or []:
-                if child.get("housenumber") is not None and child.get("shape") is not None:
+                if (
+                    child.get("housenumber") is not None
+                    and child.get("shape") is not None
+                ):
                     key = str(child["housenumber"]).split(".")[0].strip()
                     if key and key not in houses_map:
                         houses_map[key] = child["shape"]
@@ -1328,10 +1743,14 @@ def _build_export_rows_from_component_selection(component_data, slum, selected_f
 
             style_data = (selection_info or {}).get("style") or {
                 "name": item_name,
-                "polycolor": ((item_data.get("blob") or {}).get("polycolor")) or "#FFA3A3",
-                "linecolor": ((item_data.get("blob") or {}).get("linecolor")) or "#ff0000",
+                "polycolor": ((item_data.get("blob") or {}).get("polycolor"))
+                or "#FFA3A3",
+                "linecolor": ((item_data.get("blob") or {}).get("linecolor"))
+                or "#ff0000",
                 "linewidth": ((item_data.get("blob") or {}).get("linewidth")) or 1,
-                "fillflag": not (((item_data.get("blob") or {}).get("fillflag")) is False)
+                "fillflag": not (
+                    ((item_data.get("blob") or {}).get("fillflag")) is False
+                ),
             }
 
             features = []
@@ -1342,11 +1761,13 @@ def _build_export_rows_from_component_selection(component_data, slum, selected_f
                         continue
                     structure_number = str(child.get("housenumber") or item_name)
                     household_number = _base_household_number(structure_number)
-                    features.append({
-                        "structure_number": structure_number,
-                        "household_number": household_number,
-                        "geometry": shape
-                    })
+                    features.append(
+                        {
+                            "structure_number": structure_number,
+                            "household_number": household_number,
+                            "geometry": shape,
+                        }
+                    )
                     if household_number:
                         household_numbers.add(household_number)
             else:
@@ -1355,28 +1776,31 @@ def _build_export_rows_from_component_selection(component_data, slum, selected_f
                     shape = houses_map.get(household_number)
                     if not shape:
                         continue
-                    features.append({
-                        "structure_number": household_number,
-                        "household_number": household_number,
-                        "geometry": shape
-                    })
+                    features.append(
+                        {
+                            "structure_number": household_number,
+                            "household_number": household_number,
+                            "geometry": shape,
+                        }
+                    )
                     if household_number:
                         household_numbers.add(household_number)
 
             if features:
-                selected_layers.append({
-                    "metadata_name": item_name,
-                    "section_name": section_name,
-                    "metadata_type": item_data.get("type") or "",
-                    "style": style_data,
-                    "features": features
-                })
+                selected_layers.append(
+                    {
+                        "metadata_name": item_name,
+                        "section_name": section_name,
+                        "metadata_type": item_data.get("type") or "",
+                        "style": style_data,
+                        "features": features,
+                    }
+                )
 
     household_map = {
         household.household_number: household
         for household in HouseholdData.objects.filter(
-            slum=slum,
-            household_number__in=sorted(household_numbers)
+            slum=slum, household_number__in=sorted(household_numbers)
         )
     }
 
@@ -1393,7 +1817,9 @@ def _build_export_rows_from_component_selection(component_data, slum, selected_f
                 continue
 
             structure_number = str(feature.get("structure_number") or metadata_name)
-            household_number = _base_household_number(feature.get("household_number") or structure_number)
+            household_number = _base_household_number(
+                feature.get("household_number") or structure_number
+            )
             household = household_map.get(household_number)
 
             extended_data = {
@@ -1413,18 +1839,24 @@ def _build_export_rows_from_component_selection(component_data, slum, selected_f
             if household:
                 extended_data["submission_date"] = household.submission_date
                 extended_data["created_date"] = household.created_date
-                extended_data.update(_flatten_export_data(household.rhs_data or {}, "rhs_"))
-                extended_data.update(_flatten_export_data(household.ff_data or {}, "ff_"))
+                extended_data.update(
+                    _flatten_export_data(household.rhs_data or {}, "rhs_")
+                )
+                extended_data.update(
+                    _flatten_export_data(household.ff_data or {}, "ff_")
+                )
 
-            export_rows.append({
-                "component": None,
-                "geometry": geometry,
-                "layer_name": metadata_name,
-                "section_name": section_name,
-                "household_number": household_number,
-                "extended_data": extended_data,
-                "style": style_data
-            })
+            export_rows.append(
+                {
+                    "component": None,
+                    "geometry": geometry,
+                    "layer_name": metadata_name,
+                    "section_name": section_name,
+                    "household_number": household_number,
+                    "extended_data": extended_data,
+                    "style": style_data,
+                }
+            )
 
     return export_rows
 
@@ -1444,7 +1876,7 @@ def _build_kml_response(export_rows, slum, selected_filters):
                 name=escape(str(component.housenumber)),
                 style=_kml_style(row["style"]),
                 extended_data=_extended_data_kml(row["extended_data"]),
-                geometry=_geometry_to_kml(component.shape)
+                geometry=_geometry_to_kml(component.shape),
             )
         )
 
@@ -1457,21 +1889,25 @@ def _build_kml_response(export_rows, slum, selected_filters):
     kml = (
         '<?xml version="1.0" encoding="UTF-8"?>'
         '<kml xmlns="http://www.opengis.net/kml/2.2">'
-        '<Document>'
-        '<name>{name}</name>'
-        '<description>{description}</description>'
-        '{placemarks}'
-        '</Document>'
-        '</kml>'
+        "<Document>"
+        "<name>{name}</name>"
+        "<description>{description}</description>"
+        "{placemarks}"
+        "</Document>"
+        "</kml>"
     ).format(
         name=escape(document_name),
         description=escape(
             "Filtered KML export for {}{}".format(
                 slum.name,
-                " | Filters: {}".format(", ".join(selected_filters)) if selected_filters else ""
+                (
+                    " | Filters: {}".format(", ".join(selected_filters))
+                    if selected_filters
+                    else ""
+                ),
             )
         ),
-        placemarks="".join(placemarks)
+        placemarks="".join(placemarks),
     )
 
     response = HttpResponse(kml, content_type="application/vnd.google-earth.kml+xml")
@@ -1492,7 +1928,9 @@ def _kml_document_from_rows(rows, document_name, description):
             style_defs.append(
                 '<Style id="{style_id}">{style_body}</Style>'.format(
                     style_id=style_id,
-                    style_body=_kml_style(row["style"]).replace("<Style>", "").replace("</Style>", "")
+                    style_body=_kml_style(row["style"])
+                    .replace("<Style>", "")
+                    .replace("</Style>", ""),
                 )
             )
 
@@ -1515,25 +1953,27 @@ def _kml_document_from_rows(rows, document_name, description):
                 name=escape(str(feature_name)),
                 style_id=style_ids[style_key],
                 extended_data=_extended_data_kml(row["extended_data"]),
-                geometry=_geometry_to_kml(type("G", (), {"geojson": json.dumps(geometry)})())
+                geometry=_geometry_to_kml(
+                    type("G", (), {"geojson": json.dumps(geometry)})()
+                ),
             )
         )
 
     return (
         '<?xml version="1.0" encoding="UTF-8"?>'
         '<kml xmlns="http://www.opengis.net/kml/2.2">'
-        '<Document>'
-        '<name>{name}</name>'
-        '<description>{description}</description>'
-        '{styles}'
-        '{placemarks}'
-        '</Document>'
-        '</kml>'
+        "<Document>"
+        "<name>{name}</name>"
+        "<description>{description}</description>"
+        "{styles}"
+        "{placemarks}"
+        "</Document>"
+        "</kml>"
     ).format(
         name=escape(document_name),
         description=escape(description),
         styles="".join(style_defs),
-        placemarks="".join(placemarks)
+        placemarks="".join(placemarks),
     )
 
 
@@ -1544,10 +1984,22 @@ def _build_kml_zip_response(export_rows, slum, selected_filters, include_csv=Fal
         merged_name = prefix + "-merged.kml"
         merged_description = "Merged KML export for {}{}".format(
             slum.name,
-            " | Filters: {}".format(", ".join(selected_filters)) if selected_filters else ""
+            (
+                " | Filters: {}".format(", ".join(selected_filters))
+                if selected_filters
+                else ""
+            ),
         )
-        with open(os.path.join(tmp_dir, merged_name), "w", encoding="utf-8") as merged_file:
-            merged_file.write(_kml_document_from_rows(export_rows, "{} Merged Export".format(slum.name), merged_description))
+        with open(
+            os.path.join(tmp_dir, merged_name), "w", encoding="utf-8"
+        ) as merged_file:
+            merged_file.write(
+                _kml_document_from_rows(
+                    export_rows,
+                    "{} Merged Export".format(slum.name),
+                    merged_description,
+                )
+            )
         _log_export_timing("kml_zip_merged_written", started_at, rows=len(export_rows))
 
         layer_groups = OrderedDict()
@@ -1557,25 +2009,40 @@ def _build_kml_zip_response(export_rows, slum, selected_filters, include_csv=Fal
 
         for layer_name, rows in layer_groups.items():
             file_name = "{}.kml".format(_safe_file_name(layer_name))
-            with open(os.path.join(tmp_dir, file_name), "w", encoding="utf-8") as layer_file:
+            with open(
+                os.path.join(tmp_dir, file_name), "w", encoding="utf-8"
+            ) as layer_file:
                 layer_file.write(
                     _kml_document_from_rows(
                         rows,
                         "{} - {}".format(slum.name, layer_name),
-                        "Layer export for {}".format(layer_name)
+                        "Layer export for {}".format(layer_name),
                     )
                 )
-        _log_export_timing("kml_zip_layer_files_written", started_at, layers=len(layer_groups))
+        _log_export_timing(
+            "kml_zip_layer_files_written", started_at, layers=len(layer_groups)
+        )
 
         summary_csv_rows = _build_filter_summary_csv_rows(export_rows)
         if summary_csv_rows:
             summary_columns = list(summary_csv_rows[0].keys())
             summary_csv_path = os.path.join(tmp_dir, prefix + "_filter_summary.csv")
             with open(summary_csv_path, "w", encoding="utf-8") as csv_file:
-                csv_file.write(",".join(_csv_escape(col) for col in summary_columns) + "\n")
+                csv_file.write(
+                    ",".join(_csv_escape(col) for col in summary_columns) + "\n"
+                )
                 for row in summary_csv_rows:
-                    csv_file.write(",".join(_csv_escape(row.get(col, "")) for col in summary_columns) + "\n")
-        _log_export_timing("kml_zip_summary_csv_written", started_at, summary_rows=len(summary_csv_rows))
+                    csv_file.write(
+                        ",".join(
+                            _csv_escape(row.get(col, "")) for col in summary_columns
+                        )
+                        + "\n"
+                    )
+        _log_export_timing(
+            "kml_zip_summary_csv_written",
+            started_at,
+            summary_rows=len(summary_csv_rows),
+        )
 
         csv_rows = [dict(row["extended_data"]) for row in export_rows]
         if include_csv and csv_rows:
@@ -1584,8 +2051,16 @@ def _build_kml_zip_response(export_rows, slum, selected_filters, include_csv=Fal
             with open(csv_path, "w", encoding="utf-8") as csv_file:
                 csv_file.write(",".join(_csv_escape(col) for col in csv_columns) + "\n")
                 for row in csv_rows:
-                    csv_file.write(",".join(_csv_escape(row.get(col, "")) for col in csv_columns) + "\n")
-        _log_export_timing("kml_zip_detailed_csv_written", started_at, csv_rows=len(csv_rows), include_csv=include_csv)
+                    csv_file.write(
+                        ",".join(_csv_escape(row.get(col, "")) for col in csv_columns)
+                        + "\n"
+                    )
+        _log_export_timing(
+            "kml_zip_detailed_csv_written",
+            started_at,
+            csv_rows=len(csv_rows),
+            include_csv=include_csv,
+        )
 
         qml_dir = os.path.join(tmp_dir, "qml")
         os.makedirs(qml_dir, exist_ok=True)
@@ -1593,7 +2068,9 @@ def _build_kml_zip_response(export_rows, slum, selected_filters, include_csv=Fal
         for row in export_rows:
             merged_layer_styles[row["layer_name"]] = row["style"]
 
-        with open(os.path.join(qml_dir, prefix + "-merged.qml"), "w", encoding="utf-8") as qml_file:
+        with open(
+            os.path.join(qml_dir, prefix + "-merged.qml"), "w", encoding="utf-8"
+        ) as qml_file:
             qml_file.write(_qml_content_for_merged(merged_layer_styles, "polygon"))
 
         for layer_name, rows in layer_groups.items():
@@ -1601,8 +2078,14 @@ def _build_kml_zip_response(export_rows, slum, selected_filters, include_csv=Fal
             if geometry is None and rows and rows[0].get("component") is not None:
                 geometry = json.loads(rows[0]["component"].shape.geojson)
             geometry_type = geometry.get("type", "Polygon") if geometry else "Polygon"
-            with open(os.path.join(qml_dir, "{}.qml".format(_safe_file_name(layer_name))), "w", encoding="utf-8") as qml_file:
-                qml_file.write(_qml_content_for_layer(layer_name, rows[0]["style"], geometry_type))
+            with open(
+                os.path.join(qml_dir, "{}.qml".format(_safe_file_name(layer_name))),
+                "w",
+                encoding="utf-8",
+            ) as qml_file:
+                qml_file.write(
+                    _qml_content_for_layer(layer_name, rows[0]["style"], geometry_type)
+                )
         _log_export_timing("kml_zip_qml_written", started_at, layers=len(layer_groups))
 
         zip_path = os.path.join(tmp_dir, prefix + ".zip")
@@ -1613,12 +2096,17 @@ def _build_kml_zip_response(export_rows, slum, selected_filters, include_csv=Fal
                 elif file_name.endswith(".csv"):
                     zip_file.write(os.path.join(tmp_dir, file_name), arcname=file_name)
             for file_name in os.listdir(qml_dir):
-                zip_file.write(os.path.join(qml_dir, file_name), arcname=os.path.join("qml", file_name))
+                zip_file.write(
+                    os.path.join(qml_dir, file_name),
+                    arcname=os.path.join("qml", file_name),
+                )
         _log_export_timing("kml_zip_archive_created", started_at)
 
         with open(zip_path, "rb") as zip_file:
             response = HttpResponse(zip_file.read(), content_type="application/zip")
-            response["Content-Disposition"] = 'attachment; filename="{}"'.format(prefix + ".zip")
+            response["Content-Disposition"] = 'attachment; filename="{}"'.format(
+                prefix + ".zip"
+            )
             _log_export_timing("kml_zip_response_ready", started_at)
             return response
 
@@ -1634,8 +2122,8 @@ def _sld_content_for_layer(layer_name, style_data, geometry_type):
             "<Graphic>"
             "<Mark>"
             "<WellKnownName>circle</WellKnownName>"
-            "<Fill><CssParameter name=\"fill\">{fill}</CssParameter></Fill>"
-            "<Stroke><CssParameter name=\"stroke\">{stroke}</CssParameter><CssParameter name=\"stroke-width\">{width}</CssParameter></Stroke>"
+            '<Fill><CssParameter name="fill">{fill}</CssParameter></Fill>'
+            '<Stroke><CssParameter name="stroke">{stroke}</CssParameter><CssParameter name="stroke-width">{width}</CssParameter></Stroke>'
             "</Mark>"
             "<Size>10</Size>"
             "</Graphic>"
@@ -1645,18 +2133,18 @@ def _sld_content_for_layer(layer_name, style_data, geometry_type):
         symbolizer = (
             "<LineSymbolizer>"
             "<Stroke>"
-            "<CssParameter name=\"stroke\">{stroke}</CssParameter>"
-            "<CssParameter name=\"stroke-width\">{width}</CssParameter>"
+            '<CssParameter name="stroke">{stroke}</CssParameter>'
+            '<CssParameter name="stroke-width">{width}</CssParameter>'
             "</Stroke>"
             "</LineSymbolizer>"
         ).format(stroke=linecolor, width=linewidth)
     else:
         symbolizer = (
             "<PolygonSymbolizer>"
-            "<Fill><CssParameter name=\"fill\">{fill}</CssParameter></Fill>"
+            '<Fill><CssParameter name="fill">{fill}</CssParameter></Fill>'
             "<Stroke>"
-            "<CssParameter name=\"stroke\">{stroke}</CssParameter>"
-            "<CssParameter name=\"stroke-width\">{width}</CssParameter>"
+            '<CssParameter name="stroke">{stroke}</CssParameter>'
+            '<CssParameter name="stroke-width">{width}</CssParameter>'
             "</Stroke>"
             "</PolygonSymbolizer>"
         ).format(fill=polycolor, stroke=linecolor, width=linewidth)
@@ -1666,10 +2154,10 @@ def _sld_content_for_layer(layer_name, style_data, geometry_type):
         '<StyledLayerDescriptor version="1.0.0" xmlns="http://www.opengis.net/sld" '
         'xmlns:ogc="http://www.opengis.net/ogc" xmlns:xlink="http://www.w3.org/1999/xlink" '
         'xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">'
-        '<NamedLayer><Name>{name}</Name><UserStyle><Title>{name}</Title><FeatureTypeStyle>'
-        '<Rule><Title>{name}</Title>{symbolizer}</Rule>'
-        '</FeatureTypeStyle></UserStyle></NamedLayer>'
-        '</StyledLayerDescriptor>'
+        "<NamedLayer><Name>{name}</Name><UserStyle><Title>{name}</Title><FeatureTypeStyle>"
+        "<Rule><Title>{name}</Title>{symbolizer}</Rule>"
+        "</FeatureTypeStyle></UserStyle></NamedLayer>"
+        "</StyledLayerDescriptor>"
     ).format(name=escape(layer_name), symbolizer=symbolizer)
 
 
@@ -1684,23 +2172,23 @@ def _sld_content_for_merged(layer_styles, geometry_type):
             symbolizer = (
                 "<PointSymbolizer>"
                 "<Graphic><Mark><WellKnownName>circle</WellKnownName>"
-                "<Fill><CssParameter name=\"fill\">{fill}</CssParameter></Fill>"
-                "<Stroke><CssParameter name=\"stroke\">{stroke}</CssParameter><CssParameter name=\"stroke-width\">{width}</CssParameter></Stroke>"
+                '<Fill><CssParameter name="fill">{fill}</CssParameter></Fill>'
+                '<Stroke><CssParameter name="stroke">{stroke}</CssParameter><CssParameter name="stroke-width">{width}</CssParameter></Stroke>'
                 "</Mark><Size>10</Size></Graphic>"
                 "</PointSymbolizer>"
             ).format(fill=polycolor, stroke=linecolor, width=linewidth)
         elif geometry_type in ["LineString", "MultiLineString"]:
             symbolizer = (
                 "<LineSymbolizer><Stroke>"
-                "<CssParameter name=\"stroke\">{stroke}</CssParameter>"
-                "<CssParameter name=\"stroke-width\">{width}</CssParameter>"
+                '<CssParameter name="stroke">{stroke}</CssParameter>'
+                '<CssParameter name="stroke-width">{width}</CssParameter>'
                 "</Stroke></LineSymbolizer>"
             ).format(stroke=linecolor, width=linewidth)
         else:
             symbolizer = (
                 "<PolygonSymbolizer>"
-                "<Fill><CssParameter name=\"fill\">{fill}</CssParameter></Fill>"
-                "<Stroke><CssParameter name=\"stroke\">{stroke}</CssParameter><CssParameter name=\"stroke-width\">{width}</CssParameter></Stroke>"
+                '<Fill><CssParameter name="fill">{fill}</CssParameter></Fill>'
+                '<Stroke><CssParameter name="stroke">{stroke}</CssParameter><CssParameter name="stroke-width">{width}</CssParameter></Stroke>'
                 "</PolygonSymbolizer>"
             ).format(fill=polycolor, stroke=linecolor, width=linewidth)
 
@@ -1715,21 +2203,29 @@ def _sld_content_for_merged(layer_styles, geometry_type):
         '<StyledLayerDescriptor version="1.0.0" xmlns="http://www.opengis.net/sld" '
         'xmlns:ogc="http://www.opengis.net/ogc" xmlns:xlink="http://www.w3.org/1999/xlink" '
         'xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">'
-        '<NamedLayer><Name>all_layers_merged</Name><UserStyle><Title>all_layers_merged</Title><FeatureTypeStyle>'
-        '{rules}'
-        '</FeatureTypeStyle></UserStyle></NamedLayer>'
-        '</StyledLayerDescriptor>'
+        "<NamedLayer><Name>all_layers_merged</Name><UserStyle><Title>all_layers_merged</Title><FeatureTypeStyle>"
+        "{rules}"
+        "</FeatureTypeStyle></UserStyle></NamedLayer>"
+        "</StyledLayerDescriptor>"
     ).format(rules="".join(rules))
 
 
 def _qml_color_components(hex_color):
     color = _normalize_hex_color(hex_color, "#de81ff").lstrip("#")
-    return int(color[0:2], 16), int(color[1*2:2*2], 16), int(color[2*2:3*2], 16)
+    return (
+        int(color[0:2], 16),
+        int(color[1 * 2 : 2 * 2], 16),
+        int(color[2 * 2 : 3 * 2], 16),
+    )
 
 
 def _qml_content_for_layer(layer_name, style_data, geometry_type):
-    r_fill, g_fill, b_fill = _qml_color_components(style_data.get("polycolor", "#de81ff"))
-    r_line, g_line, b_line = _qml_color_components(style_data.get("linecolor", "#000000"))
+    r_fill, g_fill, b_fill = _qml_color_components(
+        style_data.get("polycolor", "#de81ff")
+    )
+    r_line, g_line, b_line = _qml_color_components(
+        style_data.get("linecolor", "#000000")
+    )
     width = str(style_data.get("linewidth") or 0.25)
     family = _geometry_family(geometry_type)
 
@@ -1741,18 +2237,30 @@ def _qml_content_for_layer(layer_name, style_data, geometry_type):
             '<Option name="outline_color" type="QString" value="{line_r},{line_g},{line_b},255"/>'
             '<Option name="outline_width" type="QString" value="{width}"/>'
             '<Option name="size" type="QString" value="2.5"/></Option>'
-            '</layer></symbol>'
-        ).format(fill_r=r_fill, fill_g=g_fill, fill_b=b_fill, line_r=r_line, line_g=g_line, line_b=b_line, width=width)
-        renderer = '<renderer-v2 type="singleSymbol" symbollevels="0">{symbol}</renderer-v2>'.format(symbol=symbol_layer)
+            "</layer></symbol>"
+        ).format(
+            fill_r=r_fill,
+            fill_g=g_fill,
+            fill_b=b_fill,
+            line_r=r_line,
+            line_g=g_line,
+            line_b=b_line,
+            width=width,
+        )
+        renderer = '<renderer-v2 type="singleSymbol" symbollevels="0">{symbol}</renderer-v2>'.format(
+            symbol=symbol_layer
+        )
     elif family == "line":
         symbol_layer = (
             '<symbol alpha="1" clip_to_extent="1" type="line" name="0">'
             '<layer class="SimpleLine" enabled="1" locked="0" pass="0">'
             '<Option type="Map"><Option name="line_color" type="QString" value="{line_r},{line_g},{line_b},255"/>'
             '<Option name="line_width" type="QString" value="{width}"/></Option>'
-            '</layer></symbol>'
+            "</layer></symbol>"
         ).format(line_r=r_line, line_g=g_line, line_b=b_line, width=width)
-        renderer = '<renderer-v2 type="singleSymbol" symbollevels="0">{symbol}</renderer-v2>'.format(symbol=symbol_layer)
+        renderer = '<renderer-v2 type="singleSymbol" symbollevels="0">{symbol}</renderer-v2>'.format(
+            symbol=symbol_layer
+        )
     else:
         symbol_layer = (
             '<symbol alpha="1" clip_to_extent="1" type="fill" name="0">'
@@ -1760,17 +2268,30 @@ def _qml_content_for_layer(layer_name, style_data, geometry_type):
             '<Option type="Map"><Option name="color" type="QString" value="{fill_r},{fill_g},{fill_b},170"/>'
             '<Option name="outline_color" type="QString" value="{line_r},{line_g},{line_b},255"/>'
             '<Option name="outline_width" type="QString" value="{width}"/></Option>'
-            '</layer></symbol>'
-        ).format(fill_r=r_fill, fill_g=g_fill, fill_b=b_fill, line_r=r_line, line_g=g_line, line_b=b_line, width=width)
-        renderer = '<renderer-v2 type="singleSymbol" symbollevels="0">{symbol}</renderer-v2>'.format(symbol=symbol_layer)
+            "</layer></symbol>"
+        ).format(
+            fill_r=r_fill,
+            fill_g=g_fill,
+            fill_b=b_fill,
+            line_r=r_line,
+            line_g=g_line,
+            line_b=b_line,
+            width=width,
+        )
+        renderer = '<renderer-v2 type="singleSymbol" symbollevels="0">{symbol}</renderer-v2>'.format(
+            symbol=symbol_layer
+        )
 
     return (
-        '<!DOCTYPE qgis PUBLIC \'http://mrcc.com/qgis.dtd\' \'SYSTEM\'>'
+        "<!DOCTYPE qgis PUBLIC 'http://mrcc.com/qgis.dtd' 'SYSTEM'>"
         '<qgis version="3.34.0" styleCategories="Symbology">'
-        '{renderer}'
-        '<layerGeometryType>{geom_type}</layerGeometryType>'
-        '</qgis>'
-    ).format(renderer=renderer, geom_type="0" if family == "point" else "1" if family == "line" else "2")
+        "{renderer}"
+        "<layerGeometryType>{geom_type}</layerGeometryType>"
+        "</qgis>"
+    ).format(
+        renderer=renderer,
+        geom_type="0" if family == "point" else "1" if family == "line" else "2",
+    )
 
 
 def _qml_content_for_merged(layer_styles, geometry_family):
@@ -1778,8 +2299,12 @@ def _qml_content_for_merged(layer_styles, geometry_family):
     symbols = []
 
     for idx, (layer_name, style_data) in enumerate(layer_styles.items()):
-        r_fill, g_fill, b_fill = _qml_color_components(style_data.get("polycolor", "#de81ff"))
-        r_line, g_line, b_line = _qml_color_components(style_data.get("linecolor", "#000000"))
+        r_fill, g_fill, b_fill = _qml_color_components(
+            style_data.get("polycolor", "#de81ff")
+        )
+        r_line, g_line, b_line = _qml_color_components(
+            style_data.get("linecolor", "#000000")
+        )
         width = str(style_data.get("linewidth") or 0.25)
         symbol_name = str(idx)
 
@@ -1791,16 +2316,31 @@ def _qml_content_for_merged(layer_styles, geometry_family):
                 '<Option name="outline_color" type="QString" value="{line_r},{line_g},{line_b},255"/>'
                 '<Option name="outline_width" type="QString" value="{width}"/>'
                 '<Option name="size" type="QString" value="2.5"/></Option>'
-                '</layer></symbol>'
-            ).format(name=symbol_name, fill_r=r_fill, fill_g=g_fill, fill_b=b_fill, line_r=r_line, line_g=g_line, line_b=b_line, width=width)
+                "</layer></symbol>"
+            ).format(
+                name=symbol_name,
+                fill_r=r_fill,
+                fill_g=g_fill,
+                fill_b=b_fill,
+                line_r=r_line,
+                line_g=g_line,
+                line_b=b_line,
+                width=width,
+            )
         elif geometry_family == "line":
             symbol = (
                 '<symbol alpha="1" clip_to_extent="1" type="line" name="{name}">'
                 '<layer class="SimpleLine" enabled="1" locked="0" pass="0">'
                 '<Option type="Map"><Option name="line_color" type="QString" value="{line_r},{line_g},{line_b},255"/>'
                 '<Option name="line_width" type="QString" value="{width}"/></Option>'
-                '</layer></symbol>'
-            ).format(name=symbol_name, line_r=r_line, line_g=g_line, line_b=b_line, width=width)
+                "</layer></symbol>"
+            ).format(
+                name=symbol_name,
+                line_r=r_line,
+                line_g=g_line,
+                line_b=b_line,
+                width=width,
+            )
         else:
             symbol = (
                 '<symbol alpha="1" clip_to_extent="1" type="fill" name="{name}">'
@@ -1808,28 +2348,46 @@ def _qml_content_for_merged(layer_styles, geometry_family):
                 '<Option type="Map"><Option name="color" type="QString" value="{fill_r},{fill_g},{fill_b},170"/>'
                 '<Option name="outline_color" type="QString" value="{line_r},{line_g},{line_b},255"/>'
                 '<Option name="outline_width" type="QString" value="{width}"/></Option>'
-                '</layer></symbol>'
-            ).format(name=symbol_name, fill_r=r_fill, fill_g=g_fill, fill_b=b_fill, line_r=r_line, line_g=g_line, line_b=b_line, width=width)
+                "</layer></symbol>"
+            ).format(
+                name=symbol_name,
+                fill_r=r_fill,
+                fill_g=g_fill,
+                fill_b=b_fill,
+                line_r=r_line,
+                line_g=g_line,
+                line_b=b_line,
+                width=width,
+            )
 
-        categories.append('<category value="{value}" type="string" label="{label}" symbol="{symbol}"/>'.format(
-            value=escape(layer_name), label=escape(layer_name), symbol=symbol_name
-        ))
+        categories.append(
+            '<category value="{value}" type="string" label="{label}" symbol="{symbol}"/>'.format(
+                value=escape(layer_name), label=escape(layer_name), symbol=symbol_name
+            )
+        )
         symbols.append(symbol)
 
     renderer = (
         '<renderer-v2 type="categorizedSymbol" attr="META_NAME" symbollevels="0">'
-        '<categories>{categories}</categories>'
-        '<symbols>{symbols}</symbols>'
-        '</renderer-v2>'
+        "<categories>{categories}</categories>"
+        "<symbols>{symbols}</symbols>"
+        "</renderer-v2>"
     ).format(categories="".join(categories), symbols="".join(symbols))
 
     return (
-        '<!DOCTYPE qgis PUBLIC \'http://mrcc.com/qgis.dtd\' \'SYSTEM\'>'
+        "<!DOCTYPE qgis PUBLIC 'http://mrcc.com/qgis.dtd' 'SYSTEM'>"
         '<qgis version="3.34.0" styleCategories="Symbology">'
-        '{renderer}'
-        '<layerGeometryType>{geom_type}</layerGeometryType>'
-        '</qgis>'
-    ).format(renderer=renderer, geom_type="0" if geometry_family == "point" else "1" if geometry_family == "line" else "2")
+        "{renderer}"
+        "<layerGeometryType>{geom_type}</layerGeometryType>"
+        "</qgis>"
+    ).format(
+        renderer=renderer,
+        geom_type=(
+            "0"
+            if geometry_family == "point"
+            else "1" if geometry_family == "line" else "2"
+        ),
+    )
 
 
 def _build_shapefile_response(export_rows, slum, selected_filters, include_csv=False):
@@ -1852,11 +2410,16 @@ def _build_shapefile_response(export_rows, slum, selected_filters, include_csv=F
                 layer_groups[key] = {
                     "display_name": row["layer_name"],
                     "family": family,
-                    "rows": []
+                    "rows": [],
                 }
             layer_groups[key]["rows"].append(row)
 
-        _log_export_timing("shp_layer_groups_built", started_at, layers=len(layer_groups), rows=len(export_rows))
+        _log_export_timing(
+            "shp_layer_groups_built",
+            started_at,
+            layers=len(layer_groups),
+            rows=len(export_rows),
+        )
 
         merged_groups = OrderedDict()
         for row in export_rows:
@@ -1878,7 +2441,13 @@ def _build_shapefile_response(export_rows, slum, selected_filters, include_csv=F
             layer_style = rows[0]["style"] if rows else {}
 
             try:
-                _log_export_timing("shp_layer_start", started_at, layer=layer_name, rows=len(rows), family=family)
+                _log_export_timing(
+                    "shp_layer_start",
+                    started_at,
+                    layer=layer_name,
+                    rows=len(rows),
+                    family=family,
+                )
 
                 for row in rows:
                     feature_properties = dict(row["extended_data"])
@@ -1888,27 +2457,36 @@ def _build_shapefile_response(export_rows, slum, selected_filters, include_csv=F
                     feature_properties["linecolor"] = feature_style.get("linecolor", "")
                     feature_properties["section_name"] = row.get("section_name", "")
                     feature_properties["META_NAME"] = row.get("layer_name", "")
-                    feature_properties["P_COLOR"] = _normalize_hex_color(feature_style.get("polycolor", "#de81ff"))
-                    feature_properties["L_COLOR"] = _normalize_hex_color(feature_style.get("linecolor", "#000000"))
-                    feature_properties["L_WIDTH"] = str(feature_style.get("linewidth") or 0.25)
+                    feature_properties["P_COLOR"] = _normalize_hex_color(
+                        feature_style.get("polycolor", "#de81ff")
+                    )
+                    feature_properties["L_COLOR"] = _normalize_hex_color(
+                        feature_style.get("linecolor", "#000000")
+                    )
+                    feature_properties["L_WIDTH"] = str(
+                        feature_style.get("linewidth") or 0.25
+                    )
 
                     geometry = row.get("geometry")
                     if geometry is None and row.get("component") is not None:
                         geometry = json.loads(row["component"].shape.geojson)
 
-                    features.append({
-                        "type": "Feature",
-                        "geometry": geometry,
-                        "properties": _shape_safe_properties(feature_properties)
-                    })
+                    features.append(
+                        {
+                            "type": "Feature",
+                            "geometry": geometry,
+                            "properties": _shape_safe_properties(feature_properties),
+                        }
+                    )
 
                     csv_rows.append(feature_properties)
 
                 with open(layer_geojson, "w", encoding="utf-8") as geojson_file:
-                    json.dump({
-                        "type": "FeatureCollection",
-                        "features": features
-                    }, geojson_file, ensure_ascii=False)
+                    json.dump(
+                        {"type": "FeatureCollection", "features": features},
+                        geojson_file,
+                        ensure_ascii=False,
+                    )
 
                 layer_dir = os.path.join(shp_dir, layer_prefix)
                 os.makedirs(layer_dir, exist_ok=True)
@@ -1919,12 +2497,16 @@ def _build_shapefile_response(export_rows, slum, selected_filters, include_csv=F
                         check=True,
                         stdout=subprocess.PIPE,
                         stderr=subprocess.PIPE,
-                        universal_newlines=True
+                        universal_newlines=True,
                     )
                     if completed.stdout:
-                        logger.info("ogr2ogr stdout for %s: %s", layer_name, completed.stdout)
+                        logger.info(
+                            "ogr2ogr stdout for %s: %s", layer_name, completed.stdout
+                        )
                     if completed.stderr:
-                        logger.info("ogr2ogr stderr for %s: %s", layer_name, completed.stderr)
+                        logger.info(
+                            "ogr2ogr stderr for %s: %s", layer_name, completed.stderr
+                        )
                 except subprocess.CalledProcessError as exc:
                     logger.exception(
                         "ogr2ogr failed for SHP layer=%s returncode=%s stderr=%s",
@@ -1935,20 +2517,51 @@ def _build_shapefile_response(export_rows, slum, selected_filters, include_csv=F
                     raise
 
                 sld_path = os.path.join(layer_dir, layer_prefix + ".sld")
-                sld_content = _sld_content_for_layer(layer_name, layer_style, "Point" if family == "point" else "LineString" if family == "line" else "Polygon")
+                sld_content = _sld_content_for_layer(
+                    layer_name,
+                    layer_style,
+                    (
+                        "Point"
+                        if family == "point"
+                        else "LineString" if family == "line" else "Polygon"
+                    ),
+                )
                 with open(sld_path, "w", encoding="utf-8") as sld_file:
                     sld_file.write(sld_content)
 
                 qml_path = os.path.join(layer_dir, layer_prefix + ".qml")
                 with open(qml_path, "w", encoding="utf-8") as qml_file:
-                    qml_file.write(_qml_content_for_layer(layer_name, layer_style, "Point" if family == "point" else "LineString" if family == "line" else "Polygon"))
+                    qml_file.write(
+                        _qml_content_for_layer(
+                            layer_name,
+                            layer_style,
+                            (
+                                "Point"
+                                if family == "point"
+                                else "LineString" if family == "line" else "Polygon"
+                            ),
+                        )
+                    )
 
-                _log_export_timing("shp_layer_done", started_at, layer=layer_name, rows=len(rows), family=family)
+                _log_export_timing(
+                    "shp_layer_done",
+                    started_at,
+                    layer=layer_name,
+                    rows=len(rows),
+                    family=family,
+                )
             except Exception:
-                logger.exception("Failed while building SHP layer: layer=%s family=%s rows=%s", layer_name, family, len(rows))
+                logger.exception(
+                    "Failed while building SHP layer: layer=%s family=%s rows=%s",
+                    layer_name,
+                    family,
+                    len(rows),
+                )
                 raise
 
-        _log_export_timing("shp_layer_files_written", started_at, layers=len(layer_groups))
+        _log_export_timing(
+            "shp_layer_files_written", started_at, layers=len(layer_groups)
+        )
 
         for family, rows in merged_groups.items():
             layer_prefix = "all_layers_merged_{}".format(family)
@@ -1957,7 +2570,9 @@ def _build_shapefile_response(export_rows, slum, selected_filters, include_csv=F
             merged_layer_styles = OrderedDict()
 
             try:
-                _log_export_timing("shp_merged_layer_start", started_at, family=family, rows=len(rows))
+                _log_export_timing(
+                    "shp_merged_layer_start", started_at, family=family, rows=len(rows)
+                )
 
                 for row in rows:
                     feature_style = row.get("style") or {}
@@ -1967,26 +2582,35 @@ def _build_shapefile_response(export_rows, slum, selected_filters, include_csv=F
                     feature_properties["linecolor"] = feature_style.get("linecolor", "")
                     feature_properties["section_name"] = row.get("section_name", "")
                     feature_properties["META_NAME"] = row.get("layer_name", "")
-                    feature_properties["P_COLOR"] = _normalize_hex_color(feature_style.get("polycolor", "#de81ff"))
-                    feature_properties["L_COLOR"] = _normalize_hex_color(feature_style.get("linecolor", "#000000"))
-                    feature_properties["L_WIDTH"] = str(feature_style.get("linewidth") or 0.25)
+                    feature_properties["P_COLOR"] = _normalize_hex_color(
+                        feature_style.get("polycolor", "#de81ff")
+                    )
+                    feature_properties["L_COLOR"] = _normalize_hex_color(
+                        feature_style.get("linecolor", "#000000")
+                    )
+                    feature_properties["L_WIDTH"] = str(
+                        feature_style.get("linewidth") or 0.25
+                    )
 
                     geometry = row.get("geometry")
                     if geometry is None and row.get("component") is not None:
                         geometry = json.loads(row["component"].shape.geojson)
 
-                    features.append({
-                        "type": "Feature",
-                        "geometry": geometry,
-                        "properties": _shape_safe_properties(feature_properties)
-                    })
+                    features.append(
+                        {
+                            "type": "Feature",
+                            "geometry": geometry,
+                            "properties": _shape_safe_properties(feature_properties),
+                        }
+                    )
                     merged_layer_styles[row.get("layer_name", "")] = feature_style
 
                 with open(layer_geojson, "w", encoding="utf-8") as geojson_file:
-                    json.dump({
-                        "type": "FeatureCollection",
-                        "features": features
-                    }, geojson_file, ensure_ascii=False)
+                    json.dump(
+                        {"type": "FeatureCollection", "features": features},
+                        geojson_file,
+                        ensure_ascii=False,
+                    )
 
                 layer_dir = os.path.join(shp_dir, layer_prefix)
                 os.makedirs(layer_dir, exist_ok=True)
@@ -1997,12 +2621,16 @@ def _build_shapefile_response(export_rows, slum, selected_filters, include_csv=F
                         check=True,
                         stdout=subprocess.PIPE,
                         stderr=subprocess.PIPE,
-                        universal_newlines=True
+                        universal_newlines=True,
                     )
                     if completed.stdout:
-                        logger.info("ogr2ogr stdout for merged %s: %s", family, completed.stdout)
+                        logger.info(
+                            "ogr2ogr stdout for merged %s: %s", family, completed.stdout
+                        )
                     if completed.stderr:
-                        logger.info("ogr2ogr stderr for merged %s: %s", family, completed.stderr)
+                        logger.info(
+                            "ogr2ogr stderr for merged %s: %s", family, completed.stderr
+                        )
                 except subprocess.CalledProcessError as exc:
                     logger.exception(
                         "ogr2ogr failed for merged SHP family=%s returncode=%s stderr=%s",
@@ -2014,28 +2642,54 @@ def _build_shapefile_response(export_rows, slum, selected_filters, include_csv=F
 
                 sld_path = os.path.join(layer_dir, layer_prefix + ".sld")
                 with open(sld_path, "w", encoding="utf-8") as sld_file:
-                    sld_file.write(_sld_content_for_merged(merged_layer_styles, "Point" if family == "point" else "LineString" if family == "line" else "Polygon"))
+                    sld_file.write(
+                        _sld_content_for_merged(
+                            merged_layer_styles,
+                            (
+                                "Point"
+                                if family == "point"
+                                else "LineString" if family == "line" else "Polygon"
+                            ),
+                        )
+                    )
 
                 qml_path = os.path.join(layer_dir, layer_prefix + ".qml")
                 with open(qml_path, "w", encoding="utf-8") as qml_file:
                     qml_file.write(_qml_content_for_merged(merged_layer_styles, family))
 
-                _log_export_timing("shp_merged_layer_done", started_at, family=family, rows=len(rows))
+                _log_export_timing(
+                    "shp_merged_layer_done", started_at, family=family, rows=len(rows)
+                )
             except Exception:
-                logger.exception("Failed while building merged SHP layer: family=%s rows=%s", family, len(rows))
+                logger.exception(
+                    "Failed while building merged SHP layer: family=%s rows=%s",
+                    family,
+                    len(rows),
+                )
                 raise
 
-        _log_export_timing("shp_merged_layer_files_written", started_at, layers=len(merged_groups))
+        _log_export_timing(
+            "shp_merged_layer_files_written", started_at, layers=len(merged_groups)
+        )
 
         summary_csv_rows = _build_filter_summary_csv_rows(export_rows)
         summary_csv_path = os.path.join(shp_dir, prefix + "_filter_summary.csv")
         if summary_csv_rows:
             summary_columns = list(summary_csv_rows[0].keys())
             with open(summary_csv_path, "w", encoding="utf-8") as csv_file:
-                csv_file.write(",".join(_csv_escape(col) for col in summary_columns) + "\n")
+                csv_file.write(
+                    ",".join(_csv_escape(col) for col in summary_columns) + "\n"
+                )
                 for row in summary_csv_rows:
-                    csv_file.write(",".join(_csv_escape(row.get(col, "")) for col in summary_columns) + "\n")
-        _log_export_timing("shp_summary_csv_written", started_at, summary_rows=len(summary_csv_rows))
+                    csv_file.write(
+                        ",".join(
+                            _csv_escape(row.get(col, "")) for col in summary_columns
+                        )
+                        + "\n"
+                    )
+        _log_export_timing(
+            "shp_summary_csv_written", started_at, summary_rows=len(summary_csv_rows)
+        )
 
         csv_path = os.path.join(shp_dir, prefix + "_detailed_hh_ff_data.csv")
         if include_csv and csv_rows:
@@ -2043,8 +2697,16 @@ def _build_shapefile_response(export_rows, slum, selected_filters, include_csv=F
             with open(csv_path, "w", encoding="utf-8") as csv_file:
                 csv_file.write(",".join(_csv_escape(col) for col in csv_columns) + "\n")
                 for row in csv_rows:
-                    csv_file.write(",".join(_csv_escape(row.get(col, "")) for col in csv_columns) + "\n")
-        _log_export_timing("shp_detailed_csv_written", started_at, csv_rows=len(csv_rows), include_csv=include_csv)
+                    csv_file.write(
+                        ",".join(_csv_escape(row.get(col, "")) for col in csv_columns)
+                        + "\n"
+                    )
+        _log_export_timing(
+            "shp_detailed_csv_written",
+            started_at,
+            csv_rows=len(csv_rows),
+            include_csv=include_csv,
+        )
 
         zip_path = os.path.join(tmp_dir, prefix + ".zip")
         with zipfile.ZipFile(zip_path, "w", zipfile.ZIP_DEFLATED) as zip_file:
@@ -2058,7 +2720,9 @@ def _build_shapefile_response(export_rows, slum, selected_filters, include_csv=F
 
         with open(zip_path, "rb") as zip_file:
             response = HttpResponse(zip_file.read(), content_type="application/zip")
-            response["Content-Disposition"] = 'attachment; filename="{}"'.format(prefix + ".zip")
+            response["Content-Disposition"] = 'attachment; filename="{}"'.format(
+                prefix + ".zip"
+            )
             _log_export_timing("shp_zip_response_ready", started_at)
             return response
 
@@ -2067,7 +2731,9 @@ def _build_shapefile_response(export_rows, slum, selected_filters, include_csv=F
 def export_filtered_kml(request):
     started_at = pytime.perf_counter()
     if request.user.username != "GIS":
-        return JsonResponse({"error": "You do not have permission to download GIS exports."}, status=403)
+        return JsonResponse(
+            {"error": "You do not have permission to download GIS exports."}, status=403
+        )
 
     payload = json.loads(request.body.decode("utf-8") or "{}")
     slum_id = payload.get("slum_id")
@@ -2086,7 +2752,10 @@ def export_filtered_kml(request):
         return JsonResponse({"error": "slum_id is required"}, status=400)
 
     if email_export and not email_address:
-        return JsonResponse({"error": "email_address is required when email export is enabled."}, status=400)
+        return JsonResponse(
+            {"error": "email_address is required when email export is enabled."},
+            status=400,
+        )
 
     slum = get_object_or_404(Slum, pk=slum_id)
     logger.info(
@@ -2095,21 +2764,12 @@ def export_filtered_kml(request):
         export_format,
         bool(export_selection),
         len(selected_sections),
-        len(selected_filters)
-    )
-    print(
-        "GIS export request started: slum_id={} export_format={} export_selection={} selected_sections={} selected_filters={}".format(
-            slum_id,
-            export_format,
-            bool(export_selection),
-            len(selected_sections),
-            len(selected_filters)
-        ),
-        flush=True
+        len(selected_filters),
     )
 
     if email_export:
         base_url = request.build_absolute_uri("/").rstrip("/")
+
         def _worker_wrapper():
             logger.info(
                 "GIS export worker thread entered: slum_id=%s email=%s export_format=%s",
@@ -2117,16 +2777,15 @@ def export_filtered_kml(request):
                 email_address,
                 export_format,
             )
-            print(
-                "GIS export worker thread entered: slum_id={} email={} export_format={}".format(
+            try:
+                _run_large_gis_export_job(
+                    request.user.id,
                     slum_id,
                     email_address,
                     export_format,
-                ),
-                flush=True,
-            )
-            try:
-                _run_large_gis_export_job(request.user.id, slum_id, email_address, export_format, include_csv, base_url)
+                    include_csv,
+                    base_url,
+                )
             finally:
                 logger.info(
                     "GIS export worker thread exited: slum_id=%s email=%s export_format=%s",
@@ -2134,33 +2793,38 @@ def export_filtered_kml(request):
                     email_address,
                     export_format,
                 )
-                print(
-                    "GIS export worker thread exited: slum_id={} email={} export_format={}".format(
-                        slum_id,
-                        email_address,
-                        export_format,
-                    ),
-                    flush=True,
-                )
 
         worker = threading.Thread(target=_worker_wrapper, daemon=False)
         worker.start()
-        logger.info("GIS export worker thread started: name=%s alive=%s", worker.name, worker.is_alive())
-        print("GIS export worker thread started: name={} alive={}".format(worker.name, worker.is_alive()), flush=True)
-        _log_export_timing("email_export_queued", started_at, slum_id=slum_id, email=email_address, export_format=export_format)
-        return JsonResponse({
-            "status": "queued",
-            "message": "The export is being generated in the background. We will email the download link when it is ready."
-        })
+        logger.info(
+            "GIS export worker thread started: name=%s alive=%s",
+            worker.name,
+            worker.is_alive(),
+        )
+        _log_export_timing(
+            "email_export_queued",
+            started_at,
+            slum_id=slum_id,
+            email=email_address,
+            export_format=export_format,
+        )
+        return JsonResponse(
+            {
+                "status": "queued",
+                "message": "The export is being generated in the background. We will email the download link when it is ready.",
+            }
+        )
 
     if export_selection:
         component_started = pytime.perf_counter()
-        component_data = _build_component_data_from_db(slum, str(slum_id), export_selection, selected_sections)
+        component_data = _build_component_data_from_db(
+            slum, str(slum_id), export_selection, selected_sections
+        )
         _log_export_timing(
             "component_data_loaded",
             component_started,
             sections=len(component_data),
-            items=sum(len(items) for items in component_data.values())
+            items=sum(len(items) for items in component_data.values()),
         )
 
         rows_started = pytime.perf_counter()
@@ -2169,7 +2833,7 @@ def export_filtered_kml(request):
             slum=slum,
             selected_filters=selected_filters,
             selected_sections=selected_sections,
-            export_selection=export_selection
+            export_selection=export_selection,
         )
         _log_export_timing("export_rows_built", rows_started, rows=len(export_rows))
     else:
@@ -2179,11 +2843,15 @@ def export_filtered_kml(request):
         )
         if not structure_components:
             structure_components = list(
-                slum.components.filter(metadata__code="HouseBaseLayer").order_by("housenumber")
+                slum.components.filter(metadata__code="HouseBaseLayer").order_by(
+                    "housenumber"
+                )
             )
 
         if not structure_components:
-            return JsonResponse({"error": "No structure KML data found for this slum."}, status=404)
+            return JsonResponse(
+                {"error": "No structure KML data found for this slum."}, status=404
+            )
 
         selected_households = {
             _base_household_number(house_no)
@@ -2193,13 +2861,19 @@ def export_filtered_kml(request):
 
         if selected_households:
             structure_components = [
-                component for component in structure_components
+                component
+                for component in structure_components
                 if _base_household_number(component.housenumber) in selected_households
             ]
-        _log_export_timing("structure_components_loaded", rows_started, rows=len(structure_components))
+        _log_export_timing(
+            "structure_components_loaded", rows_started, rows=len(structure_components)
+        )
 
         if not structure_components:
-            return JsonResponse({"error": "No matching structures found for the selected filters."}, status=404)
+            return JsonResponse(
+                {"error": "No matching structures found for the selected filters."},
+                status=404,
+            )
 
         rows_started = pytime.perf_counter()
         export_rows = _build_export_rows(
@@ -2207,44 +2881,73 @@ def export_filtered_kml(request):
             slum=slum,
             selected_filters=selected_filters,
             style_map=style_map,
-            fallback_style=fallback_style
+            fallback_style=fallback_style,
         )
         _log_export_timing("export_rows_built", rows_started, rows=len(export_rows))
 
     if not export_rows:
-        return JsonResponse({"error": "No selected layers available to export."}, status=404)
+        return JsonResponse(
+            {"error": "No selected layers available to export."}, status=404
+        )
 
-    _log_export_timing("export_rows_ready", started_at, rows=len(export_rows), export_selection=bool(export_selection), export_format=export_format)
+    _log_export_timing(
+        "export_rows_ready",
+        started_at,
+        rows=len(export_rows),
+        export_selection=bool(export_selection),
+        export_format=export_format,
+    )
 
     if export_format == "shp":
         shp_started = pytime.perf_counter()
         try:
-            response = _build_shapefile_response(export_rows, slum, selected_filters, include_csv=include_csv)
-            _log_export_timing("shapefile_response_ready", shp_started, rows=len(export_rows))
+            response = _build_shapefile_response(
+                export_rows, slum, selected_filters, include_csv=include_csv
+            )
+            _log_export_timing(
+                "shapefile_response_ready", shp_started, rows=len(export_rows)
+            )
             return response
         except subprocess.CalledProcessError as exc:
-            return JsonResponse({
-                "error": exc.stderr.decode("utf-8", errors="ignore") or "Shapefile export failed."
-            }, status=500)
+            return JsonResponse(
+                {
+                    "error": exc.stderr.decode("utf-8", errors="ignore")
+                    or "Shapefile export failed."
+                },
+                status=500,
+            )
 
     if export_selection:
         zip_started = pytime.perf_counter()
-        response = _build_kml_zip_response(export_rows, slum, selected_filters, include_csv=include_csv)
-        _log_export_timing("kml_zip_response_complete", zip_started, rows=len(export_rows))
-        _log_export_timing("export_request_complete", started_at, rows=len(export_rows), export_selection=True)
+        response = _build_kml_zip_response(
+            export_rows, slum, selected_filters, include_csv=include_csv
+        )
+        _log_export_timing(
+            "kml_zip_response_complete", zip_started, rows=len(export_rows)
+        )
+        _log_export_timing(
+            "export_request_complete",
+            started_at,
+            rows=len(export_rows),
+            export_selection=True,
+        )
         return response
 
     kml_started = pytime.perf_counter()
     response = _build_kml_response(export_rows, slum, selected_filters)
     _log_export_timing("kml_response_complete", kml_started, rows=len(export_rows))
-    _log_export_timing("export_request_complete", started_at, rows=len(export_rows), export_selection=False)
+    _log_export_timing(
+        "export_request_complete",
+        started_at,
+        rows=len(export_rows),
+        export_selection=False,
+    )
     return response
+
 
 @login_required
 def can_refresh_section(request):
-    result = {
-        "can_refresh": request.user.has_perm("component.can_refresh_section")
-    }
+    result = {"can_refresh": request.user.has_perm("component.can_refresh_section")}
     return JsonResponse(result)
 
 

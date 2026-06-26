@@ -3,43 +3,45 @@ from django.conf import settings
 from django.utils import timezone
 from jsonfield import JSONField
 import uuid
+
+
 # Stores OTPs sent for different verification tasks (PDF download, email verification, etc.)
 # Each email + task combination will have only one OTP record which gets updated on new request
 class OTPVerification(models.Model):
-	email = models.EmailField()
-	otp = models.CharField(max_length=128)
-	task = models.CharField(max_length=50)
-	is_verified = models.BooleanField(default=False)
-	created_at = models.DateTimeField(auto_now=True)
-	expiry_time = models.DateTimeField()
+    email = models.EmailField()
+    otp = models.CharField(max_length=128)
+    task = models.CharField(max_length=50)
+    is_verified = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now=True)
+    expiry_time = models.DateTimeField()
 
-	class Meta:
-		unique_together = ('email','task')
+    class Meta:
+        unique_together = ("email", "task")
 
-	def is_expired(self):
-		return timezone.now() > self.expiry_time
+    def is_expired(self):
+        return timezone.now() > self.expiry_time
 
 
 # Stores form data submitted by users before performing actions like downloading a PDF
 # Common fields are stored directly, while additional dynamic fields can be stored in JSON
 class FormSubmission(models.Model):
-	name = models.CharField(max_length=200)
-	email = models.EmailField()
-	mobile = models.CharField(max_length=15)
-	task = models.CharField(max_length=50)
-	extra_data = JSONField(blank=True, null=True)
-	otp_verified = models.BooleanField(default=False)
-	ip_address = models.GenericIPAddressField(null=True, blank=True)
-	user_agent = models.TextField(null=True, blank=True)
-	created_at = models.DateTimeField(auto_now_add=True)
+    name = models.CharField(max_length=200)
+    email = models.EmailField()
+    mobile = models.CharField(max_length=15)
+    task = models.CharField(max_length=50)
+    extra_data = JSONField(blank=True, null=True)
+    otp_verified = models.BooleanField(default=False)
+    ip_address = models.GenericIPAddressField(null=True, blank=True)
+    user_agent = models.TextField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
 
-	class Meta:
-		indexes = [
-			models.Index(fields=['email','task']),
-		]
+    class Meta:
+        indexes = [
+            models.Index(fields=["email", "task"]),
+        ]
 
-	def __str__(self):
-		return f"{self.email} - {self.task}"
+    def __str__(self):
+        return f"{self.email} - {self.task}"
 
 
 class ReminderTracker(models.Model):
@@ -68,116 +70,126 @@ class ReminderTracker(models.Model):
 
 
 class PhotoTypeItem(models.Model):
-	name = models.CharField(max_length=200)
-	parent = models.ForeignKey(
-		"self",
-		null=True,
-		blank=True,
-		related_name="children",
-		on_delete=models.CASCADE,
-	)
-	is_visible = models.BooleanField(default=True)
-	order = models.PositiveIntegerField(default=0)
+    name = models.CharField(max_length=200)
+    parent = models.ForeignKey(
+        "self",
+        null=True,
+        blank=True,
+        related_name="children",
+        on_delete=models.CASCADE,
+    )
+    is_visible = models.BooleanField(default=True)
+    order = models.PositiveIntegerField(default=0)
 
-	class Meta:
-		ordering = ["parent_id", "order", "name"]
-		verbose_name = "Photo type"
-		verbose_name_plural = "Photo types"
+    class Meta:
+        ordering = ["parent_id", "order", "name"]
+        verbose_name = "Photo type"
+        verbose_name_plural = "Photo types"
 
-	def __str__(self):
-		return self.full_path()
+    def __str__(self):
+        return self.full_path()
 
-	def path_nodes(self):
-		nodes = []
-		current = self
-		while current is not None:
-			nodes.append(current)
-			current = current.parent
-		nodes.reverse()
-		return nodes
+    def path_nodes(self):
+        nodes = []
+        current = self
+        while current is not None:
+            nodes.append(current)
+            current = current.parent
+        nodes.reverse()
+        return nodes
 
-	def full_path(self):
-		return " / ".join(node.name for node in self.path_nodes())
+    def full_path(self):
+        return " / ".join(node.name for node in self.path_nodes())
 
-	def has_visible_children(self):
-		return self.children.filter(is_visible=True).exists()
+    def has_visible_children(self):
+        return self.children.filter(is_visible=True).exists()
 
 
 class SponsorProjectPhotoConfig(models.Model):
-	"""Controls which SponsorProjects appear in the photo upload tool."""
-	sponsor_project = models.OneToOneField(
-		"sponsor.SponsorProject",
-		on_delete=models.CASCADE,
-		related_name="photo_config",
-	)
-	is_visible_in_photo_upload = models.BooleanField(
-		default=False,
-		help_text="If checked, this project appears in the photo upload sponsor dropdown.",
-	)
+    """Controls which SponsorProjects appear in the photo upload tool."""
 
-	class Meta:
-		verbose_name = "Sponsor Project Photo Config"
-		verbose_name_plural = "Sponsor Project Photo Configs"
+    sponsor_project = models.OneToOneField(
+        "sponsor.SponsorProject",
+        on_delete=models.CASCADE,
+        related_name="photo_config",
+    )
+    is_visible_in_photo_upload = models.BooleanField(
+        default=False,
+        help_text="If checked, this project appears in the photo upload sponsor dropdown.",
+    )
 
-	def __str__(self):
-		return "{} - {}".format(
-			self.sponsor_project.name,
-			"Visible" if self.is_visible_in_photo_upload else "Hidden",
-		)
+    class Meta:
+        verbose_name = "Sponsor Project Photo Config"
+        verbose_name_plural = "Sponsor Project Photo Configs"
 
+    def __str__(self):
+        return "{} - {}".format(
+            self.sponsor_project.name,
+            "Visible" if self.is_visible_in_photo_upload else "Hidden",
+        )
 
 
 class SlumPhotoUpload(models.Model):
-	PROJECT_TYPE_CHOICES = (
-		("OHOT", "OHOT"),
-		("MHM", "MHM"),
-		("Housing", "Housing"),
-		("Other", "Other"),
-	)
+    PROJECT_TYPE_CHOICES = (
+        ("OHOT", "OHOT"),
+        ("MHM", "MHM"),
+        ("Housing", "Housing"),
+        ("Other", "Other"),
+    )
 
-	slum = models.ForeignKey("master.Slum", null=True, blank=True, on_delete=models.CASCADE, related_name="photo_uploads")
-	project_type = models.CharField(max_length=20, choices=PROJECT_TYPE_CHOICES, default="OHOT")
-	project_type_other = models.CharField(max_length=200, blank=True)
-	photo_type_item = models.ForeignKey(
-		"helpers.PhotoTypeItem",
-		null=True,
-		blank=True,
-		on_delete=models.SET_NULL,
-	)
-	photo_type_item_name = models.CharField(max_length=200, blank=True)
-	photo_type_path = models.CharField(max_length=500, blank=True)
-	photo_date = models.DateField(null=True, blank=True)
-	is_city_level = models.BooleanField(default=False)
-	is_other_upload = models.BooleanField(default=False)
-	custom_folder_name = models.CharField(max_length=200, blank=True)
-	photo_comment = models.TextField(blank=True)
-	sponsor_project = models.ForeignKey(
-		"sponsor.SponsorProject",
-		null=True,
-		blank=True,
-		on_delete=models.SET_NULL,
-		related_name="photo_uploads",
-	)
-	event_name = models.CharField(max_length=200, blank=True)
-	uploaded_by = models.ForeignKey(settings.AUTH_USER_MODEL, null=True, blank=True, on_delete=models.SET_NULL)
-	uploaded_at = models.DateTimeField(auto_now_add=True)
-	hierarchy_path = models.CharField(max_length=500, blank=True)
+    slum = models.ForeignKey(
+        "master.Slum",
+        null=True,
+        blank=True,
+        on_delete=models.CASCADE,
+        related_name="photo_uploads",
+    )
+    project_type = models.CharField(
+        max_length=20, choices=PROJECT_TYPE_CHOICES, default="OHOT"
+    )
+    project_type_other = models.CharField(max_length=200, blank=True)
+    photo_type_item = models.ForeignKey(
+        "helpers.PhotoTypeItem",
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+    )
+    photo_type_item_name = models.CharField(max_length=200, blank=True)
+    photo_type_path = models.CharField(max_length=500, blank=True)
+    photo_date = models.DateField(null=True, blank=True)
+    is_city_level = models.BooleanField(default=False)
+    is_other_upload = models.BooleanField(default=False)
+    custom_folder_name = models.CharField(max_length=200, blank=True)
+    photo_comment = models.TextField(blank=True)
+    sponsor_project = models.ForeignKey(
+        "sponsor.SponsorProject",
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name="photo_uploads",
+    )
+    event_name = models.CharField(max_length=200, blank=True)
+    uploaded_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL, null=True, blank=True, on_delete=models.SET_NULL
+    )
+    uploaded_at = models.DateTimeField(auto_now_add=True)
+    hierarchy_path = models.CharField(max_length=500, blank=True)
 
 
 class SlumPhoto(models.Model):
-	upload_batch = models.ForeignKey(
-		"helpers.SlumPhotoUpload", on_delete=models.CASCADE, related_name="files"
-	)
-	file_name = models.CharField(max_length=300)
-	web_view_link = models.CharField(max_length=1000, blank=True)
-	web_content_link = models.CharField(max_length=1000, blank=True)
-	drive_file_id = models.CharField(max_length=200, blank=True)
-	size_bytes = models.BigIntegerField(null=True, blank=True)
-	content_type = models.CharField(max_length=100, blank=True)
+    upload_batch = models.ForeignKey(
+        "helpers.SlumPhotoUpload", on_delete=models.CASCADE, related_name="files"
+    )
+    file_name = models.CharField(max_length=300)
+    web_view_link = models.CharField(max_length=1000, blank=True)
+    web_content_link = models.CharField(max_length=1000, blank=True)
+    drive_file_id = models.CharField(max_length=200, blank=True)
+    size_bytes = models.BigIntegerField(null=True, blank=True)
+    content_type = models.CharField(max_length=100, blank=True)
 
-	class Meta:
-		verbose_name = "Slum Photo"
-		verbose_name_plural = "Slum Photos"
+    class Meta:
+        verbose_name = "Slum Photo"
+        verbose_name_plural = "Slum Photos"
 
-	def __str__(self):
-		return f"{self.upload_batch} - {self.file_name}"
+    def __str__(self):
+        return f"{self.upload_batch} - {self.file_name}"

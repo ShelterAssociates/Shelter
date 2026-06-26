@@ -30,23 +30,21 @@ def accounts_excel_generation():
     sheet1.write(0, 17, 'Unloading Charges')
     sheet1.write(0, 18, 'Amount')
 
-    invoiceItems = InvoiceItems.objects.filter(slum__id = 1094)
+    invoiceItems = InvoiceItems.objects.filter(slum__id=1094)
     dict_of_dict = collections.defaultdict(dict)
-
 
     for i in invoiceItems:
         for j in i.household_numbers:
             try:
-                dict_of_dict[(j, i.slum)].update({i.material_type:i})
+                dict_of_dict[(j, i.slum)].update({i.material_type: i})
             except:
-                dict_of_dict[(j, i.slum)] = {i.material_type:i}
-           
+                dict_of_dict[(j, i.slum)] = {i.material_type: i}
+
     i = 1
-    for k,v in dict_of_dict.iteritems():
-        for inner_k, inner_v in v.iteritems():
-            print i
-	    amount = inner_v.quantity * inner_v.rate
-            tax_amount = round((float(inner_v.tax)/100) * float(inner_v.quantity) * float(inner_v.rate) , 2)
+    for k, v in dict_of_dict.items():
+        for inner_k, inner_v in v.items():
+            amount = inner_v.quantity * inner_v.rate
+            tax_amount = round((float(inner_v.tax) / 100) * float(inner_v.quantity) * float(inner_v.rate), 2)
             total = amount + tax_amount
             sheet1.write(i, 0, str(inner_v.invoice.invoice_date))
             sheet1.write(i, 1, inner_v.invoice.invoice_number)
@@ -61,7 +59,6 @@ def accounts_excel_generation():
                 sheet1.write(i, 8, 'Phase - II')
             if inner_v.phase == '3':
                 sheet1.write(i, 9, 'Phase - III')
-           
             sheet1.write(i, 10, inner_k.name)
             sheet1.write(i, 11, inner_v.quantity)
             sheet1.write(i, 12, inner_v.rate)
@@ -70,10 +67,9 @@ def accounts_excel_generation():
             sheet1.write(i, 15, tax_amount)
             sheet1.write(i, 16, inner_v.invoice.transport_charges)
             sheet1.write(i, 17, inner_v.invoice.loading_unloading_charges)
-            sheet1.write(i, 18, total)  
+            sheet1.write(i, 18, total)
             i = i + 1
-            print i
-        
+
     wb.save('/home/ubuntu/aa1.xlsx')
 
 accounts_excel_generation()

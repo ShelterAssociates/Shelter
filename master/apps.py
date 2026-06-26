@@ -8,9 +8,8 @@ from django.apps import AppConfig
 class MasterAppConfig(AppConfig):
     """Used for app configuration"""
 
-    name = 'master'
+    name = "master"
 
     def ready(self):
         """Imports the signals file into django.apps"""
         import master.signals
-            

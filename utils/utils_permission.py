@@ -20,8 +20,8 @@ def _is_production():
     Returns True if running in production, based on BASE_APP_URL.
     Local dev URLs contain '127.0.0.1' or 'localhost'.
     """
-    base_url = getattr(settings, 'BASE_APP_URL', '')
-    return '127.0.0.1' not in base_url and 'localhost' not in base_url
+    base_url = getattr(settings, "BASE_APP_URL", "")
+    return "127.0.0.1" not in base_url and "localhost" not in base_url
 
 
 def deco_rhs_permission(view_func):
@@ -29,15 +29,18 @@ def deco_rhs_permission(view_func):
     Restricts a view to superusers, sponsors, or ULB group members.
     Any user outside these three groups gets a 403 Forbidden response.
     """
+
     @functools.wraps(view_func)
     def _wrapped_view(request, *args, **kwargs):
         permissions = [
             request.user.is_superuser,
-            request.user.groups.filter(name='sponsor').exists(),
-            request.user.groups.filter(name='ulb').exists(),
+            request.user.groups.filter(name="sponsor").exists(),
+            request.user.groups.filter(name="ulb").exists(),
         ]
         if not any(permissions):
-            return HttpResponseForbidden("You do not have permission to access this page.")
+            return HttpResponseForbidden(
+                "You do not have permission to access this page."
+            )
         return view_func(request, *args, **kwargs)
 
     return _wrapped_view
@@ -59,10 +62,11 @@ def apply_permissions_ajax(perms):
         @apply_permissions_ajax('myapp.can_do_thing')
         def my_view(request): ...
     """
+
     def real_decorator(view_func):
         @functools.wraps(view_func)
         def _wrapped_view(request, *args, **kwargs):
-            is_ajax = request.headers.get('X-Requested-With') == 'XMLHttpRequest'
+            is_ajax = request.headers.get("X-Requested-With") == "XMLHttpRequest"
             permissions = [
                 is_ajax,
                 request.user.has_perm(perms),
@@ -72,6 +76,7 @@ def apply_permissions_ajax(perms):
             return view_func(request, *args, **kwargs)
 
         return _wrapped_view
+
     return real_decorator
 
 
@@ -94,11 +99,14 @@ def access_right(func):
     not a hard security boundary. Use proper authentication and Django
     permissions for sensitive operations.
     """
+
     @functools.wraps(func)
     def wrapper(request, *args, **kwargs):
         if _is_production():
-            allowed_domain = settings.BASE_APP_URL.replace('https://', '').replace('http://', '')
-            referer = request.META.get('HTTP_REFERER', '')
+            allowed_domain = settings.BASE_APP_URL.replace("https://", "").replace(
+                "http://", ""
+            )
+            referer = request.META.get("HTTP_REFERER", "")
             if not referer or allowed_domain not in referer:
                 raise PermissionDenied()
         return func(request, *args, **kwargs)
