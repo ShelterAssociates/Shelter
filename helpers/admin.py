@@ -6,10 +6,8 @@ from .models import (
     ReminderTracker,
     SlumPhoto,
     SlumPhotoUpload,
-    SponsorProjectPhotoConfig,
+    SponsorPhotoConfig,
 )
-
-# Register your models here.
 
 
 @admin.register(OTPVerification)
@@ -53,22 +51,22 @@ class PhotoTypeItemAdmin(admin.ModelAdmin):
     full_path_display.short_description = "Photo type path"
 
 
-@admin.register(SponsorProjectPhotoConfig)
-class SponsorProjectPhotoConfigAdmin(admin.ModelAdmin):
+@admin.register(SponsorPhotoConfig)
+class SponsorPhotoConfigAdmin(admin.ModelAdmin):
     list_display = (
-        "sponsor_project",
-        "sponsor_organization_name",
+        "sponsor",
+        "name",
         "is_visible_in_photo_upload",
     )
     list_editable = ("is_visible_in_photo_upload",)
     search_fields = (
-        "sponsor_project__name",
-        "sponsor_project__sponsor__organization_name",
+        "sponsor__organization_name",
+        "name",
     )
 
     def sponsor_organization_name(self, obj):
-        if obj.sponsor_project and obj.sponsor_project.sponsor:
-            return obj.sponsor_project.sponsor.organization_name
+        if obj.sponsor and obj.sponsor.organization_name:
+            return obj.sponsor.organization_name
         return ""
 
     sponsor_organization_name.short_description = "Sponsor"
@@ -96,11 +94,11 @@ class SlumPhotoUploadAdmin(admin.ModelAdmin):
         "is_city_level",
         "is_other_upload",
         "photo_type_item_display",
-        "sponsor_project",
+        "sponsor_config",
         "uploaded_by",
         "uploaded_at",
     )
-    list_filter = ("sponsor_project", "uploaded_at")
+    list_filter = ("sponsor_config", "uploaded_at")
     search_fields = (
         "slum__name",
         "photo_type_item_name",

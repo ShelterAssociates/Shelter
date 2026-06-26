@@ -105,30 +105,33 @@ class PhotoTypeItem(models.Model):
         return self.children.filter(is_visible=True).exists()
 
 
-class SponsorProjectPhotoConfig(models.Model):
-    """Controls which SponsorProjects appear in the photo upload tool."""
+class SponsorPhotoConfig(models.Model):
+    """Controls which Sponsors appear in the photo upload tool."""
 
-    sponsor_project = models.OneToOneField(
-        "sponsor.SponsorProject",
+    sponsor = models.ForeignKey(
+        "sponsor.Sponsor",
         on_delete=models.CASCADE,
-        related_name="photo_config",
+        related_name="photo_configs",
+    )
+    name = models.CharField(
+        max_length=200,
+        unique=True,
+        help_text="A unique display name shown to users in the photo upload dropdown.",
     )
     is_visible_in_photo_upload = models.BooleanField(
         default=False,
-        help_text="If checked, this project appears in the photo upload sponsor dropdown.",
+        help_text="If checked, this sponsor appears in the photo upload sponsor dropdown.",
     )
 
     class Meta:
-        verbose_name = "Sponsor Project Photo Config"
-        verbose_name_plural = "Sponsor Project Photo Configs"
+        verbose_name = "Sponsor Photo Config"
+        verbose_name_plural = "Sponsor Photo Configs"
 
     def __str__(self):
         return "{} - {}".format(
-            self.sponsor_project.name,
+            self.name,
             "Visible" if self.is_visible_in_photo_upload else "Hidden",
         )
-
-
 class SlumPhotoUpload(models.Model):
     PROJECT_TYPE_CHOICES = (
         ("OHOT", "OHOT"),
@@ -161,8 +164,8 @@ class SlumPhotoUpload(models.Model):
     is_other_upload = models.BooleanField(default=False)
     custom_folder_name = models.CharField(max_length=200, blank=True)
     photo_comment = models.TextField(blank=True)
-    sponsor_project = models.ForeignKey(
-        "sponsor.SponsorProject",
+    sponsor_config = models.ForeignKey(
+        "helpers.SponsorPhotoConfig",
         null=True,
         blank=True,
         on_delete=models.SET_NULL,
