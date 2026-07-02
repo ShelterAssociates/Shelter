@@ -148,6 +148,32 @@
     margin-bottom: 13px;
 }
 
+.pu-field-invalid>label {
+    color: var(--pu-red);
+}
+
+.pu-field-invalid select,
+.pu-field-invalid input[type='text'],
+.pu-field-invalid input[type='date'],
+.pu-field-invalid input[type='file'],
+.pu-field-invalid textarea {
+    border-color: var(--pu-red-bd);
+}
+
+.pu-field-invalid select:focus,
+.pu-field-invalid input[type='text']:focus,
+.pu-field-invalid input[type='date']:focus,
+.pu-field-invalid input[type='file']:focus,
+.pu-field-invalid textarea:focus {
+    border-color: var(--pu-red);
+    box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.1);
+}
+
+.pu-field-invalid #photoTypeSummary {
+    border-color: var(--pu-red-bd);
+    background: var(--pu-red-bg);
+}
+
 .pu-field>label {
     display: block;
     font-size: 11px;
@@ -156,6 +182,10 @@
     margin-bottom: 5px;
     letter-spacing: 0.04em;
     text-transform: uppercase;
+}
+
+.pu-required-asterisk {
+    color: var(--pu-red);
 }
 
 .pu-field select {

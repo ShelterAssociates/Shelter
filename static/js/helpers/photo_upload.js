@@ -11,7 +11,7 @@
             adminWardListUrl: $c.data('administrative-ward-list-url'),
             electoralWardListUrl: $c.data('electoral-ward-list-url'),
             slumListUrl: $c.data('slum-list-url'),
-            sponsorProjectListUrl: $c.data('sponsor-project-list-url'),
+            sponsorListUrl: $c.data('sponsor-list-url'),
             photoTypeItemsUrl: $c.data('photo-type-items-url'),
             manageTreeUrl: $c.data('manage-tree-url'),
             manageToggleUrl: $c.data('manage-toggle-url'),
@@ -66,12 +66,10 @@
     loadCities()
 
     /* Load sponsor projects on page load */
-    $.get(cfg.sponsorProjectListUrl, function (data) {
-        populateSelect($('#sponsor_project'), data, '— No Sponsor Project —')
-        // re-prepend the "no project" blank option
-        $('#sponsor_project option:first').text('— No Sponsor Project —')
+    $.get(cfg.sponsorListUrl, function (data) {
+        populateSelect($('#sponsor_project'), data, '— Select Sponsor Project —')
     }).fail(function () {
-        // sponsor project is optional – silently ignore failures
+        // sponsor project list failed to load; the field still validates normally
     })
 
     $('#city').on('change', function () {
@@ -79,6 +77,8 @@
         disableSelect($('#admin_ward'), '— Select Administrative Ward —')
         disableSelect($('#electoral_ward'), '— Select Electoral Ward —')
         disableSelect($('#slum'), '— Select Slum —')
+        syncFieldValidity('cityField')
+        syncFieldValidity('slumField')
         if (!cityId) return
         /* administrativewardList expects POST with param 'id' */
         $.post(cfg.adminWardListUrl, { id: cityId, csrfmiddlewaretoken: cfg.csrfToken }, function (data) {
@@ -90,6 +90,7 @@
         var wardId = $(this).val()
         disableSelect($('#electoral_ward'), '— Select Electoral Ward —')
         disableSelect($('#slum'), '— Select Slum —')
+        syncFieldValidity('slumField')
         if (!wardId) return
         /* electoralWardList expects POST with param 'id' */
         $.post(cfg.electoralWardListUrl, { id: wardId, csrfmiddlewaretoken: cfg.csrfToken }, function (data) {
@@ -100,6 +101,7 @@
     $('#electoral_ward').on('change', function () {
         var eWardId = $(this).val()
         disableSelect($('#slum'), '— Select Slum —')
+        syncFieldValidity('slumField')
         if (!eWardId) return
         /* slumList expects POST with param 'id' */
         $.post(cfg.slumListUrl, { id: eWardId, csrfmiddlewaretoken: cfg.csrfToken }, function (data) {
@@ -125,6 +127,94 @@
     var $projectTypeOther = $('#project_type_other')
     var $photoComment = $('#photo_comment')
     var photoTypePickerRequestId = 0
+
+    function currentUploadMode() {
+        var isOther = $otherUpload.is(':checked')
+        var isCityLevel = $cityLevel.is(':checked') && !isOther
+        return {
+            isOther: isOther,
+            isCityLevel: isCityLevel
+        }
+    }
+
+    function isBlank(value) {
+        return !value || !$.trim(String(value))
+    }
+
+    function setFieldValidity(fieldId, isValid) {
+        var $field = $('#' + fieldId)
+        if ($field.length) {
+            $field.toggleClass('pu-field-invalid', !isValid)
+        }
+    }
+
+    function isPhotoDateValid() {
+        var value = $photoDate.val()
+        if (isBlank(value)) return false
+        var today = new Date().toISOString().slice(0, 10)
+        return value <= today
+    }
+
+    function isPhotosValid() {
+        var fileInput = $('#photos')[0]
+        return !!(fileInput && fileInput.files && fileInput.files.length > 0 && fileInput.files.length <= 5)
+    }
+
+    function isProjectTypeOtherValid() {
+        return $projectType.val() !== 'Other' || !isBlank($projectTypeOther.val())
+    }
+
+    function syncFieldValidity(fieldId) {
+        var mode = currentUploadMode()
+        var isValid = true
+
+        if (fieldId === 'photoDateField') {
+            isValid = isPhotoDateValid()
+        } else if (fieldId === 'projectTypeField') {
+            isValid = !isBlank($projectType.val())
+        } else if (fieldId === 'projectTypeOtherField') {
+            isValid = isProjectTypeOtherValid()
+        } else if (fieldId === 'sponsorProjectField') {
+            isValid = !isBlank($('#sponsor_project').val())
+        } else if (fieldId === 'photosField') {
+            isValid = isPhotosValid()
+        } else if (fieldId === 'customFolderField') {
+            isValid = !mode.isOther || !isBlank($customFolder.val())
+        } else if (fieldId === 'cityField') {
+            isValid = !mode.isCityLevel || !isBlank($('#city').val())
+        } else if (fieldId === 'slumField') {
+            isValid = mode.isOther || mode.isCityLevel || !isBlank($('#slum').val())
+        } else if (fieldId === 'photoTypeField') {
+            isValid = mode.isOther || !isBlank($hiddenTypeId.val())
+        }
+
+        setFieldValidity(fieldId, isValid)
+        return isValid
+    }
+
+    function syncRelevantValidationState() {
+        var mode = currentUploadMode()
+
+        syncFieldValidity('photoDateField')
+        syncFieldValidity('projectTypeField')
+        syncFieldValidity('projectTypeOtherField')
+        syncFieldValidity('sponsorProjectField')
+        syncFieldValidity('photosField')
+
+        if (mode.isOther) {
+            syncFieldValidity('customFolderField')
+        } else if (mode.isCityLevel) {
+            syncFieldValidity('cityField')
+            syncFieldValidity('photoTypeField')
+        } else {
+            syncFieldValidity('slumField')
+            syncFieldValidity('photoTypeField')
+        }
+    }
+
+    function clearValidationState() {
+        $('.pu-field-invalid').removeClass('pu-field-invalid')
+    }
 
     if ($photoDate.length) {
         var today = cfg.defaultPhotoDate || new Date().toISOString().slice(0, 10)
@@ -167,6 +257,9 @@
             $projectTypeOther.prop('required', false)
             $projectTypeOther.val('')
         }
+
+        syncFieldValidity('projectTypeField')
+        syncFieldValidity('projectTypeOtherField')
     }
 
     function addLevelRow(items, levelIndex, labelText) {
@@ -189,6 +282,7 @@
             $hiddenTypeId.val('')
             checkUploadReady()
             updateSummary()
+            syncFieldValidity('photoTypeField')
 
             if (!selectedId) return
 
@@ -202,17 +296,20 @@
                         $hiddenTypeId.val(selectedId)
                         checkUploadReady()
                         updateSummary()
+                        syncFieldValidity('photoTypeField')
                     }
                 }).fail(function () {
                     $hiddenTypeId.val(selectedId)
                     checkUploadReady()
                     updateSummary()
+                    syncFieldValidity('photoTypeField')
                 })
             } else {
                 /* leaf node — set value directly */
                 $hiddenTypeId.val(selectedId)
                 checkUploadReady()
                 updateSummary()
+                syncFieldValidity('photoTypeField')
             }
         })
     }
@@ -223,8 +320,9 @@
     }
 
     function setUploadMode() {
-        var isOther = $otherUpload.is(':checked')
-        var isCityLevel = $cityLevel.is(':checked') && !isOther
+        var mode = currentUploadMode()
+        var isOther = mode.isOther
+        var isCityLevel = mode.isCityLevel
 
         if (isOther) {
             $cityLevel.prop('checked', false)
@@ -253,6 +351,7 @@
             }
 
             if (isCityLevel) {
+                $('#adminWardField, #electoralWardField, #slumField').addClass('pu-hidden')
                 disableSelect($('#admin_ward'), '— Select Administrative Ward —')
                 disableSelect($('#electoral_ward'), '— Select Electoral Ward —')
                 disableSelect($('#slum'), '— Select Slum —')
@@ -267,6 +366,7 @@
             }
         }
 
+        clearValidationState()
         checkUploadReady()
     }
 
@@ -304,8 +404,9 @@
        ════════════════════════════════════════ */
 
     function checkUploadReady() {
-        var isOther = $otherUpload.is(':checked')
-        var isCityLevel = $cityLevel.is(':checked') && !isOther
+        var mode = currentUploadMode()
+        var isOther = mode.isOther
+        var isCityLevel = mode.isCityLevel
         var photoDate = $photoDate.val()
         var slumId = $('#slum').val()
         var typeId = $hiddenTypeId.val()
@@ -318,19 +419,48 @@
         var locationValid = isOther ? true : (isCityLevel ? $('#city').val() : slumId)
         var typeValid = isOther ? true : typeId
         var projectTypeValid = !!projectType
-        $('#uploadButton').prop('disabled', !(locationValid && typeValid && projectTypeValid && projectTypeOtherValid && hasPhotos && validDate && customFolderValid))
+        var sponsorProjectValid = !isBlank($('#sponsor_project').val())
+        $('#uploadButton').prop('disabled', !(locationValid && typeValid && projectTypeValid && projectTypeOtherValid && hasPhotos && validDate && customFolderValid && sponsorProjectValid))
     }
 
-    $('#slum, #photo_type_item_id').on('change', checkUploadReady)
-    $('#photos').on('change', checkUploadReady)
-    $('#city, #photo_date, #custom_folder_name, #project_type, #project_type_other').on('change keyup', function () {
+    $('#sponsor_project').on('change', function () {
+        checkUploadReady()
+        syncFieldValidity('sponsorProjectField')
+    })
+    $('#photos').on('change', function () {
+        checkUploadReady()
+        syncFieldValidity('photosField')
+    })
+    $('#city').on('change', function () {
+        checkUploadReady()
+        syncFieldValidity('cityField')
+        syncFieldValidity('slumField')
+    })
+    $('#photo_date').on('change keyup', function () {
+        checkUploadReady()
+        syncFieldValidity('photoDateField')
+    })
+    $('#custom_folder_name').on('change keyup', function () {
+        checkUploadReady()
+        syncFieldValidity('customFolderField')
+    })
+    $('#project_type').on('change keyup', function () {
         syncProjectTypeOtherField()
         checkUploadReady()
+        syncFieldValidity('projectTypeField')
+        syncFieldValidity('projectTypeOtherField')
+    })
+    $('#project_type_other').on('change keyup', function () {
+        syncProjectTypeOtherField()
+        checkUploadReady()
+        syncFieldValidity('projectTypeOtherField')
     })
     $('#photo_comment').on('change keyup', checkUploadReady)
 
-    /* Also hook slum select since it's a regular select not hidden */
-    $(document).on('change', '#slum', checkUploadReady)
+    $('#slum').on('change', function () {
+        checkUploadReady()
+        syncFieldValidity('slumField')
+    })
 
     function setStatus(type, html) {
         var $s = $('#uploadStatus')
@@ -464,6 +594,7 @@
                     disableSelect($('#slum'), '— Select Slum —')
                     $('#customFolderField').addClass('pu-hidden')
                     $('#cityField, #adminWardField, #electoralWardField, #slumField, #photoTypeField').removeClass('pu-hidden')
+                    clearValidationState()
                 } else {
                     setStatus('error', '❌ ' + (resp && resp.message ? resp.message : 'Upload failed. Please try again.'))
                 }
@@ -508,6 +639,8 @@
     $('#photoUploadForm').on('submit', function (e) {
         e.preventDefault()
 
+        syncRelevantValidationState()
+
         var files = $('#photos')[0].files
         if (!files || files.length === 0) {
             setStatus('error', 'Please select at least one photo.')
@@ -537,6 +670,11 @@
         }
         if ($projectType.val() === 'Other' && (!$projectTypeOther.val() || !$projectTypeOther.val().trim())) {
             setStatus('error', 'Please specify the project type.')
+            return
+        }
+
+        if (!$('#sponsor_project').val()) {
+            setStatus('error', 'Please select a sponsor project.')
             return
         }
 
