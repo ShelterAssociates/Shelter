@@ -6,7 +6,6 @@ import re
 import zipfile
 import uuid
 from datetime import date, datetime
-
 import requests
 from Crypto import Random
 from Crypto.Cipher import AES
@@ -460,19 +459,7 @@ def post_to_upload_service(payload):
     raise Exception("Photo upload service failed without a response.")
 
 
-def upload_photos_to_slum_drive_folder(
-    slum_id=None,
-    uploaded_files=None,
-    project_type="",
-    project_type_other="",
-    photo_type_item=None,
-    sponsor_project_id=None,
-    photo_date=None,
-    is_city_level=False,
-    is_other_upload=False,
-    custom_folder_name="",
-    city_id=None,
-):
+def upload_photos_to_slum_drive_folder(slum_id=None,uploaded_files=None,project_type="",project_type_other="",photo_type_item=None,sponsor_config=None,photo_date=None,is_city_level=False,is_other_upload=False,custom_folder_name="",city_id=None):
     slum = None
     city = None
     if slum_id:
@@ -512,23 +499,12 @@ def upload_photos_to_slum_drive_folder(
         "project_type": drive_context["project_type"],
         "project_type_other": drive_context["project_type_other"],
     }
+
     sponsor_name = ""
     sponsor_project_name = ""
-    if sponsor_project_id:
-        from sponsor.models import SponsorProject
-
-        sponsor_project = (
-            SponsorProject.objects.select_related("sponsor")
-            .filter(id=sponsor_project_id)
-            .first()
-        )
-        if sponsor_project:
-            sponsor_project_name = sponsor_project.name or ""
-            sponsor_name = (
-                sponsor_project.sponsor.organization_name
-                if sponsor_project.sponsor
-                else ""
-            )
+    if sponsor_config:
+        sponsor_project_name = sponsor_config.name or ""
+        sponsor_name = sponsor_config.sponsor.organization_name if sponsor_config.sponsor else ""
 
     location.update(
         {

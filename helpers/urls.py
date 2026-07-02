@@ -6,7 +6,7 @@ urlpatterns = [
     url(r"^photo-upload/$", photo_upload_page, name="photo_upload_page"),
     url(r"^photo-types/$", photo_type_list, name="photo_type_list"),
     url(r"^events/$", event_list, name="event_list"),
-    url(r"^sponsor-projects/$", sponsor_project_list, name="sponsor_project_list"),
+    url(r"^sponsor-list/$", sponsor_list, name="sponsor_list"),
     url(r"^photo-type-groups/$", photo_type_groups, name="photo_type_groups"),
     url(r"^photo-type-items/$", photo_type_items, name="photo_type_items"),
     # Superuser management
