@@ -562,6 +562,28 @@ class Rapid_Slum_Appraisal(models.Model):
         null=True,
         max_length=255,
     )
+    electricity_info_left_image = models.ImageField(
+        validate_image,
+        upload_to=rapid_slum_upload_path,
+        blank=True,
+        null=True,
+        max_length=255,
+    )
+    electricity_image_bottomdown1 = models.ImageField(
+        validate_image,
+        upload_to=rapid_slum_upload_path,
+        blank=True,
+        null=True,
+        max_length=255,
+    )
+    electricity_image_bottomdown2 = models.ImageField(
+        validate_image,
+        upload_to=rapid_slum_upload_path,
+        blank=True,
+        null=True,
+        max_length=255,
+    )
+    electricity_coverage_percentage = models.IntegerField(blank=True, null=True)
     drainage_report_image = models.ImageField(
         upload_to=rapid_slum_upload_path, blank=True, null=True, max_length=255
     )

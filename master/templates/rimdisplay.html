@@ -1,177 +1,1124 @@
 {% extends "admin/base_site.html" %}
 {% load i18n %}
-{% block breadcrumbs %}
 {% load static %}
-<script>
-	$(document).ready(function() {
-		$('[data-toggle="tooltip"]').tooltip();
-	});
 
-	$(document).ready(function() {
-		$("#delete").click(function(event) {
+{% block breadcrumbs %}
+  <ol class="breadcrumb">
+    <li>
+      <a href="{% url "master:index" %}">Home</a>
+    </li>
+    <li class="active">Rapid Infrastructure Mapping</li>
+  </ol>
 
-			var boolcheck = false;
-			var inputArray = $('[name=selectcheckbox]');
-			for (var i = 0; i < inputArray.length; i++) {
-				if (inputArray[i].type == 'checkbox' && inputArray[i].checked == true) {
-					boolcheck = true;
-				}
-			}
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@ttskch/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" />
 
-			if (boolcheck == true) {
-				if (!confirm("Are you sure you want to delete ?")){
-					event.preventDefault();
-				}
-			} else {
-				alert("Please select checkbox ... ");
-				event.preventDefault();
-			}
+  <style>
+    /* ==============================================================
+                                    	   RIM — Rapid Infrastructure Mapping list page
+                                    	   Scoped under .rim-page so nothing here leaks into admin chrome.
+                                    	   ============================================================== */
+    
+    .rim-page {
+      --rim-ink: #1f2937;
+      --rim-muted: #6b7280;
+      --rim-line: #e5e7eb;
+      --rim-bg: #f8fafc;
+      --rim-surface: #ffffff;
+      --rim-accent: #2563eb;
+      --rim-accent-ink: #1d4ed8;
+      --rim-danger: #dc2626;
+    
+      --rim-general: #4f46e5;
+      --rim-general-bg: #eef2ff;
+      --rim-toilet: #b45309;
+      --rim-toilet-bg: #fffbeb;
+      --rim-water: #0e7490;
+      --rim-water-bg: #ecfeff;
+      --rim-roads: #475569;
+      --rim-roads-bg: #f1f5f9;
+      --rim-drainage: #7c3aed;
+      --rim-drainage-bg: #f5f3ff;
+      --rim-gutter: #0d9488;
+      --rim-gutter-bg: #f0fdfa;
+      --rim-waste: #059669;
+      --rim-waste-bg: #ecfdf5;
+      --rim-electricity: #d97706;
+      --rim-electricity-bg: #fffbeb;
+    
+      font-family: -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      color: var(--rim-ink);
+      margin: 0 20px 16px;
+      min-height: calc(100vh - 88px);
+      display: flex;
+      flex-direction: column;
+    }
+    
+    .rim-page * {
+      box-sizing: border-box;
+    }
+    
+    /* ---------- Page header ---------- */
+    .rim-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 10px 16px;
+      margin: 8px 0 6px;
+    }
+    .rim-header-title h2 {
+      margin: 0;
+      font-size: 22px;
+      font-weight: 700;
+      letter-spacing: -0.01em;
+      color: var(--rim-ink);
+    }
+    .rim-header-title p {
+      margin: 3px 0 0;
+      font-size: 13.5px;
+      color: var(--rim-muted);
+    }
+    .rim-header-actions {
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-left: auto;
+    }
+    .rim-header-count {
+      font-size: 14px;
+      color: var(--rim-muted);
+      white-space: nowrap;
+      padding-right: 2px;
+    }
+    .rim-header-count b {
+      color: var(--rim-ink);
+      font-weight: 600;
+    }
+    
+    /* ---------- Toolbar: search + actions ---------- */
+    .rim-toolbar {
+      display: flex;
+      align-items: stretch;
+      background: var(--rim-surface);
+      border: 1px solid var(--rim-line);
+      border-radius: 12px;
+      padding: 10px 12px;
+      margin-bottom: 8px;
+      box-shadow: 0 4px 18px rgba(15, 23, 42, 0.04);
+    }
 
-		});
-	});
+    .rim-filter-panel {
+      display: flex;
+      flex-direction: row;
+      flex-wrap: wrap;
+      align-items: flex-end;
+      gap: 12px 14px;
+      width: 100%;
+      min-width: 0;
+    }
 
-</script>
+    .rim-filter-title {
+      margin: 0;
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      color: var(--rim-muted);
+    }
 
+    .rim-filter-field {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      min-width: 250px;
+      flex: 1 1 180px;
+    }
 
-<ol class="breadcrumb">
-    <li><a href="{% url 'master:index' %}">Home</a></li>
-</ol>
+    .rim-filter-field label {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--rim-ink);
+    }
 
-<div style = "margin-left:1%;margin-right: 1%;">
-	<div >
-		<h2>Rapid Infrastructure Mapping Form</h2>
-	</div>
+    .rim-filter-panel input[type="text"],
+    .rim-filter-panel select {
+      width: 100%;
+      padding: 8px 10px;
+      border: 1px solid var(--rim-line);
+      border-radius: 10px;
+      font-size: 14px;
+      background: var(--rim-bg);
+      outline: none;
+      transition: border-color 0.15s, background 0.15s;
+    }
 
-	<div>
-		<form method='GET' action=''>
-			
-				<div >
-					<input type='text' name='q' placeholder='Search' value='{{request.GET.q}}' size="35"/>
-					&nbsp;&nbsp; &nbsp;&nbsp;
-					<button type='submit' value='Search' class="btn btn-primary" role="button">Search</button>
+    .rim-filter-panel input[type="text"]:focus,
+    .rim-filter-panel select:focus {
+      border-color: var(--rim-accent);
+      background: var(--rim-surface);
+    }
 
-				</div>	
-					
-		</form>
-	</div>
+    .rim-filter-select {
+      min-height: 40px;
+    }
 
-	<form  enctype="multipart/form-data" method="post" >
-		<div style="text-align:right;">
-			<a href="{% url 'master:riminsert' %}" style="text-decoration: none; color: #FFF;" class="btn btn-primary" role="button">Add New</a>&nbsp;
-			<button id ="delete" type="submit" class="btn btn-danger">Delete</button>&nbsp;
-            <a href="{% url 'master:index' %}" style="text-decoration: none; color: #FFF;" class="btn btn-primary" role="button">Back</a>&nbsp;&nbsp;
-		</div>
-		{% csrf_token %}
-		<br>
-		<div style=" overflow-x:scroll ; ">
-			<table class="table table-bordered" class= "col-md-12" >
-				<thead>
-					<tr>
-						<th></th>
+    .rim-filter-select + .select2-container {
+      width: 100% !important;
+    }
 
-						<th > Slum name </th>
+    .rim-filter-select + .select2-container .select2-selection--single {
+      min-height: 40px;
+      border: 1px solid var(--rim-line);
+      border-radius: 10px;
+      background: var(--rim-surface);
+      display: flex;
+      align-items: center;
+      padding: 0 4px;
+      transition: border-color 0.15s ease, box-shadow 0.15s ease;
+      box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+    }
 
-						<th > Approximate population </th>
-						<th > General info left image</th>
-						<th > General image bottomdown1 </th>
-						<th > General image bottomdown2 </th>
+    .rim-filter-select + .select2-container .select2-selection--single .select2-selection__rendered {
+      color: var(--rim-ink);
+      font-size: 14px;
+      padding-left: 2px;
+      padding-right: 28px;
+      line-height: 38px;
+    }
 
-						<th > Toilet cost </th>
-						<th > Toilet seat to persons ratio</th>
-						<th > Toilet info left image </th>
-						<th > Toilet image bottomdown1 </th>
-						<th > Toilet image bottomdown2 </th>
+    .rim-filter-select + .select2-container .select2-selection--single .select2-selection__placeholder {
+      color: var(--rim-muted);
+    }
 
-						<th > Percentage with an individual water connection</th>
-						<th > Water info left image </th>
-						<th > Water image bottomdown1 </th>
-						<th > Water image bottomdown2 </th>
+    .rim-filter-select + .select2-container .select2-selection--single .select2-selection__arrow {
+      height: 38px;
+      right: 6px;
+    }
 
-						<th > Roads and access info left image </th>
-						<th > Roads image bottomdown1 </th>
-						<th > Roads image bottomdown2 </th>
+    .rim-filter-select + .select2-container.select2-container--focus .select2-selection--single,
+    .rim-filter-select + .select2-container.select2-container--open .select2-selection--single {
+      border-color: var(--rim-accent);
+      box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.14);
+    }
 
-						<th > Drainage info left image </th>
-						<th > Drainage image bottomdown1</th>
-						<th > Drainage image bottomdown2 </th>
-						<th > Drainage Coverage </th>
+    .rim-filter-select + .select2-container .select2-selection__clear {
+      color: var(--rim-muted);
+      font-weight: 400;
+      margin-right: 8px;
+    }
 
-						<th > Gutter info left image </th>
-						<th > Gutter image bottomdown1</th>
-						<th > Gutter image bottomdown2</th>
+    .rim-filter-select + .select2-container .select2-selection__clear:hover {
+      color: var(--rim-danger);
+    }
 
-						<th > Frequency of clearance of waste containers</th>
-						<th > Waste management info left image </th>
-						<th > Waste management image bottomdown1 </th>
-						<th > Waste management image bottomdown2 </th>
+    .select2-dropdown {
+      border: 1px solid var(--rim-line);
+      border-radius: 10px;
+      overflow: hidden;
+      box-shadow: 0 18px 40px rgba(15, 23, 42, 0.14);
+    }
 
-					</tr>
+    .select2-container--bootstrap-5 .select2-dropdown .select2-search__field {
+      border-radius: 8px;
+    }
 
-				</thead>
-				<tbody bgcolor='lavender'>
-				{% for i in RA%}
-					<tr>
-						<td>
-						<input id={{i.id}} type="checkbox" name="selectcheckbox" value={{i.id}}>
-						</td>
+    .rim-filter-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-left: auto;
+      align-self: flex-end;
+      padding-top: 0;
+      padding-bottom: 1px;
+    }
+    
+    .rim-search-form {
+      display: flex;
+      flex-direction: row;
+      flex-wrap: wrap;
+      align-items: stretch;
+      gap: 12px;
+      flex: 1;
+      min-width: 260px;
+    }
+    .rim-search-wrap {
+      position: relative;
+    }
+    .rim-search-wrap svg {
+      position: absolute;
+      left: 11px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 15px;
+      height: 15px;
+      color: var(--rim-muted);
+      pointer-events: none;
+    }
+    .rim-search-wrap input[type="text"] {
+      padding-left: 32px;
+      padding-right: 34px;
+    }
+    .rim-search-clear {
+      position: absolute;
+      right: 8px;
+      top: 50%;
+      transform: translateY(-50%);
+      border: none;
+      background: none;
+      color: var(--rim-muted);
+      cursor: pointer;
+      font-size: 15px;
+      line-height: 1;
+      padding: 2px;
+    }
+    .rim-search-clear:hover {
+      color: var(--rim-ink);
+    }
+    
+    .rim-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      border: 1px solid transparent;
+      border-radius: 8px;
+      padding: 0 16px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      text-decoration: none;
+      white-space: nowrap;
+      transition: background 0.15s, border-color 0.15s, color 0.15s;
+      min-height: 40px;
+      box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+    }
+    .rim-btn-primary {
+      background: rgb(193, 229, 233);
+      color: #fff;
+      border-color: #2563eb;
+      font-weight: 700;
+    }
+    .rim-btn-primary:hover {
+      background: #1d4ed8;
+      color: #fff;
+      border-color: #1d4ed8;
+    }
+    .rim-btn-ghost {
+      background: var(--rim-surface);
+      color: #374151;
+      border-color: #d1d5db;
+    }
+    .rim-btn-ghost:hover {
+      background: #f9fafb;
+      border-color: #cbd5e1;
+    }
+    .rim-btn-danger {
+      background: #fef2f2;
+      color: #dc2626;
+      border-color: #fca5a5;
+    }
+    .rim-btn-danger:hover {
+      background: #fee2e2;
+      border-color: #f87171;
+    }
+    
+    .rim-actions {
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 8px;
+      flex-wrap: wrap;
+      flex: 1 1 220px;
+      align-self: flex-start;
+      padding-top: 1px;
+    }
+    
+    .rim-count {
+      font-size: 12.5px;
+      color: var(--rim-muted);
+      white-space: nowrap;
+    }
+    .rim-count b {
+      color: var(--rim-ink);
+    }
+    
+    /* ---------- Legend (column groups) ---------- */
+    .rim-legend {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px 14px;
+      margin: 0 0 6px;
+      font-size: 12.5px;
+      color: var(--rim-muted);
+    }
+    .rim-legend span {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .rim-legend i {
+      width: 9px;
+      height: 9px;
+      border-radius: 2px;
+      display: inline-block;
+    }
+    
+    /* ---------- Table shell ---------- */
+    .rim-table-shell {
+      position: relative;
+      border: 1px solid var(--rim-line);
+      border-radius: 10px;
+      background: var(--rim-surface);
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      min-height: 0;
+      flex: 1 1 auto;
+    }
+    .rim-table-scroll {
+      overflow: auto;
+      height: calc(100vh - 304px);
+      max-height: calc(100vh - 304px);
+      min-height: 380px;
+      flex: 1 1 auto;
+    }
+    
+    .rim-table {
+      border-collapse: separate;
+      border-spacing: 0;
+      width: 100%;
+      font-size: 13px;
+    }
+    
+    .rim-table th,
+    .rim-table td {
+      border-right: 1px solid var(--rim-line);
+      border-bottom: 1px solid var(--rim-line);
+      padding: 6px 8px;
+      text-align: left;
+      vertical-align: middle;
+      white-space: nowrap;
+    }
+    .rim-table th:last-child,
+    .rim-table td:last-child {
+      border-right: none;
+    }
+    
+    /* group header row */
+    .rim-table thead tr.rim-group-row th {
+      position: sticky;
+      top: 0;
+      z-index: 4;
+      height: 30px;
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      font-weight: 700;
+      text-align: center;
+      color: #fff;
+    }
+    .rim-table thead tr.rim-group-row th.rim-g-general {
+      background: var(--rim-general);
+    }
+    .rim-table thead tr.rim-group-row th.rim-g-toilet {
+      background: var(--rim-toilet);
+    }
+    .rim-table thead tr.rim-group-row th.rim-g-water {
+      background: var(--rim-water);
+    }
+    .rim-table thead tr.rim-group-row th.rim-g-roads {
+      background: var(--rim-roads);
+    }
+    .rim-table thead tr.rim-group-row th.rim-g-drainage {
+      background: var(--rim-drainage);
+    }
+    .rim-table thead tr.rim-group-row th.rim-g-gutter {
+      background: var(--rim-gutter);
+    }
+    .rim-table thead tr.rim-group-row th.rim-g-waste {
+      background: var(--rim-waste);
+    }
+    .rim-table thead tr.rim-group-row th.rim-g-electricity {
+      background: var(--rim-electricity);
+    }
+    
+    /* column header row */
+    .rim-table thead tr.rim-col-row th {
+      position: sticky;
+      top: 30px;
+      z-index: 3;
+      background: #f3f4f6;
+      color: var(--rim-ink);
+      font-size: 12px;
+      font-weight: 600;
+      white-space: normal;
+      min-width: 150px;
+      max-width: 220px;
+      line-height: 1.3;
+    }
+    
+    /* pinned identity columns (checkbox / slum name / population) */
+    .rim-table th.rim-pin,
+    .rim-table td.rim-pin {
+      position: sticky;
+      background: var(--rim-surface);
+      z-index: 2;
+    }
+    .rim-table thead th.rim-pin {
+      z-index: 5;
+      background: #f3f4f6;
+    }
+    .rim-table thead tr.rim-group-row th.rim-pin {
+      background: #f3f4f6;
+      color: var(--rim-ink);
+      z-index: 6;
+    }
+    
+    .rim-col-check {
+      left: 0;
+      width: 38px;
+      min-width: 38px;
+      max-width: 38px;
+      text-align: center;
+    }
+    .rim-col-name {
+      left: 38px;
+      width: 230px;
+      min-width: 230px;
+      max-width: 230px;
+      overflow: hidden;
+      white-space: nowrap;
+      box-shadow: 2px 0 4px rgba(0, 0, 0, 0.04);
+    }
+    .rim-col-pop {
+      left: 0;
+    } /* population no longer pinned by default, see note below */
+    
+    .rim-table tbody tr {
+      background: var(--rim-surface);
+    }
+    .rim-table tbody tr:nth-child(even) {
+      background: #fafbfc;
+    }
+    .rim-table tbody tr:nth-child(even) td.rim-pin {
+      background: #fafbfc;
+    }
+    .rim-table tbody tr:hover {
+      background: #eff6ff;
+    }
+    .rim-table tbody tr:hover td.rim-pin {
+      background: #eff6ff;
+    }
+    
+    .rim-slum-link {
+      color: var(--rim-accent-ink);
+      font-weight: 600;
+      text-decoration: none;
+      display: block;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .rim-slum-link:hover {
+      text-decoration: underline;
+    }
+    
+    .rim-num {
+      text-align: right;
+      font-variant-numeric: tabular-nums;
+    }
+    
+    .rim-file {
+      display: inline-block;
+      max-width: 200px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-size: 11.5px;
+      color: #374151;
+      vertical-align: middle;
+    }
+    .rim-empty {
+      color: #c4c9d2;
+    }
+    
+    /* ---------- Pagination ---------- */
+    .rim-pagination {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 14px;
+      padding: 8px 10px 0;
+      font-size: 14px;
+      color: var(--rim-muted);
+    }
+    .rim-pagination a {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      color: var(--rim-accent-ink);
+      text-decoration: none;
+      font-weight: 600;
+      padding: 6px 12px;
+      border: 1px solid var(--rim-line);
+      border-radius: 7px;
+    }
+    .rim-pagination a:hover {
+      background: var(--rim-bg);
+    }
+    .rim-pagination .rim-page-current {
+      color: var(--rim-ink);
+      font-weight: 600;
+    }
 
-						<td ><a href="{% url 'master:rimedit' i.id %}" data-toggle="tooltip" title="edit"> {{ i.slum_name }} </a></td>
-
-						<td > {{ i.approximate_population }} </td>
-						<td > {{ i.general_info_left_image }} </td>
-						<td > {{ i.general_image_bottomdown1}} </td>
-						<td > {{ i.general_image_bottomdown2}} </td>
-
-						<td > {{ i.toilet_cost }} </td>
-						<td > {{ i.toilet_seat_to_persons_ratio }} </td>
-						<td > {{ i.toilet_info_left_image}} </td>
-						<td > {{ i.toilet_image_bottomdown1}} </td>
-						<td > {{ i.toilet_image_bottomdown2}} </td>
-
-						<td > {{ i.percentage_with_an_individual_water_connection }} </td>
-						<td > {{ i.water_info_left_image }} </td>
-						<td > {{ i.water_image_bottomdown1}} </td>
-						<td > {{ i.water_image_bottomdown2}} </td>
-
-						<td > {{ i.roads_and_access_info_left_image }} </td>
-						<td > {{ i.roads_image_bottomdown1 }} </td>
-						<td > {{ i.roads_image_bottomdown2 }} </td>
-
-						<td > {{ i.drainage_info_left_image}} </td>
-						<td > {{ i.drainage_image_bottomdown1 }} </td>
-						<td > {{ i.drainage_image_bottomdown2 }} </td>
-						<td > {{ i.drainage_coverage }} </td>
-
-						<td > {{ i.gutter_info_left_image }} </td>
-						<td > {{ i.gutter_image_bottomdown1 }} </td>
-						<td > {{ i.gutter_image_bottomdown2 }} </td>
-
-						<td > {{ i.frequency_of_clearance_of_waste_containers }} </td>
-						<td > {{ i.waste_management_info_left_image }} </td>
-						<td > {{ i.waste_management_image_bottomdown1}} </td>
-						<td > {{ i.waste_management_image_bottomdown2}} </td>
-
-					</tr>
-				{% endfor %}
-				</tbody>
-			</table>
-		</div>
-
-	</form>
-
-	<div class="pagination col-md-12"  align="center">
-		<span class="step-links col-md-12"> {% if RA.has_previous %} <a href="?q={{ request.GET.q}}&page={{ RA.previous_page_number }}">previous</a> {% endif %} <span class="current "> Page {{ RA.number }} of {{ RA.paginator.num_pages }}. </span> {% if RA.has_next %} <a href="?q={{ request.GET.q}}&page={{ RA.next_page_number }}">next</a> {% endif %} </span>
-	</div>
-
-</div>
-
+    /* ---------- Add-New modal ---------- */
+    .rs-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(15, 23, 42, 0.45);
+      z-index: 1000;
+      align-items: flex-start;
+      justify-content: center;
+    }
+    .rs-overlay.rs-open {
+      display: flex;
+    }
+    .rs-modal {
+      background: #fff;
+      max-width: 440px;
+      width: 90%;
+      margin-top: 64px;
+      border-radius: 12px;
+      padding: 22px 24px;
+      box-shadow: 0 20px 50px rgba(15, 23, 42, 0.25);
+      font-family: -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    }
+    .rs-modal h2 {
+      font-size: 16px;
+      margin: 0 0 4px;
+      color: var(--rim-ink);
+    }
+    .rs-modal p.rs-sub {
+      margin: 0 0 18px;
+      color: var(--rim-muted);
+      font-size: 12.5px;
+    }
+    .rs-field {
+      margin-bottom: 14px;
+    }
+    .rs-field label {
+      display: block;
+      font-size: 12.5px;
+      font-weight: 600;
+      margin-bottom: 5px;
+      color: var(--rim-ink);
+    }
+    .rs-field select {
+      width: 100%;
+	  height: 40px;
+      padding: 8px 10px;
+      border: 1px solid var(--rim-line);
+      border-radius: 8px;
+      font-size: 13.5px;
+      background: #fff;
+      box-sizing: border-box;
+    }
+    .rs-field select:disabled {
+      background: #f5f6f8;
+      color: var(--rim-muted);
+    }
+    #rs-status {
+      display: none;
+      margin-top: 8px;
+      padding: 12px 14px;
+      border-radius: 8px;
+      background: #fdecec;
+      color: #b3261e;
+      font-size: 13px;
+      line-height: 1.5;
+    }
+    .rs-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 8px;
+      margin-top: 18px;
+    }
+    #rs-continue:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+    
+    @media (max-width: 720px) {
+      .rim-page {
+        min-height: auto;
+      }
+      .rim-filter-panel {
+        max-width: none;
+        flex-direction: column;
+        align-items: stretch;
+      }
+      .rim-header-actions {
+        width: 100%;
+        justify-content: flex-end;
+      }
+      .rim-filter-actions {
+        width: 100%;
+        justify-content: flex-end;
+      }
+      .rim-table-scroll {
+        height: auto;
+        max-height: 68vh;
+      }
+      .rs-modal {
+        margin-top: 24px;
+      }
+    }
+  </style>
 {% endblock %}
 
 {% block content %}
+  <div
+    class="rim-page"
+    id="rim-page"
+    data-filter-api-url="{% url 'master:filterMasterList' %}"
+    data-selected-query="{{ selected_query|escapejs }}"
+    data-selected-city-id="{{ selected_city_id|escapejs }}"
+    data-selected-admin-id="{{ selected_admin_id|escapejs }}"
+    data-selected-electoral-id="{{ selected_electoral_id|escapejs }}"
+    data-selected-slum-id="{{ selected_slum_id|escapejs }}"
+    data-city-list-url="{% url 'master:cityList' %}"
+    data-admin-list-url="{% url 'master:administrativewardList' %}"
+    data-electoral-list-url="{% url 'master:electoralWardList' %}"
+    data-slum-list-url="{% url 'master:slumList' %}"
+    data-rim-check-url="{% url 'master:rimcheckexists' %}"
+    data-rim-edit-base="/admin/sluminformation/rim/edit/"
+    data-rim-insert-url="/admin/sluminformation/rim/insert/"
+  >
+    <div class="rim-header">
+      <div class="rim-header-title">
+        <h2>Rapid Infrastructure Mapping Form</h2>
+        <p>Slum-level infrastructure records &mdash; general, toilet, water, roads, drainage, gutter &amp; waste management data.</p>
+      </div>
+      <div class="rim-header-actions">
+        {% if RA.paginator.count %}
+          <span class="rim-header-count"><b>{{ RA.paginator.count }}</b> record{{ RA.paginator.count|pluralize }}</span>
+        {% endif %}
+        <a href="#" onclick="openRimSelectModal(); return false;" class="rim-btn rim-btn-primary">+ Add New</a>	
+        <button type="submit" form="rim-delete-form" id="rim-delete-btn" class="rim-btn rim-btn-danger">Delete selected</button>
+        <a href="{% url 'master:index' %}" class="rim-btn rim-btn-ghost">Back</a>
+      </div>
+    </div>
 
+    <form method="get" action="" class="rim-toolbar" id="rim-search-form">
+      <div class="rim-filter-panel">
+        <div class="rim-filter-field" style="min-width: 240px; flex: 1.5 1 280px;">
+          <label for="rim-query">Text search</label>
+          <div class="rim-search-wrap">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="11" cy="11" r="7" />
+              <path d="m21 21-4.3-4.3" />
+            </svg>
+            <input id="rim-query" type="text" name="q" placeholder="Search by slum name or area&hellip;" value="{{ request.GET.q }}" autocomplete="off" />
+            {% if request.GET.q %}
+              <button type="button" class="rim-search-clear" id="rim-clear-btn" title="Clear search">&times;</button>
+            {% endif %}
+          </div>
+        </div>
+
+        <div class="rim-filter-field">
+          <label for="rim-city-filter">City</label>
+          <select id="rim-city-filter" name="city" class="rim-filter-select" data-placeholder="All cities">
+            <option value=""></option>
+            {% for city in city_filter_options %}
+              <option value="{{ city.id }}"{% if city.id|stringformat:"s" == selected_city_id %} selected{% endif %}>{{ city }}</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <div class="rim-filter-field">
+          <label for="rim-admin-filter">Administrative ward</label>
+          <select id="rim-admin-filter" name="admin" class="rim-filter-select" data-placeholder="All administrative wards">
+            <option value=""></option>
+            {% for admin in admin_filter_options %}
+              <option value="{{ admin.id }}"{% if admin.id|stringformat:"s" == selected_admin_id %} selected{% endif %}>{{ admin }}</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <div class="rim-filter-field">
+          <label for="rim-electoral-filter">Electoral ward</label>
+          <select id="rim-electoral-filter" name="electoral" class="rim-filter-select" data-placeholder="All electoral wards">
+            <option value=""></option>
+            {% for electoral in electoral_filter_options %}
+              <option value="{{ electoral.id }}"{% if electoral.id|stringformat:"s" == selected_electoral_id %} selected{% endif %}>{{ electoral }}</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <div class="rim-filter-field">
+          <label for="rim-slum-filter">Slum</label>
+          <select id="rim-slum-filter" name="slum" class="rim-filter-select" data-placeholder="All slums">
+            <option value=""></option>
+            {% for slum in slum_filter_options %}
+              <option value="{{ slum.id }}"{% if slum.id|stringformat:"s" == selected_slum_id %} selected{% endif %}>{{ slum }}</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <div class="rim-filter-actions">
+          <button type="submit" class="rim-btn rim-btn-primary">Search</button>
+          <a href="{% url 'master:rimdisplay' %}" class="rim-btn rim-btn-ghost">Reset</a>
+        </div>
+      </div>
+    </form>
+
+    <div class="rim-legend">
+      <span><i style="background:var(--rim-general)"></i>General</span>
+      <span><i style="background:var(--rim-toilet)"></i>Toilet</span>
+      <span><i style="background:var(--rim-water)"></i>Water</span>
+      <span><i style="background:var(--rim-roads)"></i>Roads &amp; access</span>
+      <span><i style="background:var(--rim-drainage)"></i>Drainage</span>
+      <span><i style="background:var(--rim-gutter)"></i>Gutter</span>
+      <span><i style="background:var(--rim-waste)"></i>Waste management</span>
+      <span><i style="background:var(--rim-electricity)"></i>Electricity</span>
+    </div>
+
+    <form enctype="multipart/form-data" method="post" id="rim-delete-form" style="display:flex; flex-direction:column; flex:1 1 auto; min-height:0;">
+      {% csrf_token %}
+
+      <div class="rim-table-shell">
+        <div class="rim-table-scroll">
+          <table class="rim-table">
+            <thead>
+              <tr class="rim-group-row">
+                <th class="rim-pin rim-col-check" rowspan="2"></th>
+                <th class="rim-pin rim-col-name" rowspan="2">Slum name</th>
+                <th rowspan="2">
+                  Approx.<br />population
+                </th>
+
+                <th class="rim-g-general" colspan="3">General</th>
+                <th class="rim-g-toilet" colspan="5">Toilet</th>
+                <th class="rim-g-water" colspan="4">Water</th>
+                <th class="rim-g-roads" colspan="3">Roads &amp; access</th>
+                <th class="rim-g-drainage" colspan="4">Drainage</th>
+                <th class="rim-g-gutter" colspan="3">Gutter</th>
+                <th class="rim-g-waste" colspan="4">Waste management</th>
+                <th class="rim-g-electricity" colspan="4">Electricity</th>
+              </tr>
+              <tr class="rim-col-row">
+                <!-- General -->
+                <th>Info left image</th>
+                <th>Image bottomdown 1</th>
+                <th>Image bottomdown 2</th>
+
+                <!-- Toilet -->
+                <th>Cost</th>
+                <th>Seat-to-persons ratio</th>
+                <th>Info left image</th>
+                <th>Image bottomdown 1</th>
+                <th>Image bottomdown 2</th>
+
+                <!-- Water -->
+                <th>% individual connection</th>
+                <th>Info left image</th>
+                <th>Image bottomdown 1</th>
+                <th>Image bottomdown 2</th>
+
+                <!-- Roads -->
+                <th>Info left image</th>
+                <th>Image bottomdown 1</th>
+                <th>Image bottomdown 2</th>
+
+                <!-- Drainage -->
+                <th>Info left image</th>
+                <th>Image bottomdown 1</th>
+                <th>Image bottomdown 2</th>
+                <th>Coverage</th>
+
+                <!-- Gutter -->
+                <th>Info left image</th>
+                <th>Image bottomdown 1</th>
+                <th>Image bottomdown 2</th>
+
+                <!-- Waste -->
+                <th>Clearance frequency</th>
+                <th>Info left image</th>
+                <th>Image bottomdown 1</th>
+                <th>Image bottomdown 2</th>
+
+                <!-- Electricity -->
+                <th>Coverage %</th>
+                <th>Info left image</th>
+                <th>Image bottomdown 1</th>
+                <th>Image bottomdown 2</th>
+              </tr>
+            </thead>
+
+            <tbody>
+              {% for i in RA %}
+                <tr>
+                  <td class="rim-pin rim-col-check">
+                    <input id="{{ i.id }}" type="checkbox" name="selectcheckbox" value="{{ i.id }}" />
+                  </td>
+                  <td class="rim-pin rim-col-name">
+                    <a href="{% url 'master:rimedit' i.id %}" class="rim-slum-link" title="{{ i.slum_name }}">{{ i.slum_name }}</a>
+                  </td>
+                  <td class="rim-num">{{ i.approximate_population|default:"—" }}</td>
+
+                  <td>
+                    {% if i.general_info_left_image %}
+                      <span class="rim-file" title="{{ i.general_info_left_image }}">{{ i.general_info_left_image }}</span>
+                    {% else %}
+                      <span class="rim-empty">&mdash;</span>
+                    {% endif %}
+                  </td>
+                  <td>
+                    {% if i.general_image_bottomdown1 %}
+                      <span class="rim-file" title="{{ i.general_image_bottomdown1 }}">{{ i.general_image_bottomdown1 }}</span>
+                    {% else %}
+                      <span class="rim-empty">&mdash;</span>
+                    {% endif %}
+                  </td>
+                  <td>
+                    {% if i.general_image_bottomdown2 %}
+                      <span class="rim-file" title="{{ i.general_image_bottomdown2 }}">{{ i.general_image_bottomdown2 }}</span>
+                    {% else %}
+                      <span class="rim-empty">&mdash;</span>
+                    {% endif %}
+                  </td>
+
+                  <td class="rim-num">{{ i.toilet_cost|default:"—" }}</td>
+                  <td class="rim-num">{{ i.toilet_seat_to_persons_ratio|default:"—" }}</td>
+                  <td>
+                    {% if i.toilet_info_left_image %}
+                      <span class="rim-file" title="{{ i.toilet_info_left_image }}">{{ i.toilet_info_left_image }}</span>
+                    {% else %}
+                      <span class="rim-empty">&mdash;</span>
+                    {% endif %}
+                  </td>
+                  <td>
+                    {% if i.toilet_image_bottomdown1 %}
+                      <span class="rim-file" title="{{ i.toilet_image_bottomdown1 }}">{{ i.toilet_image_bottomdown1 }}</span>
+                    {% else %}
+                      <span class="rim-empty">&mdash;</span>
+                    {% endif %}
+                  </td>
+                  <td>
+                    {% if i.toilet_image_bottomdown2 %}
+                      <span class="rim-file" title="{{ i.toilet_image_bottomdown2 }}">{{ i.toilet_image_bottomdown2 }}</span>
+                    {% else %}
+                      <span class="rim-empty">&mdash;</span>
+                    {% endif %}
+                  </td>
+
+                  <td class="rim-num">{{ i.percentage_with_an_individual_water_connection|default:"—" }}</td>
+                  <td>
+                    {% if i.water_info_left_image %}
+                      <span class="rim-file" title="{{ i.water_info_left_image }}">{{ i.water_info_left_image }}</span>
+                    {% else %}
+                      <span class="rim-empty">&mdash;</span>
+                    {% endif %}
+                  </td>
+                  <td>
+                    {% if i.water_image_bottomdown1 %}
+                      <span class="rim-file" title="{{ i.water_image_bottomdown1 }}">{{ i.water_image_bottomdown1 }}</span>
+                    {% else %}
+                      <span class="rim-empty">&mdash;</span>
+                    {% endif %}
+                  </td>
+                  <td>
+                    {% if i.water_image_bottomdown2 %}
+                      <span class="rim-file" title="{{ i.water_image_bottomdown2 }}">{{ i.water_image_bottomdown2 }}</span>
+                    {% else %}
+                      <span class="rim-empty">&mdash;</span>
+                    {% endif %}
+                  </td>
+
+                  <td>
+                    {% if i.roads_and_access_info_left_image %}
+                      <span class="rim-file" title="{{ i.roads_and_access_info_left_image }}">{{ i.roads_and_access_info_left_image }}</span>
+                    {% else %}
+                      <span class="rim-empty">&mdash;</span>
+                    {% endif %}
+                  </td>
+                  <td>
+                    {% if i.roads_image_bottomdown2 %}
+                      <span class="rim-file" title="{{ i.roads_image_bottomdown2 }}">{{ i.roads_image_bottomdown2 }}</span>
+                    {% else %}
+                      <span class="rim-empty">&mdash;</span>
+                    {% endif %}
+                  </td>
+
+                  <td>
+                    {% if i.drainage_info_left_image %}
+                      <span class="rim-file" title="{{ i.drainage_info_left_image }}">{{ i.drainage_info_left_image }}</span>
+                    {% else %}
+                      <span class="rim-empty">&mdash;</span>
+                    {% endif %}
+                  </td>
+                  <td>
+                    {% if i.drainage_image_bottomdown1 %}
+                      <span class="rim-file" title="{{ i.drainage_image_bottomdown1 }}">{{ i.drainage_image_bottomdown1 }}</span>
+                    {% else %}
+                      <span class="rim-empty">&mdash;</span>
+                    {% endif %}
+                  </td>
+                  <td>
+                    {% if i.drainage_image_bottomdown2 %}
+                      <span class="rim-file" title="{{ i.drainage_image_bottomdown2 }}">{{ i.drainage_image_bottomdown2 }}</span>
+                    {% else %}
+                      <span class="rim-empty">&mdash;</span>
+                    {% endif %}
+                  </td>
+                  <td class="rim-num">{{ i.drainage_coverage|default:"—" }}</td>
+
+                  <td>
+                    {% if i.gutter_info_left_image %}
+                      <span class="rim-file" title="{{ i.gutter_info_left_image }}">{{ i.gutter_info_left_image }}</span>
+                    {% else %}
+                      <span class="rim-empty">&mdash;</span>
+                    {% endif %}
+                  </td>
+                  <td>
+                    {% if i.gutter_image_bottomdown1 %}
+                      <span class="rim-file" title="{{ i.gutter_image_bottomdown1 }}">{{ i.gutter_image_bottomdown1 }}</span>
+                    {% else %}
+                      <span class="rim-empty">&mdash;</span>
+                    {% endif %}
+                  </td>
+                  <td>
+                    {% if i.gutter_image_bottomdown2 %}
+                      <span class="rim-file" title="{{ i.gutter_image_bottomdown2 }}">{{ i.gutter_image_bottomdown2 }}</span>
+                    {% else %}
+                      <span class="rim-empty">&mdash;</span>
+                    {% endif %}
+                  </td>
+
+                  <td>{{ i.frequency_of_clearance_of_waste_containers|default:"—" }}</td>
+                  <td>
+                    {% if i.waste_management_info_left_image %}
+                      <span class="rim-file" title="{{ i.waste_management_info_left_image }}">{{ i.waste_management_info_left_image }}</span>
+                    {% else %}
+                      <span class="rim-empty">&mdash;</span>
+                    {% endif %}
+                  </td>
+                  <td>
+                    {% if i.waste_management_image_bottomdown1 %}
+                      <span class="rim-file" title="{{ i.waste_management_image_bottomdown1 }}">{{ i.waste_management_image_bottomdown1 }}</span>
+                    {% else %}
+                      <span class="rim-empty">&mdash;</span>
+                    {% endif %}
+                  </td>
+                  <td>
+                    {% if i.waste_management_image_bottomdown2 %}
+                      <span class="rim-file" title="{{ i.waste_management_image_bottomdown2 }}">{{ i.waste_management_image_bottomdown2 }}</span>
+                    {% else %}
+                      <span class="rim-empty">&mdash;</span>
+                    {% endif %}
+                  </td>
+
+                  <td class="rim-num">{{ i.electricity_coverage_percentage|default:"—" }}</td>
+                  <td>
+                    {% if i.electricity_info_left_image %}
+                      <span class="rim-file" title="{{ i.electricity_info_left_image }}">{{ i.electricity_info_left_image }}</span>
+                    {% else %}
+                      <span class="rim-empty">&mdash;</span>
+                    {% endif %}
+                  </td>
+                  <td>
+                    {% if i.electricity_image_bottomdown1 %}
+                      <span class="rim-file" title="{{ i.electricity_image_bottomdown1 }}">{{ i.electricity_image_bottomdown1 }}</span>
+                    {% else %}
+                      <span class="rim-empty">&mdash;</span>
+                    {% endif %}
+                  </td>
+                  <td>
+                    {% if i.electricity_image_bottomdown2 %}
+                      <span class="rim-file" title="{{ i.electricity_image_bottomdown2 }}">{{ i.electricity_image_bottomdown2 }}</span>
+                    {% else %}
+                      <span class="rim-empty">&mdash;</span>
+                    {% endif %}
+                  </td>
+                </tr>
+              {% empty %}
+                <tr>
+                  <td colspan="33" style="text-align:center; padding:28px; color:var(--rim-muted);">
+                    No records match{% if request.GET.q %}
+                      &ldquo;{{ request.GET.q }}&rdquo;
+                    {% endif %}.
+                  </td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </form>
+
+    {% load querystring %}
+
+    {% if RA.paginator.num_pages > 1 %}
+      <div class="rim-pagination">
+        {% if RA.has_previous %}
+          <a href="?{% querystring page=RA.previous_page_number %}">&larr; Previous</a>
+        {% endif %}
+        <span class="rim-page-current">Page {{ RA.number }} of {{ RA.paginator.num_pages }}</span>
+        {% if RA.has_next %}
+          <a href="?{% querystring page=RA.next_page_number %}">Next &rarr;</a>
+        {% endif %}
+      </div>
+    {% endif %}
+
+    <!-- ===================== RIM Add-New Modal ===================== -->
+    <div class="rs-overlay" id="rs-overlay">
+      <div class="rs-modal">
+        <h2>New RIM entry</h2>
+        <p class="rs-sub">Pick the exact slum. If a RIM record already exists for it, you'll be sent to edit it instead.</p>
+
+        <div class="rs-field">
+          <label for="rs_city">City</label>
+          <select id="rs_city">
+            <option value="0">Loading&hellip;</option>
+          </select>
+        </div>
+
+        <div class="rs-field" id="rs_admin_field" style="display:none;">
+          <label for="rs_admin">Administrative ward</label>
+          <select id="rs_admin" disabled></select>
+        </div>
+
+        <div class="rs-field" id="rs_electoral_field" style="display:none;">
+          <label for="rs_electoral">Electoral ward</label>
+          <select id="rs_electoral" disabled></select>
+        </div>
+
+        <div class="rs-field" id="rs_slum_field" style="display:none;">
+          <label for="rs_slum">Slum</label>
+          <select id="rs_slum" disabled></select>
+        </div>
+
+        <div id="rs-status"></div>
+
+        <div class="rs-actions">
+          <button type="button" id="rs-cancel" class="rim-btn rim-btn-ghost">Cancel</button>
+          <button type="button" id="rs-continue" class="rim-btn rim-btn-primary" disabled>Continue</button>
+        </div>
+      </div>
+    </div>
+    <!-- =================== /RIM Add-New Modal ======================= -->
+
+  </div>
+
+  <script src="{% static 'admin/js/jquery.min.js' %}"></script>
+  <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+  <script src="{% static 'js/rimdisplay.js' %}"></script>
 {% endblock %}
 
 {% block sidebar %}
 
 {% endblock %}
-
