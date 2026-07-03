@@ -852,7 +852,7 @@
                 <th>Image bottomdown 2</th>
 
                 <!-- Electricity -->
-                <th>Coverage %</th>
+                {% comment %} <th>Coverage %</th> {% endcomment %}
                 <th>Info left image</th>
                 <th>Image bottomdown 1</th>
                 <th>Image bottomdown 2</th>
@@ -1022,7 +1022,7 @@
                     {% endif %}
                   </td>
 
-                  <td class="rim-num">{{ i.electricity_coverage_percentage|default:"—" }}</td>
+                  {% comment %} <td class="rim-num">{{ i.electricity_coverage_percentage|default:"—" }}</td> {% endcomment %}
                   <td>
                     {% if i.electricity_info_left_image %}
                       <span class="rim-file" title="{{ i.electricity_info_left_image }}">{{ i.electricity_info_left_image }}</span>

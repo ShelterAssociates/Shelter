@@ -2081,6 +2081,9 @@ class avni_sync:
             "Road and Access Image 2": "road_image_bottomdown2",
             "General Information Image 1": "general_image_bottomdown1",
             "General Information Image 2": "general_image_bottomdown2",
+            "Electricity Infrastructure Image 1": "electricity_image_bottomdown1",
+            "Electricity Infrastructure Image 2": "electricity_image_bottomdown2",
+            
         }
         for rim_add_que, rim_val in rim_additional_ques.items():
             if rim_add_que in rim_data:
@@ -2140,7 +2143,7 @@ class avni_sync:
         return Update_count
 
     def update_rim_data(self, get_text, slum_id):
-        section_names = ["General", "Water", "Waste", "Drainage", "Gutter", "Road"]
+        section_names = ["General", "Water", "Waste", "Drainage", "Gutter", "Road","Electricity"]
         Update_count = 0
         for data in get_text:
             if not data["Voided"]:

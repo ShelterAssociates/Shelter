@@ -1,13 +1,15 @@
+from datetime import datetime
+
 import requests
 from collections import OrderedDict, Counter
 from concurrent.futures import ThreadPoolExecutor
-from functools import lru_cache
-import json
 from master.models import Slum
 from graphs.models import SlumData
 from graphs.sync_avni_data import avni_sync
-import time
 from master.models import Slum, Rapid_Slum_Appraisal
+import logging
+
+logger = logging.getLogger(__name__)
 
 _avni_token = None
 _token_expiry = 0  # epoch timestamp
@@ -45,7 +47,7 @@ RIM_FIELD_DISPLAY_NAMES = {
             "location": "Location",
             "topography": "Topography",
             "landmark": "Nearby Landmark",
-            "describe_the_slum": "Description of the Slum_observations",
+            "describe_the_slum": "General Observation_observations",
         },
         "Toilet": {
             "toilet_info_left_image": "toilet_info_map",
@@ -65,7 +67,7 @@ RIM_FIELD_DISPLAY_NAMES = {
             "percentage_with_individual_toilet": "Households with Individual Toilets (%)",
             "toilet_seat_to_persons_ratio": "Toilet Seat to Person Ratio",
             "location_of_defecation": "Location of Open Defecation",
-            "toilet_comment": "Toilet Observations_observations",
+            "toilet_comment": "Toilet Observation_observations",
         },
         "Water": {
             "water_info_left_image": "general_water_supply_map",
@@ -83,7 +85,7 @@ RIM_FIELD_DISPLAY_NAMES = {
             "coverage_of_wateracross_settle": "Coverage of Water Across Settlement",
             "quality_of_water_in_the_system": "Quality of Water",
             "percentage_with_an_individual_water_connection": "Households with Individual Water Connection (%)",
-            "water_supply_comment": "Water Supply Observations_observations",
+            "water_supply_comment": "Water Supply Observation_observations",
         },
         "Road": {
             "roads_and_access_info_left_image": "roads_and_access_map",
@@ -100,7 +102,7 @@ RIM_FIELD_DISPLAY_NAMES = {
             "point_of_vehicular_access_to_t": "Point of Vehicular Access",
             "is_the_settlement_below_or_abo": "Settlement Level (Above/Below Road)",
             "are_the_huts_below_or_above_th": "Hut Level (Above/Below Road)",
-            "road_and_access_comment": "Road & Access Observations_observations",
+            "road_and_access_comment": "Road & Access Observation_observations",
         },
         "Drainage": {
             "drainage_info_left_image": "drainage_info_map",
@@ -113,7 +115,7 @@ RIM_FIELD_DISPLAY_NAMES = {
             "do_the_drains_get_blocked": "Do Drains Get Blocked?",
             "is_the_drainage_gradient_adequ": "Drainage Gradient Adequate?",
             "diameter_of_ulb_sewer_line_acr": "Diameter of ULB Sewer Line",
-            "drainage_comment": "Drainage Observations_observations",
+            "drainage_comment": "Drainage Observation_observations",
         },
         "Gutter": {
             "gutter_info_left_image": "general_gutter_map",
@@ -126,7 +128,7 @@ RIM_FIELD_DISPLAY_NAMES = {
             "do_gutters_flood": "Do Gutters Flood?",
             "do_gutter_get_choked": "Do Gutters Get Choked?",
             "is_gutter_gradient_adequate": "Gutter Gradient Adequate?",
-            "comments_on_gutter": "Gutter Observations_observations",
+            "comments_on_gutter": "Gutter Observation_observations",
             "Gutter_Photo1": "Gutter Photo",
         },
         "Waste": {
@@ -143,7 +145,28 @@ RIM_FIELD_DISPLAY_NAMES = {
             "where_are_the_communty_open_du": "Location of Community Open Dumping",
             "do_the_member_of_community_dep": "Community Dependent on Waste Facility",
             "Is wet and dry garbage collected seperately ?": "Wet & Dry Waste Collected Separately?",
-            "Waste_management_comments": "Waste Management Observations_observations",
+            "Waste_management_comments": "Waste Management Observation_observations",
+        },
+        "Electricity": {
+            "electricity_info_left_image": "electricity_infrastructure_map",
+            "electricity_image_bottomdown1": "electricity_image_bottom1",
+            "electricity_image_bottomdown2": "electricity_image_bottom2",
+            "Electricity_Photo1": "electricity_image_bottom1",
+            "Electricity_Photo2": "electricity_image_bottom2",
+            "main_source_of_electricity_in_the_settlement": "Main Source of Electricity",
+            "if_other_specify_main_source": "If Other, Specify (Main Source)",
+            "alternative_source_of_electricity": "Alternative Source of Electricity",
+            "if_other_specify_alternative_source": "If Other, Specify (Alternative Source)",
+            "coverage_of_electricity_across_the_settlement": "Coverage of Electricity Across Settlement",
+            "average_daily_duration_of_electricity_supply": "Average Daily Duration of Electricity Supply (Hours)",
+            "percentage_of_households_with_individual_electricity_connection": "Households with Individual Electricity Connection (%)",
+            "total_number_of_streetlights": "Total Number of Streetlights",
+            "total_number_of_electricity_distribution_poles": "Total Number of Electricity Distribution Poles",
+            "number_of_electricity_poles_with_streetlights": "Electricity Poles Equipped with Streetlights",
+            "total_number_of_solar_powered_streetlights": "Total Number of Solar-Powered Streetlights",
+            "major_electricity_issues_in_the_settlement": "Major Electricity Issues",
+            "if_other_specify_electricity_issue": "If Other, Specify (Issue)",
+            "comments_on_electricity_infrastructure": "Electricity Infrastructure Observation_observations"
         },
     },
 }
@@ -195,7 +218,17 @@ def map_rim_data(raw_data: dict) -> dict:
                 section_fields[display_name] = _to_str(raw_data.get(field_key))
 
         # ================= RATIO TRANSFORMS =================
+        if section_name == "General":
+            date = section_fields.get("Date of Declaration")
 
+            if date not in (None, "", "NA"):
+                try:
+                    dt = datetime.strptime(date, "%Y-%m-%dT%H:%M:%S.%fZ")
+                    section_fields["Date of Declaration"] = dt.strftime("%b %Y")
+                except Exception:
+                    pass
+                
+        # ================= RATIO TRANSFORMS =================
         # ---- TOILET SEATS ----
         if section_name == "Toilet":
             male = section_fields.pop("Seats for Men")
@@ -223,8 +256,80 @@ def map_rim_data(raw_data: dict) -> dict:
             section_fields["Total Number of Hand-pumps (in use / NOT in use)"] = (
                 f"{in_use if in_use != 'NA' else '0'} / {not_in_use if not_in_use != 'NA' else '0'}"
             )
+            
+        if section_name == "Electricity":
+        
+            # -------- Main Source --------
+            main_source = section_fields.get("Main Source of Electricity", "")
 
-        # ================= IMAGE META =================
+            if isinstance(main_source, str) and main_source.startswith("["):
+                main_source = main_source[1:-1].replace("'", "")
+                main_source = [x.strip() for x in main_source.split(",")]
+
+            if isinstance(main_source, list):
+                if "Other" in main_source:
+                    other = section_fields.get("If Other, Specify (Main Source)", "")
+                    main_source = [
+                        f"Other: {other}" if x == "Other" else x
+                        for x in main_source
+                    ]
+                section_fields["Main Source of Electricity"] = ", ".join(main_source)
+
+            elif main_source == "Other":
+                section_fields["Main Source of Electricity"] = (
+                    "Other: " + section_fields.get("If Other, Specify (Main Source)", "")
+                )
+
+            section_fields.pop("If Other, Specify (Main Source)", None)
+
+
+            # -------- Alternative Source --------
+            alt_source = section_fields.get("Alternative Source of Electricity", "")
+
+            if isinstance(alt_source, str) and alt_source.startswith("["):
+                alt_source = alt_source[1:-1].replace("'", "")
+                alt_source = [x.strip() for x in alt_source.split(",")]
+
+            if isinstance(alt_source, list):
+                if "Other" in alt_source:
+                    other = section_fields.get("If Other, Specify (Alternative Source)", "")
+                    alt_source = [
+                        f"Other: {other}" if x == "Other" else x
+                        for x in alt_source
+                    ]
+                section_fields["Alternative Source of Electricity"] = ", ".join(alt_source)
+
+            elif alt_source == "Other":
+                section_fields["Alternative Source of Electricity"] = (
+                    "Other: " + section_fields.get("If Other, Specify (Alternative Source)", "")
+                )
+
+            section_fields.pop("If Other, Specify (Alternative Source)", None)
+
+
+            # -------- Major Electricity Issues --------
+            issues = section_fields.get("Major Electricity Issues", "")
+
+            if isinstance(issues, str) and issues.startswith("["):
+                issues = issues[1:-1].replace("'", "")
+                issues = [x.strip() for x in issues.split(",")]
+
+            if isinstance(issues, list):
+                if "Other" in issues:
+                    other = section_fields.get("If Other, Specify (Issue)", "")
+                    issues = [
+                        f"Other: {other}" if x == "Other" else x
+                        for x in issues
+                    ]
+                section_fields["Major Electricity Issues"] = ", ".join(issues)
+
+            elif issues == "Other":
+                section_fields["Major Electricity Issues"] = (
+                    "Other: " + section_fields.get("If Other, Specify (Issue)", "")
+                )
+
+            section_fields.pop("If Other, Specify (Issue)", None)
+                # ================= IMAGE META =================
         keys = list(section_fields.keys())
 
         # ---- MAP (slot 0 always exists) ----
@@ -321,7 +426,7 @@ def get_rim_factsheet_detail(slum_code):
             update(section_data)
 
     # ---- Merge base sections
-    for section in ("General", "Waste", "Water", "Drainage", "Road", "Gutter"):
+    for section in ("General", "Waste", "Water", "Drainage", "Road", "Gutter","Electricity"):
         merge_section(section)
 
     # ==================================================
@@ -446,6 +551,9 @@ def resolve_rim_images(rim_record):
         "drainage_info_left_image",
         "gutter_info_left_image",
         "drainage_report_image",
+        "electricity_info_left_image",
+        "electricity_image_bottomdown1",
+        "electricity_image_bottomdown2",
     ]
 
     avni_images = {}
@@ -473,6 +581,7 @@ def resolve_rim_images(rim_record):
 
 
 def rim_factsheet_view(slum_id, raw=False):
+    _ = raw
 
     slum_id = int(slum_id)
     response = {"status": False, "image": False, "_exists": False}
