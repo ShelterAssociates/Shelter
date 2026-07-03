@@ -1055,13 +1055,13 @@ $(document).ready(function(){
 			</div>
 
 			<div class="field-list">
-				<div class="field-row">
+				{% comment %} <div class="field-row">
 					<label for="id_electricity_coverage_percentage">Electricity coverage (%)</label>
 					<div class="field-control">
 						{{ form.electricity_coverage_percentage }}
 						<span class="field-errors">{{ form.electricity_coverage_percentage.errors }}</span>
 					</div>
-				</div>
+				</div> {% endcomment %}
 
 				<div class="field-row">
 					<label for="id_electricity_info_left_image">Electricity info left image</label>

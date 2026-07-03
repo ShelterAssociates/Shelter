@@ -108,5 +108,23 @@
         "is_the_settlement_below_or_abo": "Is the settlement below or above the mainaccess road ?",
         "are_the_huts_below_or_above_th": "Are the huts below or above the internal access road?",
         "road_and_access_comment": "Road and access comment"
+    },
+    "Electricity": {
+        "coverage_of_electricity_across_the_settlement": "Coverage of electricity across the settlement?",
+        "main_source_of_electricity_in_the_settlement": "Main source of electricity in the settlement?",
+        "if_other_specify_main_source": "If other, specify?",
+        "alternative_source_of_electricity": "Alternative source of electricity (if any)?",
+        "if_other_specify_alternative_source": "If other, specify?",
+        "average_daily_duration_of_electricity_supply": "What is the average daily duration of electricity supply (in hours)?",
+        "percentage_of_households_with_individual_electricity_connection": "What percentage of households have an individual electricity connection (approximate)?",
+        "total_number_of_streetlights": "Total number of streetlights in the settlement (Approximate)",
+        "total_number_of_electricity_distribution_poles": "Total number of electricity distribution poles in the settlement (Approximate)",
+        "number_of_electricity_poles_with_streetlights": "Number of electricity poles equipped with streetlights (Approximate)",
+        "total_number_of_solar_powered_streetlights": "Total number of solar-powered streetlights in the settlement (Approximate)",
+        "major_electricity_issues_in_the_settlement": "Major electricity issues in the settlement?",
+        "if_other_specify_electricity_issue": "If other, specify?",
+        "comments_on_electricity_infrastructure": "Comments on electricity infrastructure",
+        "electricity_infrastructure_image_1": "Electricity Infrastructure Image 1",
+        "electricity_infrastructure_image_2": "Electricity Infrastructure Image 2"
     }
 }
