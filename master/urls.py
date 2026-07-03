@@ -52,6 +52,9 @@ from master.views import (
     get_translations,
     rim_factsheet_available,
     get_slum_transformation_photos,
+    filterMasterList,
+    rim_select_slum,
+    rim_check_exists,
 )
 from django.contrib.auth import views as auth_views
 from django.conf import settings
@@ -61,6 +64,8 @@ admin.autodiscover()
 
 urlpatterns = [
     url(r"^$", index, name="index"),
+    url(r"^filterMasterList/$", filterMasterList, name="filterMasterList"),# added a new end point with all the filters for master list
+
     url(r"^surveymapping/", SurveyListView.as_view(), name="SurveyCreate"),
     url(
         r"^surveymapping/(?P<name>\w[a-zA-Z_0-9]+)/$",
@@ -100,6 +105,8 @@ urlpatterns = [
         r"^sluminformation/drainage/display/$", drainagedisplay, name="drainagedisplay"
     ),
     url(r"^sluminformation/drainage/insert/$", drainageinsert, name="drainageinsert"),
+    url(r"^sluminformation/rim/select/$", rim_select_slum, name="rimselect"),
+    url(r"^sluminformation/rim/checkexists/$", rim_check_exists, name="rimcheckexists"),
     url(
         r"^sluminformation/drainage/edit/(?P<drainage_id>\d+)$",
         drainageedit,

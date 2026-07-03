@@ -1,11 +1,9 @@
-import logging
-logger = logging.getLogger(__name__)
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 """The Django Views Page for master app"""
-
 import json
 import psycopg2
+import logging
 from django.urls import reverse
 from django.contrib.admin.views.decorators import staff_member_required
 from django.contrib.auth.decorators import login_required, user_passes_test
@@ -42,7 +40,7 @@ from graphs.models import *
 from django.db.models import Avg
 from graphs.sync_avni_data import avni_sync
 
-
+logger = logging.getLogger(__name__)
 
 @staff_member_required
 def index(request):
@@ -139,13 +137,55 @@ def rimdisplay(request):
                 R.delete()
 
     query = request.GET.get("q")
-    R = ""
-    RA = ""
+    city_ids = [value for value in request.GET.getlist("city") if value]
+    admin_ids = [value for value in request.GET.getlist("admin") if value]
+    electoral_ids = [value for value in request.GET.getlist("electoral") if value]
+    slum_ids = [value for value in request.GET.getlist("slum") if value]
+
+    R = Rapid_Slum_Appraisal.objects.select_related(
+        "slum_name",
+        "slum_name__electoral_ward",
+        "slum_name__electoral_ward__administrative_ward",
+        "slum_name__electoral_ward__administrative_ward__city",
+    ).all()
+
+    if city_ids:
+        R = R.filter(slum_name__electoral_ward__administrative_ward__city_id__in=city_ids)
+    if admin_ids:
+        R = R.filter(slum_name__electoral_ward__administrative_ward_id__in=admin_ids)
+    if electoral_ids:
+        R = R.filter(slum_name__electoral_ward_id__in=electoral_ids)
+    if slum_ids:
+        R = R.filter(slum_name_id__in=slum_ids)
     if(query):
-        R = Rapid_Slum_Appraisal.objects.filter(slum_name__name__contains=query)
-    else:
-        R = Rapid_Slum_Appraisal.objects.all()
-    paginator = Paginator(R, 10)
+        R = R.filter(slum_name__name__icontains=query)
+
+    R = R.order_by("slum_name__name")
+
+    selected_city_id = city_ids[0] if city_ids else ""
+    selected_admin_id = admin_ids[0] if admin_ids else ""
+    selected_electoral_id = electoral_ids[0] if electoral_ids else ""
+    selected_slum_id = slum_ids[0] if slum_ids else ""
+
+    city_filter_options = City.objects.select_related("name").order_by("name__city_name")
+    admin_filter_options = AdministrativeWard.objects.select_related(
+        "city",
+        "city__name",
+    ).order_by("name")
+    electoral_filter_options = ElectoralWard.objects.select_related(
+        "administrative_ward",
+        "administrative_ward__city",
+        "administrative_ward__city__name",
+    ).order_by("name")
+    slum_filter_options = Slum.objects.select_related(
+        "electoral_ward",
+        "electoral_ward__administrative_ward",
+        "electoral_ward__administrative_ward__city",
+        "electoral_ward__administrative_ward__city__name",
+    ).order_by("name")
+
+    RA = ""
+    paginator = Paginator(R, 20)
     page = request.GET.get('page')
     try:
         RA = paginator.page(page)
@@ -153,7 +193,31 @@ def rimdisplay(request):
         RA = paginator.page(1)
     except EmptyPage:
         RA = paginator.page(paginator.num_pages)
-    return render(request, 'rimdisplay.html',{'R':R,'RA':RA})
+    return render(
+        request,
+        'rimdisplay.html',
+        {
+            'R': R,
+            'RA': RA,
+            'selected_city_ids': city_ids,
+            'selected_admin_ids': admin_ids,
+            'selected_electoral_ids': electoral_ids,
+            'selected_slum_ids': slum_ids,
+            'selected_city_id': selected_city_id,
+            'selected_admin_id': selected_admin_id,
+            'selected_electoral_id': selected_electoral_id,
+            'selected_slum_id': selected_slum_id,
+            'selected_city_ids_csv': ','.join(city_ids),
+            'selected_admin_ids_csv': ','.join(admin_ids),
+            'selected_electoral_ids_csv': ','.join(electoral_ids),
+            'selected_slum_ids_csv': ','.join(slum_ids),
+            'selected_query': query or '',
+            'city_filter_options': city_filter_options,
+            'admin_filter_options': admin_filter_options,
+            'electoral_filter_options': electoral_filter_options,
+            'slum_filter_options': slum_filter_options,
+        },
+    )
 
 @csrf_exempt
 def rimedit(request,Rapid_Slum_Appraisal_id):
@@ -185,15 +249,45 @@ def rimedit(request,Rapid_Slum_Appraisal_id):
     return render(request, 'riminsert.html', {'form': form})
 
 @csrf_exempt
+def rim_select_slum(request):
+    """Popup: pick City -> Admin ward -> Electoral ward -> Slum before creating a new RIM entry."""
+    return render(request, 'rimselect.html', {})
+
+
+@csrf_exempt
+def rim_check_exists(request):
+    """AJAX: does a Rapid_Slum_Appraisal already exist for this slum?"""
+    slum_id = request.POST.get('slum_id')
+    data = {'exists': False, 'rim_id': None}
+    if slum_id:
+        existing = Rapid_Slum_Appraisal.objects.filter(slum_name_id=slum_id).first()
+        if existing:
+            data['exists'] = True
+            data['rim_id'] = existing.id
+    return HttpResponse(json.dumps(data), content_type='application/json')
+
+
+@csrf_exempt
 def riminsert(request):
     """Insert Rapid Slum Appraisal Record"""
     if request.method == 'POST':
-        form = Rapid_Slum_AppraisalForm(request.POST,request.FILES)
+        form = Rapid_Slum_AppraisalForm(request.POST, request.FILES)
         if form.is_valid():
+            slum = form.cleaned_data['slum_name']
+            # server-side guard even if popup was skipped/bypassed
+            existing = Rapid_Slum_Appraisal.objects.filter(slum_name=slum).exclude(pk=None).first()
+            if existing:
+                return HttpResponseRedirect(
+                    reverse('master:rimedit', args=[existing.id]) + '?dup=1'
+                )
             form.save()
             return HttpResponseRedirect('/admin/sluminformation/rim/display')
     else:
-        form = Rapid_Slum_AppraisalForm()
+        initial = {}
+        slum_id = request.GET.get('slum')
+        if slum_id:
+            initial['slum_name'] = slum_id
+        form = Rapid_Slum_AppraisalForm(initial=initial)
     return render(request, 'riminsert.html', {'form': form})
 
 @csrf_exempt
@@ -724,3 +818,50 @@ def get_slum_transformation_photos(request, slum_id):
         }
 
     return JsonResponse({slum_id: data})
+
+
+@csrf_exempt
+def filterMasterList(request):
+    """Generic filter API"""
+    filter_type = request.POST.get("type")
+    city_ids = [value for value in request.POST.getlist("city") if value]
+    admin_ids = [value for value in request.POST.getlist("admin") if value]
+    electoral_ids = [value for value in request.POST.getlist("electoral") if value]
+
+    if filter_type == "city":
+        queryset = City.objects.select_related("name").order_by("name__city_name")
+    elif filter_type == "administrative":
+        queryset = AdministrativeWard.objects.all()
+        if city_ids:
+            queryset = queryset.filter(city_id__in=city_ids)
+        queryset = queryset.order_by("name")
+    elif filter_type == "electoral":
+        queryset = ElectoralWard.objects.all()
+        if admin_ids:
+            queryset = queryset.filter(administrative_ward_id__in=admin_ids)
+        if city_ids:
+            queryset = queryset.filter(administrative_ward__city_id__in=city_ids)
+        queryset = queryset.order_by("name")
+    elif filter_type == "slum":
+        queryset = Slum.objects.all()
+        if electoral_ids:
+            queryset = queryset.filter(electoral_ward_id__in=electoral_ids)
+        if admin_ids:
+            queryset = queryset.filter(electoral_ward__administrative_ward_id__in=admin_ids)
+        if city_ids:
+            queryset = queryset.filter(electoral_ward__administrative_ward__city_id__in=city_ids)
+        queryset = queryset.order_by("name")
+    else:
+        return JsonResponse({"success": False,"message": "Invalid filter type."}, status=400)
+
+    idArray = []
+    nameArray = []
+    for obj in queryset:
+        idArray.append(obj.id)
+        nameArray.append(str(obj.name))
+
+    return JsonResponse({
+        "success": True,
+        "idArray": idArray,
+        "nameArray": nameArray
+    })
