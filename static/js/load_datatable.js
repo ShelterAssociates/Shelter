@@ -521,7 +521,7 @@ $(document).ready(function () {
         }
         var length_table =
           columns_defs["buttons"]["Accounts"][
-            columns_defs["buttons"]["Accounts"].length - 1
+          columns_defs["buttons"]["Accounts"].length - 1
           ] + 1;
         btn_default = [
           {
@@ -552,14 +552,10 @@ $(document).ready(function () {
       }
     },
   });
-  $("#buttons").on("click", "button", function () {
-    $(this).toggleClass("active");
-    flag = false;
-    if ($(this).hasClass("active")) {
-      flag = true;
-    }
-    section = $(this).attr("value");
-    col = columns_defs["buttons"][section];
+  $("#buttons").on("change", "input.section-checkbox", function () {
+    var flag = $(this).is(":checked");
+    var section = $(this).val();
+    var col = columns_defs["buttons"][section];
     table.columns(col).visible(flag);
     add_search_box();
   });
@@ -624,7 +620,7 @@ $(document).ready(function () {
                   $("#error_log").addClass("error_display");
                   $("#error_log").addClass("alert alert-danger");
                 }
-              } catch (error) {}
+              } catch (error) { }
             });
             var success_log = document.createElement("div");
             success_log.innerHTML =
@@ -732,16 +728,14 @@ $(document).ready(function () {
       $(".overlay").show();
       $("#legend1").show();
       $("#legend2").show();
-      buttons = '<div class="btn-group">';
+      buttons = '<div class="section-toggle-group">';
       $.each(columns_defs["buttons"], function (index, button) {
+        var safeId = index.replace(/ /g, "");
         buttons +=
-          '<button type="button" class="active btn btn-default" value="' +
+          '<label class="section-checkbox-label" for="chk_' + safeId + '">' +
+          '<input type="checkbox" class="section-checkbox" value="' + index + '" id="chk_' + safeId + '" checked> ' +
           index +
-          '" id="' +
-          index.replace(/ /g, "") +
-          '">' +
-          index +
-          "</button>";
+          '</label>';
       });
       buttons += "</div>";
       $("#buttons").append(buttons);
@@ -972,14 +966,14 @@ $(document).ready(function () {
           if (records.length == 1) {
             var result = confirm(
               "Are you sure? You have selected " +
-                records.length +
-                " record to delete."
+              records.length +
+              " record to delete."
             );
           } else {
             var result = confirm(
               "Are you sure? You have selected " +
-                records.length +
-                " records to delete."
+              records.length +
+              " records to delete."
             );
           }
           if (result) {
@@ -1074,15 +1068,16 @@ $(document).ready(function () {
         html_table
           .find(
             "thead>tr>th:eq(" +
-              (val[val.length - 1] - number_of_invisible_columns) +
-              ")"
+            (val[val.length - 1] - number_of_invisible_columns) +
+            ")"
           )
           .addClass("trLast");
       });
 
-      $("#buttons button")[0].click();
-      $("#buttons button")[1].click();
-      $("#buttons button")[2].click();
+      $("#buttons input.section-checkbox").each(function (i) {
+        var shouldShow = (i >= 3 && i <= 5);
+        $(this).prop("checked", shouldShow).trigger("change");
+      });
       $("#add_table_btn").show();
       //For excel button alignment.
       $("div.dt-buttons>button").addClass("pull-left");
@@ -1251,7 +1246,7 @@ $(document).ready(function () {
         if (no_ff_assign) {
           alert(
             "Selected record is not eligible for sponsorship. Household No.: " +
-              no_ff_assign
+            no_ff_assign
           );
           return;
         }
@@ -1259,8 +1254,8 @@ $(document).ready(function () {
         // Confirm sponsor addition
         var result = confirm(
           "Are you sure you want to add a sponsor to " +
-            records.length +
-            " record(s)?"
+          records.length +
+          " record(s)?"
         );
         if (!result) {
           return; // Abort if user cancels
@@ -1333,129 +1328,129 @@ $(document).ready(function () {
   }
 
 
-    // For Summery View Datatable master method.......
-    function load_member_datatable() {
-      btn_default = [
-        {
-          extend: "excel",
-          text: "Excel",
+  // For Summery View Datatable master method.......
+  function load_member_datatable() {
+    btn_default = [
+      {
+        extend: "excel",
+        text: "Excel",
+      },
+      {
+        extend: "searchBuilder",
+        config: {
+          depthLimit: 2,
         },
-        {
-          extend: "searchBuilder",
-          config: {
-            depthLimit: 2,
-          },
-        },
-        {
-          extend: "createState",
-          text: "Create State",
-        },
-        {
-          extend: "savedStates",
-          text: "Save State",
-        }
-      ];
-      if (report_member_datatable != null) {
-        $("#slum_form p").find("#slum_info").html("");
-        $("#slum_form p").find("#slum_info").remove();
-        $(".overlay").show();
-        report_member_datatable.ajax.reload();
-      } else {
-        $(".overlay").show();
-        $("#legend1").show();
-        $("#legend2").show();
-        buttons = '<div class="btn-group">';
-        $.each(columns_defs["buttons"], function (index, button) {
-          buttons +=
-            '<button type="button" class="active btn btn-default" value="' +
-            index +
-            '" id="' +
-            index.replace(/ /g, "") +
-            '">' +
-            index +
-            "</button>";
-        });
-        buttons += "</div>";
-        $("#buttons").append(buttons);
-        report_member_datatable = $("#example").DataTable({
-          responsive: true,
-          dom: "Bfrtip",
-          // search: {
-          //   return: true, // This is for forced search implementation on Search builder.
-          // },
-          layout: {
-            top1: 'searchBuilder'
-        },
-          paging: true,
-          order: [[9, "desc"]],
-          ajax: {
-            url: "/graphs/show/MemberData/",
-            dataSrc: "",
-            data: function () {
-              return $("#slum_form").serialize(); // , 'csrfmiddlewaretoken':csrf_token}
-              // NOTE : We could have assigned the variable itself to the 'data' attribute, instead
-              // of writing  function. That method promotes the errorneous behaviour. The code would have been
-              // unable to update the 'data' attribute on the call of 'table.ajax.reload()'.
-            },
-            contentType: "application/json",
-            dataSrc: function (data) {
-              return data;
-            },
-            complete: function (response) {
-              $(".overlay").hide();
-              if (response.responseText == '{}'){
-                alert('No Member Data Available...');
-              };
-            },
-            error: function (response) {
-              $(".overlay").hide();
-              if (response.responseText != "") {
-                alert(response.responseText);
-              }
-            },
-          },
-          buttons: btn_default,
-          columnDefs: [
-            { defaultContent: "-", targets: "_all" },
-            { footer: true },
-            { targets: 0, visible: false, searchable: false },
-          ],
-          columns: [
-            { data: "slum_id__name", title: "Slum" },
-            { data: "household_number", title: "Household Number" },
-            { data: "created_date_str", title: "Created Date" },
-            { data: "submission_date_str", title: "Last Modified Date" },
-            { data: "member_first_name", title: "Member First Name" },
-            { data: "member_last_name", title: "Member Last Name" },
-            { data: "gender", title: "Gender"},
-            { data: "age", title: "Age" },
-            { data: "Education", title: "Education" },
-            { data: "Employment Status", title: "Employment Status" },
-            { data: "Marital Status", title: "Marital Status" },
-            { data: "How many Children do you have ?", title: "How many Children do you have ?" },
-            { data: "Are you menstruating ?", title: "Are you menstruating ?" },
-            { data: "Are you a person with disability ?", title: "Are you a person with disability ?" },
-            { data: "What Type of disablity ?", title: "Select the type of disablity ?" },
-          ],
-        });
-        $("div.dt-buttons>button").addClass("pull-left");
-        add_search_box();
-        $(report_member_datatable.table().container()).on(
-          "keyup ",
-          "tfoot tr th input",
-          function (index, element) {
-            report_member_datatable
-              .column($(this).attr("dt_index"))
-              .search(String(this.value))
-              .draw();
-  
-            new $.fn.dataTable.SearchBuilder(report_member_datatable);
-          }
-        );
-        select_rows();
-        $("#add_table_btn").show();
+      },
+      {
+        extend: "createState",
+        text: "Create State",
+      },
+      {
+        extend: "savedStates",
+        text: "Save State",
       }
+    ];
+    if (report_member_datatable != null) {
+      $("#slum_form p").find("#slum_info").html("");
+      $("#slum_form p").find("#slum_info").remove();
+      $(".overlay").show();
+      report_member_datatable.ajax.reload();
+    } else {
+      $(".overlay").show();
+      $("#legend1").show();
+      $("#legend2").show();
+      buttons = '<div class="btn-group">';
+      $.each(columns_defs["buttons"], function (index, button) {
+        buttons +=
+          '<button type="button" class="active btn btn-default" value="' +
+          index +
+          '" id="' +
+          index.replace(/ /g, "") +
+          '">' +
+          index +
+          "</button>";
+      });
+      buttons += "</div>";
+      $("#buttons").append(buttons);
+      report_member_datatable = $("#example").DataTable({
+        responsive: true,
+        dom: "Bfrtip",
+        // search: {
+        //   return: true, // This is for forced search implementation on Search builder.
+        // },
+        layout: {
+          top1: 'searchBuilder'
+        },
+        paging: true,
+        order: [[9, "desc"]],
+        ajax: {
+          url: "/graphs/show/MemberData/",
+          dataSrc: "",
+          data: function () {
+            return $("#slum_form").serialize(); // , 'csrfmiddlewaretoken':csrf_token}
+            // NOTE : We could have assigned the variable itself to the 'data' attribute, instead
+            // of writing  function. That method promotes the errorneous behaviour. The code would have been
+            // unable to update the 'data' attribute on the call of 'table.ajax.reload()'.
+          },
+          contentType: "application/json",
+          dataSrc: function (data) {
+            return data;
+          },
+          complete: function (response) {
+            $(".overlay").hide();
+            if (response.responseText == '{}') {
+              alert('No Member Data Available...');
+            };
+          },
+          error: function (response) {
+            $(".overlay").hide();
+            if (response.responseText != "") {
+              alert(response.responseText);
+            }
+          },
+        },
+        buttons: btn_default,
+        columnDefs: [
+          { defaultContent: "-", targets: "_all" },
+          { footer: true },
+          { targets: 0, visible: false, searchable: false },
+        ],
+        columns: [
+          { data: "slum_id__name", title: "Slum" },
+          { data: "household_number", title: "Household Number" },
+          { data: "created_date_str", title: "Created Date" },
+          { data: "submission_date_str", title: "Last Modified Date" },
+          { data: "member_first_name", title: "Member First Name" },
+          { data: "member_last_name", title: "Member Last Name" },
+          { data: "gender", title: "Gender" },
+          { data: "age", title: "Age" },
+          { data: "Education", title: "Education" },
+          { data: "Employment Status", title: "Employment Status" },
+          { data: "Marital Status", title: "Marital Status" },
+          { data: "How many Children do you have ?", title: "How many Children do you have ?" },
+          { data: "Are you menstruating ?", title: "Are you menstruating ?" },
+          { data: "Are you a person with disability ?", title: "Are you a person with disability ?" },
+          { data: "What Type of disablity ?", title: "Select the type of disablity ?" },
+        ],
+      });
+      $("div.dt-buttons>button").addClass("pull-left");
+      add_search_box();
+      $(report_member_datatable.table().container()).on(
+        "keyup ",
+        "tfoot tr th input",
+        function (index, element) {
+          report_member_datatable
+            .column($(this).attr("dt_index"))
+            .search(String(this.value))
+            .draw();
+
+          new $.fn.dataTable.SearchBuilder(report_member_datatable);
+        }
+      );
+      select_rows();
+      $("#add_table_btn").show();
     }
+  }
 
 
   function select_rows() {
@@ -1541,44 +1536,44 @@ $(document).ready(function () {
     }
   });
 
-    // for Short View of mastersheet...
-    $("#btnFetchMember").click(function () {
-      if (document.forms[0].slumname.value == "") {
-        alert("Please select a slum");
-      } else {
-        $.ajax({
-          url: "/mastersheet/details/",
-          //dataSrc:"",
-          type: "GET",
-          data: {
-            form: $("#slum_form").serialize(),
-            csrfmiddlewaretoken: csrf_token,
-          },
-          // NOTE : We could have assigned the variable itself to the 'data' attribute, instead
-          // of writing  function. That method promotes the errorneous behaviour. The code would have been
-          // unable to update the 'data' attribute on the call of 'table.ajax.reload()'.
-          contentType: "application/json",
-          success: function (data) {
-            // Displaying the electoral ward and name of the slum besides the look-up box
-            // Checking if the element is already available or not
-            if (data != "undefined") {
-              city_code = data["City Code"];
-              var slum_info = document.createElement("div");
-              slum_info.classList.add("display_line");
-              slum_info.setAttribute("id", "slum_info");
-              slum_info.innerHTML =
-                "<p>" +
-                data["Name of the slum"] +
-                ", " +
-                data["Electoral Ward"] +
-                "</p>";
-              $("#slum_form p").append(slum_info);
-            }
-          },
-        });
-        load_member_datatable();
-      }
-    });
+  // for Short View of mastersheet...
+  $("#btnFetchMember").click(function () {
+    if (document.forms[0].slumname.value == "") {
+      alert("Please select a slum");
+    } else {
+      $.ajax({
+        url: "/mastersheet/details/",
+        //dataSrc:"",
+        type: "GET",
+        data: {
+          form: $("#slum_form").serialize(),
+          csrfmiddlewaretoken: csrf_token,
+        },
+        // NOTE : We could have assigned the variable itself to the 'data' attribute, instead
+        // of writing  function. That method promotes the errorneous behaviour. The code would have been
+        // unable to update the 'data' attribute on the call of 'table.ajax.reload()'.
+        contentType: "application/json",
+        success: function (data) {
+          // Displaying the electoral ward and name of the slum besides the look-up box
+          // Checking if the element is already available or not
+          if (data != "undefined") {
+            city_code = data["City Code"];
+            var slum_info = document.createElement("div");
+            slum_info.classList.add("display_line");
+            slum_info.setAttribute("id", "slum_info");
+            slum_info.innerHTML =
+              "<p>" +
+              data["Name of the slum"] +
+              ", " +
+              data["Electoral Ward"] +
+              "</p>";
+            $("#slum_form p").append(slum_info);
+          }
+        },
+      });
+      load_member_datatable();
+    }
+  });
 
   function trim_space(str) {
     if (str != null) {
@@ -1665,10 +1660,10 @@ $(document).ready(function () {
       title = something.find("thead tr th:eq(" + index + ")")[0].innerText;
       $(this).html(
         '<input id = "search_box" dt_index = ' +
-          visible_indices[index] +
-          '  type="text" placeholder="Search ' +
-          title +
-          '" />'
+        visible_indices[index] +
+        '  type="text" placeholder="Search ' +
+        title +
+        '" />'
       );
     });
   }
