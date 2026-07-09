@@ -74,6 +74,35 @@ def give_details(request):
 # Also, it retrieves the data of accounts and SBM. This view bundles them in a single object
 # to be displayed to the front end.
 
+import re
+
+
+def normalize_household_number(value):
+    """
+    Normalize a household number for use as a lookup key.
+
+    Historically household numbers were pure numeric strings (e.g. '0022'),
+    and the code used str(int(value)) to strip leading zeros -> '22'.
+    Household numbers can now include a trailing part-of-house suffix
+    (e.g. '0022A' for a subdivided household), which breaks int().
+
+    This preserves the old behavior for purely numeric values while
+    keeping any trailing alphanumeric suffix intact:
+        '0022'  -> '22'
+        '0022A' -> '22A'
+        22      -> '22'
+    Falls back to a plain stripped string if no leading digits are found.
+    """
+    if value is None:
+        return value
+    s = str(value).strip()
+    match = re.match(r"^0*(\d+)(.*)$", s)
+    if match:
+        digits, suffix = match.groups()
+        digits = digits if digits else "0"
+        return f"{digits}{suffix}"
+    return s
+
 
 @csrf_exempt
 @apply_permissions_ajax("mastersheet.can_view_mastersheet")
@@ -81,6 +110,12 @@ def give_details(request):
 def masterSheet(request, slum_code=0, FF_code=0, RHS_code=0):
     flag_fetch_rhs = "show_rhs" in request.GET
     flag_fetch_ff = "show_ff" in request.GET
+
+    logger.info(
+        "masterSheet called with slum_code=%s, FF_code=%s, RHS_code=%s, "
+        "flag_fetch_rhs=%s, flag_fetch_ff=%s",
+        slum_code, FF_code, RHS_code, flag_fetch_rhs, flag_fetch_ff,
+    )
 
     try:
         formdict = []
@@ -92,15 +127,21 @@ def masterSheet(request, slum_code=0, FF_code=0, RHS_code=0):
             "electoral_ward__name",
             "name",
         )
+        logger.debug("Fetched slum_code queryset: %s", list(slum_code))
 
         slum_funder = SponsorProjectDetails.objects.filter(
             slum__name=str(slum_code[0][4])
         ).exclude(sponsor__id=10)
         form_ids = Survey.objects.filter(city__id=int(slum_code[0][2]))
         household_data = HouseholdData.objects.filter(slum__id=slum_code[0][0])
+        logger.debug(
+            "slum_funder count=%s, form_ids count=%s, household_data count=%s",
+            slum_funder.count(), form_ids.count(), household_data.count(),
+        )
 
         if slum_code is not 0:
             if flag_fetch_rhs:
+                logger.debug("flag_fetch_rhs is True, processing RHS data")
 
                 # this check_rhs_data function return data as per occupacy status
                 def check_rhs_data(record):
@@ -163,29 +204,33 @@ def masterSheet(request, slum_code=0, FF_code=0, RHS_code=0):
                         return data
 
                 formdict = list(map(check_rhs_data, household_data))
+                logger.debug("formdict (RHS) built with %s records", len(formdict))
+
                 cod_data = FollowupData.objects.filter(slum=slum_code[0][0]).values(
                     "household_number", "followup_data", "submission_date"
                 )
                 followup_data = {}
                 for followup_record in cod_data:
-                    if str(int(followup_record["household_number"])) in followup_data:
+                    if normalize_household_number(followup_record["household_number"]) in followup_data:
                         temp = followup_data[
-                            str(int(followup_record["household_number"]))
+                            normalize_household_number(followup_record["household_number"])
                         ]
                         if temp["submission_date"] < followup_record["submission_date"]:
-                            hh = str(int(followup_record["household_number"]))
+                            hh = normalize_household_number(followup_record["household_number"])
                             del followup_record["household_number"]
                             temp = followup_record
                             followup_data[hh] = temp
                     else:
-                        hh = str(int(followup_record["household_number"]))
+                        hh = normalize_household_number(followup_record["household_number"])
                         temp_dict = {
                             "submission_date": followup_record["submission_date"],
                             "followup_data": followup_record["followup_data"],
                         }
                         followup_data[hh] = temp_dict
+                logger.debug("followup_data built with %s entries", len(followup_data))
 
             else:
+                logger.debug("flag_fetch_rhs is False, building minimal formdict")
                 formdict = list(
                     map(
                         lambda x: {
@@ -200,8 +245,11 @@ def masterSheet(request, slum_code=0, FF_code=0, RHS_code=0):
                         filter(lambda x: x.rhs_data != None, household_data),
                     )
                 )
+                logger.debug("formdict (non-RHS) built with %s records", len(formdict))
+
             # Family Factsheet - fetching data
             if flag_fetch_ff:
+                logger.debug("flag_fetch_ff is True, processing Family Factsheet data")
                 try:
 
                     def get_factsheet_data(record):
@@ -228,14 +276,19 @@ def masterSheet(request, slum_code=0, FF_code=0, RHS_code=0):
                     formdict_family_factsheet = list(
                         map(get_factsheet_data, household_data)
                     )
+                    logger.debug(
+                        "formdict_family_factsheet built with %s records",
+                        len(formdict_family_factsheet),
+                    )
 
                 except Exception as e:
                     logger.error(e, "in ff")
                 temp_FF = {
-                    str(int(obj_FF["group_vq77l17/Household_number"])): obj_FF
+                    normalize_household_number(obj_FF["group_vq77l17/Household_number"]): obj_FF
                     for obj_FF in formdict_family_factsheet
                 }
                 temp_FF_keys = temp_FF.keys()  # list of household numbers
+                logger.debug("temp_FF built with %s keys", len(temp_FF))
 
             # Daily Reporting - fetching data
             toilet_reconstruction_fields = [
@@ -273,6 +326,10 @@ def masterSheet(request, slum_code=0, FF_code=0, RHS_code=0):
             daily_reporting_data = daily_reporting_data.values(
                 *toilet_reconstruction_fields
             )
+            logger.debug(
+                "daily_reporting_data fetched with %s records",
+                len(daily_reporting_data),
+            )
 
             for i in daily_reporting_data:
                 if i["status"] is not None:
@@ -309,10 +366,11 @@ def masterSheet(request, slum_code=0, FF_code=0, RHS_code=0):
                         ):
                             i["delay_flag"] = "#aaa4f4"
             temp_daily_reporting = {
-                str(int(obj_DR["household_number"])): obj_DR
+                normalize_household_number(obj_DR["household_number"]): obj_DR
                 for obj_DR in daily_reporting_data
             }
             temp_DR_keys = temp_daily_reporting.keys()
+            logger.debug("temp_daily_reporting built with %s keys", len(temp_daily_reporting))
 
             # SBM - fetching data
             sbm_fields = [
@@ -338,6 +396,7 @@ def masterSheet(request, slum_code=0, FF_code=0, RHS_code=0):
             ).filter(slum__id=slum_code[0][0])
 
             sbm_data = sbm_data.values(*sbm_fields)
+            logger.debug("sbm_data fetched with %s records", len(sbm_data))
 
             temp_sbm = {str(obj_DR["household_number"]): obj_DR for obj_DR in sbm_data}
             temp_sbm_keys = temp_sbm.keys()
@@ -359,14 +418,23 @@ def masterSheet(request, slum_code=0, FF_code=0, RHS_code=0):
                     slum_id=slum_code[0][0]
                 )
             )
+            logger.debug(
+                "community_mobilization_data count=%s, community_mobilization_data_avni count=%s",
+                community_mobilization_data.count(),
+                len(community_mobilization_data_avni),
+            )
 
             # Vendor and Accounts - fetching data
             vendor = VendorHouseholdInvoiceDetail.objects.filter(
                 slum__id=slum_code[0][0]
             )
             invoices = InvoiceItems.objects.filter(slum__id=slum_code[0][0])
+            logger.debug(
+                "vendor count=%s, invoices count=%s", vendor.count(), invoices.count()
+            )
 
-            dummy_formdict = {str(int(x["Household_number"])): x for x in formdict}
+            dummy_formdict = {normalize_household_number(x["Household_number"]): x for x in formdict}
+            logger.debug("dummy_formdict initialized with %s keys", len(dummy_formdict))
 
             for y in invoices:
                 for z in y.household_numbers:
@@ -397,13 +465,13 @@ def masterSheet(request, slum_code=0, FF_code=0, RHS_code=0):
                         }
                     )
                 else:
-                    dummy_formdict[str(int(y.household_number))] = {
-                        "Household_number": str(int(y.household_number)),
+                    dummy_formdict[normalize_household_number(y.household_number)] = {
+                        "Household_number": normalize_household_number(y.household_number),
                         "_id": "",
                         "ff_id": "",
                         "no_rhs_flag": "#eba6fc",
                     }
-                    dummy_formdict[str(int(y.household_number))].update(
+                    dummy_formdict[normalize_household_number(y.household_number)].update(
                         {
                             new_activity_type: str(y.date_of_activity),
                             str(new_activity_type) + "_id": y.id,
@@ -415,7 +483,7 @@ def masterSheet(request, slum_code=0, FF_code=0, RHS_code=0):
                     y.household_number = [i for i in y.household_number if i != ""]
                     for z in y.household_number:
                         new_activity_type = y.activity_type.name
-                        z = str(int(z))
+                        z = normalize_household_number(z)
                         if z not in dummy_formdict.keys():
                             dummy_formdict[z] = {
                                 "Household_number": z,
@@ -456,6 +524,11 @@ def masterSheet(request, slum_code=0, FF_code=0, RHS_code=0):
                     {"tc_id_" + str(i): temp_daily_reporting[str(i)]["id"]}
                 )
 
+            logger.debug(
+                "dummy_formdict after merging all sources has %s keys",
+                len(dummy_formdict),
+            )
+
             for key, x in dummy_formdict.items():
                 try:
                     if (
@@ -474,7 +547,7 @@ def masterSheet(request, slum_code=0, FF_code=0, RHS_code=0):
                 x["slum__name"] = slum_code[0][4]
                 x["ff_id"] = None
                 x["ff_xform_id_string"] = None
-                x["Household_number"] = str(int(x["Household_number"]))
+                x["Household_number"] = normalize_household_number(x["Household_number"])
 
                 if flag_fetch_ff:
                     if key in temp_FF_keys:
@@ -540,12 +613,12 @@ def masterSheet(request, slum_code=0, FF_code=0, RHS_code=0):
 
                 # Update Follow up data for household
                 if flag_fetch_rhs:
-                    if str(int(key)) in followup_data:
+                    if normalize_household_number(key) in followup_data:
                         if (
                             "Type_of_structure_occupancy" in x
                             and x["Type_of_structure_occupancy"] == "Occupied house"
                         ):
-                            final_followup_data = followup_data[str(int(key))]
+                            final_followup_data = followup_data[normalize_household_number(key)]
                             data = final_followup_data["followup_data"]
                             if "group_oi8ts04/Current_place_of_defecation" in data:
                                 temp = data["group_oi8ts04/Current_place_of_defecation"]
@@ -564,12 +637,24 @@ def masterSheet(request, slum_code=0, FF_code=0, RHS_code=0):
                 if len(slum_funder) != 0:
                     for funder in slum_funder:
                         if funder.household_code != None:
-                            if int(x["Household_number"]) in funder.household_code:
+                            try:
+                                household_number_as_int = int(x["Household_number"])
+                            except (ValueError, TypeError):
+                                # Household_number may include a part-of-house
+                                # suffix (e.g. '22A') and won't match the
+                                # purely numeric funder.household_code list.
+                                household_number_as_int = None
+                            if (
+                                household_number_as_int is not None
+                                and household_number_as_int in funder.household_code
+                            ):
                                 x.update(
                                     {"Funder": funder.sponsor_project.name}
                                 )  # funder.sponsor.organization_name})
 
             formdict = list(map(lambda x: dummy_formdict[x], dummy_formdict))
+            logger.debug("Final formdict built with %s records", len(formdict))
+
             for x in formdict:
                 try:
                     if (
@@ -586,8 +671,11 @@ def masterSheet(request, slum_code=0, FF_code=0, RHS_code=0):
                 except Exception as e:
                     pass
     except Exception as e:
-        logger.error(e)
+        logger.error("Exception in masterSheet: %s", e, exc_info=True)
+
+    logger.info("masterSheet returning %s records", len(formdict))
     return HttpResponse(json.dumps(formdict), content_type="application/json")
+
 
 
 def to_date(s):
