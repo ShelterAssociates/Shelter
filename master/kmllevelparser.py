@@ -126,7 +126,7 @@ class KMLLevelParser(object):
                         for simple_data in schema_data.SimpleData:
                             name_attr = simple_data.get("name")
                             value = str(simple_data)
-                            if name_attr == "admin":
+                            if name_attr and name_attr.lower() == "admin":
                                 admin_name = value
                                 admin_obj = AdministrativeWard.objects.filter(
                                     name__iexact=admin_name, city__id=self.city_id
@@ -136,7 +136,7 @@ class KMLLevelParser(object):
                                         base_filter_data["AdministrativeWard"][1]
                                     ] = admin_obj
                                 admin_id = getattr(admin_obj, "id", None)
-                            elif name_attr == "electoral":
+                            elif name_attr and name_attr.lower() == "electoral":
                                 electoral_name = value
                                 if admin_name:
                                     electoral_obj = ElectoralWard.objects.filter(
