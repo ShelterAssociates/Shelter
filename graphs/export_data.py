@@ -114,6 +114,13 @@ class exportMethods:
         )
         sponsor_data_lst = {}
         for sp_obj in sponsor_data:
+            if not sp_obj.household_code:
+                logger.warning(
+                    "SponsorProjectDetails id=%s (slum_id=%s, sponsor_project_id=%s) "
+                    "has empty/null household_code; skipping",
+                    sp_obj.id, sp_obj.slum_id, sp_obj.sponsor_project_id,
+                )
+                continue
             for hh in sp_obj.household_code:
                 search_key = str(sp_obj.slum_id) + str(hh)
                 try:
@@ -125,6 +132,7 @@ class exportMethods:
                         "Missing sponsor_project_id=%s in sponsor_name_dict for slum_id=%s, household=%s",
                         sp_obj.sponsor_project_id, sp_obj.slum_id, hh,
                     )
+                    
         logger.debug("Built sponsor_data_lst with %s entries", len(sponsor_data_lst))
         # Create factsheet data for Response.
         for hh_object in factsheet_data_households:
