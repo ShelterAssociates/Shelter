@@ -25,6 +25,10 @@ from mastersheet.models import *
 import pandas as pd
 from django.db.models.functions import Cast
 from django.db.models import CharField
+import logging
+
+logger = logging.getLogger(__name__)
+
 
 CARDS = {
     "Cards": {
@@ -1810,65 +1814,104 @@ def factsheetDataDownload(
     request,
 ):  #     function for city wise factsheet data download.
 
+    logger.info("factsheetDataDownload called with method=%s", request.method)
+
     if request.method == "POST":
         Type_of_data = request.POST.get("Data")
         c_id = request.POST.get("City")
         startdate = request.POST.get("startdate")
         enddate = request.POST.get("enddate")
-    exportClassObj = exportMethods(c_id)
-    if Type_of_data == "Structure Data":
-        response_data, city_name = (
-            exportClassObj.Structure_data()
-        )  # Check export_data.py file for Structure_data()
-        columns_lst = [
-            "Slum Name",
-            "Admin Ward",
-            "Total Structure (In KML)",
-            "Occupied house",
-            "Unoccupied house",
-            "Locked house",
-            "Shop",
-            "Demolished house",
-            "Permanently locked house",
-            "Broken house",
-        ]
 
-    elif Type_of_data == "Factsheet Data":
-        response_data, city_name = exportClassObj.cityWiseQuery(startdate, enddate)
-        columns_lst = [
-            "Slum Name",
-            "Household_number",
-            "Name As Per RHS",
-            "Name As Per Factsheet",
-            "Ownership Status As Per Factsheet",
-            "Application id",
-            "Aadhar number",
-            "Phone number",
-            "Total_family_members",
-            "Male_members",
-            "Female_members",
-            "Below 5 years",
-            "Between_0_to_18",
-            "Above 60 years",
-            "disable_members",
-            "Toilet Connected To.",
-            "Have You Upgraded ?",
-            "Cost Of Upgradetion?",
-            "Sponsor Name",
-            "Who has built your toilet ?",
-        ]
+        logger.info(
+            "factsheetDataDownload params: Data=%s, City=%s, startdate=%s, enddate=%s",
+            Type_of_data, c_id, startdate, enddate,
+        )
+    else:
+        logger.warning(
+            "factsheetDataDownload called with non-POST method=%s; "
+            "Type_of_data/c_id/startdate/enddate may be undefined",
+            request.method,
+        )
 
-    filename = city_name + ".csv"
+    try:
+        exportClassObj = exportMethods(c_id)
 
-    response = HttpResponse(content_type="text/csv")
-    response["Content-Disposition"] = "attachment; filename=" + filename
+        if Type_of_data == "Structure Data":
+            logger.info("Fetching Structure Data for city_id=%s", c_id)
+            response_data, city_name = (
+                exportClassObj.Structure_data()
+            )  # Check export_data.py file for Structure_data()
+            columns_lst = [
+                "Slum Name",
+                "Admin Ward",
+                "Total Structure (In KML)",
+                "Occupied house",
+                "Unoccupied house",
+                "Locked house",
+                "Shop",
+                "Demolished house",
+                "Permanently locked house",
+                "Broken house",
+            ]
 
-    writer = csv.DictWriter(response, columns_lst)
-    writer.writeheader()
-    writer.writerows(response_data)
+        elif Type_of_data == "Factsheet Data":
+            logger.info(
+                "Fetching Factsheet Data for city_id=%s, startdate=%s, enddate=%s",
+                c_id, startdate, enddate,
+            )
+            response_data, city_name = exportClassObj.cityWiseQuery(startdate, enddate)
+            columns_lst = [
+                "Slum Name",
+                "Household_number",
+                "Name As Per RHS",
+                "Name As Per Factsheet",
+                "Ownership Status As Per Factsheet",
+                "Application id",
+                "Aadhar number",
+                "Phone number",
+                "Total_family_members",
+                "Male_members",
+                "Female_members",
+                "Below 5 years",
+                "Between_0_to_18",
+                "Above 60 years",
+                "disable_members",
+                "Toilet Connected To.",
+                "Have You Upgraded ?",
+                "Cost Of Upgradetion?",
+                "Sponsor Name",
+                "Who has built your toilet ?",
+            ]
+        else:
+            logger.error(
+                "factsheetDataDownload received unknown Type_of_data=%s", Type_of_data
+            )
+            return HttpResponse(status=400)
 
-    return response
+        logger.info(
+            "Data fetched successfully for city_name=%s, row_count=%s",
+            city_name, len(response_data) if response_data is not None else 0,
+        )
 
+        filename = city_name + ".csv"
+
+        response = HttpResponse(content_type="text/csv")
+        response["Content-Disposition"] = "attachment; filename=" + filename
+
+        writer = csv.DictWriter(response, columns_lst)
+        writer.writeheader()
+        writer.writerows(response_data)
+
+        logger.info("CSV file '%s' generated successfully", filename)
+
+        return response
+
+    except Exception as e:
+        logger.exception(
+            "Error in factsheetDataDownload for Type_of_data=%s, city_id=%s: %s",
+            Type_of_data, c_id, str(e),
+        )
+        return HttpResponse(status=500)
 
 # For Mastersheet Summery View rendering mastersheet summery page
 # @permission_required('mastersheet.can_view_mastersheet', raise_exception=True)
