@@ -14,16 +14,31 @@ logger = logging.getLogger(__name__)
 class exportMethods:
 
     def __init__(self, city_id):
-        self.household_data = HouseholdData.objects.all()
-        self.city_reference = CityReference.objects.all()
-        self.toilet_data = ToiletConstruction.objects.all()
-        self.slum = Slum.objects.all()
-        self.city = city_id
-        self.city_name = self.city_reference.get(
-            id=City.objects.get(id=self.city).name_id
-        ).city_name
+        logger.info("exportMethods.__init__ called with city_id=%s", city_id)
+        try:
+            self.household_data = HouseholdData.objects.all()
+            self.city_reference = CityReference.objects.all()
+            self.toilet_data = ToiletConstruction.objects.all()
+            self.slum = Slum.objects.all()
+            self.city = city_id
+            self.city_name = self.city_reference.get(
+                id=City.objects.get(id=self.city).name_id
+            ).city_name
+            logger.info(
+                "exportMethods initialized successfully for city_id=%s, city_name=%s",
+                self.city, self.city_name,
+            )
+        except Exception:
+            logger.exception(
+                "Failed to initialize exportMethods for city_id=%s", city_id
+            )
+            raise
 
     def cityWiseQuery(self, startdate, enddate):
+        logger.info(
+            "cityWiseQuery called for city_id=%s, startdate=%s, enddate=%s",
+            self.city, startdate, enddate,
+        )
         output_data = []
         """ In Array we are storing the household queryset objects which have factsheet data available."""
         factsheet_data_households = []
@@ -34,6 +49,10 @@ class exportMethods:
             phase_one_material_date__range=[startdate, enddate],
             completion_date__isnull=False,
         )
+        logger.debug(
+            "construction_data_phase_1 count=%s for city_id=%s",
+            construction_data_phase_1.count(), self.city,
+        )
         """Case :-2 phase_one_material_date is null. In this case we are going to query on phase_two_material_date"""
         construction_data_phase_2 = self.toilet_data.filter(
             slum__electoral_ward__administrative_ward__city__id=self.city,
@@ -41,10 +60,15 @@ class exportMethods:
             phase_one_material_date__isnull=True,
             completion_date__isnull=False,
         )
+        logger.debug(
+            "construction_data_phase_2 count=%s for city_id=%s",
+            construction_data_phase_2.count(), self.city,
+        )
         """ Here we are combining the both queryset object to single object"""
         construction_data = construction_data_phase_1.values_list(
             "slum_id", "household_number"
         ) | construction_data_phase_2.values_list("slum_id", "household_number")
+        logger.debug("combined construction_data count=%s", construction_data.count())
         """ Creating a groupby object to for making groups of slum_ids and households. """
         construction_group = itertools.groupby(
             sorted(
@@ -54,13 +78,27 @@ class exportMethods:
             key=lambda x: x[0],
         )
         """ Here we iterate on construction data groups slum by slum and getting the household querysets which have factsheet data available."""
+        slum_group_count = 0
         for i in construction_group:
+            slum_group_count += 1
             slum_id, households = i[0], [obj[1] for obj in list(i[1])]
+            logger.debug(
+                "Processing slum_id=%s with %s households for factsheet lookup",
+                slum_id, len(households),
+            )
             factsheet_objects = self.household_data.filter(
                 slum_id=slum_id, household_number__in=households, ff_data__isnull=False
             )
             if len(factsheet_objects) > 0:
+                logger.debug(
+                    "Found %s factsheet records for slum_id=%s",
+                    len(factsheet_objects), slum_id,
+                )
                 factsheet_data_households.extend(list(factsheet_objects))
+        logger.info(
+            "Processed %s slum groups; total factsheet households found=%s",
+            slum_group_count, len(factsheet_data_households),
+        )
         # Get Sponsor Project details slum_wise.
         slums = set(list(construction_data.values_list("slum_id", flat=True)))
         sponsor_data = SponsorProjectDetails.objects.filter(slum_id__in=slums).exclude(
@@ -70,13 +108,24 @@ class exportMethods:
             id__in=set(sponsor_data.values_list("sponsor_project_id", flat=True))
         )
         sponsor_name_dict = {i.id: i.name for i in sponsor_name}
+        logger.debug(
+            "Loaded %s sponsor project names for %s slums",
+            len(sponsor_name_dict), len(slums),
+        )
         sponsor_data_lst = {}
         for sp_obj in sponsor_data:
             for hh in sp_obj.household_code:
                 search_key = str(sp_obj.slum_id) + str(hh)
-                sponsor_data_lst[search_key] = sponsor_name_dict[
-                    sp_obj.sponsor_project_id
-                ]
+                try:
+                    sponsor_data_lst[search_key] = sponsor_name_dict[
+                        sp_obj.sponsor_project_id
+                    ]
+                except KeyError:
+                    logger.error(
+                        "Missing sponsor_project_id=%s in sponsor_name_dict for slum_id=%s, household=%s",
+                        sp_obj.sponsor_project_id, sp_obj.slum_id, hh,
+                    )
+        logger.debug("Built sponsor_data_lst with %s entries", len(sponsor_data_lst))
         # Create factsheet data for Response.
         for hh_object in factsheet_data_households:
             family_data = {}
@@ -88,7 +137,14 @@ class exportMethods:
             else:
                 family_data.update({"Sponsor Name": sponsor_data_lst[search_key]})
             """ Adding Slum Name details here."""
-            slum_name = self.slum.get(id=hh_object.slum_id).name
+            try:
+                slum_name = self.slum.get(id=hh_object.slum_id).name
+            except Slum.DoesNotExist:
+                logger.error(
+                    "Slum not found for slum_id=%s while building factsheet for household=%s",
+                    hh_object.slum_id, hh_object.household_number,
+                )
+                slum_name = None
             family_data.update({"Slum Name": slum_name})
             """SBM data questions for report(household wise)."""
             sbmData = SBMUpload.objects.filter(
@@ -140,13 +196,19 @@ class exportMethods:
                 )
             # Adding Data to output list household wise.
             output_data.append(family_data)
+        logger.info(
+            "cityWiseQuery completed for city_id=%s; total records generated=%s",
+            self.city, len(output_data),
+        )
         return output_data, self.city_name
 
     def get_occupacy_status(self):
         """Using This function to get Occupancy status count accross a city."""
+        logger.info("get_occupacy_status called for city_id=%s", self.city)
         data = self.household_data.filter(
             city_id=self.city, rhs_data__isnull=False
         ).values_list("rhs_data", "slum_id")
+        logger.debug("Fetched %s rhs_data records for city_id=%s", len(data), self.city)
         status_cnt_dct = {}
         for data_obj in data:
             record, slum = data_obj
@@ -159,10 +221,15 @@ class exportMethods:
                         temp[record["Type_of_structure_occupancy"]] = 1
                     else:
                         temp[record["Type_of_structure_occupancy"]] += 1
+        logger.info(
+            "get_occupacy_status completed; occupancy status computed for %s slums",
+            len(status_cnt_dct),
+        )
         return status_cnt_dct
 
     def get_structure_data(self):
         """Using This function to get all Structure count accross a city."""
+        logger.info("get_structure_data called for city_id=%s", self.city)
         final_component_data = {}
         component_data = Component.objects.filter(
             metadata_id=1,
@@ -173,28 +240,46 @@ class exportMethods:
         final_component_data = Counter(
             component_data
         )  # Creating dictionary with slum_id as key and Structure conut as a value.
+        logger.info(
+            "get_structure_data completed; structure counts computed for %s slums",
+            len(final_component_data),
+        )
         return dict(final_component_data)
 
     def SlumNameLst(self):
         """Creating a dictionary with slum names."""
+        logger.info("SlumNameLst called for city_id=%s", self.city)
         slums = self.slum.filter(
             electoral_ward__administrative_ward__city_id__in=[self.city]
         ).values_list("id", "name", "electoral_ward__administrative_ward__name")
         slum_name_dict = {i[0]: [i[1], i[2]] for i in slums}
+        logger.info(
+            "SlumNameLst completed; %s slums found for city_id=%s",
+            len(slum_name_dict), self.city,
+        )
         return slum_name_dict
 
     def Structure_data(self):
         """We use this function for exporting structure data count with household data count."""
+        logger.info("Structure_data called for city_id=%s", self.city)
         final_data_lst = []
         rhs_data_cnt = self.get_occupacy_status()
         component_data = self.get_structure_data()
         """ Creating a dictionary with slum names."""
         slum_name_dict = self.SlumNameLst()
+        skipped_slums = 0
         for slum_id, count in component_data.items():
             if slum_id in rhs_data_cnt:
                 rhs_data_status = rhs_data_cnt[slum_id]
             else:
                 rhs_data_status = {}
+            if slum_id not in slum_name_dict:
+                skipped_slums += 1
+                logger.error(
+                    "slum_id=%s present in component_data but missing from slum_name_dict; "
+                    "this record will raise a KeyError",
+                    slum_id,
+                )
             rhs_data_status.update(
                 {
                     "Slum Name": slum_name_dict[slum_id][0],
@@ -203,9 +288,18 @@ class exportMethods:
                 }
             )
             final_data_lst.append(rhs_data_status)
+        if skipped_slums:
+            logger.warning(
+                "Structure_data encountered %s slum_id lookup mismatches", skipped_slums
+            )
+        logger.info(
+            "Structure_data completed for city_id=%s; total rows=%s",
+            self.city, len(final_data_lst),
+        )
         return final_data_lst, self.city_name
 
     def cityWiseRhsData(self):
+        logger.info("cityWiseRhsData called for city_id=%s", self.city)
         question = {
             "rhs_uuid": "Avni UUID",
             "Date_of_survey": "Survey Date",
@@ -251,6 +345,10 @@ class exportMethods:
             .exclude(agreement_cancelled=True)
             .values_list("household_number", "status", "slum_id")
         )
+        logger.debug(
+            "cityWiseRhsData: fetched %s construction_data rows for city_id=%s",
+            len(construction_data), self.city,
+        )
         """ Create groupby object of construction_data for mapping."""
         construction_data_dct = defaultdict(dict)
         for household, status, slum_id in construction_data:
@@ -258,11 +356,19 @@ class exportMethods:
                 construction_data_dct[slum_id][household] = status
 
         construction_data = dict(construction_data_dct)
+        logger.debug(
+            "cityWiseRhsData: construction_data grouped into %s slums",
+            len(construction_data),
+        )
         """ Here we are creating slum wise group of hh who has toilet construction data (for mapping)"""
         """Extracting Followup data and sorting data as per the last modified date."""
         cod_data = FollowupData.objects.filter(
             slum_id__in=list(slum_name_dict.keys())
         ).values("household_number", "followup_data", "submission_date", "slum_id")
+        logger.debug(
+            "cityWiseRhsData: fetched %s followup_data rows for city_id=%s",
+            len(cod_data), self.city,
+        )
         followup_data = {}
         for followup_record in cod_data:
             if followup_record["slum_id"] in followup_data:
@@ -292,9 +398,16 @@ class exportMethods:
                 }
                 dict_ = {hh: temp_dict}
                 followup_data[slum] = dict_
+        logger.debug(
+            "cityWiseRhsData: followup_data built for %s slums", len(followup_data)
+        )
         """Extracting City wise household data."""
         householdData = self.household_data.filter(
             city_id=self.city, rhs_data__isnull=False
+        )
+        logger.debug(
+            "cityWiseRhsData: fetched %s household rows with rhs_data for city_id=%s",
+            householdData.count(), self.city,
         )
 
         def check_rhs_data(record):
@@ -387,19 +500,38 @@ class exportMethods:
             data["Household number"] = record.household_number
             data["Household_id"] = record.id
             data["slum_id"] = record.slum_id
-            data["Last Modified At"] = str(
-                datetime.datetime.strptime(
-                    str(record.submission_date)[:10], "%Y-%m-%d"
-                ).date()
-            )
+            try:
+                data["Last Modified At"] = str(
+                    datetime.datetime.strptime(
+                        str(record.submission_date)[:10], "%Y-%m-%d"
+                    ).date()
+                )
+            except (ValueError, TypeError):
+                logger.error(
+                    "Failed to parse submission_date=%s for HouseholdID=%s",
+                    record.submission_date, record.id,
+                )
+                data["Last Modified At"] = None
             if record.slum_id in slum_name_dict:
                 data["Slum"] = slum_name_dict[record.slum_id][0]
                 data["Admin"] = slum_name_dict[record.slum_id][1]
+            else:
+                logger.warning(
+                    "slum_id=%s not found in slum_name_dict for HouseholdID=%s",
+                    record.slum_id, record.id,
+                )
             return data
 
         """Iterating household data and selecting question for response data."""
         formdict = list(map(check_rhs_data, householdData))
+        logger.info(
+            "cityWiseRhsData: built base rhs data for %s households in city_id=%s",
+            len(formdict), self.city,
+        )
         """Adding Followup data and Construction data in this city wise data."""
+        followup_merge_count = 0
+        construction_merge_count = 0
+        error_count = 0
         for rhs_data in formdict:
             """If the followup data is available then this block will run."""
             if rhs_data["slum_id"] in followup_data and (
@@ -443,6 +575,7 @@ class exportMethods:
                             temp[key_lst[key]] = data[key]
                     if temp != {}:
                         rhs_data.update(temp)
+                        followup_merge_count += 1
             """ If the household has construction data then this block will run."""
             try:
                 exclude_lst = {
@@ -479,7 +612,18 @@ class exportMethods:
                                 )
                             )
                         )
-            except Exception as e:
-                logger.error(e)
+                        construction_merge_count += 1
+            except Exception:
+                error_count += 1
+                logger.exception(
+                    "Error merging construction data for slum_id=%s, household=%s",
+                    rhs_data.get("slum_id"), rhs_data.get("Household number"),
+                )
 
+        logger.info(
+            "cityWiseRhsData completed for city_id=%s; total=%s, followup_merged=%s, "
+            "construction_merged=%s, errors=%s",
+            self.city, len(formdict), followup_merge_count,
+            construction_merge_count, error_count,
+        )
         return formdict, self.city_name
