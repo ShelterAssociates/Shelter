@@ -26,6 +26,24 @@ import os
 import builtins
 import inspect
 
+
+# ---------------------------------------------------------------------------
+# MIDDLEWARE
+# ---------------------------------------------------------------------------
+
+
+MIDDLEWARE = (
+    "shelter.middleware.RequestLoggingMiddleware",
+    "django.middleware.gzip.GZipMiddleware",
+    "django.contrib.sessions.middleware.SessionMiddleware",
+    "django.middleware.common.CommonMiddleware",
+    "django.middleware.csrf.CsrfViewMiddleware",
+    "django.contrib.auth.middleware.AuthenticationMiddleware",
+    "django.contrib.messages.middleware.MessageMiddleware",
+    "django.middleware.clickjacking.XFrameOptionsMiddleware",
+    "django.middleware.security.SecurityMiddleware",
+)
+
 # ---------------------------------------------------------------------------
 # PATHS
 #
@@ -159,20 +177,6 @@ ADMIN_VIEW_PERMISSION_MODELS = [
 ]
 
 
-# ---------------------------------------------------------------------------
-# MIDDLEWARE
-# ---------------------------------------------------------------------------
-
-MIDDLEWARE = (
-    "django.middleware.gzip.GZipMiddleware",
-    "django.contrib.sessions.middleware.SessionMiddleware",
-    "django.middleware.common.CommonMiddleware",
-    "django.middleware.csrf.CsrfViewMiddleware",
-    "django.contrib.auth.middleware.AuthenticationMiddleware",
-    "django.contrib.messages.middleware.MessageMiddleware",
-    "django.middleware.clickjacking.XFrameOptionsMiddleware",
-    "django.middleware.security.SecurityMiddleware",
-)
 
 
 # ---------------------------------------------------------------------------
@@ -272,3 +276,52 @@ ADMIN_SITE_HEADER = "Shelter Administration"
 # ---------------------------------------------------------------------------
 
 LOGIN_REDIRECT_URL = "login_success"
+
+# ---------------------------------------------------------------------------
+# LOGGING
+#
+# All logs go to PARENT_DIR/logs/app.log (outside the codebase, like
+# media/ and static_collected/), plus console output for `runserver`
+# and gunicorn's own stdout/stderr capture.
+# ---------------------------------------------------------------------------
+
+LOG_DIR = os.path.join(PARENT_DIR, "logs")
+os.makedirs(LOG_DIR, exist_ok=True)
+
+LOGGING = {
+    "version": 1,
+    "disable_existing_loggers": False,
+    "formatters": {
+        "verbose": {
+            "format": "{asctime} [{levelname}] {name}: {message}",
+            "style": "{",
+        },
+    },
+    "handlers": {
+        "console": {
+            "class": "logging.StreamHandler",
+            "formatter": "verbose",
+        },
+        "file": {
+            "class": "logging.FileHandler",
+            "filename": os.path.join(LOG_DIR, "app.log"),
+            "formatter": "verbose",
+        },
+    },
+    "root": {
+        "handlers": ["console", "file"],
+        "level": "INFO",
+    },
+    "loggers": {
+        "request_logger": {
+            "handlers": ["console", "file"],
+            "level": "INFO",
+            "propagate": False,
+        },
+        "django.request": {
+            "handlers": ["console", "file"],
+            "level": "WARNING",
+            "propagate": False,
+        },
+    },
+}
