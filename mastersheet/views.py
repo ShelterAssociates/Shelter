@@ -74,35 +74,6 @@ def give_details(request):
 # Also, it retrieves the data of accounts and SBM. This view bundles them in a single object
 # to be displayed to the front end.
 
-import re
-
-
-def normalize_household_number(value):
-    """
-    Normalize a household number for use as a lookup key.
-
-    Historically household numbers were pure numeric strings (e.g. '0022'),
-    and the code used str(int(value)) to strip leading zeros -> '22'.
-    Household numbers can now include a trailing part-of-house suffix
-    (e.g. '0022A' for a subdivided household), which breaks int().
-
-    This preserves the old behavior for purely numeric values while
-    keeping any trailing alphanumeric suffix intact:
-        '0022'  -> '22'
-        '0022A' -> '22A'
-        22      -> '22'
-    Falls back to a plain stripped string if no leading digits are found.
-    """
-    if value is None:
-        return value
-    s = str(value).strip()
-    match = re.match(r"^0*(\d+)(.*)$", s)
-    if match:
-        digits, suffix = match.groups()
-        digits = digits if digits else "0"
-        return f"{digits}{suffix}"
-    return s
-
 
 @csrf_exempt
 @apply_permissions_ajax("mastersheet.can_view_mastersheet")
@@ -110,12 +81,6 @@ def normalize_household_number(value):
 def masterSheet(request, slum_code=0, FF_code=0, RHS_code=0):
     flag_fetch_rhs = "show_rhs" in request.GET
     flag_fetch_ff = "show_ff" in request.GET
-
-    logger.info(
-        "masterSheet called with slum_code=%s, FF_code=%s, RHS_code=%s, "
-        "flag_fetch_rhs=%s, flag_fetch_ff=%s",
-        slum_code, FF_code, RHS_code, flag_fetch_rhs, flag_fetch_ff,
-    )
 
     try:
         formdict = []
@@ -149,6 +114,8 @@ def masterSheet(request, slum_code=0, FF_code=0, RHS_code=0):
                         "rhs_uuid",
                         "Date_of_survey",
                         "Name_s_of_the_surveyor_s",
+                        "Functioning of the structure",
+                        "Are you willing to share the household information ?",
                         "Type_of_structure_occupancy",
                         "Type_of_unoccupied_house",
                         "Parent_household_number",
@@ -190,6 +157,8 @@ def masterSheet(request, slum_code=0, FF_code=0, RHS_code=0):
                             "group_og5bx85/Type_of_survey",
                             "Plus code of the house",
                             "Plus Code Part",
+                            "Functioning of the structure",
+                            "Are you willing to share the household information ?"
                         ]
                         if record.rhs_data:
                             data = {
@@ -211,17 +180,17 @@ def masterSheet(request, slum_code=0, FF_code=0, RHS_code=0):
                 )
                 followup_data = {}
                 for followup_record in cod_data:
-                    if normalize_household_number(followup_record["household_number"]) in followup_data:
+                    if str(int(followup_record["household_number"])) in followup_data:
                         temp = followup_data[
-                            normalize_household_number(followup_record["household_number"])
+                            str(int(followup_record["household_number"]))
                         ]
                         if temp["submission_date"] < followup_record["submission_date"]:
-                            hh = normalize_household_number(followup_record["household_number"])
+                            hh = str(int(followup_record["household_number"]))
                             del followup_record["household_number"]
                             temp = followup_record
                             followup_data[hh] = temp
                     else:
-                        hh = normalize_household_number(followup_record["household_number"])
+                        hh = str(int(followup_record["household_number"]))
                         temp_dict = {
                             "submission_date": followup_record["submission_date"],
                             "followup_data": followup_record["followup_data"],
@@ -284,7 +253,7 @@ def masterSheet(request, slum_code=0, FF_code=0, RHS_code=0):
                 except Exception as e:
                     logger.error(e, "in ff")
                 temp_FF = {
-                    normalize_household_number(obj_FF["group_vq77l17/Household_number"]): obj_FF
+                    str(int(obj_FF["group_vq77l17/Household_number"])): obj_FF
                     for obj_FF in formdict_family_factsheet
                 }
                 temp_FF_keys = temp_FF.keys()  # list of household numbers
@@ -366,7 +335,7 @@ def masterSheet(request, slum_code=0, FF_code=0, RHS_code=0):
                         ):
                             i["delay_flag"] = "#aaa4f4"
             temp_daily_reporting = {
-                normalize_household_number(obj_DR["household_number"]): obj_DR
+                str(int(obj_DR["household_number"])): obj_DR
                 for obj_DR in daily_reporting_data
             }
             temp_DR_keys = temp_daily_reporting.keys()
@@ -433,7 +402,7 @@ def masterSheet(request, slum_code=0, FF_code=0, RHS_code=0):
                 "vendor count=%s, invoices count=%s", vendor.count(), invoices.count()
             )
 
-            dummy_formdict = {normalize_household_number(x["Household_number"]): x for x in formdict}
+            dummy_formdict = {str(int(x["Household_number"])): x for x in formdict}
             logger.debug("dummy_formdict initialized with %s keys", len(dummy_formdict))
 
             for y in invoices:
@@ -465,13 +434,13 @@ def masterSheet(request, slum_code=0, FF_code=0, RHS_code=0):
                         }
                     )
                 else:
-                    dummy_formdict[normalize_household_number(y.household_number)] = {
-                        "Household_number": normalize_household_number(y.household_number),
+                    dummy_formdict[str(int(y.household_number))] = {
+                        "Household_number": str(int(y.household_number)),
                         "_id": "",
                         "ff_id": "",
                         "no_rhs_flag": "#eba6fc",
                     }
-                    dummy_formdict[normalize_household_number(y.household_number)].update(
+                    dummy_formdict[str(int(y.household_number))].update(
                         {
                             new_activity_type: str(y.date_of_activity),
                             str(new_activity_type) + "_id": y.id,
@@ -483,7 +452,7 @@ def masterSheet(request, slum_code=0, FF_code=0, RHS_code=0):
                     y.household_number = [i for i in y.household_number if i != ""]
                     for z in y.household_number:
                         new_activity_type = y.activity_type.name
-                        z = normalize_household_number(z)
+                        z = str(int(z))
                         if z not in dummy_formdict.keys():
                             dummy_formdict[z] = {
                                 "Household_number": z,
@@ -547,7 +516,7 @@ def masterSheet(request, slum_code=0, FF_code=0, RHS_code=0):
                 x["slum__name"] = slum_code[0][4]
                 x["ff_id"] = None
                 x["ff_xform_id_string"] = None
-                x["Household_number"] = normalize_household_number(x["Household_number"])
+                x["Household_number"] = str(int(x["Household_number"]))
 
                 if flag_fetch_ff:
                     if key in temp_FF_keys:
@@ -613,12 +582,12 @@ def masterSheet(request, slum_code=0, FF_code=0, RHS_code=0):
 
                 # Update Follow up data for household
                 if flag_fetch_rhs:
-                    if normalize_household_number(key) in followup_data:
+                    if str(int(key)) in followup_data:
                         if (
                             "Type_of_structure_occupancy" in x
                             and x["Type_of_structure_occupancy"] == "Occupied house"
                         ):
-                            final_followup_data = followup_data[normalize_household_number(key)]
+                            final_followup_data = followup_data[str(int(key))]
                             data = final_followup_data["followup_data"]
                             if "group_oi8ts04/Current_place_of_defecation" in data:
                                 temp = data["group_oi8ts04/Current_place_of_defecation"]
@@ -637,17 +606,7 @@ def masterSheet(request, slum_code=0, FF_code=0, RHS_code=0):
                 if len(slum_funder) != 0:
                     for funder in slum_funder:
                         if funder.household_code != None:
-                            try:
-                                household_number_as_int = int(x["Household_number"])
-                            except (ValueError, TypeError):
-                                # Household_number may include a part-of-house
-                                # suffix (e.g. '22A') and won't match the
-                                # purely numeric funder.household_code list.
-                                household_number_as_int = None
-                            if (
-                                household_number_as_int is not None
-                                and household_number_as_int in funder.household_code
-                            ):
+                            if int(x["Household_number"]) in funder.household_code:
                                 x.update(
                                     {"Funder": funder.sponsor_project.name}
                                 )  # funder.sponsor.organization_name})
@@ -675,7 +634,6 @@ def masterSheet(request, slum_code=0, FF_code=0, RHS_code=0):
 
     logger.info("masterSheet returning %s records", len(formdict))
     return HttpResponse(json.dumps(formdict), content_type="application/json")
-
 
 
 def to_date(s):
@@ -734,6 +692,8 @@ def define_columns(request):
         },  # 1
         {"data": "Date_of_survey", "title": "Date of Survey"},
         {"data": "Name_s_of_the_surveyor_s", "title": "Name of the Surveyor"},
+        {"data": "Functioning of the structure", "title": "Functioning of the structure"},
+        {"data": "Are you willing to share the household information ?", "title": "Willing to share household info"},
         {"data": "Type_of_structure_occupancy", "title": "Type of structure occupancy"},
         {"data": "Plus code of the house", "title": "Plus code of the house"},
         {"data": "Plus Code Part", "title": "Plus Code Part"},
@@ -913,35 +873,37 @@ def define_columns(request):
         if "bVisible" in i.keys():
             number_of_invisible_columns += 1
 
+
     final_data = {}
     final_data["buttons"] = collections.OrderedDict()
     final_data["buttons"]["RHS"] = list(
-        range(number_of_invisible_columns + 1, number_of_invisible_columns + 1 + 20)
-    )  # range(14,34)#range(13,33)
+        range(number_of_invisible_columns + 1, number_of_invisible_columns + 1 + 22)
+    )  # range(14,36)
     final_data["buttons"]["Follow-up"] = list(
         range(
-            number_of_invisible_columns + 1 + 20,
-            number_of_invisible_columns + 1 + 20 + 19,
+            number_of_invisible_columns + 1 + 22,
+            number_of_invisible_columns + 1 + 22 + 19,
         )
-    )  # range(34,52)#range(33,51)
+    )  # range(36,55)
     final_data["buttons"]["Family factsheet"] = list(
         range(
-            number_of_invisible_columns + 1 + 20 + 19,
-            number_of_invisible_columns + 1 + 20 + 19 + 7,
+            number_of_invisible_columns + 1 + 22 + 19,
+            number_of_invisible_columns + 1 + 22 + 19 + 7,
         )
-    )  # range(52,59)#range(51,58)
+    )  # range(55,62)
     final_data["buttons"]["SBM"] = list(
         range(
-            number_of_invisible_columns + 1 + 20 + 19 + 7,
-            number_of_invisible_columns + 1 + 20 + 19 + 7 + 10,
+            number_of_invisible_columns + 1 + 22 + 19 + 7,
+            number_of_invisible_columns + 1 + 22 + 19 + 7 + 10,
         )
-    )  # range(60,69)#range(58,68)
+    )  # range(62,72)
     final_data["buttons"]["Construction status"] = list(
         range(
-            number_of_invisible_columns + 1 + 20 + 19 + 7 + 10,
-            number_of_invisible_columns + 1 + 20 + 19 + 7 + 10 + 15,
+            number_of_invisible_columns + 1 + 22 + 19 + 7 + 10,
+            number_of_invisible_columns + 1 + 22 + 19 + 7 + 10 + 15,
         )
-    )  # range(70,84)#range(68,83)
+    )
+    # range(72,87)  # range(70,84)#range(68,83)
     # We define the columns for community mobilization and vendor details in a dynamic way. The
     # reason being these columns are prone to updates and additions.
     activity_pre_len = len(formdict_new)
@@ -2365,6 +2327,8 @@ def renderSummery(request):
 
 def getRhsData(record):
     key_list = {
+        "Are you willing to share the household information ?" : "willing_to_share_info",
+        "Functioning of the structure" : "functioning_of_structure",
         "Plus code of the house": "pluscodes",
         "Type_of_structure_occupancy": "occupancy_status",
         "group_og5bx85/Full_name_of_the_head_of_the_household": "name_head_of_he_household",
@@ -2701,6 +2665,19 @@ def ProcessShortView(request, slum_details=0):
         logger.error(e)
     return HttpResponse(json.dumps(formdict), content_type="application/json")
 
+def normalize_household_number(value):
+    """
+    Normalize a household number for use as a dict key / comparison value.
+    Household numbers used to be purely numeric (e.g. '0749') but can now
+    also be alphanumeric (e.g. '0749A'). This strips leading zeros in a
+    string-safe way without assuming the value is castable to int.
+    """
+    if value is None:
+        return None
+    s = str(value).strip()
+    stripped = s.lstrip("0")
+    return stripped if stripped else "0"
+
 
 def AnalyseGisTabData(slum_id):
     try:
@@ -2722,6 +2699,8 @@ def AnalyseGisTabData(slum_id):
             "slum",
             "household_number",
             "Last Modified At",
+            "functioning_of_structure",
+            "willing_to_share_info",
             "occupancy_status",
             "typeUnoccupiedHouse",
             "pluscodes",
@@ -2778,20 +2757,17 @@ def AnalyseGisTabData(slum_id):
             "household_number", "followup_data", "submission_date"
         )
         for followup_record in cod_data:
-            if str(int(followup_record["household_number"])) in followup_data:
-                temp = followup_data[str(int(followup_record["household_number"]))]
+            hh = normalize_household_number(followup_record["household_number"])
+            if hh in followup_data:
+                temp = followup_data[hh]
                 if temp["submission_date"] < followup_record["submission_date"]:
-                    hh = str(int(followup_record["household_number"]))
                     del followup_record["household_number"]
-                    temp = followup_record
-                    followup_data[hh] = temp
+                    followup_data[hh] = followup_record
             else:
-                hh = str(int(followup_record["household_number"]))
-                temp_dict = {
+                followup_data[hh] = {
                     "submission_date": followup_record["submission_date"],
                     "followup_data": followup_record["followup_data"],
                 }
-                followup_data[hh] = temp_dict
 
         # For Daily Reporting data....
         def getToiletData(record):
@@ -2804,7 +2780,9 @@ def AnalyseGisTabData(slum_id):
                 data["pocket"] = record.pocket
             if record.comment is not None and record.comment.strip() != "":
                 data["comment"] = record.comment
-            data["household_number"] = str(int(record.household_number))
+            data["household_number"] = normalize_household_number(
+                record.household_number
+            )
             return data
 
         toiletdict = list(map(getToiletData, Toilet_data))
@@ -2832,7 +2810,7 @@ def AnalyseGisTabData(slum_id):
                 "occupancy_status" in dct
                 and dct["occupancy_status"] == "Occupied house"
             ):
-                hh = str(int(dct["household_number"]))
+                hh = normalize_household_number(dct["household_number"])
                 # checking for followup-data
                 if hh in followup_data:
                     temp = followup_data[hh]
@@ -2843,15 +2821,19 @@ def AnalyseGisTabData(slum_id):
                     }
                     dct.update(sanitation_data)
                 # adding Daily Reporting data ...
-                if str(int(hh)) in toiletdict:
-                    temp_data = toiletdict[str(int(hh))]
+                if hh in toiletdict:
+                    temp_data = toiletdict[hh]
                     del temp_data["household_number"]
                     dct.update(temp_data)
                 # Adding Funder project data .....
                 if len(slum_funder) != 0:  # Adding funder project name.
                     for funder in slum_funder:
-                        if funder.household_code != None:
-                            if int(hh) in funder.household_code:
+                        if funder.household_code is not None:
+                            try:
+                                hh_key = int(hh)
+                            except ValueError:
+                                hh_key = hh
+                            if hh_key in funder.household_code:
                                 dct.update(
                                     {"sponsor_project": funder.sponsor_project.name}
                                 )
@@ -2867,8 +2849,8 @@ def AnalyseGisTabData(slum_id):
         return list(check_formdict.values()), columns_lst, slum_code[0][1]
     except Exception as e:
         logger.error(e)
-
-
+        raise
+    
 # For Gis Tab
 @csrf_exempt
 def gisDataDownload(request):
@@ -2890,6 +2872,8 @@ def gisDataDownload(request):
             "Last Modified At",
             "slum_id",
             "Name of the Surveyor",
+            "functioning of the structure",
+            "willing to share info",
             "Type of structure occupancy",
             "Type of unoccupied house",
             "Parent household number",
