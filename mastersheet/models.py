@@ -83,6 +83,7 @@ class VendorHouseholdInvoiceDetail(models.Model):
 
 class Invoice(models.Model):
     vendor = models.ForeignKey(Vendor, on_delete=models.CASCADE)
+    sponsor_project = models.ForeignKey(SponsorProject, on_delete=models.SET_NULL, null=True, blank=True)
     invoice_date = models.DateField(null=True, blank=True)
     invoice_number = models.CharField(max_length=100, null=True, blank=True)
     challan_number = models.CharField(max_length=100, null=True, blank=True)
@@ -136,7 +137,6 @@ class InvoiceItems(models.Model):
     material_type = models.ForeignKey(MaterialType, on_delete=models.CASCADE)
     slum = models.ForeignKey(Slum, on_delete=models.CASCADE)
     household_numbers = JSONField()
-    sponsor_project = models.ForeignKey(SponsorProject, on_delete=models.SET_NULL, null=True, blank=True)
     phase = models.CharField(max_length=2, choices=PHASE, null=True, blank=True)
     quantity = models.FloatField(default=0)
     unit = models.CharField(max_length=100, choices=UNITS, null=True, blank=True)

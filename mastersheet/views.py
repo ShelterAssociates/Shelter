@@ -2257,17 +2257,15 @@ def accounts_excel_generation(request):
     i = 1
     for k, v in dict_of_dict.items():
         for inner_k, inner_v in v.items():
-            # Sponsor Project pulled directly from the InvoiceItems row itself —
-            # independent of the SponsorProjectDetails-based Donor Name lookup above.
+            # Sponsor Project now lives on Invoice, not InvoiceItems.
             invoice_item_sponsor_project = (
-                inner_v.sponsor_project.name if inner_v.sponsor_project else ""
+                inner_v.invoice.sponsor_project.name if inner_v.invoice.sponsor_project else ""
             )
-
             sheet1.write(i, 0, str(inner_v.invoice.invoice_date))
             sheet1.write(i, 1, inner_v.invoice.invoice_number)
             sheet1.write(i, 2, inner_v.invoice.vendor.name)
             sheet1.write(i, 3, check_funder(k[0], inner_v.slum.id))
-            sheet1.write(i, 4, invoice_item_sponsor_project)          # NEW column
+            sheet1.write(i, 4, invoice_item_sponsor_project)         
             sheet1.write(
                 i,
                 5,
@@ -2325,6 +2323,7 @@ def accounts_excel_generation(request):
     )
     wb.save(response)
     return response
+
 @permission_required("mastersheet.can_view_mastersheet", raise_exception=True)
 def renderSummery(request):
     slum_search_field = find_slum()

@@ -54,7 +54,6 @@ class InvoiceItemsInline(admin.TabularInline):
         "material_type",
         "phase",
         "slum",
-        "sponsor_project",
         "household_numbers",
         "quantity",
         "unit",
@@ -64,7 +63,7 @@ class InvoiceItemsInline(admin.TabularInline):
     ]
     readonly_fields = ("copy_above",)
     search_fields = ("name",)
-    raw_id_fields = ("slum", "sponsor_project")
+    raw_id_fields = ("slum",)
     extra = 0
     min_num = 1
 
@@ -101,15 +100,11 @@ class InvoiceAdmin(admin.ModelAdmin):
     list_filter = ["vendor"]
     list_display = ("vendor", "invoice_number", "challan_number", "invoice_date")
     search_fields = ["vendor__name", "invoice_number", "challan_number", "invoice_date"]
+    list_display = ("vendor", "invoice_number", "challan_number", "invoice_date", "sponsor_project")
+    search_fields = ["vendor__name", "invoice_number", "challan_number", "invoice_date", "sponsor_project__name"]
+    autocomplete_fields = ["sponsor_project"]
     ordering = ["vendor"]
-    inlines = [InvoiceItemsInline]
-    exclude = (
-        "created_by",
-        "created_on",
-        "modified_by",
-        "modified_on",
-    )
-
+    inlines = [InvoiceItemsInline] 
     class Media:
         js = ["js/calculate_total_invoice.js"]
 
@@ -160,7 +155,6 @@ class InvoiceItemsAdmin(admin.ModelAdmin):
         "material_type",
         "phase",
         "slum",
-        "sponsor_project",
         "household_numbers",
         "quantity",
         "unit",
@@ -172,12 +166,10 @@ class InvoiceItemsAdmin(admin.ModelAdmin):
         "invoice__vendor__name",
         "material_type__name",
         "slum__name",
-        "sponsor_project__name",
         "phase",
     ]
     ordering = ["invoice"]
     raw_id_fields = ["slum"]                   
-    autocomplete_fields = ["sponsor_project"]  
     exclude = (
         "created_by",
         "created_on",
