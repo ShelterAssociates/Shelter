@@ -2218,6 +2218,7 @@ def accounts_excel_generation(request):
                 dict_of_dict[(j, i.slum)].update({i.material_type: i})
             except:
                 dict_of_dict[(j, i.slum)] = {i.material_type: i}
+
     i = 1
     for k, v in dict_of_dict.items():
         for inner_k, inner_v in v.items():
@@ -2286,6 +2287,7 @@ def accounts_excel_generation(request):
             )
             sheet1.write(i, 20, check_toilet_data(k[0], inner_v.slum.id))
             i = i + 1
+
     response = HttpResponse(content_type="application/ms-excel")
     response["Content-Disposition"] = "attachment; filename=%s" % str(fname).replace(
         " ", "_"

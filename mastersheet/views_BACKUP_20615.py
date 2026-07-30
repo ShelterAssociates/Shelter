@@ -2131,8 +2131,13 @@ def accounts_excel_generation(request):
     sheet1.write(0, 0, "Date")
     sheet1.write(0, 1, "Invoice No")
     sheet1.write(0, 2, "Name of Vendor")
+<<<<<<< HEAD
     sheet1.write(0, 3, "Donor Name")
     sheet1.write(0, 4, "Sponsor Project")                
+=======
+    sheet1.write(0, 3, "Donar Name")
+    sheet1.write(0, 4, "Sponsor Project")                  
+>>>>>>> master
     sheet1.write(0, 5, "City")
     sheet1.write(0, 6, "Slum")
     sheet1.write(0, 7, "House No")
@@ -2218,23 +2223,34 @@ def accounts_excel_generation(request):
                 dict_of_dict[(j, i.slum)].update({i.material_type: i})
             except:
                 dict_of_dict[(j, i.slum)] = {i.material_type: i}
+
     i = 1
     for k, v in dict_of_dict.items():
         for inner_k, inner_v in v.items():
+<<<<<<< HEAD
             if inner_v.sponsor_project and inner_v.sponsor_project.sponsor:
                 donor_name = inner_v.sponsor_project.sponsor.organization_name
             else:
                 donor_name = "Funder Not Assign"
 
             sponsor_project_name = (
+=======
+
+            invoice_item_sponsor_project = (
+>>>>>>> master
                 inner_v.sponsor_project.name if inner_v.sponsor_project else ""
             )
 
             sheet1.write(i, 0, str(inner_v.invoice.invoice_date))
             sheet1.write(i, 1, inner_v.invoice.invoice_number)
             sheet1.write(i, 2, inner_v.invoice.vendor.name)
+<<<<<<< HEAD
             sheet1.write(i, 3, donor_name)
             sheet1.write(i, 4, sponsor_project_name)          
+=======
+            sheet1.write(i, 3, check_funder(k[0], inner_v.slum.id))
+            sheet1.write(i, 4, invoice_item_sponsor_project)         
+>>>>>>> master
             sheet1.write(
                 i,
                 5,
@@ -2286,6 +2302,7 @@ def accounts_excel_generation(request):
             )
             sheet1.write(i, 20, check_toilet_data(k[0], inner_v.slum.id))
             i = i + 1
+
     response = HttpResponse(content_type="application/ms-excel")
     response["Content-Disposition"] = "attachment; filename=%s" % str(fname).replace(
         " ", "_"
