@@ -2125,14 +2125,15 @@ def accounts_excel_generation(request):
         end_date = datetime.datetime.strptime(
             request.POST.get("account_end_date"), "%d-%m-%Y"
         ).date()
+    """For adding date as a postfix in filename"""
     filename_date_ext = "_" + str(start_date) + "_" + str(end_date)
     wb = Workbook()
     sheet1 = wb.add_sheet("Sheet1")
     sheet1.write(0, 0, "Date")
     sheet1.write(0, 1, "Invoice No")
     sheet1.write(0, 2, "Name of Vendor")
-    sheet1.write(0, 3, "Donor Name")
-    sheet1.write(0, 4, "Sponsor Project")                
+    sheet1.write(0, 3, "Donar Name")
+    sheet1.write(0, 4, "Sponsor Project")                    
     sheet1.write(0, 5, "City")
     sheet1.write(0, 6, "Slum")
     sheet1.write(0, 7, "House No")
@@ -2159,6 +2160,9 @@ def accounts_excel_generation(request):
             + filename_date_ext
             + ".xls"
         )
+        sponsor = SponsorProjectDetails.objects.filter(slum__id=int(slum_id)).exclude(
+            sponsor_project=1
+        )
         Toilet = (
             ToiletConstruction.objects.filter(slum__id=int(slum_id))
             .exclude(agreement_cancelled=True)
@@ -2176,6 +2180,9 @@ def accounts_excel_generation(request):
             invoice__invoice_date__range=[start_date, end_date],
         )
         fname = str(City.objects.get(id=int(city_id))) + filename_date_ext + ".xls"
+        sponsor = SponsorProjectDetails.objects.filter(
+            slum__electoral_ward__administrative_ward__city__id=int(city_id)
+        ).exclude(sponsor_project=1)
         Toilet = (
             ToiletConstruction.objects.filter(
                 slum__electoral_ward__administrative_ward__city__id=int(city_id)
@@ -2191,7 +2198,16 @@ def accounts_excel_generation(request):
         )
 
     dict_of_dict = defaultdict(dict)
+    sponsor_with_slum = {}
     toiletData = {}
+    for i in sponsor:
+        slum = i.slum_id
+        if slum not in sponsor_with_slum:
+            sponsor_with_slum[slum] = [(i.sponsor_project.name, i.household_code)]
+        else:
+            temp_data = sponsor_with_slum[slum]
+            temp_data.append((i.sponsor_project.name, i.household_code))
+            sponsor_with_slum[slum] = temp_data
 
     for i in Toilet:
         slum, household, phaseOne, phaseTwo, phaseThree = i
@@ -2202,6 +2218,18 @@ def accounts_excel_generation(request):
                 temp = toiletData[slum]
                 temp.append(household)
                 toiletData[slum] = temp
+
+    def check_funder(house, slum):
+        try:
+            if slum in sponsor_with_slum:
+                sponsor_with_slum_lst = sponsor_with_slum[slum]
+                for i in sponsor_with_slum_lst:
+                    if house in i[1]:
+                        return i[0]
+                return "Funder Not Assign"
+            return "No Funder For This Slum"
+        except Exception as e:
+            logger.error(e, house, slum)
 
     def check_toilet_data(house, slum):
         try:
@@ -2221,20 +2249,17 @@ def accounts_excel_generation(request):
     i = 1
     for k, v in dict_of_dict.items():
         for inner_k, inner_v in v.items():
-            if inner_v.sponsor_project and inner_v.sponsor_project.sponsor:
-                donor_name = inner_v.sponsor_project.sponsor.organization_name
-            else:
-                donor_name = "Funder Not Assign"
-
-            sponsor_project_name = (
+            # Sponsor Project pulled directly from the InvoiceItems row itself —
+            # independent of the SponsorProjectDetails-based Donor Name lookup above.
+            invoice_item_sponsor_project = (
                 inner_v.sponsor_project.name if inner_v.sponsor_project else ""
             )
 
             sheet1.write(i, 0, str(inner_v.invoice.invoice_date))
             sheet1.write(i, 1, inner_v.invoice.invoice_number)
             sheet1.write(i, 2, inner_v.invoice.vendor.name)
-            sheet1.write(i, 3, donor_name)
-            sheet1.write(i, 4, sponsor_project_name)          
+            sheet1.write(i, 3, check_funder(k[0], inner_v.slum.id))
+            sheet1.write(i, 4, invoice_item_sponsor_project)          # NEW column
             sheet1.write(
                 i,
                 5,
@@ -2292,7 +2317,6 @@ def accounts_excel_generation(request):
     )
     wb.save(response)
     return response
-# For Mastersheet Summery View rendering mastersheet summery page
 @permission_required("mastersheet.can_view_mastersheet", raise_exception=True)
 def renderSummery(request):
     slum_search_field = find_slum()
