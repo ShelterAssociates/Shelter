@@ -2107,7 +2107,6 @@ def remove_invalid_char(fname):
             final_str += char1
     return final_str
 
-
 @user_passes_test(lambda u: u.groups.filter(name="Account").exists() or u.is_superuser)
 def accounts_excel_generation(request):
     account_form = account_find_slum(request.POST)
@@ -2126,30 +2125,30 @@ def accounts_excel_generation(request):
         end_date = datetime.datetime.strptime(
             request.POST.get("account_end_date"), "%d-%m-%Y"
         ).date()
-    """For adding date as a postfix in filename"""
     filename_date_ext = "_" + str(start_date) + "_" + str(end_date)
     wb = Workbook()
     sheet1 = wb.add_sheet("Sheet1")
     sheet1.write(0, 0, "Date")
     sheet1.write(0, 1, "Invoice No")
     sheet1.write(0, 2, "Name of Vendor")
-    sheet1.write(0, 3, "Donar Name")
-    sheet1.write(0, 4, "City")
-    sheet1.write(0, 5, "Slum")
-    sheet1.write(0, 6, "House No")
-    sheet1.write(0, 7, "Phase I")
-    sheet1.write(0, 8, "Phase II")
-    sheet1.write(0, 9, "Phase III")
-    sheet1.write(0, 10, "Type of Material")
-    sheet1.write(0, 11, "Quantity")
-    sheet1.write(0, 12, "Rate")
-    sheet1.write(0, 13, "Gross Amount")
-    sheet1.write(0, 14, "Tax Rate")
-    sheet1.write(0, 15, "Tax Amount")
-    sheet1.write(0, 16, "Transport Charges")
-    sheet1.write(0, 17, "Unloading Charges")
-    sheet1.write(0, 18, "Amount")
-    sheet1.write(0, 19, "Toilet Record In MasterSheet")
+    sheet1.write(0, 3, "Donor Name")
+    sheet1.write(0, 4, "Sponsor Project")                
+    sheet1.write(0, 5, "City")
+    sheet1.write(0, 6, "Slum")
+    sheet1.write(0, 7, "House No")
+    sheet1.write(0, 8, "Phase I")
+    sheet1.write(0, 9, "Phase II")
+    sheet1.write(0, 10, "Phase III")
+    sheet1.write(0, 11, "Type of Material")
+    sheet1.write(0, 12, "Quantity")
+    sheet1.write(0, 13, "Rate")
+    sheet1.write(0, 14, "Gross Amount")
+    sheet1.write(0, 15, "Tax Rate")
+    sheet1.write(0, 16, "Tax Amount")
+    sheet1.write(0, 17, "Transport Charges")
+    sheet1.write(0, 18, "Unloading Charges")
+    sheet1.write(0, 19, "Amount")
+    sheet1.write(0, 20, "Toilet Record In MasterSheet")
 
     if len(city_id) == 0:
         invoiceItems = InvoiceItems.objects.filter(
@@ -2159,9 +2158,6 @@ def accounts_excel_generation(request):
             remove_invalid_char(str(Slum.objects.get(id=int(slum_id))))
             + filename_date_ext
             + ".xls"
-        )
-        sponsor = SponsorProjectDetails.objects.filter(slum__id=int(slum_id)).exclude(
-            sponsor_project=1
         )
         Toilet = (
             ToiletConstruction.objects.filter(slum__id=int(slum_id))
@@ -2180,9 +2176,6 @@ def accounts_excel_generation(request):
             invoice__invoice_date__range=[start_date, end_date],
         )
         fname = str(City.objects.get(id=int(city_id))) + filename_date_ext + ".xls"
-        sponsor = SponsorProjectDetails.objects.filter(
-            slum__electoral_ward__administrative_ward__city__id=int(city_id)
-        ).exclude(sponsor_project=1)
         Toilet = (
             ToiletConstruction.objects.filter(
                 slum__electoral_ward__administrative_ward__city__id=int(city_id)
@@ -2198,16 +2191,7 @@ def accounts_excel_generation(request):
         )
 
     dict_of_dict = defaultdict(dict)
-    sponsor_with_slum = {}
     toiletData = {}
-    for i in sponsor:
-        slum = i.slum_id
-        if slum not in sponsor_with_slum:
-            sponsor_with_slum[slum] = [(i.sponsor_project.name, i.household_code)]
-        else:
-            temp_data = sponsor_with_slum[slum]
-            temp_data.append((i.sponsor_project.name, i.household_code))
-            sponsor_with_slum[slum] = temp_data
 
     for i in Toilet:
         slum, household, phaseOne, phaseTwo, phaseThree = i
@@ -2218,18 +2202,6 @@ def accounts_excel_generation(request):
                 temp = toiletData[slum]
                 temp.append(household)
                 toiletData[slum] = temp
-
-    def check_funder(house, slum):
-        try:
-            if slum in sponsor_with_slum:
-                sponsor_with_slum_lst = sponsor_with_slum[slum]
-                for i in sponsor_with_slum_lst:
-                    if house in i[1]:
-                        return i[0]
-                return "Funder Not Assign"
-            return "No Funder For This Slum"
-        except Exception as e:
-            logger.error(e, house, slum)
 
     def check_toilet_data(house, slum):
         try:
@@ -2246,35 +2218,46 @@ def accounts_excel_generation(request):
                 dict_of_dict[(j, i.slum)].update({i.material_type: i})
             except:
                 dict_of_dict[(j, i.slum)] = {i.material_type: i}
+
     i = 1
     for k, v in dict_of_dict.items():
         for inner_k, inner_v in v.items():
+            if inner_v.sponsor_project and inner_v.sponsor_project.sponsor:
+                donor_name = inner_v.sponsor_project.sponsor.organization_name
+            else:
+                donor_name = "Funder Not Assign"
+
+            sponsor_project_name = (
+                inner_v.sponsor_project.name if inner_v.sponsor_project else ""
+            )
+
             sheet1.write(i, 0, str(inner_v.invoice.invoice_date))
             sheet1.write(i, 1, inner_v.invoice.invoice_number)
             sheet1.write(i, 2, inner_v.invoice.vendor.name)
-            sheet1.write(i, 3, check_funder(k[0], inner_v.slum.id))
+            sheet1.write(i, 3, donor_name)
+            sheet1.write(i, 4, sponsor_project_name)          
             sheet1.write(
                 i,
-                4,
+                5,
                 inner_v.slum.electoral_ward.administrative_ward.city.name.city_name,
             )
-            sheet1.write(i, 5, inner_v.slum.name)
-            sheet1.write(i, 6, k[0])
+            sheet1.write(i, 6, inner_v.slum.name)
+            sheet1.write(i, 7, k[0])
             if inner_v.phase == "1":
-                sheet1.write(i, 7, "Phase - I")
+                sheet1.write(i, 8, "Phase - I")
             if inner_v.phase == "2":
-                sheet1.write(i, 8, "Phase - II")
+                sheet1.write(i, 9, "Phase - II")
             if inner_v.phase == "3":
-                sheet1.write(i, 9, "Phase - III")
+                sheet1.write(i, 10, "Phase - III")
 
-            sheet1.write(i, 10, inner_k.name)
-            sheet1.write(i, 11, inner_v.quantity)
-            sheet1.write(i, 12, inner_v.rate)
-            sheet1.write(i, 13, inner_v.quantity * inner_v.rate)
-            sheet1.write(i, 14, inner_v.tax)
+            sheet1.write(i, 11, inner_k.name)
+            sheet1.write(i, 12, inner_v.quantity)
+            sheet1.write(i, 13, inner_v.rate)
+            sheet1.write(i, 14, inner_v.quantity * inner_v.rate)
+            sheet1.write(i, 15, inner_v.tax)
             sheet1.write(
                 i,
-                15,
+                16,
                 round(
                     (float(inner_v.tax) / 100)
                     * float(inner_v.quantity)
@@ -2295,23 +2278,22 @@ def accounts_excel_generation(request):
                 for x in inner_v.invoice.invoiceitems_set.all():
                     total_hh += len(x.household_numbers)
                 tc = inner_v.invoice.transport_charges / total_hh
-            sheet1.write(i, 16, round(tc, 2))
-            sheet1.write(i, 17, round(luc, 2))
+            sheet1.write(i, 17, round(tc, 2))
+            sheet1.write(i, 18, round(luc, 2))
             sheet1.write(
                 i,
-                18,
+                19,
                 round(inner_v.total / len(inner_v.household_numbers) + tc + luc, 2),
             )
-            sheet1.write(i, 19, check_toilet_data(k[0], inner_v.slum.id))
+            sheet1.write(i, 20, check_toilet_data(k[0], inner_v.slum.id))
             i = i + 1
+
     response = HttpResponse(content_type="application/ms-excel")
     response["Content-Disposition"] = "attachment; filename=%s" % str(fname).replace(
         " ", "_"
     )
     wb.save(response)
     return response
-
-
 # For Mastersheet Summery View rendering mastersheet summery page
 @permission_required("mastersheet.can_view_mastersheet", raise_exception=True)
 def renderSummery(request):

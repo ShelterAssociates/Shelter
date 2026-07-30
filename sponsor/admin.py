@@ -209,6 +209,15 @@ class SponsorProjectAdmin(admin.ModelAdmin):
     ]
     ordering = ["name", "sponsor", "project_type"]
     inlines = [ProjectDocumentsInline, ProjectImagesInline]
+    list_filter = ["sponsor", "status"]
+
+    def changelist_view(self, request, extra_context=None):
+        if "status" not in request.GET:
+            q = request.GET.copy()
+            q["status"] = "2"  # '2' = Activated
+            request.GET = q
+            request.META["QUERY_STRING"] = request.GET.urlencode()
+        return super().changelist_view(request, extra_context=extra_context)
 
     def project_type(self, obj):
         return obj.get_project_type_display()
@@ -217,14 +226,6 @@ class SponsorProjectAdmin(admin.ModelAdmin):
         return obj.get_status_display()
 
     def get_search_results(self, request, queryset, search_term):
-        """
-        :param request:
-        :param queryset:
-        :param search_term:
-        :return: queryset
-
-         Function for adding custom filters for choice field options
-        """
         queryset, use_distinct = super(SponsorProjectAdmin, self).get_search_results(
             request, queryset, search_term
         )
@@ -244,7 +245,6 @@ class SponsorProjectAdmin(admin.ModelAdmin):
     def save_model(self, request, obj, form, change):
         obj.created_by = request.user
         obj.save()
-        # super(SponsorProjectAdmin, self).save_model(request, obj, form, change)
 
 
 admin.site.register(SponsorProject, SponsorProjectAdmin)

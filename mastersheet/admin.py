@@ -54,6 +54,7 @@ class InvoiceItemsInline(admin.TabularInline):
         "material_type",
         "phase",
         "slum",
+        "sponsor_project",
         "household_numbers",
         "quantity",
         "unit",
@@ -63,7 +64,7 @@ class InvoiceItemsInline(admin.TabularInline):
     ]
     readonly_fields = ("copy_above",)
     search_fields = ("name",)
-    raw_id_fields = ("slum",)
+    raw_id_fields = ("slum", "sponsor_project")
     extra = 0
     min_num = 1
 
@@ -159,6 +160,7 @@ class InvoiceItemsAdmin(admin.ModelAdmin):
         "material_type",
         "phase",
         "slum",
+        "sponsor_project",
         "household_numbers",
         "quantity",
         "unit",
@@ -170,9 +172,12 @@ class InvoiceItemsAdmin(admin.ModelAdmin):
         "invoice__vendor__name",
         "material_type__name",
         "slum__name",
+        "sponsor_project__name",
         "phase",
     ]
     ordering = ["invoice"]
+    raw_id_fields = ["slum"]                   
+    autocomplete_fields = ["sponsor_project"]  
     exclude = (
         "created_by",
         "created_on",
@@ -180,13 +185,8 @@ class InvoiceItemsAdmin(admin.ModelAdmin):
         "modified_on",
     )
 
-    # def save_model(self, request, obj, form, change):
-    #     print 'gotcha'
-    #     super(InvoiceItemAdmin, self).save_model(request, obj, form, change)
-
 
 admin.site.register(InvoiceItems, InvoiceItemsAdmin)
-
 
 class VendorAdmin(admin.ModelAdmin):
     list_display = ("name", "gst_number", "phone_number", "email_address")

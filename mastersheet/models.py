@@ -11,6 +11,7 @@ import django.dispatch
 from django.db.models.signals import pre_save, post_save
 from django.dispatch import receiver
 from django.conf import settings
+from sponsor.models import SponsorProject
 
 
 class VendorType(models.Model):
@@ -135,6 +136,7 @@ class InvoiceItems(models.Model):
     material_type = models.ForeignKey(MaterialType, on_delete=models.CASCADE)
     slum = models.ForeignKey(Slum, on_delete=models.CASCADE)
     household_numbers = JSONField()
+    sponsor_project = models.ForeignKey(SponsorProject, on_delete=models.SET_NULL, null=True, blank=True)
     phase = models.CharField(max_length=2, choices=PHASE, null=True, blank=True)
     quantity = models.FloatField(default=0)
     unit = models.CharField(max_length=100, choices=UNITS, null=True, blank=True)
