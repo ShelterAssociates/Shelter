@@ -6,14 +6,13 @@ import collections
 from mastersheet.models import *
 
 
-
 def accounts_excel_generation():
     wb = Workbook()
     sheet1 = wb.add_sheet('Sheet1')
-    sheet1.write(0, 0,'Date')
-    sheet1.write(0, 1,'Invoice No')
-    sheet1.write(0, 2,'Name of Vendor')
-    sheet1.write(0, 3, 'Donar Name')
+    sheet1.write(0, 0, 'Date')
+    sheet1.write(0, 1, 'Invoice No')
+    sheet1.write(0, 2, 'Name of Vendor')
+    sheet1.write(0, 3, 'Donor Name')
     sheet1.write(0, 4, 'City')
     sheet1.write(0, 5, 'Slum')
     sheet1.write(0, 6, 'House No')
@@ -29,6 +28,7 @@ def accounts_excel_generation():
     sheet1.write(0, 16, 'Transport Charges')
     sheet1.write(0, 17, 'Unloading Charges')
     sheet1.write(0, 18, 'Amount')
+    sheet1.write(0, 19, 'Sponsor Project')
 
     invoiceItems = InvoiceItems.objects.filter(slum__id=1094)
     dict_of_dict = collections.defaultdict(dict)
@@ -46,10 +46,20 @@ def accounts_excel_generation():
             amount = inner_v.quantity * inner_v.rate
             tax_amount = round((float(inner_v.tax) / 100) * float(inner_v.quantity) * float(inner_v.rate), 2)
             total = amount + tax_amount
+
+            # Pull donor/sponsor name from the linked SponsorProject -> Sponsor,
+            # falling back gracefully if sponsor_project isn't set on this item.
+            if inner_v.sponsor_project and inner_v.sponsor_project.sponsor:
+                donor_name = inner_v.sponsor_project.sponsor.organization_name
+            else:
+                donor_name = ''
+
+            sponsor_project_name = inner_v.sponsor_project.name if inner_v.sponsor_project else ''
+
             sheet1.write(i, 0, str(inner_v.invoice.invoice_date))
             sheet1.write(i, 1, inner_v.invoice.invoice_number)
             sheet1.write(i, 2, inner_v.invoice.vendor.name)
-            sheet1.write(i, 3, 'Donar Name')
+            sheet1.write(i, 3, donor_name)
             sheet1.write(i, 4, inner_v.slum.electoral_ward.administrative_ward.city.name.city_name)
             sheet1.write(i, 5, inner_v.slum.name)
             sheet1.write(i, 6, k[0])
@@ -68,8 +78,10 @@ def accounts_excel_generation():
             sheet1.write(i, 16, inner_v.invoice.transport_charges)
             sheet1.write(i, 17, inner_v.invoice.loading_unloading_charges)
             sheet1.write(i, 18, total)
+            sheet1.write(i, 19, sponsor_project_name)
             i = i + 1
 
     wb.save('/home/ubuntu/aa1.xlsx')
+
 
 accounts_excel_generation()
