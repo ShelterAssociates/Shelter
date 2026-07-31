@@ -43,6 +43,20 @@ import logging
 logger = logging.getLogger(__name__)
 
 
+def normalize_household_number(value):
+    """
+    Normalize a household number for use as a dict key / comparison value.
+    Household numbers used to be purely numeric (e.g. '0749') but can now
+    also be alphanumeric (e.g. '0749A'). This strips leading zeros in a
+    string-safe way without assuming the value is castable to int.
+    """
+    if value is None:
+        return None
+    s = str(value).strip()
+    stripped = s.lstrip("0")
+    return stripped if stripped else "0"
+
+
 # The views in this file correspond to the mastersheet functionality of shelter app.
 def give_details(request):
     slum_info_dict = {}
@@ -133,6 +147,11 @@ def masterSheet(request, slum_code=0, FF_code=0, RHS_code=0):
                         "Plus Code Part",
                     ]
                     # if occupied house then if block called otherwise else block called.
+                    # NOTE: Type_of_structure_occupancy is only asked after the
+                    # "Functioning of the structure" question. If the structure is
+                    # marked as not functioning, Type_of_structure_occupancy may be
+                    # absent entirely from rhs_data - always use .get() here, never
+                    # bare-key access, and never assume the key exists.
                     if (
                         record.rhs_data
                         and record.rhs_data.get("Type_of_structure_occupancy")
@@ -178,17 +197,16 @@ def masterSheet(request, slum_code=0, FF_code=0, RHS_code=0):
                 )
                 followup_data = {}
                 for followup_record in cod_data:
-                    if str(int(followup_record["household_number"])) in followup_data:
-                        temp = followup_data[
-                            str(int(followup_record["household_number"]))
-                        ]
+                    hh = normalize_household_number(
+                        followup_record["household_number"]
+                    )
+                    if hh in followup_data:
+                        temp = followup_data[hh]
                         if temp["submission_date"] < followup_record["submission_date"]:
-                            hh = str(int(followup_record["household_number"]))
                             del followup_record["household_number"]
                             temp = followup_record
                             followup_data[hh] = temp
                     else:
-                        hh = str(int(followup_record["household_number"]))
                         temp_dict = {
                             "submission_date": followup_record["submission_date"],
                             "followup_data": followup_record["followup_data"],
@@ -236,7 +254,7 @@ def masterSheet(request, slum_code=0, FF_code=0, RHS_code=0):
                                 if data_key in record.ff_data:
                                     data[data_key] = record.ff_data[data_key]
                         else:
-                            data = {"group_vq77l17/Household_number": 00}
+                            data = {"group_vq77l17/Household_number": "0"}
                         return data
 
                     formdict_family_factsheet = list(
@@ -250,7 +268,7 @@ def masterSheet(request, slum_code=0, FF_code=0, RHS_code=0):
                 except Exception as e:
                     logger.error(e, "in ff")
                 temp_FF = {
-                    str(int(obj_FF["group_vq77l17/Household_number"])): obj_FF
+                    normalize_household_number(obj_FF["group_vq77l17/Household_number"]): obj_FF
                     for obj_FF in formdict_family_factsheet
                 }
                 temp_FF_keys = temp_FF.keys()  # list of household numbers
@@ -590,7 +608,8 @@ def masterSheet(request, slum_code=0, FF_code=0, RHS_code=0):
                     if hh_key in followup_data:
                         if (
                             "Type_of_structure_occupancy" in x
-                            and x["Type_of_structure_occupancy"] == "Occupied house"
+                            and x.get("Type_of_structure_occupancy")
+                            == "Occupied house"
                         ):
                             final_followup_data = followup_data[hh_key]
                             data = final_followup_data["followup_data"]
@@ -611,11 +630,11 @@ def masterSheet(request, slum_code=0, FF_code=0, RHS_code=0):
                 if len(slum_funder) != 0:
                     for funder in slum_funder:
                         if funder.household_code != None:
-                            try:
-                                hh_as_int = int(x["Household_number"])
-                            except ValueError:
-                                continue  # alphanumeric household number can't match an int-coded list
-                            if hh_as_int in funder.household_code:
+                            hh_val = normalize_household_number(x["Household_number"])
+                            if hh_val in [
+                                normalize_household_number(code)
+                                for code in funder.household_code
+                            ]:
                                 x.update(
                                     {"Funder": funder.sponsor_project.name}
                                 )  # funder.sponsor.organization_name})
@@ -643,6 +662,8 @@ def masterSheet(request, slum_code=0, FF_code=0, RHS_code=0):
 
     logger.info("masterSheet returning %s records", len(formdict))
     return HttpResponse(json.dumps(formdict), content_type="application/json")
+
+
 def to_date(s):
     if s != None:
         return datetime.datetime.strptime(s.strip(), "%Y-%m-%d").date()
@@ -996,6 +1017,7 @@ def handle_uploaded_file(f, response, slum_code):
     try:
 
         df1 = df.set_index(str(list(df.columns.values)[0]))
+        df1.index = df1.index.map(lambda v: normalize_household_number(v))
         response.append(("total_records", len(df1.index.values)))
     except Exception as e:
         flag_overall = 1
@@ -1043,218 +1065,252 @@ def handle_uploaded_file(f, response, slum_code):
         if flag_overall != 1:
 
             for i in df1.index.values:
-                # this_slum = Slum.objects.get(name=str(df1.loc[int(i), 'Select Slum']))
+                # Household numbers are strings now (normalized above via
+                # normalize_household_number), not ints - every row is processed
+                # independently so a bad/unexpected household number on one row
+                # skips only that row's blocks instead of aborting the whole upload.
+                row_id = i
 
                 if flag_rhs_data != 1:
-                    rhs_instence = HouseholdData.objects.filter(
-                        id=int(i), rhs_data__isnull=False
-                    )
-                    if rhs_instence.count() > 0:
-                        rhs_data = rhs_instence[0].rhs_data
-                        drainage_data = {
-                            "HH_can_connect_to_Drainage": df_rhs.loc[
-                                int(i), "HH can connect to Drainage line"
-                            ]
-                        }
-                        rhs_data.update(drainage_data)
-                        rhs_instence.update(rhs_data=rhs_data)
-                        response.append(
-                            ("updated RHS", str(df_rhs.loc[int(i), "Household number"]))
+                    try:
+                        rhs_instence = HouseholdData.objects.filter(
+                            id=row_id, rhs_data__isnull=False
                         )
-                    else:
-                        response.append(
-                            (
-                                "No Households Available",
-                                str(df_rhs.loc[int(i), "Household number"]),
+                        if rhs_instence.count() > 0:
+                            rhs_data = rhs_instence[0].rhs_data
+                            drainage_data = {
+                                "HH_can_connect_to_Drainage": df_rhs.loc[
+                                    row_id, "HH can connect to Drainage line"
+                                ]
+                            }
+                            rhs_data.update(drainage_data)
+                            rhs_instence.update(rhs_data=rhs_data)
+                            response.append(
+                                (
+                                    "updated RHS",
+                                    str(df_rhs.loc[row_id, "Household number"]),
+                                )
                             )
-                        )
+                        else:
+                            response.append(
+                                (
+                                    "No Households Available",
+                                    str(df_rhs.loc[row_id, "Household number"]),
+                                )
+                            )
+                    except Exception as e:
+                        response.append(("RHS row error: " + str(e), str(row_id)))
+
                 if flag_SBM != 1:
                     try:
                         SBM_instance = SBMUpload.objects.filter(
-                            slum=this_slum, household_number=int(i)
+                            slum=this_slum, household_number=row_id
                         )
 
                         if len(SBM_instance) != 0:
 
                             SBM_instance.update(
-                                name=df_sbm.loc[int(i), "SBM Name"],
-                                application_id=df_sbm.loc[int(i), "Application ID"],
-                                phone_number=df_sbm.loc[int(i), "Phone Number"],
-                                aadhar_number=df_sbm.loc[int(i), "Aadhar Number"],
+                                name=df_sbm.loc[row_id, "SBM Name"],
+                                application_id=df_sbm.loc[row_id, "Application ID"],
+                                phone_number=df_sbm.loc[row_id, "Phone Number"],
+                                aadhar_number=df_sbm.loc[row_id, "Aadhar Number"],
                                 photo_uploaded=check_bool(
                                     df_sbm.loc[
-                                        int(i), "Toilet photo uploaded on SBM site"
+                                        row_id, "Toilet photo uploaded on SBM site"
                                     ]
                                 ),
                                 photo_verified=check_bool(
-                                    df_sbm.loc[int(i), "Toilet Photo Verified"]
+                                    df_sbm.loc[row_id, "Toilet Photo Verified"]
                                 ),
                                 photo_approved=check_bool(
-                                    df_sbm.loc[int(i), "Toilet Photo Approved"]
+                                    df_sbm.loc[row_id, "Toilet Photo Approved"]
                                 ),
                                 application_verified=check_bool(
-                                    df_sbm.loc[int(i), "Application Verified"]
+                                    df_sbm.loc[row_id, "Application Verified"]
                                 ),
                                 application_approved=check_bool(
-                                    df_sbm.loc[int(i), "Application Approved"]
+                                    df_sbm.loc[row_id, "Application Approved"]
                                 ),
-                                sbm_comment=df_sbm.loc[int(i), "SBM Comment"],
+                                sbm_comment=df_sbm.loc[row_id, "SBM Comment"],
                             )
-                            response.append(("updated sbm", int(i)))
+                            response.append(("updated sbm", row_id))
 
                         else:
-                            if True:
-                                SBM_instance_1 = SBMUpload(
-                                    slum=this_slum,
-                                    household_number=int(i),
-                                    name=df1.loc[int(i), "SBM Name"],
-                                    application_id=df_sbm.loc[int(i), "Application ID"],
-                                    phone_number=df_sbm.loc[int(i), "Phone Number"],
-                                    aadhar_number=df_sbm.loc[int(i), "Aadhar Number"],
-                                    photo_uploaded=check_bool(
-                                        df_sbm.loc[
-                                            int(i), "Toilet photo uploaded on SBM site"
-                                        ]
-                                    ),
-                                    photo_verified=check_bool(
-                                        df_sbm.loc[int(i), "Toilet Photo Verified"]
-                                    ),
-                                    photo_approved=check_bool(
-                                        df_sbm.loc[int(i), "Toilet Photo Approved"]
-                                    ),
-                                    application_verified=check_bool(
-                                        df_sbm.loc[int(i), "Application Verified"]
-                                    ),
-                                    application_approved=check_bool(
-                                        df_sbm.loc[int(i), "Application Approved"]
-                                    ),
-                                    sbm_comment=df_sbm.loc[int(i), "SBM Comment"],
-                                )
-                                SBM_instance_1.save()
-                                response.append(("newly created sbm", int(i)))
+                            SBM_instance_1 = SBMUpload(
+                                slum=this_slum,
+                                household_number=row_id,
+                                name=df1.loc[row_id, "SBM Name"],
+                                application_id=df_sbm.loc[row_id, "Application ID"],
+                                phone_number=df_sbm.loc[row_id, "Phone Number"],
+                                aadhar_number=df_sbm.loc[row_id, "Aadhar Number"],
+                                photo_uploaded=check_bool(
+                                    df_sbm.loc[
+                                        row_id, "Toilet photo uploaded on SBM site"
+                                    ]
+                                ),
+                                photo_verified=check_bool(
+                                    df_sbm.loc[row_id, "Toilet Photo Verified"]
+                                ),
+                                photo_approved=check_bool(
+                                    df_sbm.loc[row_id, "Toilet Photo Approved"]
+                                ),
+                                application_verified=check_bool(
+                                    df_sbm.loc[row_id, "Application Verified"]
+                                ),
+                                application_approved=check_bool(
+                                    df_sbm.loc[row_id, "Application Approved"]
+                                ),
+                                sbm_comment=df_sbm.loc[row_id, "SBM Comment"],
+                            )
+                            SBM_instance_1.save()
+                            response.append(("newly created sbm", row_id))
                     except Exception as e:
                         response.append(
                             (
                                 "The error says: "
                                 + str(e)
                                 + ". This error is with SBM columns for following household numbers",
-                                int(i),
+                                row_id,
                             )
                         )
 
                 if flag_ComMob != 1:
-                    for p, q in df_ComMob.loc[int(i)].items():
+                    try:
+                        commob_row = df_ComMob.loc[row_id]
+                    except Exception as e:
+                        response.append(
+                            (
+                                "Skipped ComMob row (lookup error): " + str(e),
+                                str(row_id),
+                            )
+                        )
+                        commob_row = None
 
-                        if check_null(q) is not None:
-                            household_nums = []
-                            try:
-                                activityType_instance = ActivityType.objects.get(name=p)
-                                if activityType_instance:
-                                    try:
+                    if commob_row is not None:
+                        for p, q in commob_row.items():
 
-                                        ### IMPORTANT!!!!! Date should also be considered!!! INCOMPLETE!!!!!
-                                        ComMob_instance = (
-                                            CommunityMobilization.objects.get(
+                            if check_null(q) is not None:
+                                household_nums = []
+                                try:
+                                    activityType_instance = ActivityType.objects.get(name=p)
+                                    if activityType_instance:
+                                        try:
+
+                                            ### IMPORTANT!!!!! Date should also be considered!!! INCOMPLETE!!!!!
+                                            ComMob_instance = (
+                                                CommunityMobilization.objects.get(
+                                                    slum=this_slum,
+                                                    activity_type=activityType_instance,
+                                                )
+                                            )
+
+                                            temp = ComMob_instance.household_number
+                                            if row_id not in temp:
+                                                temp.append(row_id)
+                                                response.append(("updated ComMob", row_id))
+                                            ComMob_instance.household_number = temp
+                                            ComMob_instance.save()
+
+                                        except Exception as e:
+                                            household_nums.append(row_id)
+                                            CM_instance = CommunityMobilization(
                                                 slum=this_slum,
+                                                household_number=household_nums,
                                                 activity_type=activityType_instance,
+                                                activity_date=df_ComMob.loc[row_id, p],
                                             )
+                                            CM_instance.save()
+                                            response.append(
+                                                ("newly created ComMob", row_id)
+                                            )
+                                except Exception as e:
+                                    response.append(
+                                        (
+                                            "The error says: "
+                                            + str(e)
+                                            + ". This error is in Commuinity Mobilization columns for "
+                                            + p
+                                            + ", for the following household numbers",
+                                            row_id,
                                         )
-
-                                        temp = ComMob_instance.household_number
-                                        if int(i) not in temp:
-                                            temp.append(int(i))
-                                            response.append(("updated ComMob", int(i)))
-                                        ComMob_instance.household_number = temp
-                                        ComMob_instance.save()
-
-                                    except Exception as e:
-                                        household_nums.append(int(i))
-                                        CM_instance = CommunityMobilization(
-                                            slum=this_slum,
-                                            household_number=household_nums,
-                                            activity_type=activityType_instance,
-                                            activity_date=df_ComMob.loc[int(i), p],
-                                        )
-                                        CM_instance.save()
-                                        response.append(
-                                            ("newly created ComMob", int(i))
-                                        )
-                            except Exception as e:
-                                response.append(
-                                    (
-                                        "The error says: "
-                                        + str(e)
-                                        + ". This error is in Commuinity Mobilization columns for "
-                                        + p
-                                        + ", for the following household numbers",
-                                        int(i),
                                     )
-                                )
                 if flag_accounts != 1:
-                    for j, m in df_vendors.loc[int(i)].items():
-                        if check_null(m) is not None:
-                            household_nums = []
-                            k = df_vendors.columns.get_loc(j)
-                            string = unicode(df_invoice.loc[int(i)][k])
-                            try:
-                                Vendor_instance = Vendor.objects.get(name=str(m))
-                                if Vendor_instance:
-                                    try:
-                                        VHID_instance_1 = (
-                                            VendorHouseholdInvoiceDetail.objects.get(
-                                                vendor=Vendor_instance,
-                                                invoice_number=string.split("/")[0],
-                                                slum=this_slum,
+                    try:
+                        vendor_row = df_vendors.loc[row_id]
+                    except Exception as e:
+                        response.append(
+                            (
+                                "Skipped Accounts row (lookup error): " + str(e),
+                                str(row_id),
+                            )
+                        )
+                        vendor_row = None
+
+                    if vendor_row is not None:
+                        for j, m in vendor_row.items():
+                            if check_null(m) is not None:
+                                household_nums = []
+                                k = df_vendors.columns.get_loc(j)
+                                string = unicode(df_invoice.loc[row_id][k])
+                                try:
+                                    Vendor_instance = Vendor.objects.get(name=str(m))
+                                    if Vendor_instance:
+                                        try:
+                                            VHID_instance_1 = (
+                                                VendorHouseholdInvoiceDetail.objects.get(
+                                                    vendor=Vendor_instance,
+                                                    invoice_number=string.split("/")[0],
+                                                    slum=this_slum,
+                                                )
                                             )
+                                            temp = VHID_instance_1.household_number
+                                            if row_id not in temp:
+                                                temp.append(row_id)
+                                                response.append(("updated VHID", row_id))
+                                            VHID_instance_1.household_number = temp
+                                            VHID_instance_1.save()
+                                        except Exception as e:
+                                            logger.error(e)
+                                            household_nums.append(row_id)
+                                            VHID_instance = VendorHouseholdInvoiceDetail(
+                                                vendor=Vendor.objects.get(name=str(m)),
+                                                slum=this_slum,
+                                                invoice_number=string.split("/")[0],
+                                                invoice_date=datetime.datetime.strptime(
+                                                    string.split("/")[1], "%d.%m.%Y"
+                                                ),
+                                                household_number=household_nums,
+                                            )
+                                            VHID_instance.save()
+                                            response.append(("newly created VHID", row_id))
+                                except Exception as e:
+                                    response.append(
+                                        (
+                                            "The error says: "
+                                            + str(e)
+                                            + ". This error is in Vendor Invoice Details Columns for "
+                                            + m
+                                            + ", for the following household numbers",
+                                            row_id,
                                         )
-                                        temp = VHID_instance_1.household_number
-                                        if int(i) not in temp:
-                                            temp.append(int(i))
-                                            response.append(("updated VHID", int(i)))
-                                        VHID_instance_1.household_number = temp
-                                        VHID_instance_1.save()
-                                    except Exception as e:
-                                        logger.error(e)
-                                        household_nums.append(int(i))
-                                        VHID_instance = VendorHouseholdInvoiceDetail(
-                                            vendor=Vendor.objects.get(name=str(m)),
-                                            slum=this_slum,
-                                            invoice_number=string.split("/")[0],
-                                            invoice_date=datetime.datetime.strptime(
-                                                string.split("/")[1], "%d.%m.%Y"
-                                            ),
-                                            household_number=household_nums,
-                                        )
-                                        VHID_instance.save()
-                                        response.append(("newly created VHID", int(i)))
-                            except Exception as e:
-                                response.append(
-                                    (
-                                        "The error says: "
-                                        + str(e)
-                                        + ". This error is in Vendor Invoice Details Columns for "
-                                        + m
-                                        + ", for the following household numbers",
-                                        int(i),
                                     )
-                                )
                 if flag_TC != 1:
                     try:
                         TC_instance = (
                             ToiletConstruction.objects.select_related().filter(
-                                household_number=int(i), slum__name=this_slum
+                                household_number=row_id, slum__name=this_slum
                             )
                         )
                         if TC_instance:
                             try:
-                                TC_instance[0].update_model(df_TC.loc[int(i), :])
+                                TC_instance[0].update_model(df_TC.loc[row_id, :])
                             except Exception as e:
                                 logger.error(e)
-                            response.append(("updated TC", int(i)))
+                            response.append(("updated TC", row_id))
 
                         else:
                             this_status = " "
-                            stat = df_TC.loc[int(i), "Final Status"]
+                            stat = df_TC.loc[row_id, "Final Status"]
                             for j in range(len(STATUS_CHOICES)):
                                 if (
                                     str(STATUS_CHOICES[j][1]).lower()
@@ -1265,41 +1321,41 @@ def handle_uploaded_file(f, response, slum_code):
                             TC_instance = ToiletConstruction(
                                 slum=this_slum,
                                 agreement_date=check_null(
-                                    df_TC.loc[int(i), "Date of Agreement"]
+                                    df_TC.loc[row_id, "Date of Agreement"]
                                 ),
                                 agreement_cancelled=check_bool(
-                                    df_TC.loc[int(i), "Agreement Cancelled"]
+                                    df_TC.loc[row_id, "Agreement Cancelled"]
                                 ),
-                                household_number=int(i),
+                                household_number=row_id,
                                 septic_tank_date=check_null(
-                                    df_TC.loc[int(i), "Date of Septic Tank supplied"]
+                                    df_TC.loc[row_id, "Date of Septic Tank supplied"]
                                 ),
                                 phase_one_material_date=check_null(
-                                    df_TC.loc[int(i), "Material Supply Date 1st"]
+                                    df_TC.loc[row_id, "Material Supply Date 1st"]
                                 ),
                                 phase_two_material_date=check_null(
-                                    df_TC.loc[int(i), "Material Supply Date-2nd"]
+                                    df_TC.loc[row_id, "Material Supply Date-2nd"]
                                 ),
                                 phase_three_material_date=check_null(
-                                    df_TC.loc[int(i), "Material Supply Date-3rd"]
+                                    df_TC.loc[row_id, "Material Supply Date-3rd"]
                                 ),
                                 completion_date=check_null(
-                                    df_TC.loc[int(i), "Construction Completion Date"]
+                                    df_TC.loc[row_id, "Construction Completion Date"]
                                 ),
-                                comment=check_null(df_TC.loc[int(i), "Comment"]),
-                                pocket=check_null(df_TC.loc[int(i), "Pocket"]),
+                                comment=check_null(df_TC.loc[row_id, "Comment"]),
+                                pocket=check_null(df_TC.loc[row_id, "Pocket"]),
                                 status=this_status,
                             )
 
                             TC_instance.save()
-                            response.append(("newly created TC", int(i)))
+                            response.append(("newly created TC", row_id))
                     except Exception as e:
                         response.append(
                             (
                                 "The error says: "
                                 + str(e)
                                 + ". This error is with Toilet Construction Columns for following household numbers",
-                                int(i),
+                                row_id,
                             )
                         )
 
@@ -1539,92 +1595,72 @@ level_data = {
 @csrf_exempt
 @apply_permissions_ajax("mastersheet.can_view_mastersheet_report")
 def give_report_table_numbers(request):  # view for toilet construction
-    tag_key_dict = json.loads(request.body)
-    tag = tag_key_dict["tag"]
-    keys = tag_key_dict["keys"]
-    group_perm = request.user.groups.values_list("name", flat=True)
-    if request.user.is_superuser:
-        group_perm = Group.objects.all().values_list("name", flat=True)
-    group_perm = map(lambda x: x.split(":")[-1], group_perm)
+    try:
+        tag_key_dict = json.loads(request.body)
+        tag = tag_key_dict["tag"]
+        keys = tag_key_dict["keys"]
+        group_perm = request.user.groups.values_list("name", flat=True)
+        if request.user.is_superuser:
+            group_perm = Group.objects.all().values_list("name", flat=True)
+        group_perm = map(lambda x: x.split(":")[-1], group_perm)
 
-    keys = Slum.objects.filter(
-        id__in=keys,
-        electoral_ward__administrative_ward__city__name__city_name__in=group_perm,
-    ).values_list("id", flat=True)
-    start_date = tag_key_dict["startDate"]
-    end_date = tag_key_dict["endDate"]
-    if start_date == None or end_date == None:
-        start_date = datetime.datetime(2001, 1, 1).date()
-        end_date = datetime.datetime.today().date()
-    else:
-        start_date = datetime.datetime.strptime(
-            tag_key_dict["startDate"], "%Y-%m-%d"
-        ).date()
-        end_date = datetime.datetime.strptime(
-            tag_key_dict["endDate"], "%Y-%m-%d"
-        ).date()
-
-    query_on = {
-        "agreement_date": "total_ad",
-        "phase_one_material_date": "total_p1",
-        "phase_two_material_date": "total_p2",
-        "phase_three_material_date": "total_p3",
-        "completion_date": "total_c",
-        "septic_tank_date": "total_st",
-        "use_of_toilet": "use_of_toilet",
-        "toilet_connected_to": "toilet_connected_to",
-        "factsheet_done": "factsheet_done",
-    }
-
-    """Report table data object for response"""
-    report_table_data = defaultdict(dict)
-    for query_field in query_on.keys():
-        """ "Case :-1 phase_one_material_date not null"""
-        if query_field in [
-            "agreement_date",
-            "phase_one_material_date",
-            "phase_two_material_date",
-            "phase_three_material_date",
-            "completion_date",
-            "septic_tank_date",
-            "use_of_toilet",
-            "toilet_connected_to",
-            "factsheet_done",
-        ]:
-            filter_field = {
-                "slum__id__in": keys,
-                "phase_one_material_date__range": [start_date, end_date],
-                query_field + "__isnull": False,
-            }
+        keys = Slum.objects.filter(
+            id__in=keys,
+            electoral_ward__administrative_ward__city__name__city_name__in=group_perm,
+        ).values_list("id", flat=True)
+        start_date = tag_key_dict["startDate"]
+        end_date = tag_key_dict["endDate"]
+        if start_date == None or end_date == None:
+            start_date = datetime.datetime(2001, 1, 1).date()
+            end_date = datetime.datetime.today().date()
         else:
-            filter_field = {
-                "slum__id__in": keys,
-                query_field + "__range": [start_date, end_date],
-                query_field + "__isnull": False,
-            }
-        count_field = {query_on[query_field]: Count("level_id")}
-        tc_result = (
-            ToiletConstruction.objects.filter(**filter_field)
-            .exclude(Q(agreement_cancelled=True) | Q(status="7"))
-            .annotate(**level_data[tag])
-            .values("level", "level_id", "city_name")
-            .annotate(**count_field)
-            .order_by("city_name")
-        )
+            start_date = datetime.datetime.strptime(
+                tag_key_dict["startDate"], "%Y-%m-%d"
+            ).date()
+            end_date = datetime.datetime.strptime(
+                tag_key_dict["endDate"], "%Y-%m-%d"
+            ).date()
 
-        for tc_obj in tc_result:
-            report_table_data[tc_obj["level_id"]].update(tc_obj)
+        query_on = {
+            "agreement_date": "total_ad",
+            "phase_one_material_date": "total_p1",
+            "phase_two_material_date": "total_p2",
+            "phase_three_material_date": "total_p3",
+            "completion_date": "total_c",
+            "septic_tank_date": "total_st",
+            "use_of_toilet": "use_of_toilet",
+            "toilet_connected_to": "toilet_connected_to",
+            "factsheet_done": "factsheet_done",
+        }
 
-        """"Case :-2 phase_one_material_date is null. In this case we are going to query on phase_two_material_date"""
-        if query_field != "phase_one_material_date":
-            filter_field = {
-                "slum__id__in": keys,
-                "phase_two_material_date__range": [start_date, end_date],
-                query_field + "__isnull": False,
-            }
-            filter_field["phase_one_material_date__isnull"] = True
+        """Report table data object for response"""
+        report_table_data = defaultdict(dict)
+        for query_field in query_on.keys():
+            """ "Case :-1 phase_one_material_date not null"""
+            if query_field in [
+                "agreement_date",
+                "phase_one_material_date",
+                "phase_two_material_date",
+                "phase_three_material_date",
+                "completion_date",
+                "septic_tank_date",
+                "use_of_toilet",
+                "toilet_connected_to",
+                "factsheet_done",
+            ]:
+                filter_field = {
+                    "slum__id__in": keys,
+                    "phase_one_material_date__range": [start_date, end_date],
+                    query_field + "__isnull": False,
+                }
+            else:
+                filter_field = {
+                    "slum__id__in": keys,
+                    query_field + "__range": [start_date, end_date],
+                    query_field + "__isnull": False,
+                }
             count_field = {query_on[query_field]: Count("level_id")}
-            tc_result_one = (
+            tc_result = (
                 ToiletConstruction.objects.filter(**filter_field)
                 .exclude(Q(agreement_cancelled=True) | Q(status="7"))
                 .annotate(**level_data[tag])
@@ -1632,129 +1668,160 @@ def give_report_table_numbers(request):  # view for toilet construction
                 .annotate(**count_field)
                 .order_by("city_name")
             )
-            if tc_result_one.count() > 0:
-                for tc_obj in tc_result_one:
-                    if tc_obj["level_id"] in report_table_data:
-                        if (
-                            query_on[query_field]
-                            in report_table_data[tc_obj["level_id"]]
-                        ):
-                            report_table_data[tc_obj["level_id"]][
-                                query_on[query_field]
-                            ] += tc_obj[query_on[query_field]]
-                        else:
-                            report_table_data[tc_obj["level_id"]][
-                                query_on[query_field]
-                            ] = tc_obj[query_on[query_field]]
-                    else:
-                        report_table_data[tc_obj["level_id"]].update(tc_obj)
 
-        """Here we are checking the write off cases ..."""
-        if query_field == "factsheet_done":
-            count_field = {"status": Count("level_id")}
-            filter_field = {
-                "slum__id__in": keys,
-                "phase_one_material_date__range": [start_date, end_date],
-                "status": "7",
+            for tc_obj in tc_result:
+                report_table_data[tc_obj["level_id"]].update(tc_obj)
+
+            """"Case :-2 phase_one_material_date is null. In this case we are going to query on phase_two_material_date"""
+            if query_field != "phase_one_material_date":
+                filter_field = {
+                    "slum__id__in": keys,
+                    "phase_two_material_date__range": [start_date, end_date],
+                    query_field + "__isnull": False,
+                }
+                filter_field["phase_one_material_date__isnull"] = True
+                count_field = {query_on[query_field]: Count("level_id")}
+                tc_result_one = (
+                    ToiletConstruction.objects.filter(**filter_field)
+                    .exclude(Q(agreement_cancelled=True) | Q(status="7"))
+                    .annotate(**level_data[tag])
+                    .values("level", "level_id", "city_name")
+                    .annotate(**count_field)
+                    .order_by("city_name")
+                )
+                if tc_result_one.count() > 0:
+                    for tc_obj in tc_result_one:
+                        if tc_obj["level_id"] in report_table_data:
+                            if (
+                                query_on[query_field]
+                                in report_table_data[tc_obj["level_id"]]
+                            ):
+                                report_table_data[tc_obj["level_id"]][
+                                    query_on[query_field]
+                                ] += tc_obj[query_on[query_field]]
+                            else:
+                                report_table_data[tc_obj["level_id"]][
+                                    query_on[query_field]
+                                ] = tc_obj[query_on[query_field]]
+                        else:
+                            report_table_data[tc_obj["level_id"]].update(tc_obj)
+
+            """Here we are checking the write off cases ..."""
+            if query_field == "factsheet_done":
+                count_field = {"status": Count("level_id")}
+                filter_field = {
+                    "slum__id__in": keys,
+                    "phase_one_material_date__range": [start_date, end_date],
+                    "status": "7",
+                }
+                toilet_data = (
+                    ToiletConstruction.objects.filter(**filter_field)
+                    .exclude(agreement_cancelled=True)
+                    .annotate(**level_data[tag])
+                    .values("level", "level_id", "city_name")
+                    .annotate(**count_field)
+                    .order_by("city_name")
+                )
+                toilet_data = {obj_ad["level_id"]: obj_ad for obj_ad in toilet_data}
+                for level_id, data in toilet_data.items():
+                    report_table_data[level_id].update({"write_off_cases": data["status"]})
+            level_data_tag = {
+                "city": {"level_id": "slum__electoral_ward__administrative_ward__city__id"},
+                "admin_ward": {"level_id": "slum__electoral_ward__administrative_ward__id"},
+                "electoral_ward": {"level_id": "slum__electoral_ward__id"},
+                "slum": {"level_id": "slum__id"},
             }
-            toilet_data = (
-                ToiletConstruction.objects.filter(**filter_field)
-                .exclude(agreement_cancelled=True)
-                .annotate(**level_data[tag])
-                .values("level", "level_id", "city_name")
-                .annotate(**count_field)
-                .order_by("city_name")
-            )
-            toilet_data = {obj_ad["level_id"]: obj_ad for obj_ad in toilet_data}
-            for level_id, data in toilet_data.items():
-                report_table_data[level_id].update({"write_off_cases": data["status"]})
-        level_data_tag = {
-            "city": {"level_id": "slum__electoral_ward__administrative_ward__city__id"},
-            "admin_ward": {"level_id": "slum__electoral_ward__administrative_ward__id"},
-            "electoral_ward": {"level_id": "slum__electoral_ward__id"},
-            "slum": {"level_id": "slum__id"},
-        }
-        """ For Factsheet Assign Check """
-        if query_field == "factsheet_done":
-            for level_id in report_table_data.keys():
-                """Assigning Initla count as 0 for every level."""
-                report_table_data[level_id]["factAssign"] = 0
-                if (
-                    "factsheet_done" in report_table_data[level_id]
-                    and report_table_data[level_id]["factsheet_done"] > 0
-                ):
-                    """Query filter for toilet construction data"""
-                    query_field_TC = Q(
-                        **{level_data_tag[tag]["level_id"]: level_id}
-                    ) & (
-                        Q(
-                            **{
-                                "phase_one_material_date__range": [
-                                    start_date,
-                                    end_date,
-                                ],
-                                "factsheet_done__isnull": False,
-                            }
-                        )
-                        | (
+            """ For Factsheet Assign Check """
+            if query_field == "factsheet_done":
+                for level_id in report_table_data.keys():
+                    """Assigning Initla count as 0 for every level."""
+                    report_table_data[level_id]["factAssign"] = 0
+                    if (
+                        "factsheet_done" in report_table_data[level_id]
+                        and report_table_data[level_id]["factsheet_done"] > 0
+                    ):
+                        """Query filter for toilet construction data"""
+                        query_field_TC = Q(
+                            **{level_data_tag[tag]["level_id"]: level_id}
+                        ) & (
                             Q(
                                 **{
-                                    "phase_one_material_date__isnull": True,
-                                    "phase_two_material_date__range": [
+                                    "phase_one_material_date__range": [
                                         start_date,
                                         end_date,
                                     ],
                                     "factsheet_done__isnull": False,
                                 }
                             )
+                            | (
+                                Q(
+                                    **{
+                                        "phase_one_material_date__isnull": True,
+                                        "phase_two_material_date__range": [
+                                            start_date,
+                                            end_date,
+                                        ],
+                                        "factsheet_done__isnull": False,
+                                    }
+                                )
+                            )
                         )
-                    )
 
-                    # query_field_TC = {level_data_tag[tag]['level_id'] : l, 'phase_one_material_date__range':[start_date, end_date], 'factsheet_done__isnull' : False}
-                    """Query filter for Sponsor data"""
-                    query_field_sponsor = {
-                        level_data_tag[tag]["level_id"]: level_id,
-                    }
-                    T_Housenum = ToiletConstruction.objects.filter(
-                        query_field_TC
-                    ).values_list("household_number", "slum_id")
-                    Spsr_Housecode = (
-                        SponsorProjectDetails.objects.filter(**query_field_sponsor)
-                        .exclude(sponsor__id=10)
-                        .values_list("household_code", "slum_id")
-                    )
-                    """Here we are cheching that the funder assign or not to the household."""
-                    # Creating dict object of sponsor hh data.
-                    Spnsr_data_with_hh = {}
-                    for households, slum in Spsr_Housecode:
-                        if slum not in Spnsr_data_with_hh:
-                            Spnsr_data_with_hh[slum] = households
-                        else:
-                            temp_spsr_obj = Spnsr_data_with_hh[slum]
-                            temp_spsr_obj.extend(households)
+                        # query_field_TC = {level_data_tag[tag]['level_id'] : l, 'phase_one_material_date__range':[start_date, end_date], 'factsheet_done__isnull' : False}
+                        """Query filter for Sponsor data"""
+                        query_field_sponsor = {
+                            level_data_tag[tag]["level_id"]: level_id,
+                        }
+                        T_Housenum = ToiletConstruction.objects.filter(
+                            query_field_TC
+                        ).values_list("household_number", "slum_id")
+                        Spsr_Housecode = (
+                            SponsorProjectDetails.objects.filter(**query_field_sponsor)
+                            .exclude(sponsor__id=10)
+                            .values_list("household_code", "slum_id")
+                        )
+                        """Here we are cheching that the funder assign or not to the household."""
+                        # Creating dict object of sponsor hh data.
+                        Spnsr_data_with_hh = {}
+                        for households, slum in Spsr_Housecode:
+                            if slum not in Spnsr_data_with_hh:
+                                Spnsr_data_with_hh[slum] = households
+                            else:
+                                temp_spsr_obj = Spnsr_data_with_hh[slum]
+                                temp_spsr_obj.extend(households)
 
-                    # Loop for checking hh have toilet data and sponsor data.
-                    FactsheetAssign = 0
-                    for query_obj in T_Housenum:
-                        household, slum = query_obj
-                        if slum in Spnsr_data_with_hh:
-                            temp_spsr_obj = Spnsr_data_with_hh[slum]
-                            if int(household) in temp_spsr_obj:
-                                FactsheetAssign += 1
-                    report_table_data[level_id]["factAssign"] = FactsheetAssign
+                        # Loop for checking hh have toilet data and sponsor data.
+                        # Household numbers are strings now, so compare via
+                        # normalize_household_number instead of casting to int.
+                        FactsheetAssign = 0
+                        for query_obj in T_Housenum:
+                            household, slum = query_obj
+                            if slum in Spnsr_data_with_hh:
+                                temp_spsr_obj = Spnsr_data_with_hh[slum]
+                                hh_norm = normalize_household_number(household)
+                                normalized_sponsor_codes = [
+                                    normalize_household_number(code)
+                                    for code in temp_spsr_obj
+                                ]
+                                if hh_norm in normalized_sponsor_codes:
+                                    FactsheetAssign += 1
+                        report_table_data[level_id]["factAssign"] = FactsheetAssign
 
-    """Query filter for the total houses which have rhs data..."""
-    for query_key in report_table_data.keys():
-        query_field = {
-            level_data_tag[tag]["level_id"]: query_key,
-            "rhs_data__isnull": False,
-        }
-        h = HouseholdData.objects.filter(**query_field)
-        report_table_data[query_key]["total_structure"] = h.count()
-    return HttpResponse(
-        json.dumps(list(map(lambda x: report_table_data[x], report_table_data))),
-        content_type="application/json",
-    )
+        """Query filter for the total houses which have rhs data..."""
+        for query_key in report_table_data.keys():
+            query_field = {
+                level_data_tag[tag]["level_id"]: query_key,
+                "rhs_data__isnull": False,
+            }
+            h = HouseholdData.objects.filter(**query_field)
+            report_table_data[query_key]["total_structure"] = h.count()
+        return HttpResponse(
+            json.dumps(list(map(lambda x: report_table_data[x], report_table_data))),
+            content_type="application/json",
+        )
+    except Exception as e:
+        logger.error("Exception in give_report_table_numbers: %s", e, exc_info=True)
+        return HttpResponse(json.dumps([]), content_type="application/json", status=500)
 
 
 @csrf_exempt
@@ -2230,8 +2297,12 @@ def accounts_excel_generation(request):
         try:
             if slum in sponsor_with_slum:
                 sponsor_with_slum_lst = sponsor_with_slum[slum]
+                house_norm = normalize_household_number(house)
                 for i in sponsor_with_slum_lst:
-                    if house in i[1]:
+                    normalized_codes = [
+                        normalize_household_number(code) for code in i[1]
+                    ]
+                    if house_norm in normalized_codes:
                         return i[0]
                 return "Funder Not Assign"
             return "No Funder For This Slum"
@@ -2241,7 +2312,11 @@ def accounts_excel_generation(request):
     def check_toilet_data(house, slum):
         try:
             if slum in toiletData:
-                if str(house) in toiletData[slum]:
+                house_norm = normalize_household_number(house)
+                normalized_toilet_houses = [
+                    normalize_household_number(h) for h in toiletData[slum]
+                ]
+                if house_norm in normalized_toilet_houses:
                     return "Toilet Record Found"
             return "Toilet Record Not Found"
         except Exception as e:
@@ -2368,13 +2443,18 @@ def getRhsData(record):
         "floor_type": "Floor Type",
     }
     # if occupied house then if block called otherwise else block called.
+    # NOTE: "Functioning of the structure" is asked before Type_of_structure_occupancy.
+    # If the structure was reported not functioning, Type_of_structure_occupancy may
+    # never have been asked/collected, so it can be legitimately missing from
+    # record.rhs_data. Always use .get() below - never bare-key access - and never
+    # assume the key exists just because the record itself exists.
     electricity_keys = [
         "If yes for electricity ,  type of meter ?",
         "Do you have electricity in the house ?",
     ]
     if (
         record.rhs_data
-        and record.rhs_data["Type_of_structure_occupancy"] == "Occupied house"
+        and record.rhs_data.get("Type_of_structure_occupancy") == "Occupied house"
     ):
         data = {
             key_list[i]: record.rhs_data[i]
@@ -2407,7 +2487,7 @@ def getRhsData(record):
         data = {
             key_list[i]: record.rhs_data[i]
             for i in key_list.keys()
-            if i in record.rhs_data
+            if record.rhs_data and i in record.rhs_data
         }
         data["household_number"] = record.household_number
     if record.ff_data:
@@ -2484,7 +2564,7 @@ def factsheetAssignCheck(dataList):
     finalList = []
     for record in dataList:
         if (
-            record["occupancy_status"] == "Occupied house"
+            record.get("occupancy_status") == "Occupied house"
             and ("toilet_status" in record and record["toilet_status"] == "Completed")
             and ("factsheet_done" in record and record["factsheet_done"] == "Yes")
         ):
@@ -2545,12 +2625,22 @@ def ProcessShortView(request, slum_details=0):
             slum_id=slum_code[0][0], rhs_data__isnull=False
         )
         formdict = list(map(getRhsData, householdData))
-        check_formdict = {str(int(x["household_number"])): x for x in formdict}
+        check_formdict = {
+            normalize_household_number(x["household_number"]): x for x in formdict
+        }
 
         # Process Invoice data...
         phasewise = sorted(invoice_data, key=lambda x: x[0])
         phaseWiseGroupedInvoiceData = {
-            key: list(set([num for sublist in group for num in sublist[1]]))
+            key: list(
+                set(
+                    [
+                        normalize_household_number(num)
+                        for sublist in group
+                        for num in sublist[1]
+                    ]
+                )
+            )
             for key, group in itertools.groupby(phasewise, key=lambda x: x[0])
         }
 
@@ -2562,8 +2652,9 @@ def ProcessShortView(request, slum_details=0):
         ) in (
             hh_activity_cnt.items()
         ):  # Adding activity count to the json data for response.
-            if k in check_formdict:
-                temp = check_formdict[k]
+            hh_key = normalize_household_number(k)
+            if hh_key in check_formdict:
+                temp = check_formdict[hh_key]
                 temp["total_moilization_acticity"] = v
             else:
                 temp_dict = {
@@ -2610,8 +2701,9 @@ def ProcessShortView(request, slum_details=0):
             *toilet_reconstruction_fields
         )
         for i in daily_reporting_data:  # Prpcessing Daily Reporting data.
-            if i["household_number"] in check_formdict:
-                temp = check_formdict[i["household_number"]]
+            hh_key = normalize_household_number(i["household_number"])
+            if hh_key in check_formdict:
+                temp = check_formdict[hh_key]
                 # Here we are checking phase-wise invoice data availability.....
                 material_dates = {
                     "phase_one_material_date": "1",
@@ -2624,7 +2716,7 @@ def ProcessShortView(request, slum_details=0):
                         phase = material_dates[material_date]
                         if phase in phaseWiseGroupedInvoiceData:
                             households = phaseWiseGroupedInvoiceData[phase]
-                            if int(i["household_number"]) in households:
+                            if hh_key in households:
                                 temp["invoice_phase_" + phase] = "Yes"
                             else:
                                 temp["invoice_phase_" + phase] = "No"
@@ -2657,11 +2749,15 @@ def ProcessShortView(request, slum_details=0):
                 if len(slum_funder) != 0:  # Adding funder project name.
                     for funder in slum_funder:
                         if funder.household_code != None:
-                            if int(i["household_number"]) in funder.household_code:
+                            normalized_sponsor_codes = [
+                                normalize_household_number(code)
+                                for code in funder.household_code
+                            ]
+                            if hh_key in normalized_sponsor_codes:
                                 temp.update(
                                     {"sponsor_project": funder.sponsor_project.name}
                                 )  # funder.sponsor.organization_name})
-                check_formdict[i["household_number"]] = temp
+                check_formdict[hh_key] = temp
             else:
                 temp_dict = {
                     "household_number": i["household_number"],
@@ -2672,21 +2768,8 @@ def ProcessShortView(request, slum_details=0):
         formdict = factsheetAssignCheck(formdict)
 
     except Exception as e:
-        logger.error(e)
+        logger.error("Exception in ProcessShortView: %s", e, exc_info=True)
     return HttpResponse(json.dumps(formdict), content_type="application/json")
-
-def normalize_household_number(value):
-    """
-    Normalize a household number for use as a dict key / comparison value.
-    Household numbers used to be purely numeric (e.g. '0749') but can now
-    also be alphanumeric (e.g. '0749A'). This strips leading zeros in a
-    string-safe way without assuming the value is castable to int.
-    """
-    if value is None:
-        return None
-    s = str(value).strip()
-    stripped = s.lstrip("0")
-    return stripped if stripped else "0"
 
 
 def AnalyseGisTabData(slum_id):
@@ -2816,10 +2899,7 @@ def AnalyseGisTabData(slum_id):
         }
         check_formdict = {}
         for dct in formdict:
-            if (
-                "occupancy_status" in dct
-                and dct["occupancy_status"] == "Occupied house"
-            ):
+            if dct.get("occupancy_status") == "Occupied house":
                 hh = normalize_household_number(dct["household_number"])
                 # checking for followup-data
                 if hh in followup_data:
@@ -2839,11 +2919,11 @@ def AnalyseGisTabData(slum_id):
                 if len(slum_funder) != 0:  # Adding funder project name.
                     for funder in slum_funder:
                         if funder.household_code is not None:
-                            try:
-                                hh_key = int(hh)
-                            except ValueError:
-                                hh_key = hh
-                            if hh_key in funder.household_code:
+                            normalized_codes = [
+                                normalize_household_number(code)
+                                for code in funder.household_code
+                            ]
+                            if hh in normalized_codes:
                                 dct.update(
                                     {"sponsor_project": funder.sponsor_project.name}
                                 )
@@ -2955,7 +3035,13 @@ def addSponsor(request):
     sponsor_id = int(data["sponsor_id"])
     quarter_id = data["quarter_id"]
     slum = int(data["slum"])
-    household_code = list(map(int, data["records"]))
+    # Household numbers are strings now (e.g. "0749A"), not ints - store them
+    # normalized instead of casting to int, since alphanumeric codes can't be
+    # represented as int and household_code arrays are string-keyed everywhere
+    # else in this file now.
+    household_code = [
+        normalize_household_number(rec) for rec in data["records"]
+    ]
     return_url_id = None
 
     """ Creating some helper functions ."""
@@ -3002,7 +3088,7 @@ def addSponsor(request):
         if sponsorProjectdetailsSubfields.exists():
             sponsorProjectdetailsSubfields_obj = sponsorProjectdetailsSubfields[0]
             old_household_code = sponsorProjectdetailsSubfields_obj.household_code
-            # Converting all household code to integer ..
+            # Merging household codes as normalized strings (see note above).
             household_code_updated = merge_household_codes(
                 old_household_code, household_code
             )
