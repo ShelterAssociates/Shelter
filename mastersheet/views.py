@@ -173,7 +173,6 @@ def masterSheet(request, slum_code=0, FF_code=0, RHS_code=0):
 
                 formdict = list(map(check_rhs_data, household_data))
                 logger.debug("formdict (RHS) built with %s records", len(formdict))
-
                 cod_data = FollowupData.objects.filter(slum=slum_code[0][0]).values(
                     "household_number", "followup_data", "submission_date"
                 )
@@ -195,7 +194,6 @@ def masterSheet(request, slum_code=0, FF_code=0, RHS_code=0):
                             "followup_data": followup_record["followup_data"],
                         }
                         followup_data[hh] = temp_dict
-                logger.debug("followup_data built with %s entries", len(followup_data))
 
             else:
                 logger.debug("flag_fetch_rhs is False, building minimal formdict")
@@ -588,12 +586,13 @@ def masterSheet(request, slum_code=0, FF_code=0, RHS_code=0):
 
                 # Update Follow up data for household
                 if flag_fetch_rhs:
-                    if str(int(key)) in followup_data:
+                    hh_key = normalize_household_number(key)
+                    if hh_key in followup_data:
                         if (
                             "Type_of_structure_occupancy" in x
                             and x["Type_of_structure_occupancy"] == "Occupied house"
                         ):
-                            final_followup_data = followup_data[str(int(key))]
+                            final_followup_data = followup_data[hh_key]
                             data = final_followup_data["followup_data"]
                             if "group_oi8ts04/Current_place_of_defecation" in data:
                                 temp = data["group_oi8ts04/Current_place_of_defecation"]
