@@ -135,7 +135,7 @@ def masterSheet(request, slum_code=0, FF_code=0, RHS_code=0):
                     # if occupied house then if block called otherwise else block called.
                     if (
                         record.rhs_data
-                        and record.rhs_data["Type_of_structure_occupancy"]
+                        and record.rhs_data.get("Type_of_structure_occupancy")
                         == "Occupied house"
                     ):
                         data = {
