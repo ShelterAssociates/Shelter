@@ -98,13 +98,18 @@ class InvoiceItemsInline(admin.TabularInline):
 
 class InvoiceAdmin(admin.ModelAdmin):
     list_filter = ["vendor"]
-    list_display = ("vendor", "invoice_number", "challan_number", "invoice_date")
-    search_fields = ["vendor__name", "invoice_number", "challan_number", "invoice_date"]
     list_display = ("vendor", "invoice_number", "challan_number", "invoice_date", "sponsor_project")
     search_fields = ["vendor__name", "invoice_number", "challan_number", "invoice_date", "sponsor_project__name"]
     autocomplete_fields = ["sponsor_project"]
     ordering = ["vendor"]
-    inlines = [InvoiceItemsInline] 
+    inlines = [InvoiceItemsInline]
+    exclude = (
+        "created_by",
+        "created_on",
+        "modified_by",
+        "modified_on",
+    )
+
     class Media:
         js = ["js/calculate_total_invoice.js"]
 
@@ -177,8 +182,13 @@ class InvoiceItemsAdmin(admin.ModelAdmin):
         "modified_on",
     )
 
+    # def save_model(self, request, obj, form, change):
+    #     print 'gotcha'
+    #     super(InvoiceItemAdmin, self).save_model(request, obj, form, change)
+
 
 admin.site.register(InvoiceItems, InvoiceItemsAdmin)
+
 
 class VendorAdmin(admin.ModelAdmin):
     list_display = ("name", "gst_number", "phone_number", "email_address")
