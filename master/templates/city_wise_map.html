@@ -210,7 +210,39 @@
       white-space: normal;
       line-height: 1.25;
     }
-    
+
+    /* ── COLLAPSIBLE TOGGLE (GIS export / Factsheet panels) ─ */
+    .collapsible-toggle {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      width: 100%;
+      background: #fff;
+      border: 1px solid #c8d8ea;
+      border-radius: 4px;
+      padding: 6px 10px;
+      font-size: 12px;
+      font-weight: 600;
+      color: #1a5276;
+      cursor: pointer;
+      box-sizing: border-box;
+      margin-top: 6px;
+    }
+    .collapsible-toggle:hover {
+      background: #f4f8fc;
+    }
+    .collapsible-toggle__caret {
+      display: inline-block;
+      font-size: 10px;
+      transition: transform 0.15s ease;
+    }
+    .collapsible-toggle__caret.is-open {
+      transform: rotate(90deg);
+    }
+    .collapsible-toggle__body {
+      margin-top: 6px;
+    }
+
     /* ── HOUSEHOLD SEARCH ────────────────────────────────── */
     #household-search-wrapper {
       display: none;
