@@ -174,7 +174,8 @@ function initMap() {
         "Mohanlalganj City": new L.LatLng(26.66998253, 80.98541311),
         "Nilgiri District": new L.LatLng(11.45878141, 76.64049998),
         "Ichalkaranji": new L.LatLng(16.68803567359255, 74.46583551598165),
-        "Banthara Town": new L.LatLng(26.68906000, 80.81704000)
+        "Banthara Town": new L.LatLng(26.68906000, 80.81704000),
+        "RamSanehi Ghat Nagar Panchayat": new L.LatLng(26.80700000, 81.52600000),
     };
 
     var cityName = $("#city_name").val();
