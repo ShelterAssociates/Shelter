@@ -443,6 +443,12 @@ function _wbUpdateFilterCounts() {
 
 function _wbUpdateActiveLabel() {
     var label = document.getElementById("wb-active-label");
+    var boundaryWrap = document.getElementById("wb-boundary-toggle-wrap");
+
+    if (boundaryWrap) {
+        boundaryWrap.style.display = _wb.activeWardId ? "flex" : "none";
+    }
+
     if (!label) { return; }
 
     if (_wb.activeWardId) {
@@ -527,9 +533,9 @@ function _wbEnsureDOM() {
         ' font-size:12px; cursor:pointer; color:#1a5276;">' +
         '↩ City view' +
         '</button>' +
-        '<label style="display:flex; align-items:center; gap:4px; font-size:12px; color:#1a5276; cursor:pointer;">' +
+        '<label id="wb-boundary-toggle-wrap" style="display:none; align-items:center; gap:4px; font-size:12px; color:#1a5276; cursor:pointer;">' +
         '<input type="checkbox" id="wb-boundary-toggle" checked>' +
-        'Show boundary' +
+        'Show ward boundary' +
         '</label>' +
         '<span id="wb-active-label" style="font-size:12px; font-weight:600; color:#1a5276;"></span>' +
         '</div>' +
