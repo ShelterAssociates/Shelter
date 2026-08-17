@@ -2,7 +2,7 @@ from collections import OrderedDict
 
 from django.contrib.gis.db.models import GeometryField
 from django.contrib.gis.db.models.functions import Intersection, Length, Transform
-from django.db.models import CharField, Count, Func, Q, Sum, Value
+from django.db.models import Case, CharField, Count, Func, IntegerField, Sum, Value, When
 
 from graphs.models import HouseholdData
 
@@ -28,9 +28,18 @@ def _get_line_only_metadata_names(slum):
         .values("metadata__name")
         .annotate(
             total=Count("id"),
+            # `Count("id", filter=Q(...))` compiles to SQL's FILTER (WHERE ...)
+            # clause, which older PostgreSQL servers (pre-9.4) reject with a
+            # syntax error. COUNT(CASE WHEN ... THEN id END) is equivalent and
+            # portable across all PostgreSQL versions this app targets.
             line_count=Count(
-                "id",
-                filter=Q(geom_type__in=["ST_LineString", "ST_MultiLineString"]),
+                Case(
+                    When(
+                        geom_type__in=["ST_LineString", "ST_MultiLineString"],
+                        then="id",
+                    ),
+                    output_field=IntegerField(),
+                )
             ),
         )
     )
