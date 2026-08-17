@@ -2,10 +2,13 @@ var _wb = {
     wardHouseMap: {},
     wardIds: [],
     wardShapes: {},
+    wardRoadLengths: {},
     highlightLayers: [],
     wardOverlayLayers: [],
     activeWardId: null,
     panelOpen: false,
+    panelExpanded: true,
+    boundaryVisible: true,
     loadedSlumId: null,
     slumBounds: null
 };
@@ -20,6 +23,16 @@ function _escHtml(s) {
 
 function _normalizeWardKey(value) {
     return String(value == null ? "" : value).trim().toLowerCase();
+}
+
+// Household numbers show up in two representations that disagree on zero-
+// padding: the mastersheet's household_number field (e.g. "1107") vs. the
+// raw survey JSON's "Household_number" field (e.g. "01107"). Ward-wise
+// matching compares numbers sourced from both, so both sides must be run
+// through this before comparison or matching silently fails.
+function _wbNormalizeHouseKey(value) {
+    var key = String(value == null ? "" : value).split(".")[0].trim();
+    return key.replace(/^0+(?=[0-9])/, "");
 }
 
 function _getCheckedFilterSet() {
@@ -71,6 +84,17 @@ function _wbSyncToggleButton() {
     btn.textContent = _wb.panelOpen ? "Hide ward selector" : "Show ward selector";
 }
 
+function _wbSyncPanelToggle() {
+    var body = document.getElementById("wb-panel-body");
+    var caret = document.getElementById("wb-panel-toggle-caret");
+    if (body) {
+        body.style.display = _wb.panelExpanded ? "block" : "none";
+    }
+    if (caret) {
+        caret.classList.toggle("is-open", !!_wb.panelExpanded);
+    }
+}
+
 // Full _wbClearHighlights — used ONLY for complete reset (ward reset / slum change)
 function _wbClearHighlights() {
     _wbClearOverlaysOnly();
@@ -105,6 +129,7 @@ function _wbReset() {
     _wb.wardHouseMap = {};
     _wb.wardIds = [];
     _wb.wardShapes = {};
+    _wb.wardRoadLengths = {};
     _wb.activeWardId = null;
     _wb.panelOpen = false;
     _wb.loadedSlumId = null;
@@ -208,6 +233,15 @@ function _wbComputeCountsForWard(wardId) {
             result[key] = 0;
 
             if (itemData.type === "C") {
+                // ── Road/drainage line type: use the pre-computed per-ward
+                // clipped length (metres) instead of a spatial feature count,
+                // matching the "<n> m" convention used for the city-wide total.
+                var wardRoadLengths = _wb.wardRoadLengths[String(wardId)] || null;
+                if (wardRoadLengths && Object.prototype.hasOwnProperty.call(wardRoadLengths, itemName)) {
+                    result[key] = Math.round(wardRoadLengths[itemName]) + " m";
+                    continue;
+                }
+
                 // ── Component type: spatial check against ward boundary ──
                 if (!wardShape) {
                     // No ward shape available, fall back to total count
@@ -237,7 +271,7 @@ function _wbComputeCountsForWard(wardId) {
                 // ── Filter/Sponsor type: match via wardSet house numbers ──
                 var childList = itemData.child || [];
                 for (houseIndex = 0; houseIndex < childList.length; houseIndex++) {
-                    houseNo = String(childList[houseIndex]);
+                    houseNo = _wbNormalizeHouseKey(childList[houseIndex]);
                     if (Object.prototype.hasOwnProperty.call(wardSet, houseNo)) {
                         result[key] += 1;
                     }
@@ -247,6 +281,26 @@ function _wbComputeCountsForWard(wardId) {
     }
 
     return result;
+}
+
+// Sums a line component's per-ward lengths across every loaded ward, giving
+// a whole-slum total that stays consistent with the ward-scoped figures
+// (each ward's length is that line clipped to the ward polygon, so summing
+// across all wards reconstructs the full length). Returns null when this
+// item isn't a line-length component or ward data hasn't loaded yet, so
+// callers can fall back to a plain feature count.
+function _wbTotalLineLength(itemName) {
+    if (!_wb.wardIds.length) { return null; }
+    var found = false;
+    var total = 0;
+    for (var i = 0; i < _wb.wardIds.length; i++) {
+        var wardLengths = _wb.wardRoadLengths[_wb.wardIds[i]];
+        if (wardLengths && Object.prototype.hasOwnProperty.call(wardLengths, itemName)) {
+            found = true;
+            total += wardLengths[itemName];
+        }
+    }
+    return found ? total : null;
 }
 
 function _wbComputeTotalCounts() {
@@ -268,7 +322,16 @@ function _wbComputeTotalCounts() {
         for (itemIndex = 0; itemIndex < itemKeys.length; itemIndex++) {
             itemName = String(itemKeys[itemIndex]);
             itemData = sectionItems[itemKeys[itemIndex]];
-            if (!itemData || itemData.type === "C") { continue; }
+            if (!itemData) { continue; }
+
+            if (itemData.type === "C") {
+                var totalLength = _wbTotalLineLength(itemName);
+                if (totalLength !== null) {
+                    result[sectionName + "||" + itemName] = Math.round(totalLength) + " m";
+                }
+                continue;
+            }
+
             result[sectionName + "||" + itemName] = (itemData.child || []).length;
         }
     }
@@ -296,6 +359,7 @@ function _wbRenderWardOverlay() {
     _wbClearOverlaysOnly();
     if (!map || !window.L || !L.geoJson) { return; }
     if (!_wb.activeWardId) { return; }
+    if (!_wb.boundaryVisible) { return; }
 
     for (wardId in _wb.wardShapes) {
         if (!_wb.wardShapes.hasOwnProperty(wardId)) { continue; }
@@ -379,6 +443,12 @@ function _wbUpdateFilterCounts() {
 
 function _wbUpdateActiveLabel() {
     var label = document.getElementById("wb-active-label");
+    var boundaryWrap = document.getElementById("wb-boundary-toggle-wrap");
+
+    if (boundaryWrap) {
+        boundaryWrap.style.display = _wb.activeWardId ? "flex" : "none";
+    }
+
     if (!label) { return; }
 
     if (_wb.activeWardId) {
@@ -438,8 +508,13 @@ function _wbEnsureDOM() {
     html =
         '<div id="wb-toggle-wrap" style="display:none; padding:6px 10px 6px;' +
         ' border-top:1px solid #dce8f1; background:#f4f8fc;">' +
-        '<div style="font-size:11px; font-weight:600; color:#2471a3; margin-bottom:4px;">' +
+        '<button type="button" class="collapsible-toggle" id="wb-panel-toggle-btn">' +
+        '<span class="collapsible-toggle__caret is-open" id="wb-panel-toggle-caret">&#9656;</span>' +
         'Admin ward breakdown' +
+        '</button>' +
+        '<div class="collapsible-toggle__body" id="wb-panel-body">' +
+        '<div style="font-size:10px; color:#7f8c9a; font-style:italic; margin-bottom:6px;">' +
+        'Note: road/drainage lengths shown are approximate.' +
         '</div>' +
         '<div id="wb-loading-wrap" style="display:none; margin:6px 0 8px;">' +
         '<div style="height:6px; width:100%; border-radius:999px; overflow:hidden; background:#d9e8f5;">' +
@@ -458,9 +533,14 @@ function _wbEnsureDOM() {
         ' font-size:12px; cursor:pointer; color:#1a5276;">' +
         '↩ City view' +
         '</button>' +
+        '<label id="wb-boundary-toggle-wrap" style="display:none; align-items:center; gap:4px; font-size:12px; color:#1a5276; cursor:pointer;">' +
+        '<input type="checkbox" id="wb-boundary-toggle" checked>' +
+        'Show ward boundary' +
+        '</label>' +
         '<span id="wb-active-label" style="font-size:12px; font-weight:600; color:#1a5276;"></span>' +
         '</div>' +
         '<div id="wb-ward-strip" style="display:none; gap:6px; flex-wrap:wrap; margin-top:6px;"></div>' +
+        '</div>' +
         '</div>' +
         '</div>';
 
@@ -470,8 +550,26 @@ function _wbEnsureDOM() {
         compochk.insertAdjacentHTML("beforebegin", html);
     }
 
+    var panelToggleBtn = document.getElementById("wb-panel-toggle-btn");
     var toggleBtn = document.getElementById("wb-toggle-btn");
     var cityBtn = document.getElementById("wb-cityreset-btn");
+    var boundaryToggle = document.getElementById("wb-boundary-toggle");
+
+    if (panelToggleBtn && !panelToggleBtn._wbBound) {
+        panelToggleBtn._wbBound = true;
+        panelToggleBtn.addEventListener("click", function () {
+            _wb.panelExpanded = !_wb.panelExpanded;
+            _wbSyncPanelToggle();
+        });
+    }
+
+    if (boundaryToggle && !boundaryToggle._wbBound) {
+        boundaryToggle._wbBound = true;
+        boundaryToggle.addEventListener("change", function () {
+            _wb.boundaryVisible = !!boundaryToggle.checked;
+            _wbRenderWardOverlay();
+        });
+    }
 
     if (toggleBtn && !toggleBtn._wbBound) {
         toggleBtn._wbBound = true;
@@ -536,6 +634,7 @@ function _wbEnsureDOM() {
     }
 
     _wbSyncToggleButton();
+    _wbSyncPanelToggle();
 }
 
 function _onWardChipClick() {
@@ -596,6 +695,7 @@ function initWardBreakdownPanel(slumId) {
 
             if (String(_wb.loadedSlumId) !== String(slumId)) { return; }
             normalized = _wbNormalizeWardResponse(data);
+            _wb.wardRoadLengths = (data && data.road_lengths) || {};
             keys = Object.keys(normalized || {});
             if (!keys.length) {
                 _wbSetLoadingVisible(false);
@@ -614,7 +714,7 @@ function initWardBreakdownPanel(slumId) {
                 _wb.wardIds.push(wardId);
                 _wb.wardHouseMap[wardId] = {};
                 for (j = 0; j < houses.length; j++) {
-                    _wb.wardHouseMap[wardId][String(houses[j])] = true;
+                    _wb.wardHouseMap[wardId][_wbNormalizeHouseKey(houses[j])] = true;
                 }
             }
 
@@ -705,9 +805,9 @@ function _showComponentForActiveWard(componentName) {
                     filteredShapes.push(childItem.shape);
                 }
             } else {
-                var key = String(
+                var key = _wbNormalizeHouseKey(
                     childItem.housenumber !== undefined ? childItem.housenumber : ""
-                ).split(".")[0].trim();
+                );
                 if (wardSet.hasOwnProperty(key)) {
                     filteredShapes.push(childItem.shape);
                 }
@@ -725,7 +825,7 @@ function _showComponentForActiveWard(componentName) {
         // Filter/Sponsor type: child is array of house numbers
         var filteredHouseShapes = [];
         $.each(itemData.child || [], function (_, houseNo) {
-            var key = String(houseNo).split(".")[0].trim();
+            var key = _wbNormalizeHouseKey(houseNo);
             if (!wardSet.hasOwnProperty(key)) return;
             var shape = houses[key] || houses[parseInt(key, 10)] || houses[String(key)];
             if (shape) filteredHouseShapes.push(shape);

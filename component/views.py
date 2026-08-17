@@ -47,7 +47,11 @@ from django.utils import timezone
 from mastersheet.models import ToiletConstruction
 from xml.sax.saxutils import escape
 from component.models import Component
-from component.services.helper import _get_ward_wise_data
+from component.services.helper import (
+    _get_ward_children,
+    _get_ward_wise_data,
+    _get_ward_road_lengths,
+)
 
 from graphs.models import HouseholdData
 from helpers.services.send_email import send_email
@@ -2960,5 +2964,7 @@ def get_ward_wise_data(request):
     if slum.current_status in ("sra", "road_widening"):
         return JsonResponse({})
 
-    ward_data = _get_ward_wise_data(slum)
-    return JsonResponse(ward_data)
+    ward_children = _get_ward_children(slum)
+    ward_data = _get_ward_wise_data(slum, ward_children=ward_children)
+    road_lengths = _get_ward_road_lengths(slum, ward_children=ward_children)
+    return JsonResponse({"ward_data": ward_data, "road_lengths": road_lengths})

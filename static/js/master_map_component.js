@@ -318,6 +318,25 @@ function _getGeometryCentroid(shape) {
             }
             return { lat: latSum / ring.length, lng: lngSum / ring.length };
         }
+        if (shape.type === "LineString") {
+            var coords = shape.coordinates;
+            var latSum = 0, lngSum = 0;
+            for (var i = 0; i < coords.length; i++) {
+                lngSum += coords[i][0];
+                latSum += coords[i][1];
+            }
+            return { lat: latSum / coords.length, lng: lngSum / coords.length };
+        }
+        if (shape.type === "MultiLineString") {
+            // use first line's vertices
+            var coords = shape.coordinates[0];
+            var latSum = 0, lngSum = 0;
+            for (var i = 0; i < coords.length; i++) {
+                lngSum += coords[i][0];
+                latSum += coords[i][1];
+            }
+            return { lat: latSum / coords.length, lng: lngSum / coords.length };
+        }
     } catch (e) { }
     return null;
 }

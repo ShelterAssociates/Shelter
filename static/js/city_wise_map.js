@@ -45,6 +45,11 @@ var modelsection = {
 
 var TYPE_COMPONENT = { C: "Component", S: "Sponsor", F: "Filter" };
 
+/* GIS export panel is bulky (buttons + CSV/email options), so it's
+   collapsed by default; state persists across re-renders since
+   renderKMLDownloadButton() rebuilds the DOM each time it's called. */
+var _gisExportExpanded = false;
+
 var myCustomColour = "#583470";
 var markerHtmlStyles = (
     "background-color:" + myCustomColour + ";width:3rem;height:3rem;display:block;" +
@@ -169,7 +174,8 @@ function initMap() {
         "Mohanlalganj City": new L.LatLng(26.66998253, 80.98541311),
         "Nilgiri District": new L.LatLng(11.45878141, 76.64049998),
         "Ichalkaranji": new L.LatLng(16.68803567359255, 74.46583551598165),
-        "Banthara Town": new L.LatLng(26.68906000, 80.81704000)
+        "Banthara Town": new L.LatLng(26.68906000, 80.81704000),
+        "RamSanehi Ghat Nagar Panchayat": new L.LatLng(26.80700000, 81.52600000),
     };
 
     var cityName = $("#city_name").val();
@@ -464,7 +470,7 @@ function generate_filter(globalJsonData, slumId, result) {
         $.each(v, function (k1, v1) {
             var chkcolor = v1["blob"]["polycolor"];
             var inner_label = Object.keys(globalJsonData).length > 0 ? globalJsonData[k1] : k1;
-            var child_length = k1 in length_of_components ? length_of_components[k1] + " mtr" : v1["child"].length;
+            var child_length = k1 in length_of_components ? length_of_components[k1] + " m" : v1["child"].length;
             var icon = v1["icon"] || "";
 
             panel_component +=
@@ -879,6 +885,12 @@ function renderKMLDownloadButton() {
         return;
     }
     $("#kml-btn-slot").html(
+        "<button type='button' class='collapsible-toggle' id='gisExportToggleBtn'>" +
+        "<span class='collapsible-toggle__caret" + (_gisExportExpanded ? " is-open" : "") + "'>&#9656;</span>" +
+        "GIS Export Options" +
+        "</button>" +
+        "<div class='collapsible-toggle__body' id='gisExportBody' style='display:" + (_gisExportExpanded ? "block" : "none") + ";'>" +
+
         "<div class='gis-action-grid'>" +
         "<button id='downloadKMLBtn' class='action-btn secondary-action-btn'>Download KML</button>" +
 
@@ -913,8 +925,15 @@ function renderKMLDownloadButton() {
         "<input type='email' id='emailExportAddress' class='form-control' placeholder='Enter email address to receive the download link'>" +
         "</div>" +
 
+        "</div>" +
         "</div>"
     );
+
+    $("#gisExportToggleBtn").on("click", function () {
+        _gisExportExpanded = !_gisExportExpanded;
+        renderKMLDownloadButton();
+    });
+
     updateActionButtonRow();
 }
 

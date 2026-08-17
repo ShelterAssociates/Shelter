@@ -1,4 +1,12 @@
 //Class to handle breadcrumbs and there clicks with datatable refresh.
+
+//Cities whose Admin Ward/Electoral Ward/Slum hierarchy doesn't reflect a
+//meaningful drill-down (each level has a distinct name, so the generic
+//consecutive-duplicate collapse in draw() doesn't apply), but the full
+//breadcrumb chain is still not useful to show. For these, always render
+//just the single deepest/current-level crumb.
+var FORCE_SINGLE_CRUMB_CITIES = ["Mohanlalganj City", "Banthara Town"];
+
 var Breadcrumbs = (function () {
 
     function Breadcrumbs(val) {
@@ -21,11 +29,33 @@ var Breadcrumbs = (function () {
     Breadcrumbs.prototype.draw = function () {
         let mydiv = $("#maplink");
         mydiv.html("");
-        var aTag = "   ";
-        aTag += '<label id="Home" onclick="Breadcrumbs.prototype.breadcrumb_onClick(this, false);">' + " <span style='text-decoration: underline;cursor:pointer;color:blue;'>" + city.name + "</span></label>&nbsp;&nbsp; >> ";
+
+        //Build the full crumb trail (Home + each level), then collapse runs of
+        //consecutive identical names (e.g. Admin Ward/Electoral Ward/Slum sharing
+        //the same name for single-level places) down to just the last one, so the
+        //breadcrumb doesn't repeat the same label back-to-back.
+        var crumbs = [{
+            label: city.name,
+            html: '<label id="Home" onclick="Breadcrumbs.prototype.breadcrumb_onClick(this, false);">' + " <span style='text-decoration: underline;cursor:pointer;color:blue;'>" + city.name + "</span></label>"
+        }];
         $.each(this.val, function (key, val) {
-            aTag += '<label id="' + val + '" onclick="Breadcrumbs.prototype.breadcrumb_onClick(this, true);">' + " <span style='text-decoration: underline;cursor:pointer;color:blue;'>" + val + "</span></label>&nbsp;&nbsp; >> ";
+            crumbs.push({
+                label: val,
+                html: '<label id="' + val + '" onclick="Breadcrumbs.prototype.breadcrumb_onClick(this, true);">' + " <span style='text-decoration: underline;cursor:pointer;color:blue;'>" + val + "</span></label>"
+            });
         });
+
+        var aTag = "   ";
+        if (FORCE_SINGLE_CRUMB_CITIES.indexOf(city.name) > -1) {
+            aTag += crumbs[crumbs.length - 1].html + "&nbsp;&nbsp; >> ";
+        } else {
+            for (var i = 0; i < crumbs.length; i++) {
+                var isLastOfRun = (i === crumbs.length - 1) || (crumbs[i].label !== crumbs[i + 1].label);
+                if (isLastOfRun) {
+                    aTag += crumbs[i].html + "&nbsp;&nbsp; >> ";
+                }
+            }
+        }
         mydiv.html((aTag.slice(0, aTag.length - 3)).trim());
         this.drawDatatable();
     }

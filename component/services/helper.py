@@ -1,6 +1,44 @@
 from collections import OrderedDict
 
+from django.contrib.gis.db.models import GeometryField
+from django.contrib.gis.db.models.functions import Intersection, Length, Transform
+from django.db.models import CharField, Count, Func, Q, Sum, Value
+
 from graphs.models import HouseholdData
+
+
+class _STGeometryType(Func):
+    """Wraps PostGIS's ST_GeometryType(geom), e.g. 'ST_LineString'."""
+
+    function = "ST_GeometryType"
+    output_field = CharField()
+
+
+def _get_line_only_metadata_names(slum):
+    """
+    Component (type "C") metadata names for this slum whose shapes are
+    exclusively LineString/MultiLineString — i.e. genuine line features
+    (roads, drainage lines, railway lines, etc.), as opposed to component
+    types that are fundamentally points/polygons with the occasional
+    mis-digitised line record (e.g. "Structure", "Slum boundary").
+    """
+    rows = (
+        slum.components.filter(metadata__type="C")
+        .annotate(geom_type=_STGeometryType("shape"))
+        .values("metadata__name")
+        .annotate(
+            total=Count("id"),
+            line_count=Count(
+                "id",
+                filter=Q(geom_type__in=["ST_LineString", "ST_MultiLineString"]),
+            ),
+        )
+    )
+    return [
+        row["metadata__name"]
+        for row in rows
+        if row["total"] > 0 and row["total"] == row["line_count"]
+    ]
 
 _HOUSEHOLD_JSON_FIELDS = []
 for _field_name in ("hh_data", "rhs_data", "ff_data"):
@@ -71,14 +109,19 @@ def _get_ward_children(slum):
     return list(slum.components.filter(metadata=ward_metadata).order_by("housenumber"))
 
 
-def _get_ward_wise_data(slum):
+def _get_ward_wise_data(slum, ward_children=None):
     """
     Return ward_id -> list of household numbers for a slum.
 
     The ward ids come from the Admin Ward component children, while the
     household grouping comes from HouseholdData JSON (`Select Ward`).
+
+    `ward_children` may be passed in by a caller that already computed it
+    (e.g. to share it with `_get_ward_road_lengths`) to avoid re-running the
+    admin-ward lookup, which scans every component on the slum.
     """
-    ward_children = _get_ward_children(slum)
+    if ward_children is None:
+        ward_children = _get_ward_children(slum)
     if not ward_children:
         return OrderedDict()
 
@@ -122,3 +165,54 @@ def _get_ward_wise_data(slum):
         ward_map[ward_id].append(household_number)
 
     return ward_map
+
+
+def _get_ward_road_lengths(slum, ward_children=None):
+    """
+    Return ward_id -> {line_component_name: length_in_metres} for a slum,
+    covering every component type whose geometry is a line (roads, drainage,
+    railway lines, pipelines, etc. — see `_get_line_only_metadata_names`).
+
+    Length per ward is computed by intersecting each line with the ward
+    boundary polygon and summing the intersected length, in a metric
+    projection (EPSG:3857), via PostGIS (ST_Intersection + ST_Length) rather
+    than in Python — this is the same "clip to ward boundary, then measure"
+    approach used for whole-slum totals in graphs/analyse_data.py, just
+    scoped to each ward's polygon.
+
+    `ward_children` may be passed in by a caller that already computed it
+    (e.g. alongside `_get_ward_wise_data`) to avoid re-running the admin-ward
+    lookup, which scans every component on the slum.
+    """
+    if ward_children is None:
+        ward_children = _get_ward_children(slum)
+    if not ward_children:
+        return OrderedDict()
+
+    line_metadata_names = _get_line_only_metadata_names(slum)
+    if not line_metadata_names:
+        return OrderedDict((str(ward.housenumber), {}) for ward in ward_children)
+
+    road_map = OrderedDict()
+    for ward in ward_children:
+        ward_id = str(ward.housenumber)
+        ward_geom = Value(ward.shape, output_field=GeometryField())
+
+        rows = (
+            slum.components.filter(metadata__name__in=line_metadata_names)
+            .annotate(
+                clipped_length=Length(
+                    Intersection(Transform("shape", 3857), Transform(ward_geom, 3857))
+                )
+            )
+            .values("metadata__name")
+            .annotate(total_length=Sum("clipped_length"))
+        )
+
+        road_map[ward_id] = {
+            row["metadata__name"]: round(row["total_length"].m, 1)
+            for row in rows
+            if row["total_length"] is not None
+        }
+
+    return road_map

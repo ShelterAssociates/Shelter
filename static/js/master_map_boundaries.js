@@ -9,6 +9,10 @@ var __extends = (this && this.__extends) || function (d, b) {
     d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
 };
 
+/* Factsheet panel is a single button, but still gets a collapse toggle for
+   consistency with the other action panels; defaults to expanded. */
+var _factsheetExpanded = true;
+
 /* ── Polygon base class ──────────────────────────────────────────────────── */
 var Polygon = (function () {
     function Polygon(obj_data) {
@@ -169,10 +173,22 @@ var Slum = (function (_super) {
     Slum.prototype._showFactsheetBtn = function () {
         var slumId = this.slumId;
         $("#factsheet-btn-slot").html(
+            "<button type='button' class='collapsible-toggle' id='factsheetToggleBtn'>" +
+            "<span class='collapsible-toggle__caret" + (_factsheetExpanded ? " is-open" : "") + "'>&#9656;</span>" +
+            "Factsheet" +
+            "</button>" +
+            "<div class='collapsible-toggle__body' id='factsheetBody' style='display:" + (_factsheetExpanded ? "block" : "none") + ";'>" +
             "<button class='action-btn' onclick='Slum.prototype.factsheet_click(this," + slumId + ")'>" +
             "View Factsheet" +
-            "</button>"
+            "</button>" +
+            "</div>"
         ).show();
+
+        $("#factsheetToggleBtn").on("click", function () {
+            _factsheetExpanded = !_factsheetExpanded;
+            Slum.prototype._showFactsheetBtn.call({ slumId: slumId });
+        });
+
         updateActionButtonRow();
     };
 
