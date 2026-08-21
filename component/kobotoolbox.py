@@ -533,10 +533,14 @@ def get_household_analysis_data(city, slum_code, question_fields, kobo_survey=""
         record_sorted = list(
             list_record
         )  # sorted(list(list_record), key=lambda x:x['_submission_time'], reverse=False)
-        if slum_code in ["1971", "1972"] or slum_code in [1971, 1972]:
-            household_no = household
-        else:
+        try:
+            # Strips leading zeros for plain numeric household numbers (e.g.
+            # "0022" -> 22). Falls back to the raw value for anything that
+            # isn't purely numeric (e.g. "1427A") -- works for every slum,
+            # not just ones we've hit this crash on before.
             household_no = int(household)
+        except (TypeError, ValueError):
+            household_no = household
         if not record_sorted:
             continue
         record = record_sorted[0]
