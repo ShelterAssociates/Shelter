@@ -116,8 +116,14 @@ pre.result {
 
   </style>
 
-  <!-- SheetJS library for Excel file processing -->
+  <!-- SheetJS library, used only to parse uploaded input Excel files -->
   <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
+
+  <!-- ExcelJS library, used to build the output workbook so the DIGIPIN symbol image can be embedded per row -->
+  <script src="https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js"></script>
+
+  <!-- Official DIGIPIN symbol/logo URL, consumed by digipin.js -->
+  <script>window.DIGIPIN_LOGO_URL = "{% static 'images/digipin_logo.png' %}";</script>
 
   <!-- Custom JS for DIGIPIN functionality -->
   <script src="{% static 'js/digipin.js' %}"></script>
@@ -141,6 +147,7 @@ pre.result {
           <button id="single_gen" class="btn small">Generate</button>
         </div>
         <div style="display:flex; gap:8px; align-items:center; margin-top:8px;">
+          <img id="single_symbol" src="{% static 'images/digipin_logo.png' %}" alt="DIGIPIN symbol" style="display:none; width:16px; height:16px;" />
           <pre id="single_out" class="result">DIGIPIN will appear here</pre>
           <button id="single_copy" class="btn small">Copy</button>
         </div>
@@ -150,7 +157,7 @@ pre.result {
       <div class="col" style="flex:1; min-width:300px;">
         <label><strong>Single processing</strong> — Decode DIGIPIN → Lat / Long</label>
         <div style="display:flex; gap:8px; align-items:center;">
-          <input id="reverse_in" type="text" placeholder="Enter DIGIPIN (e.g. K4L-TC7-...)" />
+          <input id="reverse_in" type="text" placeholder="Enter DIGIPIN (e.g. C4P8K63M4M)" />
           <button id="reverse_btn" class="btn small">Decode</button>
         </div>
         <div style="display:flex; gap:8px; align-items:center; margin-top:8px;">
@@ -201,6 +208,7 @@ HouseNo	    latitude	  longitude
             <li>File must be .xlsx or .xls and the first worksheet will be used.</li>
             <li>Header names must be exactly <code>HouseNo</code>, <code>latitude</code>, <code>longitude</code> (case-sensitive) in row 1.</li>
             <li>Rows with missing latitude/longitude will be skipped and listed in the error report.</li>
+            <li>DIGIPIN is generated in the new continuous 10-character format (no dashes), per the <a href="https://github.com/INDIAPOST-gov/digipin" target="_blank" rel="noopener">INDIAPOST-gov/digipin</a> specification. The output workbook includes a <code>Symbol</code> column with the official DIGIPIN logo placed in front of the <code>digipin</code> column on each row.</li>
           </ul>
         </div>
       </div>
