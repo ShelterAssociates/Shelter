@@ -15,6 +15,7 @@ document.addEventListener('DOMContentLoaded', function(){
 	const singleGen = document.getElementById('single_gen')
 	const singleOut = document.getElementById('single_out')
 	const singleCopy = document.getElementById('single_copy')
+	const singleSymbol = document.getElementById('single_symbol')
 
 	// DIGIPIN reverse decode UI
 	const reverseIn = document.getElementById('reverse_in')
@@ -53,10 +54,28 @@ document.addEventListener('DOMContentLoaded', function(){
 		}, 250)
 	}
 
-	// Download an XLSX workbook
-	function downloadWorkbook(workbook, filename){
-		const wbout = XLSX.write(workbook, {bookType:'xlsx', type:'array'})
-		downloadBlob(filename, wbout, 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+	// Download an ExcelJS workbook (async: ExcelJS serializes via a promise)
+	async function downloadWorkbook(workbook, filename){
+		const buffer = await workbook.xlsx.writeBuffer()
+		downloadBlob(filename, buffer, 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+	}
+
+	// Fetch the official DIGIPIN logo once and cache it as a base64 data URL,
+	// so it can be embedded (per row) into generated Excel files.
+	let digipinLogoBase64 = null
+	function loadDigipinLogo(){
+		if (digipinLogoBase64) return Promise.resolve(digipinLogoBase64)
+		const logoUrl = window.DIGIPIN_LOGO_URL
+		if (!logoUrl) return Promise.resolve(null)
+		return fetch(logoUrl)
+			.then(r => r.blob())
+			.then(blob => new Promise((resolve, reject) => {
+				const reader = new FileReader()
+				reader.onload = () => { digipinLogoBase64 = reader.result; resolve(digipinLogoBase64) }
+				reader.onerror = reject
+				reader.readAsDataURL(blob)
+			}))
+			.catch(err => { log('Failed to load DIGIPIN logo: ' + (err && err.message ? err.message : String(err))); return null })
 	}
 
 	// Download an array of arrays as CSV
@@ -143,109 +162,75 @@ document.addEventListener('DOMContentLoaded', function(){
 		return (h >>> 0) % 46656
 	}
 
-	// Generate DIGIPIN code from latitude and longitude
+	// DIGIPIN Labelling Grid (per INDIAPOST-gov/digipin)
+	const DIGIPIN_GRID = [
+		['F','C','9','8'],
+		['J','3','2','7'],
+		['K','4','5','6'],
+		['L','M','P','T']
+	]
+	const DIGIPIN_BOUNDS = { minLat: 2.5, maxLat: 38.5, minLon: 63.5, maxLon: 99.5 }
+	const DIGIPIN_CHAR_RE = /^[23456789CJKLMPFT]{10}$/
+
+	// Generate a DIGIPIN code from latitude and longitude.
+	// New format (per INDIAPOST-gov/digipin): continuous 10-character string, no separators.
 	function generateDigipin(lat, lon) {
-		// DIGIPIN Labelling Grid
-		const L = [
-			['F','C','9','8'],
-			['J','3','2','7'],
-			['K','4','5','6'],
-			['L','M','P','T']
-		]
-		let vDIGIPIN = ''
-
-		let row = 0, column = 0
-		let MinLat = 2.5, MaxLat = 38.5, MinLon = 63.5, MaxLon = 99.5
-		const LatDivBy = 4, LonDivBy = 4
-		let LatDivDeg = 0, LonDivDeg = 0
-
 		if (typeof lat !== 'number' || typeof lon !== 'number') return ''
-		if (lat < MinLat || lat > MaxLat) return ''
-		if (lon < MinLon || lon > MaxLon) return ''
+		if (lat < DIGIPIN_BOUNDS.minLat || lat > DIGIPIN_BOUNDS.maxLat) return ''
+		if (lon < DIGIPIN_BOUNDS.minLon || lon > DIGIPIN_BOUNDS.maxLon) return ''
 
-		// 10-level grid subdivision
-		for (let Lvl = 1; Lvl <= 10; Lvl++) {
-			LatDivDeg = (MaxLat - MinLat) / LatDivBy
-			LonDivDeg = (MaxLon - MinLon) / LonDivBy
+		let minLat = DIGIPIN_BOUNDS.minLat
+		let maxLat = DIGIPIN_BOUNDS.maxLat
+		let minLon = DIGIPIN_BOUNDS.minLon
+		let maxLon = DIGIPIN_BOUNDS.maxLon
 
-			let NextLvlMaxLat = MaxLat
-			let NextLvlMinLat = MaxLat - LatDivDeg
-			row = 0
-			for (let x = 0; x < LatDivBy; x++) {
-				// include upper bound only for last cell to avoid excluding MaxLat
-				if (x === LatDivBy - 1) {
-					if (lat >= NextLvlMinLat && lat <= NextLvlMaxLat) { row = x; break }
-				} else {
-					if (lat >= NextLvlMinLat && lat < NextLvlMaxLat) { row = x; break }
-				}
-				NextLvlMaxLat = NextLvlMinLat
-				NextLvlMinLat = NextLvlMaxLat - LatDivDeg
-			}
+		let digiPin = ''
 
-			let NextLvlMinLon = MinLon
-			let NextLvlMaxLon = MinLon + LonDivDeg
-			column = 0
-			for (let x = 0; x < LonDivBy; x++) {
-				// include upper bound only for last cell
-				if (x === LonDivBy - 1) {
-					if (lon >= NextLvlMinLon && lon <= NextLvlMaxLon) { column = x; break }
-				} else {
-					if (lon >= NextLvlMinLon && lon < NextLvlMaxLon) { column = x; break }
-				}
-				// advance
-				NextLvlMinLon = NextLvlMaxLon
-				NextLvlMaxLon = NextLvlMinLon + LonDivDeg
-			}
+		for (let level = 1; level <= 10; level++) {
+			const latDiv = (maxLat - minLat) / 4
+			const lonDiv = (maxLon - minLon) / 4
 
-			// safety check
-			if (!L[row] || L[row][column] === undefined) {
-				return ''
-			}
+			let row = 3 - Math.floor((lat - minLat) / latDiv)
+			let col = Math.floor((lon - minLon) / lonDiv)
 
-			vDIGIPIN += L[row][column]
+			row = Math.max(0, Math.min(row, 3))
+			col = Math.max(0, Math.min(col, 3))
 
-			if (Lvl === 3 || Lvl === 6) vDIGIPIN += '-'
+			digiPin += DIGIPIN_GRID[row][col]
 
-			// Set bounds for next level
-			MinLat = NextLvlMinLat
-			MaxLat = NextLvlMaxLat
-			MinLon = NextLvlMinLon
-			MaxLon = NextLvlMaxLon
+			maxLat = minLat + latDiv * (4 - row)
+			minLat = minLat + latDiv * (3 - row)
+
+			minLon = minLon + lonDiv * col
+			maxLon = minLon + lonDiv
 		}
 
-		return vDIGIPIN
+		return digiPin.toUpperCase()
 	}
 
 	// Decode DIGIPIN code to latitude/longitude (center of cell)
 	function decodeDigipin(vDigiPin) {
 		if (typeof vDigiPin !== 'string') return 'Invalid DIGIPIN'
-		// remove dashes
-		vDigiPin = vDigiPin.split('-').join('')
-		if (vDigiPin.length !== 10) return 'Invalid DIGIPIN'
+		// tolerate a pasted symbol prefix, legacy dashes, and display-format spaces —
+		// keep only characters that are actually part of the DIGIPIN alphabet
+		const pin = vDigiPin.trim().toUpperCase().replace(/[^23456789CJKLMPFT]/g, '')
+		if (!DIGIPIN_CHAR_RE.test(pin)) return 'Invalid DIGIPIN'
 
-		const L = [
-			['F','C','9','8'],
-			['J','3','2','7'],
-			['K','4','5','6'],
-			['L','M','P','T']
-		]
-
-		let MinLat = 2.5, MaxLat = 38.5, MinLng = 63.5, MaxLng = 99.5
-		const LatDivBy = 4, LngDivBy = 4
-		let LatDivVal = 0, LngDivVal = 0
-		let ri, ci, f
+		let minLat = DIGIPIN_BOUNDS.minLat
+		let maxLat = DIGIPIN_BOUNDS.maxLat
+		let minLng = DIGIPIN_BOUNDS.minLon
+		let maxLng = DIGIPIN_BOUNDS.maxLon
 		let Lat1 = 0, Lat2 = 0, Lng1 = 0, Lng2 = 0
 
-		// 10-level grid subdivision decode
-		for (let Lvl = 0; Lvl < 10; Lvl++) {
-			ri = -1; ci = -1; f = 0
-			const digipinChar = vDigiPin.charAt(Lvl)
-			LatDivVal = (MaxLat - MinLat) / LatDivBy
-			LngDivVal = (MaxLng - MinLng) / LngDivBy
+		for (let i = 0; i < 10; i++) {
+			const digipinChar = pin.charAt(i)
+			const latDivVal = (maxLat - minLat) / 4
+			const lngDivVal = (maxLng - minLng) / 4
+			let ri = -1, ci = -1, f = 0
 
-			for (let r = 0; r < LatDivBy; r++) {
-				for (let c = 0; c < LngDivBy; c++) {
-					if (L[r][c] === digipinChar) {
+			for (let r = 0; r < 4; r++) {
+				for (let c = 0; c < 4; c++) {
+					if (DIGIPIN_GRID[r][c] === digipinChar) {
 						ri = r; ci = c; f = 1; break
 					}
 				}
@@ -254,15 +239,15 @@ document.addEventListener('DOMContentLoaded', function(){
 
 			if (f === 0) return 'Invalid DIGIPIN'
 
-			Lat1 = MaxLat - (LatDivVal * (ri + 1))
-			Lat2 = MaxLat - (LatDivVal * ri)
-			Lng1 = MinLng + (LngDivVal * ci)
-			Lng2 = MinLng + (LngDivVal * (ci + 1))
+			Lat1 = maxLat - (latDivVal * (ri + 1))
+			Lat2 = maxLat - (latDivVal * ri)
+			Lng1 = minLng + (lngDivVal * ci)
+			Lng2 = minLng + (lngDivVal * (ci + 1))
 
-			MinLat = Lat1
-			MaxLat = Lat2
-			MinLng = Lng1
-			MaxLng = Lng2
+			minLat = Lat1
+			maxLat = Lat2
+			minLng = Lng1
+			maxLng = Lng2
 		}
 
 		const cLat = (Lat2 + Lat1) / 2
@@ -379,20 +364,42 @@ document.addEventListener('DOMContentLoaded', function(){
 		return duplicates;
 	}
 
-	// Build XLSX workbook with output rows and duplicates sheet
-	function buildOutputWorkbook(outRows, duplicates) {
-		const header = ['HouseNo','digipin','latitude','longitude'];
-		const data = [header].concat(outRows);
-		const ws = XLSX.utils.aoa_to_sheet(data);
-		const wb = XLSX.utils.book_new();
-		XLSX.utils.book_append_sheet(wb, ws, 'digipin');
+	// Build XLSX workbook (via ExcelJS) with output rows and duplicates sheet.
+	// A "Symbol" column carries the official DIGIPIN logo image in front of each row's digipin value.
+	async function buildOutputWorkbook(outRows, duplicates) {
+		const wb = new ExcelJS.Workbook();
+		const ws = wb.addWorksheet('digipin');
+		ws.columns = [
+			{ header: 'HouseNo', key: 'houseNo', width: 14 },
+			{ header: 'Symbol', key: 'symbol', width: 6 },
+			{ header: 'digipin', key: 'digipin', width: 16 },
+			{ header: 'latitude', key: 'latitude', width: 14 },
+			{ header: 'longitude', key: 'longitude', width: 14 },
+			{ header: 'label', key: 'label', width: 18 }
+		];
+
+		const logo = await loadDigipinLogo();
+		// wb.addImage() returns an integer id, and 0 is a valid id for the first image
+		// registered on the workbook — must check against null, not truthiness.
+		const imageId = logo !== null ? wb.addImage({ base64: logo, extension: 'png' }) : null;
+
+		outRows.forEach((r) => {
+			const row = ws.addRow({ houseNo: r[0], symbol: '', digipin: r[1], latitude: r[2], longitude: r[3], label: r[4] });
+			row.height = 16;
+			// only stamp the symbol when a digipin was actually generated for this row
+			if (imageId !== null && r[1]) {
+				ws.addImage(imageId, { tl: { col: 1, row: row.number - 1 }, ext: { width: 14, height: 14 } });
+			}
+		});
 
 		// append duplicates sheet if provided
 		if (Array.isArray(duplicates) && duplicates.length) {
-			const dupHeader = ['DIGIPIN','House_Numbers'];
-			const dupData = [dupHeader].concat(duplicates.map(d => [d.DIGIPIN, d.House_Numbers]));
-			const dupWs = XLSX.utils.aoa_to_sheet(dupData);
-			XLSX.utils.book_append_sheet(wb, dupWs, 'Duplicates');
+			const dupWs = wb.addWorksheet('Duplicates');
+			dupWs.columns = [
+				{ header: 'DIGIPIN', key: 'digipin', width: 16 },
+				{ header: 'House_Numbers', key: 'houses', width: 30 }
+			];
+			duplicates.forEach(d => dupWs.addRow({ digipin: d.DIGIPIN, houses: d.House_Numbers }));
 		}
 
 		return wb;
@@ -407,7 +414,7 @@ document.addEventListener('DOMContentLoaded', function(){
 		lastErrorsCSV = null
 		log('Reading file: ' + file.name)
 		const reader = new FileReader()
-		reader.onload = function(e){
+		reader.onload = async function(e){
 			const data = e.target.result
 			let wb
 			try {
@@ -466,10 +473,10 @@ document.addEventListener('DOMContentLoaded', function(){
 			const duplicates = computeDuplicatesByDigipin(outRows)
 			log(`Found ${duplicates.length} duplicate HouseNo entries (with >1 unique DIGIPIN).`)
 
-			const wbout = buildOutputWorkbook(outRows, duplicates)
 			const outName = `digipin_${Date.now()}.xlsx`
 			try {
-				downloadWorkbook(wbout, outName)
+				const wbout = await buildOutputWorkbook(outRows, duplicates)
+				await downloadWorkbook(wbout, outName)
 				log('Processed successfully. Download started: ' + outName)
 			} catch (err) {
 				log('Failed to download output: ' + (err && err.message ? err.message : String(err)))
@@ -526,6 +533,7 @@ document.addEventListener('DOMContentLoaded', function(){
 		}
 		const pin = generateDigipin(Number(la), Number(lo))
 		if (singleOut) singleOut.textContent = pin
+		if (singleSymbol) singleSymbol.style.display = pin ? '' : 'none'
 		log('Generated DIGIPIN for single input: ' + pin)
 	})
 
@@ -537,7 +545,7 @@ document.addEventListener('DOMContentLoaded', function(){
 			return
 		}
 		const decoded = decodeDigipin(inpin)
-		if (!decoded){
+		if (!decoded || typeof decoded === 'string'){
 			if (reverseOut) reverseOut.textContent = 'Invalid DIGIPIN'
 			log('Failed to decode DIGIPIN: ' + inpin)
 			return
