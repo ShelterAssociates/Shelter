@@ -636,6 +636,23 @@ class avni_sync:
                     a, slum, HH, d = self.get_household_details(j["Subject ID"])
                     self.FamilyFactsheetData(j, slum, HH)
 
+    def SaveSingleFamilyFactsheetData(self, program_encounter_uuid):  # checked
+        request = requests.get(
+            self.base_url + "api/programEncounter/" + program_encounter_uuid,
+            headers={"AUTH-TOKEN": self.get_cognito_token()},
+        )
+        if request.status_code == 200:
+            data = json.loads(request.text)
+            if data["Voided"] == False and data["observations"] != {}:
+                a, slum, HH, d = self.get_household_details(data["Subject ID"])
+                self.FamilyFactsheetData(data, slum, HH)
+        else:
+            logger.error(
+                "Program Encounter API request failed with status code: {}".format(
+                    request.status_code
+                )
+            )
+
     def FamilyFactsheetData(self, data, slum_name, HH):  # checked
         try:
             use_of_toilet = None
