@@ -1,7 +1,8 @@
+from __future__ import division
+
 import logging
 
 logger = logging.getLogger(__name__)
-from __future__ import division
 from django.shortcuts import get_object_or_404
 from graphs.models import *
 from component.models import *
@@ -476,9 +477,10 @@ class RHSData(object):
         of the following values:, defaults to Individual connection (optional)
         :return: the percentage of water coverage for a given type of connection.
         """
+        occupied_count = len(self.occupied_houses())
         percent = (
-            (self.get_water_coverage(type) / self.occupied_houses()) * 100
-            if self.occupied_houses() != 0
+            (self.get_water_coverage(type) / occupied_count) * 100
+            if occupied_count != 0
             else 0
         )
         return percent

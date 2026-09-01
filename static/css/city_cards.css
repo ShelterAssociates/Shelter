@@ -135,10 +135,35 @@ a:focus {
 .dashboard-statsbar__inner {
   max-width: 1400px;
   margin: 0 auto;
-  padding: 0 32px;
+  padding: 14px 32px;
   display: flex;
-  align-items: stretch;
+  align-items: center;
+  flex-wrap: wrap;
   gap: 0;
+}
+
+.dashboard-statsbar__value {
+  color: #111111;
+  font-size: 20px;
+  font-weight: 700;
+  line-height: 1;
+  font-family: "SFDisplaySemiBold", inherit;
+  letter-spacing: -0.02em;
+}
+
+.dashboard-statsbar__label {
+  color: #5a6a7a;
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  font-family: "SFDisplayMedium", inherit;
+  margin-left: 6px;
+}
+
+.dashboard-statsbar__divider {
+  color: #c8d4e0;
+  margin: 0 18px;
+  font-size: 16px;
 }
 
 .statsbar-item {

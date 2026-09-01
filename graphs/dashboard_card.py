@@ -27,6 +27,7 @@ class DashboardCard(RHSData):
                 "count_of_toilets_completed": toilet_count,
                 "people_impacted": people_impacted,
                 "slum_population": population,
+                "modified_on": timezone.now(),
             },
         )
 
@@ -78,6 +79,7 @@ class DashboardCard(RHSData):
                 "kutcha_household_cnt": kutcha_hh,
                 "puccha_household_cnt": puccha_hh,
                 "semi_puccha_household_cnt": semi_puccha_hh,
+                "modified_on": timezone.now(),
             },
         )
 
@@ -124,6 +126,7 @@ class DashboardCard(RHSData):
                 "waste_dump_in_open_percent": openspace_percent,
                 "waste_no_collection_facility_percentile": garbage_bin_facility,
                 "drains_coverage": ulb,
+                "modified_on": timezone.now(),
             },
         )
 
@@ -136,12 +139,16 @@ class DashboardCard(RHSData):
         individual_connection_percent = self.get_water_coverage("Individual connection")
         shared_connection_percent = self.get_water_coverage("Shared connection")
         water_standpost_percent = self.get_water_coverage("Water standpost")
-        other_water_services = 100 - (
-            individual_connection_percent
-            + shared_connection_percent
-            + water_standpost_percent
-        )
         water_data_available = len(self.hh_have_water_enc)
+        other_water_services = max(
+            0,
+            water_data_available
+            - (
+                individual_connection_percent
+                + shared_connection_percent
+                + water_standpost_percent
+            ),
+        )
         return (
             individual_connection_percent,
             shared_connection_percent,
@@ -169,6 +176,7 @@ class DashboardCard(RHSData):
                 "water_other_services": other_water_services,
                 "water_shared_service_percentile": shared_connection_percent,
                 "waterstandpost_percentile": water_standpost_percent,
+                "modified_on": timezone.now(),
             },
         )
 
@@ -218,6 +226,7 @@ class DashboardCard(RHSData):
                 "pucca_road_coverage": pucca_road_area,
                 "kutcha_road_coverage": kutcha_road_area,
                 "total_road_area": total_road_area,
+                "modified_on": timezone.now(),
             },
         )
 
@@ -229,8 +238,10 @@ class DashboardCard(RHSData):
         ctb_use_count = self.ctb_count()
         shared_group_toilet_count = self.shared_group_toilet_cnt()
         toilet_data_available = len(self.hh_have_toilet_enc)
-        other_services = toilet_data_available - (
-            own_toilet_count + ctb_use_count + shared_group_toilet_count
+        other_services = max(
+            0,
+            toilet_data_available
+            - (own_toilet_count + ctb_use_count + shared_group_toilet_count),
         )
 
         total_toilet_seats, fun_mix_seats, fun_male_seats, fun_female_seats = (
@@ -246,6 +257,7 @@ class DashboardCard(RHSData):
             toilet_data_available=toilet_data_available,
             shared_group_toilet_coverage=shared_group_toilet_count,
             other_services_toilet_coverage=other_services,
+            modified_on=timezone.now(),
         )
 
     def save_rim_gen(self):

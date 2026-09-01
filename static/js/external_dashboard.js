@@ -401,6 +401,13 @@ $(document).ready(function () {
       //          $("#levels_tag").trigger('change');
       display_cards(selected_name, set_level);
     },
+    error: function () {
+      $("#section_cards").html(
+        "<p class='dashboard-load-error'>Unable to load dashboard data. Please try refreshing the page.</p>"
+      );
+      $(".takeaways").html("");
+      $(".key-values").hide();
+    },
   });
 
   $.ajax({
