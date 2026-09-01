@@ -1,0 +1,251 @@
+{% extends "admin/base_site.html" %}
+{% load static %}
+
+{% block content %}
+<div class="customized-form" style="max-width:720px;">
+  <h2>RIM Data Download</h2>
+  <p class="help">
+    Export RIM survey data (from the field survey and the RIM additional info form) as a CSV file.
+  </p>
+
+  <div id="rimDownloadError" class="alert alert-danger" style="display:none;"></div>
+  <div id="rimDownloadStatus" class="alert alert-info" style="display:none;"></div>
+
+  <form id="rimDownloadForm">
+    {% csrf_token %}
+
+    <div class="form-group">
+      <label>
+        <input type="radio" name="rim_mode" value="city" checked> Whole city
+      </label>
+      <label style="margin-left:16px;">
+        <input type="radio" name="rim_mode" value="slums"> Select specific slums in a city
+      </label>
+      <label style="margin-left:16px;">
+        <input type="radio" name="rim_mode" value="slum_codes"> Look up by slum code
+      </label>
+    </div>
+
+    <div class="form-group" id="rimCityWrap">
+      <label for="rimCitySelect">City</label>
+      <select id="rimCitySelect" class="form-control">
+        <option value="">-- Select a city --</option>
+        {% for city in cities %}
+          <option value="{{ city.id }}">{{ city.name.city_name }}</option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <div class="form-group" id="rimSlumListWrap" style="display:none;">
+      <label>Slums</label>
+      <div id="rimSlumList" style="max-height:260px; overflow-y:auto; border:1px solid #ddd; padding:8px;">
+        <em>Select a city to load its slums.</em>
+      </div>
+    </div>
+
+    <div class="form-group" id="rimSlumCodesWrap" style="display:none;">
+      <label for="rimSlumCodes">Slum codes (comma-separated)</label>
+      <input type="text" id="rimSlumCodes" class="form-control" placeholder="e.g. PUN001, PUN002">
+    </div>
+
+    <div class="form-group" style="margin-top:20px;">
+      <label class="gis-export-checkbox" for="rimEmailExport">
+        <input type="checkbox" id="rimEmailExport">
+        <span class="gis-export-checkbox__text">
+          <span>Email download link for large selections</span>
+          <span class="gis-export-checkbox__hint">Use this when the export covers many slums. The file will be generated in the background and emailed to you.</span>
+        </span>
+      </label>
+      <div class="gis-export-checkbox__hint" style="margin-top:6px;">If the direct download fails or times out, tick this box and download it via email instead.</div>
+      <div id="rimEmailWrap" style="display:none; margin-top:10px;">
+        <input type="email" id="rimEmailAddress" class="form-control" placeholder="Enter your @shelter-associates.org email address">
+        <div class="gis-export-checkbox__hint">Must be a shelter-associates.org email address.</div>
+      </div>
+    </div>
+
+    <button type="button" id="rimDownloadSubmit" class="btn btn-primary">Download RIM Data</button>
+  </form>
+</div>
+
+<script>
+(function () {
+  function csrfToken() {
+    return document.querySelector('#rimDownloadForm [name=csrfmiddlewaretoken]').value;
+  }
+
+  function showError(message) {
+    var el = document.getElementById('rimDownloadError');
+    el.textContent = message;
+    el.style.display = 'block';
+    document.getElementById('rimDownloadStatus').style.display = 'none';
+  }
+
+  function showStatus(message) {
+    var el = document.getElementById('rimDownloadStatus');
+    el.textContent = message;
+    el.style.display = 'block';
+    document.getElementById('rimDownloadError').style.display = 'none';
+  }
+
+  function clearMessages() {
+    document.getElementById('rimDownloadError').style.display = 'none';
+    document.getElementById('rimDownloadStatus').style.display = 'none';
+  }
+
+  function currentMode() {
+    var checked = document.querySelector('input[name=rim_mode]:checked');
+    return checked ? checked.value : 'city';
+  }
+
+  function syncModeVisibility() {
+    var mode = currentMode();
+    document.getElementById('rimCityWrap').style.display = (mode === 'city' || mode === 'slums') ? 'block' : 'none';
+    document.getElementById('rimSlumListWrap').style.display = (mode === 'slums') ? 'block' : 'none';
+    document.getElementById('rimSlumCodesWrap').style.display = (mode === 'slum_codes') ? 'block' : 'none';
+  }
+
+  document.querySelectorAll('input[name=rim_mode]').forEach(function (el) {
+    el.addEventListener('change', syncModeVisibility);
+  });
+  syncModeVisibility();
+
+  document.getElementById('rimEmailExport').addEventListener('change', function () {
+    document.getElementById('rimEmailWrap').style.display = this.checked ? 'block' : 'none';
+  });
+
+  document.getElementById('rimCitySelect').addEventListener('change', function () {
+    var cityId = this.value;
+    var listEl = document.getElementById('rimSlumList');
+    if (!cityId) {
+      listEl.innerHTML = '<em>Select a city to load its slums.</em>';
+      return;
+    }
+    listEl.innerHTML = '<em>Loading...</em>';
+    fetch('/mastersheet/rim-data-download/slums/?city_id=' + encodeURIComponent(cityId))
+      .then(function (response) { return response.json(); })
+      .then(function (data) {
+        if (data.error) {
+          listEl.innerHTML = '';
+          showError(data.error);
+          return;
+        }
+        if (!data.slums.length) {
+          listEl.innerHTML = '<em>No slums found for this city.</em>';
+          return;
+        }
+        listEl.innerHTML = data.slums.map(function (slum) {
+          return '<label style="display:block;">' +
+            '<input type="checkbox" class="rim-slum-checkbox" value="' + slum.id + '"> ' +
+            slum.name + (slum.shelter_slum_code ? ' (' + slum.shelter_slum_code + ')' : '') +
+            '</label>';
+        }).join('');
+      })
+      .catch(function () {
+        listEl.innerHTML = '';
+        showError('Failed to load slums for this city.');
+      });
+  });
+
+  document.getElementById('rimDownloadSubmit').addEventListener('click', function () {
+    clearMessages();
+    var mode = currentMode();
+    var emailExport = document.getElementById('rimEmailExport').checked;
+    var emailAddress = document.getElementById('rimEmailAddress').value.trim();
+
+    if (emailExport && !emailAddress.toLowerCase().endsWith('@shelter-associates.org')) {
+      showError('Please enter a valid @shelter-associates.org email address.');
+      return;
+    }
+
+    var payload = {
+      mode: mode,
+      email_export: emailExport,
+      email_address: emailAddress,
+    };
+
+    if (mode === 'city') {
+      var cityId = document.getElementById('rimCitySelect').value;
+      if (!cityId) {
+        showError('Please select a city.');
+        return;
+      }
+      payload.city_id = cityId;
+    } else if (mode === 'slums') {
+      var cityId2 = document.getElementById('rimCitySelect').value;
+      var checked = Array.prototype.slice.call(document.querySelectorAll('.rim-slum-checkbox:checked'));
+      if (!cityId2 || !checked.length) {
+        showError('Please select a city and at least one slum.');
+        return;
+      }
+      payload.city_id = cityId2;
+      payload.slum_ids = checked.map(function (el) { return parseInt(el.value, 10); });
+    } else if (mode === 'slum_codes') {
+      var codes = document.getElementById('rimSlumCodes').value
+        .split(',')
+        .map(function (code) { return code.trim(); })
+        .filter(Boolean);
+      if (!codes.length) {
+        showError('Please enter at least one slum code.');
+        return;
+      }
+      payload.slum_codes = codes;
+    }
+
+    var button = document.getElementById('rimDownloadSubmit');
+    button.disabled = true;
+    var originalText = button.textContent;
+    button.textContent = emailExport ? 'Queuing export...' : 'Preparing download...';
+
+    fetch('/mastersheet/rim-data-download/submit/', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRFToken': csrfToken(),
+      },
+      body: JSON.stringify(payload),
+    })
+      .then(function (response) {
+        if (!response.ok) {
+          return response.json().then(function (data) {
+            throw new Error(data.error || 'Download failed.');
+          });
+        }
+        if (emailExport) {
+          return response.json().then(function (data) {
+            return { queued: true, message: data.message };
+          });
+        }
+        var disposition = response.headers.get('Content-Disposition') || '';
+        var filenameMatch = disposition.match(/filename=([^;]+)/);
+        var filename = filenameMatch ? filenameMatch[1].trim() : 'rim-data-export.csv';
+        return response.blob().then(function (blob) { return { blob: blob, filename: filename }; });
+      })
+      .then(function (result) {
+        if (result.queued) {
+          showStatus(result.message);
+          return;
+        }
+        var url = window.URL.createObjectURL(result.blob);
+        var link = document.createElement('a');
+        link.href = url;
+        link.download = result.filename;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        window.URL.revokeObjectURL(url);
+      })
+      .catch(function (error) {
+        var message = error.message || 'Download failed.';
+        if (!emailExport) {
+          message += ' If this keeps happening, tick "Email download link for large selections" and try again.';
+        }
+        showError(message);
+      })
+      .finally(function () {
+        button.disabled = false;
+        button.textContent = originalText;
+      });
+  });
+})();
+</script>
+{% endblock %}

@@ -1,5 +1,5 @@
 {% extends 'admin/base.html' %}
-{% load i18n static %}
+{% load i18n static custom_tags %}
 
 {% block title %}
   {{ site_title|default:_('Shelter site admin') }}
@@ -69,6 +69,11 @@
                 </li>
                 <li>
                   <a class="drop-item" href="/mastersheet/report/">Reports</a>
+                </li>
+              {% endif %}
+              {% if user.is_superuser or request.user|has_group:"GIS" or request.user|has_group:"Team Leader" %}
+                <li>
+                  <a class="drop-item" href="{% url 'rim_data_download' %}">RIM Data Download</a>
                 </li>
               {% endif %}
             </ul>
@@ -161,6 +166,9 @@
         {% if perms.mastersheet.can_view_mastersheet %}
           <a class="drop-item" href="/mastersheet/show/mastersheet/">Progress tracking</a>
           <a class="drop-item" href="/mastersheet/show/summery/">Summary view</a>
+        {% endif %}
+        {% if user.is_superuser or request.user|has_group:"GIS" or request.user|has_group:"Team Leader" %}
+          <a class="drop-item" href="{% url 'rim_data_download' %}">RIM Data Download</a>
         {% endif %}
       {% endif %}
 

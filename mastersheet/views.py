@@ -1,6 +1,19 @@
-from django.shortcuts import render
-from django.http import HttpResponse, JsonResponse
+from django.shortcuts import render, get_object_or_404
+from django.http import HttpResponse, JsonResponse, HttpResponseForbidden
 from django.contrib.auth.decorators import user_passes_test, permission_required
+from django.views.decorators.http import require_GET, require_POST
+from django.db import close_old_connections
+import os
+import uuid
+import threading
+from django.db.models.fields.files import FieldFile
+from .rim_download_permissions import (
+    can_access_rim_download,
+    get_permitted_cities_for_rim,
+    can_access_slum_for_rim,
+)
+from helpers.validators import validate_shelter_email
+from helpers.services.send_email import send_email
 from graphs.sync_avni_data import avni_sync
 from mastersheet.forms import (
     find_slum,
@@ -3025,6 +3038,364 @@ def gisDataDownload(request):
     writer.writeheader()
     writer.writerows(response_data)
     return response
+
+
+# ==================== RIM Data Download ====================
+
+RIM_SECTION_ORDER = [
+    "General",
+    "Toilet",
+    "Water",
+    "Road",
+    "Drainage",
+    "Gutter",
+    "Waste",
+    "Electricity",
+]
+RIM_OTHER_SECTION = "Other"
+RIM_ADDITIONAL_INFO_SECTION = "RIM Additional Info"
+
+
+def _flatten_rim_json(obj, parent_key=""):
+    """
+    Recursively flattens a rim_data JSON value into {flat_key: value}.
+    Dicts flatten to "parent.child" keys, lists flatten to "parent[index].child"
+    keys, so every leaf value (however deeply nested) becomes its own column.
+    """
+    flat = {}
+    if isinstance(obj, dict):
+        for key, value in obj.items():
+            new_key = "{}.{}".format(parent_key, key) if parent_key else str(key)
+            flat.update(_flatten_rim_json(value, new_key))
+    elif isinstance(obj, list):
+        for index, item in enumerate(obj, start=1):
+            new_key = "{}[{}]".format(parent_key, index)
+            flat.update(_flatten_rim_json(item, new_key))
+    else:
+        flat[parent_key or "value"] = obj
+    return flat
+
+
+def _rim_additional_info_fields(rapid_slum_appraisal):
+    fields = {}
+    for field in rapid_slum_appraisal._meta.fields:
+        if field.name in ("id", "slum_name"):
+            continue
+        value = getattr(rapid_slum_appraisal, field.name)
+        if isinstance(value, FieldFile):
+            # FieldFile.__bool__ checks self.name without touching storage,
+            # so this avoids the ValueError .url raises when no file is set.
+            value = value.url if value else ""
+        fields[field.name] = value
+    return fields
+
+
+def _csv_safe(value):
+    if value is None:
+        return ""
+    if isinstance(value, (str, int, float, bool)):
+        return value
+    return str(value)
+
+
+def _build_rim_csv_rows(slums):
+    """
+    Returns a list of CSV rows: leading identifier columns, then one
+    section-group per top-level rim_data key plus a "RIM Additional Info"
+    group for Rapid_Slum_Appraisal fields. Row 1 = section group (shown once,
+    at the first column of that section's range, blank for the rest — the
+    closest CSV equivalent of a merged header), row 2 = field name, row 3+ =
+    one row per slum.
+    """
+    leading_columns = [
+        "City",
+        "Slum Name",
+        "Slum Code",
+        "RIM Submission Date",
+        "RIM Last Modified",
+    ]
+
+    section_fields = {}  # section_name -> ordered list of flat field keys seen
+    row_data = []
+
+    for slum in slums:
+        city_name = ""
+        if slum.electoral_ward and slum.electoral_ward.administrative_ward:
+            city_name = (
+                slum.electoral_ward.administrative_ward.city.name.city_name
+            )
+
+        slum_sections = {}
+        submission_date = ""
+        modified_on = ""
+
+        slum_data = (
+            SlumData.objects.filter(slum=slum).order_by("-modified_on").first()
+        )
+        if slum_data:
+            submission_date = (
+                slum_data.submission_date.strftime("%Y-%m-%d")
+                if slum_data.submission_date
+                else ""
+            )
+            modified_on = (
+                slum_data.modified_on.strftime("%Y-%m-%d")
+                if slum_data.modified_on
+                else ""
+            )
+            if slum_data.rim_data:
+                for section_name, section_value in slum_data.rim_data.items():
+                    if isinstance(section_value, (dict, list)):
+                        flat = _flatten_rim_json(section_value)
+                        group_name = section_name
+                    else:
+                        flat = {section_name: section_value}
+                        group_name = RIM_OTHER_SECTION
+                    slum_sections.setdefault(group_name, {}).update(flat)
+                    fields_seen = section_fields.setdefault(group_name, [])
+                    for key in flat:
+                        if key not in fields_seen:
+                            fields_seen.append(key)
+
+        appraisal = Rapid_Slum_Appraisal.objects.filter(slum_name=slum).first()
+        if appraisal:
+            flat = _rim_additional_info_fields(appraisal)
+            slum_sections.setdefault(RIM_ADDITIONAL_INFO_SECTION, {}).update(flat)
+            fields_seen = section_fields.setdefault(RIM_ADDITIONAL_INFO_SECTION, [])
+            for key in flat:
+                if key not in fields_seen:
+                    fields_seen.append(key)
+
+        row_data.append(
+            (city_name, slum, submission_date, modified_on, slum_sections)
+        )
+
+    ordered_sections = [
+        name for name in RIM_SECTION_ORDER if name in section_fields
+    ] + [name for name in section_fields if name not in RIM_SECTION_ORDER]
+
+    header_row1 = list(leading_columns)
+    header_row2 = list(leading_columns)
+    column_index = {}
+    col = len(leading_columns)
+
+    for section_name in ordered_sections:
+        fields = section_fields[section_name]
+        first = True
+        for field_key in fields:
+            header_row1.append(section_name if first else "")
+            header_row2.append(field_key)
+            column_index[(section_name, field_key)] = col
+            col += 1
+            first = False
+
+    total_columns = col
+    rows = [header_row1, header_row2]
+
+    for city_name, slum, submission_date, modified_on, slum_sections in row_data:
+        row = [""] * total_columns
+        row[0] = city_name
+        row[1] = slum.name
+        row[2] = slum.shelter_slum_code
+        row[3] = submission_date
+        row[4] = modified_on
+        for section_name, fields in slum_sections.items():
+            for field_key, value in fields.items():
+                target_col = column_index.get((section_name, field_key))
+                if target_col is not None:
+                    row[target_col] = _csv_safe(value)
+        rows.append(row)
+
+    return rows
+
+
+def rim_data_download(request):
+    if not can_access_rim_download(request.user):
+        return HttpResponseForbidden(
+            "You do not have permission to access RIM data downloads."
+        )
+    cities = get_permitted_cities_for_rim(request.user)
+    return render(request, "rim_data_download.html", {"cities": cities})
+
+
+@require_GET
+def rim_data_slums_for_city(request):
+    if not can_access_rim_download(request.user):
+        return JsonResponse(
+            {"error": "You do not have permission to access RIM data downloads."},
+            status=403,
+        )
+    city_id = request.GET.get("city_id")
+    city = get_object_or_404(City, pk=city_id)
+    if city not in get_permitted_cities_for_rim(request.user):
+        return JsonResponse(
+            {"error": "You do not have access to this city."}, status=403
+        )
+    slums = list(
+        Slum.objects.filter(electoral_ward__administrative_ward__city=city)
+        .order_by("name")
+        .values("id", "name", "shelter_slum_code")
+    )
+    return JsonResponse({"slums": slums})
+
+
+def _run_large_rim_export_job(slum_ids, email, base_url):
+    close_old_connections()
+    try:
+        slums = list(Slum.objects.filter(id__in=slum_ids))
+        rows = _build_rim_csv_rows(slums)
+
+        export_id = uuid.uuid4().hex
+        export_dir = os.path.join(settings.MEDIA_ROOT, "rim_exports", export_id)
+        os.makedirs(export_dir, exist_ok=True)
+        filename = "rim-data-export.csv"
+        file_path = os.path.join(export_dir, filename)
+        with open(file_path, "w", newline="", encoding="utf-8") as csv_file:
+            writer = csv.writer(csv_file)
+            writer.writerows(rows)
+
+        download_url = "{}/mastersheet/rim-data-download/download/{}/".format(
+            base_url.rstrip("/"), export_id
+        )
+        context = {
+            "download_url": download_url,
+            "filename": filename,
+            "slum_count": len(slums),
+            "expiry_note": (
+                "This link will remain available until it is removed by our "
+                "cleanup job. If it no longer works, please request the export again."
+            ),
+        }
+        send_email(
+            [email],
+            "Your Shelter RIM data export is ready",
+            "helpers/rim_export_ready_email.html",
+            context,
+            "Your RIM data export is ready: {}".format(download_url),
+        )
+    except Exception:
+        logger.exception(
+            "RIM export job failed: slum_ids=%s email=%s", slum_ids, email
+        )
+
+
+@require_POST
+def rim_data_download_submit(request):
+    if not can_access_rim_download(request.user):
+        return JsonResponse(
+            {"error": "You do not have permission to access RIM data downloads."},
+            status=403,
+        )
+
+    payload = json.loads(request.body.decode("utf-8") or "{}")
+    mode = payload.get("mode")
+    city_id = payload.get("city_id")
+    slum_ids = payload.get("slum_ids") or []
+    slum_codes = payload.get("slum_codes") or []
+    email_export = bool(payload.get("email_export"))
+    email_address = (payload.get("email_address") or "").strip()
+
+    if email_export and not validate_shelter_email(email_address):
+        return JsonResponse(
+            {
+                "error": "Please provide a valid @shelter-associates.org email address to receive the download link."
+            },
+            status=400,
+        )
+
+    permitted_cities = get_permitted_cities_for_rim(request.user)
+
+    if mode == "slum_codes":
+        if not slum_codes:
+            return JsonResponse(
+                {"error": "At least one slum code is required."}, status=400
+            )
+        slums = list(Slum.objects.filter(shelter_slum_code__in=slum_codes))
+    elif mode == "city":
+        if not city_id:
+            return JsonResponse({"error": "city_id is required."}, status=400)
+        city = get_object_or_404(City, pk=city_id)
+        if city not in permitted_cities:
+            return JsonResponse(
+                {"error": "You do not have access to this city."}, status=403
+            )
+        slums = list(
+            Slum.objects.filter(electoral_ward__administrative_ward__city=city)
+        )
+    elif mode == "slums":
+        if not city_id or not slum_ids:
+            return JsonResponse(
+                {"error": "city_id and slum_ids are required."}, status=400
+            )
+        city = get_object_or_404(City, pk=city_id)
+        if city not in permitted_cities:
+            return JsonResponse(
+                {"error": "You do not have access to this city."}, status=403
+            )
+        slums = list(
+            Slum.objects.filter(
+                id__in=slum_ids, electoral_ward__administrative_ward__city=city
+            )
+        )
+    else:
+        return JsonResponse({"error": "Invalid mode."}, status=400)
+
+    if not slums:
+        return JsonResponse({"error": "No matching slums found."}, status=404)
+
+    for slum in slums:
+        if not can_access_slum_for_rim(request.user, slum):
+            return JsonResponse(
+                {
+                    "error": "You do not have permission to access slum '{}'.".format(
+                        slum.name
+                    )
+                },
+                status=403,
+            )
+
+    slum_ids_final = [slum.id for slum in slums]
+
+    if email_export:
+        base_url = request.build_absolute_uri("/").rstrip("/")
+
+        def _worker_wrapper():
+            try:
+                _run_large_rim_export_job(slum_ids_final, email_address, base_url)
+            finally:
+                logger.info(
+                    "RIM export worker thread exited: email=%s", email_address
+                )
+
+        worker = threading.Thread(target=_worker_wrapper, daemon=False)
+        worker.start()
+        return JsonResponse(
+            {
+                "status": "queued",
+                "message": "The RIM data export is being generated in the background. We will email the download link when it is ready.",
+            }
+        )
+
+    rows = _build_rim_csv_rows(slums)
+    response = HttpResponse(content_type="text/csv")
+    filename = "rim-data-export-{}.csv".format(uuid.uuid4().hex[:8])
+    response["Content-Disposition"] = "attachment; filename={}".format(filename)
+    writer = csv.writer(response)
+    writer.writerows(rows)
+    return response
+
+
+@require_GET
+def rim_export_download(request, export_id):
+    export_dir = os.path.join(settings.MEDIA_ROOT, "rim_exports", export_id)
+    file_path = os.path.join(export_dir, "rim-data-export.csv")
+    if not os.path.isfile(file_path):
+        return JsonResponse({"error": "Export not found or expired."}, status=404)
+
+    with open(file_path, "rb") as export_file:
+        response = HttpResponse(export_file.read(), content_type="text/csv")
+        response["Content-Disposition"] = 'attachment; filename="rim-data-export.csv"'
+        return response
 
 
 @csrf_exempt

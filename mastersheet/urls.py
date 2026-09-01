@@ -34,6 +34,24 @@ urlpatterns = [
     url(r"^show/summery/$", renderSummery, name="renderSummery"),
     url(r"^show/showSummery/$", ProcessShortView, name="ProcessShortView"),
     url(r"^gisDataDownload/$", gisDataDownload, name="gisDataDownload"),
+    url(
+        r"^rim-data-download/$", rim_data_download, name="rim_data_download"
+    ),
+    url(
+        r"^rim-data-download/slums/$",
+        rim_data_slums_for_city,
+        name="rim_data_slums_for_city",
+    ),
+    url(
+        r"^rim-data-download/submit/$",
+        rim_data_download_submit,
+        name="rim_data_download_submit",
+    ),
+    url(
+        r"^rim-data-download/download/(?P<export_id>[0-9a-f]+)/$",
+        rim_export_download,
+        name="rim_export_download",
+    ),
     url(r"^addSponsor/$", addSponsor, name="gisDataDownload"),
     url(r"^sponsorprojectList/$", sponsorprojectList, name="sponsorprojectList"),
 ]
