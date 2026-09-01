@@ -38,5 +38,6 @@ time.sleep(1)
 
 ORM
 
+bash /srv/Shelter/deploy/dashboard_update.sh
 sudo bash /srv/Shelter/deploy/auto_ssl_renew.sh
 

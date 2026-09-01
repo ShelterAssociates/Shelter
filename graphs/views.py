@@ -177,9 +177,13 @@ def get_dashboard_card(request, key):
             qol_scores.aggregate(Avg(clause))[clause + "__avg"]
         )
     cities = DashboardData.objects.filter(slum__in=list_associated_with_SA_city)
-    city_keyTakeaways = SlumDataSplit.objects.filter(city=city)
-    city_keyTakeaways_ctb = SlumCTBdataSplit.objects.filter(city=city)
-    cards = score_cards(cities)
+    city_keyTakeaways = SlumDataSplit.objects.filter(
+        city=city, slum__in=list_associated_with_SA_city
+    )
+    city_keyTakeaways_ctb = SlumCTBdataSplit.objects.filter(
+        city=city, slum__in=list_associated_with_SA_city
+    )
+    cards = score_cards(cities, list_associated_with_SA_city.count())
     key_takeaway = key_takeaways(city_keyTakeaways)
     key_takeaway.update(key_takeaways_toilet(city_keyTakeaways_ctb))
     output_data["city"][city.name.city_name]["cards"] = cards
@@ -205,12 +209,14 @@ def get_dashboard_card(request, key):
             slum__in=list_associated_with_SA_admins
         )
         admin_keyTakeaways = SlumDataSplit.objects.filter(
-            slum__electoral_ward__administrative_ward=admin_ward
+            slum__electoral_ward__administrative_ward=admin_ward,
+            slum__in=list_associated_with_SA_admins,
         )
         admin_keyTakeaways_ctb = SlumCTBdataSplit.objects.filter(
-            slum__electoral_ward__administrative_ward=admin_ward
+            slum__electoral_ward__administrative_ward=admin_ward,
+            slum__in=list_associated_with_SA_admins,
         )
-        cards = score_cards(admin_wards)
+        cards = score_cards(admin_wards, list_associated_with_SA_admins.count())
         key_takeaway = key_takeaways(admin_keyTakeaways)
         key_takeaway.update(key_takeaways_toilet(admin_keyTakeaways_ctb))
         output_data["administrative_ward"][admin_ward.name]["cards"] = cards
@@ -236,13 +242,15 @@ def get_dashboard_card(request, key):
             slum__in=list_associated_with_SA_electorals
         )
         ele_keyTakeaways_other = SlumDataSplit.objects.filter(
-            slum__electoral_ward=electoral_ward
+            slum__electoral_ward=electoral_ward,
+            slum__in=list_associated_with_SA_electorals,
         )
         ele_keyTakeaways_ctb = SlumCTBdataSplit.objects.filter(
-            slum__electoral_ward=electoral_ward
+            slum__electoral_ward=electoral_ward,
+            slum__in=list_associated_with_SA_electorals,
         )
         if ele_wards.count() > 0:
-            cards = score_cards(ele_wards)
+            cards = score_cards(ele_wards, list_associated_with_SA_electorals.count())
             key_takeaway = key_takeaways(ele_keyTakeaways_other)
             key_takeaway.update(key_takeaways_toilet(ele_keyTakeaways_ctb))
             output_data["electoral_ward"][electoral_ward.name]["cards"] = cards
@@ -278,8 +286,32 @@ def all_key_takeaways(slum):
     return ctb_data
 
 
-def score_cards(ele):
-    """To calculate aggregate level data for electoral, admin and city"""
+def _percentages_summing_to_100(counts, total):
+    """Round each count's share of total to 2 decimals so the shares sum
+    to exactly 100 -- independently rounding each share can leave a small
+    (+/- 0.01-0.02) residual; rather than scatter that error across the
+    display, add it to (or subtract it from) the largest share, which is
+    the standard "largest remainder" fix and changes that share the
+    least in relative terms. Returns all zeros if total is falsy.
+    """
+    if not total:
+        return [0] * len(counts)
+    rounded = [round((count / total) * 100, 2) for count in counts]
+    residual = round(100 - sum(rounded), 2)
+    max_index = rounded.index(max(rounded))
+    rounded[max_index] = round(rounded[max_index] + residual, 2)
+    return rounded
+
+
+def score_cards(ele, total_slum_count=None):
+    """To calculate aggregate level data for electoral, admin and city.
+
+    total_slum_count, when given, is the true count of slums eligible for
+    this scope (matching the /graphs/card/all/ stats-bar count), used
+    instead of len(slum_count) below -- ele only contains slums that have
+    a computed DashboardData row, which is a strict subset whenever some
+    eligible slums have no RIM survey data yet (see slum_count display).
+    """
     all_cards = {}
     slum_count = ele.values_list("slum_id", flat=True)
     aggrgated_data = ele.aggregate(
@@ -432,50 +464,38 @@ def score_cards(ele):
                         cards[k].append("NO CTB")
                     else:
                         cards[k].append(men_wmn_seats_ratio)
-                    individual_coverage = round(
-                        (
-                            (
-                                aggrgated_data["individual_toilet_coverage__sum"]
-                                / aggrgated_data["toilet_data_available__sum"]
-                            )
-                            * 100
-                            if aggrgated_data["toilet_data_available__sum"]
-                            else 0
-                        ),
-                        2,
+                    # Same normalization as Water: divide by the sum of the
+                    # four category counts, not toilet_data_available, so
+                    # the percentages always add up to exactly 100%.
+                    individual_toilet_cnt = (
+                        aggrgated_data["individual_toilet_coverage__sum"] or 0
                     )
-                    ctb_coverage = round(
-                        (
-                            (
-                                aggrgated_data["ctb_coverage__sum"]
-                                / aggrgated_data["toilet_data_available__sum"]
-                            )
-                            * 100
-                            if aggrgated_data["toilet_data_available__sum"]
-                            else 0
-                        ),
-                        2,
+                    ctb_cnt = aggrgated_data["ctb_coverage__sum"] or 0
+                    shared_group_toilet_cnt = (
+                        aggrgated_data["shared_group_toilet_coverage__sum"] or 0
                     )
-                    shared_group_toilet_coverage = round(
-                        (
-                            (
-                                aggrgated_data["shared_group_toilet_coverage__sum"]
-                                / aggrgated_data["toilet_data_available__sum"]
-                            )
-                            * 100
-                            if aggrgated_data["toilet_data_available__sum"]
-                            else 0
-                        ),
-                        2,
+                    other_toilet_cnt = (
+                        aggrgated_data["other_services_toilet_coverage__sum"] or 0
                     )
-                    other_services_toilet_coverage = round(
-                        100
-                        - (
-                            individual_coverage
-                            + ctb_coverage
-                            + shared_group_toilet_coverage
-                        ),
-                        2,
+                    toilet_total = (
+                        individual_toilet_cnt
+                        + ctb_cnt
+                        + shared_group_toilet_cnt
+                        + other_toilet_cnt
+                    )
+                    (
+                        individual_coverage,
+                        ctb_coverage,
+                        shared_group_toilet_coverage,
+                        other_services_toilet_coverage,
+                    ) = _percentages_summing_to_100(
+                        [
+                            individual_toilet_cnt,
+                            ctb_cnt,
+                            shared_group_toilet_cnt,
+                            other_toilet_cnt,
+                        ],
+                        toilet_total,
                     )
                     cards[k].append(str(individual_coverage) + " %")
                     cards[k].append(str(ctb_coverage) + " %")
@@ -483,7 +503,13 @@ def score_cards(ele):
                     cards[k].append(str(other_services_toilet_coverage) + " %")
                     all_cards.update(cards)
                 elif k == "General":
-                    cards[k].append(str(len(slum_count)))
+                    cards[k].append(
+                        str(
+                            total_slum_count
+                            if total_slum_count is not None
+                            else len(slum_count)
+                        )
+                    )
                     cards[k].append(
                         str(
                             round(
@@ -567,46 +593,37 @@ def score_cards(ele):
                     cards[k].append("|".join(structure_str))
                     all_cards.update(cards)
                 elif k == "Water":
-                    individual = round(
-                        (
-                            (
-                                aggrgated_data[
-                                    "water_individual_connection_percentile__sum"
-                                ]
-                                / aggrgated_data["water_data_available__sum"]
-                            )
-                            * 100
-                            if aggrgated_data["water_data_available__sum"]
-                            else 0
-                        ),
-                        2,
+                    # Normalize by the sum of the four category counts
+                    # themselves (not water_data_available) so the
+                    # percentages always add up to exactly 100% -- some
+                    # households select more than one water-source type in
+                    # the survey, so the raw category counts can sum to
+                    # slightly more than water_data_available. Dividing by
+                    # water_data_available would push the total over 100%;
+                    # dividing by the categories' own total redistributes
+                    # that overlap proportionally instead.
+                    individual_cnt = (
+                        aggrgated_data["water_individual_connection_percentile__sum"]
+                        or 0
                     )
-                    shared = round(
-                        (
-                            (
-                                aggrgated_data["water_shared_service_percentile__sum"]
-                                / aggrgated_data["water_data_available__sum"]
-                            )
-                            * 100
-                            if aggrgated_data["water_data_available__sum"]
-                            else 0
-                        ),
-                        2,
+                    shared_cnt = (
+                        aggrgated_data["water_shared_service_percentile__sum"] or 0
                     )
-                    water_stand_post = round(
-                        (
-                            (
-                                aggrgated_data["waterstandpost_percentile__sum"]
-                                / aggrgated_data["water_data_available__sum"]
-                            )
-                            * 100
-                            if aggrgated_data["water_data_available__sum"]
-                            else 0
-                        ),
-                        2,
+                    standpost_cnt = (
+                        aggrgated_data["waterstandpost_percentile__sum"] or 0
                     )
-                    other_water_services = round(
-                        100 - (individual + shared + water_stand_post), 2
+                    other_cnt = aggrgated_data["water_other_services__sum"] or 0
+                    water_total = (
+                        individual_cnt + shared_cnt + standpost_cnt + other_cnt
+                    )
+                    (
+                        individual,
+                        shared,
+                        water_stand_post,
+                        other_water_services,
+                    ) = _percentages_summing_to_100(
+                        [individual_cnt, shared_cnt, standpost_cnt, other_cnt],
+                        water_total,
                     )
                     cards[k].append(str(individual) + " %")
                     cards[k].append(str(shared) + " %")
@@ -614,68 +631,46 @@ def score_cards(ele):
                     cards[k].append(str(other_water_services) + " %")
                     all_cards.update(cards)
                 else:
-                    waste_no_collection_facility_percentile = round(
-                        (
-                            (
-                                aggrgated_data[
-                                    "waste_no_collection_facility_percentile__sum"
-                                ]
-                                / aggrgated_data["waste_data_available__sum"]
-                            )
-                            * 100
-                            if aggrgated_data["waste_data_available__sum"]
-                            else 0
-                        ),
-                        2,
+                    # Same normalization as Water/Toilet: divide by the sum
+                    # of the five category counts, not waste_data_available,
+                    # so the percentages always add up to exactly 100%.
+                    waste_no_collection_cnt = (
+                        aggrgated_data["waste_no_collection_facility_percentile__sum"]
+                        or 0
                     )
-                    waste_door_to_door_collection_facility_percentile = round(
-                        (
-                            (
-                                aggrgated_data[
-                                    "waste_door_to_door_collection_facility_percentile__sum"
-                                ]
-                                / aggrgated_data["waste_data_available__sum"]
-                            )
-                            * 100
-                            if aggrgated_data["waste_data_available__sum"]
-                            else 0
-                        ),
-                        2,
+                    waste_door_to_door_cnt = (
+                        aggrgated_data[
+                            "waste_door_to_door_collection_facility_percentile__sum"
+                        ]
+                        or 0
                     )
-                    waste_dump_in_open_percent = round(
-                        (
-                            (
-                                aggrgated_data["waste_dump_in_open_percent__sum"]
-                                / aggrgated_data["waste_data_available__sum"]
-                            )
-                            * 100
-                            if aggrgated_data["waste_data_available__sum"]
-                            else 0
-                        ),
-                        2,
+                    waste_dump_in_open_cnt = (
+                        aggrgated_data["waste_dump_in_open_percent__sum"] or 0
                     )
-                    ulb = (
-                        aggrgated_data["drains_coverage__sum"]
-                        if aggrgated_data["drains_coverage__sum"]
-                        else 0
+                    ulb = aggrgated_data["drains_coverage__sum"] or 0
+                    other_waste_cnt = aggrgated_data["waste_other_services__sum"] or 0
+                    waste_total = (
+                        waste_no_collection_cnt
+                        + waste_door_to_door_cnt
+                        + waste_dump_in_open_cnt
+                        + ulb
+                        + other_waste_cnt
                     )
-                    ulb_covrage_percentage = round(
-                        (
-                            (ulb / aggrgated_data["waste_data_available__sum"]) * 100
-                            if aggrgated_data["waste_data_available__sum"]
-                            else 0
-                        ),
-                        2,
-                    )
-                    other_waste_services = round(
-                        100
-                        - (
-                            waste_no_collection_facility_percentile
-                            + waste_door_to_door_collection_facility_percentile
-                            + waste_dump_in_open_percent
-                            + ulb_covrage_percentage
-                        ),
-                        2,
+                    (
+                        waste_no_collection_facility_percentile,
+                        waste_door_to_door_collection_facility_percentile,
+                        waste_dump_in_open_percent,
+                        ulb_covrage_percentage,
+                        other_waste_services,
+                    ) = _percentages_summing_to_100(
+                        [
+                            waste_no_collection_cnt,
+                            waste_door_to_door_cnt,
+                            waste_dump_in_open_cnt,
+                            ulb,
+                            other_waste_cnt,
+                        ],
+                        waste_total,
                     )
                     cards[k].append(str(waste_no_collection_facility_percentile) + " %")
                     cards[k].append(

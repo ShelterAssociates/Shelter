@@ -403,6 +403,53 @@ span.l30 {
 .takeaways li span {
   color: #55b4f2;
 }
+
+/* ── Skeleton loading state (cards + key takeaways) ──────────── */
+.skeleton-card {
+  height: 218px;
+  width: 21.5%;
+  border-radius: 8px;
+  float: left;
+  margin-right: 23px;
+  margin-bottom: 36px;
+  background: linear-gradient(90deg, #d8e2ee 25%, #eaf0f6 37%, #d8e2ee 63%);
+  background-size: 400% 100%;
+  animation: skeleton-shimmer 1.4s ease infinite;
+}
+.skeleton-card:last-child {
+  margin-right: 0;
+}
+
+.skeleton-line {
+  height: 14px;
+  border-radius: 4px;
+  margin-bottom: 14px;
+  list-style: none;
+  background: linear-gradient(90deg, #d8e2ee 25%, #eaf0f6 37%, #d8e2ee 63%);
+  background-size: 400% 100%;
+  animation: skeleton-shimmer 1.4s ease infinite;
+}
+.takeaways li.skeleton-line:nth-child(1) { width: 92%; }
+.takeaways li.skeleton-line:nth-child(2) { width: 78%; }
+.takeaways li.skeleton-line:nth-child(3) { width: 85%; }
+
+@keyframes skeleton-shimmer {
+  0% { background-position: 100% 0; }
+  100% { background-position: 0 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .skeleton-card,
+  .skeleton-line {
+    animation: none;
+  }
+}
+
+.dashboard-load-error {
+  color: #8a1c1c;
+  font-size: 14px;
+  padding: 16px 0;
+}
 .map {
   padding: 20.5px 20px 0 30px;
 }
