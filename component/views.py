@@ -43,6 +43,7 @@ from django.db.models import Q
 from django.db.models.functions import TruncMonth
 from django.views.decorators.http import require_GET, require_POST
 from django.utils.text import slugify
+from helpers.validators import validate_shelter_email
 from django.utils import timezone
 from mastersheet.models import ToiletConstruction
 from xml.sax.saxutils import escape
@@ -2755,9 +2756,11 @@ def export_filtered_kml(request):
     if not slum_id:
         return JsonResponse({"error": "slum_id is required"}, status=400)
 
-    if email_export and not email_address:
+    if email_export and not validate_shelter_email(email_address):
         return JsonResponse(
-            {"error": "email_address is required when email export is enabled."},
+            {
+                "error": "Please provide a valid @shelter-associates.org email address to receive the download link."
+            },
             status=400,
         )
 

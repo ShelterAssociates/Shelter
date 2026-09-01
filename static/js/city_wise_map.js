@@ -922,7 +922,8 @@ function renderKMLDownloadButton() {
         "</label>" +
 
         "<div id='emailExportWrap' style='display:none; margin-top:10px;'>" +
-        "<input type='email' id='emailExportAddress' class='form-control' placeholder='Enter email address to receive the download link'>" +
+        "<input type='email' id='emailExportAddress' class='form-control' placeholder='Enter your @shelter-associates.org email address'>" +
+        "<div class='gis-export-checkbox__hint'>Must be a shelter-associates.org email address.</div>" +
         "</div>" +
 
         "</div>" +
@@ -957,8 +958,8 @@ function triggerGISDownload(exportFormat, buttonSelector) {
         return;
     }
 
-    if (emailExport && !emailAddress.trim()) {
-        alert("Please enter an email address for the background export.");
+    if (emailExport && !emailAddress.trim().toLowerCase().endsWith("@shelter-associates.org")) {
+        alert("Please enter a valid @shelter-associates.org email address for the background export.");
         return;
     }
 
