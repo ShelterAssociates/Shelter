@@ -3,6 +3,7 @@ var _wb = {
     wardIds: [],
     wardShapes: {},
     wardRoadLengths: {},
+    componentWards: {},
     highlightLayers: [],
     wardOverlayLayers: [],
     activeWardId: null,
@@ -130,6 +131,7 @@ function _wbReset() {
     _wb.wardIds = [];
     _wb.wardShapes = {};
     _wb.wardRoadLengths = {};
+    _wb.componentWards = {};
     _wb.activeWardId = null;
     _wb.panelOpen = false;
     _wb.loadedSlumId = null;
@@ -213,7 +215,6 @@ function _wbComputeSlumBounds() {
 
 function _wbComputeCountsForWard(wardId) {
     var wardSet = _wb.wardHouseMap[String(wardId)] || {};
-    var wardShape = _wb.wardShapes[String(wardId)] || null;  // ← ward boundary polygon
     var result = {};
     var sectionKeys = Object.keys(currentSlumComponentData || {});
     var sectionIndex, sectionName, sectionItems, itemKeys, itemIndex;
@@ -242,30 +243,20 @@ function _wbComputeCountsForWard(wardId) {
                     continue;
                 }
 
-                // ── Component type: spatial check against ward boundary ──
-                if (!wardShape) {
-                    // No ward shape available, fall back to total count
-                    result[key] = (itemData.child || []).length;
+                // ── Component type: ward assignment computed server-side
+                // (see `_get_ward_component_counts` in
+                // component/services/helper.py) — plot-boundary polygons
+                // via the household's surveyed ward, everything else via
+                // spatial containment against the ward boundary polygon.
+                var wardComponents = _wb.componentWards[String(wardId)] || null;
+                if (wardComponents) {
+                    result[key] = (wardComponents[itemName] || []).length;
                     continue;
                 }
 
-                var children = itemData.child || [];
-                for (houseIndex = 0; houseIndex < children.length; houseIndex++) {
-                    var childItem = children[houseIndex];
-                    if (!childItem || !childItem.shape) continue;
-
-                    // Skip Admin boundary markers
-                    if (childItem.shape.properties && childItem.shape.properties.Level === "Admin") {
-                        continue;
-                    }
-
-                    var centroid = _getGeometryCentroid(childItem.shape);
-                    if (!centroid) continue;
-
-                    if (_wardContainsOrNearest(_wb.wardShapes, wardId, centroid.lat, centroid.lng)) {
-                        result[key] += 1;
-                    }
-                }
+                // No server-side ward assignment loaded yet — fall back to
+                // the total feature count so the panel still shows something.
+                result[key] = (itemData.child || []).length;
 
             } else {
                 // ── Filter/Sponsor type: match via wardSet house numbers ──
@@ -696,6 +687,7 @@ function initWardBreakdownPanel(slumId) {
             if (String(_wb.loadedSlumId) !== String(slumId)) { return; }
             normalized = _wbNormalizeWardResponse(data);
             _wb.wardRoadLengths = (data && data.road_lengths) || {};
+            _wb.componentWards = (data && data.component_wards) || {};
             keys = Object.keys(normalized || {});
             if (!keys.length) {
                 _wbSetLoadingVisible(false);
@@ -782,7 +774,18 @@ function _showComponentForActiveWard(componentName) {
     var type = itemData.type;
 
     if (type === "C") {
-        var wardShape = _wb.wardShapes[String(_wb.activeWardId)] || null;
+        // Ward assignment computed server-side (see
+        // `_get_ward_component_counts` in component/services/helper.py) —
+        // build the set of housenumbers this component has in the active
+        // ward, then filter the already-loaded shapes against it.
+        var wardComponents = _wb.componentWards[String(_wb.activeWardId)] || null;
+        var wardHouseNumbers = null;
+        if (wardComponents) {
+            wardHouseNumbers = {};
+            $.each(wardComponents[componentName] || [], function (_, houseNo) {
+                wardHouseNumbers[_wbNormalizeHouseKey(houseNo)] = true;
+            });
+        }
         var filteredShapes = [];
 
         $.each(itemData.child || [], function (_, childItem) {
@@ -797,20 +800,18 @@ function _showComponentForActiveWard(componentName) {
                 return;
             }
 
-            // For non-admin: use spatial containment if ward shape available,
-            // otherwise fall back to wardSet house number match
-            if (wardShape) {
-                var centroid = _getGeometryCentroid(childItem.shape);
-                if (centroid && _wardContainsOrNearest(_wb.wardShapes, _wb.activeWardId, centroid.lat, centroid.lng)) {
+            var key = _wbNormalizeHouseKey(
+                childItem.housenumber !== undefined ? childItem.housenumber : ""
+            );
+
+            // Use the server-computed ward assignment if loaded, otherwise
+            // fall back to the household-number ward set.
+            if (wardHouseNumbers) {
+                if (wardHouseNumbers.hasOwnProperty(key)) {
                     filteredShapes.push(childItem.shape);
                 }
-            } else {
-                var key = _wbNormalizeHouseKey(
-                    childItem.housenumber !== undefined ? childItem.housenumber : ""
-                );
-                if (wardSet.hasOwnProperty(key)) {
-                    filteredShapes.push(childItem.shape);
-                }
+            } else if (wardSet.hasOwnProperty(key)) {
+                filteredShapes.push(childItem.shape);
             }
         });
 

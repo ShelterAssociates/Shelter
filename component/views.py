@@ -52,6 +52,7 @@ from component.services.helper import (
     _get_ward_children,
     _get_ward_wise_data,
     _get_ward_road_lengths,
+    _get_ward_component_counts,
 )
 
 from graphs.models import HouseholdData
@@ -202,6 +203,7 @@ slum_list = [
     "2019",
     "2020",
     "2021",
+    "2023"
 ]
 
 
@@ -2970,4 +2972,13 @@ def get_ward_wise_data(request):
     ward_children = _get_ward_children(slum)
     ward_data = _get_ward_wise_data(slum, ward_children=ward_children)
     road_lengths = _get_ward_road_lengths(slum, ward_children=ward_children)
-    return JsonResponse({"ward_data": ward_data, "road_lengths": road_lengths})
+    component_wards = _get_ward_component_counts(
+        slum, ward_children=ward_children, ward_data=ward_data
+    )
+    return JsonResponse(
+        {
+            "ward_data": ward_data,
+            "road_lengths": road_lengths,
+            "component_wards": component_wards,
+        }
+    )
