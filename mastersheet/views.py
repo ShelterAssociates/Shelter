@@ -3,9 +3,12 @@ from django.http import HttpResponse, JsonResponse, HttpResponseForbidden
 from django.contrib.auth.decorators import user_passes_test, permission_required
 from django.views.decorators.http import require_GET, require_POST
 from django.db import close_old_connections
+import glob
+import io
 import os
 import uuid
 import threading
+import zipfile
 from django.db.models.fields.files import FieldFile
 from .rim_download_permissions import (
     can_access_rim_download,
@@ -3054,6 +3057,8 @@ RIM_SECTION_ORDER = [
 ]
 RIM_OTHER_SECTION = "Other"
 RIM_ADDITIONAL_INFO_SECTION = "RIM Additional Info"
+RIM_TOILET_SECTION = "Toilet"
+RIM_ALL_SECTIONS = RIM_SECTION_ORDER + [RIM_OTHER_SECTION, RIM_ADDITIONAL_INFO_SECTION]
 
 
 def _flatten_rim_json(obj, parent_key=""):
@@ -3098,21 +3103,82 @@ def _csv_safe(value):
     return str(value)
 
 
-def _build_rim_csv_rows(slums):
+def _count_ctbs(rim_data):
     """
-    Returns a list of CSV rows: leading identifier columns, then one
-    section-group per top-level rim_data key plus a "RIM Additional Info"
-    group for Rapid_Slum_Appraisal fields. Row 1 = section group (shown once,
-    at the first column of that section's range, blank for the rest — the
-    closest CSV equivalent of a merged header), row 2 = field name, row 3+ =
-    one row per slum.
+    CTB (Community Toilet Block) count for a slum: the number of entries in
+    the Toilet section's list that represent an actual surveyed toilet
+    block.
+
+    NOTE: reports/services/rim_factsheet.py and component/kobotoolbox.py
+    count CTBs by checking for a "ctb name" key on each entry, but that key
+    is essentially absent from real data - a DB check across all Pune slums
+    with a non-empty Toilet list (279 slums, 795 toilet entries) found "ctb
+    name" present on entries in only 7 slums (26 entries total), so that
+    rule undercounts to 0 for the vast majority of slums. What's actually
+    present on 788/795 entries is real answer data; the remaining entries
+    are placeholder stubs Avni sync writes when no CTB has been surveyed yet
+    for that slum, e.g. {"toilet_comment": "No CTB in this slum"} - a single
+    free-text key and nothing else. So an entry counts as a real CTB here
+    if it has any key other than that free-text "toilet_comment" field.
+
+    A second, separate data issue: some slums' Toilet lists contain
+    byte-for-byte duplicate entries (e.g. slum 616 "Janata Vasahat, Parvati"
+    has the same {"is_the_CTB_in_use": "Closed", ...} stub repeated 6 times
+    at positions 33/37/38/41/42/44 out of 45 entries, and this recurs in 12
+    of 279 Pune slums, 35 redundant entries total) - a sync/edit artifact,
+    not 6 distinct toilet blocks. So entries are also deduplicated by exact
+    content before counting.
     """
+    if not rim_data:
+        return 0
+    toilet_entries = rim_data.get(RIM_TOILET_SECTION) or []
+    if not isinstance(toilet_entries, list):
+        return 0
+    seen_entries = set()
+    count = 0
+    for entry in toilet_entries:
+        if not isinstance(entry, dict):
+            continue
+        if not any(key != "toilet_comment" for key in entry.keys()):
+            continue
+        dedupe_key = json.dumps(entry, sort_keys=True, default=str)
+        if dedupe_key in seen_entries:
+            continue
+        seen_entries.add(dedupe_key)
+        count += 1
+    return count
+
+
+def _normalize_rim_sections(sections):
+    if not sections:
+        return list(RIM_ALL_SECTIONS)
+    selected = set(sections)
+    return [name for name in RIM_ALL_SECTIONS if name in selected]
+
+
+def _build_rim_csv_rows(slums, sections=None):
+    """
+    Returns rows for the main RIM CSV: leading identifier columns (including
+    the CTB count) plus one section-group per selected top-level rim_data key
+    - excluding "Toilet", which (being a list of toilet blocks per slum
+    rather than a flat dict like every other section) always ships as its
+    own long-format CSV instead, see _build_rim_toilet_csv_rows - and a "RIM
+    Additional Info" group for Rapid_Slum_Appraisal fields. Row 1 = section
+    group (shown once, at the first column of that section's range, blank
+    for the rest - the closest CSV equivalent of a merged header), row 2 =
+    field name, row 3+ = one row per slum.
+    """
+    want_sections = [
+        name for name in _normalize_rim_sections(sections) if name != RIM_TOILET_SECTION
+    ]
+
     leading_columns = [
         "City",
         "Slum Name",
         "Slum Code",
         "RIM Submission Date",
         "RIM Last Modified",
+        "Number of CTBs",
     ]
 
     section_fields = {}  # section_name -> ordered list of flat field keys seen
@@ -3128,6 +3194,7 @@ def _build_rim_csv_rows(slums):
         slum_sections = {}
         submission_date = ""
         modified_on = ""
+        ctb_count = 0
 
         slum_data = (
             SlumData.objects.filter(slum=slum).order_by("-modified_on").first()
@@ -3144,30 +3211,36 @@ def _build_rim_csv_rows(slums):
                 else ""
             )
             if slum_data.rim_data:
+                ctb_count = _count_ctbs(slum_data.rim_data)
                 for section_name, section_value in slum_data.rim_data.items():
+                    if section_name == RIM_TOILET_SECTION:
+                        continue
                     if isinstance(section_value, (dict, list)):
                         flat = _flatten_rim_json(section_value)
                         group_name = section_name
                     else:
                         flat = {section_name: section_value}
                         group_name = RIM_OTHER_SECTION
+                    if group_name not in want_sections:
+                        continue
                     slum_sections.setdefault(group_name, {}).update(flat)
                     fields_seen = section_fields.setdefault(group_name, [])
                     for key in flat:
                         if key not in fields_seen:
                             fields_seen.append(key)
 
-        appraisal = Rapid_Slum_Appraisal.objects.filter(slum_name=slum).first()
-        if appraisal:
-            flat = _rim_additional_info_fields(appraisal)
-            slum_sections.setdefault(RIM_ADDITIONAL_INFO_SECTION, {}).update(flat)
-            fields_seen = section_fields.setdefault(RIM_ADDITIONAL_INFO_SECTION, [])
-            for key in flat:
-                if key not in fields_seen:
-                    fields_seen.append(key)
+        if RIM_ADDITIONAL_INFO_SECTION in want_sections:
+            appraisal = Rapid_Slum_Appraisal.objects.filter(slum_name=slum).first()
+            if appraisal:
+                flat = _rim_additional_info_fields(appraisal)
+                slum_sections.setdefault(RIM_ADDITIONAL_INFO_SECTION, {}).update(flat)
+                fields_seen = section_fields.setdefault(RIM_ADDITIONAL_INFO_SECTION, [])
+                for key in flat:
+                    if key not in fields_seen:
+                        fields_seen.append(key)
 
         row_data.append(
-            (city_name, slum, submission_date, modified_on, slum_sections)
+            (city_name, slum, submission_date, modified_on, ctb_count, slum_sections)
         )
 
     ordered_sections = [
@@ -3190,15 +3263,26 @@ def _build_rim_csv_rows(slums):
             first = False
 
     total_columns = col
-    rows = [header_row1, header_row2]
+    # header_row1 (the section-group row) is only meaningfully different from
+    # header_row2 when there's at least one extra section - otherwise both
+    # rows are identical copies of leading_columns, which reads as a bug.
+    rows = [header_row1, header_row2] if ordered_sections else [header_row2]
 
-    for city_name, slum, submission_date, modified_on, slum_sections in row_data:
+    for (
+        city_name,
+        slum,
+        submission_date,
+        modified_on,
+        ctb_count,
+        slum_sections,
+    ) in row_data:
         row = [""] * total_columns
         row[0] = city_name
         row[1] = slum.name
         row[2] = slum.shelter_slum_code
         row[3] = submission_date
         row[4] = modified_on
+        row[5] = ctb_count
         for section_name, fields in slum_sections.items():
             for field_key, value in fields.items():
                 target_col = column_index.get((section_name, field_key))
@@ -3207,6 +3291,84 @@ def _build_rim_csv_rows(slums):
         rows.append(row)
 
     return rows
+
+
+def _build_rim_toilet_csv_rows(slums):
+    """
+    Long-format CSV rows for the Toilet section: one row per individual CTB
+    (Community Toilet Block) instead of one row per slum. A slum's Toilet
+    data is a list of toilet blocks rather than a flat dict like every other
+    RIM section, so flattening it wide (parent[1].field, parent[2].field, ...)
+    into the main CSV - unioned across every slum in the export - is what
+    made the combined export balloon in width for cities with many CTBs.
+    Here, row count scales with the real CTB count instead.
+    """
+    toilet_fields = []  # ordered list of flat field keys seen across all CTBs
+    entries = []  # (slum, ctb_index, flat_dict)
+
+    for slum in slums:
+        slum_data = (
+            SlumData.objects.filter(slum=slum).order_by("-modified_on").first()
+        )
+        if not slum_data or not slum_data.rim_data:
+            continue
+        toilet_entries = slum_data.rim_data.get(RIM_TOILET_SECTION) or []
+        if not isinstance(toilet_entries, list):
+            continue
+        for ctb_index, entry in enumerate(toilet_entries, start=1):
+            if not isinstance(entry, dict):
+                continue
+            flat = _flatten_rim_json(entry)
+            entries.append((slum, ctb_index, flat))
+            for key in flat:
+                if key not in toilet_fields:
+                    toilet_fields.append(key)
+
+    rows = [["Slum Name", "Slum Code", "CTB #"] + toilet_fields]
+    for slum, ctb_index, flat in entries:
+        rows.append(
+            [slum.name, slum.shelter_slum_code, ctb_index]
+            + [_csv_safe(flat.get(field)) for field in toilet_fields]
+        )
+    return rows
+
+
+def _build_rim_export_files(slums, sections=None):
+    """
+    Returns a list of (filename, rows) pairs to ship for this export: always
+    the main summary/section CSV, plus a separate long-format Toilet CSV
+    when the Toilet section was selected.
+    """
+    selected_sections = _normalize_rim_sections(sections)
+    files = [
+        ("rim-data-summary.csv", _build_rim_csv_rows(slums, selected_sections))
+    ]
+    if RIM_TOILET_SECTION in selected_sections:
+        files.append(("rim-data-toilet.csv", _build_rim_toilet_csv_rows(slums)))
+    return files
+
+
+def _serialize_rim_export_files(files):
+    """
+    Serializes (filename, rows) pairs into export bytes. A single file is
+    returned as plain CSV bytes; when the Toilet CSV is also present, both
+    files are bundled into a .zip (there's no such thing as a "multi-sheet
+    CSV", so a zip of CSVs is the closest equivalent).
+    Returns (content_bytes, filename, content_type).
+    """
+    if len(files) == 1:
+        _name, rows = files[0]
+        buffer = io.StringIO()
+        csv.writer(buffer).writerows(rows)
+        return buffer.getvalue().encode("utf-8"), "rim-data-export.csv", "text/csv"
+
+    zip_buffer = io.BytesIO()
+    with zipfile.ZipFile(zip_buffer, "w", zipfile.ZIP_DEFLATED) as zip_file:
+        for name, rows in files:
+            csv_buffer = io.StringIO()
+            csv.writer(csv_buffer).writerows(rows)
+            zip_file.writestr(name, csv_buffer.getvalue())
+    return zip_buffer.getvalue(), "rim-data-export.zip", "application/zip"
 
 
 def rim_data_download(request):
@@ -3239,20 +3401,19 @@ def rim_data_slums_for_city(request):
     return JsonResponse({"slums": slums})
 
 
-def _run_large_rim_export_job(slum_ids, email, base_url):
+def _run_large_rim_export_job(slum_ids, email, base_url, sections=None):
     close_old_connections()
     try:
         slums = list(Slum.objects.filter(id__in=slum_ids))
-        rows = _build_rim_csv_rows(slums)
+        files = _build_rim_export_files(slums, sections)
+        content, filename, _content_type = _serialize_rim_export_files(files)
 
         export_id = uuid.uuid4().hex
         export_dir = os.path.join(settings.MEDIA_ROOT, "rim_exports", export_id)
         os.makedirs(export_dir, exist_ok=True)
-        filename = "rim-data-export.csv"
         file_path = os.path.join(export_dir, filename)
-        with open(file_path, "w", newline="", encoding="utf-8") as csv_file:
-            writer = csv.writer(csv_file)
-            writer.writerows(rows)
+        with open(file_path, "wb") as export_file:
+            export_file.write(content)
 
         download_url = "{}/mastersheet/rim-data-download/download/{}/".format(
             base_url.rstrip("/"), export_id
@@ -3292,6 +3453,7 @@ def rim_data_download_submit(request):
     city_id = payload.get("city_id")
     slum_ids = payload.get("slum_ids") or []
     slum_codes = payload.get("slum_codes") or []
+    sections = payload.get("sections") or []
     email_export = bool(payload.get("email_export"))
     email_address = (payload.get("email_address") or "").strip()
 
@@ -3361,7 +3523,9 @@ def rim_data_download_submit(request):
 
         def _worker_wrapper():
             try:
-                _run_large_rim_export_job(slum_ids_final, email_address, base_url)
+                _run_large_rim_export_job(
+                    slum_ids_final, email_address, base_url, sections
+                )
             finally:
                 logger.info(
                     "RIM export worker thread exited: email=%s", email_address
@@ -3376,25 +3540,28 @@ def rim_data_download_submit(request):
             }
         )
 
-    rows = _build_rim_csv_rows(slums)
-    response = HttpResponse(content_type="text/csv")
-    filename = "rim-data-export-{}.csv".format(uuid.uuid4().hex[:8])
+    files = _build_rim_export_files(slums, sections)
+    content, base_filename, content_type = _serialize_rim_export_files(files)
+    ext = os.path.splitext(base_filename)[1]
+    filename = "rim-data-export-{}{}".format(uuid.uuid4().hex[:8], ext)
+    response = HttpResponse(content, content_type=content_type)
     response["Content-Disposition"] = "attachment; filename={}".format(filename)
-    writer = csv.writer(response)
-    writer.writerows(rows)
     return response
 
 
 @require_GET
 def rim_export_download(request, export_id):
     export_dir = os.path.join(settings.MEDIA_ROOT, "rim_exports", export_id)
-    file_path = os.path.join(export_dir, "rim-data-export.csv")
-    if not os.path.isfile(file_path):
+    matches = glob.glob(os.path.join(export_dir, "rim-data-export*"))
+    if not matches:
         return JsonResponse({"error": "Export not found or expired."}, status=404)
 
+    file_path = matches[0]
+    filename = os.path.basename(file_path)
+    content_type = "application/zip" if filename.endswith(".zip") else "text/csv"
     with open(file_path, "rb") as export_file:
-        response = HttpResponse(export_file.read(), content_type="text/csv")
-        response["Content-Disposition"] = 'attachment; filename="rim-data-export.csv"'
+        response = HttpResponse(export_file.read(), content_type=content_type)
+        response["Content-Disposition"] = 'attachment; filename="{}"'.format(filename)
         return response
 
 

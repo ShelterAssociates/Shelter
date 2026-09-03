@@ -262,7 +262,7 @@ function _wbComputeCountsForWard(wardId) {
                     var centroid = _getGeometryCentroid(childItem.shape);
                     if (!centroid) continue;
 
-                    if (_polygonContainsPoint(wardShape, centroid.lat, centroid.lng)) {
+                    if (_wardContainsOrNearest(_wb.wardShapes, wardId, centroid.lat, centroid.lng)) {
                         result[key] += 1;
                     }
                 }
@@ -801,7 +801,7 @@ function _showComponentForActiveWard(componentName) {
             // otherwise fall back to wardSet house number match
             if (wardShape) {
                 var centroid = _getGeometryCentroid(childItem.shape);
-                if (centroid && _polygonContainsPoint(wardShape, centroid.lat, centroid.lng)) {
+                if (centroid && _wardContainsOrNearest(_wb.wardShapes, _wb.activeWardId, centroid.lat, centroid.lng)) {
                     filteredShapes.push(childItem.shape);
                 }
             } else {

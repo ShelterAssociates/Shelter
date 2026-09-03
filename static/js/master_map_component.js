@@ -293,6 +293,83 @@ function _ringContainsPoint(ring, lat, lng) {
     return inside;
 }
 
+// ── Nearest-ward fallback helpers ──────────────────────────────────────────
+// Digitized ward polygons don't always perfectly tile a slum (small gaps or
+// non-snapped edges between adjacent wards), so a small number of features
+// near a shared boundary can fail `_polygonContainsPoint` for every ward.
+// Rather than silently dropping those from every ward's count, fall back to
+// whichever ward's boundary the point is closest to.
+
+function _distPointToSegment(lat, lng, lat1, lng1, lat2, lng2) {
+    var dx = lng2 - lng1, dy = lat2 - lat1;
+    var lenSq = dx * dx + dy * dy;
+    var t = lenSq === 0 ? 0 : ((lng - lng1) * dx + (lat - lat1) * dy) / lenSq;
+    t = Math.max(0, Math.min(1, t));
+    var px = lng1 + t * dx, py = lat1 + t * dy;
+    var ddx = lng - px, ddy = lat - py;
+    return Math.sqrt(ddx * ddx + ddy * ddy);
+}
+
+function _distPointToRing(ring, lat, lng) {
+    var min = Infinity;
+    for (var i = 0, j = ring.length - 1; i < ring.length; j = i++) {
+        var d = _distPointToSegment(lat, lng, ring[j][1], ring[j][0], ring[i][1], ring[i][0]);
+        if (d < min) min = d;
+    }
+    return min;
+}
+
+function _distPointToPolygon(polygonGeoJson, lat, lng) {
+    try {
+        if (polygonGeoJson.type === "Polygon") {
+            return _distPointToRing(polygonGeoJson.coordinates[0], lat, lng);
+        }
+        if (polygonGeoJson.type === "MultiPolygon") {
+            var min = Infinity;
+            for (var p = 0; p < polygonGeoJson.coordinates.length; p++) {
+                var d = _distPointToRing(polygonGeoJson.coordinates[p][0], lat, lng);
+                if (d < min) min = d;
+            }
+            return min;
+        }
+    } catch (e) { }
+    return Infinity;
+}
+
+// Returns true if `wardId`'s shape contains (lat, lng), OR — when no ward in
+// `wardShapes` contains it at all — if `wardId` is the nearest one. This
+// keeps exactly one ward "true" per point (never zero, never more than one)
+// even for points that fall outside every ward polygon.
+function _wardContainsOrNearest(wardShapes, wardId, lat, lng) {
+    var id;
+    var containingId = null;
+    var nearestId = null;
+    var nearestDist = Infinity;
+
+    for (id in wardShapes) {
+        if (!wardShapes.hasOwnProperty(id) || !wardShapes[id]) continue;
+        if (containingId === null && _polygonContainsPoint(wardShapes[id], lat, lng)) {
+            containingId = id;
+            break;
+        }
+    }
+
+    if (containingId !== null) {
+        return containingId === String(wardId);
+    }
+
+    for (id in wardShapes) {
+        if (!wardShapes.hasOwnProperty(id) || !wardShapes[id]) continue;
+        var d = _distPointToPolygon(wardShapes[id], lat, lng);
+        if (d < nearestDist) {
+            nearestDist = d;
+            nearestId = id;
+        }
+    }
+
+    return nearestId !== null && nearestId === String(wardId);
+}
+
 // Get centroid of a GeoJSON geometry
 function _getGeometryCentroid(shape) {
     try {
