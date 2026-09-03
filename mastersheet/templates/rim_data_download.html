@@ -5,7 +5,7 @@
 <div class="customized-form" style="max-width:720px;">
   <h2>RIM Data Download</h2>
   <p class="help">
-    Export RIM survey data (from the field survey and the RIM additional info form) as a CSV file.
+    Export RIM survey data (from the field survey and the RIM additional info form) as a CSV file. Pick only the sections you need to keep the file small.
   </p>
 
   <div id="rimDownloadError" class="alert alert-danger" style="display:none;"></div>
@@ -46,6 +46,26 @@
     <div class="form-group" id="rimSlumCodesWrap" style="display:none;">
       <label for="rimSlumCodes">Slum codes (comma-separated)</label>
       <input type="text" id="rimSlumCodes" class="form-control" placeholder="e.g. PUN001, PUN002">
+    </div>
+
+    <div class="form-group">
+      <label>
+        Sections
+        <a href="#" id="rimSectionsToggleAll" style="margin-left:10px; font-weight:normal;">Select all / none</a>
+      </label>
+      <div id="rimSectionsList" style="border:1px solid #ddd; padding:8px;">
+        <label style="display:inline-block; width:48%;"><input type="checkbox" class="rim-section-checkbox" value="General" checked> General</label>
+        <label style="display:inline-block; width:48%;"><input type="checkbox" class="rim-section-checkbox" value="Toilet" checked> Toilet (CTB) - includes a "Number of CTBs" count and a separate per-toilet-block file</label>
+        <label style="display:inline-block; width:48%;"><input type="checkbox" class="rim-section-checkbox" value="Water" checked> Water</label>
+        <label style="display:inline-block; width:48%;"><input type="checkbox" class="rim-section-checkbox" value="Road" checked> Road</label>
+        <label style="display:inline-block; width:48%;"><input type="checkbox" class="rim-section-checkbox" value="Drainage" checked> Drainage</label>
+        <label style="display:inline-block; width:48%;"><input type="checkbox" class="rim-section-checkbox" value="Gutter" checked> Gutter</label>
+        <label style="display:inline-block; width:48%;"><input type="checkbox" class="rim-section-checkbox" value="Waste" checked> Waste</label>
+        <label style="display:inline-block; width:48%;"><input type="checkbox" class="rim-section-checkbox" value="Electricity" checked> Electricity</label>
+        <label style="display:inline-block; width:48%;"><input type="checkbox" class="rim-section-checkbox" value="Other" checked> Other</label>
+        <label style="display:inline-block; width:48%;"><input type="checkbox" class="rim-section-checkbox" value="RIM Additional Info" checked> RIM Additional Info</label>
+      </div>
+      <div class="gis-export-checkbox__hint" style="margin-top:6px;">The "Number of CTBs" count is always included. If "Toilet" is selected, the download includes an extra per-toilet-block CSV (delivered as a .zip alongside the main file).</div>
     </div>
 
     <div class="form-group" style="margin-top:20px;">
@@ -113,6 +133,18 @@
     document.getElementById('rimEmailWrap').style.display = this.checked ? 'block' : 'none';
   });
 
+  document.getElementById('rimSectionsToggleAll').addEventListener('click', function (e) {
+    e.preventDefault();
+    var boxes = document.querySelectorAll('.rim-section-checkbox');
+    var anyUnchecked = Array.prototype.some.call(boxes, function (el) { return !el.checked; });
+    boxes.forEach(function (el) { el.checked = anyUnchecked; });
+  });
+
+  function selectedSections() {
+    return Array.prototype.slice.call(document.querySelectorAll('.rim-section-checkbox:checked'))
+      .map(function (el) { return el.value; });
+  }
+
   document.getElementById('rimCitySelect').addEventListener('change', function () {
     var cityId = this.value;
     var listEl = document.getElementById('rimSlumList');
@@ -157,10 +189,17 @@
       return;
     }
 
+    var sections = selectedSections();
+    if (!sections.length) {
+      showError('Please select at least one section to export.');
+      return;
+    }
+
     var payload = {
       mode: mode,
       email_export: emailExport,
       email_address: emailAddress,
+      sections: sections,
     };
 
     if (mode === 'city') {
