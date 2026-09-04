@@ -74,8 +74,39 @@ $(document).ready(function () {
     });
 
     // -----------------------------
-    // Delete component
+    // Delete component (custom on-page modal)
     // -----------------------------
+    const $modalOverlay = $("#kmlDeleteModalOverlay");
+    const $modalStepInput = $modalOverlay.find(".kml-modal-step-input");
+    const $modalLoading = $modalOverlay.find(".kml-modal-loading");
+    const $modalResult = $modalOverlay.find(".kml-modal-result");
+    const $reasonInput = $("#kmlDeleteReason");
+    const $reasonError = $("#kmlDeleteReasonError");
+    let pendingDelete = null; // { $btn, compName, sid }
+
+    function showModalStep(step) {
+        $modalStepInput.hide();
+        $modalLoading.hide();
+        $modalResult.hide();
+        if (step === "input") $modalStepInput.show();
+        if (step === "loading") $modalLoading.show();
+        if (step === "result") $modalResult.show();
+    }
+
+    function openDeleteModal(compName, sid, $btn) {
+        pendingDelete = { $btn: $btn, compName: compName, sid: sid };
+        $("#kmlDeleteCompName").text(compName);
+        $reasonInput.val("");
+        $reasonError.hide();
+        showModalStep("input");
+        $modalOverlay.addClass("active");
+    }
+
+    function closeDeleteModal() {
+        $modalOverlay.removeClass("active");
+        pendingDelete = null;
+    }
+
     // remove previous delegated handler, then attach
     $(document).off("click", ".delete-component").on("click", ".delete-component", function (e) {
        e.preventDefault();
@@ -88,24 +119,52 @@ $(document).ready(function () {
            return;
        }
 
-       if (!confirm(`Are you sure you want to delete "${compName}"?`)) return;
+       openDeleteModal(compName, sid, $btn);
+    });
 
-       $.ajax({
-           url: "/component/delete_component/",
-           type: "POST",
-           data: {
-               object_id: sid,
-               comp_name: compName,
-               csrfmiddlewaretoken: $('input[name="csrfmiddlewaretoken"]').val()
-           },
-           success: function (res) {
-               alert(res.message || `"${compName}" deleted successfully`);
-               $btn.closest(".component-item").remove();
-           },
-           error: function () {
-               alert("Failed to delete component.");
-           }
-       });
+    $("#kmlDeleteCancelBtn").on("click", function () {
+        closeDeleteModal();
+    });
+
+    $("#kmlDeleteConfirmBtn").on("click", function () {
+        if (!pendingDelete) return;
+        const reason = $reasonInput.val().trim();
+        if (!reason) {
+            $reasonError.show();
+            return;
+        }
+        $reasonError.hide();
+
+        const { $btn, compName, sid } = pendingDelete;
+        showModalStep("loading");
+
+        $.ajax({
+            url: "/component/delete_component/",
+            type: "POST",
+            data: {
+                object_id: sid,
+                comp_name: compName,
+                reason: reason,
+                csrfmiddlewaretoken: $('input[name="csrfmiddlewaretoken"]').val()
+            },
+            success: function (res) {
+                $modalResult.removeClass("error").addClass("success");
+                $modalResult.find(".kml-modal-result-icon").text("✓");
+                $modalResult.find(".kml-modal-result-message").text(res.message || `"${compName}" deleted successfully`);
+                showModalStep("result");
+                $btn.closest(".component-item").remove();
+            },
+            error: function (xhr) {
+                $modalResult.removeClass("success").addClass("error");
+                $modalResult.find(".kml-modal-result-icon").text("✕");
+                $modalResult.find(".kml-modal-result-message").text((xhr.responseJSON && xhr.responseJSON.message) || "Failed to delete component.");
+                showModalStep("result");
+            }
+        });
+    });
+
+    $("#kmlDeleteCloseBtn").on("click", function () {
+        closeDeleteModal();
     });
 
     // -----------------------------

@@ -226,6 +226,45 @@ def kml_upload(request):
                     k for k, v in parsed_data.items() if v == False
                 ]
                 messages.success(request, "KML uploaded successfully")
+
+                city = form.cleaned_data.get("City")
+                admin_ward = form.cleaned_data.get("AdministrativeWard")
+                electoral_ward = form.cleaned_data.get("ElectoralWard")
+                slum = form.cleaned_data.get("slum_name")
+                upload_context = {
+                    "level": form.cleaned_data["level"],
+                    "city_name": city.name.city_name if city else "N/A",
+                    "administrative_ward": admin_ward.name if admin_ward else "N/A",
+                    "electoral_ward": electoral_ward.name if electoral_ward else "N/A",
+                    "slum_name": slum.name if slum else "N/A",
+                    "uploaded_by": request.user.username,
+                    "parsed": context_data["parsed"],
+                    "unparsed": context_data["unparsed"],
+                    "timestamp": datetime.now(),
+                }
+                if settings.KML_CHANGE_NOTIFY_EMAILS:
+                    try:
+                        send_email(
+                            settings.KML_CHANGE_NOTIFY_EMAILS,
+                            "KML uploaded: {}".format(
+                                upload_context["slum_name"]
+                                if upload_context["level"] == "Slum"
+                                else upload_context["city_name"]
+                            ),
+                            "helpers/kml_component_upload_email.html",
+                            upload_context,
+                            "{} uploaded a KML file ({}).".format(
+                                request.user.username,
+                                upload_context["slum_name"]
+                                if upload_context["level"] == "Slum"
+                                else upload_context["city_name"],
+                            ),
+                        )
+                    except Exception as email_err:
+                        logger.error(
+                            "Failed to send KML upload notification email: %s",
+                            email_err,
+                        )
             except Exception as e:
                 messages.error(
                     request,
@@ -817,39 +856,108 @@ def get_component_list(request):
     return JsonResponse(data, safe=False)
 
 
+@login_required(login_url="/accounts/login/")
+@permission_required("component.can_upload_KML", raise_exception=True)
 def delete_component(request):
 
-    if request.method == "POST":  # or "DELETE"
-        object_id = request.POST.get("object_id")
-        comp_name = request.POST.get("comp_name")
-        if not object_id or not comp_name:
-            return JsonResponse(
-                {"success": False, "message": "Missing object_id or comp_name"},
-                status=400,
-            )
-
-        # Try to delete the component
-        try:
-            comp = Component.objects.filter(
-                object_id=object_id, metadata__name=comp_name
-            )
-            comp.delete()
-            return JsonResponse(
-                {
-                    "success": True,
-                    "message": f'Component "{comp_name}" deleted successfully',
-                }
-            )
-        except Component.DoesNotExist:
-            return JsonResponse(
-                {"success": False, "message": "Component not found"}, status=404
-            )
-        except Exception as e:
-            return JsonResponse({"success": False, "message": str(e)}, status=500)
-    else:
+    if request.method != "POST":  # or "DELETE"
         return JsonResponse(
             {"success": False, "message": "Invalid request method"}, status=405
         )
+
+    object_id = request.POST.get("object_id")
+    comp_name = request.POST.get("comp_name")
+    reason = (request.POST.get("reason") or "").strip()
+
+    if not object_id or not comp_name:
+        return JsonResponse(
+            {"success": False, "message": "Missing object_id or comp_name"},
+            status=400,
+        )
+    if not reason:
+        return JsonResponse(
+            {"success": False, "message": "A reason is required to delete a component"},
+            status=400,
+        )
+
+    try:
+        comp = Component.objects.filter(object_id=object_id, metadata__name=comp_name)
+        deleted_count = comp.count()
+        if deleted_count == 0:
+            return JsonResponse(
+                {"success": False, "message": "Component not found"}, status=404
+            )
+
+        slum = Slum.objects.filter(pk=object_id).first()
+        location_context = {
+            "city_name": (
+                slum.electoral_ward.administrative_ward.city.name.city_name
+                if slum
+                else "Unknown"
+            ),
+            "administrative_ward": (
+                slum.electoral_ward.administrative_ward.name if slum else "Unknown"
+            ),
+            "electoral_ward": slum.electoral_ward.name if slum else "Unknown",
+            "slum_name": slum.name if slum else "Unknown",
+        }
+
+        email_context = {
+            "comp_name": comp_name,
+            "deleted_count": deleted_count,
+            "deleted_by": request.user.username,
+            "reason": reason,
+            "timestamp": datetime.now(),
+            **location_context,
+        }
+
+        if not settings.KML_CHANGE_NOTIFY_EMAILS:
+            logger.error(
+                "KML_CHANGE_NOTIFY_EMAILS is not configured; blocking component delete"
+            )
+            return JsonResponse(
+                {
+                    "success": False,
+                    "message": "Notification recipients are not configured, so the component was not deleted.",
+                },
+                status=500,
+            )
+
+        try:
+            send_email(
+                settings.KML_CHANGE_NOTIFY_EMAILS,
+                'KML component "{}" deleted in {}'.format(
+                    comp_name, location_context["slum_name"]
+                ),
+                "helpers/kml_component_delete_email.html",
+                email_context,
+                '{} deleted component "{}" ({} feature(s)) from slum {}. Reason: {}'.format(
+                    request.user.username,
+                    comp_name,
+                    deleted_count,
+                    location_context["slum_name"],
+                    reason,
+                ),
+            )
+        except Exception as e:
+            logger.error("Failed to send KML delete notification email: %s", e)
+            return JsonResponse(
+                {
+                    "success": False,
+                    "message": "Could not send the notification email, so the component was not deleted. Please try again.",
+                },
+                status=500,
+            )
+
+        comp.delete()
+        return JsonResponse(
+            {
+                "success": True,
+                "message": f'Component "{comp_name}" deleted successfully',
+            }
+        )
+    except Exception as e:
+        return JsonResponse({"success": False, "message": str(e)}, status=500)
 
 
 # ================== New API for Sponsor Toilet Household Month End Dates ==================
