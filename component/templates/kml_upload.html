@@ -4,6 +4,84 @@
 {% load widget_tweaks %}
 {% block extrahead %}
   <script src="{% static 'js/common_cascading.js' %}"></script>
+  <style>
+    .kml-delete-modal-overlay {
+      display: none;
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0, 0, 0, 0.5);
+      z-index: 2000;
+      align-items: center;
+      justify-content: center;
+    }
+    .kml-delete-modal-overlay.active {
+      display: flex;
+    }
+    .kml-delete-modal {
+      background: #fff;
+      border-radius: 8px;
+      width: 420px;
+      max-width: 90vw;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
+      padding: 24px;
+      font-size: 14px;
+    }
+    .kml-delete-modal h4 {
+      margin-top: 0;
+      margin-bottom: 12px;
+    }
+    .kml-delete-modal textarea {
+      width: 100%;
+      min-height: 80px;
+      resize: vertical;
+      padding: 8px;
+      box-sizing: border-box;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+    }
+    .kml-delete-modal .kml-modal-error {
+      color: #d93025;
+      font-size: 13px;
+      margin-top: 6px;
+      display: none;
+    }
+    .kml-delete-modal .kml-modal-actions {
+      margin-top: 18px;
+      text-align: right;
+    }
+    .kml-delete-modal .kml-modal-actions button {
+      margin-left: 8px;
+    }
+    .kml-delete-modal .kml-modal-loading {
+      display: none;
+      text-align: center;
+      padding: 20px 0;
+    }
+    .kml-delete-modal .kml-modal-spinner {
+      display: inline-block;
+      width: 32px;
+      height: 32px;
+      border: 4px solid #eee;
+      border-top-color: #1a73e8;
+      border-radius: 50%;
+      animation: kml-modal-spin 0.8s linear infinite;
+    }
+    @keyframes kml-modal-spin {
+      to { transform: rotate(360deg); }
+    }
+    .kml-delete-modal .kml-modal-result {
+      display: none;
+      text-align: center;
+      padding: 10px 0;
+    }
+    .kml-delete-modal .kml-modal-result.success { color: #1a9e5c; }
+    .kml-delete-modal .kml-modal-result.error { color: #d93025; }
+    .kml-delete-modal .kml-modal-result-icon {
+      font-size: 32px;
+      display: block;
+      margin-bottom: 8px;
+    }
+  </style>
 {% endblock %}
 {% block sidebar %}
 
@@ -132,5 +210,30 @@
       </div>
     </div>
   </form>
+  <div class="kml-delete-modal-overlay" id="kmlDeleteModalOverlay">
+    <div class="kml-delete-modal">
+      <div class="kml-modal-step kml-modal-step-input">
+        <h4>Delete component</h4>
+        <p>You are about to delete "<strong><span id="kmlDeleteCompName"></span></strong>". Please enter a reason:</p>
+        <textarea id="kmlDeleteReason" placeholder="Why are you deleting this component?"></textarea>
+        <div class="kml-modal-error" id="kmlDeleteReasonError">A reason is required.</div>
+        <div class="kml-modal-actions">
+          <button type="button" class="btn btn-default" id="kmlDeleteCancelBtn">Cancel</button>
+          <button type="button" class="btn btn-danger" id="kmlDeleteConfirmBtn">Delete</button>
+        </div>
+      </div>
+      <div class="kml-modal-loading">
+        <div class="kml-modal-spinner"></div>
+        <p>Deleting component...</p>
+      </div>
+      <div class="kml-modal-result">
+        <span class="kml-modal-result-icon"></span>
+        <p class="kml-modal-result-message"></p>
+        <div class="kml-modal-actions">
+          <button type="button" class="btn btn-primary" id="kmlDeleteCloseBtn">OK</button>
+        </div>
+      </div>
+    </div>
+  </div>
   <script src="{% static 'js/component_list_kml_upload.js' %}"></script>
 {% endblock %}

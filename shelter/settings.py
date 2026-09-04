@@ -72,6 +72,12 @@ DEBUG = False  # overridden to True in local_settings.py for dev
 SECRET_KEY = ""  # MUST be set in local_settings.py
 ALLOWED_HOSTS = []  # MUST be set in local_settings.py
 
+# Empty by default so that if local_settings.py ever fails to define this,
+# delete_component blocks the delete (no one configured to notify) rather
+# than silently deleting with no notification. Set per-environment in
+# local_settings.py — dev: developer only; production: developer + GIS.
+KML_CHANGE_NOTIFY_EMAILS = []
+
 # Use BigAutoField by default to avoid Django warnings about auto-created PK types
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
