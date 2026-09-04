@@ -60,6 +60,7 @@ class Metadata(models.Model):
     )  # map/table
     visible = models.BooleanField()  # BooleanField
     authenticate = models.BooleanField(default=False)
+    show_metric = models.BooleanField(default=True)  # show count/length badge on the feature box
     order = models.FloatField()
     blob = JSONField()
     icon = models.ImageField(upload_to=COMPONENT_ICON, blank=True, null=True)

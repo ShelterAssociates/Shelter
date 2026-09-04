@@ -482,6 +482,7 @@ def get_component(request, slum_id):
         component["section"] = metad.section.name
         component["section_order"] = metad.section.order
         component["type"] = metad.type
+        component["show_metric"] = metad.show_metric
         component["order"] = metad.order
         component["blob"] = metad.blob
         component["icon"] = str(metad.icon.url) if metad.icon else ""
