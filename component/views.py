@@ -25,7 +25,7 @@ from datetime import date, datetime
 from django.contrib.auth.decorators import login_required
 from .kobotoolbox import *
 from .forms import KMLUpload
-from .kmlparser import KMLParser
+from .kmlparser import KMLParser, KMLValidationError
 from .models import Metadata
 from .cipher import *
 from master.models import Slum, Rapid_Slum_Appraisal, drainage
@@ -47,12 +47,14 @@ from helpers.validators import validate_shelter_email
 from django.utils import timezone
 from mastersheet.models import ToiletConstruction
 from xml.sax.saxutils import escape
-from component.models import Component
+from component.models import Component, ComponentMetric
 from component.services.helper import (
     _get_ward_children,
     _get_ward_wise_data,
     _get_ward_road_lengths,
     _get_ward_component_counts,
+    _get_line_only_metadata_names,
+    compute_auto_metric,
 )
 
 from graphs.models import HouseholdData
@@ -234,6 +236,56 @@ def kml_upload(request):
                 admin_ward = form.cleaned_data.get("AdministrativeWard")
                 electoral_ward = form.cleaned_data.get("ElectoralWard")
                 slum = form.cleaned_data.get("slum_name")
+
+                # ---- Optional inline metric (slum-level uploads only — a
+                # ComponentMetric row is scoped to one slum) ----
+                metric_info = None
+                needs_metric = []
+                if slum:
+                    parsed_metadata = list(
+                        Metadata.objects.filter(
+                            type="C", code__in=context_data["parsed"]
+                        )
+                    )
+                    metric_value = form.cleaned_data.get("metric_value")
+                    # Only apply the single inline value when exactly one
+                    # component type was parsed in this upload — with more
+                    # than one, we can't tell which type it belongs to, so
+                    # we fall through to the per-type post-upload prompt
+                    # instead of guessing.
+                    if metric_value is not None and len(parsed_metadata) == 1:
+                        target_metadata = parsed_metadata[0]
+                        ComponentMetric.objects.update_or_create(
+                            slum=slum,
+                            metadata=target_metadata,
+                            defaults={
+                                "value": metric_value,
+                                "unit": form.cleaned_data["metric_unit"],
+                                "unit_label": "",
+                                "updated_by": request.user,
+                            },
+                        )
+                        metric_info = {
+                            "component": target_metadata.name,
+                            "value": str(metric_value),
+                            "unit": form.cleaned_data["metric_unit"],
+                            "reason": form.cleaned_data.get("metric_reason", ""),
+                        }
+
+                    existing_metric_ids = set(
+                        ComponentMetric.objects.filter(
+                            slum=slum, metadata__in=parsed_metadata
+                        ).values_list("metadata_id", flat=True)
+                    )
+                    line_only_names = set(_get_line_only_metadata_names(slum))
+                    needs_metric = [
+                        metadata.name
+                        for metadata in parsed_metadata
+                        if metadata.show_metric
+                        and metadata.name in line_only_names
+                        and metadata.id not in existing_metric_ids
+                    ]
+
                 upload_context = {
                     "level": form.cleaned_data["level"],
                     "city_name": city.name.city_name if city else "N/A",
@@ -244,6 +296,7 @@ def kml_upload(request):
                     "parsed": context_data["parsed"],
                     "unparsed": context_data["unparsed"],
                     "timestamp": datetime.now(),
+                    "metric": metric_info,
                 }
                 email_sent = None
                 if settings.KML_CHANGE_NOTIFY_EMAILS:
@@ -280,7 +333,25 @@ def kml_upload(request):
                             "parsed": context_data["parsed"],
                             "unparsed": context_data["unparsed"],
                             "email_sent": email_sent,
+                            "needs_metric": needs_metric,
+                            "object_id": slum.id if slum else None,
                         }
+                    )
+            except KMLValidationError as ve:
+                error_message = "KML upload rejected — {} issue(s) found. Nothing was saved:\n- {}".format(
+                    len(ve.errors), "\n- ".join(ve.errors)
+                )
+                messages.error(request, error_message)
+                if is_ajax:
+                    return JsonResponse(
+                        {
+                            "success": False,
+                            "message": "KML upload rejected — {} issue(s) found. Nothing was saved.".format(
+                                len(ve.errors)
+                            ),
+                            "errors": {"kml_file": ve.errors},
+                        },
+                        status=400,
                     )
             except Exception as e:
                 error_message = (
@@ -470,6 +541,22 @@ def get_component(request, slum_id):
         sponsor_project_count=len(sponsor_metadata_codes),
     )
 
+    # Metric (length/count) per component type — manual ComponentMetric
+    # value first, else auto-calculated from geometry, never hardcoded.
+    # Computed once up front rather than per-type so
+    # `_get_line_only_metadata_names` (a slum-wide query) isn't re-run for
+    # every single component type below.
+    manual_metrics = {}
+    line_metadata_names = []
+    if component_metadata_ids:
+        manual_metrics = {
+            m.metadata_id: m
+            for m in ComponentMetric.objects.filter(
+                slum=slum, metadata_id__in=component_metadata_ids
+            )
+        }
+        line_metadata_names = _get_line_only_metadata_names(slum)
+
     lstcomponent = []
     sponsor_houses = []
     # Iterate through each filter and assign answers to child if available
@@ -496,6 +583,22 @@ def get_component(request, slum_id):
                         "shape": json.loads(comp.shape.json),
                     }
                 )
+
+            if metad.show_metric:
+                manual = manual_metrics.get(metad.id)
+                if manual:
+                    component["metric"] = {
+                        "source": "manual",
+                        "value": str(manual.value),
+                        "unit": manual.unit,
+                    }
+                else:
+                    value, unit = compute_auto_metric(slum, metad, line_metadata_names)
+                    component["metric"] = {
+                        "source": "auto",
+                        "value": round(value, 1) if unit == "m" else value,
+                        "unit": unit,
+                    }
         elif metad.type == "F" and metad.code != "":
             field = metad.code.split(":")
 
@@ -880,13 +983,50 @@ def get_kobo_drainage_report_data(request, slum_id):
 
 
 def get_component_list(request):
-    """Get unique component names from Metadata for a given object_id, with count numbers."""
+    """Get unique component types for a given object_id (slum), each with
+    its metric — a manually-entered ComponentMetric value if one exists,
+    else auto-calculated from geometry (see compute_auto_metric) — when
+    that component type's Metadata.show_metric is enabled.
+    """
     object_id = request.GET.get("object_id")
-    components = Component.objects.filter(object_id=object_id).values_list(
-        "metadata__name", flat=True
+    metadata_ids = (
+        Component.objects.filter(object_id=object_id)
+        .values_list("metadata_id", flat=True)
+        .distinct()
     )
-    unique_names = sorted(set(components))
-    data = [{"id": i + 1, "name": name} for i, name in enumerate(unique_names)]
+    metadata_list = Metadata.objects.filter(id__in=metadata_ids).order_by("name")
+
+    slum = Slum.objects.filter(pk=object_id).first()
+    manual_metrics = {}
+    line_metadata_names = []
+    if slum:
+        manual_metrics = {
+            m.metadata_id: m
+            for m in ComponentMetric.objects.filter(
+                slum=slum, metadata_id__in=metadata_ids
+            )
+        }
+        line_metadata_names = _get_line_only_metadata_names(slum)
+
+    data = []
+    for i, metadata in enumerate(metadata_list):
+        row = {"id": i + 1, "name": metadata.name}
+        if metadata.show_metric:
+            manual = manual_metrics.get(metadata.id)
+            if manual:
+                row["metric"] = {
+                    "source": "manual",
+                    "value": str(manual.value),
+                    "unit": manual.unit,
+                }
+            elif slum:
+                value, unit = compute_auto_metric(slum, metadata, line_metadata_names)
+                row["metric"] = {
+                    "source": "auto",
+                    "value": round(value, 1) if unit == "m" else value,
+                    "unit": unit,
+                }
+        data.append(row)
     return JsonResponse(data, safe=False)
 
 
@@ -988,6 +1128,142 @@ def delete_component(request):
             {
                 "success": True,
                 "message": f'Component "{comp_name}" deleted successfully',
+            }
+        )
+    except Exception as e:
+        return JsonResponse({"success": False, "message": str(e)}, status=500)
+
+
+@login_required(login_url="/accounts/login/")
+@permission_required("component.can_upload_KML", raise_exception=True)
+def set_component_metric(request):
+    """Create/update the manual metric (length, count, etc.) for one
+    component type within one slum. Mirrors delete_component: a reason is
+    required, and the save is blocked if the notification email can't be
+    sent.
+    """
+    if request.method != "POST":
+        return JsonResponse(
+            {"success": False, "message": "Invalid request method"}, status=405
+        )
+
+    object_id = request.POST.get("object_id")
+    comp_name = request.POST.get("comp_name")
+    value = request.POST.get("value")
+    unit = request.POST.get("unit")
+    unit_label = (request.POST.get("unit_label") or "").strip()
+    reason = (request.POST.get("reason") or "").strip()
+
+    if not object_id or not comp_name or value is None or not unit:
+        return JsonResponse(
+            {"success": False, "message": "Missing object_id, comp_name, value or unit"},
+            status=400,
+        )
+    if not reason:
+        return JsonResponse(
+            {"success": False, "message": "A reason is required to set a metric"},
+            status=400,
+        )
+
+    try:
+        value = float(value)
+    except ValueError:
+        return JsonResponse(
+            {"success": False, "message": "Value must be a number"}, status=400
+        )
+
+    slum = Slum.objects.filter(pk=object_id).first()
+    if not slum:
+        return JsonResponse({"success": False, "message": "Slum not found"}, status=404)
+
+    metadata = Metadata.objects.filter(type="C", name=comp_name).first()
+    if not metadata:
+        return JsonResponse(
+            {"success": False, "message": "Component type not found"}, status=404
+        )
+
+    try:
+        location_context = {
+            "city_name": slum.electoral_ward.administrative_ward.city.name.city_name,
+            "administrative_ward": slum.electoral_ward.administrative_ward.name,
+            "electoral_ward": slum.electoral_ward.name,
+            "slum_name": slum.name,
+        }
+
+        existing = ComponentMetric.objects.filter(slum=slum, metadata=metadata).first()
+
+        email_context = {
+            "comp_name": comp_name,
+            "value": value,
+            "unit": unit,
+            "unit_label": unit_label,
+            "old_value": existing.value if existing else None,
+            "old_unit": existing.unit if existing else None,
+            "old_unit_label": existing.unit_label if existing else None,
+            "updated_by": request.user.username,
+            "reason": reason,
+            "timestamp": datetime.now(),
+            **location_context,
+        }
+
+        if not settings.KML_CHANGE_NOTIFY_EMAILS:
+            logger.error(
+                "KML_CHANGE_NOTIFY_EMAILS is not configured; blocking metric update"
+            )
+            return JsonResponse(
+                {
+                    "success": False,
+                    "message": "Notification recipients are not configured, so the metric was not saved.",
+                },
+                status=500,
+            )
+
+        change_summary = (
+            "{} {} -> {} {}".format(existing.value, existing.unit, value, unit)
+            if existing
+            else "{} {} (new)".format(value, unit)
+        )
+        try:
+            send_email(
+                settings.KML_CHANGE_NOTIFY_EMAILS,
+                'KML component metric updated: "{}" in {}'.format(
+                    comp_name, location_context["slum_name"]
+                ),
+                "helpers/kml_component_metric_email.html",
+                email_context,
+                '{} set the metric for "{}" ({}) in slum {}. Reason: {}'.format(
+                    request.user.username,
+                    comp_name,
+                    change_summary,
+                    location_context["slum_name"],
+                    reason,
+                ),
+            )
+        except Exception as e:
+            logger.error("Failed to send KML metric notification email: %s", e)
+            return JsonResponse(
+                {
+                    "success": False,
+                    "message": "Could not send the notification email, so the metric was not saved. Please try again.",
+                },
+                status=500,
+            )
+
+        ComponentMetric.objects.update_or_create(
+            slum=slum,
+            metadata=metadata,
+            defaults={
+                "value": value,
+                "unit": unit,
+                "unit_label": unit_label,
+                "updated_by": request.user,
+            },
+        )
+        return JsonResponse(
+            {
+                "success": True,
+                "message": f'Metric for "{comp_name}" saved successfully',
+                "metric": {"source": "manual", "value": str(value), "unit": unit},
             }
         )
     except Exception as e:

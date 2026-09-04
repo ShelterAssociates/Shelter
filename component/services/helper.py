@@ -11,7 +11,7 @@ from django.contrib.gis.db.models.functions import (
 from django.db import Error as DatabaseError
 from django.db.models import Case, CharField, Count, Func, IntegerField, Sum, Value, When
 
-from component.models import Metadata
+from component.models import Component, Metadata
 from graphs.models import HouseholdData
 
 logger = logging.getLogger(__name__)
@@ -80,6 +80,52 @@ def _get_line_only_metadata_names(slum):
         for row in rows
         if row["total"] > 0 and row["total"] == row["line_count"]
     ]
+
+
+def compute_auto_metric(slum, metadata, line_metadata_names=None):
+    """
+    Fallback metric for a (slum, metadata) pair with no manual
+    ComponentMetric value — never a hardcoded number.
+
+    Line-type component types (see `_get_line_only_metadata_names`) get
+    their total length in meters via the same safe PostGIS calculation as
+    `_get_ward_road_lengths` — `ST_Length` after `ST_MakeValid` on the
+    EPSG:3857-transformed shape (MakeValid must run *after* the transform,
+    not before — see `_MakeValid`'s docstring). Everything else
+    (points/polygons — handpumps, water tanks, structures, etc.) gets a
+    plain count of components.
+
+    `line_metadata_names` may be passed in by a caller that's calling this
+    once per component type on the same slum (e.g. `get_component_list`,
+    `get_component`), so `_get_line_only_metadata_names` — a slum-wide
+    query — isn't redundantly re-run for every single type.
+
+    Returns (value, unit) where unit is "m" or "count".
+    """
+    if line_metadata_names is None:
+        line_metadata_names = _get_line_only_metadata_names(slum)
+    is_line_type = metadata.name in line_metadata_names
+    components = slum.components.filter(metadata=metadata)
+
+    if not is_line_type:
+        return components.count(), "count"
+
+    try:
+        result = components.annotate(
+            safe_length=Length(_MakeValid(Transform("shape", 3857)))
+        ).aggregate(total_length=Sum("safe_length"))
+    except DatabaseError:
+        logger.exception(
+            "Failed to compute auto length for metadata %s in slum %s; "
+            "returning 0 (likely invalid geometry)",
+            metadata.id,
+            slum.pk,
+        )
+        return 0.0, "m"
+
+    total_length = result["total_length"]
+    return (total_length.m if total_length is not None else 0.0), "m"
+
 
 _HOUSEHOLD_JSON_FIELDS = []
 for _field_name in ("hh_data", "rhs_data", "ff_data"):

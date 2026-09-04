@@ -2,9 +2,17 @@ from django.contrib.gis.db import models
 
 # from picklefield.fields import PickledObjectField
 from jsonfield import JSONField
+from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.contrib.contenttypes.fields import GenericForeignKey
 from django.contrib.contenttypes.models import ContentType
+
+METRIC_UNIT_CHOICES = (
+    ("m", "Meters"),
+    ("km", "Kilometers"),
+    ("count", "Count"),
+    ("other", "Other"),
+)
 
 DISPLAY_TYPE_CHOICES = (
     ("M", "Map"),
@@ -103,4 +111,39 @@ class Component(models.Model):
             + self.metadata.name
             + ":"
             + self.housenumber
+        )
+
+
+class ComponentMetric(models.Model):
+    """Manually-entered metric (length, count, etc.) for one component type
+    within one slum. Uploading/re-uploading a KML for a slum replaces
+    exactly one component type's ("layer") worth of components at a time,
+    so a metric override is scoped the same way — one row per (slum,
+    metadata) pair. If no row exists here, the value is auto-calculated
+    from geometry (see component.services.helper.compute_auto_metric)
+    instead of ever being hardcoded.
+
+    A "reason" is required to create/update this (enforced in the view),
+    same as component delete, but — also same as delete — the reason is
+    only ever emailed, never stored here.
+    """
+
+    slum = models.ForeignKey(
+        "master.Slum", on_delete=models.CASCADE, related_name="component_metrics"
+    )
+    metadata = models.ForeignKey(Metadata, on_delete=models.CASCADE)
+    value = models.DecimalField(max_digits=12, decimal_places=2)
+    unit = models.CharField(max_length=16, choices=METRIC_UNIT_CHOICES)
+    unit_label = models.CharField(max_length=32, blank=True)
+    updated_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True
+    )
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        unique_together = ("slum", "metadata")
+
+    def __str__(self):
+        return "{} - {}: {} {}".format(
+            self.slum.name, self.metadata.name, self.value, self.unit
         )

@@ -2,10 +2,51 @@ from pykml import parser
 from .models import Component, Metadata
 from django.contrib.gis.geos import GEOSGeometry
 from django.contrib.contenttypes.models import ContentType
+from django.db import transaction
 
 POINT = "Point"
 POLYGON = "Polygon"
 LINESTRING = "LineString"
+
+
+class KMLValidationError(Exception):
+    """Raised when one or more placemarks fail geometry/topology validation.
+
+    `errors` holds every issue found across the whole file (not just the
+    first one), so the caller can show the uploader a complete list instead
+    of making them fix and re-upload one error at a time.
+    """
+
+    def __init__(self, errors):
+        self.errors = errors
+        super().__init__("; ".join(errors))
+
+
+def _is_degenerate(geom):
+    """True for zero-length/duplicate-point/empty line geometry."""
+    if geom.empty:
+        return True
+    if geom.geom_type == "LineString":
+        coords = geom.coords
+        if len(coords) < 2:
+            return True
+        deduped = [coords[0]]
+        for coord in coords[1:]:
+            if coord != deduped[-1]:
+                deduped.append(coord)
+        return len(deduped) < 2
+    if geom.geom_type == "MultiLineString":
+        return any(_is_degenerate(line) for line in geom)
+    return False
+
+
+def _validate_geometry(geom, label):
+    """Return validation error strings for one geometry (empty list if OK)."""
+    if _is_degenerate(geom):
+        return [f"{label}: degenerate geometry (zero-length or duplicate points)"]
+    if not geom.valid:
+        return [f"{label}: invalid/self-intersecting geometry ({geom.valid_reason})"]
+    return []
 
 
 class KMLParser(object):
@@ -117,7 +158,15 @@ class KMLParser(object):
             Component.objects.bulk_create(create_bulk)
 
     def other_components(self):
-        """Iterate through each document folder and process the data"""
+        """Iterate through each document folder, validate every placemark's
+        geometry first, and only persist anything if the whole file passes.
+
+        This is a two-pass process specifically so a bad placemark late in
+        the file can't leave earlier folders' deletes/creates applied and
+        later ones untouched: nothing is written to the database until
+        every folder and placemark in the file has been parsed and
+        validated.
+        """
         folders = []
         kml_folder = {}
         try:
@@ -128,31 +177,57 @@ class KMLParser(object):
             "code", flat=True
         )
 
-        if self.delete_flag:
-            self.object_type.components.all().delete()
+        # ---- Pass 1: parse + validate everything, write nothing ----
+        folder_plan = []
+        validation_errors = []
         for folder in folders:
-            try:
-                kml_name = str(folder.name).split("(")[0]
-                kml_name = kml_name.replace(" ", "")
-                kml_folder[kml_name] = False
+            kml_name = str(folder.name).split("(")[0]
+            kml_name = kml_name.replace(" ", "")
+            kml_folder[kml_name] = False
+            if kml_name not in metadata_component:
+                continue
+
+            component_data = []
+            seen_housenumbers = set()
+            for pm in folder.Placemark:
+                placemark_label = '"{}" -> {}'.format(kml_name, str(pm.name))
+                try:
+                    household_no, coordinates = self.component_latlong(pm)
+                except Exception as ex:
+                    validation_errors.append("{}: {}".format(placemark_label, ex))
+                    continue
+
+                if household_no in seen_housenumbers:
+                    validation_errors.append(
+                        '{}: duplicate placemark id "{}" within this folder'.format(
+                            placemark_label, household_no
+                        )
+                    )
+                seen_housenumbers.add(household_no)
+
+                for geom in coordinates:
+                    validation_errors.extend(_validate_geometry(geom, placemark_label))
+
+                component_data.append(
+                    {"house_no": household_no, "coordinates": coordinates}
+                )
+            folder_plan.append((kml_name, component_data))
+
+        if validation_errors:
+            raise KMLValidationError(validation_errors)
+
+        # ---- Pass 2: everything validated, now persist ----
+        with transaction.atomic():
+            if self.delete_flag:
+                self.object_type.components.all().delete()
+            for kml_name, component_data in folder_plan:
                 if not self.delete_flag:
                     metadata = Metadata.objects.get(code=kml_name, type="C")
                     self.object_type.components.filter(
                         metadata=metadata, object_id=self.object_type.id
                     ).delete()
-                if kml_name in metadata_component:
-                    self.component_data = []
-                    for pm in folder.Placemark:
-                        # Fetch household number from extended data
-                        try:
-                            household_no, coordinates = self.component_latlong(pm)
-                            self.component_data.append(
-                                {"house_no": household_no, "coordinates": coordinates}
-                            )
-                        except Exception as ex:
-                            raise Exception(" -> " + str(pm.name) + " ]] " + str(ex))
-                    self.bulk_update_or_create(kml_name)
-                    kml_folder[kml_name] = True
-            except Exception as e:
-                raise Exception("[[ " + str(folder.name) + str(e))
+                self.component_data = component_data
+                self.bulk_update_or_create(kml_name)
+                kml_folder[kml_name] = True
+
         return kml_folder

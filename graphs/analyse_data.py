@@ -312,6 +312,7 @@ class RHSData(object):
         """
         kutcha_road_area = 0
         pucca_road_area = 0
+        slum_type = ContentType.objects.get_for_model(Slum)
 
         def get_road_len(linestring):
             """
@@ -329,20 +330,30 @@ class RHSData(object):
             len_in_meter = line.length
             return len_in_meter
 
-        slum_type = ContentType.objects.get_for_model(Slum)
-        for i in ["Kutcha road", "Paving block", "Farashi"]:
+        def road_len_for(name):
+            """
+            Manually-entered ComponentMetric value first (converted to
+            meters), else the geometry-based calculation below — the
+            length for a road type is never a hardcoded number.
+            """
+            metadata = Metadata.objects.filter(type="C", name=name).first()
+            if metadata:
+                manual = ComponentMetric.objects.filter(
+                    slum=self.slum, metadata=metadata
+                ).first()
+                if manual and manual.unit in ("m", "km"):
+                    return float(manual.value) * (1000 if manual.unit == "km" else 1)
+
             shape = Component.objects.filter(
-                content_type=slum_type, object_id=self.slum.id, metadata__name=i
+                content_type=slum_type, object_id=self.slum.id, metadata__name=name
             ).values("shape")
-            for j in shape:
-                kutcha_road_area += get_road_len(j)
+            return sum(get_road_len(j) for j in shape)
+
+        for i in ["Kutcha road", "Paving block", "Farashi"]:
+            kutcha_road_area += road_len_for(i)
 
         for i in ["Coba road", "Tar road", "Concrete road"]:
-            shape = Component.objects.filter(
-                content_type=slum_type, object_id=self.slum.id, metadata__name=i
-            ).values("shape")
-            for j in shape:
-                pucca_road_area += get_road_len(j)
+            pucca_road_area += road_len_for(i)
 
         total_road_area = kutcha_road_area + pucca_road_area
         return (kutcha_road_area, pucca_road_area, total_road_area)

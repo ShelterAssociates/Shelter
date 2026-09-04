@@ -474,35 +474,35 @@ input.ku-input[type='file'] {
     font-size: 12.5px;
 }
 
-.ku-empty-state {
+/* ---- component list: muted/empty text + loading spinner ---- */
+
+.ku-list-muted {
     text-align: center;
-    padding: 40px 20px;
+    padding: 32px 16px;
+    margin: 0;
     color: var(--ku-g400);
+    font-size: 12.5px;
+    line-height: 1.6;
 }
 
-.ku-empty-state-icon {
-    width: 40px;
-    height: 40px;
-    margin: 0 auto 12px;
-    border-radius: 50%;
-    background: var(--ku-g100);
+.ku-list-loading {
     display: flex;
     align-items: center;
     justify-content: center;
-}
-
-.ku-empty-state-icon svg {
-    width: 19px;
-    height: 19px;
-    stroke: var(--ku-g300);
-    fill: none;
-    stroke-width: 1.8;
-}
-
-.ku-empty-state p {
-    margin: 0;
+    gap: 8px;
+    padding: 32px 16px;
+    color: var(--ku-g400);
     font-size: 12.5px;
-    line-height: 1.6;
+}
+
+.ku-list-spinner {
+    display: inline-block;
+    width: 14px;
+    height: 14px;
+    border: 2px solid var(--ku-g200);
+    border-top-color: var(--ku-blue);
+    border-radius: 50%;
+    animation: ku-modal-spin 0.8s linear infinite;
 }
 
 .ku-delete-btn {
@@ -532,6 +532,93 @@ input.ku-input[type='file'] {
     stroke: currentColor;
     fill: none;
     stroke-width: 2.5;
+}
+
+.ku-component-row-main {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+}
+
+.ku-component-row-actions {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-shrink: 0;
+}
+
+.ku-metric-badge {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--ku-g600);
+}
+
+.ku-metric-badge.manual {
+    color: var(--ku-blue-dark);
+}
+
+.ku-metric-btn {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 5px 10px;
+    font-size: 11px;
+    font-weight: 700;
+    font-family: var(--ku-font);
+    border-radius: 6px;
+    cursor: pointer;
+    border: 1px solid var(--ku-blue-mid);
+    background: var(--ku-blue-light);
+    color: var(--ku-blue);
+    transition: background 0.12s;
+    flex-shrink: 0;
+}
+
+.ku-metric-btn:hover {
+    background: var(--ku-blue-mid);
+}
+
+.ku-metric-inline {
+    padding: 12px;
+    border: 1px dashed var(--ku-g200);
+    border-radius: var(--ku-r);
+    background: var(--ku-g50);
+}
+
+.ku-metric-inline > label {
+    margin-bottom: 8px !important;
+}
+
+.ku-metric-inline-row {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 8px;
+}
+
+.ku-metric-inline-row .ku-select,
+.ku-metric-inline-row .ku-input {
+    margin-bottom: 0;
+    min-height: 36px;
+    padding: 8px 10px;
+}
+
+.ku-metric-inline-row .ku-input {
+    flex: 1;
+    min-width: 0;
+}
+
+.ku-metric-inline-row .ku-select {
+    flex: 1;
+    min-width: 0;
+}
+
+.ku-metric-inline textarea.ku-input {
+    height: 44px;
+    min-height: 36px;
+    max-height: 100px;
+    resize: vertical;
+    padding: 8px 10px;
 }
 
 /* ---- delete modal ---- */

@@ -1,5 +1,6 @@
 from django import forms
 from master.models import City, AdministrativeWard, ElectoralWard, Slum
+from component.models import METRIC_UNIT_CHOICES
 
 
 class KMLUpload(forms.Form):
@@ -36,6 +37,35 @@ class KMLUpload(forms.Form):
     delete_flag = forms.BooleanField(
         required=False, label="Do you want to deleted previous records?"
     )
+    metric_value = forms.DecimalField(
+        required=False,
+        label="Known length/metric (optional)",
+        max_digits=12,
+        decimal_places=2,
+        widget=forms.NumberInput(attrs={"placeholder": "Value", "step": "0.01"}),
+    )
+    metric_unit = forms.ChoiceField(
+        choices=(("", "--Unit--"),) + METRIC_UNIT_CHOICES,
+        required=False,
+        label="Unit",
+    )
+    metric_reason = forms.CharField(
+        required=False,
+        label="Reason (required if a metric value is given)",
+        widget=forms.Textarea(attrs={"rows": 2, "placeholder": "Why are you providing this metric?"}),
+    )
+
+    def clean(self):
+        cleaned_data = super().clean()
+        metric_value = cleaned_data.get("metric_value")
+        if metric_value is not None:
+            if not cleaned_data.get("metric_unit"):
+                self.add_error("metric_unit", "Please select a unit for the metric value.")
+            if not (cleaned_data.get("metric_reason") or "").strip():
+                self.add_error(
+                    "metric_reason", "A reason is required when providing a metric value."
+                )
+        return cleaned_data
 
     def __init__(self, *args, **kwargs):
         super(KMLUpload, self).__init__(*args, **kwargs)
