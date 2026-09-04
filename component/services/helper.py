@@ -1,16 +1,21 @@
+import logging
 from collections import OrderedDict
 
 from django.contrib.gis.db.models import GeometryField
 from django.contrib.gis.db.models.functions import (
     Intersection,
     Length,
+    MakeValid,
     PointOnSurface,
     Transform,
 )
+from django.db import Error as DatabaseError
 from django.db.models import Case, CharField, Count, Func, IntegerField, Sum, Value, When
 
 from component.models import Metadata
 from graphs.models import HouseholdData
+
+logger = logging.getLogger(__name__)
 
 
 class _STGeometryType(Func):
@@ -206,16 +211,31 @@ def _get_ward_road_lengths(slum, ward_children=None):
         ward_id = str(ward.housenumber)
         ward_geom = Value(ward.shape, output_field=GeometryField())
 
-        rows = (
+        rows_query = (
             slum.components.filter(metadata__name__in=line_metadata_names)
             .annotate(
                 clipped_length=Length(
-                    Intersection(Transform("shape", 3857), Transform(ward_geom, 3857))
+                    Intersection(
+                        Transform(MakeValid("shape"), 3857),
+                        Transform(MakeValid(ward_geom), 3857),
+                    )
                 )
             )
             .values("metadata__name")
             .annotate(total_length=Sum("clipped_length"))
         )
+
+        try:
+            rows = list(rows_query)
+        except DatabaseError:
+            logger.exception(
+                "Failed to compute road lengths for ward %s in slum %s; "
+                "skipping (likely invalid geometry)",
+                ward_id,
+                slum.pk,
+            )
+            road_map[ward_id] = {}
+            continue
 
         road_map[ward_id] = {
             row["metadata__name"]: round(row["total_length"].m, 1)
