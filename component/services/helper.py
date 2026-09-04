@@ -5,7 +5,6 @@ from django.contrib.gis.db.models import GeometryField
 from django.contrib.gis.db.models.functions import (
     Intersection,
     Length,
-    MakeValid,
     PointOnSurface,
     Transform,
 )
@@ -23,6 +22,28 @@ class _STGeometryType(Func):
 
     function = "ST_GeometryType"
     output_field = CharField()
+
+
+class _MakeValid(Func):
+    """
+    Wraps PostGIS's ST_MakeValid(geom) to repair invalid geometries
+    (self-intersections, bad rings, etc.) before an overlay operation.
+
+    Not `django.contrib.gis.db.models.functions.MakeValid` — that ORM
+    wrapper only exists from Django 3.1 onward, and production pins
+    Django==3.0.7 (see requirement.txt), so importing it would break
+    the app at startup rather than just this one endpoint.
+
+    Deliberately does NOT set a static `output_field = GeometryField()`
+    here: that would default to SRID 4326 and shadow the SRID of
+    whatever expression it wraps (e.g. a prior `Transform(..., 3857)`),
+    which makes `Length()` treat the result as geodetic and inflates
+    distances by ~5 orders of magnitude. Leaving `output_field` unset
+    lets Django infer it from the wrapped expression instead, which
+    correctly carries the SRID through.
+    """
+
+    function = "ST_MakeValid"
 
 
 def _get_line_only_metadata_names(slum):
@@ -216,8 +237,8 @@ def _get_ward_road_lengths(slum, ward_children=None):
             .annotate(
                 clipped_length=Length(
                     Intersection(
-                        MakeValid(Transform("shape", 3857)),
-                        MakeValid(Transform(ward_geom, 3857)),
+                        _MakeValid(Transform("shape", 3857)),
+                        _MakeValid(Transform(ward_geom, 3857)),
                     )
                 )
             )
@@ -280,7 +301,7 @@ def _fetch_countable_components(slum, line_metadata_names):
         slum.components.filter(metadata__type="C")
         .exclude(metadata__name__in=line_metadata_names)
         .select_related("metadata")
-        .annotate(rep_point=PointOnSurface("shape"))
+        .annotate(rep_point=PointOnSurface(_MakeValid("shape")))
     )
 
 
