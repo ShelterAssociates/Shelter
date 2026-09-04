@@ -216,8 +216,8 @@ def _get_ward_road_lengths(slum, ward_children=None):
             .annotate(
                 clipped_length=Length(
                     Intersection(
-                        Transform(MakeValid("shape"), 3857),
-                        Transform(MakeValid(ward_geom), 3857),
+                        MakeValid(Transform("shape", 3857)),
+                        MakeValid(Transform(ward_geom, 3857)),
                     )
                 )
             )
