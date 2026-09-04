@@ -1,9 +1,15 @@
 from collections import OrderedDict
 
 from django.contrib.gis.db.models import GeometryField
-from django.contrib.gis.db.models.functions import Intersection, Length, Transform
+from django.contrib.gis.db.models.functions import (
+    Intersection,
+    Length,
+    PointOnSurface,
+    Transform,
+)
 from django.db.models import Case, CharField, Count, Func, IntegerField, Sum, Value, When
 
+from component.models import Metadata
 from graphs.models import HouseholdData
 
 
@@ -93,28 +99,21 @@ def _get_select_ward_value(payload):
     return ""
 
 
-def _find_admin_ward_component(slum):
-    if not slum:
-        return None
-
-    for component in slum.components.select_related("metadata").all():
-        metadata = getattr(component, "metadata", None)
-        if not metadata or metadata.type != "C":
-            continue
-
-        name = _normalize_text(metadata.name)
-        if "admin ward" in name:
-            return component
-
-    return None
-
-
 def _get_ward_children(slum):
-    ward_component = _find_admin_ward_component(slum)
-    if not ward_component or not getattr(ward_component, "metadata", None):
+    """
+    Return this slum's Admin Ward component children, ordered by ward number.
+
+    The Metadata table is small and global (not per-slum), and the admin-ward
+    row is uniquely identifiable by name, so we look it up directly instead
+    of scanning every component on the slum (which used to pull full
+    geometry for every row just to find the one metadata match).
+    """
+    ward_metadata = Metadata.objects.filter(
+        type="C", name__icontains="admin ward"
+    ).first()
+    if not ward_metadata:
         return []
 
-    ward_metadata = ward_component.metadata
     return list(slum.components.filter(metadata=ward_metadata).order_by("housenumber"))
 
 
@@ -225,3 +224,192 @@ def _get_ward_road_lengths(slum, ward_children=None):
         }
 
     return road_map
+
+
+# Component types that represent one polygon per household (plot boundary
+# outlines), as opposed to independently digitised/KML-uploaded map features
+# (handpumps, poles, garbage bins, etc.). For these, ward assignment must
+# come from the same authority as household ward assignment — the RHS
+# survey's "Select Ward" field, matched by household number — not from
+# where the digitized outline happens to sit relative to a ward boundary
+# polygon. A household's survey ward and its plot polygon are collected
+# independently, so a plot near a boundary can be drawn slightly across it
+# even though the survey unambiguously assigned the household to one ward.
+_HOUSEHOLD_LINKED_COMPONENT_NAMES = {"Structure", "Other Structures"}
+
+
+def _fetch_countable_components(slum, line_metadata_names):
+    """
+    Non-line "C"-type components for this slum (structures, handpumps, water
+    tanks, garbage bins, etc. — anything a ward count makes sense for), each
+    annotated with a representative point (`rep_point`) used, for the
+    non-household-linked ones, to test which ward polygon contains it.
+
+    Deliberately `PointOnSurface`, not `Centroid`: a centroid is only
+    guaranteed to fall inside convex shapes, and a concave polygon's
+    centroid can fall outside it entirely, occasionally landing in a
+    neighbouring ward across a shared boundary. `PointOnSurface` is
+    guaranteed to lie within the geometry — for a Point it's that point, so
+    this still works uniformly across Point/Polygon/MultiPolygon.
+
+    Line features (roads, drainage, etc.) are excluded — "which ward
+    contains this line" isn't a meaningful question, they're covered by
+    `_get_ward_road_lengths` instead.
+    """
+    return list(
+        slum.components.filter(metadata__type="C")
+        .exclude(metadata__name__in=line_metadata_names)
+        .select_related("metadata")
+        .annotate(rep_point=PointOnSurface("shape"))
+    )
+
+
+def _split_household_linked_components(components):
+    """Partition components into (household-linked, spatially-assigned)."""
+    household_linked = []
+    spatial_candidates = []
+    for component in components:
+        if component.metadata.name in _HOUSEHOLD_LINKED_COMPONENT_NAMES:
+            household_linked.append(component)
+        else:
+            spatial_candidates.append(component)
+    return household_linked, spatial_candidates
+
+
+def _build_household_to_ward_map(ward_data):
+    """
+    Invert ward_data (ward_id -> [household_number, ...], as returned by
+    `_get_ward_wise_data`) into household_number -> ward_id, so
+    household-linked components can look their ward up directly.
+    """
+    household_to_ward = {}
+    for ward_id, household_numbers in ward_data.items():
+        for household_number in household_numbers:
+            household_to_ward[household_number] = ward_id
+    return household_to_ward
+
+
+def _record_component(ward_map, ward_id, component):
+    ward_map[ward_id].setdefault(component.metadata.name, []).append(
+        component.housenumber
+    )
+
+
+def _assign_by_household_ward(ward_map, components, household_to_ward):
+    """
+    Assign household-linked components (see `_HOUSEHOLD_LINKED_COMPONENT_NAMES`)
+    to a ward via their household's surveyed "Select Ward" value.
+
+    Returns the components that couldn't be matched this way (no household
+    with that number, or no Select Ward value recorded for it), so the
+    caller can fall back to spatial containment for just those instead of
+    dropping them.
+    """
+    unassigned = []
+    for component in components:
+        household_number = _base_household_number(component.housenumber)
+        ward_id = household_to_ward.get(household_number)
+        if ward_id is None or ward_id not in ward_map:
+            unassigned.append(component)
+            continue
+
+        _record_component(ward_map, ward_id, component)
+
+    return unassigned
+
+
+def _assign_by_spatial_containment(ward_map, components, ward_children):
+    """
+    Assign each component to the ward whose polygon contains its
+    representative point, using GEOS spatial predicates on geometry already
+    materialised in Python (the same GEOS engine PostGIS's ST_Contains uses
+    under the hood, so this agrees with the database rather than a
+    hand-written point-in-polygon check).
+
+    Returns the components whose point didn't fall strictly inside any ward
+    polygon, typically because it sits almost exactly on a shared boundary
+    between two wards — the caller falls back to nearest-ward for those.
+    """
+    unmatched = []
+    for component in components:
+        rep_point = component.rep_point
+        if rep_point is None:
+            unmatched.append(component)
+            continue
+
+        matched_ward = next(
+            (ward for ward in ward_children if ward.shape.contains(rep_point)),
+            None,
+        )
+        if matched_ward is None:
+            unmatched.append(component)
+            continue
+
+        _record_component(ward_map, str(matched_ward.housenumber), component)
+
+    return unmatched
+
+
+def _assign_orphans_to_nearest_ward(ward_map, unmatched, ward_children):
+    """
+    Fallback for components that didn't land strictly inside any ward
+    polygon (see `_assign_by_spatial_containment`) — assigns each to
+    whichever ward polygon is closest, so a boundary-hugging point still
+    counts toward exactly one ward instead of none.
+    """
+    for component in unmatched:
+        rep_point = component.rep_point
+        if rep_point is None:
+            continue
+
+        nearest_ward = min(
+            ward_children, key=lambda ward: ward.shape.distance(rep_point)
+        )
+        _record_component(ward_map, str(nearest_ward.housenumber), component)
+
+
+def _get_ward_component_counts(slum, ward_children=None, ward_data=None):
+    """
+    Return ward_id -> {metadata_name: [housenumber, ...]} for every
+    non-line "C"-type component in this slum.
+
+    Plot-boundary components (`_HOUSEHOLD_LINKED_COMPONENT_NAMES`) are
+    assigned via their household's surveyed ward; every other component
+    (independently digitised/KML-uploaded map features) is assigned via
+    spatial containment against the ward boundary polygons, using the same
+    GEOS predicates PostGIS itself uses — replacing the old client-side
+    approach of computing each feature's centroid and testing it with a
+    hand-written ray-casting algorithm in JS.
+
+    `ward_children` and `ward_data` may be passed in by a caller that
+    already computed them (e.g. alongside `_get_ward_wise_data`) to avoid
+    redoing that work.
+    """
+    if ward_children is None:
+        ward_children = _get_ward_children(slum)
+    if not ward_children:
+        return OrderedDict()
+
+    if ward_data is None:
+        ward_data = _get_ward_wise_data(slum, ward_children=ward_children)
+    household_to_ward = _build_household_to_ward_map(ward_data)
+
+    line_metadata_names = _get_line_only_metadata_names(slum)
+    components = _fetch_countable_components(slum, line_metadata_names)
+    household_linked, spatial_candidates = _split_household_linked_components(
+        components
+    )
+
+    ward_map = OrderedDict((str(ward.housenumber), {}) for ward in ward_children)
+
+    unassigned = _assign_by_household_ward(
+        ward_map, household_linked, household_to_ward
+    )
+    spatial_candidates.extend(unassigned)
+
+    unmatched = _assign_by_spatial_containment(
+        ward_map, spatial_candidates, ward_children
+    )
+    _assign_orphans_to_nearest_ward(ward_map, unmatched, ward_children)
+
+    return ward_map

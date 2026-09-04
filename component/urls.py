@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 from django.conf.urls import include, url
-from . import views, get_component_api
+from . import views, get_component_api, get_ward_wise_data_api
 
 base64_pattern = r"(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$"
 
@@ -55,5 +55,9 @@ urlpatterns = [
     url(
         r"^can-refresh-section/$", views.can_refresh_section, name="can_refresh_section"
     ),
-    url(r"^get-ward-wise-data/$", views.get_ward_wise_data, name="get_ward_wise_data"),
+    url(
+        r"^get-ward-wise-data/$",
+        get_ward_wise_data_api.get_ward_wise_data_api,
+        name="get_ward_wise_data",
+    ),
 ]
