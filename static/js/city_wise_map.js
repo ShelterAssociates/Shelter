@@ -472,6 +472,7 @@ function generate_filter(globalJsonData, slumId, result) {
             var inner_label = Object.keys(globalJsonData).length > 0 ? globalJsonData[k1] : k1;
             var child_length = k1 in length_of_components ? length_of_components[k1] + " m" : v1["child"].length;
             var icon = v1["icon"] || "";
+            var show_metric = v1["show_metric"] !== false;
 
             panel_component +=
                 '<div name="div_group" class="wb-filter-row">&nbsp;&nbsp;&nbsp;' +
@@ -484,10 +485,12 @@ function generate_filter(globalJsonData, slumId, result) {
                 ' type="checkbox" value="' + k1 + '"' +
                 ' onclick="checkSingleGroup(this);">' +
                 '<a class="wb-filter-label">&nbsp;' + inner_label + '</a>&nbsp;' +
-                '<span class="wb-item-count" data-item-name="' + k1 + '"' +
-                ' data-section-name="' + k + '"' +
-                ' data-item-type="' + v1["type"] + '"' +
-                ' data-total-count="' + child_length + '">(' + child_length + ')</span>' +
+                (show_metric
+                    ? '<span class="wb-item-count" data-item-name="' + k1 + '"' +
+                      ' data-section-name="' + k + '"' +
+                      ' data-item-type="' + v1["type"] + '"' +
+                      ' data-total-count="' + child_length + '">(' + child_length + ')</span>'
+                    : '') +
                 (icon ? ' <img src="' + icon + '">' : '') +
                 '</div>';
 
