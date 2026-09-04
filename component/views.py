@@ -209,6 +209,7 @@ slum_list = [
 @permission_required("component.can_upload_KML", raise_exception=True)
 def kml_upload(request):
     context_data = {}
+    is_ajax = request.headers.get("x-requested-with") == "XMLHttpRequest"
     if request.method == "POST":
         form = KMLUpload(request.POST or None, request.FILES)
         if form.is_valid():
@@ -242,6 +243,7 @@ def kml_upload(request):
                     "unparsed": context_data["unparsed"],
                     "timestamp": datetime.now(),
                 }
+                email_sent = None
                 if settings.KML_CHANGE_NOTIFY_EMAILS:
                     try:
                         send_email(
@@ -260,18 +262,47 @@ def kml_upload(request):
                                 else upload_context["city_name"],
                             ),
                         )
+                        email_sent = True
                     except Exception as email_err:
+                        email_sent = False
                         logger.error(
                             "Failed to send KML upload notification email: %s",
                             email_err,
                         )
+
+                if is_ajax:
+                    return JsonResponse(
+                        {
+                            "success": True,
+                            "message": "KML uploaded successfully",
+                            "parsed": context_data["parsed"],
+                            "unparsed": context_data["unparsed"],
+                            "email_sent": email_sent,
+                        }
+                    )
             except Exception as e:
-                messages.error(
-                    request,
+                error_message = (
                     "Some error occurred while parsing. KML file is not in the required format ("
                     + str(e)
-                    + ")",
+                    + ")"
                 )
+                messages.error(request, error_message)
+                if is_ajax:
+                    return JsonResponse(
+                        {"success": False, "message": error_message}, status=400
+                    )
+        elif is_ajax:
+            errors = {
+                field: [str(e) for e in errs] for field, errs in form.errors.items()
+            }
+            return JsonResponse(
+                {
+                    "success": False,
+                    "message": "Please correct the errors below.",
+                    "errors": errors,
+                },
+                status=400,
+            )
     else:
         form = KMLUpload()
     metadata_component = Metadata.objects.filter(type="C").values_list(
