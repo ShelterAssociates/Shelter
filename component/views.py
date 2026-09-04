@@ -230,7 +230,42 @@ def kml_upload(request):
                 context_data["unparsed"] = [
                     k for k, v in parsed_data.items() if v == False
                 ]
-                messages.success(request, "KML uploaded successfully")
+
+                # "Success" means the file was read, every folder in it
+                # matched a known component (Metadata.code), and something
+                # was actually saved — never just "no exception was raised".
+                # A folder lands in `unparsed` when its name doesn't match
+                # any Metadata.code: nothing is written to the database for
+                # it, so that must be reported as a failure. (Topology/hard
+                # validation errors are a separate concern, handled by the
+                # KMLValidationError branch below — left untouched here.)
+                upload_ok = bool(context_data["parsed"]) and not context_data["unparsed"]
+
+                if upload_ok:
+                    upload_message = "KML uploaded successfully"
+                    messages.success(request, upload_message)
+                elif context_data["parsed"]:
+                    upload_message = (
+                        "KML upload failed — saved: {}. NOT recognized / NOT "
+                        "saved: {}.".format(
+                            ", ".join(context_data["parsed"]),
+                            ", ".join(context_data["unparsed"]),
+                        )
+                    )
+                    messages.error(request, upload_message)
+                elif context_data["unparsed"]:
+                    upload_message = (
+                        "KML upload failed — nothing was saved. No folder "
+                        "matched a known component name: {}.".format(
+                            ", ".join(context_data["unparsed"])
+                        )
+                    )
+                    messages.error(request, upload_message)
+                else:
+                    upload_message = (
+                        "KML upload failed — no components found in the file."
+                    )
+                    messages.error(request, upload_message)
 
                 city = form.cleaned_data.get("City")
                 admin_ward = form.cleaned_data.get("AdministrativeWard")
@@ -298,8 +333,10 @@ def kml_upload(request):
                     "timestamp": datetime.now(),
                     "metric": metric_info,
                 }
+                # Only notify on a real, fully-saved upload — a failed/
+                # partial upload (unparsed folders present) sends no email.
                 email_sent = None
-                if settings.KML_CHANGE_NOTIFY_EMAILS:
+                if upload_ok and settings.KML_CHANGE_NOTIFY_EMAILS:
                     try:
                         send_email(
                             settings.KML_CHANGE_NOTIFY_EMAILS,
@@ -328,8 +365,8 @@ def kml_upload(request):
                 if is_ajax:
                     return JsonResponse(
                         {
-                            "success": True,
-                            "message": "KML uploaded successfully",
+                            "success": upload_ok,
+                            "message": upload_message,
                             "parsed": context_data["parsed"],
                             "unparsed": context_data["unparsed"],
                             "email_sent": email_sent,
