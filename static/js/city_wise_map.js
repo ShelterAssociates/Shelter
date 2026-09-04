@@ -6,15 +6,6 @@
  */
 
 /* ── Global state ─────────────────────────────────────────────────────────── */
-var length_of_components = {
-    "Dambar road": 75140, "Cement/Concrete": 34648, "Interlocking": 24264,
-    "Kharanja": 20767, "Kutcha road": 96744, "Existing Drainage Line": 383,
-    "Location of Kutcha Open Nali (Gutter)": 5266,
-    "Location of Pucca Closed Nali (Gutter)": 5581,
-    "Location of Pucca Open Nali (Gutter)": 59665,
-    "Location of Nahar": 23136, "Location of Nala": 6907
-};
-
 var WARDLEVEL = ["AdministrativeWard", "ElectoralWard", "Slum"];
 
 var parse_data = {};
@@ -470,7 +461,8 @@ function generate_filter(globalJsonData, slumId, result) {
         $.each(v, function (k1, v1) {
             var chkcolor = v1["blob"]["polycolor"];
             var inner_label = Object.keys(globalJsonData).length > 0 ? globalJsonData[k1] : k1;
-            var child_length = k1 in length_of_components ? length_of_components[k1] + " m" : v1["child"].length;
+            var metric = v1["metric"];
+            var child_length = metric ? (metric.value + " " + metric.unit) : v1["child"].length;
             var icon = v1["icon"] || "";
             var show_metric = v1["show_metric"] !== false;
 

@@ -13,6 +13,11 @@ urlpatterns = [
         name="get_component",
     ),
     url(r"^delete_component/$", views.delete_component, name="delete_component"),
+    url(
+        r"^set_component_metric/$",
+        views.set_component_metric,
+        name="set_component_metric",
+    ),
     url(r"^get_component_list/$", views.get_component_list, name="get_component_list"),
     url(
         r"^get_kobo_RIM_data/(?P<slum_id>\d+)$",

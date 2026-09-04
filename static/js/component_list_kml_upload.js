@@ -19,28 +19,36 @@ $(document).ready(function () {
     // -----------------------------
     // Render component list
     // -----------------------------
-    const EMPTY_STATE_ICON = '<svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>';
-
     function renderComponents(components) {
         $("#componentList").empty();
 
         if (!components || components.length === 0) {
             $("#componentList").append(
-                '<div class="ku-empty-state">' +
-                    '<div class="ku-empty-state-icon">' + EMPTY_STATE_ICON + '</div>' +
-                    '<p>No components available.<br>Start by uploading your first KML for this slum.</p>' +
-                '</div>'
+                '<p class="ku-list-muted">Please upload a KML first — it will be seen here, or refresh once.</p>'
             );
             return;
         }
 
         components.forEach(function (comp) {
+            const metric = comp.metric;
+            const metricHtml = metric
+                ? `<span class="ku-metric-badge ${metric.source}">${metric.value} ${metric.unit}${metric.source === "manual" ? " (manual)" : " (auto)"}</span>`
+                : "";
+            const metricBtnHtml = metric
+                ? `<button class="ku-metric-btn set-metric" type="button" data-current-value="${metric.value}" data-current-unit="${metric.unit}">${metric.source === "manual" ? "Edit" : "Add"} metric</button>`
+                : "";
             $("#componentList").append(`
                 <div class="ku-component-row component-item" data-component-name="${comp.name}">
-                    <div>${comp.name}</div>
-                    <button class="ku-delete-btn delete-component" type="button">
-                        <svg viewBox="0 0 24 24" width="11" height="11" stroke="currentColor" stroke-width="2.5" fill="none"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg>Delete
-                    </button>
+                    <div class="ku-component-row-main">
+                        <div>${comp.name}</div>
+                        ${metricHtml}
+                    </div>
+                    <div class="ku-component-row-actions">
+                        ${metricBtnHtml}
+                        <button class="ku-delete-btn delete-component" type="button">
+                            <svg viewBox="0 0 24 24" width="11" height="11" stroke="currentColor" stroke-width="2.5" fill="none"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg>Delete
+                        </button>
+                    </div>
                 </div>
             `);
         });
@@ -83,14 +91,13 @@ $(document).ready(function () {
         const sid = $slumSelect.val();
 
         if (!sid) {
-            $("#componentList").html(
-                '<div class="ku-empty-state">' +
-                    '<div class="ku-empty-state-icon">' + EMPTY_STATE_ICON + '</div>' +
-                    '<p>Select a slum to view components.</p>' +
-                '</div>'
-            );
+            $("#componentList").html('<p class="ku-list-muted">Please select a slum.</p>');
             return;
         }
+
+        $("#componentList").html(
+            '<div class="ku-list-loading"><span class="ku-list-spinner"></span>Loading components...</div>'
+        );
 
         $.ajax({
             url: "/component/get_component_list/",
@@ -212,6 +219,110 @@ $(document).ready(function () {
     });
 
     // -----------------------------
+    // Set/edit metric (shared by: the "Add/Edit metric" button on a
+    // component row, and the automatic post-upload prompt for a newly
+    // uploaded line-type component with no metric yet)
+    // -----------------------------
+    const $metricModalOverlay = $("#kmlMetricModalOverlay");
+    const $metricStepInput = $metricModalOverlay.find(".kml-modal-step-input");
+    const $metricLoading = $metricModalOverlay.find(".kml-modal-loading");
+    const $metricResult = $metricModalOverlay.find(".kml-modal-result");
+    const $metricValueInput = $("#kmlMetricValue");
+    const $metricUnitInput = $("#kmlMetricUnit");
+    const $metricReasonInput = $("#kmlMetricReason");
+    const $metricReasonError = $("#kmlMetricReasonError");
+    let pendingMetric = null; // { compName, sid }
+
+    function showMetricModalStep(step) {
+        $metricStepInput.hide();
+        $metricLoading.hide();
+        $metricResult.hide();
+        if (step === "input") $metricStepInput.show();
+        if (step === "loading") $metricLoading.show();
+        if (step === "result") $metricResult.show();
+    }
+
+    function openMetricModal(compName, sid, currentValue, currentUnit) {
+        pendingMetric = { compName: compName, sid: sid };
+        $("#kmlMetricCompName").text(compName);
+        $metricValueInput.val(currentValue || "");
+        $metricUnitInput.val(currentUnit || "");
+        $metricReasonInput.val("");
+        $metricReasonError.hide();
+        showMetricModalStep("input");
+        $metricModalOverlay.addClass("active");
+    }
+
+    function closeMetricModal() {
+        $metricModalOverlay.removeClass("active");
+        pendingMetric = null;
+    }
+
+    $(document).off("click", ".set-metric").on("click", ".set-metric", function (e) {
+        e.preventDefault();
+        const $btn = $(this);
+        const compName = $btn.closest(".component-item").data("component-name");
+        const sid = $slumSelect.val();
+
+        if (!sid) {
+            alert("Please select a slum first!");
+            return;
+        }
+
+        openMetricModal(compName, sid, $btn.data("current-value"), $btn.data("current-unit"));
+    });
+
+    $("#kmlMetricCancelBtn").on("click", function () {
+        closeMetricModal();
+    });
+
+    $("#kmlMetricConfirmBtn").on("click", function () {
+        if (!pendingMetric) return;
+        const value = $metricValueInput.val().trim();
+        const unit = $metricUnitInput.val();
+        const reason = $metricReasonInput.val().trim();
+
+        if (!value || !unit || !reason) {
+            $metricReasonError.show();
+            return;
+        }
+        $metricReasonError.hide();
+
+        const { compName, sid } = pendingMetric;
+        showMetricModalStep("loading");
+
+        $.ajax({
+            url: "/component/set_component_metric/",
+            type: "POST",
+            data: {
+                object_id: sid,
+                comp_name: compName,
+                value: value,
+                unit: unit,
+                reason: reason,
+                csrfmiddlewaretoken: $('input[name="csrfmiddlewaretoken"]').val()
+            },
+            success: function (res) {
+                $metricResult.removeClass("error").addClass("success");
+                $metricResult.find(".kml-modal-result-icon").text("✓");
+                $metricResult.find(".kml-modal-result-message").text(res.message || `Metric for "${compName}" saved`);
+                showMetricModalStep("result");
+                loadComponentList();
+            },
+            error: function (xhr) {
+                $metricResult.removeClass("success").addClass("error");
+                $metricResult.find(".kml-modal-result-icon").text("✕");
+                $metricResult.find(".kml-modal-result-message").text((xhr.responseJSON && xhr.responseJSON.message) || "Failed to save metric.");
+                showMetricModalStep("result");
+            }
+        });
+    });
+
+    $("#kmlMetricCloseBtn").on("click", function () {
+        closeMetricModal();
+    });
+
+    // -----------------------------
     // Refresh button
     // -----------------------------
     // remove previous delegated handler and attach properly (with event param)
@@ -278,6 +389,15 @@ $(document).ready(function () {
 
                     updateComponentListTitle();
                     loadComponentList();
+
+                    // If a newly-uploaded line-type component still has no
+                    // metric (and none was given inline above), prompt for
+                    // one now — this is the second of the two "ask" points,
+                    // the first being the optional field on the form itself.
+                    if (res.needs_metric && res.needs_metric.length && res.object_id) {
+                        $uploadModalOverlay.removeClass("active");
+                        openMetricModal(res.needs_metric[0], res.object_id, "", "");
+                    }
                 } else {
                     let detail = "";
                     if (res.errors) {

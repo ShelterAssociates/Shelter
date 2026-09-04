@@ -98,6 +98,22 @@
               {{ form.kml_file|add_class:'ku-input' }}
             </div>
 
+            <div class="ku-field ku-metric-inline">
+              <label>Know the length/metric already? (optional)</label>
+              <div class="ku-metric-inline-row">
+                {{ form.metric_value|add_class:'ku-input' }}
+                {{ form.metric_unit|add_class:'ku-select' }}
+              </div>
+              {{ form.metric_reason|add_class:'ku-input' }}
+              {% if form.metric_value.errors or form.metric_unit.errors or form.metric_reason.errors %}
+                <div class="ku-modal-error" style="display:block;">
+                  {{ form.metric_value.errors|join:" " }}
+                  {{ form.metric_unit.errors|join:" " }}
+                  {{ form.metric_reason.errors|join:" " }}
+                </div>
+              {% endif %}
+            </div>
+
             {% comment %} <div class="ku-field">{{ form.delete_flag }} {{ form.delete_flag.label_tag }}</div> {% endcomment %}
 
             <input class="ku-btn" type="submit" value="Submit" />
@@ -190,6 +206,47 @@
           <p class="kml-modal-result-message ku-modal-result-message"></p>
           <div class="ku-modal-actions" style="justify-content:center;">
             <button type="button" class="ku-btn-primary" id="kmlDeleteCloseBtn">OK</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="ku-modal" id="kmlMetricModalOverlay">
+    <div class="ku-modal-backdrop"></div>
+    <div class="ku-modal-dialog">
+      <div class="kml-modal-step-input">
+        <div class="ku-modal-body">
+          <h4>Set metric</h4>
+          <p>Set the length/metric for "<strong><span id="kmlMetricCompName"></span></strong>":</p>
+          <div class="ku-metric-inline-row" style="display:flex; gap:8px; margin-bottom:12px;">
+            <input type="number" step="0.01" id="kmlMetricValue" class="ku-input" placeholder="Value" />
+            <select id="kmlMetricUnit" class="ku-select">
+              <option value="">--Unit--</option>
+              <option value="m">Meters</option>
+              <option value="km">Kilometers</option>
+              <option value="count">Count</option>
+              <option value="other">Other</option>
+            </select>
+          </div>
+          <textarea id="kmlMetricReason" placeholder="Why are you setting this metric?"></textarea>
+          <div class="ku-modal-error" id="kmlMetricReasonError">A value, unit, and reason are all required.</div>
+          <div class="ku-modal-actions">
+            <button type="button" class="ku-btn-secondary" id="kmlMetricCancelBtn">Cancel</button>
+            <button type="button" class="ku-btn-primary" id="kmlMetricConfirmBtn">Save</button>
+          </div>
+        </div>
+      </div>
+      <div class="kml-modal-loading ku-modal-loading">
+        <div class="ku-modal-spinner"></div>
+        <p>Saving metric...</p>
+      </div>
+      <div class="kml-modal-result ku-modal-result">
+        <div class="ku-modal-body" style="text-align:center;">
+          <span class="kml-modal-result-icon ku-modal-result-icon"></span>
+          <p class="kml-modal-result-message ku-modal-result-message"></p>
+          <div class="ku-modal-actions" style="justify-content:center;">
+            <button type="button" class="ku-btn-primary" id="kmlMetricCloseBtn">OK</button>
           </div>
         </div>
       </div>

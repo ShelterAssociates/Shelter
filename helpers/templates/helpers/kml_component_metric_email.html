@@ -20,7 +20,7 @@
         box-shadow: 0 6px 20px rgba(0, 0, 0, 0.12);
       }
       .header {
-        background: #1a9e5c;
+        background: #1a73e8;
         color: #ffffff;
         padding: 28px 36px;
       }
@@ -37,8 +37,8 @@
       }
       .details-box {
         margin-top: 24px;
-        background: #f2fbf6;
-        border-left: 8px solid #1a9e5c;
+        background: #f4f8ff;
+        border-left: 8px solid #1a73e8;
         border-radius: 8px;
         padding: 22px;
         color: #333;
@@ -46,6 +46,15 @@
       }
       .details-box div {
         margin-bottom: 6px;
+      }
+      .reason-box {
+        margin-top: 18px;
+        background: #f4f8ff;
+        border-left: 8px solid #1a73e8;
+        border-radius: 8px;
+        padding: 18px 22px;
+        color: #333;
+        word-break: break-word;
       }
       .footer {
         padding: 32px 36px;
@@ -71,38 +80,37 @@
           <table cellpadding="0" cellspacing="0" class="card">
             <tr>
               <td class="header">
-                <h2>KML File Uploaded</h2>
+                <h2>KML Component Metric Updated</h2>
               </td>
             </tr>
             <tr>
               <td class="body-content">
                 <p>Hello,</p>
                 <p>
-                  <strong>{{ uploaded_by }}</strong> uploaded a new KML file on the
-                  KML upload page.
+                  <strong>{{ updated_by }}</strong> set the metric for the
+                  <strong>{{ comp_name }}</strong> component
+                  on the KML upload page.
                 </p>
                 <div class="details-box">
-                  <div>Level: <strong>{{ level }}</strong></div>
                   <div>City: <strong>{{ city_name }}</strong></div>
                   <div>Administrative Ward: <strong>{{ administrative_ward }}</strong></div>
                   <div>Electoral Ward: <strong>{{ electoral_ward }}</strong></div>
                   <div>Slum: <strong>{{ slum_name }}</strong></div>
-                  <div>Uploaded by: <strong>{{ uploaded_by }}</strong></div>
-                  <div>Uploaded at: <strong>{{ timestamp }}</strong></div>
-                  {% if parsed %}
-                    <div>Parsed components: <strong>{{ parsed|join:", " }}</strong></div>
+                  <div>Component: <strong>{{ comp_name }}</strong></div>
+                  {% if old_value is not None %}
+                    <div>Old value: <strong>{{ old_value }} {{ old_unit }}{% if old_unit_label %} ({{ old_unit_label }}){% endif %}</strong></div>
+                    <div>New value: <strong>{{ value }} {{ unit }}{% if unit_label %} ({{ unit_label }}){% endif %}</strong></div>
+                  {% else %}
+                    <div>Value: <strong>{{ value }} {{ unit }}{% if unit_label %} ({{ unit_label }}){% endif %}</strong> <em>(new)</em></div>
                   {% endif %}
-                  {% if unparsed %}
-                    <div>Unparsed components: <strong>{{ unparsed|join:", " }}</strong></div>
-                  {% endif %}
+                  <div>Updated by: <strong>{{ updated_by }}</strong></div>
+                  <div>Updated at: <strong>{{ timestamp }}</strong></div>
                 </div>
-                {% if metric %}
-                  <div class="details-box" style="margin-top:14px;">
-                    <div>Metric provided: <strong>{{ metric.component }}</strong> = <strong>{{ metric.value }} {{ metric.unit }}</strong></div>
-                    <div>Reason: <strong>{{ metric.reason }}</strong></div>
-                  </div>
-                {% endif %}
-                <p class="muted">This is an automated notification.</p>
+                <div class="reason-box">
+                  Reason given:<br />
+                  <strong>{{ reason }}</strong>
+                </div>
+                <p class="muted">This is an automated notification — the reason above is not stored anywhere else.</p>
               </td>
             </tr>
             <tr>
