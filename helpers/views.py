@@ -21,6 +21,7 @@ from shelter import settings
 from sponsor.models import SponsorProject
 
 from .models import (
+    FormSubmission,
     OTPVerification,
     PhotoTypeItem,
     ReminderTracker,
@@ -76,11 +77,19 @@ def send_otp(request):
     data = json.loads(request.body)
     email = data.get("email")
     task = data.get("task", "Random Task")
-    logger.info("send_otp: processing OTP request for email=%s task=%s", email, task)
+    slum_id = data.get("slum_id")
+    logger.info("send_otp: processing OTP request for email=%s task=%s slum_id=%s", email, task, slum_id)
 
     if not email:
         logger.warning("send_otp: email missing in request payload")
         return JsonResponse({"status": "error", "message": "Email required"})
+
+    slum = None
+    if slum_id:
+        slum = Slum.objects.filter(id=slum_id).first()
+        if not slum:
+            logger.warning("send_otp: slum_id=%s not found", slum_id)
+            return JsonResponse({"status": "error", "message": "Slum not found"})
 
     record = OTPVerification.objects.filter(email=email, task=task).first()
     if record and (timezone.now() - record.created_at).seconds < 30:
@@ -105,6 +114,7 @@ def send_otp(request):
             "otp": hashed_otp,
             "expiry_time": expiry,
             "is_verified": False,
+            "slum": slum,
         },
     )
     logger.info(
@@ -159,7 +169,10 @@ def verify_otp(request):
     email = data.get("email")
     otp = data.get("otp")
     task = data.get("task", "FACTSHEET_DOWNLOAD")
-    logger.info("verify_otp: processing OTP verification for email=%s task=%s", email, task)
+    name = data.get("name", "")
+    mobile = data.get("mobile", "")
+    slum_id = data.get("slum_id")
+    logger.info("verify_otp: processing OTP verification for email=%s task=%s slum_id=%s", email, task, slum_id)
 
     session_key = f"otp_attempts_{email}_{task}"
     attempts = request.session.get(session_key, 0)
@@ -190,6 +203,13 @@ def verify_otp(request):
         logger.info("verify_otp: OTP expired for email=%s task=%s", email, task)
         return JsonResponse({"status": "expired"})
 
+    if slum_id and str(record.slum_id) != str(slum_id):
+        logger.warning(
+            "verify_otp: slum_id=%s does not match OTP record's slum_id=%s for email=%s task=%s",
+            slum_id, record.slum_id, email, task,
+        )
+        return JsonResponse({"status": "invalid"})
+
     input_hash = hashlib.sha256(otp.encode()).hexdigest()
 
     if record.otp != input_hash:
@@ -205,9 +225,21 @@ def verify_otp(request):
     record.is_verified = True
     record.save()
     request.session[session_key] = 0
-    # mark session as verified for factsheet download
-    request.session["rim_otp_verified"] = True
+    # mark session as verified for factsheet download, scoped to the specific slum
+    # so a verified session can only unlock the factsheet it was requested for
+    request.session["rim_otp_verified_slum_id"] = record.slum_id
     logger.info("verify_otp: OTP verified successfully for email=%s task=%s", email, task)
+
+    FormSubmission.objects.create(
+        name=name,
+        email=email,
+        mobile=mobile,
+        task=task,
+        slum=record.slum,
+        otp_verified=True,
+        ip_address=request.META.get("REMOTE_ADDR"),
+        user_agent=request.META.get("HTTP_USER_AGENT", ""),
+    )
 
     return JsonResponse({"status": "verified"})
 

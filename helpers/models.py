@@ -14,6 +14,9 @@ class OTPVerification(models.Model):
     is_verified = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now=True)
     expiry_time = models.DateTimeField()
+    slum = models.ForeignKey(
+        "master.Slum", null=True, blank=True, on_delete=models.SET_NULL
+    )
 
     class Meta:
         unique_together = ("email", "task")
@@ -29,6 +32,9 @@ class FormSubmission(models.Model):
     email = models.EmailField()
     mobile = models.CharField(max_length=15)
     task = models.CharField(max_length=50)
+    slum = models.ForeignKey(
+        "master.Slum", null=True, blank=True, on_delete=models.SET_NULL
+    )
     extra_data = JSONField(blank=True, null=True)
     otp_verified = models.BooleanField(default=False)
     ip_address = models.GenericIPAddressField(null=True, blank=True)

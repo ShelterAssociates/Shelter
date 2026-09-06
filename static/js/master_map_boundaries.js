@@ -452,6 +452,7 @@ $(document).on("click", "#rimSendOTP", function () {
     var name = $("#rimName").val().trim();
     var email = $("#rimEmail").val().trim();
     var mobile = $("#rimMobile").val().trim();
+    var slumId = $("#rimDownloadForm").attr("data-slum-id");
 
     /* ── Validations ── */
     if (!name) { _showOtpInlineError("Please enter your name."); return; }
@@ -485,7 +486,8 @@ $(document).on("click", "#rimSendOTP", function () {
         body: JSON.stringify({
             email: email,
             mobile: mobile,
-            task: "FACTSHEET_DOWNLOAD"
+            task: "FACTSHEET_DOWNLOAD",
+            slum_id: slumId
         })
     })
         .then(function (res) { return res.json(); })
@@ -537,7 +539,8 @@ $(document).on("click", "#rimVerifyOTP", function () {
             email: email,
             mobile: mobile,
             otp: otp,
-            task: "FACTSHEET_DOWNLOAD"
+            task: "FACTSHEET_DOWNLOAD",
+            slum_id: slumId
         })
     })
         .then(function (res) { return res.json(); })

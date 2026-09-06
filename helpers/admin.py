@@ -12,16 +12,16 @@ from .models import (
 
 @admin.register(OTPVerification)
 class OTPVerificationAdmin(admin.ModelAdmin):
-    list_display = ("email", "task", "is_verified", "created_at", "expiry_time")
+    list_display = ("email", "task", "slum", "is_verified", "created_at", "expiry_time")
     list_filter = ("task", "is_verified")
-    search_fields = ("email", "task")
+    search_fields = ("email", "task", "slum__name")
 
 
 @admin.register(FormSubmission)
 class FormSubmissionAdmin(admin.ModelAdmin):
-    list_display = ("name", "email", "mobile", "task", "otp_verified", "created_at")
+    list_display = ("name", "email", "mobile", "task", "slum", "otp_verified", "created_at")
     list_filter = ("task", "otp_verified")
-    search_fields = ("name", "email", "mobile")
+    search_fields = ("name", "email", "mobile", "slum__name")
 
 
 @admin.register(ReminderTracker)
