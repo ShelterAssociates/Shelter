@@ -77,7 +77,15 @@ function onEachFeature(feature, layer) {
         }
         layer.on('mouseover', function (e) { this.openPopup(); });
         layer.on('mouseout', function (e) { this.closePopup(); });
-        layer.on('click', function (e) { household_details(name); });
+        layer.on('click', function (e) {
+            if ('Level' in feature.properties) {
+                if (typeof _wbSelectWard === 'function') {
+                    _wbSelectWard(name);
+                }
+            } else {
+                household_details(name);
+            }
+        });
     }
 }
 
