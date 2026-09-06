@@ -113,9 +113,9 @@ def rim_factsheet_pdf_fetch(request, slum_id):
     )
     is_internal = internal_token == settings.INTERNAL_TEAM_SECRET
 
-    # 🔐 If not internal, enforce OTP
+    # 🔐 If not internal, enforce OTP scoped to this specific slum
     if not is_internal:
-        if not request.session.get("rim_otp_verified"):
+        if str(request.session.get("rim_otp_verified_slum_id")) != str(slum_id):
             return HttpResponseForbidden("OTP verification required")
 
     try:
@@ -140,7 +140,7 @@ def rim_factsheet_pdf_fetch(request, slum_id):
 
             # Only invalidate OTP session for public users
             if not is_internal:
-                request.session["rim_otp_verified"] = False
+                request.session["rim_otp_verified_slum_id"] = None
 
             return response
 
