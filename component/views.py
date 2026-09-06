@@ -208,6 +208,18 @@ slum_list = [
     "2023"
 ]
 
+# Slums treated as "Towns" (Nagar Panchayat) rather than plain slums:
+# "Slum boundary" renders as "Town boundary", RHS output substitutes
+# town_name for slum_name/admin_ward, and MLG-only project details are
+# exposed. See usages below and in get_kobo_RHS_data().
+TOWN_SLUM_IDS = ["1971", "1972", "2023"]
+
+# Slums for which the "Status of sanitation (post SBM)" section is hidden
+# entirely (filter panel + RIM field data). Kept separate from
+# TOWN_SLUM_IDS even though the ids currently match — a conceptually
+# distinct rule.
+HIDE_POST_SBM_SLUM_IDS = ["1971", "1972", "2023"]
+
 
 @staff_member_required
 @permission_required("component.can_upload_KML", raise_exception=True)
@@ -504,6 +516,8 @@ def get_component(request, slum_id):
             .select_related("section")
             .order_by("section__order", "order")
         )
+    if slum_id in HIDE_POST_SBM_SLUM_IDS:
+        metadata_qs = metadata_qs.exclude(section__name="Status of sanitation (post SBM)")
     metadata = list(metadata_qs)
     _log_component_timing(
         "metadata_lookup",
@@ -600,7 +614,7 @@ def get_component(request, slum_id):
     for metad in metadata:
         component = {}
         component["name"] = metad.name
-        if component["name"] == "Slum boundary" and slum_id in ["1971", "1972"]:
+        if component["name"] == "Slum boundary" and slum_id in TOWN_SLUM_IDS:
             component["name"] = "Town boundary"
         component["level"] = metad.level
         component["section"] = metad.section.name
@@ -780,10 +794,10 @@ def get_kobo_RHS_data(request, slum_id, house_num):
 
     is_house_part = any(c.isalpha() for c in str(house_num))
 
-    if slum_id not in ["1971", "1972"]:
+    if slum_id not in TOWN_SLUM_IDS:
         output["admin_ward"] = slum.electoral_ward.administrative_ward.name
 
-    if slum_id not in ["1971", "1972"]:
+    if slum_id not in TOWN_SLUM_IDS:
         output["slum_name"] = slum.name
     else:
         output["town_name"] = slum.name
@@ -792,7 +806,7 @@ def get_kobo_RHS_data(request, slum_id, house_num):
 
     if (
         request.user.is_superuser or request.user.groups.filter(name="MLG").exists()
-    ) and slum_id in ["1971", "1972"]:
+    ) and slum_id in TOWN_SLUM_IDS:
         project_details = True
         output.update(
             get_kobo_RHS_list(
@@ -1863,7 +1877,7 @@ def _build_component_data_from_db(slum, slum_id, export_selection, selected_sect
     }
     query_names = set(selected_names)
 
-    if slum_id in ["1971", "1972"] and "Town boundary" in query_names:
+    if slum_id in TOWN_SLUM_IDS and "Town boundary" in query_names:
         query_names.add("Slum boundary")
 
     if not selected_sections and not selected_names:
@@ -1895,7 +1909,7 @@ def _build_component_data_from_db(slum, slum_id, export_selection, selected_sect
         section_name = metadata.section.name
         item_name = (
             "Town boundary"
-            if metadata.name == "Slum boundary" and slum_id in ["1971", "1972"]
+            if metadata.name == "Slum boundary" and slum_id in TOWN_SLUM_IDS
             else metadata.name
         )
 
