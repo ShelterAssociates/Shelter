@@ -435,9 +435,19 @@ function _wbUpdateFilterCounts() {
 function _wbUpdateActiveLabel() {
     var label = document.getElementById("wb-active-label");
     var boundaryWrap = document.getElementById("wb-boundary-toggle-wrap");
+    var loadingNote = document.getElementById("wb-ward-loading-note");
 
     if (boundaryWrap) {
         boundaryWrap.style.display = _wb.activeWardId ? "flex" : "none";
+    }
+
+    // A ward can be selected (map click or chip click) before
+    // `/component/get-ward-wise-data/` has resolved — until then
+    // `_wb.wardIds` is still empty, so nothing is ward-scoped yet. Surface
+    // that instead of leaving the click looking like it did nothing.
+    if (loadingNote) {
+        loadingNote.style.display =
+            (_wb.activeWardId && _wb.wardIds.length === 0) ? "inline-flex" : "none";
     }
 
     if (!label) { return; }
@@ -529,6 +539,10 @@ function _wbEnsureDOM() {
         'Show ward boundary' +
         '</label>' +
         '<span id="wb-active-label" style="font-size:12px; font-weight:600; color:#1a5276;"></span>' +
+        '<span id="wb-ward-loading-note" style="display:none; align-items:center; gap:5px;' +
+        ' font-size:11px; font-style:italic; color:#7f8c9a;">' +
+        '<span class="wb-mini-spinner"></span>Ward-wise breakdown loading…' +
+        '</span>' +
         '</div>' +
         '<div id="wb-ward-strip" style="display:none; gap:6px; flex-wrap:wrap; margin-top:6px;"></div>' +
         '</div>' +
@@ -620,6 +634,12 @@ function _wbEnsureDOM() {
         $("head").append(
             '<style id="wb-loading-style">' +
             '@keyframes wb-loading-slide{0%{transform:translateX(-60%)}50%{transform:translateX(110%)}100%{transform:translateX(-60%)}}' +
+            '@keyframes wb-mini-spin{to{transform:rotate(360deg)}}' +
+            '#wb-ward-loading-note .wb-mini-spinner{' +
+            'display:inline-block;width:9px;height:9px;border-radius:50%;' +
+            'border:1.5px solid #c8d8ea;border-top-color:#2471a3;' +
+            'animation:wb-mini-spin .7s linear infinite;' +
+            '}' +
             '</style>'
         );
     }
@@ -628,11 +648,8 @@ function _wbEnsureDOM() {
     _wbSyncPanelToggle();
 }
 
-function _onWardChipClick() {
-    var wid = this.getAttribute("data-wid");
-    if (!wid) { return; }
-
-    _wb.activeWardId = String(wid);
+function _wbSelectWard(wardId) {
+    _wb.activeWardId = String(wardId);
 
     // Step 1: Remove ward boundary overlays only
     _wbClearOverlaysOnly();
@@ -643,6 +660,12 @@ function _onWardChipClick() {
     // Step 3: Re-draw ward boundary strip + overlay
     _wbRenderWardStrip();
     _wbUpdateFilterCounts();
+}
+
+function _onWardChipClick() {
+    var wid = this.getAttribute("data-wid");
+    if (!wid) { return; }
+    _wbSelectWard(wid);
 }
 
 function _wbNormalizeWardResponse(data) {
@@ -966,7 +989,14 @@ function _showComponentForActiveWard(componentName) {
                 var isAdmin = childItem.shape.properties &&
                     childItem.shape.properties.Level === "Admin";
                 if (isAdmin) {
-                    filteredShapes.push(childItem.shape);
+                    // Only keep the active ward's own boundary — other
+                    // wards' boundaries must hide when one is selected.
+                    var adminKeyLine = _wbNormalizeHouseKey(
+                        childItem.housenumber !== undefined ? childItem.housenumber : ""
+                    );
+                    if (adminKeyLine === _wbNormalizeHouseKey(_wb.activeWardId)) {
+                        filteredShapes.push(childItem.shape);
+                    }
                     return;
                 }
 
@@ -998,8 +1028,14 @@ function _showComponentForActiveWard(componentName) {
                     childItem.shape.properties.Level === "Admin";
 
                 if (isAdmin) {
-                    // always include admin boundary
-                    filteredShapes.push(childItem.shape);
+                    // Only keep the active ward's own boundary — other
+                    // wards' boundaries must hide when one is selected.
+                    var adminKey = _wbNormalizeHouseKey(
+                        childItem.housenumber !== undefined ? childItem.housenumber : ""
+                    );
+                    if (adminKey === _wbNormalizeHouseKey(_wb.activeWardId)) {
+                        filteredShapes.push(childItem.shape);
+                    }
                     return;
                 }
 
