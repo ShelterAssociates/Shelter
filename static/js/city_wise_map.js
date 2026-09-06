@@ -462,7 +462,9 @@ function generate_filter(globalJsonData, slumId, result) {
             var chkcolor = v1["blob"]["polycolor"];
             var inner_label = Object.keys(globalJsonData).length > 0 ? globalJsonData[k1] : k1;
             var metric = v1["metric"];
-            var child_length = metric ? (metric.value + " " + metric.unit) : v1["child"].length;
+            var child_length = metric
+                ? (metric.unit === "count" ? metric.value : metric.value + " " + metric.unit)
+                : v1["child"].length;
             var icon = v1["icon"] || "";
             var show_metric = v1["show_metric"] !== false;
 
