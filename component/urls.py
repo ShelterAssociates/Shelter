@@ -12,6 +12,11 @@ urlpatterns = [
         get_component_api.get_component_api,
         name="get_component",
     ),
+    url(
+        r"^get_component_geometry/(?P<slum_id>\d+)$",
+        get_component_api.get_component_geometry_api,
+        name="get_component_geometry",
+    ),
     url(r"^delete_component/$", views.delete_component, name="delete_component"),
     url(
         r"^set_component_metric/$",

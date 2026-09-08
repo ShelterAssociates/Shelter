@@ -28,6 +28,216 @@ var currentSlumComponentData = {};
    and consumed by initWardBreakdownPanel. */
 var _wardPrefetch = null;
 
+/*
+ * Geometry hydration.
+ *
+ * /component/get_component/<id>?geom=panel omits the map geometry of large
+ * layers, so the panel renders from ~0.6 MB instead of ~11 MB. Those layers
+ * arrive here afterwards, one request per layer, and are merged back into
+ * currentSlumComponentData. Nothing is lost: the geometry is byte-identical to
+ * what the full endpoint returns, just delivered behind the panel.
+ *
+ * Anything that needs a layer's geometry calls whenLayerReady(name) and acts in
+ * the callback, so no feature breaks while hydration is still in flight.
+ */
+var GEOMETRY_CONCURRENCY = 2;
+
+var _geom = {
+    slumId: null,
+    pending: {},   /* layer name -> {promise, resolve} */
+    loaded: {},    /* layer name -> true once merged   */
+    queue: [],
+    active: 0
+};
+
+/* Locate an item entry by name, whichever section it lives in. */
+function _findComponentEntry(layerName) {
+    var found = null;
+    $.each(currentSlumComponentData || {}, function (_, sectionItems) {
+        $.each(sectionItems || {}, function (itemName, itemData) {
+            if (itemName === layerName) { found = itemData; return false; }
+        });
+        if (found) { return false; }
+    });
+    return found;
+}
+
+/*
+ * Resolves once `layerName` has its geometry. Already-present layers resolve
+ * synchronously on the next tick; a deferred layer is promoted to the front of
+ * the queue so an explicit request is served before background prefetching.
+ */
+function whenLayerReady(layerName) {
+    var entry = _findComponentEntry(layerName);
+
+    if (!entry || !entry.geometry_deferred || _geom.loaded[layerName]) {
+        return Promise.resolve(entry);
+    }
+
+    if (!_geom.pending[layerName]) {
+        _geomTrack(layerName);
+    }
+
+    var idx = _geom.queue.indexOf(layerName);
+    if (idx > 0) {
+        _geom.queue.splice(idx, 1);
+        _geom.queue.unshift(layerName);
+    }
+    _geomPump();
+
+    return _geom.pending[layerName].promise;
+}
+
+function _geomTrack(layerName) {
+    var resolve;
+    var promise = new Promise(function (res) { resolve = res; });
+    _geom.pending[layerName] = { promise: promise, resolve: resolve };
+    if (_geom.queue.indexOf(layerName) === -1) { _geom.queue.push(layerName); }
+}
+
+/*
+ * Queue every deferred layer for this slum. Structure goes first because the
+ * `houses` lookup is built from it, and household search, the timeline
+ * highlighter and every Filter/Sponsor layer resolve through `houses`.
+ * The rest follow largest-first, so the heavy layers are in hand early.
+ */
+function initGeometryHydration(slumId, componentData) {
+    _geom = { slumId: String(slumId), pending: {}, loaded: {}, queue: [], active: 0 };
+
+    var deferred = [];
+    $.each(componentData || {}, function (_, sectionItems) {
+        $.each(sectionItems || {}, function (itemName, itemData) {
+            if (itemData && itemData.geometry_deferred) {
+                deferred.push({ name: itemName, count: itemData.child_count || 0 });
+            }
+        });
+    });
+
+    deferred.sort(function (a, b) {
+        if (_isStructureLayerName(a.name) !== _isStructureLayerName(b.name)) {
+            return _isStructureLayerName(a.name) ? -1 : 1;
+        }
+        return b.count - a.count;
+    });
+
+    deferred.forEach(function (layer) { _geomTrack(layer.name); });
+    _geomPump();
+}
+
+function _isStructureLayerName(name) {
+    var n = String(name || "").toLowerCase();
+    return n === "structure" || n === "housebaselayer" || n === "house base layer";
+}
+
+function _geomPump() {
+    while (_geom.active < GEOMETRY_CONCURRENCY && _geom.queue.length > 0) {
+        _geomFetch(_geom.queue.shift());
+    }
+}
+
+function _geomFetch(layerName) {
+    var slumId = _geom.slumId;
+    _geom.active++;
+
+    fetch("/component/get_component_geometry/" + encodeURIComponent(slumId) +
+          "?layers=" + encodeURIComponent(layerName))
+        .then(function (res) { return res.json(); })
+        .then(function (data) {
+            /* Ignore a response for a slum the user has already navigated away from. */
+            if (String(_geom.slumId) !== String(slumId)) { return; }
+            _geomMerge(layerName, (data && data[layerName]) || []);
+        })
+        .catch(function (err) {
+            if (String(_geom.slumId) !== String(slumId)) { return; }
+            console.warn("Geometry load failed for layer " + layerName + ":", err);
+            /* Resolve anyway so awaiting callers are never left hanging. */
+            _geomResolve(layerName);
+        })
+        .then(function () {
+            if (String(_geom.slumId) !== String(slumId)) { return; }
+            _geom.active--;
+            _geomPump();
+        });
+}
+
+function _geomMerge(layerName, child) {
+    var entry = _findComponentEntry(layerName);
+    if (!entry) { _geomResolve(layerName); return; }
+
+    entry.child = child;
+    delete entry.geometry_deferred;
+    _geom.loaded[layerName] = true;
+
+    /* Rebuild the layer object so its next show() materialises the real
+       geometry rather than the empty placeholder it was created with. */
+    if (parse_component[layerName]) {
+        parse_component[layerName].child = child;
+    }
+
+    if (_isStructureLayerName(layerName)) {
+        _populateHousesFrom(child);
+        setHouseholdSearchEnabled(true);
+        renderKMLDownloadButton();
+    }
+
+    /* If the user ticked this layer while it was still loading, draw it now. */
+    var checkbox = $("[name=chk1]").filter(function () { return $(this).val() === layerName; });
+    if (checkbox.length && checkbox.is(":checked")) {
+        _showCheckedLayer(layerName);
+    }
+
+    _geomResolve(layerName);
+}
+
+function _geomResolve(layerName) {
+    if (_geom.pending[layerName]) {
+        _geom.pending[layerName].resolve(_findComponentEntry(layerName));
+    }
+}
+
+/* Draw a ticked layer, honouring an active ward selection. */
+function _showCheckedLayer(layerName) {
+    if (_wb.activeWardId) {
+        _showComponentForActiveWard(layerName);
+    } else if (parse_component[layerName]) {
+        parse_component[layerName].show();
+    }
+}
+
+function _populateHousesFrom(child) {
+    for (var i = 0; i < (child || []).length; i++) {
+        var item = child[i];
+        if (!item || !item.shape) { continue; }
+        item.shape["properties"] = { name: item.housenumber };
+        houses[item.housenumber] = item.shape;
+    }
+}
+
+/* Marks a single filter row as awaiting its geometry. */
+function _setRowLoading(layerName, loading) {
+    var row = $("[name=chk1]").filter(function () { return $(this).val() === layerName; })
+        .closest(".wb-filter-row");
+    if (!row.length) { return; }
+    row.find(".wb-row-spinner").remove();
+    if (loading) {
+        row.find(".wb-filter-label").after('<span class="wb-row-spinner">&nbsp;\u2026</span>');
+    }
+}
+
+/* Household search depends on `houses`, which is built from the Structure
+   geometry, so the input stays disabled until that layer lands. */
+function setHouseholdSearchEnabled(enabled) {
+    var input = document.getElementById("household-search-input");
+    var note = document.getElementById("household-search-loading");
+    if (input) {
+        input.disabled = !enabled;
+        input.placeholder = enabled
+            ? "Search household number..."
+            : "Loading household data...";
+    }
+    if (note) { note.style.display = enabled ? "none" : "block"; }
+}
+
 /* LRU of parsed /component/get_component/ payloads so revisiting a slum skips
    the transfer and the JSON.parse. Payloads reach ~10 MB, hence the tight cap. */
 var SLUM_CACHE_MAX = 2;
@@ -319,8 +529,11 @@ function slum_data_fetch(slumId) {
     var cachedComponent = _slumCacheGet(slumId);
 
     Promise.all([
+        /* ?geom=panel omits the geometry of large map layers, taking the panel
+           payload from ~11 MB to ~0.6 MB. initGeometryHydration() fetches the
+           rest immediately afterwards. */
         cachedComponent || $.ajax({
-            url: "/component/get_component/" + slumId,
+            url: "/component/get_component/" + slumId + "?geom=panel",
             type: "GET",
             contenttype: "json",
             headers: { "Force-Refresh-Flag": "0" }
@@ -557,9 +770,12 @@ function generate_filter(globalJsonData, slumId, result) {
             var chkcolor = v1["blob"]["polycolor"];
             var inner_label = Object.keys(globalJsonData).length > 0 ? globalJsonData[k1] : k1;
             var metric = v1["metric"];
+            /* _entryFeatureCount, not child.length: a deferred layer has an
+               empty child until its geometry arrives, but child_count is
+               already correct, so the badge never shows a wrong number. */
             var child_length = metric
                 ? (metric.unit === "count" ? metric.value : metric.value + " " + metric.unit)
-                : v1["child"].length;
+                : _entryFeatureCount(v1);
             var icon = v1["icon"] || "";
             var show_metric = v1["show_metric"] !== false;
 
@@ -616,6 +832,27 @@ function generate_filter(globalJsonData, slumId, result) {
     autoSelectBoundaryCheckbox();
     pinSponsorToBottom(slumId);
     initWardBreakdownPanel(slumId);
+
+    /* Panel is now usable; pull the deferred geometry in behind it. */
+    setHouseholdSearchEnabled(!_hasDeferredStructure());
+    initGeometryHydration(slumId, result);
+}
+
+
+/* True when the Structure layer's geometry has not arrived yet, meaning the
+   `houses` lookup is still empty. */
+function _hasDeferredStructure() {
+    var deferred = false;
+    $.each(currentSlumComponentData || {}, function (_, sectionItems) {
+        $.each(sectionItems || {}, function (itemName, itemData) {
+            if (_isStructureLayerName(itemName) && itemData && itemData.geometry_deferred) {
+                deferred = true;
+                return false;
+            }
+        });
+        if (deferred) { return false; }
+    });
+    return deferred;
 }
 
 
@@ -638,11 +875,15 @@ function checkSingleGroup(singlechk) {
 
     var chkchild = $(singlechk).val();
     if ($(singlechk).is(":checked")) {
-        // If a ward is active, re-render the component filtered to that ward
-        if (_wb.activeWardId) {
-            _showComponentForActiveWard(chkchild);
+        var entry = _findComponentEntry(chkchild);
+        if (entry && entry.geometry_deferred) {
+            /* Geometry still in flight. Promote this layer to the front of the
+               queue and mark just this row as busy; _geomMerge draws it as soon
+               as it lands, so the rest of the panel stays responsive. */
+            _setRowLoading(chkchild, true);
+            whenLayerReady(chkchild).then(function () { _setRowLoading(chkchild, false); });
         } else {
-            parse_component[chkchild].show();
+            _showCheckedLayer(chkchild);
         }
     } else {
         parse_component[chkchild].hide();
@@ -824,6 +1065,13 @@ function fullResetHouseholdSearch() {
 }
 
 
+/* Feature count for an item, whether or not its geometry has arrived. */
+function _entryFeatureCount(entry) {
+    if (!entry) { return 0; }
+    if (entry.child && entry.child.length) { return entry.child.length; }
+    return entry.child_count || 0;
+}
+
 function _findStructureEntry() {
     var structureEntry = null;
 
@@ -841,7 +1089,10 @@ function _findStructureEntry() {
                 return false;
             }
 
-            if (!structureEntry && itemData.child && itemData.child.length && itemData.child[0].housenumber !== undefined) {
+            if (!structureEntry && itemData.geometry_deferred && itemData.child_count) {
+                structureEntry = itemData;
+            } else if (!structureEntry && itemData.child && itemData.child.length &&
+                       itemData.child[0].housenumber !== undefined) {
                 structureEntry = itemData;
             }
         });
@@ -985,8 +1236,11 @@ function renderKMLDownloadButton() {
         return;
     }
 
+    /* child_count is authoritative: with ?geom=panel the Structure geometry
+       arrives later, so `child` is briefly empty and testing it would hide the
+       GIS Export button permanently. */
     var structureEntry = _findStructureEntry();
-    if (!structureEntry || !structureEntry.child || !structureEntry.child.length) {
+    if (!structureEntry || !_entryFeatureCount(structureEntry)) {
         $("#kml-btn-slot").hide().html("");
         updateActionButtonRow();
         return;
@@ -1730,7 +1984,7 @@ $(document).off("click.refreshYes", "#refreshConfirmYes")
         );
 
         $.ajax({
-            url: "/component/get_component/" + slumId,
+            url: "/component/get_component/" + slumId + "?geom=panel",
             type: "GET",
             headers: { "Force-Refresh-Flag": "1" },
             success: function (result) {

@@ -251,7 +251,10 @@ function _wbComputeCountsForWard(wardId) {
 
                 // No server-side ward assignment loaded yet — fall back to
                 // the total feature count so the panel still shows something.
-                result[key] = (itemData.child || []).length;
+                // child_count covers layers whose geometry has not arrived yet.
+                result[key] = (itemData.child && itemData.child.length)
+                    ? itemData.child.length
+                    : (itemData.child_count || 0);
 
             } else {
                 // ── Filter/Sponsor type: match via wardSet house numbers ──
@@ -961,6 +964,16 @@ function _getGeometryCentroid(shape) {
 
 function _showComponentForActiveWard(componentName) {
     if (!window._wardScopedLayers) window._wardScopedLayers = {};
+
+    /* Ward scoping reads itemData.child directly, so a layer whose geometry is
+       still in flight must wait for it rather than silently scoping nothing. */
+    var entry = typeof _findComponentEntry === "function" ? _findComponentEntry(componentName) : null;
+    if (entry && entry.geometry_deferred) {
+        whenLayerReady(componentName).then(function () {
+            if (_wb.activeWardId) { _showComponentForActiveWard(componentName); }
+        });
+        return;
+    }
 
     // Remove any previous ward-scoped layer for this component
     if (window._wardScopedLayers[componentName]) {

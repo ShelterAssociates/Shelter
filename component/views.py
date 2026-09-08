@@ -220,6 +220,14 @@ TOWN_SLUM_IDS = ["1971", "1972", "2023"]
 # distinct rule.
 HIDE_POST_SBM_SLUM_IDS = ["1971", "1972", "2023"]
 
+# Map layers whose geometry is always sent inline, even in ?geom=panel mode.
+# They are only a handful of features each and the panel is unusable without
+# them: the boundary is auto-selected on open, and "Admin Ward Area" backs the
+# ward chips and the ward overlay. Everything else is fetched on demand by
+# get_component_geometry. Names are the display names, so "Town boundary" (the
+# TOWN_SLUM_IDS rename of "Slum boundary") is listed too.
+INLINE_GEOMETRY_NAMES = {"Slum boundary", "Town boundary", "Admin Ward Area"}
+
 
 @staff_member_required
 @permission_required("component.can_upload_KML", raise_exception=True)
@@ -444,6 +452,11 @@ def get_component(request, slum_id):
     request_started_at = pytime.perf_counter()
     request_started_queries = len(connection.queries)
 
+    # ?geom=panel returns metadata and counts only for large map layers; their
+    # geometry comes from get_component_geometry. Omitting it makes no
+    # difference to any value the panel displays.
+    panel_only = request.GET.get("geom") == "panel"
+
     slum_lookup_started_at = pytime.perf_counter()
     slum_lookup_started_queries = len(connection.queries)
     slum = get_object_or_404(
@@ -627,13 +640,23 @@ def get_component(request, slum_id):
         component["child"] = []
 
         if metad.type == "C":
-            for comp in component_map.get(metad.id, []):
-                component["child"].append(
-                    {
-                        "housenumber": comp.housenumber,
-                        "shape": json.loads(comp.shape.json),
-                    }
-                )
+            comps = component_map.get(metad.id, [])
+            component["child_count"] = len(comps)
+
+            # In panel mode the geometry for large layers is left out and
+            # fetched separately by get_component_geometry, so the panel can
+            # render without waiting on ~35k GeoJSON features. Skipping the
+            # json.loads below is also what makes panel mode cheap to compute.
+            if panel_only and component["name"] not in INLINE_GEOMETRY_NAMES:
+                component["geometry_deferred"] = True
+            else:
+                for comp in comps:
+                    component["child"].append(
+                        {
+                            "housenumber": comp.housenumber,
+                            "shape": json.loads(comp.shape.json),
+                        }
+                    )
 
             if metad.show_metric:
                 manual = manual_metrics.get(metad.id)
@@ -683,8 +706,12 @@ def get_component(request, slum_id):
             else:
                 component["child"] = sponsor_houses
 
-        if len(component["child"]) > 0:
-            component["count"] = len(component["child"])
+        # child_count is set for type C (and equals len(child) unless the
+        # geometry was deferred); other types have no deferral, so fall back to
+        # the child list itself.
+        child_count = component.get("child_count", len(component["child"]))
+        if child_count > 0:
+            component["count"] = child_count
             lstcomponent.append(component)
 
     build_started_at = pytime.perf_counter()
@@ -838,6 +865,81 @@ def get_kobo_RHS_data(request, slum_id, house_num):
     output["FFReport"] = project_details
 
     return HttpResponse(json.dumps(output), content_type="application/json")
+
+
+def get_component_geometry(request, slum_id):
+    """Return the map geometry for one or more component layers.
+
+    Companion to `get_component(..., ?geom=panel)`, which omits the geometry of
+    large layers so the filter panel can render immediately. The client then
+    requests those layers here, in the background or when one is ticked.
+
+    Layers are named with their *display* name, matching the keys the panel was
+    built from, so "Town boundary" resolves to the "Slum boundary" metadata for
+    the slums in TOWN_SLUM_IDS.
+
+    Query params:
+        layers - comma-separated display names. Required.
+
+    Response:
+        {"<display name>": [{"housenumber": ..., "shape": {GeoJSON}}, ...], ...}
+
+    Geometry is returned exactly as stored - full coordinate precision, no
+    simplification.
+    """
+    slum = get_object_or_404(Slum, pk=slum_id)
+
+    requested = [
+        name.strip()
+        for name in (request.GET.get("layers") or "").split(",")
+        if name.strip()
+    ]
+    if not requested:
+        return JsonResponse({"error": "layers is required"}, status=400)
+
+    # Same visibility rules as get_component, so a layer that is hidden there
+    # can never be reached through this endpoint.
+    if slum_id in slum_list:
+        metadata_qs = Metadata.objects.filter(visible=True, type="C").exclude(name="Shops")
+    else:
+        metadata_qs = Metadata.objects.filter(visible=True, type="C").exclude(name="Shop")
+    if slum_id in HIDE_POST_SBM_SLUM_IDS:
+        metadata_qs = metadata_qs.exclude(
+            section__name="Status of sanitation (post SBM)"
+        )
+
+    is_town_slum = slum_id in TOWN_SLUM_IDS
+    metadata_by_display_name = {}
+    for metad in metadata_qs.select_related("section"):
+        display_name = metad.name
+        if display_name == "Slum boundary" and is_town_slum:
+            display_name = "Town boundary"
+        metadata_by_display_name[display_name] = metad
+
+    wanted = {
+        name: metadata_by_display_name[name]
+        for name in requested
+        if name in metadata_by_display_name
+    }
+
+    payload = {name: [] for name in wanted}
+    if wanted:
+        components = (
+            slum.components.filter(metadata_id__in=[m.id for m in wanted.values()])
+            .select_related("metadata")
+            .order_by("metadata__order", "housenumber")
+        )
+        display_name_by_metadata_id = {m.id: name for name, m in wanted.items()}
+        for comp in components:
+            display_name = display_name_by_metadata_id[comp.metadata_id]
+            payload[display_name].append(
+                {
+                    "housenumber": comp.housenumber,
+                    "shape": json.loads(comp.shape.json),
+                }
+            )
+
+    return JsonResponse(payload)
 
 
 # @user_passes_test(lambda u: u.is_superuser)
