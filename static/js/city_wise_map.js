@@ -24,6 +24,40 @@ var parse_component = {};
 var globalJsonData = {};
 var currentSlumComponentData = {};
 
+/* In-flight /component/get-ward-wise-data/ request, started in slum_data_fetch
+   and consumed by initWardBreakdownPanel. */
+var _wardPrefetch = null;
+
+/* LRU of parsed /component/get_component/ payloads so revisiting a slum skips
+   the transfer and the JSON.parse. Payloads reach ~10 MB, hence the tight cap. */
+var SLUM_CACHE_MAX = 2;
+var _slumCache = { order: [], data: {} };
+
+function _slumCacheGet(slumId) {
+    var key = String(slumId);
+    var entry = _slumCache.data[key];
+    if (!entry) { return null; }
+    _slumCache.order.splice(_slumCache.order.indexOf(key), 1);
+    _slumCache.order.push(key);
+    return entry;
+}
+
+function _slumCachePut(slumId, payload) {
+    var key = String(slumId);
+    if (!_slumCache.data[key]) { _slumCache.order.push(key); }
+    _slumCache.data[key] = payload;
+    while (_slumCache.order.length > SLUM_CACHE_MAX) {
+        delete _slumCache.data[_slumCache.order.shift()];
+    }
+}
+
+function _slumCacheEvict(slumId) {
+    var key = String(slumId);
+    var idx = _slumCache.order.indexOf(key);
+    if (idx !== -1) { _slumCache.order.splice(idx, 1); }
+    delete _slumCache.data[key];
+}
+
 var modelsection = {
     "General": "General information",
     "Toilet": "Status of sanitation (pre SBM)",
@@ -35,6 +69,9 @@ var modelsection = {
 };
 
 var TYPE_COMPONENT = { C: "Component", S: "Sponsor", F: "Filter" };
+
+/* See the L.Map construction in initMap(). */
+var MAP_PREFER_CANVAS = true;
 
 /* GIS export panel is bulky (buttons + CSV/email options), so it's
    collapsed by default; state persists across re-renders since
@@ -172,7 +209,16 @@ function initMap() {
     var cityName = $("#city_name").val();
     var pos = center_data[cityName] || new L.LatLng(18.640083, 73.825560);
 
-    map = new L.Map("map", { center: pos, zoom: 12, zoomSnap: 0.25, markerZoomAnimation: false });
+    /* Canvas instead of one SVG <path> per feature: a slum's Structure layer can
+       be 11k+ polygons. Markers stay in the DOM either way. Set to false to go
+       back to SVG if rendering or hover behaviour ever looks wrong. */
+    map = new L.Map("map", {
+        center: pos,
+        zoom: 12,
+        zoomSnap: 0.25,
+        markerZoomAnimation: false,
+        preferCanvas: MAP_PREFER_CANVAS
+    });
 
     if (["Pune District", "Nilgiri District"].includes(cityName)) {
         map.setZoom(9);
@@ -259,15 +305,31 @@ function slum_data_fetch(slumId) {
         '<div id="loading-img"></div></div>'
     );
 
+    /* Kicked off here rather than after the panel renders. Deliberately not in
+       the Promise.all below, which would make the panel wait on it. */
+    _wardPrefetch = {
+        slumId: String(slumId),
+        promise: fetch("/component/get-ward-wise-data/?slum_id=" + encodeURIComponent(String(slumId)))
+            .then(function (r) { return r.json(); })
+    };
+    /* Suppresses an unhandled rejection if this fails before
+       initWardBreakdownPanel attaches the real handler. */
+    _wardPrefetch.promise.catch(function () { });
+
+    var cachedComponent = _slumCacheGet(slumId);
+
     Promise.all([
-        $.ajax({
+        cachedComponent || $.ajax({
             url: "/component/get_component/" + slumId,
             type: "GET",
             contenttype: "json",
             headers: { "Force-Refresh-Flag": "0" }
         }),
+        /* Never cached: generate_RIM() deletes each entry's `ctb_name` as it
+           builds the header, so a replayed copy loses the toilet-block names. */
         $.ajax({ url: "/component/get_kobo_RIM_data/" + slumId, type: "GET", contenttype: "json" })
     ]).then(function (result) {
+        if (!cachedComponent) { _slumCachePut(slumId, result[0]); }
         global_slum_id = slumId;
         var componentData = result[0];
         const skipStatuses = ["inactive", "sra", "road_widening"];
@@ -278,6 +340,7 @@ function slum_data_fetch(slumId) {
             $("#household-search-wrapper").hide();
             $("#sponsor-pinned").hide();
             resetWardBreakdownPanel();
+            _wardPrefetch = null;
             $("#compochk_refresh").html("");
 
             $.each(arr_poly_disp, function (k, v) { map.removeLayer(v.shape); });
@@ -397,9 +460,15 @@ function generate_RIM(result) {
 function resetComponentSelectionState() {
     var selectedItems = $("#compochk").find("[name=chk1]:checked");
 
-    selectedItems.each(function () {
-        $(this).click();
-    });
+    /* Same burst as checkAllGroup: one click, and one recompute, per item. */
+    suspendWardBreakdownCounts();
+    try {
+        selectedItems.each(function () {
+            $(this).click();
+        });
+    } finally {
+        resumeWardBreakdownCounts();
+    }
 
     $.each(arr_poly_disp, function (k, v) {
         if (v && v.shape) {
@@ -413,7 +482,23 @@ function resetComponentSelectionState() {
 function generate_filter(globalJsonData, slumId, result) {
     currentSlumComponentData = result || {};
 
+    /* Unticks everything from the outgoing slum, which also drops its layers and
+       any ward-scoped copies. Runs first so the ward reset below has nothing
+       left to restore. */
     resetComponentSelectionState();
+
+    /* Clears the outgoing slum's ward selection before the incoming slum's
+       components are built, so a stale ward cannot scope them. This used to sit
+       inside a 600 ms timeout, leaving exactly that window open. */
+    if (typeof resetWardBreakdownPanel === "function") {
+        resetWardBreakdownPanel();
+    }
+
+    /* Releases the previous slum's components and any layers they materialised. */
+    parse_component = {};
+
+    /* Household-shape lookup, rebuilt per slum below. */
+    houses = {};
 
     /* ---- Refresh button ---- */
     var compochk_refresh = $("#compochk_refresh");
@@ -498,13 +583,19 @@ function generate_filter(globalJsonData, slumId, result) {
                 (icon ? ' <img src="' + icon + '">' : '') +
                 '</div>';
 
-            /* Build house lookup for Structure / Admin Ward Area */
+            /* Both need the `properties` tag so onEachFeature binds the right
+               popup, but only Structure belongs in `houses`: ward ids (1..15)
+               and household numbers (1, 10, 100...) share a key space, so wards
+               would shadow real households. */
             if (k1 === "Structure" || k1 === "Admin Ward Area") {
-                houses = {};
+                var isAdminWardArea = (k1 === "Admin Ward Area");
                 $.each(v1["child"], function (k2, v2) {
                     v2.shape["properties"] = { name: v2.housenumber };
-                    if (k1 === "Admin Ward Area") { v2.shape.properties["Level"] = "Admin"; }
-                    houses[v2.housenumber] = v2.shape;
+                    if (isAdminWardArea) {
+                        v2.shape.properties["Level"] = "Admin";
+                    } else {
+                        houses[v2.housenumber] = v2.shape;
+                    }
                 });
             }
 
@@ -517,24 +608,27 @@ function generate_filter(globalJsonData, slumId, result) {
     compochk.html(panel_component);
     renderKMLDownloadButton();
 
-    /* Auto-select boundary checkbox */
-    setTimeout(function () {
-        var autoSelect = null;
-        $("[name=chk1]").each(function () {
-            var val = $(this).val();
-            if (val === "Town boundary" || val === "Slum boundary") {
-                autoSelect = $(this);
-                return false;
-            }
-        });
-        if (autoSelect && !autoSelect.is(":checked")) { autoSelect.click(); }
-    }, 300);
-
-    /* Pin sponsor section */
-    setTimeout(function () { pinSponsorToBottom(slumId); }, 400);
-    setTimeout(function () { initWardBreakdownPanel(slumId); }, 600);
-
+    /* Previously staggered over timeouts that waited on nothing. Order still
+       matters: pinSponsorToBottom() clones the Sponsor accordion, and jQuery's
+       clone() drops a checkbox's runtime `checked` property, so nothing that
+       ticks a sponsor box may run before it. */
     initHouseholdSearch();
+    autoSelectBoundaryCheckbox();
+    pinSponsorToBottom(slumId);
+    initWardBreakdownPanel(slumId);
+}
+
+
+function autoSelectBoundaryCheckbox() {
+    var autoSelect = null;
+    $("[name=chk1]").each(function () {
+        var val = $(this).val();
+        if (val === "Town boundary" || val === "Slum boundary") {
+            autoSelect = $(this);
+            return false;
+        }
+    });
+    if (autoSelect && !autoSelect.is(":checked")) { autoSelect.click(); }
 }
 
 
@@ -565,16 +659,22 @@ function checkSingleGroup(singlechk) {
 }
 
 function checkAllGroup(grpchk) {
-    if ($(grpchk).is(":checked")) {
-        $(grpchk).parent().find("[name=chk1]:not(:checked)").click();
-        if ($(grpchk).parent().find("div.in").length === 0) {
-            $(grpchk).parent().find("a[name=chk_group]").click();
+    /* Each child click would otherwise recompute every count in the panel. */
+    suspendWardBreakdownCounts();
+    try {
+        if ($(grpchk).is(":checked")) {
+            $(grpchk).parent().find("[name=chk1]:not(:checked)").click();
+            if ($(grpchk).parent().find("div.in").length === 0) {
+                $(grpchk).parent().find("a[name=chk_group]").click();
+            }
+        } else {
+            $(grpchk).parent().find("[name=chk1]:checked").click();
+            if ($(grpchk).parent().find("div.in").length > 0) {
+                $(grpchk).parent().find("a[name=chk_group]").click();
+            }
         }
-    } else {
-        $(grpchk).parent().find("[name=chk1]:checked").click();
-        if ($(grpchk).parent().find("div.in").length > 0) {
-            $(grpchk).parent().find("a[name=chk_group]").click();
-        }
+    } finally {
+        resumeWardBreakdownCounts();
     }
     refreshWardBreakdownCounts();
 }
@@ -1619,6 +1719,9 @@ $(document).off("click.refreshYes", "#refreshConfirmYes")
         var slumId = global_slum_id;
 
         btn.prop("disabled", true).text("Refreshing...");
+        /* A forced refresh must never be served from, or leave behind, a stale
+           client-side copy. */
+        _slumCacheEvict(slumId);
         fullResetHouseholdSearch();
         resetComponentSelectionState();
         $("#compochk").html(
@@ -1632,6 +1735,7 @@ $(document).off("click.refreshYes", "#refreshConfirmYes")
             headers: { "Force-Refresh-Flag": "1" },
             success: function (result) {
                 btn.prop("disabled", false).text("Refresh Components");
+                _slumCachePut(slumId, result);
 
                 Promise.all([
                     Promise.resolve(result),
