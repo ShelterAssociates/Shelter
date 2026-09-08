@@ -120,13 +120,8 @@ function _wbClearHighlights() {
 }
 
 function _wbReset() {
+    /* _wbClearHighlights() already restores the full layers for checked filters. */
     _wbClearHighlights();
-    $("[name=chk1]:checked").each(function () {
-        var componentName = $(this).val();
-        if (parse_component[componentName]) {
-            parse_component[componentName].show();
-        }
-    });
     _wb.wardHouseMap = {};
     _wb.wardIds = [];
     _wb.wardShapes = {};
@@ -701,8 +696,18 @@ function initWardBreakdownPanel(slumId) {
     _wbSetToggleVisible(true);
     _wbSetLoadingVisible(true);
 
-    fetch("/component/get-ward-wise-data/?slum_id=" + encodeURIComponent(String(slumId)))
-        .then(function (res) { return res.json(); })
+    /* slum_data_fetch starts this request in parallel with get_component; fall
+       back to fetching here for callers that bypass it (e.g. force refresh). */
+    var wardPromise;
+    if (_wardPrefetch && String(_wardPrefetch.slumId) === String(slumId)) {
+        wardPromise = _wardPrefetch.promise;
+    } else {
+        wardPromise = fetch("/component/get-ward-wise-data/?slum_id=" + encodeURIComponent(String(slumId)))
+            .then(function (res) { return res.json(); });
+    }
+    _wardPrefetch = null;
+
+    wardPromise
         .then(function (data) {
             var normalized;
             var j;
@@ -747,7 +752,28 @@ function initWardBreakdownPanel(slumId) {
         });
 }
 
+/* Recomputing walks the whole component tree and every count node, so callers
+   that click many checkboxes in a burst wrap themselves in suspend/resume to
+   collapse it into one pass. Safe because _wbUpdateFilterCounts() reads only
+   _wb state and the payload, never checkbox state. Counted, not a flag, as
+   these calls nest. */
+var _wbCountsSuspended = 0;
+var _wbCountsDirty = false;
+
+function suspendWardBreakdownCounts() {
+    _wbCountsSuspended++;
+}
+
+function resumeWardBreakdownCounts() {
+    if (_wbCountsSuspended > 0) { _wbCountsSuspended--; }
+    if (_wbCountsSuspended === 0 && _wbCountsDirty) {
+        _wbCountsDirty = false;
+        refreshWardBreakdownCounts();
+    }
+}
+
 function refreshWardBreakdownCounts() {
+    if (_wbCountsSuspended > 0) { _wbCountsDirty = true; return; }
     if (_wb.wardIds.length === 0) { return; }
     _wbUpdateFilterCounts();
 }

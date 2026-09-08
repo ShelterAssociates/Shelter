@@ -106,20 +106,33 @@ var BaseShape = (function () {
         this.icon = obj_component.icon;
     }
 
+    /* Stores the raw feature array; the Leaflet group is built on first use.
+       Building every component up front cost ~25k L.geoJson features per slum
+       while only the checked ones are ever drawn. */
     Object.defineProperty(BaseShape.prototype, "child", {
-        get: function () { return this._child; },
+        get: function () { return this._materialize(); },
         set: function (child) {
-            let par_child = null;
-            if (this.type != 'C') {
-                try { par_child = this.parse_filter(child); } catch (err) { }
-            } else {
-                par_child = this.parse_component(child);
-            }
-            this._child = par_child;
+            this._rawChild = child;
+            this._child = null;
+            this._built = false;
         },
         enumerable: true,
         configurable: true
     });
+
+    /* Memoises failures too, so an unparseable component is not retried on
+       every click. */
+    BaseShape.prototype._materialize = function () {
+        if (this._built) { return this._child; }
+        this._built = true;
+
+        if (this.type != 'C') {
+            try { this._child = this.parse_filter(this._rawChild); } catch (err) { this._child = null; }
+        } else {
+            this._child = this.parse_component(this._rawChild);
+        }
+        return this._child;
+    };
 
     BaseShape.prototype.style_geo_geometry = function (shape_geo) {
         // FIX 1: 'let' makes this local — no longer a global that gets overwritten
@@ -169,58 +182,39 @@ var BaseShape = (function () {
         return style_geometry;
     };
 
+    /* Always builds the full slum-wide group. Ward scoping is owned by
+       _showComponentForActiveWard(), which keeps its own separate layer; a
+       ward-filtered group memoised here would be restored later as if it were
+       the full one. */
     BaseShape.prototype.parse_component = function (child) {
         // FIX 4: 'let' keeps list_draw local
         let list_draw = [];
-        let parse_child = {};
-        let wardSet = null;
+        let i;
+        let v;
 
-        if (typeof _wbGetWardHouseSet === "function") {
-            wardSet = _wbGetWardHouseSet();
-        }
+        if (!child || !child.length) { return L.geoJson([]); }
 
-        $.each(child, function (k, v) {
-            var houseKey = String(v && v.housenumber !== undefined ? v.housenumber : k).split(".")[0].trim();
-            var isAdminBoundary = v && v.shape && v.shape.properties && v.shape.properties.Level === "Admin";
-
-            if (wardSet && !isAdminBoundary && !Object.prototype.hasOwnProperty.call(wardSet, houseKey)) {
-                return;
-            }
-
+        for (i = 0; i < child.length; i++) {
+            v = child[i];
             if (v && v.shape) {
                 list_draw.push(v.shape);
             }
-        });
-        parse_child = L.geoJson(list_draw, this.style_geo_geometry(child[0].shape));
-        // Add this after L.geoJson
-        parse_child.eachLayer(function (layer) {
-            if (layer.options && layer.options.fillColor) {
-                console.log(this.name + " actual layer fillColor:", layer.options.fillColor);
-            }
-        }.bind(this));
-        return parse_child;
-    };
-
-    BaseShape.prototype.parse_filter = function (child) {
-        console.log("=== parse_filter called ===");
-        console.log("Component name:", this.name);
-        console.log("chkcolor:", this.chkcolor);
-        console.log("chklinecolor:", this.chklinecolor);
-        console.log("fillflag:", this.fillflag);
-        let parse_child = {};
-        let filter_houses = [];
-        let wardSet = null;
-
-        if (typeof _wbGetWardHouseSet === "function") {
-            wardSet = _wbGetWardHouseSet();
         }
 
-        $.each(child, function (k, v) {
-            var houseKey = String(v).split(".")[0].trim();
-            var houseKeyInt = parseInt(houseKey, 10);
-            if (wardSet && !Object.prototype.hasOwnProperty.call(wardSet, houseKey)) {
-                return;
-            }
+        return L.geoJson(list_draw, this.style_geo_geometry(child[0].shape));
+    };
+
+    /* Resolves household numbers against the global `houses` lookup. Unscoped,
+       for the same reason as parse_component. */
+    BaseShape.prototype.parse_filter = function (child) {
+        let filter_houses = [];
+        let i;
+        let houseKey;
+        let houseKeyInt;
+
+        for (i = 0; i < (child || []).length; i++) {
+            houseKey = String(child[i]).split(".")[0].trim();
+            houseKeyInt = parseInt(houseKey, 10);
             if (houses[houseKey]) {
                 filter_houses.push(houses[houseKey]);
             } else if (houses[String(houseKey)]) {
@@ -228,21 +222,22 @@ var BaseShape = (function () {
             } else if (!isNaN(houseKeyInt) && houses[houseKeyInt]) {
                 filter_houses.push(houses[houseKeyInt]);
             }
-        });
+        }
 
-        console.log("filter_houses count:", filter_houses.length);
-        console.log("first house geometry type:", filter_houses[0] && filter_houses[0].geometry && filter_houses[0].geometry.type);
-
-        parse_child = L.geoJson(filter_houses, this.style_geo_geometry(filter_houses[0]));
-        return parse_child;
+        return L.geoJson(filter_houses, this.style_geo_geometry(filter_houses[0]));
     };
 
     BaseShape.prototype.show = function () {
-        this.child.eachLayer(function (layer) { map.addLayer(layer); });
+        var group = this._materialize();
+        if (!group) { return; }
+        group.eachLayer(function (layer) { map.addLayer(layer); });
     };
 
+    /* Reads _child directly, not the getter: hiding a component that was never
+       shown must not trigger a build. */
     BaseShape.prototype.hide = function () {
-        this.child.eachLayer(function (layer) { map.removeLayer(layer); });
+        if (!this._built || !this._child) { return; }
+        this._child.eachLayer(function (layer) { map.removeLayer(layer); });
     };
 
     return BaseShape;
