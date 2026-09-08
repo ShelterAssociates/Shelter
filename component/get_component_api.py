@@ -1,7 +1,7 @@
 from . import views
 from graphs.models import APICache
 from django.http import HttpResponse, JsonResponse
-from django.db import connection, close_old_connections
+from django.db import IntegrityError, connection, close_old_connections, transaction
 from django.utils import timezone
 from datetime import timedelta
 import threading
@@ -49,15 +49,41 @@ def _write_cache(req_hash, payload_text, expires_at):
     compact JSON: jsonfield is configured with indent=4, which inflates the
     largest payload from 10.2 MB to 44.1 MB of mostly spaces. `created_at` is
     supplied explicitly because auto_now_add is applied in Python, not the DB.
+
+    UPDATE-then-INSERT rather than INSERT ... ON CONFLICT, which needs
+    PostgreSQL 9.5+; production runs older than that. Two requests missing the
+    same key concurrently can both reach the INSERT, so the unique violation is
+    caught and retried as an UPDATE. The retry runs in its own atomic block
+    because a failed statement aborts the surrounding transaction.
     """
-    with connection.cursor() as cursor:
-        cursor.execute(
-            "INSERT INTO graphs_apicache (request_hash, response, created_at, expires_at) "
-            "VALUES (%s, %s, %s, %s) "
-            "ON CONFLICT (request_hash) DO UPDATE "
-            "SET response = EXCLUDED.response, expires_at = EXCLUDED.expires_at",
-            [req_hash, payload_text, timezone.now(), expires_at],
-        )
+    with transaction.atomic():
+        with connection.cursor() as cursor:
+            cursor.execute(
+                "UPDATE graphs_apicache SET response = %s, expires_at = %s "
+                "WHERE request_hash = %s",
+                [payload_text, expires_at, req_hash],
+            )
+            if cursor.rowcount:
+                return
+
+    try:
+        with transaction.atomic():
+            with connection.cursor() as cursor:
+                cursor.execute(
+                    "INSERT INTO graphs_apicache "
+                    "(request_hash, response, created_at, expires_at) "
+                    "VALUES (%s, %s, %s, %s)",
+                    [req_hash, payload_text, timezone.now(), expires_at],
+                )
+    except IntegrityError:
+        # Another request inserted this key between our UPDATE and INSERT.
+        with transaction.atomic():
+            with connection.cursor() as cursor:
+                cursor.execute(
+                    "UPDATE graphs_apicache SET response = %s, expires_at = %s "
+                    "WHERE request_hash = %s",
+                    [payload_text, expires_at, req_hash],
+                )
 
 
 def _payload_text(response):
