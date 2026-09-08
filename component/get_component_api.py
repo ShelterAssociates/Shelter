@@ -1,6 +1,6 @@
 from . import views
 from graphs.models import APICache
-from django.http import JsonResponse
+from django.http import HttpResponse, JsonResponse
 from django.db import connection, close_old_connections
 from django.utils import timezone
 from datetime import timedelta
@@ -25,7 +25,57 @@ def _log_cache_timing(stage, started_at, started_queries, **details):
     )
 
 
-def get_request_hash(request, slum_id):
+def _read_cache(req_hash):
+    """Return (response_text, expires_at) for a cache row, or None.
+
+    Reads the column directly rather than through the ORM: `response` is a
+    jsonfield, so loading it via the model would json.loads the whole payload
+    only for us to json.dumps it straight back out. On the largest slum that
+    round trip costs ~750 ms per request. The column is plain text, so the
+    stored JSON can be streamed to the client untouched.
+    """
+    with connection.cursor() as cursor:
+        cursor.execute(
+            "SELECT response, expires_at FROM graphs_apicache WHERE request_hash = %s",
+            [req_hash],
+        )
+        return cursor.fetchone()
+
+
+def _write_cache(req_hash, payload_text, expires_at):
+    """Upsert a cache row from already-serialised JSON text.
+
+    Bypasses the ORM for the same reason as _read_cache, and additionally stores
+    compact JSON: jsonfield is configured with indent=4, which inflates the
+    largest payload from 10.2 MB to 44.1 MB of mostly spaces. `created_at` is
+    supplied explicitly because auto_now_add is applied in Python, not the DB.
+    """
+    with connection.cursor() as cursor:
+        cursor.execute(
+            "INSERT INTO graphs_apicache (request_hash, response, created_at, expires_at) "
+            "VALUES (%s, %s, %s, %s) "
+            "ON CONFLICT (request_hash) DO UPDATE "
+            "SET response = EXCLUDED.response, expires_at = EXCLUDED.expires_at",
+            [req_hash, payload_text, timezone.now(), expires_at],
+        )
+
+
+def _payload_text(response):
+    """Serialised JSON for a view's response, without a needless re-encode."""
+    if hasattr(response, "content"):
+        return response.content.decode("utf-8")
+    return json.dumps(response.data, separators=(",", ":"))
+
+
+def _json_response(payload_text):
+    return HttpResponse(payload_text, content_type="application/json")
+
+
+def _is_expired(expires_at):
+    return expires_at is not None and timezone.now() > expires_at
+
+
+def get_request_hash(request, slum_id, endpoint=None):
     """
     Generate cache key based on:
     - slum_id
@@ -42,12 +92,14 @@ def get_request_hash(request, slum_id):
         user_key = "anon"
 
     params = {"slum_id": slum_id, "user": user_key, **request.GET.dict()}
+    if endpoint:
+        params["endpoint"] = endpoint
 
     params_string = json.dumps(params, sort_keys=True)
     return hashlib.sha256(params_string.encode("utf-8")).hexdigest()
 
 
-def compute_and_update_cache(request, slum_id, req_hash):
+def compute_and_update_cache(request, slum_id, req_hash, view=None):
     """
     Compute fresh response by calling original view
     """
@@ -55,20 +107,8 @@ def compute_and_update_cache(request, slum_id, req_hash):
     started_at = pytime.perf_counter()
     started_queries = len(connection.queries)
     try:
-        # Call the original view to get JsonResponse
-        response = views.get_component(request, slum_id)
-
-        # Convert JsonResponse to dict for storing
-        if hasattr(response, "data"):  # If DRF Response
-            data = response.data
-        else:  # If JsonResponse
-            data = json.loads(response.content)
-
-        # Update or create cache
-        APICache.objects.update_or_create(
-            request_hash=req_hash,
-            defaults={"response": data, "expires_at": timezone.now() + TTL},
-        )
+        response = (view or views.get_component)(request, slum_id)
+        _write_cache(req_hash, _payload_text(response), timezone.now() + TTL)
     finally:
         _log_cache_timing(
             "background_refresh", started_at, started_queries, slum_id=slum_id
@@ -76,53 +116,62 @@ def compute_and_update_cache(request, slum_id, req_hash):
         close_old_connections()
 
 
-def get_component_api(request, slum_id):
-    """
-    Wrapper view with stale-while-revalidate caching
+def _cached_view(request, slum_id, view, endpoint=None):
+    """Stale-while-revalidate wrapper shared by the component endpoints.
+
+    Serves the cached bytes immediately, even when stale, and kicks off a
+    background recompute when the entry has expired or a refresh was forced.
     """
     started_at = pytime.perf_counter()
     started_queries = len(connection.queries)
-    req_hash = get_request_hash(request, slum_id)
-    flag = request.headers.get("Force-Refresh-Flag", "0")
+    req_hash = get_request_hash(request, slum_id, endpoint=endpoint)
+    force_refresh = request.headers.get("Force-Refresh-Flag", "0") == "1"
 
-    try:
-        cache = APICache.objects.get(request_hash=req_hash)
+    row = _read_cache(req_hash)
+    if row is not None:
+        payload_text, expires_at = row
         _log_cache_timing(
             "cache_lookup_hit",
             started_at,
             started_queries,
             slum_id=slum_id,
-            expired=cache.is_expired(),
-            force_refresh=flag,
+            expired=_is_expired(expires_at),
+            force_refresh=force_refresh,
         )
 
-        # If cache is expired, start background refresh
-        if cache.is_expired() or flag == "1":
+        if _is_expired(expires_at) or force_refresh:
             refresh_thread = threading.Thread(
-                target=compute_and_update_cache, args=(request, slum_id, req_hash)
+                target=compute_and_update_cache,
+                args=(request, slum_id, req_hash, view),
             )
             refresh_thread.daemon = True
             refresh_thread.start()
 
-        # Return cached response immediately (even if stale)
-        return JsonResponse(cache.response)
+        return _json_response(payload_text)
 
-    except APICache.DoesNotExist:
-        _log_cache_timing(
-            "cache_lookup_miss", started_at, started_queries, slum_id=slum_id
-        )
+    _log_cache_timing("cache_lookup_miss", started_at, started_queries, slum_id=slum_id)
 
-        # No cache → compute synchronously
-        response = views.get_component(request, slum_id)
-        if hasattr(response, "data"):
-            data = response.data
-        else:
-            data = json.loads(response.content)
+    response = view(request, slum_id)
+    payload_text = _payload_text(response)
+    _write_cache(req_hash, payload_text, timezone.now() + TTL)
+    _log_cache_timing("cache_miss_compute", started_at, started_queries, slum_id=slum_id)
+    return _json_response(payload_text)
 
-        APICache.objects.create(
-            request_hash=req_hash, response=data, expires_at=timezone.now() + TTL
-        )
-        _log_cache_timing(
-            "cache_miss_compute", started_at, started_queries, slum_id=slum_id
-        )
-        return JsonResponse(data)
+
+def get_component_api(request, slum_id):
+    """Cached /component/get_component/<slum_id>.
+
+    `?geom=panel` produces a separate, much smaller cache entry automatically,
+    because get_request_hash folds request.GET into the key.
+    """
+    return _cached_view(request, slum_id, views.get_component)
+
+
+def get_component_geometry_api(request, slum_id):
+    """Cached /component/get_component_geometry/<slum_id>.
+
+    Keyed per requested layer set, again via request.GET in the hash.
+    """
+    return _cached_view(
+        request, slum_id, views.get_component_geometry, endpoint="component_geometry"
+    )
