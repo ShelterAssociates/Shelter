@@ -1,0 +1,44 @@
+{% extends "admin/base_site.html" %}
+
+{% block bodyclass %}ph-body{% endblock %}
+{% block breadcrumbs %}{% endblock %}
+{% block extrastyle %}{% include "photos/_styles.html" %}{% endblock %}
+
+{% block content %}
+<div class="ph-page">
+  <p class="ph-crumb"><a href="{% url 'photos:photo_index' %}">&larr; Photos</a></p>
+  <div class="ph-header">
+    <div>
+      <h1 class="ph-title">Program encounter</h1>
+      <p class="ph-sub">Look up one Avni encounter directly by its UUID.</p>
+    </div>
+  </div>
+
+  <div class="ph-card">
+    <div class="ph-card-body">
+      <form method="get" action="" class="ph-inline">
+        <label class="ph-field">
+          <span class="ph-label">Encounter UUID</span>
+          <input type="text" name="uuid" class="ph-input" value="{{ encounter_uuid }}"
+                 placeholder="e.g. 8e94c622-a47b-473b-ae4a-dd125f0eb54a" />
+        </label>
+        <button type="submit" class="ph-btn ph-btn--primary">Show photos</button>
+      </form>
+    </div>
+  </div>
+
+  {% if error %}
+    <div class="ph-alert">{{ error }}</div>
+  {% elif encounter %}
+    <div class="ph-group">
+      <div class="ph-group-head">
+        <h2 class="ph-group-title">{{ encounter.program|default:"Encounter" }}</h2>
+      </div>
+      <div class="ph-group-body">
+        {% include "photos/_photo_list.html" %}
+      </div>
+    </div>
+  {% endif %}
+</div>
+{% include "photos/_photo_loader.html" %}
+{% endblock %}

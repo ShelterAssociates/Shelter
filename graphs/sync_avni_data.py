@@ -758,9 +758,14 @@ class avni_sync:
             for j in data:
                 if j["Voided"] == False and j["observations"] != {}:
                     a, slum_id, HH, d = self.get_household_details(j["Subject ID"])
-                    self.DailyReportingData(j["observations"], slum_id, HH)
+                    self.DailyReportingData(
+                        j["observations"], slum_id, HH, j.get("ID")
+                    )
 
-    def DailyReportingData(self, data, slum, HH):  # checked
+    def DailyReportingData(self, data, slum, HH, source_uuid=None):  # checked
+        """`source_uuid` is the Avni program encounter UUID this data came from.
+        It defaults to None so the KoboToolbox sync path, which has no Avni
+        encounter, keeps working unchanged."""
         slum_id, city_id = self.get_city_slum_ids(slum)
 
         phase_one_materials = [
@@ -974,9 +979,10 @@ class avni_sync:
                         p3_material_shifted_to=p3_material_shifted_to,
                         st_material_shifted_to=st_material_shifted_to,
                         comment=comment_,
+                        source_uuid=source_uuid,
                     )
                 else:
-                    check_record.update(
+                    update_fields = dict(
                         agreement_date=agreement_date,
                         agreement_cancelled=agreement_cancelled,
                         septic_tank_date=septic_tank_date,
@@ -991,6 +997,12 @@ class avni_sync:
                         st_material_shifted_to=st_material_shifted_to,
                         comment=comment_,
                     )
+                    # Only set the UUID when we actually have one, so a later
+                    # Kobo sync of the same household doesn't wipe the Avni
+                    # encounter UUID an earlier Avni sync recorded.
+                    if source_uuid:
+                        update_fields["source_uuid"] = source_uuid
+                    check_record.update(**update_fields)
 
         except Exception as e:
             logger.error(e, HH)
@@ -1415,7 +1427,9 @@ class avni_sync:
                             or data["Encounter type"]
                             == "Household Level Daily Reporting"
                         ) and (data["observations"] != {} or data["Voided"] == False):
-                            self.DailyReportingData(data["observations"], slum_name, HH)
+                            self.DailyReportingData(
+                                data["observations"], slum_name, HH, data.get("ID")
+                            )
                     else:
                         logger.error(
                             "Program Encounter API request failed with status code: {}".format(

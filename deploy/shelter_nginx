@@ -35,6 +35,26 @@ server {
 	alias /srv/Shelter/static/;
      }
      
+     # Photo export zips live under media/ but must NEVER be served directly:
+     # they can contain thousands of household photos including Aadhaar card
+     # images. Downloads go only through /photos/exports/<id>/download/, which
+     # checks login, superuser and ownership. This block must stay ABOVE the
+     # /media block -- nginx picks the longest matching prefix, so order in the
+     # file is not what matters, but keeping it adjacent keeps the intent clear.
+     location /media/photo_exports {
+	deny all;
+	return 403;
+     }
+
+     # The KoboToolbox photo backup. Serving this directly made every household's
+     # family and toilet photo downloadable by URL with no login. It is now
+     # reachable only via /photos/file/..., which checks can_view_mastersheet.
+     # The mastersheet grid and the photos section both link through that view.
+     location /media/shelter/attachments {
+	deny all;
+	return 403;
+     }
+
      location /media {
 	alias /srv/Shelter/media/;
      }

@@ -80,6 +80,8 @@ urlpatterns = (
         url(r"^helpers/", include("helpers.urls")),
         ## setting up url for reprot generation
         url(r"^reports/", include("reports.urls")),
+        # Internal-only browser for Avni household photos
+        url(r"^photos/", include("photos.urls")),
         # Setting URL for QGIS plugin login
         url("api-token-auth/", obtain_auth_token, name="api_token_auth"),
         url("api/", include(router.urls)),

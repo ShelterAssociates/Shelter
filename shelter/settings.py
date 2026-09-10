@@ -78,6 +78,31 @@ ALLOWED_HOSTS = []  # MUST be set in local_settings.py
 # local_settings.py — dev: developer only; production: developer + GIS.
 KML_CHANGE_NOTIFY_EMAILS = []
 
+# Developer address(es) told when a photo export fails. Empty by default so a
+# missing local_settings.py can't silently swallow failures -- the runner logs
+# loudly if it has nowhere to send them. Set per-environment in
+# local_settings.py, same convention as KML_CHANGE_NOTIFY_EMAILS above.
+PHOTO_EXPORT_NOTIFY_EMAILS = []
+
+# Refuse to start a photo export that would leave less than this much disk free.
+# The server runs close to full, so exports must never be the thing that fills
+# it. On refusal the developer is emailed; free space, then re-run from admin.
+PHOTO_EXPORT_MIN_FREE_GB = 10
+
+# A photo export still "running" after this long was killed (deploy, restart,
+# OOM). The runner marks it failed and reports it.
+PHOTO_EXPORT_STUCK_HOURS = 3
+
+# Ceilings for the instant single-household download, which is built in memory
+# on the request thread. Anything larger must go through the queued slum export.
+PHOTO_INSTANT_MAX_PHOTOS = 60
+PHOTO_INSTANT_MAX_MB = 80
+
+# Extra groups allowed to download photos, on top of superusers. Empty means
+# superuser-only, which is the intent -- bulk photo exports can contain Aadhaar
+# card images.
+PHOTO_DOWNLOAD_GROUPS = []
+
 # Use BigAutoField by default to avoid Django warnings about auto-created PK types
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
@@ -128,6 +153,7 @@ INSTALLED_APPS = (
     "mastersheet",
     "graphs",
     "helpers",
+    "photos",
     "reports.apps.ReportsConfig",
     "rest_framework",
     "rest_framework.authtoken",

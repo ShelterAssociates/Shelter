@@ -2138,10 +2138,71 @@ def gis_export_download(request, export_id):
         return response
 
 
+def _create_gis_export_tracker(request, slum_id, email, export_format):
+    """Record a GIS export in the unified helpers.ExportRequest register.
+
+    Tracking only -- the threading model here is unchanged. Never allowed to
+    break a working export, so failures are logged and it proceeds untracked.
+    """
+    try:
+        from helpers.models import ExportRequest
+        from master.models import Slum as _Slum
+
+        slum = _Slum.objects.filter(pk=slum_id).first()
+        tracker = ExportRequest.objects.create(
+            export_type="gis",
+            status="queued",
+            requested_by=(
+                request.user if getattr(request.user, "is_authenticated", False)
+                else None
+            ),
+            email=email or "",
+            scope="GIS export: {} ({})".format(
+                slum.name if slum else slum_id, export_format
+            )[:500],
+            slum=slum,
+            params={"slum_id": slum_id, "export_format": export_format},
+        )
+        return tracker.pk
+    except Exception:
+        logger.exception("Could not create GIS export tracker")
+        return None
+
+
+def _finish_gis_export_tracker(export_request_id, status, file_path=None,
+                               bytes_total=0, error=None):
+    if not export_request_id:
+        return
+    try:
+        from helpers.models import ExportRequest
+        from django.utils import timezone as _timezone
+
+        ExportRequest.objects.filter(pk=export_request_id).update(
+            status=status,
+            file_path=file_path,
+            bytes_total=bytes_total or 0,
+            error=error,
+            finished_on=_timezone.now(),
+        )
+    except Exception:
+        logger.exception("Could not finish GIS export tracker %s", export_request_id)
+
+
 def _run_large_gis_export_job(
-    user_id, slum_id, email, export_format, include_csv, base_url
+    user_id, slum_id, email, export_format, include_csv, base_url,
+    export_request_id=None
 ):
     close_old_connections()
+    if export_request_id:
+        try:
+            from helpers.models import ExportRequest
+            from django.utils import timezone as _tz
+
+            ExportRequest.objects.filter(pk=export_request_id).update(
+                status="running", started_on=_tz.now()
+            )
+        except Exception:
+            logger.exception("Could not mark GIS export %s running", export_request_id)
     try:
         logger.info(
             "GIS export worker started: slum_id=%s email=%s export_format=%s include_csv=%s",
@@ -2270,9 +2331,18 @@ def _run_large_gis_export_job(
             email,
             export_meta["relative_path"],
         )
-    except Exception:
+        _finish_gis_export_tracker(
+            export_request_id,
+            status="done",
+            file_path=export_meta["file_path"],
+            bytes_total=export_meta["size"],
+        )
+    except Exception as exc:
         logger.exception(
             "GIS export email job failed: slum_id=%s email=%s", slum_id, email
+        )
+        _finish_gis_export_tracker(
+            export_request_id, status="failed", error=str(exc)
         )
     finally:
         close_old_connections()
@@ -3347,6 +3417,11 @@ def export_filtered_kml(request):
 
     if email_export:
         base_url = request.build_absolute_uri("/").rstrip("/")
+        # Recorded before the thread starts, so the request is visible even if
+        # a deploy restart kills the thread mid-run.
+        export_request_id = _create_gis_export_tracker(
+            request, slum_id, email_address, export_format
+        )
 
         def _worker_wrapper():
             logger.info(
@@ -3363,6 +3438,7 @@ def export_filtered_kml(request):
                     export_format,
                     include_csv,
                     base_url,
+                    export_request_id=export_request_id,
                 )
             finally:
                 logger.info(

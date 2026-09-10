@@ -1,0 +1,119 @@
+{% extends "admin/base_site.html" %}
+
+{% block bodyclass %}ph-body{% endblock %}
+{% block breadcrumbs %}{% endblock %}
+{% block extrastyle %}{% include "photos/_styles.html" %}{% endblock %}
+
+{% block content %}
+<div class="ph-page">
+  <p class="ph-crumb"><a href="{% url 'photos:photo_slum' slum.id %}">&larr; {{ slum.name }}</a></p>
+  <div class="ph-header">
+    <div>
+      <h1 class="ph-title">
+        Household {{ household_number }}{% if family_name %} &mdash; {{ family_name }}{% endif %}
+      </h1>
+      <p class="ph-sub">{{ slum.name }}</p>
+    </div>
+    <div>
+      {% if source == "kobo" %}<span class="ph-badge ph-badge--kobo">KoboToolbox</span>{% endif %}
+      {% if source == "avni" %}<span class="ph-badge ph-badge--avni">Avni</span>{% endif %}
+    </div>
+  </div>
+
+  {% if error %}
+    <div class="ph-alert">{{ error }}</div>
+  {% elif programs %}
+    <form id="householdDownloadForm" method="post"
+          action="{% url 'photos:photo_household_download' slum.id household_number %}">
+      {% csrf_token %}
+      {% for program in programs %}
+        <div class="ph-group">
+          <div class="ph-group-head">
+            <h2 class="ph-group-title">{{ program.program|default:"Photos" }}</h2>
+            {% if program.enrolment_date %}
+              <p class="ph-group-sub">
+                Enrolled {{ program.enrolment_date }}{% if program.exit_date %} &middot; exited {{ program.exit_date }}{% endif %}
+              </p>
+            {% endif %}
+          </div>
+          <div class="ph-group-body">
+            {% if program.encounters %}
+              {% for encounter in program.encounters %}
+                {% include "photos/_photo_list.html" %}
+              {% endfor %}
+            {% else %}
+              <p class="ph-note">No encounters recorded under this programme.</p>
+            {% endif %}
+          </div>
+        </div>
+      {% endfor %}
+
+      {% if can_download and photo_count %}
+        <div class="ph-toolbar">
+          <label class="ph-check"><input type="checkbox" id="selectAllPhotos" checked /> Select all</label>
+          <span class="ph-count"><span id="photoSelectedCount">{{ photo_count }}</span> photos</span>
+          <button type="submit" class="ph-btn ph-btn--primary">Download selected</button>
+          <span class="ph-note">Downloads straight away &mdash; no email for a single household.</span>
+        </div>
+      {% endif %}
+    </form>
+
+    {% if not photo_count %}
+      <div class="ph-card"><div class="ph-empty">No photos found for this household.</div></div>
+    {% endif %}
+
+    {% if source == "kobo" and has_construction %}
+      <div class="ph-card">
+        <div class="ph-card-head"><h2 class="ph-card-title">Construction status</h2></div>
+        <div class="ph-card-body">
+          <p class="ph-note" style="margin:0;">
+            No photos for construction &mdash; this household was surveyed on
+            KoboToolbox, which holds factsheet photos only. Agreement photos exist
+            only for Avni-surveyed households.
+          </p>
+        </div>
+      </div>
+    {% endif %}
+  {% else %}
+    <div class="ph-card">
+      <div class="ph-empty">
+        No photos for this household.<br />
+        It has no KoboToolbox factsheet and is not enrolled in any Avni programme &mdash;
+        factsheet and Daily Reporting photos only exist once a household is enrolled.
+      </div>
+    </div>
+  {% endif %}
+</div>
+
+{% if can_download %}
+<script>
+  (function () {
+    var form = document.getElementById("householdDownloadForm");
+    if (!form) return;
+    var boxes = [].slice.call(form.querySelectorAll(".photo-select"));
+    var counter = document.getElementById("photoSelectedCount");
+    var selectAll = document.getElementById("selectAllPhotos");
+
+    function refresh() {
+      var n = boxes.filter(function (b) { return b.checked; }).length;
+      if (counter) counter.textContent = n;
+    }
+    boxes.forEach(function (b) { b.addEventListener("change", refresh); });
+    if (selectAll) {
+      selectAll.addEventListener("change", function () {
+        boxes.forEach(function (b) { b.checked = selectAll.checked; });
+        refresh();
+      });
+    }
+    form.addEventListener("submit", function (e) {
+      if (!boxes.some(function (b) { return b.checked; })) {
+        e.preventDefault();
+        alert("Select at least one photo.");
+      }
+    });
+    refresh();
+  })();
+</script>
+{% endif %}
+{% include "photos/_photo_loader.html" %}
+{% endblock %}

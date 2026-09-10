@@ -114,6 +114,13 @@
               <li>
                 <a class="drop-item" href="/helpers/photo-upload/">Photo upload</a>
               </li>
+              {% if perms.mastersheet.can_view_mastersheet %}
+                <li class="drop-div"></li>
+                <li class="drop-label">Photos</li>
+                <li>
+                  <a class="drop-item" href="{% url 'photos:photo_index' %}">Household photos <span class="new-badge">New</span></a>
+                </li>
+              {% endif %}
             </ul>
           </div>
         {% endif %}
@@ -182,6 +189,9 @@
         <span class="drop-label">Tools</span>
         <a class="drop-item" href="/helpers/digipin_generate/">Generate Digipin</a>
         <a class="drop-item" href="/helpers/photo-upload/">Photo upload</a>
+        {% if perms.mastersheet.can_view_mastersheet %}
+          <a class="drop-item" href="{% url 'photos:photo_index' %}">Household photos</a>
+        {% endif %}
       {% endif %}
 
       <div class="drop-div"></div>

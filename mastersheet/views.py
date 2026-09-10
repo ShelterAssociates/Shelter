@@ -3,6 +3,7 @@ from django.http import HttpResponse, JsonResponse, HttpResponseForbidden
 from django.contrib.auth.decorators import user_passes_test, permission_required
 from django.views.decorators.http import require_GET, require_POST
 from django.db import close_old_connections
+from django.utils import timezone
 import glob
 import io
 import os
@@ -16,6 +17,7 @@ from .rim_download_permissions import (
     can_access_slum_for_rim,
 )
 from helpers.validators import validate_shelter_email
+from photos.views import protected_media_url
 from helpers.services.send_email import send_email
 from graphs.sync_avni_data import avni_sync
 from mastersheet.forms import (
@@ -569,18 +571,31 @@ def masterSheet(request, slum_code=0, FF_code=0, RHS_code=0):
                         x["_id"] = temp
                         x["ff_id"] = ff_id
 
-                    # Adding hyperlink for factsheet photos
+                    # Adding hyperlink for factsheet photos.
+                    # These used to point straight at /media/shelter/attachments/,
+                    # which nginx served with no authentication at all. They now
+                    # go through photos:protected_media, which requires the same
+                    # can_view_mastersheet permission this grid already needs, so
+                    # nothing changes for legitimate users.
                     if "_attachments" in x.keys() and len(x["_attachments"]) != 0:
-                        PATH = "/media/shelter/attachments/" + "/".join(
+                        RELATIVE_DIR = "shelter/attachments/" + "/".join(
                             x["_attachments"][0]["filename"].split("/")[2:-1]
                         )
                         if "Toilet_Photo" in x.keys():
                             x.update(
-                                {"toilet_photo_url": PATH + "/" + x["Toilet_Photo"]}
+                                {
+                                    "toilet_photo_url": protected_media_url(
+                                        RELATIVE_DIR + "/" + x["Toilet_Photo"]
+                                    )
+                                }
                             )
                         if "Family_Photo" in x.keys():
                             x.update(
-                                {"family_photo_url": PATH + "/" + x["Family_Photo"]}
+                                {
+                                    "family_photo_url": protected_media_url(
+                                        RELATIVE_DIR + "/" + x["Family_Photo"]
+                                    )
+                                }
                             )
 
                     else:
@@ -3401,8 +3416,12 @@ def rim_data_slums_for_city(request):
     return JsonResponse({"slums": slums})
 
 
-def _run_large_rim_export_job(slum_ids, email, base_url, sections=None):
+def _run_large_rim_export_job(slum_ids, email, base_url, sections=None,
+                             export_request_id=None):
     close_old_connections()
+    # export_request_id tracks this run in the unified helpers.ExportRequest
+    # register. Tracking only -- the threading model here is unchanged.
+    tracker = _export_tracker(export_request_id, "running")
     try:
         slums = list(Slum.objects.filter(id__in=slum_ids))
         files = _build_rim_export_files(slums, sections)
@@ -3434,10 +3453,88 @@ def _run_large_rim_export_job(slum_ids, email, base_url, sections=None):
             context,
             "Your RIM data export is ready: {}".format(download_url),
         )
-    except Exception:
+        _export_tracker_finish(
+            tracker,
+            status="done",
+            file_path=file_path,
+            item_count=len(slums),
+            bytes_total=len(content),
+        )
+    except Exception as exc:
         logger.exception(
             "RIM export job failed: slum_ids=%s email=%s", slum_ids, email
         )
+        _export_tracker_finish(tracker, status="failed", error=str(exc))
+    finally:
+        # The GIS job does this; without it each export leaks a PG connection.
+        close_old_connections()
+
+
+def _create_export_tracker(request, export_type, email, scope, slum=None,
+                           params=None):
+    """Create an ExportRequest row and return its id (or None).
+
+    Tracking must never break a working export, so failures are logged and the
+    export proceeds untracked.
+    """
+    try:
+        from helpers.models import ExportRequest
+
+        tracker = ExportRequest.objects.create(
+            export_type=export_type,
+            status="queued",
+            requested_by=(
+                request.user if getattr(request.user, "is_authenticated", False)
+                else None
+            ),
+            email=email or "",
+            scope=(scope or "")[:500],
+            slum=slum,
+            params=params,
+        )
+        return tracker.pk
+    except Exception:
+        logger.exception("Could not create export tracker for %s", export_type)
+        return None
+
+
+def _export_tracker(export_request_id, status):
+    """Fetch and advance an ExportRequest row, tolerating its absence.
+
+    Tracking must never be able to break an export that would otherwise work,
+    so every failure here is swallowed and logged.
+    """
+    if not export_request_id:
+        return None
+    try:
+        from helpers.models import ExportRequest
+
+        tracker = ExportRequest.objects.filter(pk=export_request_id).first()
+        if tracker is None:
+            return None
+        tracker.status = status
+        tracker.started_on = timezone.now()
+        tracker.save(update_fields=["status", "started_on"])
+        return tracker
+    except Exception:
+        logger.exception("Could not update export tracker %s", export_request_id)
+        return None
+
+
+def _export_tracker_finish(tracker, status, file_path=None, item_count=0,
+                           bytes_total=0, error=None):
+    if tracker is None:
+        return
+    try:
+        tracker.status = status
+        tracker.file_path = file_path
+        tracker.item_count = item_count or 0
+        tracker.bytes_total = bytes_total or 0
+        tracker.error = error
+        tracker.finished_on = timezone.now()
+        tracker.save()
+    except Exception:
+        logger.exception("Could not finish export tracker %s", tracker.pk)
 
 
 @require_POST
@@ -3521,10 +3618,26 @@ def rim_data_download_submit(request):
     if email_export:
         base_url = request.build_absolute_uri("/").rstrip("/")
 
+        # Record the request in the unified export register before starting the
+        # thread, so it is visible even if the thread dies (a deploy restart
+        # kills in-flight threads, and this export has no other trace).
+        export_request_id = _create_export_tracker(
+            request,
+            export_type="rim",
+            email=email_address,
+            scope="RIM data: {} slum(s)".format(len(slums)),
+            slum=slums[0] if len(slums) == 1 else None,
+            params={"slum_ids": slum_ids_final, "sections": sections},
+        )
+
         def _worker_wrapper():
             try:
                 _run_large_rim_export_job(
-                    slum_ids_final, email_address, base_url, sections
+                    slum_ids_final,
+                    email_address,
+                    base_url,
+                    sections,
+                    export_request_id=export_request_id,
                 )
             finally:
                 logger.info(

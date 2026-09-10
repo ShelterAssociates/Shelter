@@ -1,5 +1,7 @@
 from django.contrib import admin
+from django.utils import timezone
 from .models import (
+    ExportRequest,
     FormSubmission,
     OTPVerification,
     PhotoTypeItem,
@@ -115,3 +117,87 @@ class SlumPhotoUploadAdmin(admin.ModelAdmin):
         return obj.photo_type_item_name
 
     photo_type_item_display.short_description = "Photo type"
+
+@admin.register(ExportRequest)
+class ExportRequestAdmin(admin.ModelAdmin):
+    """The one place to see every generated download, of any kind.
+
+    Categorised by export_type so photo, RIM and GIS requests sit in one list
+    and can be filtered apart.
+    """
+
+    list_display = (
+        "id",
+        "export_type",
+        "status",
+        "scope",
+        "requested_by",
+        "email",
+        "item_count",
+        "size_display",
+        "failure_count",
+        "created_on",
+        "finished_on",
+    )
+    list_filter = ("export_type", "status", "created_on")
+    search_fields = ("email", "scope", "error")
+    date_hierarchy = "created_on"
+    readonly_fields = (
+        "export_type",
+        "requested_by",
+        "email",
+        "scope",
+        "slum",
+        "params",
+        "item_count",
+        "bytes_total",
+        "file_path",
+        "failures",
+        "error",
+        "created_on",
+        "started_on",
+        "finished_on",
+    )
+    actions = ("rerun_exports",)
+
+    def size_display(self, obj):
+        return obj.size_display
+
+    size_display.short_description = "Size"
+
+    def failure_count(self, obj):
+        return obj.failure_count
+
+    failure_count.short_description = "Failed photos"
+
+    def rerun_exports(self, request, queryset):
+        """Re-queue failed photo exports.
+
+        This is the recovery path for a disk-space failure: the developer is
+        emailed, frees space, then re-runs from here. The next cron tick picks
+        it up and emails the original requester on success.
+        """
+        eligible = queryset.filter(export_type="photo", status="failed")
+        updated = eligible.update(
+            status="queued",
+            error=None,
+            started_on=None,
+            finished_on=None,
+            item_count=0,
+            bytes_total=0,
+            file_path=None,
+        )
+        skipped = queryset.count() - updated
+        message = "Re-queued {} photo export(s).".format(updated)
+        if skipped:
+            message += (
+                " Skipped {} row(s): only failed photo exports can be re-run "
+                "(RIM and GIS exports run in their own threads).".format(skipped)
+            )
+        self.message_user(request, message)
+
+    rerun_exports.short_description = "Re-run selected exports"
+
+    def has_add_permission(self, request):
+        # Rows are created by the export flows, never by hand.
+        return False

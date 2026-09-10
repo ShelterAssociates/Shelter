@@ -1,0 +1,242 @@
+{% extends "admin/base_site.html" %}
+{% load static %}
+
+{% block bodyclass %}ph-body{% endblock %}
+{% block breadcrumbs %}{% endblock %}
+{% block extrastyle %}{% include "photos/_styles.html" %}{% endblock %}
+
+{% block content %}
+<link rel="stylesheet" href="{% static 'css/jquery.dataTables.min.css' %}" />
+
+<div class="ph-page">
+  <p class="ph-crumb"><a href="{% url 'photos:photo_index' %}">&larr; All slums</a></p>
+  <div class="ph-header">
+    <div>
+      <h1 class="ph-title">{{ slum.name }}</h1>
+      <p class="ph-sub">
+        {% if show_all %}
+          Showing all {{ total_count }} households.
+          <a href="{% url 'photos:photo_slum' slum.id %}">Show only those with photos or construction data</a>
+        {% else %}
+          Showing <strong>{{ shown_count }}</strong> of {{ total_count }} households &mdash; those with a
+          factsheet or recorded construction progress. Photos only exist for surveyed
+          households. <a href="?all=1">Show all {{ total_count }}</a>
+        {% endif %}
+      </p>
+    </div>
+    {% if can_download %}
+      <a class="ph-btn" href="{% url 'photos:photo_export_list' %}">My exports</a>
+    {% endif %}
+  </div>
+
+  {% if can_download %}
+  <div class="ph-card">
+    <div class="ph-card-head"><h2 class="ph-card-title">Export filters</h2></div>
+    <div class="ph-card-body">
+      <div class="ph-field">
+        <span class="ph-label">Photo types to include</span>
+        <div class="ph-chiprow">
+          {% for key, label in photo_types %}
+            <label class="ph-check">
+              <input type="checkbox" class="photo-type" value="{{ key }}" checked /> {{ label }}
+            </label>
+          {% endfor %}
+        </div>
+        <p class="ph-note" style="margin:8px 0 0;">
+          KoboToolbox-era households only ever have family and toilet photos.
+        </p>
+      </div>
+
+      <div class="ph-inline" style="margin-top:16px;">
+        <label class="ph-field">
+          <span class="ph-label">Financial year</span>
+          <select id="filterFY" class="ph-select" style="max-width:200px;">
+            <option value="">Any</option>
+            {% for year, label in financial_years %}
+              <option value="{{ year }}">{{ label }}</option>
+            {% endfor %}
+          </select>
+        </label>
+        <label class="ph-field">
+          <span class="ph-label">Based on date</span>
+          <select id="filterDateField" class="ph-select" style="max-width:240px;">
+            {% for field, label in fy_date_fields %}
+              <option value="{{ field }}">{{ label }}</option>
+            {% endfor %}
+          </select>
+        </label>
+        <label class="ph-field">
+          <span class="ph-label">Email the link to</span>
+          <input type="email" id="exportEmail" class="ph-input"
+                 style="max-width:300px;" placeholder="you@shelter-associates.org" />
+        </label>
+      </div>
+    </div>
+  </div>
+  {% endif %}
+
+  {% if households %}
+    <div class="ph-card">
+      <div class="ph-card-body ph-card-body--flush" style="padding:16px 18px 4px;">
+        <table class="ph-table display" id="householdTable" style="width:100%;">
+          <thead>
+            <tr>
+              {% if can_download %}<th style="width:36px;"><input type="checkbox" id="selectAllRows" /></th>{% endif %}
+              <th>Household</th>
+              <th>Family factsheet name</th>
+              <th>Source</th>
+              <th>Recorded</th>
+              <th style="width:90px;"></th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for household in households %}
+              <tr>
+                {% if can_download %}
+                  <td><input type="checkbox" class="row-select" value="{{ household.lookup_number }}" /></td>
+                {% endif %}
+                <td><strong>{{ household.household_number }}</strong></td>
+                <td>{{ household.family_name|default:"&mdash;" }}</td>
+                <td>
+                  {% if household.source_label %}
+                    <span class="ph-badge ph-badge--{{ household.source }}">{{ household.source_label }}</span>
+                  {% else %}&mdash;{% endif %}
+                </td>
+                <td>
+                  {% if household.has_factsheet %}<span class="ph-badge">Factsheet</span>{% endif %}
+                  {% if household.has_construction %}<span class="ph-badge">Construction</span>{% endif %}
+                  {% if not household.has_factsheet and not household.has_construction %}&mdash;{% endif %}
+                </td>
+                <td>
+                  <a class="ph-btn ph-btn--sm" href="{% url 'photos:photo_household' slum.id household.lookup_number %}">Photos</a>
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    {% if can_download %}
+      <div class="ph-toolbar">
+        <span class="ph-count"><span id="selectedCount">0</span> selected</span>
+        <button type="button" class="ph-btn" id="selectFiltered">Select all matching search</button>
+        <button type="button" class="ph-btn" id="clearSelection">Clear</button>
+        <button type="button" class="ph-btn ph-btn--primary" id="queueExport">Download photos</button>
+        <span class="ph-note">Nothing selected exports the whole slum. Large exports are emailed when ready.</span>
+      </div>
+      <div id="exportMsg" class="ph-msg"></div>
+    {% endif %}
+  {% else %}
+    <div class="ph-card">
+      <div class="ph-empty">
+        No households with recorded activity in this slum.<br />
+        <a href="?all=1">Show all {{ total_count }} households anyway</a>
+      </div>
+    </div>
+  {% endif %}
+</div>
+
+<script src="{% static 'js/jquery.min.js' %}"></script>
+<script src="{% static 'js/jquery.dataTables.min.js' %}"></script>
+<script>
+  jQuery(function ($) {
+    var table = $("#householdTable").DataTable({
+      pageLength: 50,
+      lengthMenu: [[25, 50, 100, 250], [25, 50, 100, 250]],
+      order: [[{% if can_download %}1{% else %}0{% endif %}, "asc"]],
+      columnDefs: [{% if can_download %}{ orderable: false, targets: 0 },{% endif %}
+                   { orderable: false, targets: -1 }],
+      language: {
+        search: "Search house number or name",
+        searchPlaceholder: "e.g. 1035 or Sanjay",
+        info: "_START_-_END_ of _TOTAL_",
+        infoEmpty: "No households",
+        lengthMenu: "Show _MENU_"
+      }
+    });
+
+    {% if can_download %}
+    var selected = {};
+    function refresh() { $("#selectedCount").text(Object.keys(selected).length); }
+
+    $("#householdTable tbody").on("change", ".row-select", function () {
+      if (this.checked) { selected[this.value] = true; } else { delete selected[this.value]; }
+      refresh();
+    });
+
+    // Re-tick boxes when DataTables redraws a page.
+    table.on("draw", function () {
+      $(".row-select").each(function () { this.checked = !!selected[this.value]; });
+      $("#selectAllRows").prop("checked", false);
+    });
+
+    $("#selectAllRows").on("change", function () {
+      var on = this.checked;
+      $("#householdTable tbody .row-select").each(function () {
+        this.checked = on;
+        if (on) { selected[this.value] = true; } else { delete selected[this.value]; }
+      });
+      refresh();
+    });
+
+    // Respects the active search, not just the visible page.
+    $("#selectFiltered").on("click", function () {
+      table.rows({ search: "applied" }).nodes().to$().find(".row-select").each(function () {
+        selected[this.value] = true;
+        this.checked = true;
+      });
+      refresh();
+    });
+
+    $("#clearSelection").on("click", function () {
+      selected = {};
+      $(".row-select").prop("checked", false);
+      $("#selectAllRows").prop("checked", false);
+      refresh();
+    });
+
+    function message(text, ok) {
+      $("#exportMsg").attr("class", "ph-msg " + (ok ? "is-ok" : "is-err")).text(text);
+    }
+
+    $("#queueExport").on("click", function () {
+      var email = $.trim($("#exportEmail").val());
+      if (!email) { message("Enter the email address to send the link to.", false); return; }
+      var types = $(".photo-type:checked").map(function () { return this.value; }).get();
+      if (!types.length) { message("Select at least one photo type.", false); return; }
+
+      var households = Object.keys(selected);
+      var payload = {
+        email: email,
+        photo_types: types,
+        household_numbers: households.length ? households : null,
+        financial_year: $("#filterFY").val() || null,
+        date_field: $("#filterFY").val() ? $("#filterDateField").val() : null
+      };
+      var scope = households.length
+        ? households.length + " selected household(s)"
+        : "every household in this slum";
+      if (!confirm("Queue a photo export for " + scope + "?")) { return; }
+
+      $("#queueExport").prop("disabled", true);
+      $.ajax({
+        url: "{% url 'photos:photo_export_submit' slum.id %}",
+        type: "POST",
+        contentType: "application/json",
+        headers: { "X-CSRFToken": "{{ csrf_token }}" },
+        data: JSON.stringify(payload)
+      }).done(function (data) {
+        message(data.message || "Export queued.", true);
+      }).fail(function (xhr) {
+        message((xhr.responseJSON && xhr.responseJSON.error) || "Could not queue the export.", false);
+      }).always(function () {
+        $("#queueExport").prop("disabled", false);
+      });
+    });
+
+    refresh();
+    {% endif %}
+  });
+</script>
+{% endblock %}

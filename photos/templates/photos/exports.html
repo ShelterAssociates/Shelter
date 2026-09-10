@@ -1,0 +1,64 @@
+{% extends "admin/base_site.html" %}
+
+{% block bodyclass %}ph-body{% endblock %}
+{% block breadcrumbs %}{% endblock %}
+{% block extrastyle %}{% include "photos/_styles.html" %}{% endblock %}
+
+{% block content %}
+<div class="ph-page">
+  <p class="ph-crumb"><a href="{% url 'photos:photo_index' %}">&larr; Photos</a></p>
+  <div class="ph-header">
+    <div>
+      <h1 class="ph-title">My photo exports</h1>
+      <p class="ph-sub">
+        Files are removed 24 hours after they are generated. Every export ever
+        requested &mdash; photo, RIM and GIS &mdash; is listed under
+        <a href="/accounts/helpers/exportrequest/">Export requests</a> in the admin.
+      </p>
+    </div>
+  </div>
+
+  <div class="ph-card">
+    {% if exports %}
+      <div class="ph-card-body ph-card-body--flush" style="padding:6px 0 0;">
+        <table class="ph-table">
+          <thead>
+            <tr>
+              <th>Requested</th><th>Scope</th><th>Status</th>
+              <th>Photos</th><th>Size</th><th>Failed</th><th></th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for export in exports %}
+              <tr>
+                <td>{{ export.created_on|date:"j M Y, H:i" }}</td>
+                <td>{{ export.scope }}</td>
+                <td>
+                  {% if export.status == "done" %}
+                    <span class="ph-badge ph-badge--avni">Done</span>
+                  {% elif export.status == "failed" %}
+                    <span class="ph-badge" style="background:#fee2e2;color:#b91c1c;border-color:#fecaca;">Failed</span>
+                  {% else %}
+                    <span class="ph-badge ph-badge--info">{{ export.get_status_display }}</span>
+                  {% endif %}
+                  {% if export.error %}<div class="ph-missing">{{ export.error }}</div>{% endif %}
+                </td>
+                <td>{{ export.item_count }}</td>
+                <td>{{ export.size_display }}</td>
+                <td>{{ export.failure_count }}</td>
+                <td>
+                  {% if export.status == "done" %}
+                    <a class="ph-btn ph-btn--sm" href="{% url 'photos:photo_export_download' export.id %}">Download</a>
+                  {% endif %}
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% else %}
+      <div class="ph-empty">You have not requested any photo exports yet.</div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}
