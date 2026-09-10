@@ -2,7 +2,7 @@
 
 {% block bodyclass %}ph-body{% endblock %}
 {% block breadcrumbs %}{% endblock %}
-{% block extrastyle %}{% include "photos/_styles.html" %}{% endblock %}
+{% block extrastyle %}{% include "photos/partials/styles.html" %}{% endblock %}
 
 {% block content %}
 <div class="ph-page">
@@ -39,7 +39,7 @@
           <div class="ph-group-body">
             {% if program.encounters %}
               {% for encounter in program.encounters %}
-                {% include "photos/_photo_list.html" %}
+                {% include "photos/partials/photo_list.html" %}
               {% endfor %}
             {% else %}
               <p class="ph-note">No encounters recorded under this programme.</p>
@@ -115,5 +115,5 @@
   })();
 </script>
 {% endif %}
-{% include "photos/_photo_loader.html" %}
+{% include "photos/partials/photo_loader.html" %}
 {% endblock %}

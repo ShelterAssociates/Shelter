@@ -161,6 +161,43 @@ def photo_slum(request, slum_id):
     )
 
 
+def _pending_duplicate_export(user, slum, email, params):
+    """The same photo export this user already has queued or running, if any.
+
+    Guards against a double-click or an impatient re-click: without it the
+    runner would build, zip and email the identical archive twice, and bill the
+    disk for both. Only `queued` and `running` block -- once a job is `done` or
+    `failed`, asking again is a legitimate request.
+
+    `params` is a `jsonfield.JSONField`, which has no reliable SQL lookup, so
+    the handful of pending rows are compared in Python instead. Lists are sorted
+    before comparison because the browser sends the selected household numbers
+    in whatever order the user ticked them.
+    """
+
+    def normalise(values):
+        return {
+            key: sorted(value) if isinstance(value, list) else value
+            # estimated_photos is a derived count, not a filter -- two requests
+            # that differ only there are still the same export.
+            for key, value in values.items()
+            if key != "estimated_photos"
+        }
+
+    wanted = normalise(params)
+    pending = ExportRequest.objects.filter(
+        export_type="photo",
+        status__in=("queued", "running"),
+        requested_by=user,
+        slum=slum,
+        email=email,
+    )
+    for job in pending:
+        if normalise(job.params or {}) == wanted:
+            return job
+    return None
+
+
 def _with_recorded_activity(slum_id, tc_numbers):
     """Households with some recorded programme activity.
 
@@ -376,6 +413,28 @@ def photo_export_submit(request, slum_id):
         scope += ", FY {}".format(financial_year)
     scope += ")"
 
+    params = {
+        "photo_types": photo_types,
+        "household_numbers": household_numbers,
+        "date_field": date_field,
+        "financial_year": financial_year,
+        "estimated_photos": estimated,
+    }
+
+    duplicate = _pending_duplicate_export(request.user, slum, email, params)
+    if duplicate:
+        return JsonResponse(
+            {
+                "error": (
+                    "You already have this exact export {} (request #{}). "
+                    "You will be emailed when it is ready -- no need to queue "
+                    "it again.".format(duplicate.get_status_display().lower(), duplicate.pk)
+                ),
+                "duplicate_of": duplicate.pk,
+            },
+            status=409,
+        )
+
     job = ExportRequest.objects.create(
         export_type="photo",
         status="queued",
@@ -383,13 +442,7 @@ def photo_export_submit(request, slum_id):
         email=email,
         scope=scope[:500],
         slum=slum,
-        params={
-            "photo_types": photo_types,
-            "household_numbers": household_numbers,
-            "date_field": date_field,
-            "financial_year": financial_year,
-            "estimated_photos": estimated,
-        },
+        params=params,
     )
     return JsonResponse(
         {
