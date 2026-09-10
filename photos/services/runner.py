@@ -40,7 +40,7 @@ def claim_next_job():
     """
     with transaction.atomic():
         job = (
-            ExportRequest.objects.select_for_update(skip_locked=True)
+            ExportRequest.objects.select_for_update()
             .filter(export_type="photo", status="queued")
             .order_by("created_on")
             .first()
