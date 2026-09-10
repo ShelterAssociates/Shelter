@@ -1,0 +1,79 @@
+{% comment %}
+Fetches a signed URL per Avni thumbnail after first paint.
+
+The page renders with placeholders, then this asks photos:photo_sign for each
+photo. Requests are capped so a household with many photos doesn't fire dozens
+of parallel round trips; each thumbnail resolves independently, so one slow or
+failed photo never blocks the rest.
+{% endcomment %}
+<script>
+  (function () {
+    var SIGN_URL = "{% url 'photos:photo_sign' %}";
+    var MAX_PARALLEL = 4;
+
+    var queue = Array.prototype.slice.call(document.querySelectorAll(".js-photo"));
+    if (!queue.length) return;
+    var active = 0;
+
+    function showError(node) {
+      node.classList.remove("ph-thumb-media--pending");
+      node.classList.add("is-error");
+      if (node.querySelector(".ph-thumb-error")) return;
+      var box = document.createElement("span");
+      box.className = "ph-thumb-error";
+      var msg = document.createElement("span");
+      msg.textContent = "Could not load";
+      var retry = document.createElement("button");
+      retry.type = "button";
+      retry.className = "ph-thumb-retry";
+      retry.textContent = "Retry";
+      retry.addEventListener("click", function (e) {
+        e.preventDefault();
+        e.stopPropagation();
+        box.remove();
+        node.classList.remove("is-error");
+        node.classList.add("ph-thumb-media--pending");
+        load(node);
+      });
+      box.appendChild(msg);
+      box.appendChild(retry);
+      node.appendChild(box);
+    }
+
+    function load(node) {
+      var raw = node.getAttribute("data-raw");
+      if (!raw) { showError(node); next(); return; }
+      active++;
+
+      var done = false;
+      function finish() { if (!done) { done = true; active--; next(); } }
+
+      fetch(SIGN_URL + "?u=" + encodeURIComponent(raw), {
+        credentials: "same-origin"
+      }).then(function (res) {
+        if (!res.ok) { throw new Error("sign failed: " + res.status); }
+        return res.json();
+      }).then(function (data) {
+        if (!data || !data.url) { throw new Error("no url"); }
+        var img = node.querySelector("img");
+        img.addEventListener("load", function () {
+          node.classList.remove("ph-thumb-media--pending");
+          node.classList.add("is-loaded");
+          finish();
+        });
+        img.addEventListener("error", function () { showError(node); finish(); });
+        img.src = data.url;
+      }).catch(function () {
+        showError(node);
+        finish();
+      });
+    }
+
+    function next() {
+      while (active < MAX_PARALLEL && queue.length) {
+        load(queue.shift());
+      }
+    }
+    next();
+  })();
+</script>

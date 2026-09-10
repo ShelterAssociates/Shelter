@@ -226,6 +226,7 @@ class ToiletConstruction(models.Model):
     use_of_toilet = models.DateField(null=True, blank=True)
     toilet_connected_to = models.DateField(null=True, blank=True)
     factsheet_done = models.DateField(null=True, blank=True)
+    source_uuid = models.CharField(max_length=100, null=True, blank=True)
 
     class Meta:
         permissions = (

@@ -202,3 +202,97 @@ class SlumPhoto(models.Model):
 
     def __str__(self):
         return f"{self.upload_batch} - {self.file_name}"
+
+
+# ---------------------------------------------------------------------------
+# Unified register of every generated download/export across the whole app.
+#
+# Before this, RIM and GIS exports tracked nothing at all -- state lived only in
+# a uuid4 directory name on disk, so a failed export left no trace anywhere and
+# nobody could see what had been requested. This is the one table that answers
+# "who asked for which download, when, and did it work".
+# ---------------------------------------------------------------------------
+
+EXPORT_TYPES = (
+    ("photo", "Photo export"),
+    ("rim", "RIM data"),
+    ("gis", "GIS export"),
+)
+
+EXPORT_STATUSES = (
+    ("queued", "Queued"),
+    ("running", "Running"),
+    ("done", "Done"),
+    ("failed", "Failed"),
+)
+
+
+class ExportRequest(models.Model):
+    """One requested download, of any type.
+
+    Photo exports use this as a real work queue: rows are created `queued` and
+    picked up by the run_photo_exports management command. RIM and GIS exports
+    still run in their own background threads and use this purely as a record.
+    """
+
+    export_type = models.CharField(max_length=20, choices=EXPORT_TYPES)
+    status = models.CharField(
+        max_length=20, choices=EXPORT_STATUSES, default="queued"
+    )
+
+    requested_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL, null=True, blank=True, on_delete=models.SET_NULL
+    )
+    email = models.CharField(max_length=254, blank=True)
+
+    # Human-readable description of what was asked for, e.g.
+    # "Slum: Ganesh Nagar (412 households, Family Photo + Toilet Photo)".
+    scope = models.CharField(max_length=500, blank=True)
+    slum = models.ForeignKey(
+        "master.Slum", null=True, blank=True, on_delete=models.SET_NULL
+    )
+    # Type-specific request parameters: photo types, household numbers,
+    # financial year, chosen date field, etc.
+    params = JSONField(null=True, blank=True)
+
+    item_count = models.IntegerField(default=0)
+    bytes_total = models.BigIntegerField(default=0)
+    # Absolute path of the generated file. Not a FileField: these are transient
+    # artefacts deleted by the nightly cleanup script, and a dangling FileField
+    # is worse than a dangling string.
+    file_path = models.CharField(max_length=1000, null=True, blank=True)
+
+    # [{"household": "0022", "label": "Family Photo", "error": "..."}]
+    failures = JSONField(null=True, blank=True)
+    error = models.TextField(null=True, blank=True)
+
+    created_on = models.DateTimeField(default=timezone.now)
+    started_on = models.DateTimeField(null=True, blank=True)
+    finished_on = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        verbose_name = "Export request"
+        verbose_name_plural = "Export requests"
+        ordering = ("-created_on",)
+        indexes = [
+            # Exactly what the photo export runner queries.
+            models.Index(fields=["status", "created_on"]),
+        ]
+
+    def __str__(self):
+        return "{} - {} ({})".format(
+            self.get_export_type_display(), self.scope or "-", self.status
+        )
+
+    @property
+    def size_display(self):
+        """Human-readable size for the admin list."""
+        size = float(self.bytes_total or 0)
+        for unit in ("B", "KB", "MB", "GB"):
+            if size < 1024 or unit == "GB":
+                return "{:.1f} {}".format(size, unit)
+            size /= 1024
+
+    @property
+    def failure_count(self):
+        return len(self.failures or [])

@@ -1,0 +1,130 @@
+{% extends "admin/base_site.html" %}
+
+{% block bodyclass %}ph-body{% endblock %}
+{% block breadcrumbs %}{% endblock %}
+{% block extrastyle %}{% include "photos/_styles.html" %}{% endblock %}
+
+{% block content %}
+<div class="ph-page">
+  <div class="ph-header">
+    <div>
+      <h1 class="ph-title">Photos</h1>
+      <p class="ph-sub">
+        Family and toilet photos from the household factsheet, and agreement
+        photos recorded during construction. Pick a city, then find a slum.
+      </p>
+    </div>
+    {% if can_download %}
+      <a class="ph-btn" href="{% url 'photos:photo_export_list' %}">My exports</a>
+    {% endif %}
+  </div>
+
+  <div class="ph-card">
+    <div class="ph-card-body ph-card-body--tight">
+      <form method="get" action="">
+        <label class="ph-field" style="margin-bottom:0;">
+          <span class="ph-label">City</span>
+          <select name="city_id" class="ph-select" onchange="this.form.submit();">
+            <option value="">Select a city&hellip;</option>
+            {% for city in cities %}
+              <option value="{{ city.id }}"{% if selected_city_id == city.id|stringformat:"s" %} selected{% endif %}>
+                {{ city.name.city_name }}
+              </option>
+            {% endfor %}
+          </select>
+          <noscript><button type="submit" class="ph-btn ph-btn--primary" style="margin-top:10px;">Show slums</button></noscript>
+        </label>
+      </form>
+    </div>
+  </div>
+
+  {% if selected_city_id %}
+    <div class="ph-card">
+      <div class="ph-card-head">
+        <h2 class="ph-card-title">Slums</h2>
+        <span class="ph-pill"><span id="slumShown">{{ slums|length }}</span> of {{ slums|length }}</span>
+      </div>
+      <div class="ph-card-body">
+        <div class="ph-search" style="margin-bottom:20px;">
+          <svg class="ph-search-icon" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+            <circle cx="9" cy="9" r="6" stroke="currentColor" stroke-width="2"/>
+            <path d="m13.5 13.5 3.5 3.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+          </svg>
+          <input type="search" id="slumSearch" class="ph-input" autocomplete="off"
+                 placeholder="Search by slum name or code&hellip;" />
+        </div>
+
+        {% if slums %}
+          <div class="ph-grid" id="slumGrid">
+            {% for slum in slums %}
+              <a class="ph-tile" href="{% url 'photos:photo_slum' slum.id %}"
+                 data-name="{{ slum.name|lower }}"
+                 data-code="{{ slum.shelter_slum_code|default:''|lower }}">
+                <span class="ph-tile-mark">{{ slum.name|slice:":1"|upper }}</span>
+                <span class="ph-tile-body">
+                  <span class="ph-tile-name">{{ slum.name }}</span>
+                </span>
+              </a>
+            {% endfor %}
+          </div>
+          <div class="ph-empty" id="slumEmpty" style="display:none;">
+            <span class="ph-empty-mark">
+              <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+                <circle cx="9" cy="9" r="6" stroke="currentColor" stroke-width="2"/>
+                <path d="m13.5 13.5 3.5 3.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+              </svg>
+            </span>
+            <div>No slums match that search.</div>
+          </div>
+        {% else %}
+          <div class="ph-empty">No slums found for this city.</div>
+        {% endif %}
+      </div>
+    </div>
+  {% endif %}
+
+  <div class="ph-card">
+    <div class="ph-card-head">
+      <h2 class="ph-card-title">Look up one encounter</h2>
+    </div>
+    <div class="ph-card-body">
+      <form method="get" action="{% url 'photos:photo_encounter' %}" class="ph-inline">
+        <label class="ph-field">
+          <span class="ph-label">Avni program encounter UUID</span>
+          <input type="text" name="uuid" class="ph-input"
+                 placeholder="8e94c622-a47b-473b-ae4a-dd125f0eb54a" />
+        </label>
+        <button type="submit" class="ph-btn ph-btn--primary">Show photos</button>
+      </form>
+    </div>
+  </div>
+</div>
+
+<script>
+  (function () {
+    var input = document.getElementById("slumSearch");
+    var grid = document.getElementById("slumGrid");
+    if (!input || !grid) return;
+    var tiles = Array.prototype.slice.call(grid.children);
+    var shown = document.getElementById("slumShown");
+    var empty = document.getElementById("slumEmpty");
+
+    function filter() {
+      var q = input.value.trim().toLowerCase();
+      var n = 0;
+      tiles.forEach(function (t) {
+        var hit = !q ||
+          t.getAttribute("data-name").indexOf(q) !== -1 ||
+          t.getAttribute("data-code").indexOf(q) !== -1;
+        t.style.display = hit ? "" : "none";
+        if (hit) n++;
+      });
+      if (shown) shown.textContent = n;
+      if (empty) empty.style.display = n ? "none" : "block";
+      grid.style.display = n ? "" : "none";
+    }
+    input.addEventListener("input", filter);
+    input.focus();
+  })();
+</script>
+{% endblock %}

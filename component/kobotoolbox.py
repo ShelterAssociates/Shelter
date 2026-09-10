@@ -1365,10 +1365,18 @@ def get_kobo_FF_report_detail(city, slum_code, house_number, kobo_survey=""):
                     output[split_key[-1:][0]] = output[key]
                     output.pop(key)
             if "_attachments" in output and len(output["_attachments"]) != 0:
-                PATH = (
-                    "https://app.shelter-associates.org/media/shelter/attachments/"
-                    + "/".join(output["_attachments"][0]["filename"].split("/")[2:-1])
+                # Previously a raw /media/shelter/attachments/ URL, which nginx
+                # served with no authentication. These now go through
+                # photos:protected_media, which admits superusers, mastersheet
+                # viewers and the "sponsor" group -- i.e. exactly the audience
+                # this report already has.
+                from photos.views import protected_media_url
+
+                RELATIVE_DIR = "shelter/attachments/" + "/".join(
+                    output["_attachments"][0]["filename"].split("/")[2:-1]
                 )
+                base_url = (getattr(settings, "BASE_APP_URL", "") or "").rstrip("/")
+                PATH = base_url + protected_media_url(RELATIVE_DIR)
                 for photo in output["_attachments"]:
                     if (
                         "Toilet_Photo" in output

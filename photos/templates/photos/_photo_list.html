@@ -1,0 +1,78 @@
+{% comment %}
+One encounter's photos, as a thumbnail grid.
+
+Avni photos render as an empty placeholder with a spinner and a `data-raw`
+attribute; a script fetches each signed URL after first paint (photos:photo_sign)
+and swaps the image in. Signing costs a round trip to Avni per photo, so doing
+it during the request made the page wait for all of them before showing
+anything.
+
+Kobo photos need no signing -- they are served by our own view -- so they get a
+real src straight away.
+{% endcomment %}
+<div class="ph-enc">
+  <h3 class="ph-enc-title">{{ encounter.encounter_type|default:"Encounter" }}</h3>
+  <p class="ph-enc-meta">
+    {% if encounter.encounter_date %}{{ encounter.encounter_date }}{% endif %}
+    {% if encounter.uuid %} &middot; <code>{{ encounter.uuid }}</code>{% endif %}
+    {% if encounter.avni_url %} &middot; <a href="{{ encounter.avni_url }}" target="_blank" rel="noopener">Open in Avni</a>{% endif %}
+  </p>
+
+  {% if encounter.photos %}
+    <div class="ph-thumbs">
+      {% for photo in encounter.photos %}
+        <figure class="ph-thumb{% if photo.exists is False %} is-missing{% endif %}">
+          {% if can_download and photo.exists is not False %}
+            <label class="ph-thumb-check" title="Include in download">
+              <input type="checkbox" class="photo-select" name="labels" value="{{ photo.label }}" checked />
+            </label>
+          {% endif %}
+
+          {% if photo.exists is False %}
+            <div class="ph-thumb-media ph-thumb-media--empty">
+              <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <path d="M3 5h18v14H3z" stroke="currentColor" stroke-width="1.6"/>
+                <path d="m3 16 5-5 4 4 3-3 6 6" stroke="currentColor" stroke-width="1.6"
+                      stroke-linecap="round" stroke-linejoin="round"/>
+                <path d="m4 4 16 16" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+              </svg>
+            </div>
+          {% elif photo.source == "kobo" %}
+            {# Served by our own view -- no signing needed, load immediately. #}
+            <a class="ph-thumb-media" href="{{ photo.link_url|default:photo.url }}"
+               target="_blank" rel="noopener" title="Open {{ photo.label }}">
+              <img src="{{ photo.url }}" alt="{{ photo.label }}" loading="lazy" />
+              <span class="ph-thumb-zoom">
+                <svg viewBox="0 0 20 20" fill="none" aria-hidden="true">
+                  <circle cx="9" cy="9" r="6" stroke="currentColor" stroke-width="2"/>
+                  <path d="M9 6.5v5M6.5 9h5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                </svg>
+              </span>
+            </a>
+          {% else %}
+            <a class="ph-thumb-media ph-thumb-media--pending js-photo"
+               data-raw="{{ photo.raw_url }}"
+               href="{{ photo.link_url|default:'#' }}"
+               target="_blank" rel="noopener" title="Open {{ photo.label }}">
+              <span class="ph-spinner" aria-label="Loading photo"></span>
+              <img alt="{{ photo.label }}" />
+              <span class="ph-thumb-zoom">
+                <svg viewBox="0 0 20 20" fill="none" aria-hidden="true">
+                  <circle cx="9" cy="9" r="6" stroke="currentColor" stroke-width="2"/>
+                  <path d="M9 6.5v5M6.5 9h5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                </svg>
+              </span>
+            </a>
+          {% endif %}
+
+          <figcaption class="ph-thumb-label" title="{{ photo.label }}">
+            {{ photo.label }}
+            {% if photo.exists is False %}<span class="ph-missing">missing on server</span>{% endif %}
+          </figcaption>
+        </figure>
+      {% endfor %}
+    </div>
+  {% else %}
+    <p class="ph-note" style="margin:0;">No photos recorded on this encounter.</p>
+  {% endif %}
+</div>
