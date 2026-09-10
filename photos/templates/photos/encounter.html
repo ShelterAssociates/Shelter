@@ -2,7 +2,7 @@
 
 {% block bodyclass %}ph-body{% endblock %}
 {% block breadcrumbs %}{% endblock %}
-{% block extrastyle %}{% include "photos/_styles.html" %}{% endblock %}
+{% block extrastyle %}{% include "photos/partials/styles.html" %}{% endblock %}
 
 {% block content %}
 <div class="ph-page">
@@ -35,10 +35,10 @@
         <h2 class="ph-group-title">{{ encounter.program|default:"Encounter" }}</h2>
       </div>
       <div class="ph-group-body">
-        {% include "photos/_photo_list.html" %}
+        {% include "photos/partials/photo_list.html" %}
       </div>
     </div>
   {% endif %}
 </div>
-{% include "photos/_photo_loader.html" %}
+{% include "photos/partials/photo_loader.html" %}
 {% endblock %}

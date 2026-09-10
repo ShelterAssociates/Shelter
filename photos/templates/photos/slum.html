@@ -3,7 +3,7 @@
 
 {% block bodyclass %}ph-body{% endblock %}
 {% block breadcrumbs %}{% endblock %}
-{% block extrastyle %}{% include "photos/_styles.html" %}{% endblock %}
+{% block extrastyle %}{% include "photos/partials/styles.html" %}{% endblock %}
 
 {% block content %}
 <link rel="stylesheet" href="{% static 'css/jquery.dataTables.min.css' %}" />
@@ -35,7 +35,7 @@
     <div class="ph-card-body">
       <div class="ph-field">
         <span class="ph-label">Photo types to include</span>
-        <div class="ph-chiprow">
+        <div class="ph-chiprow" id="photoTypeRow">
           {% for key, label in photo_types %}
             <label class="ph-check">
               <input type="checkbox" class="photo-type" value="{{ key }}" checked /> {{ label }}
@@ -118,14 +118,49 @@
     </div>
 
     {% if can_download %}
-      <div class="ph-toolbar">
-        <span class="ph-count"><span id="selectedCount">0</span> selected</span>
-        <button type="button" class="ph-btn" id="selectFiltered">Select all matching search</button>
-        <button type="button" class="ph-btn" id="clearSelection">Clear</button>
-        <button type="button" class="ph-btn ph-btn--primary" id="queueExport">Download photos</button>
-        <span class="ph-note">Nothing selected exports the whole slum. Large exports are emailed when ready.</span>
+      <div class="ph-export-dock">
+        <div id="exportMsg" class="ph-msg"></div>
+        <div class="ph-toolbar">
+          <span class="ph-count"><span id="selectedCount">0</span> selected</span>
+          <button type="button" class="ph-btn" id="selectFiltered">Select all matching search</button>
+          <button type="button" class="ph-btn" id="clearSelection">Clear</button>
+          <button type="button" class="ph-btn ph-btn--primary" id="queueExport">Download photos</button>
+          <span class="ph-note">Nothing selected exports the whole slum. Large exports are emailed when ready.</span>
+        </div>
       </div>
-      <div id="exportMsg" class="ph-msg"></div>
+
+      {# Confirm dialog for the export. Same confirm -> loading -> result steps
+         as the KML delete modal, so the two admin flows behave alike. #}
+      <div class="ph-modal" id="exportModal">
+        <div class="ph-modal-backdrop"></div>
+        <div class="ph-modal-dialog" role="dialog" aria-modal="true" aria-labelledby="exportModalTitle">
+          <div class="ph-modal-step-confirm">
+            <div class="ph-modal-body">
+              <h2 id="exportModalTitle">Queue photo export</h2>
+              <p>This builds a zip on the server and emails you a download link when it is ready.</p>
+              <div class="ph-modal-scope">
+                <strong id="exportModalScope"></strong>
+                <span id="exportModalDetail"></span>
+              </div>
+              <div class="ph-modal-actions">
+                <button type="button" class="ph-btn" id="exportCancelBtn">Cancel</button>
+                <button type="button" class="ph-btn ph-btn--primary" id="exportConfirmBtn">Queue export</button>
+              </div>
+            </div>
+          </div>
+          <div class="ph-modal-loading">
+            <div class="ph-modal-spinner"></div>
+            <p class="ph-note" style="margin-top:14px;">Queueing the export&hellip;</p>
+          </div>
+          <div class="ph-modal-result">
+            <span class="ph-modal-result-icon"></span>
+            <p class="ph-modal-result-message" style="font-size:13.5px;"></p>
+            <div class="ph-modal-actions" style="justify-content:center;">
+              <button type="button" class="ph-btn ph-btn--primary" id="exportResultCloseBtn">OK</button>
+            </div>
+          </div>
+        </div>
+      </div>
     {% endif %}
   {% else %}
     <div class="ph-card">
@@ -196,41 +231,137 @@
       refresh();
     });
 
-    function message(text, ok) {
+    var $email = $("#exportEmail");
+    var $typeRow = $("#photoTypeRow");
+
+    $email.on("input", function () { $email.removeClass("is-invalid"); });
+    $(".photo-type").on("change", function () { $typeRow.removeClass("is-invalid"); });
+
+    // The toolbar is sticky but the fields it validates sit at the top of the
+    // page, so an error has to (a) appear in the dock next to the button that
+    // was clicked and (b) carry the user back up to the field to fix.
+    function message(text, ok, $field) {
       $("#exportMsg").attr("class", "ph-msg " + (ok ? "is-ok" : "is-err")).text(text);
+      if (!$field || !$field.length) { return; }
+      $field.addClass("is-invalid");
+      var top = $field.offset().top - 120;
+      $("html, body").stop(true).animate({ scrollTop: top < 0 ? 0 : top }, 260)
+        .promise().done(function () {
+          var $focus = $field.is("input, select, textarea")
+            ? $field
+            : $field.find("input, select, textarea").first();
+          $focus.focus();
+        });
     }
 
+    // ---- confirm modal (replaces window.confirm) ----
+    var $modal = $("#exportModal");
+    var $stepConfirm = $modal.find(".ph-modal-step-confirm");
+    var $stepLoading = $modal.find(".ph-modal-loading");
+    var $stepResult = $modal.find(".ph-modal-result");
+    var pendingPayload = null;
+    var inFlight = false;
+
+    function showStep(step) {
+      $stepConfirm.hide();
+      $stepLoading.hide();
+      $stepResult.hide();
+      if (step === "confirm") { $stepConfirm.show(); }
+      if (step === "loading") { $stepLoading.show(); }
+      if (step === "result") { $stepResult.show(); }
+    }
+
+    function openModal(payload, scopeText, detailText) {
+      pendingPayload = payload;
+      $("#exportModalScope").text(scopeText);
+      $("#exportModalDetail").text(detailText);
+      showStep("confirm");
+      $modal.addClass("is-open");
+      $("#exportConfirmBtn").focus();
+    }
+
+    function closeModal() {
+      $modal.removeClass("is-open");
+      pendingPayload = null;
+    }
+
+    // `tone` is one of is-ok / is-err / is-warn.
+    function showResult(tone, icon, text) {
+      $stepResult.removeClass("is-ok is-err is-warn").addClass(tone);
+      $stepResult.find(".ph-modal-result-icon").text(icon);
+      $stepResult.find(".ph-modal-result-message").text(text);
+      showStep("result");
+    }
+
+    $modal.find(".ph-modal-backdrop").on("click", function () {
+      // Only dismissable while it is not mid-request.
+      if (!inFlight) { closeModal(); }
+    });
+    $(document).on("keydown", function (e) {
+      if (e.key === "Escape" && $modal.hasClass("is-open") && !inFlight) { closeModal(); }
+    });
+    $("#exportCancelBtn").on("click", closeModal);
+    $("#exportResultCloseBtn").on("click", closeModal);
+
     $("#queueExport").on("click", function () {
-      var email = $.trim($("#exportEmail").val());
-      if (!email) { message("Enter the email address to send the link to.", false); return; }
+      if (inFlight) { return; }
+
+      var email = $.trim($email.val());
+      if (!email) {
+        message("Enter the email address to send the download link to.", false, $email);
+        return;
+      }
       var types = $(".photo-type:checked").map(function () { return this.value; }).get();
-      if (!types.length) { message("Select at least one photo type.", false); return; }
+      if (!types.length) {
+        message("Select at least one photo type.", false, $typeRow);
+        return;
+      }
+      $email.removeClass("is-invalid");
+      $typeRow.removeClass("is-invalid");
 
       var households = Object.keys(selected);
+      var fy = $("#filterFY").val();
       var payload = {
         email: email,
         photo_types: types,
         household_numbers: households.length ? households : null,
-        financial_year: $("#filterFY").val() || null,
-        date_field: $("#filterFY").val() ? $("#filterDateField").val() : null
+        financial_year: fy || null,
+        date_field: fy ? $("#filterDateField").val() : null
       };
       var scope = households.length
-        ? households.length + " selected household(s)"
-        : "every household in this slum";
-      if (!confirm("Queue a photo export for " + scope + "?")) { return; }
+        ? households.length + " selected household" + (households.length === 1 ? "" : "s")
+        : "Every household in this slum";
+      var detail = types.length + " photo type" + (types.length === 1 ? "" : "s")
+        + (fy ? ", FY " + fy : "") + " \u2014 link goes to " + email;
+      openModal(payload, scope, detail);
+    });
 
+    $("#exportConfirmBtn").on("click", function () {
+      // Guards the double-click: the modal is still open on the confirm step
+      // until the response lands, so without this the same job queues twice.
+      if (inFlight || !pendingPayload) { return; }
+      inFlight = true;
       $("#queueExport").prop("disabled", true);
+      showStep("loading");
+
       $.ajax({
         url: "{% url 'photos:photo_export_submit' slum.id %}",
         type: "POST",
         contentType: "application/json",
         headers: { "X-CSRFToken": "{{ csrf_token }}" },
-        data: JSON.stringify(payload)
+        data: JSON.stringify(pendingPayload)
       }).done(function (data) {
+        showResult("is-ok", "\u2713", data.message || "Export queued.");
         message(data.message || "Export queued.", true);
       }).fail(function (xhr) {
-        message((xhr.responseJSON && xhr.responseJSON.error) || "Could not queue the export.", false);
+        var err = (xhr.responseJSON && xhr.responseJSON.error) || "Could not queue the export.";
+        // 409 = this exact export is already queued or running. Not a failure,
+        // so it does not get the red treatment.
+        var duplicate = xhr.status === 409;
+        showResult(duplicate ? "is-warn" : "is-err", duplicate ? "!" : "\u2715", err);
+        message(err, false);
       }).always(function () {
+        inFlight = false;
         $("#queueExport").prop("disabled", false);
       });
     });
