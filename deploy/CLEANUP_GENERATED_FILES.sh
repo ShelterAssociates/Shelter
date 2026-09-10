@@ -31,7 +31,9 @@
 set -e
 
 PROJECT_DIR="/srv/Shelter"
-MEDIA_DIR="$PROJECT_DIR/media"
+
+
+MEDIA_DIR="${SHELTER_MEDIA_DIR:-$(dirname "$PROJECT_DIR")/media}"
 
 # Retention in minutes. 1440 = 24 hours, matching the expiry note in the
 # "export ready" emails.
@@ -71,9 +73,12 @@ trap 'echo "[ERROR] $(date "+%Y-%m-%d %H:%M:%S") - FAILED at line $LINENO runnin
 echo "========== $(date "+%Y-%m-%d %H:%M:%S") : cleanup starting =========="
 
 if [ ! -d "$MEDIA_DIR" ]; then
-	echo "Media directory $MEDIA_DIR does not exist -- nothing to do."
-	exit 0
+	echo "[ERROR] Media directory $MEDIA_DIR does not exist."
+	echo "        Nothing was cleaned. Check the path (MEDIA_ROOT = PARENT_DIR/media)"
+	echo "        or set SHELTER_MEDIA_DIR to the correct location."
+	exit 1
 fi
+echo "Media directory: $MEDIA_DIR"
 
 BEFORE_KB=$(df -Pk "$MEDIA_DIR" | awk 'NR==2 {print $4}')
 TOTAL_REMOVED=0
