@@ -59,6 +59,7 @@ from component.services.helper import (
 
 from graphs.models import HouseholdData
 from helpers.services.send_email import send_email
+from notification.services import contacts
 
 logger = logging.getLogger(__name__)
 
@@ -356,10 +357,11 @@ def kml_upload(request):
                 # Only notify on a real, fully-saved upload — a failed/
                 # partial upload (unparsed folders present) sends no email.
                 email_sent = None
-                if upload_ok and settings.KML_CHANGE_NOTIFY_EMAILS:
+                kml_to, kml_cc, kml_bcc = contacts.recipients_for("kml_change")
+                if upload_ok and kml_to:
                     try:
                         send_email(
-                            settings.KML_CHANGE_NOTIFY_EMAILS,
+                            kml_to,
                             "KML uploaded: {}".format(
                                 upload_context["slum_name"]
                                 if upload_context["level"] == "Slum"
@@ -373,6 +375,8 @@ def kml_upload(request):
                                 if upload_context["level"] == "Slum"
                                 else upload_context["city_name"],
                             ),
+                            cc=kml_cc,
+                            bcc=kml_bcc,
                         )
                         email_sent = True
                     except Exception as email_err:
@@ -1238,9 +1242,10 @@ def delete_component(request):
             **location_context,
         }
 
-        if not settings.KML_CHANGE_NOTIFY_EMAILS:
+        kml_to, kml_cc, kml_bcc = contacts.recipients_for("kml_change")
+        if not kml_to:
             logger.error(
-                "KML_CHANGE_NOTIFY_EMAILS is not configured; blocking component delete"
+                "No kml_change recipients configured; blocking component delete"
             )
             return JsonResponse(
                 {
@@ -1252,7 +1257,7 @@ def delete_component(request):
 
         try:
             send_email(
-                settings.KML_CHANGE_NOTIFY_EMAILS,
+                kml_to,
                 'KML component "{}" deleted in {}'.format(
                     comp_name, location_context["slum_name"]
                 ),
@@ -1265,6 +1270,8 @@ def delete_component(request):
                     location_context["slum_name"],
                     reason,
                 ),
+                cc=kml_cc,
+                bcc=kml_bcc,
             )
         except Exception as e:
             logger.error("Failed to send KML delete notification email: %s", e)
@@ -1359,9 +1366,10 @@ def set_component_metric(request):
             **location_context,
         }
 
-        if not settings.KML_CHANGE_NOTIFY_EMAILS:
+        kml_to, kml_cc, kml_bcc = contacts.recipients_for("kml_change")
+        if not kml_to:
             logger.error(
-                "KML_CHANGE_NOTIFY_EMAILS is not configured; blocking metric update"
+                "No kml_change recipients configured; blocking metric update"
             )
             return JsonResponse(
                 {
@@ -1378,7 +1386,7 @@ def set_component_metric(request):
         )
         try:
             send_email(
-                settings.KML_CHANGE_NOTIFY_EMAILS,
+                kml_to,
                 'KML component metric updated: "{}" in {}'.format(
                     comp_name, location_context["slum_name"]
                 ),
@@ -1391,6 +1399,8 @@ def set_component_metric(request):
                     location_context["slum_name"],
                     reason,
                 ),
+                cc=kml_cc,
+                bcc=kml_bcc,
             )
         except Exception as e:
             logger.error("Failed to send KML metric notification email: %s", e)

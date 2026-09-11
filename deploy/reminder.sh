@@ -11,12 +11,13 @@ from django.urls import reverse
 from django.utils import timezone
 from helpers.services.send_email import send_email
 from helpers.models import ReminderTracker
+from notification.services import contacts
 
-# ── Test Config (adjust these before each manual run) ────────────────────────
 REMINDER_TYPE  = "GIS_SERVER_DATA_SYNC"
-TO_EMAILS      = ["gis@shelter-associates.org"]
-CC_EMAILS      = ["info@shelter-associates.org" , "dhana@shelter-associates.org" ,"developer@shelter-associates.org" ]
-BCC_EMAILS     = []
+TO_EMAILS, CC_EMAILS, BCC_EMAILS = contacts.recipients_for("gis_reminder")
+if not TO_EMAILS:
+    print("No gis_reminder contacts configured in admin; nothing sent.")
+    exit()
 TEMPLATE       = "helpers/gis_reminder.html"
 PRIMARY_EMAIL  = TO_EMAILS[0]
 

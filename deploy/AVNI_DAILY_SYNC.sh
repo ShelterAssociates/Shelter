@@ -1,43 +1,47 @@
-cd /srv/Shelter/
-source ENV3/bin/activate
-python manage.py shell <<ORM
-from graphs.sync_avni_data import *
-from time import sleep
-import time
-a = avni_sync()
-a.SaveDailyReportingdata()
-time.sleep(1)
-a.SaveFamilyFactsheetData()
-time.sleep(1)
-a.SaveCommunityMobilizationData()
-time.sleep(1)
-## Not Doing currently
-# a.SaveFollowupData()
-# time.sleep(1m)
-# a.SaveRhsData('Household')
-# time.sleep(1m)
-# a.SaveRhsData('Structure')
-# time.sleep(1m)
-# a.SaveWasteData()
-# time.sleep(1m)
-# a.SaveWaterData()
-# time.sleep(1m)
-# a.SaveElectricityData()
-# time.sleep(1m)
-# a.SavePropertyTaxData()
-# time.sleep(1m)
-# a.SaveDailyReportingdata()
-#a.sync_sanitation_data('/home/ubuntu/Json_files_for_upload/sanitation_data_09_10_2025.json')
-#sleep(3)
-#a.sync_water_data('/home/ubuntu/Json_files_for_upload/water_data_09_10_2025.json')
-#sleep(3)
-#a.sync_waste_data('/home/ubuntu/Json_files_for_upload/waste_data_09_10_2025.json')
-#sleep(3)
-#a.sync_Electricity_data('/home/ubuntu/Json_files_for_upload/electricity_data_09_10_2025.json')
+#!/bin/bash
+# Nightly Avni sync. Install as a cron job:
+#
+#0 22 * * * bash /srv/Shelter/deploy/AVNI_DAILY_SYNC.sh
+#
+# Steps: RHS Household registration, Daily Reporting, Family Factsheet,
+# Community Mobilization (see graphs/jobs/avni_daily_sync.py). Every step is
+# recorded in Django admin (Job runs) and emailed on failure.
+# dashboard_update.sh is NO LONGER chained here -- it runs fortnightly on its
+# own cron line (1st and 16th). Chaining it made it run nightly.
+# sync_rhs.sh remains for manual Structure / by-IID runs only.
 
+set -e
 
-ORM
+PROJECT_DIR="/srv/Shelter"
+VENV_DIR="$PROJECT_DIR/ENV3"
 
-bash /srv/Shelter/deploy/dashboard_update.sh
+export VIRTUAL_ENV="$VENV_DIR"
+export PATH="$VENV_DIR/bin:$PATH"
+export DJANGO_SETTINGS_MODULE=shelter.settings
+
+cd "$PROJECT_DIR"
+
+LOG_DIR="$HOME/sync_logs"
+LOG_FILE="$LOG_DIR/avni_daily_sync.log"
+MAX_SIZE=$((2 * 1024 * 1024))
+mkdir -p "$LOG_DIR"
+
+if [ -f "$LOG_FILE" ]; then
+	CURRENT_SIZE=$(stat -c%s "$LOG_FILE" 2>/dev/null || echo 0)
+	if [ "$CURRENT_SIZE" -ge "$MAX_SIZE" ]; then
+		mv "$LOG_FILE" "${LOG_FILE}.1"
+		touch "$LOG_FILE"
+	fi
+else
+	touch "$LOG_FILE"
+fi
+
+exec >>"$LOG_FILE" 2>&1
+
+trap 'echo "[ERROR] $(date "+%Y-%m-%d %H:%M:%S") - FAILED at line $LINENO running: $BASH_COMMAND"' ERR
+
+echo "========== $(date "+%Y-%m-%d %H:%M:%S") : avni daily sync starting =========="
+"$VENV_DIR/bin/python" manage.py run_job avni_daily_sync --trigger cron
+echo "========== $(date "+%Y-%m-%d %H:%M:%S") : avni daily sync finished =========="
+
 sudo bash /srv/Shelter/deploy/auto_ssl_renew.sh
-

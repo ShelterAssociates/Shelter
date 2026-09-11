@@ -103,6 +103,25 @@ PHOTO_INSTANT_MAX_MB = 80
 # card images.
 PHOTO_DOWNLOAD_GROUPS = []
 
+# Fallback recipients for scheduled-job digests/alerts, used only when the
+# notification address book has no active rows for the purpose yet.
+JOB_NOTIFY_FALLBACK_EMAILS = []
+
+# With DEBUG on, send_email() delivers every mail ONLY to the "dev_redirect"
+# contacts in the address book; this is the fallback when that purpose is empty.
+# If both are empty, sending is refused so a dev run can never reach real people.
+EMAIL_DEV_REDIRECT_TO = []
+
+# Directory under MEDIA_ROOT holding per-run detail reports. Must stay in sync with
+# EXPORT_DIRS in deploy/CLEANUP_GENERATED_FILES.sh, which reaps it after 24h.
+JOB_REPORT_DIR_NAME = "job_reports"
+
+# Detail reports larger than this are attached truncated (head+tail).
+JOB_REPORT_MAX_ATTACH_BYTES = 5 * 1024 * 1024
+
+# A JobRun still "running" after this long was killed; the digest marks it crashed.
+JOB_RUN_STUCK_HOURS = 6
+
 # Use BigAutoField by default to avoid Django warnings about auto-created PK types
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
@@ -153,6 +172,7 @@ INSTALLED_APPS = (
     "mastersheet",
     "graphs",
     "helpers",
+    "notification.apps.NotificationConfig",
     "photos",
     "reports.apps.ReportsConfig",
     "rest_framework",
