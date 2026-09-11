@@ -76,7 +76,17 @@ class Command(BaseCommand):
                 included_in_digest_at=stamp
             )
             definitions.update(last_digest_checked_at=until)
+            self.record_own_run(until, stamp)
         self.stdout.write(self.style.SUCCESS("Digest sent."))
+
+    def record_own_run(self, started, finished):
+        """So the next digest can tell this one ran. Pre-marked as digested."""
+        definition = JobDefinition.objects.filter(key="job_digest").first()
+        JobRun.objects.create(
+            job=definition, job_key="job_digest", status="success",
+            started_on=started, finished_on=finished,
+            included_in_digest_at=finished,
+        )
 
     def sweep_stuck(self, until):
         """Close runs that are still 'running' past their job's max runtime."""

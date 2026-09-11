@@ -188,6 +188,7 @@ class StepRecorder(object):
         self.failed = 0
         self.skipped = 0
         self.error = None
+        self.extras = {}
         self._cities = {}
         self._failures = []
         self._logger_names = list(loggers or [])
@@ -311,6 +312,7 @@ class StepRecorder(object):
         self.model.records_skipped = self.skipped
         self.model.error = self.error
         self.model.sample_failures = self._failures
+        self.model.extras = self.extras or None
         self.model.save()
 
         for city_name, data in self._cities.items():
@@ -462,6 +464,13 @@ def expect(count):
     step = getattr(_state, "step", None)
     if step is not None:
         step.expect(count)
+
+
+def note(**values):
+    """Attach key/value facts (e.g. the watermark used) to the active step."""
+    step = getattr(_state, "step", None)
+    if step is not None:
+        step.extras.update({k: str(v) for k, v in values.items()})
 
 
 def skip(slum=None, reason=""):

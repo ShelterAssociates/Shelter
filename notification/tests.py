@@ -116,6 +116,7 @@ class RecorderDbTests(TestCase):
         recorder = reporting.start("unit", trigger="manual")
         with recorder.step("s1", loggers=["notification.tests.run"]) as step:
             step.expect(4)
+            reporting.note(watermark="2026-09-01T00:00:00.000Z")
             with reporting.record(city="Pune", household="1"):
                 pass
             with reporting.record(city="Pune", household="2"):
@@ -132,6 +133,7 @@ class RecorderDbTests(TestCase):
         stats = {c.city_name: (c.records_ok, c.records_failed) for c in step_model.city_stats.all()}
         self.assertEqual(stats, {"Pune": (1, 1), "Thane": (0, 1)})
         self.assertEqual(len(step_model.sample_failures), 2)
+        self.assertEqual(step_model.extras, {"watermark": "2026-09-01T00:00:00.000Z"})
         self.assertTrue(os.path.exists(run.detail_file_path))
         self.assertIn("job_reports", run.detail_file_path)
 
@@ -306,3 +308,19 @@ class AdminSwitchTests(TestCase):
         call_command("run_job", "selftest", "--no-email", stdout=out)
         self.assertIn("switched off", out.getvalue())
         self.assertFalse(JobRun.objects.filter(job_key="selftest").exists())
+
+
+@override_settings(
+    DEBUG=False, EMAIL_BACKEND="django.core.mail.backends.locmem.EmailBackend",
+    JOB_NOTIFY_FALLBACK_EMAILS=["ops@example.org"],
+)
+class DigestSelfRecordTests(TestCase):
+    def test_digest_records_its_own_run(self):
+        from django.core.management import call_command
+
+        JobDefinition.objects.create(key="job_digest", display_name="D", expected_times="06:00")
+        call_command("send_job_digest")
+        self.assertEqual(len(mail.outbox), 1)
+        own = JobRun.objects.get(job_key="job_digest")
+        self.assertEqual(own.status, "success")
+        self.assertIsNotNone(own.included_in_digest_at)
