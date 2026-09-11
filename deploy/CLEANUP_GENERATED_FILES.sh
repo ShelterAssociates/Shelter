@@ -40,7 +40,9 @@ MEDIA_DIR="${SHELTER_MEDIA_DIR:-$(dirname "$PROJECT_DIR")/media}"
 RETENTION_MINUTES=1440
 
 # The ONLY directories this script may delete from, relative to MEDIA_DIR.
-EXPORT_DIRS=("photo_exports" "gis_exports" "rim_exports")
+#   job_reports/ holds per-run sync detail reports. NotificationJobRun
+#   .detail_file_path is a plain CharField, so reaping these breaks no DB rows.
+EXPORT_DIRS=("photo_exports" "gis_exports" "rim_exports" "job_reports")
 
 DRY_RUN=false
 if [ "$1" = "--dry-run" ]; then
@@ -69,6 +71,20 @@ else
 fi
 
 trap 'echo "[ERROR] $(date "+%Y-%m-%d %H:%M:%S") - FAILED at line $LINENO running: $BASH_COMMAND"' ERR
+
+# Report the outcome to the notification system whatever happens (set -e included).
+STARTED_ON="$(date -Iseconds)"
+TOTAL_REMOVED=0
+RECLAIMED_MB=0
+report_run() {
+	local code=$?
+	$DRY_RUN && return 0
+	"$PROJECT_DIR/ENV3/bin/python" "$PROJECT_DIR/manage.py" report_external_job cleanup_generated_files \
+		--exit-code "$code" --started-on "$STARTED_ON" \
+		--metric "dirs_removed=$TOTAL_REMOVED" --metric "mb_reclaimed=$RECLAIMED_MB" \
+		--log-tail-file "$LOG_FILE" || echo "[WARN] could not report run to notification system"
+}
+trap report_run EXIT
 
 echo "========== $(date "+%Y-%m-%d %H:%M:%S") : cleanup starting =========="
 

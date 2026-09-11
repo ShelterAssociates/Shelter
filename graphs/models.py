@@ -509,6 +509,7 @@ class MemberDataETL(models.Model):
 
 
 class ETLLog(models.Model):
+    # Legacy. New jobs record into notification.JobRun instead.
     run_timestamp = models.DateTimeField(auto_now_add=True)  # Track when ETL ran
     task_name = models.CharField(max_length=255, null=True, blank=True)
     updated_records = models.IntegerField(default=0)

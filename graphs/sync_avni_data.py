@@ -16,6 +16,7 @@ from time import time
 from datetime import timedelta, datetime
 from django.utils import timezone
 from dateutil import parser
+from notification.services import reporting
 
 direct_encountes = [
     "Sanitation",
@@ -75,15 +76,14 @@ class avni_sync:
         return slum[0], slum[1]
 
     def lastModifiedDateTime(self):
-        # last_submission_date = HouseholdData.objects.latest('submission_date')
-        # latest_date = last_submission_date.submission_date
-        # latest_date = datetime.today() + timedelta(days= -1)
-        latest_date = datetime(2025, 11, 9) + timedelta(days=-1)
-
-        latest_date = latest_date.strftime("%Y-%m-%dT00:00:00.000Z")
-        # iso = "2024-07-05T05:40:00.000Z"
-        # latest_date = "2025-10-10T05:40:00.000Z"
-        return latest_date
+        latest = (
+            HouseholdData.objects.order_by("-submission_date")
+            .values_list("submission_date", flat=True)
+            .first()
+        )
+        return ((latest or timezone.now()) - timedelta(days=1)).strftime(
+            "%Y-%m-%dT00:00:00.000Z"
+        )
 
     def get_image(self, image_link):
         path = "https://app.avniproject.org/media/signedUrl?url="
@@ -294,6 +294,7 @@ class avni_sync:
 
         created_date = HH_data["Registration date"]
         submission_date = HH_data["audit"]["Last modified at"]  # use last modf date
+        slum_name = None
         try:
             slum_name = HH_data["location"]["Slum"]
             slum_id, city_id = self.get_city_slum_ids(slum_name)
@@ -354,6 +355,7 @@ class avni_sync:
                 )
         except Exception as e:
             logger.error("second exception", slum_name, e)
+            reporting.fail(e)
 
     def SaveRhsData_byUUID(self, uuid):  # checked
         Request = requests.get(
@@ -409,14 +411,16 @@ class avni_sync:
             )
             get_HH_data = json.loads(send_request.text)["content"]
             for i in get_HH_data:
+                slum_name = (i.get("location") or {}).get("Slum")
                 if not (i["Voided"]):
-                    self.registrtation_data(i)
+                    with reporting.record(
+                        slum=slum_name,
+                        household=(i.get("observations") or {}).get("First name"),
+                        key=i.get("ID"),
+                    ):
+                        self.registrtation_data(i)
                 else:
-                    logger.error(
-                        "Subject Type API request failed with status code: {}".format(
-                            send_request.status_code
-                        )
-                    )
+                    reporting.skip(slum=slum_name, reason="voided")
 
     def update_rhs_data(self, subject_id, encounter_data):  # checked
         self.get_household_details(subject_id)
@@ -598,6 +602,7 @@ class avni_sync:
 
         except Exception as e:
             logger.error(e, data["ID"])
+            reporting.fail(e)
 
     def SaveCommunityMobilizationData(self):  # checked
         pages, path = self.create_mobilization_activity_url()
@@ -609,9 +614,11 @@ class avni_sync:
             data = json.loads(send_request.text)["content"]
             for j in data:
                 if j["Voided"] == False:
-                    self.CommunityMobilizationData(j)
+                    slum_name = (j.get("location") or {}).get("Slum")
+                    with reporting.record(slum=slum_name, key=j.get("ID")):
+                        self.CommunityMobilizationData(j)
                 else:
-                    pass
+                    reporting.skip(reason="voided")
 
     def SaveFamilyFactsheetData(self):  # checked
         latest_date = self.lastModifiedDateTime()
@@ -634,7 +641,10 @@ class avni_sync:
             for j in data:
                 if j["Voided"] == False and j["observations"] != {}:
                     a, slum, HH, d = self.get_household_details(j["Subject ID"])
-                    self.FamilyFactsheetData(j, slum, HH)
+                    with reporting.record(slum=slum, household=HH, key=j.get("ID")):
+                        self.FamilyFactsheetData(j, slum, HH)
+                else:
+                    reporting.skip(reason="voided or empty observations")
 
     def SaveSingleFamilyFactsheetData(self, program_encounter_uuid):  # checked
         request = requests.get(
@@ -735,6 +745,7 @@ class avni_sync:
                 )
         except Exception as e:
             logger.error(e)
+            reporting.fail(e)
 
     def SaveDailyReportingdata(self):  # checked
         latest_date = self.lastModifiedDateTime()
@@ -758,9 +769,12 @@ class avni_sync:
             for j in data:
                 if j["Voided"] == False and j["observations"] != {}:
                     a, slum_id, HH, d = self.get_household_details(j["Subject ID"])
-                    self.DailyReportingData(
-                        j["observations"], slum_id, HH, j.get("ID")
-                    )
+                    with reporting.record(slum=slum_id, household=HH, key=j.get("ID")):
+                        self.DailyReportingData(
+                            j["observations"], slum_id, HH, j.get("ID")
+                        )
+                else:
+                    reporting.skip(reason="voided or empty observations")
 
     def DailyReportingData(self, data, slum, HH, source_uuid=None):  # checked
         """`source_uuid` is the Avni program encounter UUID this data came from.
@@ -1006,6 +1020,7 @@ class avni_sync:
 
         except Exception as e:
             logger.error(e, HH)
+            reporting.fail(e)
 
     def update_construction_status(self, slum_id):
 

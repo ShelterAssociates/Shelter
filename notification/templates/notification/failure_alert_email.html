@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <style>
+      body { margin:0; padding:0; background:#eef1f5; font-family:Arial, Helvetica, sans-serif; }
+      .wrapper { padding:40px 0; }
+      .card { width:680px; background:#ffffff; border-radius:12px; overflow:hidden; box-shadow:0 6px 20px rgba(0,0,0,.12); }
+      .header { color:#ffffff; padding:28px 36px; }
+      .header h2 { margin:0; font-size:26px; font-weight:600; }
+      .body-content { padding:30px 36px; color:#333; font-size:15px; line-height:1.6; }
+      .error-box { margin-top:20px; background:#fff5f5; border-left:8px solid #d93025; border-radius:8px; padding:18px 20px; word-break:break-word; }
+      table.data { width:100%; border-collapse:collapse; margin-top:10px; font-size:14px; }
+      table.data th { text-align:left; background:#f4f8ff; padding:8px 10px; border-bottom:2px solid #dce6f5; font-size:13px; }
+      table.data td { padding:7px 10px; border-bottom:1px solid #eee; }
+      td.num, th.num { text-align:right; }
+      pre { background:#f6f8fa; padding:12px; border-radius:6px; font-size:12px; overflow-x:auto; white-space:pre-wrap; word-break:break-word; }
+      .fail-list { margin:8px 0 0; padding-left:18px; font-size:13px; color:#5f6368; }
+      .footer { padding:26px 36px; background:#fafafa; border-top:1px solid #e5e5e5; }
+      .logo img { width:170px; max-width:100%; display:block; }
+      .muted { color:#6b7280; font-size:12px; margin-top:12px; }
+    </style>
+  </head>
+  <body>
+    <table width="100%" cellpadding="0" cellspacing="0" class="wrapper">
+      <tr><td align="center">
+        <table cellpadding="0" cellspacing="0" class="card">
+          <tr><td class="header" style="background:{{ header_colour }};">
+            <h2>{{ job_name }} failed</h2>
+          </td></tr>
+          <tr><td class="body-content">
+            <div class="error-box">
+              Run <strong>#{{ run.pk }}</strong> &mdash; {{ run.get_status_display }}<br />
+              Started {{ run.started_on|date:"d M Y H:i" }} on {{ run.hostname }}<br />
+              {{ run.records_ok }} synced, <strong>{{ run.records_failed }} failed</strong>,
+              {{ run.records_total }} seen
+              {% if run.window_label %}<br />Window: {{ run.window_label }}{% endif %}
+            </div>
+
+            {% if run.error %}<pre>{{ run.error }}</pre>{% endif %}
+
+            {% for entry in steps %}
+              {% if entry.step.records_failed or entry.step.error %}
+                <h3>{{ entry.step.name }}</h3>
+                {% if entry.step.error %}<pre>{{ entry.step.error }}</pre>{% endif %}
+                {% if entry.cities %}
+                  <table class="data">
+                    <tr><th>City</th><th class="num">Synced</th><th class="num">Failed</th></tr>
+                    {% for city in entry.cities %}
+                      {% if city.records_failed %}
+                        <tr>
+                          <td>{{ city.city_name }}</td>
+                          <td class="num">{{ city.records_ok }}</td>
+                          <td class="num">{{ city.records_failed }}</td>
+                        </tr>
+                      {% endif %}
+                    {% endfor %}
+                  </table>
+                {% endif %}
+                {% if entry.failures %}
+                  <ul class="fail-list">
+                    {% for failure in entry.failures %}
+                      <li>{{ failure.city }} / {{ failure.slum }} / {{ failure.household }} &mdash; {{ failure.reason }}</li>
+                    {% endfor %}
+                  </ul>
+                {% endif %}
+              {% endif %}
+            {% endfor %}
+
+            <p class="muted">
+              Full per-household detail is attached. The copy on the server is deleted
+              after 24 hours. This run is also in Django admin under Job runs.
+            </p>
+          </td></tr>
+          <tr><td class="footer">
+            <div class="logo">
+              <img src="https://app.shelter-associates.org/static/images/shelter.png" alt="Shelter Associates" />
+            </div>
+          </td></tr>
+        </table>
+      </td></tr>
+    </table>
+  </body>
+</html>

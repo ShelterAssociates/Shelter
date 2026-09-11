@@ -20,9 +20,12 @@ logger = logging.getLogger(__name__)
 
 
 def developer_emails():
-    """Follows the KML_CHANGE_NOTIFY_EMAILS convention: empty-by-default in
-    settings.py, real addresses in the gitignored local_settings.py."""
-    return list(getattr(settings, "PHOTO_EXPORT_NOTIFY_EMAILS", []) or [])
+    """Address-book contacts for photo_export_failure, falling back to
+    PHOTO_EXPORT_NOTIFY_EMAILS while the table is empty."""
+    from notification.services import contacts
+
+    to, cc, bcc = contacts.recipients_for("photo_export_failure")
+    return to + cc + bcc
 
 
 def _download_url(job):
@@ -63,8 +66,8 @@ def send_failure_email(job):
     recipients = developer_emails()
     if not recipients:
         logger.error(
-            "Photo export %s failed but PHOTO_EXPORT_NOTIFY_EMAILS is empty, "
-            "so nobody was told. Set it in local_settings.py.",
+            "Photo export %s failed but no photo_export_failure contacts exist, "
+            "so nobody was told. Add one in admin under Email purposes.",
             job.pk,
         )
         return
