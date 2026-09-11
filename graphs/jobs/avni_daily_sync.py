@@ -27,4 +27,6 @@ def run(recorder):
         with recorder.step(name, loggers=LOGGERS) as step:
             if step.disabled:
                 continue
+            if not args:
+                step.extras["watermark"] = sync.lastModifiedDateTime()
             getattr(sync, method)(*args)

@@ -255,6 +255,7 @@ class avni_sync:
 
         latest_date = obj.submission_date + timedelta(days=-1)
         latest_date = latest_date.strftime("%Y-%m-%dT00:00:00.000Z")
+        reporting.note(watermark=latest_date)
 
         household_path = (
             "api/subjects?lastModifiedDateTime="
