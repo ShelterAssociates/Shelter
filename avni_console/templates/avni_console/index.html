@@ -1,0 +1,180 @@
+{% extends "admin/base_site.html" %}
+{% block bodyclass %}ph-body{% endblock %}
+{% block breadcrumbs %}{% endblock %}
+{% block extrastyle %}{% include "avni_console/partials/styles.html" %}{% endblock %}
+
+{% block content %}
+<div class="ph-page">
+  <div class="ph-header">
+    <div>
+      <h1 class="ph-title">AVNI sync console</h1>
+      <p class="ph-sub">
+        Pull data from AVNI into the mastersheet, or push corrections back into AVNI.
+        Every run is recorded and emailed to the developer and data team with your name and the full list of changes.
+      </p>
+    </div>
+    <div class="ac-row">
+      <a class="ph-btn" href="{% url 'avni_console:runs' %}">My runs</a>
+      {% if can_write %}<a class="ph-btn ph-btn--primary" href="{% url 'avni_console:bulk_new' %}">Bulk update into AVNI</a>{% endif %}
+    </div>
+  </div>
+
+  {% if cache_stale %}
+  <div class="ac-result ac-result--warn" style="margin-bottom:18px">
+    The AVNI form cache is empty or older than two days. Bulk uploads validate against it — queue "Refresh AVNI form cache" below.
+  </div>
+  {% endif %}
+
+  <div class="ac-grid">
+    {% for job in jobs %}
+    <div class="ph-card" data-job="{{ job.key }}">
+      <div class="ph-card-head"><h2 class="ph-card-title">{{ job.title }}</h2></div>
+      <div class="ph-card-body">
+        <p class="ac-card-desc">{{ job.description }}</p>
+
+        {% if "from_date" in job.fields %}
+        <div class="ph-field">
+          <label class="ph-label">From date <span class="ac-note" style="display:inline">(blank = newest local record − 1 day)</span></label>
+          <input class="ph-input" type="date" name="from_date">
+        </div>
+        {% endif %}
+
+        {% if "subject_types" in job.fields %}
+        <div class="ph-field ac-checks">
+          <span class="ph-label">Subject types</span>
+          {% for kind in subject_types %}<label><input type="checkbox" name="subject_types" value="{{ kind }}" {% if kind == "Household" %}checked{% endif %}> {{ kind }}</label>{% endfor %}
+        </div>
+        {% endif %}
+
+        {% if "all_dates" in job.fields %}
+        <div class="ph-field ac-checks"><label><input type="checkbox" name="all_dates" value="1"> All dates (ignore from date; re-read everything)</label></div>
+        {% endif %}
+
+        {% if "encounter_types" in job.fields %}
+        <div class="ph-field ac-checks">
+          <span class="ph-label">Encounter types <span class="ac-note" style="display:inline">(none ticked = all)</span></span><br>
+          {% for kind in encounter_types %}<label><input type="checkbox" name="encounter_types" value="{{ kind }}"> {{ kind }}</label>{% endfor %}
+        </div>
+        {% endif %}
+
+        {% if "slum_ids" in job.fields %}
+        <div class="ph-field">
+          <label class="ph-label">Slums <span class="ac-note" style="display:inline">(none selected = every mapped slum, {{ slums|length }})</span></label>
+          <select class="ph-select ac-select-multi" name="slum_ids" multiple>
+            {% for slum in slums %}<option value="{{ slum.id }}">{{ slum.name }}</option>{% endfor %}
+          </select>
+        </div>
+        {% endif %}
+        {% if "include_toilets" in job.fields %}
+        <div class="ph-field ac-checks"><label><input type="checkbox" name="include_toilets" value="1" checked> Also sync community toilet blocks</label></div>
+        {% endif %}
+
+        {% if "city_ids" in job.fields %}
+        <div class="ph-field ac-checks">
+          <span class="ph-label">Cities</span><br>
+          {% for id, name in cities %}<label><input type="checkbox" name="city_ids" value="{{ id }}"> {{ name }}</label>{% endfor %}
+          <p class="ac-note">Runs tonight at {{ limits.dashboard_hour|stringformat:"02d" }}:00 IST only — it is a heavy process. Check the dashboards tomorrow morning.</p>
+        </div>
+        {% endif %}
+
+        <div class="ac-row">
+          {% if job.dry_run %}<button class="ph-btn" type="button" data-action="dry-run">Dry run (count only)</button>{% endif %}
+          <button class="ph-btn ph-btn--primary" type="button" data-action="queue">{% if job.scheduled %}Queue for tonight{% else %}Queue sync{% endif %}</button>
+        </div>
+        <div class="ac-result" data-result hidden></div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+
+  {% if recent %}
+  <div class="ph-card" style="margin-top:24px">
+    <div class="ph-card-head"><h2 class="ph-card-title">Recent runs</h2></div>
+    <div class="ac-table-wrap">
+      <table class="ph-table">
+        <thead><tr><th>#</th><th>Job</th><th>Status</th><th>Requested</th><th>Result</th></tr></thead>
+        <tbody>
+        {% for r in recent %}
+          <tr>
+            <td><a href="{% url 'avni_console:run_detail' r.pk %}">{{ r.pk }}</a></td>
+            <td>{{ r.job_key }}</td>
+            <td>{% include "avni_console/partials/badge.html" with status=r.status %}</td>
+            <td>{{ r.created_on|date:"j M, H:i" }}</td>
+            <td>{{ r.summary|default:r.error|default:"—"|truncatechars:90 }}</td>
+          </tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+  {% endif %}
+</div>
+
+<script>
+(function () {
+  var csrf = "{{ csrf_token }}";
+  var dryRunUrl = "{% url 'avni_console:dry_run_rhs' %}";
+  var queueUrlTemplate = "{% url 'avni_console:queue' 'jobkey' %}";
+
+  function collect(card) {
+    var data = {};
+    card.querySelectorAll("input, select").forEach(function (el) {
+      var name = el.name;
+      if (!name) return;
+      if (el.type === "checkbox") {
+        if (el.value === "1") { data[name] = el.checked; return; }
+        data[name] = data[name] || [];
+        if (el.checked) data[name].push(el.value);
+      } else if (el.multiple) {
+        data[name] = Array.from(el.selectedOptions).map(function (o) { return o.value; });
+      } else {
+        data[name] = el.value;
+      }
+    });
+    return data;
+  }
+
+  function show(card, text, kind) {
+    var box = card.querySelector("[data-result]");
+    box.className = "ac-result" + (kind ? " ac-result--" + kind : "");
+    box.textContent = text;
+    box.hidden = false;
+  }
+
+  function post(url, data) {
+    return fetch(url, {
+      method: "POST", credentials: "same-origin",
+      headers: { "Content-Type": "application/json", "X-CSRFToken": csrf },
+      body: JSON.stringify(data)
+    }).then(function (r) { return r.json().then(function (j) { return { ok: r.ok, status: r.status, json: j }; }); });
+  }
+
+  function countsText(json) {
+    var lines = ["Window starts " + json.window_start + ". Records AVNI would send (voided included):"];
+    Object.keys(json.counts).forEach(function (k) { lines.push("  " + k + ": " + json.counts[k].total + " (" + json.counts[k].pages + " page(s))"); });
+    Object.keys(json.errors).forEach(function (k) { lines.push("  " + k + ": could not count — " + json.errors[k]); });
+    if (json.warning) lines.push(json.warning);
+    return lines.join("\n");
+  }
+
+  document.querySelectorAll(".ph-card[data-job]").forEach(function (card) {
+    var key = card.getAttribute("data-job");
+    card.querySelectorAll("button[data-action]").forEach(function (button) {
+      button.addEventListener("click", function () {
+        var action = button.getAttribute("data-action");
+        var data = collect(card);
+        if (action === "queue" && !confirm("Queue '" + card.querySelector(".ph-card-title").textContent + "' now? The developer and data team will be emailed with your name.")) return;
+        button.disabled = true;
+        show(card, action === "dry-run" ? "Counting… AVNI can take a minute for wide windows." : "Queueing…");
+        var url = action === "dry-run" ? dryRunUrl : queueUrlTemplate.replace("jobkey", key);
+        post(url, data).then(function (r) {
+          if (!r.ok) { show(card, r.json.error || ("Failed (" + r.status + ")"), r.status === 409 ? "warn" : "bad"); return; }
+          show(card, action === "dry-run" ? countsText(r.json) : r.json.message, "ok");
+        }).catch(function (e) { show(card, "Request failed: " + e, "bad"); })
+          .then(function () { button.disabled = false; });
+      });
+    });
+  });
+})();
+</script>
+{% endblock %}

@@ -122,6 +122,24 @@ JOB_REPORT_MAX_ATTACH_BYTES = 5 * 1024 * 1024
 # A JobRun still "running" after this long was killed; the digest marks it crashed.
 JOB_RUN_STUCK_HOURS = 6
 
+# AVNI sync console (avni_console app). Override in local_settings.py.
+# Groups (by name) allowed to open the console and queue syncs; superusers always can.
+AVNI_SYNC_GROUPS = []
+# Groups additionally allowed to push bulk updates INTO AVNI. Empty = superusers only.
+AVNI_WRITE_GROUPS = []
+# Rows per uploaded Excel on this host (production keeps it small; raise locally).
+AVNI_BULK_MAX_ROWS = 50
+# Parallel workers for a bulk update (production 1; raise locally).
+AVNI_BULK_WORKERS = 1
+# Hour (IST) at which queued dashboard refreshes run.
+AVNI_DASHBOARD_QUEUE_HOUR = 1
+# Where uploaded bulk-update files are kept (under MEDIA_ROOT); never auto-cleaned.
+AVNI_BULK_UPLOAD_DIR_NAME = "avni_bulk_updates"
+# Timeout for every AVNI HTTP call, seconds.
+AVNI_REQUEST_TIMEOUT = 60
+# Form cache older than this counts as stale in the console.
+AVNI_FORM_CACHE_MAX_AGE_HOURS = 48
+
 # Use BigAutoField by default to avoid Django warnings about auto-created PK types
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
@@ -173,6 +191,8 @@ INSTALLED_APPS = (
     "graphs",
     "helpers",
     "notification.apps.NotificationConfig",
+    "avni.apps.AvniConfig",
+    "avni_console.apps.AvniConsoleConfig",
     "photos",
     "reports.apps.ReportsConfig",
     "rest_framework",

@@ -1,156 +1,68 @@
 #!/bin/bash
+# Manual RHS (household / structure registration) sync from AVNI.
+# Runs through manage.py run_job so the run is recorded and reported like cron jobs.
+#
+#   sync_rhs.sh [-d] [-f YYYY-MM-DD] MODE
+#     MODE 1 = Household, 2 = Structure, 4 = Structure + Household
+#     -f     sync everything modified since this date (default: newest local record - 1 day)
+#     -d     also print to console
+#
+# Single records by uuid: python manage.py shell -c
+#   "from avni.sync.by_uuid import sync_by_uuid; sync_by_uuid('subject', ['<uuid>'])"
 set -e
 
 PROJECT_DIR="/srv/Shelter"
-VENV_DIR="/srv/Shelter/ENV3"
-
+VENV_DIR="$PROJECT_DIR/ENV3"
 export VIRTUAL_ENV="$VENV_DIR"
 export PATH="$VENV_DIR/bin:$PATH"
 export DJANGO_SETTINGS_MODULE=shelter.settings
-
-echo "VIRTUAL_ENV=$VIRTUAL_ENV"
 cd "$PROJECT_DIR"
-
-SCRIPT_NAME="$(basename "$0")"
 
 LOG_DIR="$HOME/sync_logs"
 LOG_FILE="$LOG_DIR/rhs_sync.log"
-MAX_SIZE=$((2 * 1024 * 1024))  # 2 MB
-
+MAX_SIZE=$((2 * 1024 * 1024))
 mkdir -p "$LOG_DIR"
-
-# Rotate log if exceeds 2 MB
-if [ -f "$LOG_FILE" ]; then
-	CURRENT_SIZE=$(stat -c%s "$LOG_FILE" 2>/dev/null || echo 0)
-	if [ "$CURRENT_SIZE" -ge "$MAX_SIZE" ]; then
-		mv "$LOG_FILE" "${LOG_FILE}.1"
-		touch "$LOG_FILE"
-	fi
-else
-	touch "$LOG_FILE"
+if [ -f "$LOG_FILE" ] && [ "$(stat -c%s "$LOG_FILE" 2>/dev/null || echo 0)" -ge "$MAX_SIZE" ]; then
+	mv "$LOG_FILE" "${LOG_FILE}.1"
 fi
+touch "$LOG_FILE"
 
 usage() {
-	echo
-	echo "Usage: $SCRIPT_NAME [-h] [-i] [-d] MODE"
-	echo
-	echo "MODE:"
-	echo "  1 = Household"
-	echo "  2 = Structure"
-	echo "  3 = IIDs"
-	echo "  4 = Structure + Household (5 second delay)"
-	echo
-	echo "Options:"
-	echo "  -i   Also print Cognito token"
-	echo "  -d   Also print output to console (in addition to log file)"
-	echo "  -h   Show help and exit"
-	echo
-	echo "Examples:"
-	echo "  $SCRIPT_NAME 1"
-	echo "  $SCRIPT_NAME -i 4"
-	echo "  $SCRIPT_NAME -d 1"
-	echo "  $SCRIPT_NAME -i -d 4"
-	echo
+	sed -n '2,11p' "$0" | sed 's/^# \{0,1\}//'
 }
 
-PRINT_TOKEN=false
-SHOW_HELP=false
-PRINT_CONSOLE=false   # for -d
-
-# Parse flags
-while getopts ":hid" opt; do
+PRINT_CONSOLE=false
+FROM_DATE=""
+while getopts ":hdf:" opt; do
 	case "$opt" in
-		h) SHOW_HELP=true ;;
-		i) PRINT_TOKEN=true ;;
+		h) usage; exit 0 ;;
 		d) PRINT_CONSOLE=true ;;
-		\?)
-			echo "Invalid option: -$OPTARG"
-			SHOW_HELP=true
-			;;
+		f) FROM_DATE="$OPTARG" ;;
+		\?) echo "Invalid option: -$OPTARG"; usage; exit 1 ;;
 	esac
 done
 shift $((OPTIND - 1))
 
-if $SHOW_HELP; then
-	usage
-	exit 0
-fi
-
-# Now decide logging behavior based on -d
-if $PRINT_CONSOLE; then
-	# Log + print to console
-	exec > >(tee -a "$LOG_FILE") 2>&1
-else
-	# Log only, no console output
-	exec >> "$LOG_FILE" 2>&1
-fi
-
-trap 'echo "[ERROR] $(date "+%Y-%m-%d %H:%M:%S") - Script FAILED at line $LINENO while running: $BASH_COMMAND"' ERR
-
-MODE="${1:-}"
-
-if [[ -z "$MODE" ]]; then
-	echo "ERROR: MODE is required."
-	usage
-	exit 1
-fi
-
-case "$MODE" in
-	1|2|3|4) ;;
-	*)
-		echo "ERROR: Invalid MODE: $MODE"
-		usage
-		exit 1
-		;;
+case "${1:-}" in
+	1) SUBJECT_TYPES='["Household"]' ;;
+	2) SUBJECT_TYPES='["Structure"]' ;;
+	4) SUBJECT_TYPES='["Structure", "Household"]' ;;
+	*) echo "ERROR: MODE must be 1, 2 or 4."; usage; exit 1 ;;
 esac
 
-echo "========== $(date "+%Y-%m-%d %H:%M:%S") : Starting RHS sync (mode=$MODE, print_token=$PRINT_TOKEN, print_console=$PRINT_CONSOLE) =========="
-"$VENV_DIR/bin/python" manage.py shell <<EOF
-from importlib import reload
-import time
-import graphs.sync_avni_data as sync_module
+if $PRINT_CONSOLE; then
+	exec > >(tee -a "$LOG_FILE") 2>&1
+else
+	exec >> "$LOG_FILE" 2>&1
+fi
+trap 'echo "[ERROR] $(date "+%Y-%m-%d %H:%M:%S") - FAILED at line $LINENO running: $BASH_COMMAND"' ERR
 
-reload(sync_module)
+PARAMS="{\"subject_types\": $SUBJECT_TYPES"
+if [ -n "$FROM_DATE" ]; then
+	PARAMS="$PARAMS, \"from_date\": \"$FROM_DATE\""
+fi
+PARAMS="$PARAMS}"
 
-mode = "$MODE"
-print_token = "$PRINT_TOKEN".lower() in ("true", "1", "yes")
-
-print(">>> Creating avni_sync object...")
-a = sync_module.avni_sync()
-
-print(">>> Mode:", mode)
-
-if mode == "1":
-    print(">>> Running Household Sync...")
-    a.SaveRhsData("Household")
-
-elif mode == "2":
-    print(">>> Running Structure Sync...")
-    a.SaveRhsData("Structure")
-
-elif mode == "3":
-    print(">>> Running Sync by IIDs...")
-    a.SaveRhsData_byIIDs()
-
-elif mode == "4":
-    print(">>> Running Structure Sync (part 1 of 2)...")
-    a.SaveRhsData("Structure")
-    print(">>> Waiting 5 seconds before Household sync...")
-    time.sleep(5)
-    print(">>> Running Household Sync (part 2 of 2)...")
-    a.SaveRhsData("Household")
-
-else:
-    print(">>> ERROR: Invalid mode received in Python:", mode)
-
-if print_token:
-    print(">>> Fetching Cognito token...")
-    try:
-        token = a.get_cognito_token()
-        print("Cognito token:", token)
-    except Exception as e:
-        print("Failed to get Cognito token:", e)
-
-EOF
-
+echo "========== $(date "+%Y-%m-%d %H:%M:%S") : RHS sync starting (params=$PARAMS) =========="
+"$VENV_DIR/bin/python" manage.py run_job rhs_sync --trigger manual --params "$PARAMS"
 echo "========== $(date "+%Y-%m-%d %H:%M:%S") : RHS sync finished =========="

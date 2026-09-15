@@ -1,0 +1,65 @@
+{% extends "admin/base_site.html" %}
+{% block bodyclass %}ph-body{% endblock %}
+{% block breadcrumbs %}{% endblock %}
+{% block extrastyle %}{% include "avni_console/partials/styles.html" %}{% endblock %}
+
+{% block content %}
+<div class="ph-page">
+  <p class="ph-crumb"><a href="{% url 'avni_console:index' %}">&larr; AVNI sync console</a></p>
+  <div class="ph-header">
+    <div>
+      <h1 class="ph-title">My runs</h1>
+      <p class="ph-sub">Everything you queued. Detail files are kept for 24 hours; the run record stays in the admin under Job Notifications.</p>
+    </div>
+  </div>
+
+  <div class="ph-card">
+    <div class="ph-card-head"><h2 class="ph-card-title">Sync requests</h2></div>
+    {% if requests %}
+    <div class="ac-table-wrap">
+      <table class="ph-table">
+        <thead><tr><th>#</th><th>Job</th><th>Parameters</th><th>Requested by</th><th>Requested</th><th>Runs at</th><th>Status</th><th>Result</th></tr></thead>
+        <tbody>
+        {% for r in requests %}
+          <tr>
+            <td><a href="{% url 'avni_console:run_detail' r.pk %}">{{ r.pk }}</a></td>
+            <td>{{ r.title }}</td>
+            <td class="ac-code">{{ r.describe|default:"—" }}</td>
+            <td>{{ r.requested_by_label }}</td>
+            <td>{{ r.created_on|date:"j M Y, H:i" }}</td>
+            <td>{% if r.scheduled_for > r.created_on %}{{ r.scheduled_for|date:"j M, H:i" }}{% else %}asap{% endif %}</td>
+            <td>{% include "avni_console/partials/badge.html" with status=r.status %}</td>
+            <td>{{ r.summary|default:r.error|default:"—"|truncatechars:100 }}</td>
+          </tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}<div class="ph-empty">No runs yet.</div>{% endif %}
+  </div>
+
+  <div class="ph-card" style="margin-top:24px">
+    <div class="ph-card-head"><h2 class="ph-card-title">Bulk updates into AVNI</h2></div>
+    {% if bulks %}
+    <div class="ac-table-wrap">
+      <table class="ph-table">
+        <thead><tr><th>#</th><th>File</th><th>Target</th><th>Rows</th><th>Mode</th><th>Status</th><th>Result</th></tr></thead>
+        <tbody>
+        {% for b in bulks %}
+          <tr>
+            <td><a href="{% url 'avni_console:bulk_detail' b.pk %}">{{ b.pk }}</a></td>
+            <td>{{ b.original_name }}</td>
+            <td>{{ b.target_label }}</td>
+            <td>{{ b.row_count }}</td>
+            <td>{% if b.dry_run %}dry run{% else %}<b>apply</b>{% endif %}</td>
+            <td>{% include "avni_console/partials/badge.html" with status=b.status %}</td>
+            <td>{{ b.summary|default:"—"|truncatechars:100 }}</td>
+          </tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}<div class="ph-empty">No bulk updates yet.</div>{% endif %}
+  </div>
+</div>
+{% endblock %}

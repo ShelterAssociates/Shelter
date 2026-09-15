@@ -17,6 +17,8 @@ SETTINGS_FALLBACK = {
     "job_failure": "JOB_NOTIFY_FALLBACK_EMAILS",
     "kml_change": "KML_CHANGE_NOTIFY_EMAILS",
     "photo_export_failure": "PHOTO_EXPORT_NOTIFY_EMAILS",
+    "avni_console_activity": "JOB_NOTIFY_FALLBACK_EMAILS",
+    "avni_bulk_update": "JOB_NOTIFY_FALLBACK_EMAILS",
     "dev_redirect": "EMAIL_DEV_REDIRECT_TO",
 }
 

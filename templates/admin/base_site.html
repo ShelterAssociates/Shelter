@@ -1,5 +1,5 @@
 {% extends 'admin/base.html' %}
-{% load i18n static custom_tags %}
+{% load i18n static custom_tags avni_console_tags %}
 
 {% block title %}
   {{ site_title|default:_('Shelter site admin') }}
@@ -119,6 +119,7 @@
                 <li class="drop-label">Photos</li>
                 <li>
                   <a class="drop-item" href="{% url 'photos:photo_index' %}">Household photos <span class="new-badge">New</span></a>
+                  {% if user|can_use_avni_console %}<a class="drop-item" href="{% url 'avni_console:index' %}">AVNI sync console <span class="new-badge">New</span></a>{% endif %}
                 </li>
               {% endif %}
             </ul>
@@ -191,6 +192,7 @@
         <a class="drop-item" href="/helpers/photo-upload/">Photo upload</a>
         {% if perms.mastersheet.can_view_mastersheet %}
           <a class="drop-item" href="{% url 'photos:photo_index' %}">Household photos</a>
+          {% if user|can_use_avni_console %}<a class="drop-item" href="{% url 'avni_console:index' %}">AVNI sync console</a>{% endif %}
         {% endif %}
       {% endif %}
 

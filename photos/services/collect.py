@@ -12,7 +12,7 @@ photo came from Avni or the Kobo backup.
 import logging
 
 from graphs.models import HouseholdData
-from graphs.services import avni_media
+from avni import media as avni_media
 from mastersheet.models import ToiletConstruction
 from photos.services import sources
 from photos.utils import (

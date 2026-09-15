@@ -4,7 +4,7 @@
 #0 22 * * * bash /srv/Shelter/deploy/AVNI_DAILY_SYNC.sh
 #
 # Steps: RHS Household registration, Daily Reporting, Family Factsheet,
-# Community Mobilization (see graphs/jobs/avni_daily_sync.py). Every step is
+# Community Mobilization (see avni/jobs/daily_sync.py). Every step is
 # recorded in Django admin (Job runs) and emailed on failure.
 # dashboard_update.sh is NO LONGER chained here -- it runs fortnightly on its
 # own cron line (1st and 16th). Chaining it made it run nightly.

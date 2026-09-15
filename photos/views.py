@@ -31,7 +31,7 @@ from django.shortcuts import get_object_or_404, render
 from django.views.decorators.http import require_GET, require_POST
 
 from graphs.models import HouseholdData
-from graphs.services import avni_media
+from avni import media as avni_media
 from helpers.models import ExportRequest
 from helpers.validators import validate_shelter_email
 from master.models import City, Slum

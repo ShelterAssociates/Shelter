@@ -31,13 +31,14 @@ from urllib.parse import quote
 import requests
 from django.conf import settings
 
-from graphs.structure_registration_sync import AvniHouseholdSync
+from avni import mappings
+from avni.client import client
+from avni.locations import slum_location_uuid
 
 logger = logging.getLogger(__name__)
 
 # /api/programEncounters requires lastModifiedDateTime, so send a date old
-# enough to mean "everything". Deliberately NOT avni_sync.lastModifiedDateTime(),
-# which is hardcoded to 2025-11-09 and would silently hide older encounters.
+# enough to mean "everything" (the nightly watermark would hide older encounters).
 EPOCH_LMDT = "1900-01-01T00:00:00.000Z"
 
 REQUEST_TIMEOUT_SECONDS = 15
@@ -61,7 +62,7 @@ MEDIA_URL_RE = re.compile(
 )
 
 # Households are registered under one of these subject types. "Household" and
-# "Structure" come from create_registrationdata_url in graphs/sync_avni_data.py;
+# "Structure" come from create_registrationdata_url in avni/watermark.py;
 # "Detailed Socio Economic Survey" is a third one used in some cities -- it has
 # the same shape (observations["First name"] is the household number, with
 # location.Slum / location.City), so the fallback subject search must cover it
@@ -97,20 +98,16 @@ PHOTO_TYPE_KEYS = tuple(key for key, _label in PHOTO_TYPES)
 
 
 def get_token():
-    """Cached Avni JWT. AvniHouseholdSync caches at class level and puts hard
-    timeouts on both the cognito-details call and the node subprocess, unlike
-    avni_sync.get_cognito_token which re-shells to node on every single call."""
-    return AvniHouseholdSync().get_cognito_token()
+    """Cached AVNI JWT shared with every other caller in the process."""
+    return client().token()
 
 
-def _refresh_token():
-    """Force a new JWT by clearing AvniHouseholdSync's class-level cache. Used
-    only when Avni answers 401, i.e. the cached token was rejected."""
-    AvniHouseholdSync._token_cache = {"token": None, "expires_at": 0}
-    return AvniHouseholdSync().get_cognito_token()
+def refresh_token():
+    """Force a new JWT; used only when AVNI answers 401."""
+    return client().refresh_token()
 
 
-def _now():
+def utc_now():
     """Current UTC in Avni's ISO format.
 
     Newer avni-server builds mark `now` as a required parameter on the list
@@ -122,7 +119,7 @@ def _now():
     return datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%S.000Z")
 
 
-def _api_get(path, params=None, token=None):
+def api_get(path, params=None, token=None):
     """GET an Avni API path and return parsed JSON, or None on any failure."""
     token = token or get_token()
     url = settings.AVNI_URL + path
@@ -151,13 +148,13 @@ def _api_get(path, params=None, token=None):
 
 def fetch_subject(subject_uuid, token=None):
     """One subject. Its "enrolments" key is a list of enrolment UUIDs."""
-    return _api_get("api/subject/" + quote(str(subject_uuid), safe=""), token=token)
+    return api_get("api/subject/" + quote(str(subject_uuid), safe=""), token=token)
 
 
 def fetch_program_encounter(encounter_uuid, token=None):
     """One program encounter. Carries "Subject ID" and "Enrolment ID", so a bare
     encounter UUID is enough to reach the rest of the household's data."""
-    return _api_get(
+    return api_get(
         "api/programEncounter/" + quote(str(encounter_uuid), safe=""), token=token
     )
 
@@ -166,7 +163,7 @@ def fetch_program_enrolment(enrolment_uuid, token=None):
     """One program enrolment. Carries "Program" (e.g. "Sanitation program"),
     "Enrolment datetime" and "Exit datetime" -- the context that explains why a
     household does or doesn't have Daily Reporting encounters."""
-    return _api_get(
+    return api_get(
         "api/programEnrolment/" + quote(str(enrolment_uuid), safe=""), token=token
     )
 
@@ -179,7 +176,7 @@ def fetch_encounter(encounter_uuid, token=None):
     Fetched one at a time on purpose: /api/encounters?subjectId=... exists but
     times out against this server, whereas /api/encounter/<uuid> is instant.
     """
-    return _api_get(
+    return api_get(
         "api/encounter/" + quote(str(encounter_uuid), safe=""), token=token
     )
 
@@ -192,13 +189,13 @@ def fetch_encounters_for_enrolment(enrolment_uuid, encounter_type=None, token=No
     while page < MAX_PAGES:
         params = {
             "lastModifiedDateTime": EPOCH_LMDT,
-            "now": _now(),
+            "now": utc_now(),
             "programEnrolmentId": enrolment_uuid,
             "page": page,
         }
         if encounter_type:
             params["encounterType"] = encounter_type
-        payload = _api_get("api/programEncounters", params=params, token=token)
+        payload = api_get("api/programEncounters", params=params, token=token)
         if not payload:
             break
         encounters.extend(payload.get("content") or [])
@@ -215,23 +212,21 @@ def find_subject_uuid(slum_id, household_number, token=None):
     a paged scan of every subject in the slum, so it is the fallback, not the
     primary path.
     """
-    from graphs.sync_avni_data import avni_sync
-
-    location_uuid = avni_sync().avni_uuid_details(slum_id)
+    location_uuid = slum_location_uuid(slum_id)
     if not location_uuid:
         return None
 
     token = token or get_token()
-    target = AvniHouseholdSync.derive_household_number(household_number)
+    target = mappings.household_number_from(household_number)
 
     for subject_type in HOUSEHOLD_SUBJECT_TYPES:
         page = 0
         while page < MAX_PAGES:
-            payload = _api_get(
+            payload = api_get(
                 "api/subjects",
                 params={
                     "lastModifiedDateTime": EPOCH_LMDT,
-                    "now": _now(),
+                    "now": utc_now(),
                     "subjectType": subject_type,
                     "locationIds": location_uuid,
                     "page": page,
@@ -245,7 +240,7 @@ def find_subject_uuid(slum_id, household_number, token=None):
                 found = observations.get("First name")
                 if found is None:
                     continue
-                if AvniHouseholdSync.derive_household_number(found) == target:
+                if mappings.household_number_from(found) == target:
                     return record.get("ID")
             page += 1
             if page >= (payload.get("totalPages") or 0):
@@ -279,7 +274,7 @@ def extract_photos(observations):
     return photos
 
 
-def _sign_one(raw_url, token):
+def sign_one(raw_url, token):
     """Exchange one raw S3 URL for a pre-signed one. The response body IS the
     signed URL (plain text, not JSON). Falls back to the raw URL so a signing
     failure degrades to a dead link rather than a broken page."""
@@ -291,7 +286,7 @@ def _sign_one(raw_url, token):
         if response.status_code == 401:
             response = requests.get(
                 url,
-                headers={"AUTH-TOKEN": _refresh_token()},
+                headers={"AUTH-TOKEN": refresh_token()},
                 timeout=SIGNING_TIMEOUT_SECONDS,
             )
         if response.status_code != 200:
@@ -311,7 +306,7 @@ def sign_urls(raw_urls):
     token = get_token()
     signed = {}
     with ThreadPoolExecutor(max_workers=SIGNING_MAX_WORKERS) as executor:
-        for raw, url in executor.map(lambda item: _sign_one(item, token), unique):
+        for raw, url in executor.map(lambda item: sign_one(item, token), unique):
             signed[raw] = url
     return signed
 
@@ -323,7 +318,7 @@ def encounter_avni_url(encounter_uuid):
     )
 
 
-def _encounter_entry(encounter):
+def encounter_entry(encounter):
     """Flatten one raw API encounter into what the templates render."""
     return {
         "uuid": encounter.get("ID"),
@@ -340,7 +335,7 @@ def _encounter_entry(encounter):
     }
 
 
-def _attach_signed_urls(entries, sign=True):
+def attach_signed_urls(entries, sign=True):
     """Attach a display URL to every photo.
 
     Signing costs one HTTP round trip to Avni per photo, which is the single
@@ -368,7 +363,7 @@ def _attach_signed_urls(entries, sign=True):
     return entries
 
 
-def _sorted_entries(entries):
+def sorted_entries(entries):
     """Newest encounter first; undated ones last."""
     return sorted(entries, key=lambda e: (e["encounter_date"] or ""), reverse=True)
 
@@ -411,7 +406,7 @@ def resolve_subject_programs(subject_uuid, include_direct_encounters=False, sign
             for encounter in fetched:
                 if not encounter or encounter.get("Voided"):
                     continue
-                entry = _encounter_entry(encounter)
+                entry = encounter_entry(encounter)
                 if entry["photos"]:
                     direct.append(entry)
         if direct:
@@ -422,7 +417,7 @@ def resolve_subject_programs(subject_uuid, include_direct_encounters=False, sign
                     "program": "Other encounters",
                     "enrolment_date": None,
                     "exit_date": None,
-                    "encounters": _sorted_entries(direct),
+                    "encounters": sorted_entries(direct),
                     "photo_count": sum(len(e["photos"]) for e in direct),
                 }
             )
@@ -444,7 +439,7 @@ def resolve_subject_programs(subject_uuid, include_direct_encounters=False, sign
         for encounter in encounters:
             if encounter.get("Voided"):
                 continue
-            entries.append(_encounter_entry(encounter))
+            entries.append(encounter_entry(encounter))
         all_entries.extend(entries)
         programs.append(
             {
@@ -452,14 +447,14 @@ def resolve_subject_programs(subject_uuid, include_direct_encounters=False, sign
                 "program": enrolment.get("Program"),
                 "enrolment_date": enrolment.get("Enrolment datetime"),
                 "exit_date": enrolment.get("Exit datetime"),
-                "encounters": _sorted_entries(entries),
+                "encounters": sorted_entries(entries),
                 "photo_count": sum(len(e["photos"]) for e in entries),
             }
         )
 
     # Not signed by default -- the browser asks for each signed URL as it
     # renders, so the page is not held up by a round trip per photo.
-    _attach_signed_urls(all_entries, sign=sign)
+    attach_signed_urls(all_entries, sign=sign)
     return programs
 
 
@@ -468,6 +463,6 @@ def resolve_encounter_photos(encounter_uuid, sign=False):
     encounter = fetch_program_encounter(encounter_uuid)
     if encounter is None:
         return None
-    entry = _encounter_entry(encounter)
-    _attach_signed_urls([entry], sign=sign)
+    entry = encounter_entry(encounter)
+    attach_signed_urls([entry], sign=sign)
     return entry

@@ -1,0 +1,29 @@
+{% comment %}Console additions on top of the photos design system (ph-*). Prefixed ac-.{% endcomment %}
+{% include "photos/partials/styles.html" %}
+<style>
+  .ac-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 18px; }
+  .ac-two { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 22px; align-items: start; }
+  @media (max-width: 900px) { .ac-two { grid-template-columns: 1fr; } }
+  .ac-card-desc { color: var(--ph-muted); font-size: 13px; margin: 0 0 12px; }
+  .ac-row { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; margin-top: 12px; }
+  .ac-checks label { display: inline-flex; align-items: center; gap: 6px; margin-right: 12px; font-size: 13px; }
+  .ac-result { margin-top: 12px; font-size: 13px; padding: 10px 12px; border-radius: var(--ph-r-sm);
+               background: var(--ph-accent-soft); color: var(--ph-ink-2); white-space: pre-line; }
+  .ac-result--bad { background: var(--ph-red-soft); color: var(--ph-red); }
+  .ac-result--warn { background: var(--ph-amber-soft); color: var(--ph-amber); }
+  .ac-result--ok { background: var(--ph-green-soft); color: var(--ph-green); }
+  .ac-badge-ok { background: var(--ph-green-soft); color: var(--ph-green); border-color: #a7f3d0; }
+  .ac-badge-bad { background: var(--ph-red-soft); color: var(--ph-red); border-color: #fecdd3; }
+  .ac-badge-warn { background: var(--ph-amber-soft); color: var(--ph-amber); border-color: #fde68a; }
+  .ac-badge-info { background: var(--ph-accent-soft); color: var(--ph-accent-dark); border-color: #c7d2fe; }
+  .ac-code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px; }
+  .ac-note { font-size: 12.5px; color: var(--ph-muted); margin: 6px 0 0; }
+  .ac-table-wrap { overflow-x: auto; }
+  .ac-select-multi { min-height: 120px; width: 100%; }
+  .ac-sticky { position: sticky; top: 16px; }
+  .ac-stat { display: inline-block; margin-right: 18px; }
+  .ac-stat b { font-size: 18px; display: block; }
+  .ac-kv { display: grid; grid-template-columns: 180px 1fr; gap: 6px 14px; font-size: 13px; }
+  .ac-kv dt { color: var(--ph-muted); }
+  .ac-kv dd { margin: 0; }
+</style>

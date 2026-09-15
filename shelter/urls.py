@@ -82,6 +82,8 @@ urlpatterns = (
         url(r"^reports/", include("reports.urls")),
         # Internal-only browser for Avni household photos
         url(r"^photos/", include("photos.urls")),
+        # Internal-only AVNI sync console (manual syncs, bulk updates into AVNI)
+        url(r"^avni-console/", include("avni_console.urls")),
         # Setting URL for QGIS plugin login
         url("api-token-auth/", obtain_auth_token, name="api_token_auth"),
         url("api/", include(router.urls)),

@@ -1,0 +1,77 @@
+{% extends "admin/base_site.html" %}
+{% block bodyclass %}ph-body{% endblock %}
+{% block breadcrumbs %}{% endblock %}
+{% block extrastyle %}{% include "avni_console/partials/styles.html" %}{% endblock %}
+
+{% block content %}
+<div class="ph-page">
+  <p class="ph-crumb"><a href="{% url 'avni_console:bulk_new' %}">&larr; New bulk update</a></p>
+  <div class="ph-header">
+    <div>
+      <h1 class="ph-title">Preview: {{ bulk.original_name }}</h1>
+      <p class="ph-sub">Target: <b>{{ bulk.target_label }}</b> · form <b>{{ bulk.form.name }}</b> · {{ bulk.row_count }} row(s).</p>
+    </div>
+    <div>{% include "avni_console/partials/badge.html" with status=bulk.status %}</div>
+  </div>
+
+  {% if message %}<div class="ac-result ac-result--warn" style="margin-bottom:18px">{{ message }}</div>{% endif %}
+  {% if pending_run %}<div class="ac-result" style="margin-bottom:18px">Already queued as <a href="{% url 'avni_console:run_detail' pending_run.pk %}">run #{{ pending_run.pk }}</a>.</div>{% endif %}
+
+  <form method="post" class="ph-card">
+    {% csrf_token %}
+    <div class="ph-card-head"><h2 class="ph-card-title">Columns</h2></div>
+    <div class="ac-table-wrap">
+      <table class="ph-table">
+        <thead><tr><th>Column in your file</th><th>Resolved to</th><th>How</th><th>Note</th></tr></thead>
+        <tbody>
+        {% for r in resolutions %}
+          <tr>
+            <td class="ac-code">{{ r.header }}</td>
+            <td>
+              {% if r.kind == "unknown" or r.kind == "ambiguous" %}
+                <select class="ph-select" name="map__{{ r.header }}">
+                  <option value="">— pick the question —</option>
+                  {% for c in r.candidates %}<option value="{{ c }}">{{ c }} (suggested)</option>{% endfor %}
+                  {% for q in questions %}<option value="{{ q }}">{{ q }}</option>{% endfor %}
+                </select>
+              {% elif r.kind == "id" %}record uuid
+              {% else %}<span class="ac-code">{{ r.concept_name }}</span>{% endif %}
+            </td>
+            <td>
+              {% if r.kind == "exact_concept" or r.kind == "exact_question" or r.kind == "id" or r.kind == "reserved" %}<span class="ph-badge ac-badge-ok">{{ r.kind }}</span>
+              {% elif r.kind == "normalized" or r.kind == "chosen" or r.kind == "ignored" %}<span class="ph-badge ac-badge-warn">{{ r.kind }}</span>
+              {% else %}<span class="ph-badge ac-badge-bad">{{ r.kind }}</span>{% endif %}
+            </td>
+            <td>{{ r.message }}</td>
+          </tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    <div class="ph-card-body">
+      {% if problems %}
+        <div class="ac-result ac-result--bad">{% for p in problems %}{{ p }}<br>{% endfor %}</div>
+        <div class="ac-row"><button class="ph-btn" type="submit" name="action" value="remap">Save column choices and re-check</button></div>
+      {% else %}
+        <div class="ac-result ac-result--ok">All columns resolve. Dry run first: it fetches every record and lists what would change without writing anything.</div>
+        <div class="ac-row">
+          <button class="ph-btn" type="submit" name="action" value="dry_run" {% if not can_run %}disabled{% endif %}>Dry run</button>
+          <button class="ph-btn ph-btn--primary" type="submit" name="action" value="apply" {% if not can_run %}disabled{% endif %}
+                  onclick="return confirm('Write these changes into AVNI? This cannot be undone from here.');">Apply to AVNI</button>
+        </div>
+      {% endif %}
+      <p class="ac-note">Both run in the background (within two minutes) and email the developer and data team with your name and every change.</p>
+    </div>
+  </form>
+
+  <div class="ph-card" style="margin-top:18px">
+    <div class="ph-card-head"><h2 class="ph-card-title">First {{ preview_rows|length }} row(s)</h2></div>
+    <div class="ac-table-wrap">
+      <table class="ph-table">
+        <thead><tr>{% for h in preview_headers %}<th>{{ h }}</th>{% endfor %}</tr></thead>
+        <tbody>{% for row in preview_rows %}<tr>{% for cell in row %}<td>{{ cell|default_if_none:"" }}</td>{% endfor %}</tr>{% endfor %}</tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}

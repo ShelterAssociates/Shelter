@@ -12,6 +12,7 @@ from .models import (
     EmailPurpose,
     EmailRecipient,
     JobDefinition,
+    JobRequest,
     JobRun,
     JobStep,
     JobStepCityStat,
@@ -238,3 +239,39 @@ class JobRunAdmin(admin.ModelAdmin):
 
     def has_change_permission(self, request, obj=None):
         return False
+
+
+@admin.register(JobRequest)
+class JobRequestAdmin(admin.ModelAdmin):
+    list_display = ("job_key", "status", "requested_by", "scheduled_for", "created_on", "finished_on", "summary")
+    list_filter = ("status", "job_key")
+    search_fields = ("job_key", "dedupe_key", "error", "requested_by__username")
+    date_hierarchy = "created_on"
+    readonly_fields = tuple(f.name for f in JobRequest._meta.fields)
+    actions = ["requeue", "cancel"]
+
+    def has_add_permission(self, request):
+        return False
+
+    def requeue(self, request, queryset):
+        """Put finished requests back in the queue, due now."""
+        count = 0
+        for job_request in queryset.exclude(status__in=("queued", "running")):
+            job_request.status = "queued"
+            job_request.scheduled_for = timezone.now()
+            job_request.error = None
+            job_request.summary = ""
+            job_request.job_run = None
+            job_request.started_on = None
+            job_request.finished_on = None
+            job_request.save()
+            count += 1
+        self.message_user(request, "{} request(s) queued again.".format(count), messages.SUCCESS)
+
+    requeue.short_description = "Queue selected requests again"
+
+    def cancel(self, request, queryset):
+        count = queryset.filter(status="queued").update(status="cancelled", finished_on=timezone.now())
+        self.message_user(request, "{} queued request(s) cancelled.".format(count), messages.SUCCESS)
+
+    cancel.short_description = "Cancel selected queued requests"

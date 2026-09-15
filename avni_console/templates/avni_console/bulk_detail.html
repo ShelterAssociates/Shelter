@@ -1,0 +1,34 @@
+{% extends "admin/base_site.html" %}
+{% block bodyclass %}ph-body{% endblock %}
+{% block breadcrumbs %}{% endblock %}
+{% block extrastyle %}{% include "avni_console/partials/styles.html" %}{% endblock %}
+
+{% block content %}
+<div class="ph-page">
+  <p class="ph-crumb"><a href="{% url 'avni_console:runs' %}">&larr; My runs</a></p>
+  <div class="ph-header">
+    <div>
+      <h1 class="ph-title">Upload #{{ bulk.pk }}: {{ bulk.original_name }}</h1>
+      <p class="ph-sub">{{ bulk.target_label }} · {{ bulk.row_count }} row(s) · {% if bulk.dry_run %}dry run{% else %}<b>applied to AVNI</b>{% endif %}</p>
+    </div>
+    <div>{% include "avni_console/partials/badge.html" with status=bulk.status %}</div>
+  </div>
+
+  <div class="ph-card">
+    <div class="ph-card-body">
+      <dl class="ac-kv">
+        <dt>Requested by</dt><dd>{{ bulk.requested_by|default:"system" }}</dd>
+        <dt>Uploaded</dt><dd>{{ bulk.created_on|date:"j M Y, H:i" }}</dd>
+        <dt>Result</dt><dd>{{ bulk.summary|default:"Not run yet." }}</dd>
+        {% if job_request %}<dt>Run</dt><dd><a href="{% url 'avni_console:run_detail' job_request.pk %}">#{{ job_request.pk }}</a> — {{ job_request.status }}{% if job_request.error %}: {{ job_request.error }}{% endif %}</dd>{% endif %}
+      </dl>
+      <div class="ac-row">
+        {% if has_changes and job_request %}<a class="ph-btn ph-btn--primary" href="{% url 'avni_console:run_changes_csv' job_request.pk %}">Download changes.csv</a>{% endif %}
+        {% if bulk.status != "queued" and bulk.status != "running" %}<a class="ph-btn" href="{% url 'avni_console:bulk_preview' bulk.pk %}">Back to preview (dry run again / apply)</a>{% endif %}
+      </div>
+      {% if bulk.status == "queued" or bulk.status == "running" %}<p class="ac-note">Refresh this page in a minute or two; you will also receive an email.</p>{% endif %}
+      <p class="ac-note">The local mastersheet is not updated by a bulk update. Run the matching sync from the console if you need the change locally today.</p>
+    </div>
+  </div>
+</div>
+{% endblock %}

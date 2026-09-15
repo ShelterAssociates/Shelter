@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <style>
+      body { margin:0; padding:0; background:#eef1f5; font-family:Arial, Helvetica, sans-serif; }
+      .wrapper { padding:40px 0; }
+      .card { width:720px; background:#ffffff; border-radius:12px; overflow:hidden; box-shadow:0 6px 20px rgba(0,0,0,.12); }
+      .header { color:#ffffff; padding:28px 36px; }
+      .header h2 { margin:0; font-size:24px; font-weight:600; }
+      .header p { margin:6px 0 0; opacity:.9; font-size:14px; }
+      .body-content { padding:30px 36px; color:#333; font-size:15px; line-height:1.6; }
+      .facts td { padding:4px 10px 4px 0; vertical-align:top; font-size:14px; }
+      .facts td.k { color:#6b7280; white-space:nowrap; }
+      .box { margin-top:18px; background:#f6f8fa; border-left:8px solid #1a73e8; border-radius:8px; padding:14px 18px; }
+      .box.bad { background:#fff5f5; border-color:#d93025; }
+      table.data { width:100%; border-collapse:collapse; margin-top:10px; font-size:13px; }
+      table.data th { text-align:left; background:#f4f8ff; padding:7px 9px; border-bottom:2px solid #dce6f5; font-size:12px; }
+      table.data td { padding:6px 9px; border-bottom:1px solid #eee; word-break:break-word; }
+      td.num, th.num { text-align:right; }
+      pre { background:#f6f8fa; padding:12px; border-radius:6px; font-size:11.5px; overflow-x:auto; white-space:pre-wrap; word-break:break-word; }
+      h3 { margin:26px 0 6px; font-size:16px; }
+      .footer { padding:22px 36px; background:#fafafa; border-top:1px solid #e5e5e5; color:#6b7280; font-size:12px; }
+      .tag { display:inline-block; padding:2px 8px; border-radius:999px; font-size:12px; font-weight:600; background:#fff3cd; color:#8a6d00; }
+    </style>
+  </head>
+  <body>
+    <table width="100%" cellpadding="0" cellspacing="0" class="wrapper">
+      <tr><td align="center">
+        <table cellpadding="0" cellspacing="0" class="card">
+          <tr><td class="header" style="background:{{ header_colour }};">
+            <h2>{% if dry_run %}<span class="tag">DRY RUN</span> {% endif %}{{ title }} &mdash; {{ status }}</h2>
+            <p>Request #{{ request.pk }} by {{ requester }}</p>
+          </td></tr>
+          <tr><td class="body-content">
+            <table class="facts" cellpadding="0" cellspacing="0">
+              <tr><td class="k">Who</td><td>{{ requester }}</td></tr>
+              <tr><td class="k">What</td><td>{{ title }}{% if params_text %} &mdash; {{ params_text }}{% endif %}</td></tr>
+              <tr><td class="k">Requested</td><td>{{ request.created_on|date:"d M Y H:i" }}{% if request.scheduled_for > request.created_on %} (scheduled for {{ request.scheduled_for|date:"d M Y H:i" }}){% endif %}</td></tr>
+              {% if run %}
+              <tr><td class="k">Ran</td><td>{{ run.started_on|date:"d M Y H:i" }} &rarr; {{ run.finished_on|date:"H:i"|default:"?" }} ({{ run.duration_display }}) on {{ run.hostname }}</td></tr>
+              {% if run.window_label %}<tr><td class="k">Window</td><td>{{ run.window_label }}</td></tr>{% endif %}
+              <tr><td class="k">Records</td><td>{{ run.records_ok }} ok, {{ run.records_failed }} failed, {{ run.records_total }} seen</td></tr>
+              {% endif %}
+              <tr><td class="k">Outcome</td><td>{{ request.summary|default:request.status }}</td></tr>
+              <tr><td class="k">Details</td><td><a href="{{ run_url }}">{{ run_url }}</a></td></tr>
+            </table>
+
+            {% if request.error %}<div class="box bad"><strong>Error</strong><pre>{{ request.error }}</pre></div>{% endif %}
+
+            {% for item in steps %}
+              <h3>{{ item.step.name }} &mdash; {{ item.step.get_status_display }}</h3>
+              <div>{{ item.step.records_ok }} ok, {{ item.step.records_failed }} failed, {{ item.step.records_skipped }} skipped{% if item.step.extras %} &middot; {% for k, v in item.step.extras.items %}{{ k }}: {{ v }}{% if not forloop.last %}, {% endif %}{% endfor %}{% endif %}</div>
+              {% if item.step.error %}<pre>{{ item.step.error }}</pre>{% endif %}
+              {% if item.cities %}
+              <table class="data">
+                <tr><th>City</th><th class="num">Synced</th><th class="num">Failed</th><th class="num">Skipped</th></tr>
+                {% for c in item.cities %}<tr><td>{{ c.city_name }}</td><td class="num">{{ c.records_ok }}</td><td class="num">{{ c.records_failed }}</td><td class="num">{{ c.records_skipped }}</td></tr>{% endfor %}
+              </table>
+              {% endif %}
+              {% if item.failures %}
+              <table class="data">
+                <tr><th>City</th><th>Slum</th><th>Household</th><th>Reason</th></tr>
+                {% for f in item.failures %}<tr><td>{{ f.city }}</td><td>{{ f.slum }}</td><td>{{ f.household }}</td><td>{{ f.reason }}</td></tr>{% endfor %}
+              </table>
+              {% endif %}
+            {% endfor %}
+
+            {% if changes_total %}
+              <h3>Changes</h3>
+              <p>{{ changes_total }} change line{{ changes_total|pluralize }} &mdash; the full list is attached as <strong>changes.csv</strong>.</p>
+            {% elif detail_lines %}
+              <h3>Records touched{% if detail_lines|length >= 200 %} (first 200; the full file is attached){% endif %}</h3>
+              <pre>{% for line in detail_lines %}{{ line }}
+{% endfor %}</pre>
+            {% endif %}
+          </td></tr>
+          <tr><td class="footer">
+            Sent automatically for every run started from the AVNI sync console or the shell. Recipients are managed under Admin &rarr; Job Notifications &rarr; Email purposes.
+          </td></tr>
+        </table>
+      </td></tr>
+    </table>
+  </body>
+</html>

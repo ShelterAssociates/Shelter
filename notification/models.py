@@ -295,3 +295,55 @@ class JobStepCityStat(models.Model):
 
     def __str__(self):
         return "{} - {}".format(self.city_name, self.step.name)
+
+
+REQUEST_STATUSES = (
+    ("queued", "Queued"),
+    ("running", "Running"),
+    ("done", "Done"),
+    ("failed", "Failed"),
+    ("cancelled", "Cancelled"),
+)
+
+
+class JobRequest(models.Model):
+    """A job someone asked for (console button, admin, shell), waiting for the queue runner.
+
+    The runner claims due requests oldest-first, executes them as a JobRun and
+    links the two. `dedupe_key` lets repeat requests merge into one pending row.
+    """
+
+    job_key = models.SlugField(max_length=100)
+    params = JSONField(null=True, blank=True)
+    requested_by = models.ForeignKey(
+        "auth.User", null=True, blank=True, on_delete=models.SET_NULL, related_name="job_requests"
+    )
+    status = models.CharField(max_length=20, choices=REQUEST_STATUSES, default="queued")
+    scheduled_for = models.DateTimeField(default=timezone.now)
+    dedupe_key = models.CharField(max_length=200, blank=True, db_index=True)
+    job_run = models.ForeignKey(
+        JobRun, null=True, blank=True, on_delete=models.SET_NULL, related_name="requests"
+    )
+    summary = models.TextField(blank=True)
+    error = models.TextField(null=True, blank=True)
+    created_on = models.DateTimeField(default=timezone.now)
+    started_on = models.DateTimeField(null=True, blank=True)
+    finished_on = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        ordering = ("-created_on",)
+        indexes = [models.Index(fields=["status", "scheduled_for"])]
+
+    def __str__(self):
+        return "{} #{} ({})".format(self.job_key, self.pk, self.status)
+
+    @property
+    def is_pending(self):
+        return self.status in ("queued", "running")
+
+    @property
+    def requested_by_label(self):
+        user = self.requested_by
+        if user is None:
+            return "system"
+        return "{} (id {})".format(user.get_username(), user.pk)

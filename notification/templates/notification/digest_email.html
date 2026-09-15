@@ -48,6 +48,26 @@
               </div>
             {% endif %}
 
+            {% if queue.stuck or queue.died %}
+              <h3>Queue problems</h3>
+              <div class="miss">
+                {% if queue.stuck %}
+                  <p class="meta">These requests were due but never picked up &mdash; is the JOB_QUEUE_RUNNER cron running?</p>
+                  <table class="data">
+                    <tr><th>Request</th><th>Job</th><th>Requested by</th><th>Due</th></tr>
+                    {% for r in queue.stuck %}<tr><td>#{{ r.pk }}</td><td>{{ r.job_key }}</td><td>{{ r.requested_by_label }}</td><td>{{ r.scheduled_for|date:"d M Y H:i" }}</td></tr>{% endfor %}
+                  </table>
+                {% endif %}
+                {% if queue.died %}
+                  <p class="meta">Requests that ended without a run (cancelled, or killed by a restart):</p>
+                  <table class="data">
+                    <tr><th>Request</th><th>Job</th><th>Requested by</th><th>Status</th><th>Why</th></tr>
+                    {% for r in queue.died %}<tr><td>#{{ r.pk }}</td><td>{{ r.job_key }}</td><td>{{ r.requested_by_label }}</td><td>{{ r.status }}</td><td>{{ r.error|default:"" }}</td></tr>{% endfor %}
+                  </table>
+                {% endif %}
+              </div>
+            {% endif %}
+
             <h3>Summary</h3>
             <table class="data">
               <tr><th>Records seen</th><th class="num">Synced</th><th class="num">Failed</th></tr>
@@ -68,6 +88,11 @@
                   took {{ job.run.duration_display }}
                   {% if job.run.window_label %} &middot; window: {{ job.run.window_label }}{% endif %}
                 </div>
+                {% if job.request %}
+                <div class="meta">
+                  Requested by <strong>{{ job.requester }}</strong> (request #{{ job.request.pk }}, {{ job.run.trigger }}){% if job.params_text %} &middot; {{ job.params_text }}{% endif %}
+                </div>
+                {% endif %}
 
                 {% for entry in job.steps %}
                   <h3>{{ entry.step.name }}

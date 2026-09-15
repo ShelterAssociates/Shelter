@@ -30,7 +30,7 @@ from .models import Metadata
 from .cipher import *
 from master.models import Slum, Rapid_Slum_Appraisal, drainage
 from sponsor.models import SponsorProject, SponsorProjectDetails
-from graphs.sync_avni_data import *
+from avni.client import client as avni_client
 from utils.utils_permission import (
     apply_permissions_ajax,
     access_right,
@@ -969,21 +969,17 @@ def get_kobo_RIM_data(request, slum_id):
     return HttpResponse(json.dumps(output), content_type="application/json")
 
 
-def get_image(image_name, image_link, cognito_token):
-    path = "https://app.avniproject.org/media/signedUrl?url="
-    request_1 = requests.get(path + image_link, headers={"AUTH-TOKEN": cognito_token})
-    return image_name, request_1.text
+def get_image(image_name, image_link):
+    try:
+        return image_name, avni_client().signed_media_url(image_link)
+    except Exception:
+        return image_name, image_link
 
 
-def fetch_images_and_update_urls(image_dict, cognito_token):
+def fetch_images_and_update_urls(image_dict):
     with ThreadPoolExecutor() as executor:
-        # Submit tasks with Cognito token included
-        tasks = [
-            executor.submit(get_image, name, link, cognito_token)
-            for name, link in image_dict.items()
-        ]
-        updated_dict = {task.result()[0]: task.result()[1] for task in tasks}
-    return updated_dict
+        tasks = [executor.submit(get_image, name, link) for name, link in image_dict.items()]
+        return {task.result()[0]: task.result()[1] for task in tasks}
 
 
 def get_avni_image_urls(rim_obj):
@@ -1012,7 +1008,6 @@ def get_avni_image_urls(rim_obj):
         "drainage_report_image",
     ]
     image_dict = {}
-    a = avni_sync()
     for field in fields_to_modify:
         if field in rim_obj:
             old_link = str(rim_obj[field])
@@ -1023,9 +1018,7 @@ def get_avni_image_urls(rim_obj):
                 rim_obj[field] = prefix + old_link
             else:
                 continue
-    # Process images with Cognito token
-    cognito_token = a.get_cognito_token()
-    updated_image_dict = fetch_images_and_update_urls(image_dict, cognito_token)
+    updated_image_dict = fetch_images_and_update_urls(image_dict)
     rim_obj.update(updated_image_dict)
     return rim_obj
 

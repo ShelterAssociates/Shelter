@@ -23,7 +23,7 @@ FIXTURE = [
 ]
 
 
-def run(recorder):
+def run(recorder, params=None):
     recorder.set_window("selftest fixture, no external calls")
 
     with recorder.step("selftest_records", loggers=[logger.name]) as step:

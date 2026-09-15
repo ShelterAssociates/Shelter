@@ -23,7 +23,7 @@ import os
 from django.conf import settings
 from django.urls import reverse
 
-from graphs.services import avni_media
+from avni import media as avni_media
 
 logger = logging.getLogger(__name__)
 

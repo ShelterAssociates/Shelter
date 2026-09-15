@@ -19,7 +19,7 @@ from .rim_download_permissions import (
 from helpers.validators import validate_shelter_email
 from photos.views import protected_media_url
 from helpers.services.send_email import send_email
-from graphs.sync_avni_data import avni_sync
+from avni.sync import rim as avni_rim
 from mastersheet.forms import (
     find_slum,
     file_form,
@@ -1484,13 +1484,8 @@ def sync_kobo_data(request):
     data = {}
     try:
         slum = Slum.objects.get(id=request.GET["slumname"])
-        """ Calling a method sync_rim_data() of avni_sync class to sync Slum-RIM data of the given slum.
-            Argument => slum_id
-            Return => Number of Forms synced.
-        """
-        sync_obj = avni_sync()
-        slum_in_avni_flag, rim_sync_num, rim_add_flag = sync_obj.sync_rim_data(slum.id)
-        toilet_sync_num = sync_obj.sync_toilet_data(slum.id)
+        slum_in_avni_flag, rim_sync_num, rim_add_flag = avni_rim.sync_slum_rim(slum.id)
+        toilet_sync_num = avni_rim.sync_slum_toilets(slum.id)
         data["flag"] = True
         if not (slum_in_avni_flag):
             data["msg"] = (

@@ -1,0 +1,65 @@
+{% extends "admin/base_site.html" %}
+{% block bodyclass %}ph-body{% endblock %}
+{% block breadcrumbs %}{% endblock %}
+{% block extrastyle %}{% include "avni_console/partials/styles.html" %}{% endblock %}
+
+{% block content %}
+<div class="ph-page">
+  <p class="ph-crumb"><a href="{% url 'avni_console:runs' %}">&larr; My runs</a></p>
+  <div class="ph-header">
+    <div>
+      <h1 class="ph-title">Run #{{ job_request.pk }} — {{ title }}</h1>
+      <p class="ph-sub">{{ describe|default:"no parameters" }}</p>
+    </div>
+    <div>{% include "avni_console/partials/badge.html" with status=job_request.status %}</div>
+  </div>
+
+  <div class="ph-card">
+    <div class="ph-card-body">
+      <dl class="ac-kv">
+        <dt>Requested by</dt><dd>{{ job_request.requested_by_label }}</dd>
+        <dt>Requested</dt><dd>{{ job_request.created_on|date:"j M Y, H:i" }}</dd>
+        <dt>Scheduled for</dt><dd>{{ job_request.scheduled_for|date:"j M Y, H:i" }}</dd>
+        <dt>Started</dt><dd>{{ job_request.started_on|date:"j M Y, H:i"|default:"—" }}</dd>
+        <dt>Finished</dt><dd>{{ job_request.finished_on|date:"j M Y, H:i"|default:"—" }}</dd>
+        <dt>Result</dt><dd>{{ job_request.summary|default:"—" }}</dd>
+        {% if job_request.error %}<dt>Error</dt><dd class="ac-code" style="white-space:pre-wrap">{{ job_request.error }}</dd>{% endif %}
+        {% if run %}<dt>Window</dt><dd>{{ run.window_label|default:"—" }}</dd>
+        <dt>Records</dt><dd>{{ run.records_ok }} ok · {{ run.records_failed }} failed · {{ run.records_total }} seen · {{ run.duration_display }}</dd>{% endif %}
+      </dl>
+      <div class="ac-row">
+        {% if has_detail_file %}<a class="ph-btn ph-btn--sm" href="{% url 'avni_console:run_detail_file' job_request.pk %}">Download detail file</a>{% endif %}
+        {% if has_changes %}<a class="ph-btn ph-btn--sm" href="{% url 'avni_console:run_changes_csv' job_request.pk %}">Download changes.csv</a>{% endif %}
+        {% if bulk %}<a class="ph-btn ph-btn--sm" href="{% url 'avni_console:bulk_detail' bulk.pk %}">Upload #{{ bulk.pk }}</a>{% endif %}
+      </div>
+    </div>
+  </div>
+
+  {% for step in steps %}
+  <div class="ph-card" style="margin-top:18px">
+    <div class="ph-card-head">
+      <h2 class="ph-card-title">{{ step.name }} {% include "avni_console/partials/badge.html" with status=step.status %}</h2>
+    </div>
+    <div class="ph-card-body">
+      <span class="ac-stat"><b>{{ step.records_ok }}</b> ok</span>
+      <span class="ac-stat"><b>{{ step.records_failed }}</b> failed</span>
+      <span class="ac-stat"><b>{{ step.records_skipped }}</b> skipped</span>
+      {% if step.extras %}<p class="ac-note">{% for k, v in step.extras.items %}{{ k }}: {{ v }}{% if not forloop.last %} · {% endif %}{% endfor %}</p>{% endif %}
+      {% if step.error %}<div class="ac-result ac-result--bad">{{ step.error }}</div>{% endif %}
+      {% if step.city_stats.all %}
+      <table class="ph-table" style="margin-top:10px">
+        <thead><tr><th>City</th><th>Synced</th><th>Failed</th><th>Skipped</th></tr></thead>
+        <tbody>{% for c in step.city_stats.all %}<tr><td>{{ c.city_name }}</td><td>{{ c.records_ok }}</td><td>{{ c.records_failed }}</td><td>{{ c.records_skipped }}</td></tr>{% endfor %}</tbody>
+      </table>
+      {% endif %}
+      {% if step.sample_failures %}
+      <table class="ph-table" style="margin-top:10px">
+        <thead><tr><th>City</th><th>Slum</th><th>Household</th><th>Reason</th></tr></thead>
+        <tbody>{% for f in step.sample_failures %}<tr><td>{{ f.city }}</td><td>{{ f.slum }}</td><td>{{ f.household }}</td><td>{{ f.reason }}</td></tr>{% endfor %}</tbody>
+      </table>
+      {% endif %}
+    </div>
+  </div>
+  {% endfor %}
+</div>
+{% endblock %}

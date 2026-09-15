@@ -12,7 +12,8 @@ from django.shortcuts import get_object_or_404
 from django.db import connection
 from graphs.models import *
 import itertools
-from graphs.sync_avni_data import *
+from avni.client import client as avni_client
+from mastersheet.models import ToiletConstruction
 import time as pytime
 
 
@@ -1358,7 +1359,6 @@ def get_kobo_FF_report_detail(city, slum_code, house_number, kobo_survey=""):
         ).exclude(ff_data=None)
         if len(householdData) > 0 and householdData[0].ff_data:
             output = householdData[0].ff_data
-            a = avni_sync()
             for key in list(output):
                 split_key = key.split("/")
                 if len(split_key) > 1:
@@ -1389,12 +1389,9 @@ def get_kobo_FF_report_detail(city, slum_code, house_number, kobo_survey=""):
                     ):
                         output["Family_Photo"] = PATH + "/" + output["Family_Photo"]
             else:
-                if "Toilet_Photo" in output:
-                    toilet_image_url = a.get_image(output["Toilet_Photo"])
-                    output["Toilet_Photo"] = toilet_image_url
-                if "Family_Photo" in output:
-                    family_image_url = a.get_image(output["Family_Photo"])
-                    output["Family_Photo"] = family_image_url
+                for photo_key in ("Toilet_Photo", "Family_Photo"):
+                    if photo_key in output:
+                        output[photo_key] = avni_client().signed_media_url(output[photo_key])
     return output
 
 

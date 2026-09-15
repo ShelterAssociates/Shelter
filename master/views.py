@@ -38,7 +38,6 @@ from django.http import Http404
 from django.core.exceptions import PermissionDenied
 from graphs.models import *
 from django.db.models import Avg
-from graphs.sync_avni_data import avni_sync
 
 logger = logging.getLogger(__name__)
 

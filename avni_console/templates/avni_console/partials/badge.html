@@ -1,0 +1,4 @@
+{% if status == "done" or status == "success" %}<span class="ph-badge ac-badge-ok">{{ label|default:status }}</span>
+{% elif status == "failed" or status == "crashed" %}<span class="ph-badge ac-badge-bad">{{ label|default:status }}</span>
+{% elif status == "partial" or status == "cancelled" %}<span class="ph-badge ac-badge-warn">{{ label|default:status }}</span>
+{% else %}<span class="ph-badge ac-badge-info">{{ label|default:status }}</span>{% endif %}

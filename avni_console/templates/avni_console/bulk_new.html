@@ -1,0 +1,159 @@
+{% extends "admin/base_site.html" %}
+{% block bodyclass %}ph-body{% endblock %}
+{% block breadcrumbs %}{% endblock %}
+{% block extrastyle %}{% include "avni_console/partials/styles.html" %}{% endblock %}
+
+{% block content %}
+<div class="ph-page">
+  <p class="ph-crumb"><a href="{% url 'avni_console:index' %}">&larr; AVNI sync console</a></p>
+  <div class="ph-header">
+    <div>
+      <h1 class="ph-title">Bulk update into AVNI</h1>
+      <p class="ph-sub">
+        Upload a spreadsheet with a <span class="ac-code">uuid</span> column and one column per question to change.
+        Blank cells leave a value alone; write <span class="ac-code">__CLEAR__</span> to remove one; a <span class="ac-code">Voided</span> column (yes/no) voids records.
+        Limit here: <b>{{ limits.max_rows }} rows per file</b>. Larger files: ask the developer, who can run it locally with more workers.
+        The local mastersheet is not changed by this — run the matching sync from the console afterwards if you need it today.
+      </p>
+    </div>
+  </div>
+
+  {% if cache_stale %}<div class="ac-result ac-result--warn" style="margin-bottom:18px">The AVNI form cache is stale. Queue "Refresh AVNI form cache" on the console first so the question list below is current.</div>{% endif %}
+  {% if error %}<div class="ac-result ac-result--bad" style="margin-bottom:18px">{{ error }}</div>{% endif %}
+
+  <div class="ac-two">
+    <form class="ph-card" method="post" enctype="multipart/form-data" id="picker">
+      {% csrf_token %}
+      <div class="ph-card-head"><h2 class="ph-card-title">1. What do you want to update?</h2></div>
+      <div class="ph-card-body">
+        <div class="ph-field">
+          <label class="ph-label">Subject type</label>
+          <select class="ph-select" name="subject_type" id="subject_type" required>
+            <option value="">— choose —</option>
+            {% for kind in subject_types %}<option value="{{ kind }}">{{ kind }}</option>{% endfor %}
+          </select>
+        </div>
+
+        <div class="ph-field ac-checks" id="levels" hidden>
+          <span class="ph-label">Update…</span><br>
+          <label><input type="radio" name="level" value="registration" checked> the subject itself (registration form)</label><br>
+          <label id="level-enrolment" hidden><input type="radio" name="level" value="enrolment"> a program enrolment</label><br>
+          <label id="level-program_encounter" hidden><input type="radio" name="level" value="program_encounter"> a program encounter (e.g. Daily Reporting)</label><br>
+          <label id="level-encounter" hidden><input type="radio" name="level" value="encounter"> a general encounter (Sanitation, Water, …)</label>
+        </div>
+
+        <div class="ph-field" id="program-field" hidden>
+          <label class="ph-label">Program</label>
+          <select class="ph-select" name="program" id="program"></select>
+        </div>
+        <div class="ph-field" id="encounter-field" hidden>
+          <label class="ph-label">Encounter type</label>
+          <select class="ph-select" name="encounter_type" id="encounter_type"></select>
+        </div>
+
+        <div class="ph-field">
+          <label class="ph-label">Spreadsheet (.xlsx)</label>
+          <input class="ph-input" type="file" name="file" accept=".xlsx,.xlsm" required>
+        </div>
+        <div class="ac-row">
+          <button class="ph-btn ph-btn--primary" type="submit" id="upload" disabled>Upload and preview</button>
+          <a class="ph-btn ph-btn--sm" id="template" href="#" hidden>Download template .xlsx</a>
+        </div>
+      </div>
+    </form>
+
+    <div class="ph-card ac-sticky">
+      <div class="ph-card-head"><h2 class="ph-card-title">2. Valid column headers for this form</h2></div>
+      <div class="ph-card-body">
+        <p class="ac-card-desc" id="form-name">Pick a subject type and level to see its questions.</p>
+        <div class="ac-table-wrap">
+          <table class="ph-table" id="questions" hidden>
+            <thead><tr><th>Question shown in app</th><th>Concept name (what AVNI needs)</th><th>Type</th><th>Allowed answers</th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+        <p class="ac-note" id="reserved" hidden></p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function () {
+  var levelsUrl = "{% url 'avni_console:levels_json' %}";
+  var questionsUrlTemplate = "{% url 'avni_console:questions_json' 0 %}";
+  var templateUrlTemplate = "{% url 'avni_console:template_xlsx' 0 %}";
+  var subject = document.getElementById("subject_type");
+  var levelsBox = document.getElementById("levels");
+  var programField = document.getElementById("program-field"), programSelect = document.getElementById("program");
+  var encounterField = document.getElementById("encounter-field"), encounterSelect = document.getElementById("encounter_type");
+  var upload = document.getElementById("upload"), templateLink = document.getElementById("template");
+  var formName = document.getElementById("form-name"), table = document.getElementById("questions"), reserved = document.getElementById("reserved");
+  var levels = null;
+
+  function level() { return document.querySelector("input[name=level]:checked").value; }
+  function fill(select, values) {
+    select.innerHTML = "";
+    values.forEach(function (v) { var o = document.createElement("option"); o.value = v; o.textContent = v; select.appendChild(o); });
+  }
+  function uniq(list) { return list.filter(function (v, i) { return list.indexOf(v) === i; }); }
+
+  function currentForm() {
+    if (!levels) return null;
+    var l = level();
+    if (l === "registration") return levels.registration;
+    if (l === "enrolment") return (levels.enrolments.filter(function (e) { return e.program === programSelect.value; })[0]) || null;
+    if (l === "program_encounter") return (levels.program_encounters.filter(function (e) { return e.program === programSelect.value && e.encounter_type === encounterSelect.value; })[0]) || null;
+    return (levels.encounters.filter(function (e) { return e.encounter_type === encounterSelect.value; })[0]) || null;
+  }
+
+  function renderQuestions(form) {
+    var tbody = table.querySelector("tbody");
+    tbody.innerHTML = "";
+    if (!form) { table.hidden = true; reserved.hidden = true; templateLink.hidden = true; upload.disabled = true; formName.textContent = "No form for this choice."; return; }
+    fetch(questionsUrlTemplate.replace("0", form.form_id), { credentials: "same-origin" }).then(function (r) { return r.json(); }).then(function (j) {
+      formName.textContent = "Form: " + j.form.name + " (cached " + j.fetched_on.slice(0, 10) + ")";
+      j.questions.forEach(function (q) {
+        var tr = document.createElement("tr");
+        if (!q.supported) tr.style.opacity = ".45";
+        tr.innerHTML = "<td>" + q.question_name + "</td><td class='ac-code'>" + q.concept_name + "</td><td>" + q.data_type + (q.multi ? " (multi)" : "") + (q.supported ? "" : " — not via spreadsheet") + "</td><td>" + (q.answers.join(" · ")) + "</td>";
+        tbody.appendChild(tr);
+      });
+      reserved.textContent = "Also accepted as columns: uuid (required), " + j.reserved.join(", ") + ".";
+      table.hidden = false; reserved.hidden = false;
+      templateLink.href = templateUrlTemplate.replace("0", form.form_id); templateLink.hidden = false;
+      upload.disabled = false;
+    });
+  }
+
+  function updateFields() {
+    var l = level();
+    programField.hidden = !(l === "enrolment" || l === "program_encounter");
+    encounterField.hidden = !(l === "program_encounter" || l === "encounter");
+    if (l === "enrolment") fill(programSelect, uniq(levels.enrolments.map(function (e) { return e.program; })));
+    if (l === "program_encounter") {
+      fill(programSelect, uniq(levels.program_encounters.map(function (e) { return e.program; })));
+      fill(encounterSelect, uniq(levels.program_encounters.filter(function (e) { return e.program === programSelect.value; }).map(function (e) { return e.encounter_type; })));
+    }
+    if (l === "encounter") fill(encounterSelect, uniq(levels.encounters.map(function (e) { return e.encounter_type; })));
+    renderQuestions(currentForm());
+  }
+
+  subject.addEventListener("change", function () {
+    if (!subject.value) { levelsBox.hidden = true; renderQuestions(null); return; }
+    fetch(levelsUrl + "?subject_type=" + encodeURIComponent(subject.value), { credentials: "same-origin" }).then(function (r) { return r.json(); }).then(function (j) {
+      levels = j;
+      levelsBox.hidden = false;
+      document.getElementById("level-enrolment").hidden = !j.enrolments.length;
+      document.getElementById("level-program_encounter").hidden = !j.program_encounters.length;
+      document.getElementById("level-encounter").hidden = !j.encounters.length;
+      document.querySelector("input[name=level][value=registration]").checked = true;
+      updateFields();
+    });
+  });
+  document.querySelectorAll("input[name=level]").forEach(function (r) { r.addEventListener("change", updateFields); });
+  programSelect.addEventListener("change", updateFields);
+  encounterSelect.addEventListener("change", function () { renderQuestions(currentForm()); });
+})();
+</script>
+{% endblock %}

@@ -21,7 +21,7 @@ import zipfile
 import requests
 from django.conf import settings
 
-from graphs.services import avni_media
+from avni import media as avni_media
 from photos.services import sources
 
 logger = logging.getLogger(__name__)

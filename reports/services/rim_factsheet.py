@@ -5,7 +5,7 @@ from collections import OrderedDict, Counter
 from concurrent.futures import ThreadPoolExecutor
 from master.models import Slum
 from graphs.models import SlumData
-from graphs.sync_avni_data import avni_sync
+from avni.client import client as avni_client
 from master.models import Slum, Rapid_Slum_Appraisal
 import logging
 
@@ -374,7 +374,7 @@ def map_rim_data(raw_data: dict) -> dict:
 
 
 def get_avni_token():
-    return avni_sync().get_cognito_token()
+    return avni_client().token()
 
 
 # ======================================================

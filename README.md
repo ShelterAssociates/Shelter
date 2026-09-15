@@ -294,6 +294,67 @@ python manage.py shell_plus    # requires django-extensions
 
 ---
 
+## Running the tests
+
+The historic migration chain cannot build an empty database, so tests use a
+settings module that creates tables straight from the models:
+
+```bash
+python manage.py test avni avni_console notification --settings=shelter.test_settings --noinput
+```
+
+`avni/` (everything that talks to AVNI), `avni_console/` (the sync console) and
+`notification/` (job records, queue, digests) are covered; the suite runs against a fake AVNI and needs no credentials.
+
+## AVNI sync console
+
+`/avni-console/` (Admin → Tools → AVNI sync console) lets the data team queue syncs,
+count before pulling, queue the nightly dashboard refresh and push spreadsheet
+corrections into AVNI. Access is by group name in `local_settings.py`:
+
+```python
+AVNI_SYNC_GROUPS = ["Data Team"]        # may open the console and queue syncs
+AVNI_WRITE_GROUPS = ["AVNI Writers"]    # may also push bulk updates into AVNI
+AVNI_BULK_MAX_ROWS = 50                 # production keeps this small; raise locally (e.g. 100)
+AVNI_BULK_WORKERS = 1                   # raise locally (e.g. 4) for faster bulk runs
+```
+
+Cron lines needed on the server (see the script headers):
+
+```
+*/2 * * * *  bash /srv/Shelter/deploy/JOB_QUEUE_RUNNER.sh        # runs queued requests
+30 1 * * *   bash /srv/Shelter/deploy/AVNI_FORM_CACHE_REFRESH.sh  # form definitions for uploads
+```
+
+After deploying: `python manage.py makemigrations avni avni_console notification && python manage.py migrate`,
+then `python manage.py seed_notification_config` (new email purposes `avni_console_activity`,
+`avni_bulk_update` and job definitions), then `python manage.py run_job avni_form_cache_refresh`.
+
+Large spreadsheets (over the row cap) are run by the developer from the shell, any size, any worker count:
+
+```bash
+python manage.py shell -c "from avni_console.services.bulk_update import apply_file; \
+  print(apply_file('/path/fix.xlsx', '<form uuid>', 'Household', dry_run=True, workers=4).summary)"
+```
+
+## AVNI syncs from the shell
+
+Every sync is a registered job, so it is recorded and shows up in the daily digest:
+
+```bash
+python manage.py run_job avni_daily_sync --trigger manual --no-email
+python manage.py run_job rhs_sync --trigger manual --params '{"subject_types": ["Household"], "from_date": "2026-01-01"}'
+python manage.py run_job mobilization_sync --trigger manual --params '{"all_dates": true}'
+python manage.py run_job rim_sync --trigger manual --params '{"slum_ids": [123]}'
+python manage.py run_job file_import --trigger manual --params '{"kind": "water", "path": "/path/water.json"}'
+```
+
+Single records by uuid (no job record):
+
+```bash
+python manage.py shell -c "from avni.sync.by_uuid import sync_by_uuid; print(sync_by_uuid('subject', ['<uuid>'], subject_type='Household'))"
+```
+
 ## Production Deployment
 
 ### On the server, the folder structure mirrors local
