@@ -67,11 +67,8 @@
             {% endfor %}
 
             {% if changes_total %}
-              <h3>Changes ({{ changes_total }} change line{{ changes_total|pluralize }}{% if changes_truncated %}, first {{ changes|length }} shown; the full list is attached{% endif %})</h3>
-              <table class="data">
-                <tr><th>uuid</th><th>Field</th><th>Old</th><th>New</th><th>Status</th><th>Error</th></tr>
-                {% for c in changes %}<tr><td>{{ c.uuid }}</td><td>{{ c.field }}</td><td>{{ c.old }}</td><td>{{ c.new }}</td><td>{{ c.status }}</td><td>{{ c.error }}</td></tr>{% endfor %}
-              </table>
+              <h3>Changes</h3>
+              <p>{{ changes_total }} change line{{ changes_total|pluralize }} &mdash; the full list is attached as <strong>changes.csv</strong>.</p>
             {% elif detail_lines %}
               <h3>Records touched{% if detail_lines|length >= 200 %} (first 200; the full file is attached){% endif %}</h3>
               <pre>{% for line in detail_lines %}{{ line }}

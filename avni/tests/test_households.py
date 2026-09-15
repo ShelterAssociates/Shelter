@@ -118,6 +118,41 @@ class HouseholdSyncTests(TestCase):
         start = watermark.window_start("Household")
         self.assertTrue(start.endswith("T00:00:00.000Z"))
 
+    def last_run(self, job_key, status, started):
+        from notification.models import JobRun
+
+        JobRun.objects.create(job_key=job_key, status=status, started_on=started)
+
+    def window_inside_run(self, job_key):
+        recorder = reporting.start(job_key, trigger="manual")
+        try:
+            return watermark.window_start("Household")
+        finally:
+            recorder.finish()
+
+    def test_last_successful_run_of_same_job_advances_the_window(self):
+        HouseholdData.objects.create(
+            household_number="9", slum=self.slum, city=self.city, submission_date="2026-03-10T10:00:00Z", rhs_data={}
+        )
+        self.last_run("avni_daily_sync", "success", "2026-03-14T22:00:00Z")
+        self.assertEqual(self.window_inside_run("avni_daily_sync"), "2026-03-13T00:00:00.000Z")
+
+    def test_failed_partial_or_other_jobs_runs_do_not_advance_the_window(self):
+        HouseholdData.objects.create(
+            household_number="9", slum=self.slum, city=self.city, submission_date="2026-03-10T10:00:00Z", rhs_data={}
+        )
+        self.last_run("avni_daily_sync", "failed", "2026-03-14T22:00:00Z")
+        self.last_run("avni_daily_sync", "partial", "2026-03-15T22:00:00Z")
+        self.last_run("encounter_sync", "success", "2026-03-16T22:00:00Z")
+        self.assertEqual(self.window_inside_run("avni_daily_sync"), "2026-03-09T00:00:00.000Z")
+
+    def test_newer_data_still_wins_over_an_older_run(self):
+        HouseholdData.objects.create(
+            household_number="9", slum=self.slum, city=self.city, submission_date="2026-03-10T10:00:00Z", rhs_data={}
+        )
+        self.last_run("avni_daily_sync", "success", "2026-03-08T22:00:00Z")
+        self.assertEqual(self.window_inside_run("avni_daily_sync"), "2026-03-09T00:00:00.000Z")
+
     def test_list_failure_propagates(self):
         from avni.client import AvniError
 

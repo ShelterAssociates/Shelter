@@ -49,7 +49,7 @@ class ActivityReportTests(TestCase):
         self.assertIn("from 2026-01-01", body)
         self.assertIn("/avni-console/runs/{}/".format(self.request.pk), body)
 
-    def test_bulk_report_goes_to_team_only_and_lists_changes(self):
+    def test_bulk_report_goes_to_team_only_and_attaches_changes(self):
         self.request.job_key = "avni_bulk_update"
         self.request.params = {"bulk_update_id": 7, "dry_run": False}
         self.request.save()
@@ -70,10 +70,9 @@ class ActivityReportTests(TestCase):
         self.assertEqual(sorted(message.to), [self.data.email, self.developer.email])
         self.assertEqual(message.cc, [], "bulk updates go to developer and data only")
         body = message.alternatives[0][0]
-        self.assertIn("u0", body)
-        self.assertIn("u199", body)
-        self.assertNotIn("u249", body, "inline list is capped at 200 rows")
         self.assertIn("250 change", body)
+        self.assertNotIn("u0", body, "changes live in the attachment, not the body")
+        self.assertNotIn("Aadhaar number", body)
         self.assertEqual([name for name, _, _ in message.attachments], ["changes.csv"])
 
     def test_dry_run_is_marked(self):

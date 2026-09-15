@@ -203,7 +203,7 @@ def send_activity_report(request, run):
     title = job_title(request.job_key)
     subject = "[Shelter] {}{} by {} - {}".format("DRY RUN " if dry_run else "", title, requester_name(request), status)
 
-    changes = change_rows(changes_file_for(request)) if is_bulk else []
+    changes_total = len(change_rows(changes_file_for(request))) if is_bulk else 0
     context = {
         "title": title,
         "request": request,
@@ -214,9 +214,7 @@ def send_activity_report(request, run):
         "params_text": describe_params(request.job_key, params),
         "dry_run": dry_run,
         "steps": _run_payload(run)["steps"] if run else [],
-        "changes": changes[:INLINE_CHANGE_ROWS],
-        "changes_total": len(changes),
-        "changes_truncated": len(changes) > INLINE_CHANGE_ROWS,
+        "changes_total": changes_total,
         "detail_lines": detail_lines(run) if run and not is_bulk else [],
         "run_url": run_url(request),
     }
