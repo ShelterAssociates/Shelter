@@ -31,6 +31,11 @@ urlpatterns = [
     url(
         r"^account/excel/$", accounts_excel_generation, name="accounts_excel_generation"
     ),
+    url(r"^accounts/$", accounts_home, name="accounts_home"),
+    url(r"^accounts/data/$", accounts_report_data, name="accounts_report_data"),
+    url(
+        r"^accounts/slums/$", accounts_slums_for_city, name="accounts_slums_for_city"
+    ),
     url(r"^show/summery/$", renderSummery, name="renderSummery"),
     url(r"^show/showSummery/$", ProcessShortView, name="ProcessShortView"),
     url(r"^gisDataDownload/$", gisDataDownload, name="gisDataDownload"),

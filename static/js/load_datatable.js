@@ -669,18 +669,6 @@ $(document).ready(function () {
     });
   });
 
-  // Handling Download Accounts Data button click event.
-  $("#btnAccount").on("click", function () {
-    var slum_code = $("#slum_form")[0][1].value;
-    $("#accountModal").modal("show");
-    $("#accountModal").on("hidden.bs.modal", function () {
-      $(this).find("#error_log").html("");
-      $(this).find("#error_log").remove();
-      $(this).find("#success_log").html("");
-      $(this).find("#success_log").remove();
-      $("#accountModal_selection")[0].reset();
-    });
-  });
   // Handling Download GIS Data button click event.
   $("#btnFetchGisTab").on("click", function () {
     var slum_code = $("#slum_form")[0][1].value;
@@ -692,18 +680,6 @@ $(document).ready(function () {
       $(this).find("#success_log").remove();
       $("#GISModal_selection")[0].reset();
     });
-  });
-
-  // when we submit  Account data download  tab we check if slum is selected or not.
-  $("#downloadExcel").on("click", function () {
-    if (
-      $("#id_account_slumname").val() == "" &&
-      $("#account_cityname").val() == ""
-    ) {
-      alert("Either Slum or City is required");
-    } else {
-      $("#accountModal_selection").submit();
-    }
   });
 
   // when we submit  GIS data download tab we check if slum is selected or not.
