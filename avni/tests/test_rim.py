@@ -4,7 +4,7 @@ from unittest import mock
 
 from django.test import TestCase
 
-from avni import paths, watermark
+from avni import paths, window
 from avni.sync import rim
 from avni.tests.support import FakeApi, make_city, make_slum, page, subject_record
 from graphs.models import SlumData
@@ -87,8 +87,8 @@ class RimSyncTests(TestCase):
         toilets = [subject_record("t{}".format(i), number="", observations={name_concept: "CTB {}".format(i)}) for i in range(3)]
         toilets.append(subject_record("tv", voided=True, number="", observations={name_concept: "void"}))
         api = FakeApi({
-            paths.subjects(rim.RIM_SUBJECT_TYPE, watermark.EPOCH, "loc-1"): page([record]),
-            paths.subjects(rim.TOILET_SUBJECT_TYPE, watermark.EPOCH, "loc-1"): [page(toilets[:2], 2), page(toilets[2:], 2)],
+            paths.subjects(rim.RIM_SUBJECT_TYPE, window.EPOCH, "loc-1"): page([record]),
+            paths.subjects(rim.TOILET_SUBJECT_TYPE, window.EPOCH, "loc-1"): [page(toilets[:2], 2), page(toilets[2:], 2)],
         })
         with mock.patch("avni.sync.rim.slum_location_uuid", return_value="loc-1"):
             self.assertEqual(rim.sync_slum_rim(self.slum.id, api=api), (True, 1, False))

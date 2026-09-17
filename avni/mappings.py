@@ -6,7 +6,6 @@ graphs/sync_avni_data.py and graphs/structure_registration_sync.py unchanged.
 """
 
 import logging
-import re
 
 logger = logging.getLogger(__name__)
 
@@ -88,6 +87,17 @@ SANITATION_KEYS = {
     "group_oi8ts04/If_no_why": "If no for individual toilet , why?",
     "group_oi8ts04/Which_Community_Toil_r_family_members_use": "Which CTB do your family members use ?",
     "group_el9cl08/Does_any_household_m_n_skills_given_below": "Does any household member have any of the construction skills given below ?",
+}
+
+# Detailed Socio Economic Survey encounter types that ask the same questions as
+# a Household encounter. The provider hands the legacy writer a copy of the
+# record stamped with the twin type, so a DSES record lands on the same rhs
+# keys a Household record does. The core store keeps the real type name.
+LEGACY_TWIN_TYPES = {
+    "Sanitation INP": "Sanitation",
+    "Water INP": "Water",
+    "Waste INP": "Waste",
+    "Electricity INP": "Electricity",
 }
 
 # Single renames applied to direct encounters before merging into rhs_data.
@@ -173,20 +183,9 @@ METADATA_KEYS = {
 SHOP_ONLY_KEYS = ["If shop, type of occupancy ?", "Type of shop"]
 UNOCCUPIED_ONLY_KEYS = ["Type_of_unoccupied_house", "Parent_household_number"]
 
-LEADING_ZEROS = re.compile(r"^0*(\d+)([A-Za-z].*)$")
-
-
-def household_number_from(value):
-    """'0042' -> '42', '0022A' -> '22A', 42.0 -> '42'. Blank stays blank."""
-    if value is None:
-        return ""
-    if isinstance(value, float) and value.is_integer():
-        value = int(value)
-    text = str(value).strip()
-    if text.isdigit():
-        return str(int(text))
-    match = LEADING_ZEROS.match(text)
-    return match.group(1) + match.group(2) if match else text
+# The household-number spelling is provider-neutral; re-exported for the many
+# callers that already import it from avni.mappings.
+from survey.identity import LEADING_ZEROS, household_number_from  # noqa: E402,F401 isort:skip
 
 
 def merge_rhs_keys(existing, incoming):

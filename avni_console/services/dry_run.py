@@ -2,7 +2,7 @@
 
 from datetime import date
 
-from avni import paths, watermark
+from avni import paths, window
 from avni.client import AvniError, client
 from avni.jobs.manual_sync import HOUSEHOLD_SUBJECT_TYPES
 
@@ -16,7 +16,7 @@ def count_households(subject_types, from_date, api=None):
     if unknown:
         raise ValueError("Unknown subject type(s): {}".format(", ".join(unknown)))
     api = api or client()
-    since = watermark.format_from_date(from_date)
+    since = window.format_from_date(from_date)
     result = {"window_start": since, "counts": {}, "errors": {}, "warning": ""}
     for subject_type in subject_types:
         try:

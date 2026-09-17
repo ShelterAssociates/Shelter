@@ -23,6 +23,11 @@ def program_encounters(encounter_type, since):
     return list_path("api/programEncounters", "encounterType", encounter_type, since)
 
 
+def program_enrolments(subject_uuid, program, since):
+    """AVNI answers 400 unless both subject and program are given."""
+    return list_path("api/programEnrolments", "program", program, since) + "&subject=" + quote(str(subject_uuid), safe="")
+
+
 def subject(uuid):
     return "api/subject/" + uuid
 

@@ -31,7 +31,12 @@
         {% if has_detail_file %}<a class="ph-btn ph-btn--sm" href="{% url 'avni_console:run_detail_file' job_request.pk %}">Download detail file</a>{% endif %}
         {% if has_changes %}<a class="ph-btn ph-btn--sm" href="{% url 'avni_console:run_changes_csv' job_request.pk %}">Download changes.csv</a>{% endif %}
         {% if bulk %}<a class="ph-btn ph-btn--sm" href="{% url 'avni_console:bulk_detail' bulk.pk %}">Upload #{{ bulk.pk }}</a>{% endif %}
+        {% if can_retry %}<button class="ph-btn ph-btn--sm ph-btn--primary" type="button" id="retry">Retry from where it stopped</button>{% endif %}
       </div>
+      {% if can_retry %}
+      <div class="ac-result" id="retry-result" hidden></div>
+      <p class="ac-note">Steps that finished are skipped; each stopped step continues from the last record it processed (subject syncs redo the failed subjects and the ones never reached).</p>
+      {% endif %}
     </div>
   </div>
 
@@ -62,4 +67,24 @@
   </div>
   {% endfor %}
 </div>
+<script id="retry-script">
+(function () {
+  var button = document.getElementById("retry");
+  if (!button) return;
+  var box = document.getElementById("retry-result");
+  function show(text, kind) { box.className = "ac-result" + (kind ? " ac-result--" + kind : ""); box.textContent = text; box.hidden = false; }
+  button.addEventListener("click", function () {
+    if (!confirm("Retry this run from where it stopped?")) return;
+    button.disabled = true;
+    show("Queueing…");
+    fetch("{% url 'avni_console:run_retry' job_request.pk %}", {
+      method: "POST", credentials: "same-origin",
+      headers: { "Content-Type": "application/json", "X-CSRFToken": "{{ csrf_token }}" }, body: "{}"
+    }).then(function (r) { return r.json().then(function (j) { return { ok: r.ok, status: r.status, json: j }; }); })
+      .then(function (r) { show(r.ok ? r.json.message : (r.json.error || ("Failed (" + r.status + ")")), r.ok ? "ok" : (r.status === 409 ? "warn" : "bad")); })
+      .catch(function (e) { show("Request failed: " + e, "bad"); })
+      .then(function () { button.disabled = false; });
+  });
+})();
+</script>
 {% endblock %}

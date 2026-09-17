@@ -139,6 +139,18 @@ AVNI_BULK_UPLOAD_DIR_NAME = "avni_bulk_updates"
 AVNI_REQUEST_TIMEOUT = 60
 # Form cache older than this counts as stale in the console.
 AVNI_FORM_CACHE_MAX_AGE_HOURS = 48
+# Subject explorer: how many subjects one page previews live from AVNI. The
+# sync itself has no cap: every uuid pasted or uploaded is queued and runs in
+# the background like any other console job.
+AVNI_SUBJECT_PREVIEW_MAX_IDS = 25
+
+# ---------------------------------------------------------------------------
+# SURVEY DATA CORE
+# ---------------------------------------------------------------------------
+
+# The survey tool the core store reads through. Swap this one line to move to
+# another tool (e.g. "kobo.provider.KoboProvider"); survey/* stays untouched.
+SURVEY_PROVIDER = "avni.provider.AvniProvider"
 
 # Use BigAutoField by default to avoid Django warnings about auto-created PK types
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
@@ -193,6 +205,7 @@ INSTALLED_APPS = (
     "notification.apps.NotificationConfig",
     "avni.apps.AvniConfig",
     "avni_console.apps.AvniConsoleConfig",
+    "survey.apps.SurveyConfig",
     "photos",
     "reports.apps.ReportsConfig",
     "rest_framework",

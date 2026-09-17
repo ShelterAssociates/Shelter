@@ -4,7 +4,7 @@ from datetime import date
 
 from django.test import TestCase
 
-from avni import paths, watermark
+from avni import paths, window
 from avni.sync import mobilization
 from avni.tests.support import FakeApi, make_city, make_slum, page, subject_record
 from graphs.models import HouseholdData
@@ -22,7 +22,7 @@ def make_activity(name):
 def mobilization_record(uuid="mob-1", activity="Samitee meeting 1", date_text="2026-02-01", voided=False, **attendees):
     observations = {"Type of Activity": activity, "Date of Survey": date_text}
     observations.update(attendees)
-    return subject_record(uuid, voided=voided, number="", observations=observations)
+    return subject_record(uuid, voided=voided, number="", observations=observations, subject_type=mobilization.SUBJECT_TYPE)
 
 
 class MobilizationTests(TestCase):
@@ -62,11 +62,11 @@ class MobilizationTests(TestCase):
             mobilization.save_mobilization(mobilization_record(activity="Dance"))
 
     def test_sync_all_dates_uses_epoch_and_records(self):
-        path = paths.subjects(mobilization.SUBJECT_TYPE, watermark.EPOCH)
+        path = paths.subjects(mobilization.SUBJECT_TYPE, window.EPOCH)
         api = FakeApi({path: page([mobilization_record(), mobilization_record("v", voided=True), mobilization_record("bad", activity="Dance")])})
         recorder = reporting.start("mobilization_sync", trigger="manual")
         with recorder.step("mobilization"):
-            saved = mobilization.sync_mobilization(from_date=watermark.EPOCH, api=api)
+            saved = mobilization.sync_mobilization(from_date=window.EPOCH, api=api)
         step = recorder.finish().steps.get()
         self.assertEqual(saved, 1)
         self.assertEqual((step.records_ok, step.records_failed, step.records_skipped), (1, 1, 1))

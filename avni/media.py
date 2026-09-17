@@ -38,7 +38,7 @@ from avni.locations import slum_location_uuid
 logger = logging.getLogger(__name__)
 
 # /api/programEncounters requires lastModifiedDateTime, so send a date old
-# enough to mean "everything" (the nightly watermark would hide older encounters).
+# enough to mean "everything" (the nightly window start would hide older encounters).
 EPOCH_LMDT = "1900-01-01T00:00:00.000Z"
 
 REQUEST_TIMEOUT_SECONDS = 15
@@ -62,7 +62,7 @@ MEDIA_URL_RE = re.compile(
 )
 
 # Households are registered under one of these subject types. "Household" and
-# "Structure" come from create_registrationdata_url in avni/watermark.py;
+# "Structure" come from create_registrationdata_url in avni/window.py;
 # "Detailed Socio Economic Survey" is a third one used in some cities -- it has
 # the same shape (observations["First name"] is the household number, with
 # location.Slum / location.City), so the fallback subject search must cover it

@@ -4,8 +4,8 @@ import logging
 
 import dateparser
 
-from avni import mappings, paths, watermark
-from avni.client import AvniError, client
+from avni import mappings
+from avni.client import AvniError
 from avni.locations import slum_and_city_ids
 from avni.sync import households
 from graphs.models import FollowupData
@@ -70,15 +70,17 @@ def save_sanitation_followup(household, data):
         rows.update(followup_data=followup, submission_date=dateparser.parse(household.submitted_on))
 
 
-def sync_encounters(encounter_type, from_date=None, api=None):
-    """Pull every encounter of one type modified since the window start."""
-    api = api or client()
-    since = watermark.window_start(from_date=from_date)
-    saved = 0
-    for page in api.iter_pages(paths.encounters(encounter_type, since)):
-        for record in page:
-            saved += int(save_encounter_record(record, api))
-    return saved
+def sync_encounters(encounter_type, from_date=None, api=None, context=None):
+    """Pull every encounter of one type modified since the window start.
+
+    Runs through survey.connector so the core store is fed in the same pass.
+    """
+    from avni.provider import sync_context
+    from survey import connector
+
+    return connector.sync_kind(
+        "encounter", "", encounter_type=encounter_type, from_date=from_date, context=context or sync_context(api)
+    )
 
 
 def save_encounter_record(record, api=None):

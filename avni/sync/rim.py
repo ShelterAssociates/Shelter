@@ -7,7 +7,7 @@ from functools import lru_cache
 
 import dateparser
 
-from avni import paths, watermark
+from avni import paths, window
 from avni.client import client
 from avni.locations import data_file, slum_location_uuid
 from graphs.models import SlumData
@@ -152,7 +152,7 @@ def sync_slum_rim(slum_id, api=None):
         return False, 0, False
     api = api or client()
     saved, images_updated = 0, False
-    for page in api.iter_pages(paths.subjects(RIM_SUBJECT_TYPE, watermark.EPOCH, location_uuid)):
+    for page in api.iter_pages(paths.subjects(RIM_SUBJECT_TYPE, window.EPOCH, location_uuid)):
         for record in page:
             if record.get("Voided"):
                 continue
@@ -173,7 +173,7 @@ def sync_slum_toilets(slum_id, api=None):
         return 0
     api = api or client()
     saved = 0
-    for page in api.iter_pages(paths.subjects(TOILET_SUBJECT_TYPE, watermark.EPOCH, location_uuid)):
+    for page in api.iter_pages(paths.subjects(TOILET_SUBJECT_TYPE, window.EPOCH, location_uuid)):
         for record in page:
             if record.get("Voided"):
                 continue

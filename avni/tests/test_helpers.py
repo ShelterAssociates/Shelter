@@ -4,7 +4,7 @@ from datetime import date, datetime
 
 from django.test import SimpleTestCase
 
-from avni import mappings, paths, watermark
+from avni import mappings, paths, window
 
 
 class PathTests(SimpleTestCase):
@@ -33,18 +33,18 @@ class PathTests(SimpleTestCase):
 class WatermarkTests(SimpleTestCase):
     def test_format_accepts_date_datetime_and_string(self):
         expected = "2026-03-05T00:00:00.000Z"
-        self.assertEqual(watermark.format_from_date(date(2026, 3, 5)), expected)
-        self.assertEqual(watermark.format_from_date(datetime(2026, 3, 5, 14, 2)), expected)
-        self.assertEqual(watermark.format_from_date("2026-03-05"), expected)
+        self.assertEqual(window.format_from_date(date(2026, 3, 5)), expected)
+        self.assertEqual(window.format_from_date(datetime(2026, 3, 5, 14, 2)), expected)
+        self.assertEqual(window.format_from_date("2026-03-05"), expected)
 
     def test_full_iso_string_passes_through(self):
-        self.assertEqual(watermark.format_from_date(watermark.EPOCH), watermark.EPOCH)
+        self.assertEqual(window.format_from_date(window.EPOCH), window.EPOCH)
 
     def test_window_start_prefers_explicit_from_date(self):
-        self.assertEqual(watermark.window_start(from_date="2026-03-05"), "2026-03-05T00:00:00.000Z")
+        self.assertEqual(window.window_start(from_date="2026-03-05"), "2026-03-05T00:00:00.000Z")
 
     def test_day_before(self):
-        self.assertEqual(watermark.day_before(datetime(2026, 3, 5, 9, 0)), "2026-03-04T00:00:00.000Z")
+        self.assertEqual(window.day_before(datetime(2026, 3, 5, 9, 0)), "2026-03-04T00:00:00.000Z")
 
 
 class HouseholdNumberTests(SimpleTestCase):

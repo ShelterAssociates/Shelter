@@ -15,6 +15,7 @@
     </div>
     <div class="ac-row">
       <a class="ph-btn" href="{% url 'avni_console:runs' %}">My runs</a>
+      <a class="ph-btn" href="{% url 'avni_console:subjects' %}">Subject explorer</a>
       {% if can_write %}<a class="ph-btn ph-btn--primary" href="{% url 'avni_console:bulk_new' %}">Bulk update into AVNI</a>{% endif %}
     </div>
   </div>
@@ -54,6 +55,20 @@
         <div class="ph-field ac-checks">
           <span class="ph-label">Encounter types <span class="ac-note" style="display:inline">(none ticked = all)</span></span><br>
           {% for kind in encounter_types %}<label><input type="checkbox" name="encounter_types" value="{{ kind }}"> {{ kind }}</label>{% endfor %}
+        </div>
+        {% endif %}
+
+        {% if "household_subject_types" in job.fields %}
+        <div class="ph-field ac-checks">
+          <span class="ph-label">Subject types <span class="ac-note" style="display:inline">(none ticked = all)</span></span><br>
+          {% for kind in subject_types %}<label><input type="checkbox" name="household_subject_types" value="{{ kind }}"> {{ kind }}</label>{% endfor %}
+        </div>
+        {% endif %}
+
+        {% if "household_encounter_types" in job.fields %}
+        <div class="ph-field ac-checks">
+          <span class="ph-label">Forms <span class="ac-note" style="display:inline">(none ticked = every enabled form)</span></span><br>
+          {% for value, label in household_encounter_types %}<label><input type="checkbox" name="household_encounter_types" value="{{ value }}"> {{ label }}</label>{% empty %}<span class="ac-note">No forms in the catalog yet — queue "Refresh AVNI form cache" first.</span>{% endfor %}
         </div>
         {% endif %}
 

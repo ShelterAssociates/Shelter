@@ -30,12 +30,14 @@ def make_slum(city, name="Lokmanya Nagar", code="LN1"):
 
 
 def subject_record(uuid="sub-1", slum="Lokmanya Nagar", city="Thane", number="0042", voided=False,
-                   observations=None, modified="2026-09-01T06:47:34.548Z", registered="2018-03-20"):
+                   observations=None, modified="2026-09-01T06:47:34.548Z", registered="2018-03-20",
+                   subject_type="Household"):
     data = {"First name": number}
     data.update(observations or {})
     return {
         "ID": uuid,
         "Voided": voided,
+        "Subject type": subject_type,
         "Registration date": registered,
         "External ID": None,
         "location": {"Slum": slum, "City": city, "Admin": "A", "Ward": "W"},

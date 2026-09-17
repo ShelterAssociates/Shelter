@@ -5,7 +5,7 @@ from collections import namedtuple
 
 from django.utils import timezone
 
-from avni import mappings, paths, watermark
+from avni import mappings, paths
 from avni.client import AvniError, client
 from avni.locations import slum_and_city_ids
 from graphs.models import HouseholdData
@@ -95,15 +95,15 @@ def update_household(existing, record, observations):
     existing.update(rhs_data=rhs_data, **registration_fields(record))
 
 
-def sync_households(subject_type, from_date=None, api=None):
-    """Pull every Household/Structure subject modified since the window start."""
-    api = api or client()
-    since = watermark.window_start(subject_type, from_date)
-    saved = 0
-    for page in api.iter_pages(paths.subjects(subject_type, since)):
-        for record in page:
-            saved += int(save_household_record(record))
-    return saved
+def sync_households(subject_type, from_date=None, api=None, context=None):
+    """Pull every Household/Structure subject modified since the window start.
+
+    Runs through survey.connector so the core store is fed in the same pass.
+    """
+    from avni.provider import sync_context
+    from survey import connector
+
+    return connector.sync_kind("subject", subject_type, from_date=from_date, context=context or sync_context(api))
 
 
 def save_household_record(record):

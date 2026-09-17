@@ -3,7 +3,7 @@
 from django.test import TestCase
 from django.utils import timezone
 
-from avni import paths, watermark
+from avni import paths, window
 from avni.sync import households
 from avni.tests.support import FakeApi, make_city, make_slum, page, subject_record
 from graphs.models import HouseholdData
@@ -105,17 +105,17 @@ class HouseholdSyncTests(TestCase):
         recorder = reporting.start("rhs_sync", trigger="manual")
         with recorder.step("households:Household") as step:
             households.sync_households("Household", from_date="2026-01-01", api=api)
-            self.assertEqual(step.extras["watermark"], "2026-01-01T00:00:00.000Z")
+            self.assertEqual(step.extras["window_start"], "2026-01-01T00:00:00.000Z")
         recorder.finish()
 
     def test_default_window_is_day_before_newest_household(self):
         HouseholdData.objects.create(
             household_number="9", slum=self.slum, city=self.city, submission_date="2026-03-10T10:00:00Z", rhs_data={}
         )
-        self.assertEqual(watermark.window_start("Household"), "2026-03-09T00:00:00.000Z")
+        self.assertEqual(window.window_start("Household"), "2026-03-09T00:00:00.000Z")
 
     def test_default_window_without_data_uses_today(self):
-        start = watermark.window_start("Household")
+        start = window.window_start("Household")
         self.assertTrue(start.endswith("T00:00:00.000Z"))
 
     def last_run(self, job_key, status, started):
@@ -126,7 +126,7 @@ class HouseholdSyncTests(TestCase):
     def window_inside_run(self, job_key):
         recorder = reporting.start(job_key, trigger="manual")
         try:
-            return watermark.window_start("Household")
+            return window.window_start("Household")
         finally:
             recorder.finish()
 

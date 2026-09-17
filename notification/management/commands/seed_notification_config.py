@@ -88,12 +88,16 @@ JOBS = [
         "key": "avni_daily_sync",
         "display_name": "Avni daily sync",
         "expected_times": "22:00",
-        "max_runtime_minutes": 360,
+        "max_runtime_minutes": 480,
         "steps": [
             "households:Household",
+            "households:Structure",
+            "households:Detailed Socio Economic Survey",
             "daily_reporting",
             "family_factsheets",
             "mobilization",
+            "household_encounters",
+            "members",
         ],
     },
     # Manual jobs: no expected times, so they are listed in the digest but never "missed".
@@ -103,6 +107,9 @@ JOBS = [
     {"key": "family_factsheet_sync", "display_name": "Family factsheet sync (manual)", "expected_times": "", "max_runtime_minutes": 180},
     {"key": "daily_reporting_sync", "display_name": "Daily reporting sync (manual)", "expected_times": "", "max_runtime_minutes": 180},
     {"key": "encounter_sync", "display_name": "Direct encounter sync (manual)", "expected_times": "", "max_runtime_minutes": 360},
+    {"key": "household_encounter_sync", "display_name": "All household encounters sync (manual)", "expected_times": "", "max_runtime_minutes": 600},
+    {"key": "member_sync", "display_name": "Family member sync (manual)", "expected_times": "", "max_runtime_minutes": 180},
+    {"key": "subject_sync", "display_name": "Subject sync from the explorer (manual)", "expected_times": "", "max_runtime_minutes": 240},
     {"key": "file_import", "display_name": "JSON file import (manual)", "expected_times": "", "max_runtime_minutes": 120},
     {"key": "avni_form_cache_refresh", "display_name": "AVNI form cache refresh", "expected_times": "01:30", "max_runtime_minutes": 60},
     {
@@ -126,7 +133,27 @@ JOBS = [
         "expected_times": "06:00",
         "max_runtime_minutes": 30,
     },
+    # Reported on their own, never in the digest: bulk updates mail developer + data
+    # team as they happen (avni_bulk_update purpose); selftest is a smoke test.
+    {"key": "avni_bulk_update", "display_name": "AVNI bulk update", "expected_times": "", "max_runtime_minutes": 240,
+     "include_in_digest": False},
+    {"key": "selftest", "display_name": "Notification self test", "expected_times": "", "max_runtime_minutes": 10,
+     "include_in_digest": False, "alert_on_failure": False},
 ]
+
+# Flags the seed enforces even on existing rows, so a job created on first sight
+# by run_job (defaults: in digest) is corrected by the next seed.
+ENFORCED_FLAGS = ("include_in_digest", "alert_on_failure")
+
+
+def enforce_flags(job, spec):
+    """Apply the spec's ENFORCED_FLAGS to an existing row; True when something changed."""
+    changed = [flag for flag in ENFORCED_FLAGS if flag in spec and getattr(job, flag) != spec[flag]]
+    for flag in changed:
+        setattr(job, flag, spec[flag])
+    if changed:
+        job.save(update_fields=changed)
+    return bool(changed)
 
 
 class Command(BaseCommand):
@@ -169,11 +196,14 @@ class Command(BaseCommand):
                     "expected_days_of_month": spec.get("expected_days_of_month", ""),
                     "max_runtime_minutes": spec["max_runtime_minutes"],
                     "runner": spec.get("runner", "internal"),
+                    "include_in_digest": spec.get("include_in_digest", True),
+                    "alert_on_failure": spec.get("alert_on_failure", True),
                 },
             )
-            self.stdout.write("{} job {}".format(
-                "created" if created else "kept", job.key
-            ))
+            verb = "created" if created else "kept"
+            if not created and enforce_flags(job, spec):
+                verb = "updated"
+            self.stdout.write("{} job {}".format(verb, job.key))
             for order, step_name in enumerate(spec.get("steps", [])):
                 JobStepConfig.objects.get_or_create(
                     job=job, step_name=step_name, defaults={"order": order}

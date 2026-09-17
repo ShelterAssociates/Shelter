@@ -4,8 +4,6 @@ import logging
 
 import dateparser
 
-from avni import paths, watermark
-from avni.client import client
 from avni.locations import slum_and_city_ids
 from graphs.models import HouseholdData
 from mastersheet.models import ActivityType, CommunityMobilization, CommunityMobilizationActivityAttendance
@@ -92,15 +90,17 @@ def save_mobilization_record(record):
             return False
 
 
-def sync_mobilization(from_date=None, api=None):
-    """Pull mobilization subjects modified since the window start (EPOCH = all dates)."""
-    api = api or client()
-    since = watermark.window_start(from_date=from_date)
-    saved = 0
-    for page in api.iter_pages(paths.subjects(SUBJECT_TYPE, since)):
-        for record in page:
-            saved += int(save_mobilization_record(record))
-    return saved
+def sync_mobilization(from_date=None, api=None, context=None):
+    """Pull mobilization subjects modified since the window start (EPOCH = all dates).
+
+    Runs through survey.connector so the core store is fed in the same pass.
+    """
+    from avni.provider import sync_context
+    from survey import connector
+
+    return connector.sync_kind(
+        "subject", SUBJECT_TYPE, from_date=from_date, context=context or sync_context(api)
+    )
 
 
 def attendance_counts(observations):

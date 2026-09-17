@@ -26,12 +26,6 @@ def mapped_slum_ids():
     return sorted(int(slum_id) for slum_id in slum_location_uuids())
 
 
-def slum_and_city_ids(slum_name):
-    from master.models import Slum
-
-    row = Slum.objects.filter(name=slum_name).values_list(
-        "id", "electoral_ward_id__administrative_ward__city__id"
-    ).first()
-    if row is None:
-        raise LookupError("No slum named '{}'".format(slum_name))
-    return row[0], row[1]
+# Generic (slum name -> ids), so it lives in the core; re-exported here because
+# every sync module already imports it from avni.locations.
+from survey.locations import slum_and_city_ids  # noqa: E402,F401 isort:skip
