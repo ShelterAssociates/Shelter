@@ -399,6 +399,15 @@ class AvniProvider(contracts.Provider):
             )
         return False
 
+    def legacy_void(self, kind, raw, context):
+        if kind != "subject" or raw.get("Subject type") not in LEGACY_HOUSEHOLD_TYPES:
+            return 0
+        try:
+            return households.remove_voided_household(raw)
+        except Exception as exc:
+            logger.error("Voided subject %s not removed: %s", raw.get("ID"), exc)
+            return 0
+
     def legacy_save(self, kind, raw, context):
         try:
             return bool(self.dispatch(kind, raw, context))

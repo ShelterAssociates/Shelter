@@ -108,6 +108,32 @@ def give_details(request):
 # Also, it retrieves the data of accounts and SBM. This view bundles them in a single object
 # to be displayed to the front end.
 
+FACTSHEET_KEYS = [
+    "group_vq77l17/Household_number",
+    "group_ne3ao98/Have_you_upgraded_yo_ng_individual_toilet",
+    "group_ne3ao98/Cost_of_upgradation_in_Rs",
+    "group_ne3ao98/Where_the_individual_ilet_is_connected_to",
+    "group_ne3ao98/Use_of_toilet",
+    "_attachments",
+    "ff_uuid",
+    "Family_Photo",
+    "Toilet_Photo",
+]
+
+
+def factsheet_by_household(household_data):
+    """{normalised household number: factsheet columns} keyed by the row the
+    ff_data is stored on, not by the number typed inside the form."""
+    rows = {}
+    for record in household_data:
+        if not record.ff_data:
+            continue
+        rows[normalize_household_number(record.household_number)] = {
+            key: record.ff_data[key] for key in FACTSHEET_KEYS if key in record.ff_data
+        }
+    return rows
+
+
 @csrf_exempt
 @apply_permissions_ajax("mastersheet.can_view_mastersheet")
 @deco_city_permission
@@ -117,7 +143,6 @@ def masterSheet(request, slum_code=0, FF_code=0, RHS_code=0):
 
     try:
         formdict = []
-        formdict_family_factsheet = []
         slum_code = Slum.objects.filter(pk=int(request.GET["slumname"])).values_list(
             "id",
             "shelter_slum_code",
@@ -254,43 +279,7 @@ def masterSheet(request, slum_code=0, FF_code=0, RHS_code=0):
             # Family Factsheet - fetching data
             if flag_fetch_ff:
                 logger.debug("flag_fetch_ff is True, processing Family Factsheet data")
-                try:
-
-                    def get_factsheet_data(record):
-                        key_list = [
-                            "group_vq77l17/Household_number",
-                            "group_ne3ao98/Have_you_upgraded_yo_ng_individual_toilet",
-                            "group_ne3ao98/Cost_of_upgradation_in_Rs",
-                            "group_ne3ao98/Where_the_individual_ilet_is_connected_to",
-                            "group_ne3ao98/Use_of_toilet",
-                            "_attachments",
-                            "ff_uuid",
-                            "Family_Photo",
-                            "Toilet_Photo",
-                        ]
-                        if record.ff_data:
-                            data = {}
-                            for data_key in key_list:
-                                if data_key in record.ff_data:
-                                    data[data_key] = record.ff_data[data_key]
-                        else:
-                            data = {"group_vq77l17/Household_number": "0"}
-                        return data
-
-                    formdict_family_factsheet = list(
-                        map(get_factsheet_data, household_data)
-                    )
-                    logger.debug(
-                        "formdict_family_factsheet built with %s records",
-                        len(formdict_family_factsheet),
-                    )
-
-                except Exception as e:
-                    logger.error(e, "in ff")
-                temp_FF = {
-                    normalize_household_number(obj_FF["group_vq77l17/Household_number"]): obj_FF
-                    for obj_FF in formdict_family_factsheet
-                }
+                temp_FF = factsheet_by_household(household_data)
                 temp_FF_keys = temp_FF.keys()  # list of household numbers
                 logger.debug("temp_FF built with %s keys", len(temp_FF))
 

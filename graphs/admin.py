@@ -1,10 +1,19 @@
+from django import forms
+from django.conf import settings
 from django.contrib import admin
+from django.db.models import Q
+from django.http import JsonResponse
+from django.urls import path
 from .models import *
 import datetime
 from django.contrib.auth.models import User
+from master.models import Slum
+
+SLUM_FILTER_PARAM = "slum__id__in"
 
 
 class HouseholdDataAdmin(admin.ModelAdmin):
+    change_list_template = "admin/graphs/householddata/change_list.html"
     list_filter = ["slum__electoral_ward__administrative_ward__city"]
     list_display = (
         "household_number",
@@ -14,10 +23,59 @@ class HouseholdDataAdmin(admin.ModelAdmin):
         "created_date",
         "submission_date",
     )
-    search_fields = ["slum_id__name", "household_number"]
+    search_fields = ["household_number", "slum__name", "=slum__id"]
     ordering = ["slum", "household_number"]
     raw_id_fields = ["slum"]
     list_per_page = 10
+
+    @property
+    def media(self):
+        extra = "" if settings.DEBUG else ".min"
+        return super().media + forms.Media(
+            css={"all": ("admin/css/vendor/select2/select2%s.css" % extra, "admin/css/autocomplete.css")},
+            js=(
+                "admin/js/vendor/jquery/jquery%s.js" % extra,
+                "admin/js/vendor/select2/select2.full%s.js" % extra,
+                "admin/js/jquery.init.js",
+                "graphs/householddata_slum_filter.js",
+            ),
+        )
+
+    def get_urls(self):
+        urls = [
+            path(
+                "slum-search/",
+                self.admin_site.admin_view(self.slum_search),
+                name="graphs_householddata_slum_search",
+            )
+        ]
+        return urls + super().get_urls()
+
+    def slum_search(self, request):
+        """JSON for the changelist slum picker: matches slum name (contains) or exact slum id."""
+        term = request.GET.get("term", "").strip()
+        qs = Slum.objects.all()
+        if term:
+            cond = Q(name__icontains=term)
+            if term.isdigit():
+                cond |= Q(id=int(term))
+            qs = qs.filter(cond)
+        results = [{"id": s.id, "text": "%s (%s)" % (s.name, s.id)} for s in qs.order_by("name")[:20]]
+        return JsonResponse({"results": results})
+
+    def changelist_view(self, request, extra_context=None):
+        raw = request.GET.get(SLUM_FILTER_PARAM, "")
+        ids = [i for i in raw.split(",") if i.isdigit()]
+        if not ids and SLUM_FILTER_PARAM in request.GET:
+            request.GET = request.GET.copy()
+            del request.GET[SLUM_FILTER_PARAM]
+        extra_context = dict(
+            extra_context or {},
+            slum_filter_param=SLUM_FILTER_PARAM,
+            slum_filter_value=raw,
+            selected_slums=Slum.objects.filter(id__in=ids).order_by("name"),
+        )
+        return super().changelist_view(request, extra_context)
 
 
 admin.site.register(HouseholdData, HouseholdDataAdmin)
