@@ -50,7 +50,7 @@ urlpatterns = [
     # Authenticated access to the Kobo photo backup. nginx denies the raw
     # /media/shelter/attachments/ path, so this is the only way in.
     url(
-        r"^file/(?P<relative_path>shelter/attachments/[^\s]+)$",
+        r"^file/(?P<relative_path>shelter/attachments/.+)$",
         protected_media,
         name="protected_media",
     ),

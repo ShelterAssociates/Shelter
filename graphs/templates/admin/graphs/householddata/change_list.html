@@ -1,0 +1,24 @@
+{% extends "admin/change_list.html" %}
+{% load i18n static %}
+
+{% block search %}
+<div id="toolbar"><form id="changelist-search" method="get">
+<div>
+<label for="searchbar"><img src="{% static "admin/img/search.svg" %}" alt="Search"></label>
+<input type="text" size="30" name="q" value="{{ cl.query }}" id="searchbar" placeholder="Household number / slum id" autofocus>
+<select id="slum-picker" multiple
+        data-url="{% url 'admin:graphs_householddata_slum_search' %}"
+        data-placeholder="Search slums (name or id)">
+  {% for slum in selected_slums %}<option value="{{ slum.id }}" selected>{{ slum.name }} ({{ slum.id }})</option>{% endfor %}
+</select>
+<input type="hidden" name="{{ slum_filter_param }}" id="slum-picker-value" value="{{ slum_filter_value }}">
+<input type="submit" value="{% trans 'Search' %}">
+{% if cl.result_count != cl.full_result_count %}
+    <span class="small quiet">{% blocktrans count counter=cl.result_count %}{{ counter }} result{% plural %}{{ counter }} results{% endblocktrans %} (<a href="?{% if cl.is_popup %}_popup=1{% endif %}">{% if cl.show_full_result_count %}{% blocktrans with full_result_count=cl.full_result_count %}{{ full_result_count }} total{% endblocktrans %}{% else %}{% trans "Show all" %}{% endif %}</a>)</span>
+{% endif %}
+{% for pair in cl.params.items %}
+    {% if pair.0 != "q" and pair.0 != slum_filter_param %}<input type="hidden" name="{{ pair.0 }}" value="{{ pair.1 }}">{% endif %}
+{% endfor %}
+</div>
+</form></div>
+{% endblock %}

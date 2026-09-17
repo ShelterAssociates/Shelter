@@ -82,6 +82,8 @@ def sync_record(kind, raw, context):
 
     if status == "voided" or source.is_skipped_by_legacy(kind, raw):
         reporting.skip(slum=facts.slum_name or None, reason=skip_reason(kind, status))
+        if status == "voided":
+            source.legacy_void(kind, raw, context)
         if not store.unchanged(source.key, facts.external_id, facts.last_modified):
             store_quietly(kind, raw, context)
         return False

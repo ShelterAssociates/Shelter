@@ -184,3 +184,55 @@ class HouseholdByUuidTests(TestCase):
         row = HouseholdData.objects.get(household_number="42")
         self.assertEqual(row.rhs_data["extra"], 1)
         self.assertEqual(row.rhs_data["rhs_uuid"], "sub-1")
+
+
+class SubjectIdentityTests(TestCase):
+    """HouseholdData is keyed by number, AVNI by uuid: renumbers, moves and voids must not leave ghosts."""
+
+    def setUp(self):
+        self.city = make_city()
+        self.slum = make_slum(self.city)
+
+    def row(self, number, uuid="sub-1", slum=None):
+        return HouseholdData.objects.create(
+            household_number=number, slum=slum or self.slum, city=self.city,
+            submission_date="2020-01-01T00:00:00Z", rhs_data={"rhs_uuid": uuid, "kept": "yes"},
+        )
+
+    def test_renumbered_subject_renames_its_row(self):
+        old = self.row("109")
+        households.save_household(subject_record(number="110"))
+        row = HouseholdData.objects.get()
+        self.assertEqual((row.pk, row.household_number, row.rhs_data["kept"]), (old.pk, "110", "yes"))
+
+    def test_renumbered_subject_drops_the_stale_copy_when_the_new_number_already_has_a_row(self):
+        self.row("109")
+        keep = self.row("110")
+        households.save_household(subject_record(number="110"))
+        self.assertEqual(list(HouseholdData.objects.values_list("pk", flat=True)), [keep.pk])
+
+    def test_subject_moved_to_another_slum_leaves_no_row_behind(self):
+        other = make_slum(self.city, name="Other Nagar", code="ON1")
+        self.row("5", slum=other)
+        households.save_household(subject_record(number="5"))
+        row = HouseholdData.objects.get()
+        self.assertEqual((row.slum, row.household_number), (self.slum, "5"))
+
+    def test_voided_subject_removes_its_row_by_uuid_only(self):
+        self.row("109")
+        self.row("110", uuid="someone-else")
+        self.assertFalse(households.save_household_record(subject_record(number="109", voided=True)))
+        self.assertEqual(list(HouseholdData.objects.values_list("household_number", flat=True)), ["110"])
+
+    def test_voided_subject_with_no_row_is_a_no_op(self):
+        self.row("109", uuid="someone-else")
+        households.save_household_record(subject_record(number="109", voided=True))
+        self.assertEqual(HouseholdData.objects.count(), 1)
+
+    def test_voided_subject_is_removed_through_the_listing_sync(self):
+        self.row("2", uuid="v")
+        api = FakeApi({paths.subjects("Household", window.window_start("Household", "2026-01-01")): page([
+            subject_record("a", number="1"), subject_record("v", number="2", voided=True),
+        ])})
+        households.sync_households("Household", from_date="2026-01-01", api=api)
+        self.assertEqual(sorted(HouseholdData.objects.values_list("household_number", flat=True)), ["1"])

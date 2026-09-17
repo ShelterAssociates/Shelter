@@ -101,6 +101,10 @@ class Provider(object):
         """Run the existing writers for this record. Returns True when something was written."""
         raise NotImplementedError
 
+    def legacy_void(self, kind, raw, context):
+        """Let the legacy tables forget a voided record. Returns the number of rows removed."""
+        return 0
+
     def legacy_handles(self, kind, subject_type, encounter_type=""):
         """True when a legacy writer exists for this kind/type (used by the explorer)."""
         return False

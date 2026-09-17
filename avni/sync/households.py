@@ -45,6 +45,7 @@ def save_household(record):
         if not household.number:
             raise ValueError("subject has no First name (household number)")
         slum_id, city_id = slum_and_city_ids(household.slum)
+        retire_stale_rows(record["ID"], slum_id, city_id, household.number)
         existing = HouseholdData.objects.filter(
             household_number=household.number, city_id=city_id, slum_id=slum_id
         )
@@ -57,6 +58,49 @@ def save_household(record):
         logger.error("Household %s in %s not saved: %s", household.number, household.slum, exc)
         reporting.fail(exc)
         return False
+
+
+def rows_for_subject(subject_uuid):
+    """Every HouseholdData row carrying this subject's uuid (rhs_data is text, so LIKE then confirm)."""
+    rows = HouseholdData.objects.filter(rhs_data__contains=subject_uuid)
+    return [row for row in rows if (row.rhs_data or {}).get("rhs_uuid") == subject_uuid]
+
+
+def plan_stale_rows(subject_uuid, slum_id, number):
+    """Rows this subject left behind after a renumber or slum move in AVNI.
+
+    Returns (row to rename, rows to delete): the newest stale row is renamed
+    when the new number has no row yet, every other one is a duplicate.
+    """
+    stale = [
+        row for row in rows_for_subject(subject_uuid)
+        if (row.household_number, row.slum_id) != (number, slum_id)
+    ]
+    stale.sort(key=lambda row: row.submission_date, reverse=True)
+    if not stale or HouseholdData.objects.filter(household_number=number, slum_id=slum_id).exists():
+        return None, stale
+    return stale[0], stale[1:]
+
+
+def retire_stale_rows(subject_uuid, slum_id, city_id, number):
+    rename, delete = plan_stale_rows(subject_uuid, slum_id, number)
+    if rename is not None:
+        logger.info("Household %s in slum %s renamed to %s (subject %s)", rename.household_number, rename.slum_id, number, subject_uuid)
+        rename.household_number, rename.slum_id, rename.city_id = number, slum_id, city_id
+        rename.save(update_fields=["household_number", "slum", "city"])
+    for row in delete:
+        logger.info("Household %s in slum %s removed: subject %s is now %s in slum %s", row.household_number, row.slum_id, subject_uuid, number, slum_id)
+        row.delete()
+    return len(delete) + int(rename is not None)
+
+
+def remove_voided_household(record):
+    """A subject voided in AVNI takes its HouseholdData rows with it (matched by uuid, never by number)."""
+    rows = rows_for_subject(record["ID"])
+    for row in rows:
+        logger.info("Household %s in slum %s removed: subject %s voided", row.household_number, row.slum_id, record["ID"])
+        row.delete()
+    return len(rows)
 
 
 def registration_fields(record):
@@ -111,6 +155,7 @@ def save_household_record(record):
     slum = (record.get("location") or {}).get("Slum")
     if record.get("Voided"):
         reporting.skip(slum=slum, reason="voided")
+        remove_voided_household(record)
         return False
     number = (record.get("observations") or {}).get("First name")
     with reporting.record(slum=slum, household=number, key=record.get("ID")):

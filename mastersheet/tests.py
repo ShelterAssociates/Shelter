@@ -174,3 +174,28 @@ class AnalyseGisTabDataTests(SimpleTestCase):
 
         self.assertEqual([r["household_number"] for r in rows], ["22A"])
         self.assertEqual(rows[0]["final_status"], "Completed")
+
+
+class FactsheetByHouseholdTests(SimpleTestCase):
+    """FF data is keyed by the row it is stored on, not by the number typed inside the form."""
+
+    def record(self, number, ff_data):
+        return SimpleNamespace(household_number=number, ff_data=ff_data)
+
+    def test_keyed_by_the_row_number_even_when_the_form_says_otherwise(self):
+        from mastersheet.views import factsheet_by_household
+        rows = factsheet_by_household([
+            self.record("110", {"group_vq77l17/Household_number": 109, "ff_uuid": "ff-1", "ignored": 1}),
+        ])
+        self.assertEqual(list(rows), ["110"])
+        self.assertEqual(rows["110"]["ff_uuid"], "ff-1")
+        self.assertNotIn("ignored", rows["110"])
+
+    def test_rows_without_factsheet_are_left_out_and_numbers_are_normalised(self):
+        from mastersheet.views import factsheet_by_household
+        rows = factsheet_by_household([
+            self.record("0042", {"group_ne3ao98/Use_of_toilet": "Yes"}),
+            self.record("43", None),
+            self.record("44", {}),
+        ])
+        self.assertEqual(list(rows), ["42"])
