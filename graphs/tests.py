@@ -1,10 +1,13 @@
+import datetime
 from io import StringIO
+from types import SimpleNamespace
 from unittest.mock import MagicMock, patch
 
 from django.core.management import call_command
 from django.test import SimpleTestCase
 
 from graphs.dashboard_card import DashboardCard
+from graphs.export_data import exportMethods
 from graphs.views import _percentages_summing_to_100
 
 
@@ -204,3 +207,40 @@ class PercentagesSummingTo100Tests(SimpleTestCase):
         result = _percentages_summing_to_100([10, 20, 30, 40, 50], 150)
         self.assertEqual(len(result), 5)
         self.assertEqual(round(sum(result), 2), 100.0)
+
+
+class CityWiseRhsDataTests(SimpleTestCase):
+    """The city GIS download must not int() alphanumeric household numbers."""
+
+    def test_alphanumeric_household_number_merges_followup_and_status(self):
+        export = exportMethods.__new__(exportMethods)
+        export.city, export.city_name = 1, "Testville"
+        export.SlumNameLst = MagicMock(return_value={5: ["Test Slum", "AW"]})
+        export.toilet_data = MagicMock()
+        export.toilet_data.filter.return_value.exclude.return_value.values_list.return_value = [
+            ("22A", "6", 5)
+        ]
+        households = MagicMock(count=MagicMock(return_value=1))
+        households.__iter__.return_value = [
+            SimpleNamespace(
+                id=1, household_number="0022A", slum_id=5,
+                submission_date=datetime.datetime(2026, 1, 1),
+                rhs_data={"Type_of_structure_occupancy": "Occupied house"},
+            )
+        ]
+        export.household_data = MagicMock()
+        export.household_data.filter.return_value = households
+        followups = [{
+            "household_number": "22A", "slum_id": 5,
+            "submission_date": datetime.datetime(2026, 1, 2),
+            "followup_data": {"Do you have a toilet at home?": "Yes"},
+        }]
+
+        with patch("graphs.export_data.FollowupData") as followup_model:
+            followup_model.objects.filter.return_value.values.return_value = followups
+            rows, city_name = export.cityWiseRhsData()
+
+        self.assertEqual(len(rows), 1)
+        self.assertEqual(rows[0]["Household number"], "22A")
+        self.assertEqual(rows[0]["Do you have a toilet at home?"], "Yes")
+        self.assertEqual(rows[0]["Final_Status"], "Completed")

@@ -2502,7 +2502,7 @@ def getRhsData(record):
                 if key in electricity_data_obj
             }
             data.update(electricity_data)
-        data["household_number"] = record.household_number
+        data["household_number"] = normalize_household_number(record.household_number)
     else:
         key_list = {
             "Plus code of the house": "pluscodes",
@@ -2515,7 +2515,7 @@ def getRhsData(record):
             for i in key_list.keys()
             if record.rhs_data and i in record.rhs_data
         }
-        data["household_number"] = record.household_number
+        data["household_number"] = normalize_household_number(record.household_number)
     if record.ff_data:
         factsheet_keys = {
             "group_ne3ao98/Cost_of_upgradation_in_Rs": "Cost of upgradation",
@@ -2899,14 +2899,11 @@ def AnalyseGisTabData(slum_id):
                 data["pocket"] = record.pocket
             if record.comment is not None and record.comment.strip() != "":
                 data["comment"] = record.comment
-            data["household_number"] = normalize_household_number(
-                record.household_number
-            )
             return data
 
-        toiletdict = list(map(getToiletData, Toilet_data))
         toiletdict = {
-            temp_data["household_number"]: temp_data for temp_data in toiletdict
+            normalize_household_number(record.household_number): getToiletData(record)
+            for record in Toilet_data
         }
         # for Communication Activity data ...
         activity_count = communityActivityData(slum_code)
@@ -2926,7 +2923,7 @@ def AnalyseGisTabData(slum_id):
         check_formdict = {}
         for dct in formdict:
             if dct.get("occupancy_status") == "Occupied house":
-                hh = normalize_household_number(dct["household_number"])
+                hh = dct["household_number"]
                 # checking for followup-data
                 if hh in followup_data:
                     temp = followup_data[hh]
@@ -2938,9 +2935,7 @@ def AnalyseGisTabData(slum_id):
                     dct.update(sanitation_data)
                 # adding Daily Reporting data ...
                 if hh in toiletdict:
-                    temp_data = toiletdict[hh]
-                    del temp_data["household_number"]
-                    dct.update(temp_data)
+                    dct.update(toiletdict[hh])
                 # Adding Funder project data .....
                 if len(slum_funder) != 0:  # Adding funder project name.
                     for funder in slum_funder:
