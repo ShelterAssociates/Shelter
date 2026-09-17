@@ -117,6 +117,45 @@ class account_find_slum(forms.Form):
             {"name": "account_end_date", "class": "datepicker", "style": "width:80px;"}
         )
 
+        self.fields["account_vendor"] = forms.ModelChoiceField(
+            queryset=Vendor.objects.order_by("name"),
+            required=False,
+            empty_label="All vendors",
+        )
+        self.fields["account_vendor"].label = "Vendor"
+        self.fields["account_vendor"].widget.attrs.update(
+            {"name": "account_vendor", "class": "customized-form"}
+        )
+
+        self.fields["account_paid_status"] = forms.ChoiceField(
+            choices=[("", "All"), ("paid", "Paid"), ("unpaid", "Unpaid")],
+            required=False,
+        )
+        self.fields["account_paid_status"].label = "Payment status"
+        self.fields["account_paid_status"].widget.attrs.update(
+            {"name": "account_paid_status", "class": "customized-form"}
+        )
+
+        self.fields["account_material_type"] = forms.ModelChoiceField(
+            queryset=MaterialType.objects.order_by("name"),
+            required=False,
+            empty_label="All materials",
+        )
+        self.fields["account_material_type"].label = "Material type"
+        self.fields["account_material_type"].widget.attrs.update(
+            {"name": "account_material_type", "class": "customized-form"}
+        )
+
+        self.fields["account_donor"] = forms.ModelChoiceField(
+            queryset=SponsorProject.objects.order_by("name"),
+            required=False,
+            empty_label="All donors / sponsors",
+        )
+        self.fields["account_donor"].label = "Donor / Sponsor project"
+        self.fields["account_donor"].widget.attrs.update(
+            {"name": "account_donor", "class": "customized-form"}
+        )
+
     class Meta:
         raw_id_fields = ("account_slumname",)
         model = "Slum"

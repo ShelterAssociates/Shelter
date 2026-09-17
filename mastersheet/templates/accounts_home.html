@@ -1,0 +1,175 @@
+{%extends "admin/base_site.html"%}
+{% load static %}
+{% load custom_tags %}
+
+{% block extrastyle %}
+<link rel="stylesheet" type="text/css" href="{% static "css/jquery.dataTables.min.css" %}">
+<link rel="stylesheet" type="text/css" href="{% static "admin/css/forms.css" %}">
+<link rel="stylesheet" type="text/css" href="{% static "css/mastersheet_stylesheet.css" %}">
+<link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/pivottable@2.23.0/dist/pivot.min.css">
+<link rel="stylesheet" type="text/css" href="{% static "css/bootstrap-datepicker3.min.css" %}">
+<style>
+  .accounts-intro { color: #555; max-width: 720px; margin-bottom: 20px; }
+  .accounts-filter-row {
+    margin-bottom: 20px;
+    padding: 15px;
+    background: #f8f8f8;
+    border: 1px solid #e0e0e0;
+    border-radius: 4px;
+  }
+  .accounts-filter-fields { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 18px; }
+  .accounts-field label { display: block; font-weight: bold; margin-bottom: 4px; }
+  .accounts-field-input { position: relative; }
+  .accounts-field-input .related-lookup { vertical-align: middle; margin-left: 4px; }
+  .accounts-filter-actions { margin-top: 15px; }
+  .accounts-filter-actions .btn { margin-right: 8px; }
+  .accounts-tabs { margin-top: 15px; }
+  .accounts-tab-help { color: #666; margin: 12px 0; }
+  #accountsPivotPresets { margin: 10px 0 15px; }
+  #accountsPivotPresets .dropdown-menu { min-width: 260px; }
+  #accountsPivotContainer { margin-top: 10px; }
+  .accounts-empty-hint { color: #888; padding: 20px 0; }
+</style>
+{% endblock %}
+
+{% block extrahead %}
+<script src="{% static "js/jquery.dataTables.min.js" %}"></script>
+<script src="{% static "admin/js/admin/RelatedObjectLookups.js" %}"></script>
+<script src="https://cdn.jsdelivr.net/npm/jquery-ui-dist@1.13.2/jquery-ui.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/pivottable@2.23.0/dist/pivot.min.js"></script>
+<script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
+<script src="{% static "js/bootstrap-datepicker.js" %}"></script>
+<script>
+  $(document).ready(function () {
+    $(".datepicker").datepicker({
+      format: "dd-mm-yyyy",
+      todayHighlight: true,
+      autoclose: true,
+    });
+    // Delegated: the slum lookup icon can be replaced dynamically (see accounts_home.js).
+    $(document).on("click", ".related-lookup", function (e) {
+      e.preventDefault();
+      showRelatedObjectLookupPopup(this);
+    });
+  });
+</script>
+<script src="{% static "js/accounts_home.js" %}"></script>
+{% endblock %}
+
+{% block content %}
+<div class="overlay">
+  <div id="loading-img"></div>
+</div>
+
+<h2>Accounts</h2>
+<p class="accounts-intro">
+  Search invoices for a city or slum and date range, then choose how you want to look at the data:
+  <strong>Preview</strong> the exact rows before downloading, build a <strong>Pivot Table</strong> summary,
+  or go straight to <strong>Download Excel</strong>.
+</p>
+
+<div class="accounts-filter-row">
+  <form id="accounts_filter_form" method="POST" action="{% url 'accounts_excel_generation' %}" novalidate>
+    {% csrf_token %}
+    <div class="accounts-filter-fields">
+      <div class="accounts-field">
+        <label for="account_cityname">City</label>
+        <div class="accounts-field-input">{{ form_account.account_cityname }}</div>
+      </div>
+      <div class="accounts-field" id="accounts-slum-field">
+        <label for="id_account_slumname">Slum</label>
+        <div class="accounts-field-input">{{ form_account.account_slumname }}</div>
+      </div>
+      <div class="accounts-field">
+        <label for="id_account_start_date">From date</label>
+        <div class="accounts-field-input">{{ form_account.account_start_date }}</div>
+      </div>
+      <div class="accounts-field">
+        <label for="id_account_end_date">To date</label>
+        <div class="accounts-field-input">{{ form_account.account_end_date }}</div>
+      </div>
+      <div class="accounts-field">
+        <label for="id_account_vendor">Vendor</label>
+        <div class="accounts-field-input">{{ form_account.account_vendor }}</div>
+      </div>
+      <div class="accounts-field">
+        <label for="id_account_paid_status">Payment status</label>
+        <div class="accounts-field-input">{{ form_account.account_paid_status }}</div>
+      </div>
+      <div class="accounts-field">
+        <label for="id_account_material_type">Material type</label>
+        <div class="accounts-field-input">{{ form_account.account_material_type }}</div>
+      </div>
+      <div class="accounts-field">
+        <label for="id_account_donor">Donor / Sponsor project</label>
+        <div class="accounts-field-input">{{ form_account.account_donor }}</div>
+      </div>
+    </div>
+    <p class="accounts-tab-help">
+      Tip: pick either a City (all its slums) or one specific Slum. Leave both dates blank to include everything.
+      The other fields are optional - use them to narrow down a large result.
+    </p>
+    <div class="accounts-filter-actions">
+      <button type="button" id="btnAccountsPreview" class="btn btn-primary" title="See every row that will be in the Excel file, before downloading it">
+        <span class="glyphicon glyphicon-eye-open"></span> Preview
+      </button>
+      <button type="button" id="btnAccountsPivot" class="btn btn-default" title="Build a summary table - e.g. total amount per vendor or per slum">
+        <span class="glyphicon glyphicon-th-list"></span> Pivot Table
+      </button>
+      <button type="button" id="btnAccountsDownload" class="btn btn-success" title="Download this data as an Excel (.xlsx) file">
+        <span class="glyphicon glyphicon-download"></span> Download Excel
+      </button>
+    </div>
+  </form>
+</div>
+
+<ul class="nav nav-tabs accounts-tabs" id="accountsTabs">
+  <li class="active"><a href="#accountsPreviewTab" data-toggle="tab">Preview</a></li>
+  <li><a href="#accountsPivotTab" data-toggle="tab">Pivot Table</a></li>
+</ul>
+
+<div class="tab-content">
+  <div class="tab-pane active" id="accountsPreviewTab">
+    <p class="accounts-tab-help">
+      This shows every row exactly as it will appear in the downloaded Excel file, so you can check it
+      looks right - search, sort, or scroll through it - before downloading.
+    </p>
+    <p class="accounts-empty-hint" id="accountsPreviewHint">
+      Choose a city or slum and a date range above, then click Preview.
+    </p>
+    <table id="accountsPreviewTable" class="display" width="100%" cellspacing="0" style="display:none;"></table>
+  </div>
+  <div class="tab-pane" id="accountsPivotTab">
+    <p class="accounts-tab-help">
+      A Pivot Table adds up the numbers for you - for example, "total amount paid per vendor" or
+      "total transport charges per slum" - instead of you adding cells by hand. Use a
+      <strong>Quick view</strong> below for a ready-made summary, or drag any field into the
+      Rows / Columns / Values boxes to build your own.
+    </p>
+    <p class="accounts-empty-hint" id="accountsPivotHint">
+      Choose a city or slum and a date range above, then click Pivot Table.
+      For a very large city or slum with many years of invoices, fetching the data can take a few seconds -
+      narrowing the date range or using the Vendor/Material/Donor filters above will make it quicker.
+    </p>
+    <div id="accountsPivotPresets" style="display:none;">
+      <div class="btn-group">
+        <button type="button" class="btn btn-sm btn-default dropdown-toggle" data-toggle="dropdown">
+          Quick views <span class="caret"></span>
+        </button>
+        <ul class="dropdown-menu" id="pivotPresetMenu">
+          <li><a href="#" data-preset="vendorMonth">Vendor &times; Month &mdash; sum of Amount</a></li>
+          <li><a href="#" data-preset="slumTransport">Slum &mdash; sum of Transport Charges</a></li>
+          <li><a href="#" data-preset="vendorTotal">Vendor &mdash; total Amount</a></li>
+          <li><a href="#" data-preset="donorTotal">Donor / Funder &mdash; total Amount</a></li>
+          <li><a href="#" data-preset="materialTotal">Material type &mdash; total Amount</a></li>
+          <li><a href="#" data-preset="cityMaterial">City &times; Material &mdash; sum of Gross Amount</a></li>
+        </ul>
+      </div>
+      <button type="button" class="btn btn-sm btn-success" id="btnPivotDownload" title="Download the pivot table exactly as shown, including any custom rows/columns you've dragged in">
+        <span class="glyphicon glyphicon-download"></span> Download Excel
+      </button>
+    </div>
+    <div id="accountsPivotContainer"></div>
+  </div>
+</div>
+{% endblock %}

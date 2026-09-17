@@ -80,6 +80,22 @@
           </div>
         {% endif %}
 
+        <!-- Accounts -->
+        {% if request.user|has_group:"Account" or user.is_superuser %}
+          <div class="nav-drop">
+            <button class="nav-btn">Accounts <span class="nav-caret"></span></button>
+            <ul class="drop-menu">
+              <li class="drop-label">Invoices</li>
+              <li>
+                <a class="drop-item" href="/mastersheet/accounts/">Overview &amp; reports</a>
+              </li>
+              <li>
+                <a class="drop-item" href="/accounts/mastersheet/invoice/add/" target="_blank">Add invoice</a>
+              </li>
+            </ul>
+          </div>
+        {% endif %}
+
         <!-- Reports -->
         {% if user.is_staff %}
           <div class="nav-drop">
@@ -178,6 +194,13 @@
         {% if user.is_superuser or request.user|has_group:"GIS" or request.user|has_group:"Team Leader" %}
           <a class="drop-item" href="{% url 'rim_data_download' %}">RIM Data Download</a>
         {% endif %}
+      {% endif %}
+
+      {% if request.user|has_group:"Account" or user.is_superuser %}
+        <div class="drop-div"></div>
+        <span class="drop-label">Accounts</span>
+        <a class="drop-item" href="/mastersheet/accounts/">Overview &amp; reports</a>
+        <a class="drop-item" href="/accounts/mastersheet/invoice/add/">Add invoice</a>
       {% endif %}
 
       {% if user.is_staff %}

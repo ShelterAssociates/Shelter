@@ -3,8 +3,10 @@ from django.http import HttpResponse, JsonResponse, HttpResponseForbidden
 from django.contrib.auth.decorators import user_passes_test, permission_required
 from django.views.decorators.http import require_GET, require_POST
 from django.db import close_old_connections
+from django.core.cache import cache
 from django.utils import timezone
 import glob
+import hashlib
 import io
 import os
 import uuid
@@ -49,7 +51,7 @@ from .decorators import deco_city_permission
 from collections import defaultdict
 import datetime
 import itertools
-from xlwt import Workbook
+from openpyxl import Workbook
 from mastersheet.models import *
 from graphs.models import *
 from django.core import serializers
@@ -1006,14 +1008,12 @@ def define_columns(request):
 @permission_required("mastersheet.can_view_mastersheet", raise_exception=True)
 def renderMastersheet(request):
     slum_search_field = find_slum()
-    account_slum_search_field = account_find_slum()
     file_form1 = file_form()
     return render(
         request,
         "masterSheet.html",
         {
             "form": slum_search_field,
-            "form_account": account_slum_search_field,
             "file_form": file_form1,
         },
     )
@@ -2209,32 +2209,46 @@ def remove_invalid_char(fname):
 
 
 def allocate_whole_rupees(total, count):
-    """Split `total` (rounded to the nearest whole rupee) into `count`
-    whole-rupee integer shares that sum back to it exactly, with the leftover
-    rupees given one each to the first shares (largest-remainder method).
-    Avoids the paise drift caused by dividing and rounding each share
-    independently.
-    """
+    """Split total into count whole-rupee shares that sum back to it exactly (largest-remainder method)."""
     total = round(total)
     base, remainder = divmod(total, count)
     return [base + 1 if idx < remainder else base for idx in range(count)]
 
 
 def allocate_paise(total, count):
-    """Split `total` (a rupee amount that may legitimately include paise,
-    e.g. quantity x a fractional rate) into `count` shares, each a multiple
-    of one paisa, that sum back to it exactly. Same largest-remainder method
-    as allocate_whole_rupees, but working in paise instead of whole rupees so
-    it stays exact without discarding real fractional rupees.
-    """
+    """Same as allocate_whole_rupees but splits to the nearest paisa (for amounts that can be fractional)."""
     total_paise = round(total * 100)
     base, remainder = divmod(total_paise, count)
     return [(base + 1 if idx < remainder else base) / 100 for idx in range(count)]
 
 
-@user_passes_test(lambda u: u.groups.filter(name="Account").exists() or u.is_superuser)
-def accounts_excel_generation(request):
-    account_form = account_find_slum(request.POST)
+ACCOUNTS_REPORT_COLUMNS = [
+    "Date",
+    "Invoice No",
+    "Name of Vendor",
+    "Donar Name",
+    "Sponsor Project",
+    "City",
+    "Slum",
+    "House No",
+    "Phase I",
+    "Phase II",
+    "Phase III",
+    "Type of Material",
+    "Quantity",
+    "Rate",
+    "Gross Amount",
+    "Tax Rate",
+    "Tax Amount",
+    "Transport Charges",
+    "Unloading Charges",
+    "Amount",
+    "Toilet Record In MasterSheet",
+]
+
+
+def parse_accounts_filters(request):
+    """Parse the filters shared by the accounts download, preview and pivot views."""
     city_id = request.POST.get("account_cityname")
     slum_id = request.POST.get("account_slumname")
     if (
@@ -2250,40 +2264,56 @@ def accounts_excel_generation(request):
         end_date = datetime.datetime.strptime(
             request.POST.get("account_end_date"), "%d-%m-%Y"
         ).date()
-    """For adding date as a postfix in filename"""
+    vendor_id = request.POST.get("account_vendor") or ""
+    paid_status = request.POST.get("account_paid_status") or ""
+    material_type_id = request.POST.get("account_material_type") or ""
+    donor_id = request.POST.get("account_donor") or ""
+    return (
+        city_id,
+        slum_id,
+        start_date,
+        end_date,
+        vendor_id,
+        paid_status,
+        material_type_id,
+        donor_id,
+    )
+
+
+def build_accounts_report_rows(
+    city_id,
+    slum_id,
+    start_date,
+    end_date,
+    vendor_id="",
+    paid_status="",
+    material_type_id="",
+    donor_id="",
+):
+    """Gather accounts report rows for the given filters. Shared by download/preview/pivot. Returns (filename, rows)."""
     filename_date_ext = "_" + str(start_date) + "_" + str(end_date)
-    wb = Workbook()
-    sheet1 = wb.add_sheet("Sheet1")
-    sheet1.write(0, 0, "Date")
-    sheet1.write(0, 1, "Invoice No")
-    sheet1.write(0, 2, "Name of Vendor")
-    sheet1.write(0, 3, "Donar Name")
-    sheet1.write(0, 4, "Sponsor Project")                    
-    sheet1.write(0, 5, "City")
-    sheet1.write(0, 6, "Slum")
-    sheet1.write(0, 7, "House No")
-    sheet1.write(0, 8, "Phase I")
-    sheet1.write(0, 9, "Phase II")
-    sheet1.write(0, 10, "Phase III")
-    sheet1.write(0, 11, "Type of Material")
-    sheet1.write(0, 12, "Quantity")
-    sheet1.write(0, 13, "Rate")
-    sheet1.write(0, 14, "Gross Amount")
-    sheet1.write(0, 15, "Tax Rate")
-    sheet1.write(0, 16, "Tax Amount")
-    sheet1.write(0, 17, "Transport Charges")
-    sheet1.write(0, 18, "Unloading Charges")
-    sheet1.write(0, 19, "Amount")
-    sheet1.write(0, 20, "Toilet Record In MasterSheet")
+
+    # select_related avoids N+1 queries on the invoice/slum/city chain for every row.
+    accounts_select_related = (
+        "invoice",
+        "invoice__vendor",
+        "invoice__sponsor_project",
+        "material_type",
+        "slum",
+        "slum__electoral_ward",
+        "slum__electoral_ward__administrative_ward",
+        "slum__electoral_ward__administrative_ward__city",
+        "slum__electoral_ward__administrative_ward__city__name",
+    )
 
     if len(city_id) == 0:
         invoiceItems = InvoiceItems.objects.filter(
             slum__id=int(slum_id), invoice__invoice_date__range=[start_date, end_date]
-        )
+        ).select_related(*accounts_select_related)
         fname = (
             remove_invalid_char(str(Slum.objects.get(id=int(slum_id))))
             + filename_date_ext
-            + ".xls"
+            + ".xlsx"
         )
         sponsor = SponsorProjectDetails.objects.filter(slum__id=int(slum_id)).exclude(
             sponsor_project=1
@@ -2303,8 +2333,8 @@ def accounts_excel_generation(request):
         invoiceItems = InvoiceItems.objects.filter(
             slum__electoral_ward__administrative_ward__city__id=int(city_id),
             invoice__invoice_date__range=[start_date, end_date],
-        )
-        fname = str(City.objects.get(id=int(city_id))) + filename_date_ext + ".xls"
+        ).select_related(*accounts_select_related)
+        fname = str(City.objects.get(id=int(city_id))) + filename_date_ext + ".xlsx"
         sponsor = SponsorProjectDetails.objects.filter(
             slum__electoral_ward__administrative_ward__city__id=int(city_id)
         ).exclude(sponsor_project=1)
@@ -2321,6 +2351,15 @@ def accounts_excel_generation(request):
                 "phase_three_material_date",
             )
         )
+
+    # Material type/donor are filtered later, post-allocation - filtering them here would
+    # shrink an invoice's household count and skew the transport/loading charge split.
+    if vendor_id:
+        invoiceItems = invoiceItems.filter(invoice__vendor_id=int(vendor_id))
+    if paid_status == "paid":
+        invoiceItems = invoiceItems.filter(invoice__paid=True)
+    elif paid_status == "unpaid":
+        invoiceItems = invoiceItems.filter(invoice__paid=False)
 
     dict_of_dict = defaultdict(dict)
     sponsor_with_slum = {}
@@ -2344,31 +2383,36 @@ def accounts_excel_generation(request):
                 temp.append(household)
                 toiletData[slum] = temp
 
+    # Pre-normalize once into O(1) lookups instead of per-row re-normalization.
+    sponsor_lookup_by_slum = {}
+    for slum, entries in sponsor_with_slum.items():
+        lookup = {}
+        for sponsor_name, codes in entries:
+            for code in codes:
+                # setdefault preserves the original "first matching sponsor
+                # entry wins" behaviour when the same code appears twice.
+                lookup.setdefault(normalize_household_number(code), sponsor_name)
+        sponsor_lookup_by_slum[slum] = lookup
+
+    toilet_lookup_by_slum = {
+        slum: {normalize_household_number(h) for h in households}
+        for slum, households in toiletData.items()
+    }
+
     def check_funder(house, slum):
         try:
-            if slum in sponsor_with_slum:
-                sponsor_with_slum_lst = sponsor_with_slum[slum]
-                house_norm = normalize_household_number(house)
-                for i in sponsor_with_slum_lst:
-                    normalized_codes = [
-                        normalize_household_number(code) for code in i[1]
-                    ]
-                    if house_norm in normalized_codes:
-                        return i[0]
-                return "Funder Not Assign"
-            return "No Funder For This Slum"
+            lookup = sponsor_lookup_by_slum.get(slum)
+            if lookup is None:
+                return "No Funder For This Slum"
+            return lookup.get(normalize_household_number(house), "Funder Not Assign")
         except Exception as e:
             logger.error(e, house, slum)
 
     def check_toilet_data(house, slum):
         try:
-            if slum in toiletData:
-                house_norm = normalize_household_number(house)
-                normalized_toilet_houses = [
-                    normalize_household_number(h) for h in toiletData[slum]
-                ]
-                if house_norm in normalized_toilet_houses:
-                    return "Toilet Record Found"
+            normalized_houses = toilet_lookup_by_slum.get(slum)
+            if normalized_houses and normalize_household_number(house) in normalized_houses:
+                return "Toilet Record Found"
             return "Toilet Record Not Found"
         except Exception as e:
             logger.error(e, house, slum)
@@ -2379,7 +2423,6 @@ def accounts_excel_generation(request):
                 dict_of_dict[(j, i.slum)].update({i.material_type: i})
             except:
                 dict_of_dict[(j, i.slum)] = {i.material_type: i}
-    i = 1
 
     invoice_rows = defaultdict(list)
     item_rows = defaultdict(list)
@@ -2409,63 +2452,166 @@ def accounts_excel_generation(request):
         for idx, (row_k, row_inner_k, _) in enumerate(rows):
             amount_alloc[(row_k, row_inner_k)] = amount_shares[idx]
 
+    # Donor filter uses the same funder lookup as the Donar Name column, not Invoice.sponsor_project.
+    selected_donor_name = None
+    if donor_id:
+        try:
+            selected_donor_name = SponsorProject.objects.get(id=int(donor_id)).name
+        except SponsorProject.DoesNotExist:
+            selected_donor_name = None
+
+    output_rows = []
     for k, v in dict_of_dict.items():
         for inner_k, inner_v in v.items():
+            if material_type_id and inner_k.id != int(material_type_id):
+                continue
+
+            funder_name = check_funder(k[0], inner_v.slum.id)
+            if selected_donor_name is not None and funder_name != selected_donor_name:
+                continue
+
             # Sponsor Project now lives on Invoice, not InvoiceItems.
             invoice_item_sponsor_project = (
                 inner_v.invoice.sponsor_project.name if inner_v.invoice.sponsor_project else ""
             )
-            sheet1.write(i, 0, str(inner_v.invoice.invoice_date))
-            sheet1.write(i, 1, inner_v.invoice.invoice_number)
-            sheet1.write(i, 2, inner_v.invoice.vendor.name)
-            sheet1.write(i, 3, check_funder(k[0], inner_v.slum.id))
-            sheet1.write(i, 4, invoice_item_sponsor_project)         
-            sheet1.write(
-                i,
-                5,
-                inner_v.slum.electoral_ward.administrative_ward.city.name.city_name,
-            )
-            sheet1.write(i, 6, inner_v.slum.name)
-            sheet1.write(i, 7, k[0])
-            if inner_v.phase == "1":
-                sheet1.write(i, 8, "Phase - I")
-            if inner_v.phase == "2":
-                sheet1.write(i, 9, "Phase - II")
-            if inner_v.phase == "3":
-                sheet1.write(i, 10, "Phase - III")
-
-            sheet1.write(i, 11, inner_k.name)
-            sheet1.write(i, 12, inner_v.quantity)
-            sheet1.write(i, 13, inner_v.rate)
-            sheet1.write(i, 14, inner_v.quantity * inner_v.rate)
-            sheet1.write(i, 15, inner_v.tax)
-            sheet1.write(
-                i,
-                16,
-                round(
-                    (float(inner_v.tax) / 100)
-                    * float(inner_v.quantity)
-                    * float(inner_v.rate),
-                    2,
-                ),
-            )
             tc = tc_alloc[(k, inner_k)]
             luc = luc_alloc[(k, inner_k)]
-            sheet1.write(i, 17, tc)
-            sheet1.write(i, 18, luc)
-            sheet1.write(
-                i,
-                19,
-                round(amount_alloc[(k, inner_k)] + tc + luc, 2),
+
+            output_rows.append(
+                [
+                    str(inner_v.invoice.invoice_date),
+                    inner_v.invoice.invoice_number,
+                    inner_v.invoice.vendor.name,
+                    funder_name,
+                    invoice_item_sponsor_project,
+                    inner_v.slum.electoral_ward.administrative_ward.city.name.city_name,
+                    inner_v.slum.name,
+                    k[0],
+                    "Phase - I" if inner_v.phase == "1" else "",
+                    "Phase - II" if inner_v.phase == "2" else "",
+                    "Phase - III" if inner_v.phase == "3" else "",
+                    inner_k.name,
+                    inner_v.quantity,
+                    inner_v.rate,
+                    inner_v.quantity * inner_v.rate,
+                    inner_v.tax,
+                    round(
+                        (float(inner_v.tax) / 100)
+                        * float(inner_v.quantity)
+                        * float(inner_v.rate),
+                        2,
+                    ),
+                    tc,
+                    luc,
+                    round(amount_alloc[(k, inner_k)] + tc + luc, 2),
+                    check_toilet_data(k[0], inner_v.slum.id),
+                ]
             )
-            sheet1.write(i, 20, check_toilet_data(k[0], inner_v.slum.id))
-            i = i + 1
-    response = HttpResponse(content_type="application/ms-excel")
+
+    return fname, output_rows
+
+
+def get_accounts_report_rows_cached(*filters):
+    """Same as build_accounts_report_rows, cached a few minutes per filter set."""
+    cache_key = "accounts_report:" + hashlib.sha1(
+        "|".join(str(f) for f in filters).encode("utf-8")
+    ).hexdigest()
+    cached = cache.get(cache_key)
+    if cached is not None:
+        return cached
+    result = build_accounts_report_rows(*filters)
+    cache.set(cache_key, result, 300)
+    return result
+
+
+@user_passes_test(lambda u: u.groups.filter(name="Account").exists() or u.is_superuser)
+def accounts_excel_generation(request):
+    filters = parse_accounts_filters(request)
+    fname, rows = get_accounts_report_rows_cached(*filters)
+
+    # .xlsx via openpyxl (write_only for speed) - xlwt/.xls caps at 65,536 rows.
+    wb = Workbook(write_only=True)
+    sheet1 = wb.create_sheet("Sheet1")
+    sheet1.append(ACCOUNTS_REPORT_COLUMNS)
+    for row in rows:
+        sheet1.append(row)
+
+    response = HttpResponse(
+        content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    )
     response["Content-Disposition"] = "attachment; filename=%s" % str(fname).replace(
         " ", "_"
     )
     wb.save(response)
     return response
+
+
+@user_passes_test(lambda u: u.groups.filter(name="Account").exists() or u.is_superuser)
+def accounts_report_data(request):
+    """JSON data for preview/pivot. With "draw" in the request, paginates DataTables-style; otherwise returns all rows."""
+    filters = parse_accounts_filters(request)
+    fname, rows = get_accounts_report_rows_cached(*filters)
+
+    draw = request.POST.get("draw")
+    if draw is None:
+        return JsonResponse({"columns": ACCOUNTS_REPORT_COLUMNS, "data": rows})
+
+    search_value = request.POST.get("search[value]", "").strip().lower()
+    if search_value:
+        filtered_rows = [
+            row
+            for row in rows
+            if any(search_value in str(cell).lower() for cell in row)
+        ]
+    else:
+        filtered_rows = rows
+
+    order_column = request.POST.get("order[0][column]")
+    if order_column is not None:
+        try:
+            idx = int(order_column)
+            reverse = request.POST.get("order[0][dir]") == "desc"
+            filtered_rows = sorted(
+                filtered_rows, key=lambda row: (row[idx] is None, row[idx]), reverse=reverse
+            )
+        except (ValueError, IndexError, TypeError):
+            pass
+
+    try:
+        start = int(request.POST.get("start", 0))
+        length = int(request.POST.get("length", 25))
+    except ValueError:
+        start, length = 0, 25
+    page_rows = filtered_rows[start:] if length == -1 else filtered_rows[start : start + length]
+
+    return JsonResponse(
+        {
+            "draw": int(draw),
+            "recordsTotal": len(rows),
+            "recordsFiltered": len(filtered_rows),
+            "columns": ACCOUNTS_REPORT_COLUMNS,
+            "data": page_rows,
+        }
+    )
+
+
+@user_passes_test(lambda u: u.groups.filter(name="Account").exists() or u.is_superuser)
+def accounts_home(request):
+    account_form = account_find_slum()
+    return render(request, "accounts_home.html", {"form_account": account_form})
+
+
+@user_passes_test(lambda u: u.groups.filter(name="Account").exists() or u.is_superuser)
+def accounts_slums_for_city(request):
+    """Slums for a given city, so the Accounts Slum field can narrow to it."""
+    city_id = request.GET.get("city_id")
+    city = get_object_or_404(City, pk=city_id)
+    slums = list(
+        Slum.objects.filter(electoral_ward__administrative_ward__city=city)
+        .order_by("name")
+        .values("id", "name")
+    )
+    return JsonResponse({"slums": slums})
 
 @permission_required("mastersheet.can_view_mastersheet", raise_exception=True)
 def renderSummery(request):
