@@ -1,0 +1,160 @@
+{% extends "admin/base_site.html" %}
+{% block bodyclass %}ph-body{% endblock %}
+{% block breadcrumbs %}{% endblock %}
+{% block extrastyle %}{% include "avni_console/partials/styles.html" %}{% endblock %}
+
+{% block content %}
+<div class="ph-page">
+  <p class="ph-crumb"><a href="{% url 'avni_console:index' %}">&larr; AVNI sync console</a></p>
+  <div class="ph-header">
+    <div>
+      <h1 class="ph-title">Subject explorer</h1>
+      <p class="ph-sub">
+        Paste one or more subject uuids (household, structure, detailed socio economic survey, member — any subject),
+        or upload an .xlsx with a <span class="ac-code">uuid</span> column, and see every form AVNI holds under each one:
+        the registration, program enrolments, program encounters and encounters, with their status.
+        <b>Sync</b> pulls the registration and every <i>done</i> form into the mastersheet and the survey tables.
+        A visit that is only scheduled is counted, not stored; it arrives by itself once it is filled in.
+        The page previews the first {{ preview_max }} subjects live; the sync itself has no limit and runs in the background.
+      </p>
+    </div>
+    <div class="ac-row">
+      <a class="ph-btn" href="{% url 'avni_console:runs' %}">My runs</a>
+    </div>
+  </div>
+
+  {% if cache_stale %}<div class="ac-result ac-result--warn" style="margin-bottom:18px">The AVNI form cache is stale; form names below may be missing. Queue "Refresh AVNI form cache" on the console.</div>{% endif %}
+  {% if error %}<div class="ac-result ac-result--bad" style="margin-bottom:18px">{{ error }}</div>{% endif %}
+
+  <form class="ph-card" method="post" enctype="multipart/form-data" action="{% url 'avni_console:subject_preview' %}">
+    {% csrf_token %}
+    <div class="ph-card-head"><h2 class="ph-card-title">1. Which subjects?</h2></div>
+    <div class="ph-card-body">
+      <div class="ph-field">
+        <label class="ph-label">Subject uuids (one per line, or comma separated)</label>
+        <textarea class="ph-input" name="uuids" rows="4" placeholder="b88057dd-0184-450b-8c02-29c1dd445bd7">{{ pasted }}</textarea>
+      </div>
+      <div class="ph-field">
+        <label class="ph-label">…or a spreadsheet (.xlsx) with a <span class="ac-code">uuid</span> column</label>
+        <input class="ph-input" type="file" name="file" accept=".xlsx,.xlsm">
+      </div>
+      <div class="ac-row">
+        <button class="ph-btn ph-btn--primary" type="submit">Show forms</button>
+      </div>
+      <p class="ac-note">Read-only: this only fetches from AVNI. Each subject costs one request per form under it.</p>
+    </div>
+  </form>
+
+  {% if subjects %}
+  <div class="ph-card" style="margin-top:24px" id="results">
+    <div class="ph-card-head">
+      <h2 class="ph-card-title">2. {{ subjects|length }} subject(s)</h2>
+    </div>
+    <div class="ph-card-body">
+      {% for s in subjects %}
+      <div class="ac-subject" style="margin-bottom:22px">
+        {% if s.error %}
+          <p><span class="ac-code">{{ s.subject_id }}</span> <span class="ph-badge ac-badge-bad">not found</span> <span class="ac-note" style="display:inline">{{ s.error }}</span></p>
+        {% else %}
+          <p style="margin:0 0 6px">
+            <b>{{ s.subject_type|default:"Subject" }}</b>
+            {% if s.household_number %}· household <b>{{ s.household_number }}</b>{% endif %}
+            {% if s.slum %}· {{ s.slum }}{% endif %}
+            · <span class="ac-code">{{ s.subject_id }}</span>
+            {% if s.is_voided %}<span class="ph-badge ac-badge-bad">voided</span>{% endif %}
+          </p>
+          <p class="ac-note" style="margin:0 0 8px">
+            Registered {{ s.registered_on|default:"—" }} · last modified {{ s.last_modified|default:"—" }} ·
+            {{ s.done }} done, {{ s.scheduled }} scheduled only, {{ s.pending }} done but not yet synced
+          </p>
+          <div class="ac-table-wrap">
+            <table class="ph-table">
+              <thead><tr><th>Form</th><th>Kind</th><th>Program</th><th>Status</th><th>Visit date</th><th>Last modified</th><th>Synced</th><th>Mastersheet</th><th>Switch</th></tr></thead>
+              <tbody>
+              {% for f in s.forms %}
+                <tr>
+                  <td>{{ f.form_name|default:f.encounter_type|default:f.program|default:"Registration" }}</td>
+                  <td>{{ f.kind }}</td>
+                  <td>{{ f.program|default:"—" }}</td>
+                  <td>{% include "avni_console/partials/badge.html" with status=f.status %}</td>
+                  <td>{{ f.record_datetime|default:"—" }}</td>
+                  <td>{{ f.last_modified|default:"—" }}</td>
+                  <td>{% if f.synced %}<span class="ph-badge ac-badge-ok">yes</span>{% elif f.status == "done" %}<span class="ph-badge ac-badge-warn">no</span>{% else %}—{% endif %}</td>
+                  <td>{% if f.legacy %}yes{% else %}survey tables only{% endif %}</td>
+                  <td>{% if f.enabled %}on{% else %}<span class="ph-badge ac-badge-warn">off</span>{% endif %}</td>
+                </tr>
+              {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        {% endif %}
+      </div>
+      {% endfor %}
+
+      {% if not_previewed %}
+      <p class="ac-note" style="margin-bottom:12px">{{ not_previewed|length }} more subject(s) not previewed (over the {{ preview_max }} preview limit) — they are still included in the sync below.</p>
+      {% endif %}
+
+      {% if subject_ids %}
+      <div class="ac-row" id="sync-card" data-ids="{{ subject_ids|join:',' }}">
+        <button class="ph-btn ph-btn--primary" type="button" id="sync">Sync {{ subject_ids|length }} subject(s) now</button>
+      </div>
+      <div class="ac-result" id="sync-result" hidden></div>
+      {% endif %}
+    </div>
+  </div>
+  {% endif %}
+
+  {% if recent %}
+  <div class="ph-card" style="margin-top:24px">
+    <div class="ph-card-head"><h2 class="ph-card-title">Recent subject syncs</h2></div>
+    <div class="ac-table-wrap">
+      <table class="ph-table">
+        <thead><tr><th>#</th><th>Status</th><th>Requested</th><th>Result</th></tr></thead>
+        <tbody>
+        {% for r in recent %}
+          <tr>
+            <td><a href="{% url 'avni_console:run_detail' r.pk %}">{{ r.pk }}</a></td>
+            <td>{% include "avni_console/partials/badge.html" with status=r.status %}</td>
+            <td>{{ r.created_on|date:"j M, H:i" }}</td>
+            <td>{{ r.summary|default:r.error|default:"—"|truncatechars:90 }}</td>
+          </tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+  {% endif %}
+</div>
+
+<script>
+(function () {
+  var card = document.getElementById("sync-card");
+  if (!card) return;
+  var csrf = "{{ csrf_token }}";
+  var button = document.getElementById("sync");
+  var box = document.getElementById("sync-result");
+  function show(text, kind) {
+    box.className = "ac-result" + (kind ? " ac-result--" + kind : "");
+    box.textContent = text;
+    box.hidden = false;
+  }
+  button.addEventListener("click", function () {
+    var ids = card.getAttribute("data-ids").split(",").filter(Boolean);
+    if (!confirm("Sync " + ids.length + " subject(s) now? Registration and every done form under each will be written into the mastersheet and the survey tables. The developer and data team will be emailed with your name.")) return;
+    button.disabled = true;
+    show("Queueing…");
+    fetch("{% url 'avni_console:subject_sync_queue' %}", {
+      method: "POST", credentials: "same-origin",
+      headers: { "Content-Type": "application/json", "X-CSRFToken": csrf },
+      body: JSON.stringify({ subject_ids: ids })
+    }).then(function (r) { return r.json().then(function (j) { return { ok: r.ok, status: r.status, json: j }; }); })
+      .then(function (r) {
+        if (!r.ok) { show(r.json.error || ("Failed (" + r.status + ")"), r.status === 409 ? "warn" : "bad"); return; }
+        show(r.json.message, "ok");
+      }).catch(function (e) { show("Request failed: " + e, "bad"); })
+      .then(function () { button.disabled = false; });
+  });
+})();
+</script>
+{% endblock %}

@@ -41,6 +41,7 @@ def _run_payload(run):
     request = run.requests.select_related("requested_by").first()
     return {
         "run": run,
+        "colour": STATUS_COLOURS.get(run.status, STATUS_COLOURS["failed"]),
         "steps": steps,
         "request": request,
         "requester": requester_label(request) if request else "",

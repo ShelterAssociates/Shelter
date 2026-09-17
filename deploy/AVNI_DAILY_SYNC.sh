@@ -3,9 +3,13 @@
 #
 #0 22 * * * bash /srv/Shelter/deploy/AVNI_DAILY_SYNC.sh
 #
-# Steps: RHS Household registration, Daily Reporting, Family Factsheet,
-# Community Mobilization (see avni/jobs/daily_sync.py). Every step is
-# recorded in Django admin (Job runs) and emailed on failure.
+# Steps (avni/jobs/daily_sync.py): Household, Structure and Detailed Socio
+# Economic Survey registrations, Daily Reporting, Family Factsheet, Community
+# Mobilization, then every other enabled household form (household_encounters)
+# and Family Members (members). Each step also mirrors its records into the
+# survey tables; a step whose switch is off (Admin -> Survey -> Sync switches)
+# is recorded as disabled. Every step is recorded in Django admin (Job runs)
+# and emailed on failure.
 # dashboard_update.sh is NO LONGER chained here -- it runs fortnightly on its
 # own cron line (1st and 16th). Chaining it made it run nightly.
 # sync_rhs.sh remains for manual Structure / by-IID runs only.

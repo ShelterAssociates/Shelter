@@ -1,7 +1,13 @@
-"""Nightly refresh of the cached AVNI form definitions (deploy/AVNI_FORM_CACHE_REFRESH.sh)."""
+"""Nightly refresh of the cached AVNI form definitions (deploy/AVNI_FORM_CACHE_REFRESH.sh).
+
+After the forms are cached, the survey concept dictionary claims a key for
+every question and answer and the sync switches are brought in line with the
+catalog. Run this before the first backfill so the clean keys win.
+"""
 
 from avni import metadata
 from notification.services import reporting
+from survey import concepts, connector, switches
 
 
 def run(recorder, params=None):
@@ -13,5 +19,23 @@ def run(recorder, params=None):
         reporting.note(**counts)
         step.expect(counts["forms"])
         for _ in range(counts["forms"] - counts["export_errors"]):
+            with reporting.record():
+                pass
+    with recorder.step("survey_catalog", loggers=["survey.concepts", "survey.switches"]) as step:
+        if step.disabled:
+            return
+        provider = connector.provider()
+        if hasattr(provider, "reset_forms"):
+            provider.reset_forms()
+        catalog = provider.catalog()
+        concept_counts = concepts.upsert_catalog(catalog, provider.key)
+        switch_counts = switches.sync_catalog(provider)
+        reporting.note(
+            forms=concept_counts["forms"], questions=concept_counts["questions"], answers=concept_counts["answers"],
+            switches_created=switch_counts["created"], switches_seen=switch_counts["seen"],
+            switches_deactivated=switch_counts["deactivated"],
+        )
+        step.expect(len(catalog))
+        for _ in catalog:
             with reporting.record():
                 pass

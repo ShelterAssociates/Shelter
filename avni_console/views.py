@@ -22,12 +22,16 @@ from avni_console.permissions import can_write_avni, console_required, write_req
 from avni_console.services import dry_run, headers, schedule
 from graphs.jobs.dashboard_update import ACTIVE_CITY_NAMES
 from master.models import City, Slum
+from avni.jobs import resume as resuming
 from notification.models import JobRequest
 from notification.services import queue
+from survey import connector
 
 DASHBOARD_JOB = "dashboard_update"
 BULK_JOB = "avni_bulk_update"
+SUBJECT_SYNC_JOB = "subject_sync"
 PREVIEW_ROWS = 10
+UUID_COLUMN = "uuid"
 
 
 def limits():
@@ -56,11 +60,12 @@ def index(request):
     slums = Slum.objects.filter(id__in=mapped_slum_ids()).order_by("name").values("id", "name")
     cities = City.objects.filter(name__city_name__in=ACTIVE_CITY_NAMES).order_by("name__city_name")
     context = {
-        "jobs": catalog.JOBS,
+        "jobs": catalog.visible_jobs(),
         "slums": list(slums),
         "cities": [(city.id, city.name.city_name) for city in cities],
-        "subject_types": ["Household", "Structure"],
-        "encounter_types": catalog.DIRECT_ENCOUNTER_TYPES,
+        "subject_types": catalog.enabled_subject_types(),
+        "encounter_types": catalog.enabled_direct_encounter_types(),
+        "household_encounter_types": catalog.household_encounter_choices(),
         "limits": limits(),
         "can_write": can_write_avni(request.user),
         "cache_stale": metadata.cache_is_stale(),
@@ -94,6 +99,8 @@ def queue_job(request, job_key):
     job = catalog.BY_KEY.get(job_key)
     if job is None:
         raise Http404("Unknown job")
+    if not catalog.is_visible(job):
+        return JsonResponse({"error": "This sync is switched off (Admin > Survey > Sync switches)."}, status=400)
     try:
         params = catalog.build_params(job_key, request_payload(request))
     except catalog.ParamError as exc:
@@ -168,8 +175,30 @@ def run_detail(request, pk):
         "describe": catalog.describe(job_request.job_key, job_request.params),
         "has_detail_file": bool(run and run.detail_file_path and os.path.exists(run.detail_file_path)),
         "has_changes": bool(bulk and bulk.result_file_path and os.path.exists(bulk.result_file_path)),
+        "can_retry": resuming.can_resume(run, job_request.job_key),
     }
     return render(request, "avni_console/run_detail.html", context)
+
+
+@login_required
+@console_required
+@require_POST
+def run_retry(request, pk):
+    """Queue the same job again, resuming every step from where this run stopped."""
+    job_request = visible_request(request, pk)
+    run = job_request.job_run
+    if not resuming.can_resume(run, job_request.job_key):
+        return JsonResponse({"error": "Only a failed, partial or crashed run of a sync job can be retried."}, status=400)
+    params = dict(job_request.params or {})
+    params[resuming.PARAM] = run.pk
+    if duplicate_pending(job_request.job_key, params, request.user):
+        return JsonResponse({"error": "This retry is already queued or running. See My runs."}, status=409)
+    retry = queue.enqueue(job_request.job_key, params, request.user)
+    return JsonResponse({
+        "status": "queued", "id": retry.pk,
+        "message": "Queued as run #{}: it resumes from where run #{} stopped. You will get an email when it finishes.".format(
+            retry.pk, run.pk),
+    })
 
 
 @login_required
@@ -392,3 +421,121 @@ def bulk_detail(request, pk):
         "can_write": can_write_avni(request.user),
     }
     return render(request, "avni_console/bulk_detail.html", context)
+
+
+# -- subject explorer ---------------------------------------------------------
+
+def preview_limit():
+    return getattr(settings, "AVNI_SUBJECT_PREVIEW_MAX_IDS", 25)
+
+
+def explorer_context(request, subjects=(), error="", pasted="", not_previewed=()):
+    subjects = list(subjects)
+    return {
+        "subjects": subjects,
+        "not_previewed": list(not_previewed),
+        "subject_ids": [entry["subject_id"] for entry in subjects if entry.get("subject_id")] + list(not_previewed),
+        "error": error,
+        "pasted": pasted,
+        "preview_max": preview_limit(),
+        "cache_stale": metadata.cache_is_stale(),
+        "recent": [r for r in own_requests(request.user)[:20] if r.job_key == SUBJECT_SYNC_JOB][:8],
+    }
+
+
+@login_required
+@console_required
+@require_GET
+def subject_explorer(request):
+    """Paste subject uuids (or upload an .xlsx with a uuid column) and see every form under them."""
+    pasted = (request.GET.get("uuids") or "").strip()
+    if not pasted:
+        return render(request, "avni_console/subjects.html", explorer_context(request))
+    return preview_response(request, split_ids(pasted), pasted)
+
+
+@login_required
+@console_required
+@require_POST
+def subject_preview(request):
+    pasted = (request.POST.get("uuids") or "").strip()
+    try:
+        ids = collect_subject_ids(request, pasted)
+    except ValueError as exc:
+        return render(request, "avni_console/subjects.html", explorer_context(request, error=str(exc), pasted=pasted))
+    return preview_response(request, ids, pasted)
+
+
+def split_ids(pasted):
+    return catalog.as_list(pasted.replace("\r", "\n").replace("\n", ","))
+
+
+def collect_subject_ids(request, pasted):
+    ids = split_ids(pasted) if pasted else []
+    upload = request.FILES.get("file")
+    if upload:
+        if not upload.name.lower().endswith((".xlsx", ".xlsm")):
+            raise ValueError("Only .xlsx files are accepted (save the sheet as Excel Workbook).")
+        try:
+            ids += excel.read_column(BytesIO(upload.read()), UUID_COLUMN)
+        except KeyError as exc:
+            raise ValueError(str(exc))
+        except Exception as exc:
+            raise ValueError("The spreadsheet could not be read: {}".format(exc))
+    ids = unique(ids)
+    if not ids:
+        raise ValueError("Paste at least one subject uuid or upload an .xlsx with a '{}' column.".format(UUID_COLUMN))
+    return ids
+
+
+def preview_response(request, ids, pasted):
+    """Preview the first few live; the rest are listed and still included in the sync."""
+    ids = unique(ids)
+    shown, rest = ids[:preview_limit()], ids[preview_limit():]
+    subjects = [describe_one(subject_id) for subject_id in shown]
+    return render(request, "avni_console/subjects.html",
+                  explorer_context(request, subjects, pasted=pasted, not_previewed=rest))
+
+
+def describe_one(subject_id):
+    """connector.describe_subject with the error kept inline, so one bad uuid never hides the rest."""
+    try:
+        described = dict(connector.describe_subject(subject_id))
+    except AvniError as exc:
+        return {"subject_id": subject_id, "error": "AVNI: {}".format(exc), "forms": []}
+    except Exception as exc:
+        return {"subject_id": subject_id, "error": str(exc), "forms": []}
+    described["requested_id"] = subject_id
+    described["done"] = sum(1 for form in described["forms"] if form["status"] == "done")
+    described["scheduled"] = sum(1 for form in described["forms"] if form["status"] == "scheduled")
+    described["pending"] = sum(1 for form in described["forms"] if form["status"] == "done" and not form["synced"])
+    return described
+
+
+@login_required
+@console_required
+@require_POST
+def subject_sync_queue(request):
+    """Queue subject_sync for every uuid given; it runs in the background like any console job."""
+    ids = unique(catalog.as_list(request_payload(request).get("subject_ids")))
+    if not ids:
+        return JsonResponse({"error": "Nothing to sync: preview some subjects first."}, status=400)
+    params = {"subject_ids": ids}
+    if duplicate_pending(SUBJECT_SYNC_JOB, params, request.user):
+        return JsonResponse({"error": "You already have this exact request queued or running. See My runs."}, status=409)
+    job_request = queue.enqueue(SUBJECT_SYNC_JOB, params, request.user)
+    return JsonResponse({
+        "status": "queued", "id": job_request.pk,
+        "message": "Queued as run #{} for {} subject(s). It starts within two minutes; you will get an email when it finishes.".format(
+            job_request.pk, len(ids)),
+    })
+
+
+def unique(values):
+    seen, ordered = set(), []
+    for value in values:
+        text = str(value).strip()
+        if text and text not in seen:
+            seen.add(text)
+            ordered.append(text)
+    return ordered

@@ -272,6 +272,7 @@ class StepRecorder(object):
                         "city": city_name,
                         "slum": item.slum or "",
                         "household": item.household or "",
+                        "key": str(item.key) if item.key else "",
                         "reason": item.reason,
                     }
                 )
@@ -295,8 +296,8 @@ class StepRecorder(object):
         if self.expected > self.total:
             self.skipped += self.expected - self.total
         if status is None:
-            if self.error and not self.total:
-                status = "failed"
+            if self.error:
+                status = "partial" if self.ok else "failed"
             elif self.failed and self.ok:
                 status = "partial"
             elif self.failed:
@@ -467,7 +468,7 @@ def expect(count):
 
 
 def note(**values):
-    """Attach key/value facts (e.g. the watermark used) to the active step."""
+    """Attach key/value facts (e.g. the window start used) to the active step."""
     step = getattr(_state, "step", None)
     if step is not None:
         step.extras.update({k: str(v) for k, v in values.items()})

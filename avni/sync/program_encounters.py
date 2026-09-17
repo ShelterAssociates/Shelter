@@ -4,7 +4,7 @@ import logging
 
 import dateparser
 
-from avni import mappings, paths, watermark
+from avni import mappings, paths
 from avni.client import AvniError, client
 from avni.locations import slum_and_city_ids
 from avni.sync import households
@@ -204,14 +204,15 @@ def save_program_encounter_record(record, api=None):
             return False
 
 
-def sync_program_encounters(encounter_type, from_date=None, api=None):
-    api = api or client()
-    since = watermark.window_start(from_date=from_date)
-    saved = 0
-    for page in api.iter_pages(paths.program_encounters(encounter_type, since)):
-        for record in page:
-            saved += int(save_program_encounter_record(record, api))
-    return saved
+def sync_program_encounters(encounter_type, from_date=None, api=None, context=None):
+    """Runs through survey.connector so the core store is fed in the same pass."""
+    from avni.provider import sync_context
+    from survey import connector
+
+    return connector.sync_kind(
+        "program_encounter", "", encounter_type=encounter_type, from_date=from_date,
+        context=context or sync_context(api),
+    )
 
 
 def sync_program_encounter_by_uuid(encounter_uuid, api=None):

@@ -81,7 +81,7 @@
             {% for job in jobs %}
               <div class="job">
                 <h4>{{ job.run.job_key }}
-                  <span class="pill" style="background:{{ header_colour }};">{{ job.run.get_status_display }}</span>
+                  <span class="pill" style="background:{{ job.colour }};">{{ job.run.get_status_display }}</span>
                 </h4>
                 <div class="meta">
                   Started {{ job.run.started_on|date:"d M Y H:i" }} &middot;
@@ -100,7 +100,7 @@
                       {% if entry.step.status == "disabled" %}
                         &mdash; switched off in admin, not run
                       {% else %}
-                        &mdash; {{ entry.step.records_ok }} synced,
+                        &mdash; {{ entry.step.records_ok }} synced{% if "created" in entry.step.extras %} ({{ entry.step.extras.created }} created, {{ entry.step.extras.updated }} updated){% endif %},
                         {{ entry.step.records_failed }} failed,
                         {{ entry.step.records_skipped }} skipped
                       {% endif %}

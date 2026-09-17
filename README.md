@@ -300,11 +300,12 @@ The historic migration chain cannot build an empty database, so tests use a
 settings module that creates tables straight from the models:
 
 ```bash
-python manage.py test avni avni_console notification --settings=shelter.test_settings --noinput
+python manage.py test survey avni avni_console notification --settings=shelter.test_settings --noinput
 ```
 
-`avni/` (everything that talks to AVNI), `avni_console/` (the sync console) and
-`notification/` (job records, queue, digests) are covered; the suite runs against a fake AVNI and needs no credentials.
+`survey/` (the tool-agnostic survey core and connector), `avni/` (everything that talks to AVNI, including the
+AVNI provider), `avni_console/` (the sync console and subject explorer) and `notification/` (job records, queue,
+digests) are covered; the suite runs against a fake AVNI and needs no credentials.
 
 ## AVNI sync console
 
@@ -319,7 +320,7 @@ AVNI_BULK_MAX_ROWS = 50                 # production keeps this small; raise loc
 AVNI_BULK_WORKERS = 1                   # raise locally (e.g. 4) for faster bulk runs
 ```
 
-Cron lines needed on the server (see the script headers):
+Cron lines needed on the server (see the script headers; the full set is under *Production Deployment*):
 
 ```
 */2 * * * *  bash /srv/Shelter/deploy/JOB_QUEUE_RUNNER.sh        # runs queued requests
@@ -330,12 +331,56 @@ After deploying: `python manage.py makemigrations avni avni_console notification
 then `python manage.py seed_notification_config` (new email purposes `avni_console_activity`,
 `avni_bulk_update` and job definitions), then `python manage.py run_job avni_form_cache_refresh`.
 
+**What the daily digest (06:00) contains**: every run of the nightly sync (all steps: household / structure / DSES
+registrations, daily reporting, family factsheets, mobilization, household encounters, members), every manual sync
+queued from the console or the shell, the dashboard update and the form cache refresh — each step with
+`N synced (c created, u updated), f failed, s skipped` and its window. Bulk updates into AVNI and the `selftest` job
+are **not** in the digest (`include_in_digest` off, set by the seed): a bulk update mails developer + data team
+immediately with `changes.csv`.
+
 Large spreadsheets (over the row cap) are run by the developer from the shell, any size, any worker count:
 
 ```bash
 python manage.py shell -c "from avni_console.services.bulk_update import apply_file; \
   print(apply_file('/path/fix.xlsx', '<form uuid>', 'Household', dry_run=True, workers=4).summary)"
 ```
+
+The row cap applies only to bulk updates **into** AVNI. Syncs from AVNI into the mastersheet have no cap: they
+are queued and run in the background by the queue runner.
+
+### Subject explorer
+
+`/avni-console/subjects/` — paste subject uuids (household, structure, detailed socio economic survey, member — any
+subject) or upload an `.xlsx` with a `uuid` column, and the page shows every form AVNI holds under each subject:
+registration, program enrolments, program encounters and encounters, each with its status (**done / scheduled /
+cancelled / voided**), visit date, last modified, whether it is already synced and whether a mastersheet writer
+exists for it. **Sync** queues `subject_sync`, which pulls the registration and every *done* form under each subject
+into the mastersheet (`rhs_data` and friends, exactly as the nightly job writes them) and into the survey tables.
+A visit that is only scheduled is counted, never stored; it arrives on its own once it is filled in, because AVNI
+moves its last-modified stamp then. The page previews the first `AVNI_SUBJECT_PREVIEW_MAX_IDS` (25) subjects live;
+the sync itself has no limit.
+
+### Sync switches and data versions (Admin → Survey)
+
+- **Sync switches** — one row per form of each subject type, built from the AVNI form catalog by the nightly form
+  cache refresh. Switching a subject type off (its `subject` row) hides every job for it on the console, records the
+  nightly steps as `disabled`, and refuses shell runs. Children keep their own flags, so switching the subject back
+  on restores them untouched. Household, Structure, Detailed Socio Economic Survey and New_Mobilization_Form arrive
+  on; everything else (Family Member, Toilet, Slum-RIM, …) arrives off.
+- **Slum data versions** — start a new version for a slum (with a date) when it is re-surveyed. Records last
+  modified from that moment on are written to the new version; older versions are frozen, so the same household
+  number can exist once per version. Only the survey tables are versioned; `rhs_data` is not.
+- **Concepts** — the standard question/answer dictionary. Keys are generated once from the name a concept was first
+  seen with and never change; edit **SA text** to control what reports show. Each provider's own ids live in aliases,
+  which is how a future survey tool maps onto the same keys.
+
+### Retrying a stopped run
+
+Every listing step notes a checkpoint (the last-modified stamp of the last record it processed). On a failed,
+partial or crashed run, **My runs → run → Retry from where it stopped** queues the same job again: steps that
+finished are skipped, each stopped step continues from its checkpoint, and a subject sync redoes the failed subjects
+plus the ones never reached. From the shell the same thing is `--params '{..., "resume_run": <run id>}'`.
+Transient AVNI errors (timeouts, connection resets, 5xx) are retried three times automatically before a record fails.
 
 ## AVNI syncs from the shell
 
@@ -347,6 +392,22 @@ python manage.py run_job rhs_sync --trigger manual --params '{"subject_types": [
 python manage.py run_job mobilization_sync --trigger manual --params '{"all_dates": true}'
 python manage.py run_job rim_sync --trigger manual --params '{"slum_ids": [123]}'
 python manage.py run_job file_import --trigger manual --params '{"kind": "water", "path": "/path/water.json"}'
+python manage.py run_job household_encounter_sync --trigger manual --params '{"from_date": "2026-05-15"}'          # every enabled form of every household type
+python manage.py run_job household_encounter_sync --trigger manual --params '{"from_date": "2026-05-15", "encounter_types": ["Water", "Water INP"]}'
+python manage.py run_job member_sync --trigger manual --params '{"from_date": "2026-01-01"}'                        # once the Family Member switch is on
+python manage.py run_job subject_sync --trigger manual --params '{"subject_ids": ["<uuid>", "<uuid>"]}'
+python manage.py run_job rhs_sync --trigger manual --params '{"subject_types": ["Household"], "resume_run": 123}' # retry from where run 123 stopped
+```
+
+**Backfill after the first deploy** (the survey tables start empty; run it in the background, it is safe to re-run).
+A kind with nothing held yet — no survey record of that encounter type / program / subject type — starts from
+**2018-01-01** when no `from_date` is given, then follows the newest record it holds; household registrations follow
+the mastersheet as before. Run the backfill **before** the first nightly sync so the nightly job does not spend its
+whole night on history:
+
+```bash
+python manage.py run_job avni_form_cache_refresh --trigger manual        # claims clean concept keys from the catalog first
+nohup python manage.py run_job household_encounter_sync --trigger manual > ~/sync_logs/backfill.log 2>&1 &   # from 2018
 ```
 
 Single records by uuid (no job record):
@@ -379,8 +440,13 @@ git pull origin main
 # 3. Install/update dependencies
 pip install -r requirements.txt
 
-# 4. Run migrations
+# 4. Run migrations (the survey app's migrations are generated here, never shipped from git)
+python manage.py makemigrations survey avni avni_console notification
 python manage.py migrate
+python manage.py seed_notification_config            # new jobs and nightly steps; bulk update + selftest out of the digest
+python manage.py run_job avni_form_cache_refresh --trigger manual   # concept dictionary + sync switches
+psql "$DATABASE_URL" -f DBScripts/vw_survey_households.sql -f DBScripts/vw_survey_encounters.sql -f DBScripts/vw_survey_answers.sql
+# then the one-off backfill (see "Backfill after the first deploy") before the next 22:00 nightly run
 
 # 5. Collect static files
 python manage.py collectstatic --noinput
@@ -389,6 +455,23 @@ python manage.py collectstatic --noinput
 sudo systemctl restart gunicorn    # or your service name
 sudo systemctl reload nginx
 ```
+
+### Crontab on the server
+
+The crontab is not in the repo; each `deploy/*.sh` header carries its own line. The full set:
+
+```
+0 22 * * *    bash /srv/Shelter/deploy/AVNI_DAILY_SYNC.sh          # nightly AVNI sync (all steps)
+30 1 * * *    bash /srv/Shelter/deploy/AVNI_FORM_CACHE_REFRESH.sh  # form catalog, concepts, sync switches
+*/2 * * * *   bash /srv/Shelter/deploy/JOB_QUEUE_RUNNER.sh         # console / shell requests (syncs, bulk updates)
+*/2 * * * *   bash /srv/Shelter/deploy/PHOTO_EXPORT_RUNNER.sh       # queued photo exports
+0 23 1,16 * * bash /srv/Shelter/deploy/dashboard_update.sh         # fortnightly dashboard rebuild
+0 5 * * *     bash /srv/Shelter/deploy/CLEANUP_GENERATED_FILES.sh  # reaps job reports and exports
+0 6 * * *     bash /srv/Shelter/deploy/JOB_DIGEST.sh               # the daily digest mail
+```
+
+Keep the times in step with the `JobDefinition` rows in admin (`expected_times`, `expected_days_of_month`): those
+drive the digest's "did not run" alerts.
 
 ### Production local_settings.py differences
 
@@ -467,7 +550,15 @@ def _is_production():
 
 All of the following must be installed and in `INSTALLED_APPS`:
 
-`django_extensions`, `admin_view_permission`, `django.contrib.gis`, `master`, `component`, `sponsor`, `colorfield`, `mastersheet`, `graphs`, `helpers`, `reports`, `rest_framework`, `rest_auth`, `drf_dynamic_fields`, `widget_tweaks`
+`django_extensions`, `admin_view_permission`, `django.contrib.gis`, `master`, `component`, `sponsor`, `colorfield`, `mastersheet`, `graphs`, `helpers`, `notification`, `avni`, `avni_console`, `survey`, `reports`, `rest_framework`, `rest_auth`, `drf_dynamic_fields`, `widget_tweaks`
+
+### Survey provider
+
+`SURVEY_PROVIDER = "avni.provider.AvniProvider"` (in `shelter/settings.py`) names the survey tool the core store
+reads through. The `survey` app (tables, concept dictionary, connector, switches, versions) knows nothing about
+AVNI; the provider translates AVNI's API into the connector's contract and calls the existing mastersheet writers.
+Moving to another tool (KoboToolbox again, say) means writing `kobo/provider.py` against `survey.contracts.Provider`,
+adding concept aliases that map its question ids onto the existing keys, and changing this one setting.
 
 ### BIRT Report path
 

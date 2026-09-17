@@ -4,6 +4,7 @@ import traceback
 from datetime import datetime, time as dt_time, timedelta
 
 from django.core.management.base import BaseCommand
+from django.db.models import Q
 from django.utils import timezone
 from django.utils.dateparse import parse_datetime
 
@@ -47,6 +48,7 @@ class Command(BaseCommand):
             runs = JobRun.objects.filter(
                 included_in_digest_at__isnull=True, started_on__lte=until
             )
+        runs = runs.filter(Q(job__isnull=True) | Q(job__include_in_digest=True))
         runs = list(runs.select_related("job").prefetch_related("steps").order_by("started_on"))
 
         self.stdout.write(

@@ -3,6 +3,7 @@ import os
 import shutil
 import tempfile
 from datetime import datetime, timedelta
+from io import StringIO
 from unittest import mock
 
 from django.core import mail
@@ -116,7 +117,7 @@ class RecorderDbTests(TestCase):
         recorder = reporting.start("unit", trigger="manual")
         with recorder.step("s1", loggers=["notification.tests.run"]) as step:
             step.expect(4)
-            reporting.note(watermark="2026-09-01T00:00:00.000Z")
+            reporting.note(window_start="2026-09-01T00:00:00.000Z")
             with reporting.record(city="Pune", household="1"):
                 pass
             with reporting.record(city="Pune", household="2"):
@@ -133,7 +134,7 @@ class RecorderDbTests(TestCase):
         stats = {c.city_name: (c.records_ok, c.records_failed) for c in step_model.city_stats.all()}
         self.assertEqual(stats, {"Pune": (1, 1), "Thane": (0, 1)})
         self.assertEqual(len(step_model.sample_failures), 2)
-        self.assertEqual(step_model.extras, {"watermark": "2026-09-01T00:00:00.000Z"})
+        self.assertEqual(step_model.extras, {"window_start": "2026-09-01T00:00:00.000Z"})
         self.assertTrue(os.path.exists(run.detail_file_path))
         self.assertIn("job_reports", run.detail_file_path)
 
@@ -324,3 +325,102 @@ class DigestSelfRecordTests(TestCase):
         own = JobRun.objects.get(job_key="job_digest")
         self.assertEqual(own.status, "success")
         self.assertIsNotNone(own.included_in_digest_at)
+
+
+@override_settings(
+    DEBUG=False, EMAIL_BACKEND="django.core.mail.backends.locmem.EmailBackend",
+    JOB_NOTIFY_FALLBACK_EMAILS=["ops@example.org"],
+)
+class DigestContentTests(TestCase):
+    def setUp(self):
+        from django.core.management import call_command
+
+        call_command("send_job_digest", "--no-email", stdout=StringIO())  # nothing pending
+        self.quiet = JobDefinition.objects.create(key="selftest", display_name="Self test", include_in_digest=False)
+        self.nightly = JobDefinition.objects.create(key="avni_daily_sync", display_name="Nightly")
+        self.stamp = timezone.now() - timedelta(hours=1)
+
+    def run_of(self, definition, key=None):
+        return JobRun.objects.create(job=definition, job_key=key or definition.key, status="success",
+                                     started_on=self.stamp, finished_on=self.stamp)
+
+    def test_runs_of_jobs_kept_out_of_the_digest_are_neither_listed_nor_marked(self):
+        from django.core.management import call_command
+
+        quiet_run = self.run_of(self.quiet)
+        listed_run = self.run_of(self.nightly)
+        orphan_run = self.run_of(None, key="dashboard_update")
+        call_command("send_job_digest")
+        body = mail.outbox[-1].alternatives[0][0]
+        self.assertIn("avni_daily_sync", body)
+        self.assertIn("dashboard_update", body)
+        self.assertNotIn("selftest", body)
+        listed_run.refresh_from_db(); orphan_run.refresh_from_db(); quiet_run.refresh_from_db()
+        self.assertIsNotNone(listed_run.included_in_digest_at)
+        self.assertIsNotNone(orphan_run.included_in_digest_at)
+        self.assertIsNone(quiet_run.included_in_digest_at)
+
+
+    def test_step_headline_shows_created_and_updated_separately(self):
+        from django.core.management import call_command
+
+        from notification.models import JobStep
+
+        run = self.run_of(self.nightly)
+        JobStep.objects.create(run=run, name="households:Household", status="success", records_ok=4,
+                               extras={"created": "3", "updated": "1", "window_start": "2018-01-01T00:00:00.000Z"})
+        JobStep.objects.create(run=run, name="rim", status="success", records_ok=2, order=1, extras=None)
+        call_command("send_job_digest")
+        body = mail.outbox[-1].alternatives[0][0]
+        self.assertIn("4 synced (3 created, 1 updated)", body)
+        self.assertIn("2 synced,", body)
+
+    def test_each_job_pill_shows_its_own_status_colour(self):
+        from django.core.management import call_command
+
+        self.run_of(self.nightly)
+        JobRun.objects.create(job=self.nightly, job_key="avni_daily_sync", status="failed",
+                              started_on=self.stamp, finished_on=self.stamp)
+        call_command("send_job_digest")
+        body = mail.outbox[-1].alternatives[0][0]
+        self.assertIn('class="pill" style="background:#1e8e3e;">Success', body)
+        self.assertIn('class="pill" style="background:#d93025;">Failed', body)
+
+
+class SeedTests(TestCase):
+    def test_seed_kept_jobs_out_of_the_digest(self):
+        from django.core.management import call_command
+
+        call_command("seed_notification_config", stdout=StringIO())
+        for key in ("selftest", "avni_bulk_update"):
+            self.assertFalse(JobDefinition.objects.get(key=key).include_in_digest, key)
+        self.assertFalse(JobDefinition.objects.get(key="selftest").alert_on_failure)
+        self.assertTrue(JobDefinition.objects.get(key="dashboard_update").include_in_digest)
+
+    def test_seed_switches_the_digest_off_for_jobs_already_created_on_first_sight(self):
+        from django.core.management import call_command
+
+        JobDefinition.objects.create(key="avni_bulk_update", display_name="Avni Bulk Update")
+        call_command("seed_notification_config", stdout=StringIO())
+        self.assertFalse(JobDefinition.objects.get(key="avni_bulk_update").include_in_digest)
+
+    def test_seed_creates_the_survey_jobs_and_nightly_steps(self):
+        from io import StringIO
+
+        from django.core.management import call_command
+
+        from notification.models import JobDefinition, JobStepConfig
+
+        call_command("seed_notification_config", stdout=StringIO())
+        nightly = JobDefinition.objects.get(key="avni_daily_sync")
+        steps = list(JobStepConfig.objects.filter(job=nightly).order_by("order").values_list("step_name", flat=True))
+        self.assertEqual(steps, [
+            "households:Household", "households:Structure", "households:Detailed Socio Economic Survey",
+            "daily_reporting", "family_factsheets", "mobilization", "household_encounters", "members",
+        ])
+        self.assertEqual(nightly.max_runtime_minutes, 480)
+        for key, minutes in (("household_encounter_sync", 600), ("member_sync", 180), ("subject_sync", 240)):
+            job = JobDefinition.objects.get(key=key)
+            self.assertEqual((job.expected_times, job.max_runtime_minutes), ("", minutes))
+        call_command("seed_notification_config", stdout=StringIO())
+        self.assertEqual(JobStepConfig.objects.filter(job=nightly).count(), 8, "idempotent")
