@@ -8,6 +8,8 @@ from collections import Counter, defaultdict
 import datetime
 import logging
 
+from photos.utils import normalize_household_number
+
 logger = logging.getLogger(__name__)
 
 
@@ -360,6 +362,7 @@ class exportMethods:
         """ Create groupby object of construction_data for mapping."""
         construction_data_dct = defaultdict(dict)
         for household, status, slum_id in construction_data:
+            household = normalize_household_number(household)
             if household not in construction_data_dct[slum_id]:
                 construction_data_dct[slum_id][household] = status
 
@@ -379,19 +382,16 @@ class exportMethods:
         )
         followup_data = {}
         for followup_record in cod_data:
+            hh = normalize_household_number(followup_record["household_number"])
             if followup_record["slum_id"] in followup_data:
                 followup_data_slum = followup_data[followup_record["slum_id"]]
-                if str(int(followup_record["household_number"])) in followup_data_slum:
-                    temp = followup_data_slum[
-                        str(int(followup_record["household_number"]))
-                    ]
+                if hh in followup_data_slum:
+                    temp = followup_data_slum[hh]
                     if temp["submission_date"] < followup_record["submission_date"]:
-                        hh = str(int(followup_record["household_number"]))
                         del followup_record["household_number"]
                         temp = followup_record
                         followup_data_slum[hh] = temp
                 else:
-                    hh = str(int(followup_record["household_number"]))
                     temp_dict = {
                         "submission_date": followup_record["submission_date"],
                         "followup_data": followup_record["followup_data"],
@@ -399,7 +399,6 @@ class exportMethods:
                     followup_data_slum[hh] = temp_dict
             else:
                 slum = followup_record["slum_id"]
-                hh = str(int(followup_record["household_number"]))
                 temp_dict = {
                     "submission_date": followup_record["submission_date"],
                     "followup_data": followup_record["followup_data"],
@@ -505,7 +504,7 @@ class exportMethods:
                     }
             else:
                 data = {}
-            data["Household number"] = record.household_number
+            data["Household number"] = normalize_household_number(record.household_number)
             data["Household_id"] = record.id
             data["slum_id"] = record.slum_id
             try:
@@ -541,16 +540,15 @@ class exportMethods:
         construction_merge_count = 0
         error_count = 0
         for rhs_data in formdict:
+            hh = rhs_data["Household number"]
             """If the followup data is available then this block will run."""
             if rhs_data["slum_id"] in followup_data and (
                 "Type of structure occupancy" in rhs_data
                 and rhs_data["Type of structure occupancy"] == "Occupied house"
             ):
                 followup_slum_data = followup_data[rhs_data["slum_id"]]
-                if str(int(rhs_data["Household number"])) in followup_slum_data:
-                    final_followup_data = followup_slum_data[
-                        str(int(rhs_data["Household number"]))
-                    ]
+                if hh in followup_slum_data:
+                    final_followup_data = followup_slum_data[hh]
                     data = final_followup_data["followup_data"]
                     temp = {}
                     key_lst = {
@@ -604,20 +602,13 @@ class exportMethods:
                 }
                 if rhs_data["slum_id"] in construction_data:
                     if rhs_data["slum_id"] in exclude_lst:
-                        if (
-                            str(int(rhs_data["Household number"]))
-                            in exclude_lst[rhs_data["slum_id"]]
-                        ):
+                        if hh in exclude_lst[rhs_data["slum_id"]]:
                             continue
                     slum_construction_data = construction_data[rhs_data["slum_id"]]
-                    if str(int(rhs_data["Household number"])) in slum_construction_data:
+                    if hh in slum_construction_data:
                         rhs_data["Final_Status"] = (
                             ToiletConstruction.get_status_display(
-                                int(
-                                    slum_construction_data[
-                                        str(int(rhs_data["Household number"]))
-                                    ]
-                                )
+                                int(slum_construction_data[hh])
                             )
                         )
                         construction_merge_count += 1
