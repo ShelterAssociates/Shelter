@@ -445,7 +445,8 @@ python manage.py makemigrations survey avni avni_console notification
 python manage.py migrate
 python manage.py seed_notification_config            # new jobs and nightly steps; bulk update + selftest out of the digest
 python manage.py run_job avni_form_cache_refresh --trigger manual   # concept dictionary + sync switches
-psql "$DATABASE_URL" -f DBScripts/vw_survey_households.sql -f DBScripts/vw_survey_encounters.sql -f DBScripts/vw_survey_answers.sql
+DB=$(python -c "from shelter import local_settings as s; print(s.DATABASES['default']['NAME'])")
+psql -h localhost -U shelter -d "$DB" -f DBScripts/vw_survey_households.sql -f DBScripts/vw_survey_encounters.sql -f DBScripts/vw_survey_answers.sql   # DB user + password from local_settings.py
 # then the one-off backfill (see "Backfill after the first deploy") before the next 22:00 nightly run
 
 # 5. Collect static files

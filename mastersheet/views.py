@@ -2207,6 +2207,31 @@ def remove_invalid_char(fname):
             final_str += char1
     return final_str
 
+
+def allocate_whole_rupees(total, count):
+    """Split `total` (rounded to the nearest whole rupee) into `count`
+    whole-rupee integer shares that sum back to it exactly, with the leftover
+    rupees given one each to the first shares (largest-remainder method).
+    Avoids the paise drift caused by dividing and rounding each share
+    independently.
+    """
+    total = round(total)
+    base, remainder = divmod(total, count)
+    return [base + 1 if idx < remainder else base for idx in range(count)]
+
+
+def allocate_paise(total, count):
+    """Split `total` (a rupee amount that may legitimately include paise,
+    e.g. quantity x a fractional rate) into `count` shares, each a multiple
+    of one paisa, that sum back to it exactly. Same largest-remainder method
+    as allocate_whole_rupees, but working in paise instead of whole rupees so
+    it stays exact without discarding real fractional rupees.
+    """
+    total_paise = round(total * 100)
+    base, remainder = divmod(total_paise, count)
+    return [(base + 1 if idx < remainder else base) / 100 for idx in range(count)]
+
+
 @user_passes_test(lambda u: u.groups.filter(name="Account").exists() or u.is_superuser)
 def accounts_excel_generation(request):
     account_form = account_find_slum(request.POST)
@@ -2355,6 +2380,35 @@ def accounts_excel_generation(request):
             except:
                 dict_of_dict[(j, i.slum)] = {i.material_type: i}
     i = 1
+
+    invoice_rows = defaultdict(list)
+    item_rows = defaultdict(list)
+    for k, v in dict_of_dict.items():
+        for inner_k, inner_v in v.items():
+            invoice_rows[inner_v.invoice_id].append((k, inner_k, inner_v))
+            item_rows[inner_v.id].append((k, inner_k, inner_v))
+
+    tc_alloc = {}
+    luc_alloc = {}
+    for rows in invoice_rows.values():
+        invoice = rows[0][2].invoice
+        n = len(rows)
+
+        tc_shares = allocate_whole_rupees(invoice.transport_charges, n)
+        luc_shares = allocate_whole_rupees(invoice.loading_unloading_charges, n)
+        for idx, (row_k, row_inner_k, _) in enumerate(rows):
+            tc_alloc[(row_k, row_inner_k)] = tc_shares[idx]
+            luc_alloc[(row_k, row_inner_k)] = luc_shares[idx]
+
+    amount_alloc = {}
+    for rows in item_rows.values():
+        inner_v = rows[0][2]
+        n = len(rows)
+
+        amount_shares = allocate_paise(inner_v.total, n)
+        for idx, (row_k, row_inner_k, _) in enumerate(rows):
+            amount_alloc[(row_k, row_inner_k)] = amount_shares[idx]
+
     for k, v in dict_of_dict.items():
         for inner_k, inner_v in v.items():
             # Sponsor Project now lives on Invoice, not InvoiceItems.
@@ -2395,25 +2449,14 @@ def accounts_excel_generation(request):
                     2,
                 ),
             )
-            tc = 0
-            luc = 0
-            total_hh = 1
-            if inner_v.invoice.transport_charges != 0:
-                total_hh = 0
-                for x in inner_v.invoice.invoiceitems_set.all():
-                    total_hh += len(x.household_numbers)
-                tc = inner_v.invoice.transport_charges / total_hh
-            if inner_v.invoice.loading_unloading_charges != 0:
-                total_hh = 0
-                for x in inner_v.invoice.invoiceitems_set.all():
-                    total_hh += len(x.household_numbers)
-                tc = inner_v.invoice.transport_charges / total_hh
-            sheet1.write(i, 17, round(tc, 2))
-            sheet1.write(i, 18, round(luc, 2))
+            tc = tc_alloc[(k, inner_k)]
+            luc = luc_alloc[(k, inner_k)]
+            sheet1.write(i, 17, tc)
+            sheet1.write(i, 18, luc)
             sheet1.write(
                 i,
                 19,
-                round(inner_v.total / len(inner_v.household_numbers) + tc + luc, 2),
+                round(amount_alloc[(k, inner_k)] + tc + luc, 2),
             )
             sheet1.write(i, 20, check_toilet_data(k[0], inner_v.slum.id))
             i = i + 1
