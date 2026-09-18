@@ -206,3 +206,39 @@ class DigestQueueHealthTests(QueueTestCase):
         body = self.digest_body()
         self.assertIn("Status: OK", body)
         self.assertNotIn("never picked up", body)
+
+
+class ShellManualRunTests(QueueTestCase):
+    """run_job --trigger manual is recorded as a request and mailed like a console run."""
+
+    def test_manual_shell_run_gets_a_request_and_an_activity_mail(self):
+        from io import StringIO
+
+        from django.core.management import call_command
+
+        call_command("run_job", "fake", "--trigger", "manual", "--params", '{"items": ["1"]}', stdout=StringIO())
+        request = JobRequest.objects.get(job_key="fake")
+        self.assertEqual(request.status, "done")
+        self.assertIsNone(request.requested_by)
+        self.assertEqual(request.params, {"items": ["1"]})
+        self.assertEqual(request.job_run.trigger, "manual")
+        self.assertIn("1 ok", request.summary)
+        self.send.assert_called_once_with(request, request.job_run)
+
+    def test_cron_run_creates_no_request(self):
+        from io import StringIO
+
+        from django.core.management import call_command
+
+        call_command("run_job", "fake", "--params", '{"items": ["1"]}', stdout=StringIO())
+        self.assertFalse(JobRequest.objects.exists())
+        self.send.assert_not_called()
+
+    def test_no_email_still_records_the_request(self):
+        from io import StringIO
+
+        from django.core.management import call_command
+
+        call_command("run_job", "fake", "--trigger", "manual", "--no-email", stdout=StringIO())
+        self.assertEqual(JobRequest.objects.get(job_key="fake").status, "done")
+        self.send.assert_not_called()

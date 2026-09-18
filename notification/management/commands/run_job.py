@@ -1,13 +1,18 @@
-"""Runs a registered job, records what it did, and emails on failure."""
+"""Runs a registered job, records what it did, and reports it.
+
+Cron runs mail only on failure (the nightly digest covers success). A manual
+run from the shell is recorded as a JobRequest and mailed on every outcome, the
+same activity report the console queue sends, so it is never silent.
+"""
 
 import json
 import traceback
 
 from django.core.management.base import BaseCommand, CommandError
 
-from notification.models import JobRun
+from notification.models import JobRequest, JobRun
 from notification.services import email as job_email
-from notification.services import execute
+from notification.services import execute, queue
 
 
 class Command(BaseCommand):
@@ -38,12 +43,27 @@ class Command(BaseCommand):
         self.stdout.write("{}: {} - {} ok, {} failed, {} seen".format(
             key, run.status, run.records_ok, run.records_failed, run.records_total
         ))
-        if run.status in ("failed", "partial", "crashed"):
+        if options["trigger"] == "manual":
+            self.record_request(run, params, options["no_email"])
+        elif run.status in ("failed", "partial", "crashed"):
             self.notify(run, options["no_email"])
         if run.status == "crashed":
             raise CommandError("{} crashed: {}".format(key, (run.error or "").strip().splitlines()[-1:] or ""))
         if run.status == "failed" and run.records_total == 0 and run.error:
             raise CommandError(run.error)
+
+    def record_request(self, run, params, suppressed):
+        """A shell run gets a JobRequest like a console run: listed in the console, mailed as it finishes."""
+        request = JobRequest.objects.create(
+            job_key=run.job_key, params=params or {}, requested_by=None, status="running",
+            job_run=run, scheduled_for=run.started_on, created_on=run.started_on, started_on=run.started_on,
+        )
+        status = "done" if run.status in ("success", "partial") else "failed"
+        queue.finish(request, status, summary=queue.summarize(run), error=run.error if status == "failed" else None)
+        if suppressed:
+            self.stdout.write("Email suppressed by --no-email")
+            return
+        queue.report(request)
 
     def notify(self, run, suppressed):
         if suppressed:
