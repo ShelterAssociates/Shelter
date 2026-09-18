@@ -351,8 +351,8 @@ class DigestContentTests(TestCase):
         listed_run = self.run_of(self.nightly)
         orphan_run = self.run_of(None, key="dashboard_update")
         call_command("send_job_digest")
-        body = mail.outbox[-1].alternatives[0][0]
-        self.assertIn("avni_daily_sync", body)
+        body = mail.outbox[-1].body
+        self.assertIn("Nightly", body)
         self.assertIn("dashboard_update", body)
         self.assertNotIn("selftest", body)
         listed_run.refresh_from_db(); orphan_run.refresh_from_db(); quiet_run.refresh_from_db()
@@ -360,6 +360,18 @@ class DigestContentTests(TestCase):
         self.assertIsNotNone(orphan_run.included_in_digest_at)
         self.assertIsNone(quiet_run.included_in_digest_at)
 
+    def test_manual_runs_are_left_to_their_activity_mail(self):
+        from django.core.management import call_command
+
+        manual = JobRun.objects.create(job=self.nightly, job_key="rhs_sync", status="failed", trigger="manual",
+                                       started_on=self.stamp, finished_on=self.stamp, error="manual boom")
+        self.run_of(self.nightly)
+        call_command("send_job_digest")
+        body = mail.outbox[-1].body
+        self.assertNotIn("manual boom", body)
+        self.assertIn("Status: OK", body)
+        manual.refresh_from_db()
+        self.assertIsNone(manual.included_in_digest_at)
 
     def test_step_headline_shows_created_and_updated_separately(self):
         from django.core.management import call_command
@@ -371,20 +383,48 @@ class DigestContentTests(TestCase):
                                extras={"created": "3", "updated": "1", "window_start": "2018-01-01T00:00:00.000Z"})
         JobStep.objects.create(run=run, name="rim", status="success", records_ok=2, order=1, extras=None)
         call_command("send_job_digest")
-        body = mail.outbox[-1].alternatives[0][0]
-        self.assertIn("4 synced (3 created, 1 updated)", body)
-        self.assertIn("2 synced,", body)
+        body = mail.outbox[-1].body
+        self.assertIn("households:Household — 4 synced (3 created, 1 updated), 0 failed, 0 skipped", body)
+        self.assertIn("rim — 2 synced, 0 failed, 0 skipped", body)
 
-    def test_each_job_pill_shows_its_own_status_colour(self):
+    def test_city_table_and_cause_lines_are_plain_text(self):
         from django.core.management import call_command
 
-        self.run_of(self.nightly)
-        JobRun.objects.create(job=self.nightly, job_key="avni_daily_sync", status="failed",
-                              started_on=self.stamp, finished_on=self.stamp)
+        from notification.models import JobStep, JobStepCityStat
+
+        run = JobRun.objects.create(job=self.nightly, job_key="avni_daily_sync", status="partial",
+                                    started_on=self.stamp, finished_on=self.stamp)
+        step = JobStep.objects.create(run=run, name="members", status="failed", records_ok=70, records_failed=2,
+                                      error="Traceback (most recent call last):\n  boom\nKeyError: 'uuid'")
+        JobStepCityStat.objects.create(step=step, city_name="Navi Mumbai", records_ok=70, records_skipped=3)
+        JobStepCityStat.objects.create(step=step, city_name="Pune", records_ok=0, records_failed=2)
         call_command("send_job_digest")
-        body = mail.outbox[-1].alternatives[0][0]
-        self.assertIn('class="pill" style="background:#1e8e3e;">Success', body)
-        self.assertIn('class="pill" style="background:#d93025;">Failed', body)
+        message = mail.outbox[-1]
+        self.assertEqual(message.subject, "Shelter Nightly Sync - {} - PARTIAL".format(
+            timezone.localtime().strftime("%d %b %Y")))
+        self.assertIn("Status: PARTIAL (members: KeyError: 'uuid')", message.body)
+        self.assertIn("    City         Synced  Failed  Skipped\n"
+                      "    Navi Mumbai  70      0       3\n"
+                      "    Pune         0       2       0\n", message.body)
+        self.assertIn("    Cause: KeyError: 'uuid'", message.body)
+        self.assertNotIn("Traceback", message.body)
+        self.assertNotIn("<table", message.body)
+        self.assertEqual(message.attachments, [])
+        self.assertIn("<pre", message.alternatives[0][0])
+
+    def test_hung_run_names_the_step_that_never_finished(self):
+        from django.core.management import call_command
+
+        from notification.models import JobStep
+
+        run = JobRun.objects.create(job=self.nightly, job_key="avni_daily_sync", status="running",
+                                    started_on=timezone.now() - timedelta(hours=9))
+        JobStep.objects.create(run=run, name="households:Household", status="success", records_ok=5)
+        JobStep.objects.create(run=run, name="household_encounters", status="running", order=1)
+        call_command("send_job_digest")
+        body = mail.outbox[-1].body
+        self.assertIn("Status: FAILED (household_encounters hung: Still running after 360 minutes.)", body)
+        self.assertIn("Nightly — CRASHED", body)
 
 
 class SeedTests(TestCase):

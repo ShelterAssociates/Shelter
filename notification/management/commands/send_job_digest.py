@@ -1,4 +1,8 @@
-"""Sends the daily job digest: what ran, what failed, what never started."""
+"""Sends the nightly digest: what the scheduled jobs did, what failed, what never started.
+
+Only cron (and chained) runs go in. Manual runs are mailed one by one as they
+finish by the queue runner, so they are left out here and never stamped as digested.
+"""
 
 import traceback
 from datetime import datetime, time as dt_time, timedelta
@@ -12,10 +16,11 @@ from notification.models import DAY_KEYS, JobDefinition, JobRun
 from notification.services import email as job_email
 
 SLOT_EARLY_TOLERANCE = timedelta(minutes=5)
+SCHEDULED_TRIGGERS = ("cron", "chained")
 
 
 class Command(BaseCommand):
-    help = "Email the scheduled-job digest for the last window."
+    help = "Email the nightly scheduled-job digest for the last window."
 
     def add_arguments(self, parser):
         parser.add_argument("--since", default=None, help="ISO datetime, for backfill")
@@ -49,6 +54,7 @@ class Command(BaseCommand):
                 included_in_digest_at__isnull=True, started_on__lte=until
             )
         runs = runs.filter(Q(job__isnull=True) | Q(job__include_in_digest=True))
+        runs = runs.filter(trigger__in=SCHEDULED_TRIGGERS)
         runs = list(runs.select_related("job").prefetch_related("steps").order_by("started_on"))
 
         self.stdout.write(

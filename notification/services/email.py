@@ -1,4 +1,4 @@
-"""Builds and sends the job digest and failure alerts."""
+"""Builds and sends the nightly digest, failure alerts and activity reports."""
 
 import csv
 import logging
@@ -49,63 +49,136 @@ def _run_payload(run):
     }
 
 
-def queue_health(since, until):
-    """Requests the runner should have picked up but did not, and requests that died outside a run."""
+def stuck_requests():
+    """Queued requests the runner should have picked up hours ago but did not."""
     from notification.models import JobRequest
 
     stuck_after = timezone.now() - timedelta(hours=2)
-    stuck = list(JobRequest.objects.filter(status="queued", scheduled_for__lt=stuck_after).select_related("requested_by"))
-    died = list(
-        JobRequest.objects.filter(status__in=("failed", "cancelled"), job_run__isnull=True,
-                                  finished_on__gte=since, finished_on__lte=until).select_related("requested_by")
-    )
-    return {"stuck": stuck, "died": died}
+    return list(JobRequest.objects.filter(status="queued", scheduled_for__lt=stuck_after).order_by("pk"))
 
 
 def send_digest(runs, missed, since, until):
-    """One digest covering every run in the window. Returns the Message-ID or None."""
+    """Plain-text nightly summary of the scheduled runs. Returns the Message-ID or None.
+
+    Short on purpose (management reads it): per-step counts and city tables, one
+    cause line where something broke, no record-level lines, no attachments.
+    Manual runs are not passed in; each is mailed as it finishes (send_activity_report).
+    """
     to, cc, bcc = contacts.recipients_for(DIGEST_PURPOSE)
     if not to:
         logger.error("Digest not sent: no recipients for %s", DIGEST_PURPOSE)
         return None
 
     runs = list(runs)
-    bad = [r for r in runs if r.status in ("failed", "crashed", "partial")]
-    health = queue_health(since, until)
-    if missed:
-        headline = "{} job(s) did not run".format(len(missed))
-        colour = STATUS_COLOURS["failed"]
-    elif health["stuck"]:
-        headline = "{} queued request(s) were never picked up".format(len(health["stuck"]))
-        colour = STATUS_COLOURS["failed"]
-    elif bad:
-        headline = "{} job(s) had problems".format(len(bad))
-        colour = STATUS_COLOURS["partial"]
-    else:
-        headline = "All jobs healthy"
-        colour = STATUS_COLOURS["success"]
-
-    subject = "Shelter daily job report - {} - {}".format(
-        timezone.localtime(until).strftime("%d %b %Y"), headline
-    )
-    context = {
-        "headline": headline,
-        "header_colour": colour,
-        "since": timezone.localtime(since),
-        "until": timezone.localtime(until),
-        "missed": missed,
-        "queue": health,
-        "jobs": [_run_payload(r) for r in runs],
-        "totals": {
-            "records": sum(r.records_total for r in runs),
-            "ok": sum(r.records_ok for r in runs),
-            "failed": sum(r.records_failed for r in runs),
-        },
-    }
-    attachments = [r.detail_file_path for r in runs if r.detail_file_path]
+    stuck = stuck_requests()
+    status = digest_status(runs, missed, stuck)
+    day = timezone.localtime(until).strftime("%d %b %Y")
+    text = nightly_text(day, status, runs, missed, stuck, since, until)
+    subject = "Shelter Nightly Sync - {} - {}".format(day, status.split(" (")[0])
     return _send(
-        to, cc, bcc, subject, "notification/digest_email.html", context, attachments
+        to, cc, bcc, subject, "notification/nightly_digest_email.html", {"text": text}, [], plain=text
     )
+
+
+def digest_status(runs, missed, stuck):
+    """OK, or the worst thing that happened and why, e.g. FAILED (members hung: ...)."""
+    if missed:
+        item = missed[0]
+        return "MISSED ({} did not start at {})".format(item["name"], _when(item["expected_at"]))
+    if stuck:
+        return "FAILED ({} queued request(s) never picked up - is the queue runner cron running?)".format(len(stuck))
+    order = ("crashed", "failed", "partial")
+    bad = sorted((r for r in runs if r.status in order), key=lambda r: order.index(r.status))
+    if not bad:
+        return "OK"
+    label = "PARTIAL" if bad[0].status == "partial" else "FAILED"
+    return "{} ({})".format(label, run_cause(bad[0]))
+
+
+def nightly_text(day, status, runs, missed, stuck, since, until):
+    lines = [
+        "Shelter Nightly Sync — {}".format(day),
+        "Status: {}".format(status),
+        "Window: {} → {}".format(_when(since), _when(until)),
+        "",
+    ]
+    for item in missed:
+        lines.append("Did not run: {} (expected {})".format(item["name"], _when(item["expected_at"])))
+    if stuck:
+        lines.append("Queued requests never picked up: " + ", ".join("#{} {}".format(r.pk, r.job_key) for r in stuck))
+    if missed or stuck:
+        lines.append("")
+    if not runs:
+        lines.append("No scheduled runs were recorded in this window.")
+    for run in runs:
+        lines.extend(run_lines(run))
+        lines.append("")
+    lines.append("Synced = source records written without error, not households changed.")
+    return "\n".join(lines) + "\n"
+
+
+def run_lines(run):
+    name = run.job.display_name if run.job else run.job_key
+    head = "{} — {}, started {}, took {}".format(
+        name, run.get_status_display().upper(), _when(run.started_on), run.duration_display
+    )
+    if run.window_label:
+        head += ", window: " + run.window_label
+    lines = [head]
+    steps = list(run.steps.all().prefetch_related("city_stats"))
+    if not steps:
+        lines.append("  {} synced, {} failed, {} skipped".format(run.records_ok, run.records_failed, run.records_skipped))
+    for step in steps:
+        if step.status == "disabled":
+            lines.append("  {} — switched off in admin, not run".format(step.name))
+            continue
+        extras = step.extras or {}
+        split = " ({} created, {} updated)".format(extras["created"], extras.get("updated", 0)) if "created" in extras else ""
+        lines.append("  {} — {} synced{}, {} failed, {} skipped".format(
+            step.name, step.records_ok, split, step.records_failed, step.records_skipped
+        ))
+        lines.extend(city_table(step.city_stats.all(), "    "))
+        if step.error:
+            lines.append("    Cause: " + last_line(step.error))
+    if run.error:
+        lines.append("  Cause: " + run_cause(run))
+    return lines
+
+
+def city_table(cities, indent):
+    rows = [(c.city_name, str(c.records_ok), str(c.records_failed), str(c.records_skipped)) for c in cities]
+    if not rows:
+        return []
+    rows.insert(0, ("City", "Synced", "Failed", "Skipped"))
+    widths = [max(len(row[i]) for row in rows) for i in range(4)]
+    return [indent + "  ".join(cell.ljust(widths[i]) for i, cell in enumerate(row)).rstrip() for row in rows]
+
+
+def run_cause(run):
+    """One line naming the step that broke and why; the run's own error otherwise."""
+    steps = list(run.steps.all())
+    for step in steps:
+        if step.status == "failed" and step.error:
+            return "{}: {}".format(step.name, last_line(step.error))
+    hung = [s for s in steps if s.status == "running"]
+    if run.status == "crashed" and hung:
+        return "{} hung: {}".format(hung[-1].name, last_line(run.error) or "run was cut short")
+    if run.error:
+        return last_line(run.error)
+    return "{} record(s) failed".format(run.records_failed)
+
+
+def last_line(text, limit=160):
+    """The last non-empty line of an error or traceback, i.e. the exception message."""
+    lines = [l.strip() for l in (text or "").splitlines() if l.strip()]
+    if not lines:
+        return ""
+    line = lines[-1]
+    return line if len(line) <= limit else line[: limit - 3] + "..."
+
+
+def _when(dt):
+    return timezone.localtime(dt).strftime("%d %b %Y %H:%M")
 
 
 def send_failure_alert(run):
@@ -164,14 +237,14 @@ def send_failure_alert(run):
     return message_id
 
 
-def _send(to, cc, bcc, subject, template, context, attachments, thread_message_id=None):
+def _send(to, cc, bcc, subject, template, context, attachments, thread_message_id=None, plain=None):
     try:
         return send_email(
             to,
             subject,
             template,
             context,
-            subject,
+            plain or subject,
             thread_message_id,
             cc,
             bcc,
