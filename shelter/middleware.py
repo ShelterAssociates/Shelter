@@ -3,6 +3,16 @@ import time
 
 logger = logging.getLogger("request_logger")
 
+SENSITIVE_KEYS = ("password", "otp", "token", "secret", "csrfmiddlewaretoken")
+
+
+def redact(querydict):
+    """Copy of the params with credential-like values masked."""
+    return {
+        k: "***" if any(part in k.lower() for part in SENSITIVE_KEYS) else v
+        for k, v in dict(querydict).items()
+    }
+
 
 class RequestLoggingMiddleware:
     def __init__(self, get_response):
@@ -15,8 +25,8 @@ class RequestLoggingMiddleware:
             "REQUEST: method=%s path=%s GET=%s POST=%s",
             request.method,
             request.path,
-            dict(request.GET),
-            dict(request.POST),
+            redact(request.GET),
+            redact(request.POST),
         )
 
         response = self.get_response(request)

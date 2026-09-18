@@ -1,10 +1,11 @@
 from django.shortcuts import render, get_object_or_404
 from django.http import HttpResponse, JsonResponse, HttpResponseForbidden
-from django.contrib.auth.decorators import user_passes_test, permission_required
+from django.contrib.auth.decorators import login_required, user_passes_test, permission_required
 from django.views.decorators.http import require_GET, require_POST
 from django.db import close_old_connections
 from django.core.cache import cache
 from django.utils import timezone
+import re
 import glob
 import hashlib
 import io
@@ -63,6 +64,9 @@ import logging
 logger = logging.getLogger(__name__)
 
 
+HOUSEHOLD_CODE_RE = re.compile(r"^[0-9A-Za-z]+$")
+
+
 def normalize_household_number(value):
     """
     Normalize a household number for use as a dict key / comparison value.
@@ -78,6 +82,7 @@ def normalize_household_number(value):
 
 
 # The views in this file correspond to the mastersheet functionality of shelter app.
+@login_required(login_url="/accounts/login/")
 def give_details(request):
     slum_info_dict = {}
     try:
@@ -1840,6 +1845,7 @@ def give_report_table_numbers(request):  # view for toilet construction
 
 
 @csrf_exempt
+@apply_permissions_ajax("mastersheet.can_view_mastersheet_report")
 def report_table_cm(request):
     tag_key_dict = json.loads(request.body)
     tag = tag_key_dict["tag"]
@@ -1935,6 +1941,7 @@ def report_table_cm(request):
 
 
 @csrf_exempt
+@apply_permissions_ajax("mastersheet.can_view_mastersheet_report")
 def report_table_cm_activity_count(request):
     tag_key_dict = json.loads(request.body)
     tag = tag_key_dict["tag"]
@@ -2034,6 +2041,7 @@ def report_table_cm_activity_count(request):
 
 
 @csrf_exempt
+@apply_permissions_ajax("mastersheet.can_view_mastersheet_report")
 def give_report_table_numbers_accounts(request):
     tag_key_dict = json.loads(request.body)
     tag = tag_key_dict["tag"]
@@ -3141,7 +3149,8 @@ def AnalyseGisTabData(slum_id):
         raise
     
 # For Gis Tab
-@csrf_exempt
+@login_required(login_url="/accounts/login/")
+@permission_required("mastersheet.can_view_mastersheet", raise_exception=True)
 def gisDataDownload(request):
     slum_id = request.POST.get("gisdata_slumname")
     city_id = request.POST.get("gisdata_cityname")
@@ -3847,6 +3856,7 @@ def rim_export_download(request, export_id):
 
 
 @csrf_exempt
+@apply_permissions_ajax("mastersheet.can_view_mastersheet")
 def addSponsor(request):
     response = {}
     data = json.loads(request.body)
@@ -3861,6 +3871,13 @@ def addSponsor(request):
     household_code = [
         normalize_household_number(rec) for rec in data["records"]
     ]
+    # Codes end up in file names and BIRT report commands: alphanumeric only.
+    if not all(HOUSEHOLD_CODE_RE.match(code or "") for code in household_code):
+        return HttpResponse(
+            json.dumps({"error": "household codes must be alphanumeric"}),
+            content_type="application/json",
+            status=400,
+        )
     return_url_id = None
 
     """ Creating some helper functions ."""
@@ -3954,6 +3971,7 @@ def addSponsor(request):
 
 
 @csrf_exempt
+@apply_permissions_ajax("mastersheet.can_view_mastersheet")
 def sponsorprojectList(request):
     """Administrativeward List Display"""
     sponsorid = request.POST["id"]

@@ -1,9 +1,11 @@
+# Production nginx config. Lives at /etc/nginx/sites-enabled/ on the server;
+# keep this copy in sync with it.
+
 upstream shelter_app {
-    server 3.90.10.80:8011 fail_timeout=10;
+    server 127.0.0.1:8011 fail_timeout=10;
 }
 
-
-server{
+server {
     listen 80;
     server_name app.shelter-associates.org;
     access_log  /var/log/nginx/shelter.access.log;
@@ -15,81 +17,79 @@ server{
     client_max_body_size 4G;
     return 301 https://$http_host$request_uri;
 }
+
 server {
-     #listen 80;
     server_name app.shelter-associates.org;
     listen 443;
 
-
     ssl on;
-#    ssl_certificate     /srv/secrets/ssl.crt;
-#    ssl_certificate_key /srv/secrets/ssl.key;
-    
-     # RSA certificate
     ssl_certificate /etc/letsencrypt/live/app.shelter-associates.org-0002/fullchain.pem; # managed by Certbot
     ssl_certificate_key /etc/letsencrypt/live/app.shelter-associates.org-0002/privkey.pem; # managed by Certbot
-
     include /etc/letsencrypt/options-ssl-nginx.conf; # managed by Certbot
-    
-     location /static {
-	alias /srv/Shelter/static/;
-     }
-     
-     # Photo export zips live under media/ but must NEVER be served directly:
-     # they can contain thousands of household photos including Aadhaar card
-     # images. Downloads go only through /photos/exports/<id>/download/, which
-     # checks login, superuser and ownership. This block must stay ABOVE the
-     # /media block -- nginx picks the longest matching prefix, so order in the
-     # file is not what matters, but keeping it adjacent keeps the intent clear.
-     location /media/photo_exports {
-	deny all;
-	return 403;
-     }
 
-     # The KoboToolbox photo backup. Serving this directly made every household's
-     # family and toilet photo downloadable by URL with no login. It is now
-     # reachable only via /photos/file/..., which checks can_view_mastersheet.
-     # The mastersheet grid and the photos section both link through that view.
-     location /media/shelter/attachments {
-	deny all;
-	return 403;
-     }
+    add_header Strict-Transport-Security "max-age=31536000" always;
+    add_header X-Content-Type-Options nosniff always;
 
-     location /media {
-	alias /srv/Shelter/media/;
-     }
+    location /static {
+        alias /srv/static_collected/;
+    }
 
-     client_max_body_size 4G;
-#    add_header X-Frame-Options ALLOW-FROM http://www.shelter-associates.org;
-#    add_header X-Frame-Options SAMEORIGIN;
+    # Media subtrees holding PII are never served by URL; each has a
+    # login-checked Django view instead (photos/, avni_console/).
+    location /media/photo_exports {
+        deny all;
+        return 403;
+    }
+
+    location /media/shelter/attachments {
+        deny all;
+        return 403;
+    }
+
+    location /media/avni_bulk_updates {
+        deny all;
+        return 403;
+    }
+
+    location /media/job_reports {
+        deny all;
+        return 403;
+    }
+
+    location /media {
+        alias /srv/media/;
+    }
+
+    client_max_body_size 4G;
+
     location / {
-        add_header Access-Control-Allow-Origin *;
         # checks for static file, if not found proxy to app
         try_files $uri @proxy_to_app;
         proxy_read_timeout 3000;
-	proxy_connect_timeout 3000;
+        proxy_connect_timeout 3000;
         proxy_send_timeout 3000;
     }
 
     location @proxy_to_app {
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
         proxy_set_header Host $http_host;
         proxy_redirect off;
 
-        proxy_pass   http://shelter_app;
+        proxy_pass http://shelter_app;
     }
 }
 
 upstream birt_report {
     server 127.0.0.1:8080 fail_timeout=0;
 }
-server{
+
+server {
     listen 80;
     server_name report.shelter-associates.org;
     access_log  /var/log/nginx/birt_report.access.log;
     error_log   /var/log/nginx/birt_report.error.log;
 
-    # Support bigger headers. Useful for huge cookies
     large_client_header_buffers 8 16k;
 
     client_max_body_size 4G;
@@ -97,19 +97,16 @@ server{
 }
 
 server {
-     #listen 80;
-     server_name report.shelter-associates.org;
-     listen 443;
-
+    server_name report.shelter-associates.org;
+    listen 443;
 
     ssl on;
-	# RSA certificate
     ssl_certificate /etc/letsencrypt/live/app.shelter-associates.org-0002/fullchain.pem; # managed by Certbot
     ssl_certificate_key /etc/letsencrypt/live/app.shelter-associates.org-0002/privkey.pem; # managed by Certbot
 
-     client_max_body_size 4G;
+    client_max_body_size 4G;
+
     location / {
-        # checks for static file, if not found proxy to app
         try_files $uri @proxy_to_superset_app;
         proxy_read_timeout 300;
         proxy_send_timeout 300;
@@ -124,16 +121,33 @@ server {
     }
 }
 
-upstream superset_app{
-    server 3.90.10.80:8088 fail_timeout=10;
+upstream superset_app {
+    server 127.0.0.1:8088 fail_timeout=0;
 }
 
 server {
-     listen 80;
-     server_name graphs.shelter-associates.org;
-     client_max_body_size 4G;
+    listen 80;
+    server_name graphs.shelter-associates.org;
+    access_log  /var/log/nginx/superset_app.access.log;
+    error_log   /var/log/nginx/superset_app.error.log;
+
+    large_client_header_buffers 8 16k;
+
+    client_max_body_size 4G;
+    return 301 https://$http_host$request_uri;
+}
+
+server {
+    server_name graphs.shelter-associates.org;
+    listen 443;
+
+    ssl on;
+    ssl_certificate /etc/letsencrypt/live/app.shelter-associates.org-0002/fullchain.pem; # managed by Certbot
+    ssl_certificate_key /etc/letsencrypt/live/app.shelter-associates.org-0002/privkey.pem; # managed by Certbot
+
+    client_max_body_size 4G;
+
     location / {
-        # checks for static file, if not found proxy to app
         try_files $uri @proxy_to_superset_app;
         proxy_read_timeout 300;
         proxy_send_timeout 300;

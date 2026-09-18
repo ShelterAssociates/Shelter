@@ -2,7 +2,7 @@ from __future__ import division
 from re import S, T
 from django.shortcuts import render
 from django.conf import settings
-from django.contrib.auth.decorators import login_required
+from django.contrib.auth.decorators import login_required, permission_required
 from django.shortcuts import get_object_or_404
 from django.http import HttpResponse
 from itertools import groupby
@@ -1800,11 +1800,15 @@ def give_report_covid_data(request):  # view for covid data
 # for tase to generate csv file
 
 
+@login_required(login_url="/accounts/login/")
+@permission_required("mastersheet.can_view_mastersheet", raise_exception=True)
 def factsheetData(request):
 
     return render(request, "factsheet_data.html")
 
 
+@login_required(login_url="/accounts/login/")
+@permission_required("mastersheet.can_view_mastersheet", raise_exception=True)
 def factsheetDataDownload(
     request,
 ):  #     function for city wise factsheet data download.
@@ -1909,13 +1913,15 @@ def factsheetDataDownload(
         return HttpResponse(status=500)
 
 # For Mastersheet Summery View rendering mastersheet summery page
-# @permission_required('mastersheet.can_view_mastersheet', raise_exception=True)
+@login_required(login_url="/accounts/login/")
+@permission_required("mastersheet.can_view_mastersheet", raise_exception=True)
 def member_data(request):
     slum_search_field = find_slum()
     return render(request, "member_data.html", {"form": slum_search_field})
 
 
 @csrf_exempt
+@apply_permissions_ajax("mastersheet.can_view_mastersheet")
 def MemberDataView(request):
 
     data = {}

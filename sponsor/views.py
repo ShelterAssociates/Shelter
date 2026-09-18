@@ -5,9 +5,11 @@ from master.models import *
 from django.views.decorators.csrf import csrf_exempt
 from django.core.files.storage import default_storage
 from django.contrib.auth.decorators import login_required
+from django.conf import settings
 
 import json
 from component.cipher import *
+from sponsor.birt_ff_report import build_command, report_exec
 import zipfile
 import shutil
 import os
@@ -128,12 +130,10 @@ def create_zip(request, slumname):
     )
 
     rp_slum_code = str(SlumObj.shelter_slum_code)
-    folder_name = "/home/shelter/Documents/Project/Shelter/media/" + str(request.user)
-    if os.path.isfile(
-        "/home/shelter/Documents/Project/Shelter/media/" + str(request.user) + ".zip"
-    ):
+    folder_name = os.path.join(settings.MEDIA_ROOT, str(request.user))
+    if os.path.isfile(folder_name + ".zip"):
 
-        zip_file = open(folder_name + ".zip", "r")
+        zip_file = open(folder_name + ".zip", "rb")
         response = HttpResponse(zip_file, content_type="application/force-download")
         response["Content-Disposition"] = 'attachment; filename="%s"' % str(
             request.user
@@ -151,26 +151,19 @@ def create_zip(request, slumname):
                 + "|"
                 + str(request.user.id)
             )
-            com = (
-                "sh /opt/BIRT/ReportEngine/genReport.sh -f PDF -o "
-                + folder_name
-                + "/household_code_"
-                + str(household_code)
-                + ".pdf -p key="
-                + key
-                + " /srv/Shelter/reports/FFReport.rptdesign"
+            pdf_file = os.path.join(
+                folder_name, "household_code_{}.pdf".format(household_code)
             )
-            os.system(com)
+            report_exec(build_command(settings.BIRT_REPORT_CMD, pdf_file, key))
             i = i + 1
 
         shutil.make_archive(folder_name, "zip", folder_name)
 
-        zip_file = open(folder_name + ".zip", "r")
+        zip_file = open(folder_name + ".zip", "rb")
         response = HttpResponse(zip_file, content_type="application/force-download")
         response["Content-Disposition"] = 'attachment; filename="%s"' % str(
             request.user
         )
 
-        delete_command = "rm -rf " + folder_name
-        os.system(delete_command)
+        shutil.rmtree(folder_name, ignore_errors=True)
         return response
