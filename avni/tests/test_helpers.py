@@ -4,7 +4,7 @@ from datetime import date, datetime
 
 from django.test import SimpleTestCase
 
-from avni import mappings, paths, window
+from avni import locations, mappings, paths, window
 
 
 class PathTests(SimpleTestCase):
@@ -107,3 +107,17 @@ class OverrideTests(SimpleTestCase):
     def test_functioning_shop_becomes_occupancy(self):
         data = mappings.normalize_occupancy({"Functioning of the structure": "Shop"})
         self.assertEqual(data, {"Type_of_structure_occupancy": "Shop"})
+
+
+class LocationLookupTests(SimpleTestCase):
+    def test_uuid_resolves_to_the_slum_it_was_mapped_from(self):
+        slum_id = locations.mapped_slum_ids()[0]
+        uuid = locations.slum_location_uuid(slum_id)
+        self.assertEqual(locations.slum_id_for_location_uuid(uuid), slum_id)
+
+    def test_unknown_uuid_is_none(self):
+        self.assertIsNone(locations.slum_id_for_location_uuid("00000000-0000-0000-0000-000000000000"))
+        self.assertIsNone(locations.slum_id_for_location_uuid(None))
+
+    def test_every_uuid_maps_to_exactly_one_slum(self):
+        self.assertEqual(len(locations.slum_ids_by_location_uuid()), len(locations.slum_location_uuids()))

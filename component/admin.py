@@ -168,3 +168,16 @@ class PatchedUserAdmin(BaseUserAdmin):
 # Re-register User with patched admin
 admin.site.unregister(User)
 admin.site.register(User, PatchedUserAdmin)
+
+
+class SubjectStructureMappingAdmin(admin.ModelAdmin):
+    """Read-mostly: rows are written by the Avni mobile app, not by hand."""
+
+    list_display = ("subject_uuid", "slum", "structure_id", "component", "updated_at")
+    list_filter = ("slum",)
+    search_fields = ("subject_uuid", "structure_id", "slum__name")
+    raw_id_fields = ("slum", "component")
+    readonly_fields = ("created_at", "updated_at")
+
+
+admin.site.register(SubjectStructureMapping, SubjectStructureMappingAdmin)

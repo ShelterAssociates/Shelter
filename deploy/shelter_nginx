@@ -27,8 +27,8 @@ server {
     ssl_certificate_key /etc/letsencrypt/live/app.shelter-associates.org-0002/privkey.pem; # managed by Certbot
     include /etc/letsencrypt/options-ssl-nginx.conf; # managed by Certbot
 
-    add_header Strict-Transport-Security "max-age=31536000" always;
-    add_header X-Content-Type-Options nosniff always;
+    add_header Strict-Transport-Security "max-age=31536000";
+    add_header X-Content-Type-Options nosniff;
 
     location /static {
         alias /srv/static_collected/;

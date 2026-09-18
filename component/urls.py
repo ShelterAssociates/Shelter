@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 from django.conf.urls import include, url
-from . import views, get_component_api, get_ward_wise_data_api
+from . import avni_map, views, get_component_api, get_ward_wise_data_api
 
 base64_pattern = r"(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$"
 
@@ -18,6 +18,9 @@ urlpatterns = [
         name="get_component_geometry",
     ),
     url(r"^delete_component/$", views.delete_component, name="delete_component"),
+    # Avni mobile app map picker (component/avni_map.py)
+    url(r"^get_structures_for_avni/$", avni_map.get_structures_for_avni, name="get_structures_for_avni"),
+    url(r"^map_subject_to_structure/$", avni_map.map_subject_to_structure, name="map_subject_to_structure"),
     url(
         r"^set_component_metric/$",
         views.set_component_metric,
