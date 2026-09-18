@@ -147,3 +147,36 @@ class ComponentMetric(models.Model):
         return "{} - {}: {} {}".format(
             self.slum.name, self.metadata.name, self.value, self.unit
         )
+
+
+class SubjectStructureMapping(models.Model):
+    """Which building footprint an Avni household subject was registered on.
+
+    Written by the Avni mobile app (component/avni_map.py) the moment a
+    field worker saves a registration started from the map picker, so the
+    survey record and the GIS polygon are linked at data entry rather than
+    joined by house number afterwards.
+
+    structure_id is the house number painted on the wall as the map knows
+    it (Component.housenumber, no zero padding). It is only unique within a
+    slum, hence the slum key. component is resolved at write time when a
+    Structure footprint with that number exists and is left empty otherwise
+    (e.g. the KML for the slum was re-uploaded with different numbers).
+    """
+
+    subject_uuid = models.CharField(max_length=100, unique=True, help_text="Avni subject (household) uuid")
+    slum = models.ForeignKey("master.Slum", on_delete=models.PROTECT, related_name="subject_structure_mappings")
+    structure_id = models.CharField(max_length=100, help_text="Component.housenumber of the tapped footprint")
+    component = models.ForeignKey(
+        Component, on_delete=models.SET_NULL, null=True, blank=True, related_name="subject_mappings",
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        indexes = [models.Index(fields=["slum", "structure_id"], name="component_ssm_slum_structure")]
+        verbose_name = "Avni subject ↔ structure mapping"
+        verbose_name_plural = "Avni subject ↔ structure mappings"
+
+    def __str__(self):
+        return "{} -> {} #{}".format(self.subject_uuid, self.slum.name, self.structure_id)
