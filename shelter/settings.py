@@ -137,6 +137,11 @@ AVNI_DASHBOARD_QUEUE_HOUR = 1
 AVNI_BULK_UPLOAD_DIR_NAME = "avni_bulk_updates"
 # Timeout for every AVNI HTTP call, seconds.
 AVNI_REQUEST_TIMEOUT = 60
+# Shared key the Shelter build of the Avni mobile app sends (X-Avni-Gis-Key)
+# to the map endpoints in component/avni_map.py. Empty = endpoints refuse
+# with 503. Set a long random value per environment in local_settings.py and
+# the same value in the app's config.
+AVNI_GIS_API_KEY = ""
 # Form cache older than this counts as stale in the console.
 AVNI_FORM_CACHE_MAX_AGE_HOURS = 48
 # Subject explorer: how many subjects one page previews live from AVNI. The
