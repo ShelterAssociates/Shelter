@@ -300,12 +300,13 @@ The historic migration chain cannot build an empty database, so tests use a
 settings module that creates tables straight from the models:
 
 ```bash
-python manage.py test survey avni avni_console notification --settings=shelter.test_settings --noinput
+python manage.py test survey avni avni_console notification component --settings=shelter.test_settings --noinput
 ```
 
 `survey/` (the tool-agnostic survey core and connector), `avni/` (everything that talks to AVNI, including the
 AVNI provider), `avni_console/` (the sync console and subject explorer) and `notification/` (job records, queue,
-digests) are covered; the suite runs against a fake AVNI and needs no credentials.
+digests) are covered, as is `component/` (the Avni mobile app's map-picker endpoints); the suite runs against a
+fake AVNI and needs no credentials.
 
 ## AVNI sync console
 
@@ -327,7 +328,7 @@ Cron lines needed on the server (see the script headers; the full set is under *
 30 1 * * *   bash /srv/Shelter/deploy/AVNI_FORM_CACHE_REFRESH.sh  # form definitions for uploads
 ```
 
-After deploying: `python manage.py makemigrations avni avni_console notification && python manage.py migrate`,
+After deploying: `python manage.py makemigrations avni avni_console notification component && python manage.py migrate`,
 then `python manage.py seed_notification_config` (new email purposes `avni_console_activity`,
 `avni_bulk_update` and job definitions), then `python manage.py run_job avni_form_cache_refresh`.
 
@@ -445,7 +446,7 @@ git pull origin main
 pip install -r requirements.txt
 
 # 4. Run migrations (the survey app's migrations are generated here, never shipped from git)
-python manage.py makemigrations survey avni avni_console notification
+python manage.py makemigrations survey avni avni_console notification component
 python manage.py migrate
 python manage.py seed_notification_config            # new jobs and nightly steps; bulk update + selftest out of the digest
 python manage.py run_job avni_form_cache_refresh --trigger manual   # concept dictionary + sync switches
