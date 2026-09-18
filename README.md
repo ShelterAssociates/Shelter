@@ -336,8 +336,9 @@ only (`trigger` cron/chained): the nightly sync (all steps: household / structur
 reporting, family factsheets, mobilization, household encounters, members), the dashboard update, the form cache
 refresh and the cleanup — each step as `N synced (c created, u updated), f failed, s skipped` with a per-city table,
 plus one `Cause:` line where a step failed or a run hung. No record-level lines, no tracebacks, no attachments.
-Manual runs (console, admin, shell `--trigger manual`) are **not** in it: every queued request is mailed on its
-own as it finishes (activity report, developer + data team + requester). Bulk updates into AVNI and the `selftest`
+Manual runs (console, admin, shell `--trigger manual`) are **not** in it: each one is mailed on its own as it
+finishes (activity report, developer + data team, plus the requester for console runs; a shell run is recorded as
+a request by "system" and listed in the console like any other). Bulk updates into AVNI and the `selftest`
 job are also out (`include_in_digest` off, set by the seed): a bulk update mails developer + data team
 immediately with `changes.csv`.
 
