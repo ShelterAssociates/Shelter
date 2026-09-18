@@ -1,6 +1,5 @@
 from django.conf.urls import url
 from .views import *
-from django.http import HttpResponse
 
 app_name = "reports"
 
@@ -15,7 +14,6 @@ urlpatterns = [
         rim_factsheet_pdf_fetch,
         name="rim_factsheet_pdf_fetching",
     ),
-    url(r"^test/$", lambda r: HttpResponse("OK")),
     url(
         r"^rim_factsheet/html/(?P<slum_id>[0-9]+)/$",
         rim_factsheet_html_report,
@@ -28,11 +26,6 @@ urlpatterns = [
         name="rim_factsheet_preview",
     ),
     ## Donar report
-    url(
-        r"^monthly-report/(?P<report_id>[0-9]+)/$",
-        monthly_report_details,
-        name="monthly_report_details",
-    ),
     url(
         r"^generate-donor-report/(?P<report_id>[0-9]+)/$",
         monthly_donor_report_pdf_generation,

@@ -9,7 +9,8 @@ from django.conf import settings
 # Used for timestamps (folder names & DB updates)
 from datetime import datetime
 
-# Used to execute shell commands (BIRT report generation)
+# Used to execute BIRT report generation
+import shlex
 import subprocess
 
 # OS utilities for path handling
@@ -26,16 +27,30 @@ from concurrent import futures
 ZIP_PATH = 'FFReport'
 
 
+def build_command(template, *values):
+    """
+    Split a BIRT command template (e.g. settings.BIRT_REPORT_CMD) into an
+    argument list and fill each {} placeholder with the next value.
+    Returns a list so subprocess never goes through a shell.
+    """
+    values = list(values)
+    args = []
+    for arg in shlex.split(template):
+        if "{}" in arg:
+            arg = arg.replace("{}", values.pop(0), 1)
+        args.append(arg)
+    return args
+
+
 def report_exec(cmd):
     """
-    Executes a single shell command.
+    Executes a single BIRT command given as an argument list.
     This is used to generate one PDF using BIRT.
     Runs inside a thread from ThreadPoolExecutor.
     """
     try:
         p = subprocess.Popen(
             cmd,
-            shell=True,
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE
         )
@@ -132,7 +147,7 @@ class FFReport(object):
             )
 
             # Final BIRT command using Django setting
-            cmd = settings.BIRT_REPORT_CMD.format(pdf_file, key)
+            cmd = build_command(settings.BIRT_REPORT_CMD, pdf_file, key)
 
             # Add command to list
             execute_command.append(cmd)

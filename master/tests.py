@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 """The Django tests page for master app"""
 
+from django.contrib.auth.models import Permission, User
 from django.http import HttpResponse
 from django.test import RequestFactory, TestCase
 from unittest.mock import MagicMock, Mock, patch
@@ -12,6 +13,10 @@ from master.views import filterMasterList, rimdisplay
 class RimDisplayFilterTests(TestCase):
 	def setUp(self):
 		self.factory = RequestFactory()
+		self.user = User.objects.create_user("rim", password="x")
+		self.user.user_permissions.add(
+			Permission.objects.get(codename="view_rapid_slum_appraisal")
+		)
 
 	@patch("master.views.render")
 	@patch("master.views.Paginator")
@@ -44,6 +49,7 @@ class RimDisplayFilterTests(TestCase):
 				"slum": "13",
 			},
 		)
+		request.user = self.user
 
 		rimdisplay(request)
 

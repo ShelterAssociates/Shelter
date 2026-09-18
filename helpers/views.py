@@ -488,6 +488,7 @@ def sponsor_list(request):
     return JsonResponse(response_data, safe=False)
 
 @csrf_exempt
+@staff_member_required
 def upload_slum_photos_to_drive(request):
     logger.info("upload_slum_photos_to_drive: request received, method=%s", request.method)
 

@@ -6,7 +6,7 @@ import psycopg2
 import logging
 from django.urls import reverse
 from django.contrib.admin.views.decorators import staff_member_required
-from django.contrib.auth.decorators import login_required, user_passes_test
+from django.contrib.auth.decorators import login_required, permission_required, user_passes_test
 from django.template import RequestContext, loader
 from django.http import HttpResponse, HttpResponseRedirect, JsonResponse
 from django.views.generic import ListView
@@ -124,7 +124,8 @@ def search(request):
     return HttpResponse(json.dumps(data_dict),
                         content_type='application/json')
 
-@csrf_exempt
+@login_required(login_url="/accounts/login/")
+@permission_required("master.view_rapid_slum_appraisal", raise_exception=True)
 def rimdisplay(request):
     """Display Rapid Slum Appraisal Records"""
     if request.method=='POST':
@@ -218,7 +219,8 @@ def rimdisplay(request):
         },
     )
 
-@csrf_exempt
+@login_required(login_url="/accounts/login/")
+@permission_required("master.view_rapid_slum_appraisal", raise_exception=True)
 def rimedit(request,Rapid_Slum_Appraisal_id):
     """Update Rapid Slum Appraisal Record"""
     if request.method == 'POST':
@@ -247,12 +249,15 @@ def rimedit(request,Rapid_Slum_Appraisal_id):
         form = Rapid_Slum_AppraisalForm(instance=R)
     return render(request, 'riminsert.html', {'form': form})
 
-@csrf_exempt
+@login_required(login_url="/accounts/login/")
+@permission_required("master.view_rapid_slum_appraisal", raise_exception=True)
 def rim_select_slum(request):
     """Popup: pick City -> Admin ward -> Electoral ward -> Slum before creating a new RIM entry."""
     return render(request, 'rimselect.html', {})
 
 
+@login_required(login_url="/accounts/login/")
+@permission_required("master.view_rapid_slum_appraisal", raise_exception=True)
 @csrf_exempt
 def rim_check_exists(request):
     """AJAX: does a Rapid_Slum_Appraisal already exist for this slum?"""
@@ -266,7 +271,8 @@ def rim_check_exists(request):
     return HttpResponse(json.dumps(data), content_type='application/json')
 
 
-@csrf_exempt
+@login_required(login_url="/accounts/login/")
+@permission_required("master.view_rapid_slum_appraisal", raise_exception=True)
 def riminsert(request):
     """Insert Rapid Slum Appraisal Record"""
     if request.method == 'POST':
@@ -557,6 +563,8 @@ def modelmapdisplay(request):
     data = {'shape': shape,'background_color':background_color}
     return HttpResponse(json.dumps(data),content_type='application/json')
 
+@login_required(login_url="/accounts/login/")
+@permission_required("master.view_drainage", raise_exception=True)
 def drainageinsert(request):
     """ RIM Report Form"""
     if request.method == 'POST':
@@ -568,6 +576,8 @@ def drainageinsert(request):
         form = DrainageForm()
     return render(request,'drainageinsert.html', {'form':form})
 
+@login_required(login_url="/accounts/login/")
+@permission_required("master.view_drainage", raise_exception=True)
 def drainagedisplay(request):
     """ drainage display List Form"""
     if request.method=='POST':
@@ -593,6 +603,8 @@ def drainagedisplay(request):
         RA = paginator.page(paginator.num_pages)
     return render(request, 'drainagedisplay.html',{'R':R,'RA':RA})
 
+@login_required(login_url="/accounts/login/")
+@permission_required("master.view_drainage", raise_exception=True)
 def drainageedit(request,drainage_id):
     if request.method == 'POST':
         d = drainage.objects.get(pk=drainage_id)
@@ -625,10 +637,12 @@ def cityList(request):
             }
     return HttpResponse(json.dumps(data),content_type='application/json')
 
-@csrf_exempt
+@staff_member_required
 def formList(request):
     """ Form List"""
-    old = psycopg2.connect(database='kobotoolbox',user='kobo',password='kobo',host='172.17.0.7',port='5432')
+    db = settings.KOBOCAT_DATABASES
+    old = psycopg2.connect(database=db['DBNAME'], user=db['USER'], password=db['PASSWORD'],
+                           host=db['HOST'], port=db['PORT'])
     cursor_old = old.cursor()
     cursor_old.execute("select id, title from logger_xform;")
     fetch_data = cursor_old.fetchall()

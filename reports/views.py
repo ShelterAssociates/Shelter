@@ -4,6 +4,7 @@ from django.http import HttpResponse, HttpResponseForbidden, JsonResponse
 from django.shortcuts import render
 from django.template.loader import render_to_string
 from django.conf import settings
+from django.contrib.admin.views.decorators import staff_member_required
 from django.core.cache import cache
 from .services.rim_factsheet import rim_factsheet_view
 from reports.models import (
@@ -13,10 +14,11 @@ from reports.models import (
 from reports.services.monthly_report_service import monthly_report_details
 
 
-# HTML preview for RIM Factsheet report home page
+# Internal report tooling home page (RIM factsheet + donor report PDFs)
+@staff_member_required
 def report_view(request):
     """Renders the report home page with factsheet data if provided."""
-    context = {"INTERNAL_TEAM_SECRET": settings.INTERNAL_TEAM_SECRET}
+    context = {}
 
     if request.method == "POST":
         slum_id = request.POST.get("slum_id")
@@ -104,14 +106,9 @@ def rim_factsheet_pdf_fetch(request, slum_id):
     """Fetches and forces download of generated RIM Factsheet PDF.
 
     - Public users: require OTP verification
-    - Internal team: require X-Internal-Token header or ?internal_token=... param
+    - Internal team: logged-in staff skip OTP
     """
-
-    # ✅ Check if internal team request
-    internal_token = request.headers.get("X-Internal-Token") or request.GET.get(
-        "internal_token"
-    )
-    is_internal = internal_token == settings.INTERNAL_TEAM_SECRET
+    is_internal = request.user.is_authenticated and request.user.is_staff
 
     # 🔐 If not internal, enforce OTP scoped to this specific slum
     if not is_internal:
@@ -154,6 +151,7 @@ def rim_factsheet_pdf_fetch(request, slum_id):
 
 
 # Trigger PDF generation for monthly donor report
+@staff_member_required
 def monthly_donor_report_pdf_generation(request, report_id):
     """Generates PDF for monthly donor report and sends to PDF service."""
     cache_key = f"monthly_report_{report_id}"
@@ -194,6 +192,7 @@ def monthly_donor_report_pdf_generation(request, report_id):
 
 
 # Download generated monthly donor report PDF
+@staff_member_required
 def monthly_donor_report_pdf_fetch(request, report_id):
     """Fetches and forces download of generated monthly donor report PDF."""
     try:
@@ -224,6 +223,7 @@ def monthly_donor_report_pdf_fetch(request, report_id):
 
 
 # Get all donor projects
+@staff_member_required
 def donor_projects(request):
     """Retrieves list of all donor projects with IDs and names."""
     projects = SponsorProjectReportDetails.objects.select_related(
@@ -238,6 +238,7 @@ def donor_projects(request):
 
 
 # Get report months for a specific project
+@staff_member_required
 def project_months(request, project_id):
     """Retrieves completed monthly reports for a specific project."""
     monthly_reports = SponsorProjectMonthlyReportDetails.objects.filter(
