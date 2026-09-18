@@ -22,9 +22,9 @@ def footprint(x, y):
     return Polygon(((x, y), (x, y + 0.001), (x + 0.001, y + 0.001), (x + 0.001, y), (x, y)))
 
 
-def make_metadata(name, section):
+def make_metadata(name, section, code=None):
     return Metadata.objects.create(
-        name=name, section=section, level="S", type="C", display_type="M", visible=True, order=1, blob={},
+        name=name, section=section, level="S", type="C", display_type="M", visible=True, order=1, blob={}, code=code,
     )
 
 
@@ -86,6 +86,49 @@ class GetStructuresTests(AvniMapTestCase):
         self.assertEqual(sorted(f["properties"]["s"] for f in collection["features"]), ["1", "35"])
         self.assertEqual(collection["features"][0]["geometry"]["type"], "Polygon")
 
+    def test_houses_digitised_as_house_base_layer_count_as_structures(self):
+        # Some slums have no "Structure" components; their footprints are the HouseBaseLayer (as export does).
+        Component.objects.filter(metadata=self.structure).delete()
+        base_layer = make_metadata("Houses", self.structure.section, code="HouseBaseLayer")
+        make_component(self.slum, base_layer, "7", 0.1, 0.1)
+        make_component(self.slum, base_layer, "0008", 0.2, 0.2)
+        collection = json.loads(self.get_structures().content.decode("utf-8"))
+        self.assertEqual(sorted(f["properties"]["s"] for f in collection["features"]), ["0008", "7"])
+
+    def test_boundary_is_the_slum_boundary_component_when_one_is_uploaded(self):
+        boundary = make_metadata("Slum boundary", self.structure.section)
+        component = make_component(self.slum, boundary, "", 0.9, 0.9)
+        collection = json.loads(self.get_structures().content.decode("utf-8"))
+        self.assertEqual(collection["boundary"], json.loads(component.shape.geojson))
+        self.assertEqual(collection["total"], 2)  # the boundary is not a house
+
+    def test_boundary_falls_back_to_the_master_slum_shape(self):
+        collection = json.loads(self.get_structures().content.decode("utf-8"))
+        self.assertEqual(collection["boundary"], json.loads(self.slum.shape.geojson))
+
+    def test_filters_carry_the_website_colours_keyed_by_avni_concept_and_answers(self):
+        section = self.structure.section
+        Metadata.objects.create(  # rhs key that the Avni sync renames from a concept
+            name="Has own toilet", section=section, level="H", type="F", display_type="M", visible=True, order=1,
+            code="group_oi8ts04/Current_place_of_defecation:Own toilet|,|Shared toilet",
+            blob={"polycolor": "#00AA00", "linecolor": "#004400"},
+        )
+        Metadata.objects.create(  # key written through unchanged: concept name is the key itself
+            name="Rented", section=section, level="H", type="F", display_type="M", visible=True, order=2,
+            code="Ownership status of the house_1:Rented", blob={"polycolor": "#0000AA"},
+        )
+        Metadata.objects.create(  # no answers, no colour: nothing to colour with
+            name="Broken", section=section, level="H", type="F", display_type="M", visible=True, order=3,
+            code="Some question", blob={},
+        )
+        collection = json.loads(self.get_structures().content.decode("utf-8"))
+        self.assertEqual(collection["filters"], [
+            {"name": "Has own toilet", "concepts": ["Current place of defecation", "Final current place of defecation"],
+             "answers": ["Own toilet", "Shared toilet"], "polycolor": "#00AA00", "linecolor": "#004400"},
+            {"name": "Rented", "concepts": ["Ownership status of the house_1"],
+             "answers": ["Rented"], "polycolor": "#0000AA", "linecolor": None},
+        ])
+
     def test_gzips_when_the_client_accepts_it(self):
         response = self.get_structures(HTTP_ACCEPT_ENCODING="gzip")
         self.assertEqual(response.status_code, 200)
@@ -145,6 +188,13 @@ class MapSubjectToStructureTests(AvniMapTestCase):
     def test_numeric_structure_id_is_accepted(self):
         response = self.post_mapping({"subject_uuid": "sub-1", "structure_id": 35, "avni_uuid": SLUM_UUID})
         self.assertEqual(response.json()["component_id"], self.house_35.id)
+
+    def test_resolves_a_house_base_layer_footprint(self):
+        Component.objects.filter(metadata=self.structure).delete()
+        base_layer = make_metadata("Houses", self.structure.section, code="HouseBaseLayer")
+        house = make_component(self.slum, base_layer, "35")
+        self.post_mapping({"subject_uuid": "sub-1", "structure_id": "0035", "avni_uuid": SLUM_UUID})
+        self.assertEqual(SubjectStructureMapping.objects.get(subject_uuid="sub-1").component, house)
 
     def test_unknown_structure_is_recorded_without_a_footprint(self):
         response = self.post_mapping({"subject_uuid": "sub-1", "structure_id": "999", "avni_uuid": SLUM_UUID})

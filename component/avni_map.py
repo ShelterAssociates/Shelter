@@ -5,7 +5,8 @@ building they are standing in front of instead of typing the house number.
 For that it needs two things from us:
 
 * ``GET  /component/get_structures_for_avni/?avni_uuid=<AddressLevel uuid>``
-  every Structure footprint of the slum as a GeoJSON FeatureCollection,
+  every house footprint of the slum (Structure, or HouseBaseLayer for slums
+  without one) as a GeoJSON FeatureCollection, plus the slum ``boundary``,
   gzip-compressed when the client accepts it (8-9k polygons is ~5 MB raw,
   ~400 KB gzipped). Downloaded once per sync and cached on the phone.
 * ``POST /component/map_subject_to_structure/``
@@ -36,8 +37,9 @@ from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.gzip import gzip_page
 from django.views.decorators.http import require_GET, require_POST
 
+from avni import mappings
 from avni.locations import slum_id_for_location_uuid
-from component.models import Component, SubjectStructureMapping
+from component.models import Component, Metadata, SubjectStructureMapping
 from master.models import Slum
 from survey.identity import household_number_from
 
@@ -45,6 +47,8 @@ logger = logging.getLogger(__name__)
 
 API_KEY_HEADER = "HTTP_X_AVNI_GIS_KEY"
 STRUCTURE_METADATA_NAME = "Structure"
+HOUSE_BASE_LAYER_CODE = "HouseBaseLayer"
+BOUNDARY_METADATA_NAME = "Slum boundary"
 
 
 def error(message, status):
@@ -83,7 +87,47 @@ def slum_for_avni_uuid(avni_uuid):
 
 
 def structure_components(slum):
-    return Component.objects.filter(component_slum=slum, metadata__name=STRUCTURE_METADATA_NAME)
+    # Slums digitised before the Structure layer existed only have a HouseBaseLayer (as the export view).
+    components = Component.objects.filter(component_slum=slum)
+    structures = components.filter(metadata__name=STRUCTURE_METADATA_NAME)
+    return structures if structures.exists() else components.filter(metadata__code=HOUSE_BASE_LAYER_CODE)
+
+
+def concepts_for_rhs_key(rhs_key):
+    """Avni concept names the sync writes to this rhs_data key; the key itself when it is written through unchanged."""
+    concepts = []
+    for table in (mappings.RHS_KEYS, mappings.FACTSHEET_KEYS, mappings.SANITATION_KEYS):
+        if table.get(rhs_key) and table[rhs_key] not in concepts:
+            concepts.append(table[rhs_key])
+    for concept, key in mappings.KNOWN_QUESTION_MAP.items():
+        if key == rhs_key and concept not in concepts:
+            concepts.append(concept)
+    return concepts or [rhs_key]
+
+
+def filter_styles():
+    """The website's filter rows as {concepts, answers, colours}, so the app can colour the same answers the same way."""
+    styles = []
+    for metadata in Metadata.objects.filter(type="F").exclude(code__isnull=True).order_by("section__order", "order", "id"):
+        question, separator, options = (metadata.code or "").partition(":")
+        blob = metadata.blob or {}
+        answers = [option.strip() for option in options.split("|,|") if option.strip()]
+        if not separator or not answers or not blob.get("polycolor"):
+            continue
+        styles.append({
+            "name": metadata.name,
+            "concepts": concepts_for_rhs_key(question.strip()),
+            "answers": answers,
+            "polycolor": blob.get("polycolor"),
+            "linecolor": blob.get("linecolor"),
+        })
+    return styles
+
+
+def slum_boundary(slum):
+    uploaded = Component.objects.filter(component_slum=slum, metadata__name=BOUNDARY_METADATA_NAME).first()
+    shape = uploaded.shape if uploaded is not None else slum.shape
+    return json.loads(shape.geojson) if shape is not None else None
 
 
 @require_GET
@@ -102,6 +146,8 @@ def get_structures_for_avni(request):
         "avni_uuid": request.GET.get("avni_uuid"),
         "slum_id": slum.id,
         "slum_name": slum.name,
+        "boundary": slum_boundary(slum),
+        "filters": filter_styles(),
         "total": len(features),
         "features": features,
     }
