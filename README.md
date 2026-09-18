@@ -331,11 +331,14 @@ After deploying: `python manage.py makemigrations avni avni_console notification
 then `python manage.py seed_notification_config` (new email purposes `avni_console_activity`,
 `avni_bulk_update` and job definitions), then `python manage.py run_job avni_form_cache_refresh`.
 
-**What the daily digest (06:00) contains**: every run of the nightly sync (all steps: household / structure / DSES
-registrations, daily reporting, family factsheets, mobilization, household encounters, members), every manual sync
-queued from the console or the shell, the dashboard update and the form cache refresh — each step with
-`N synced (c created, u updated), f failed, s skipped` and its window. Bulk updates into AVNI and the `selftest` job
-are **not** in the digest (`include_in_digest` off, set by the seed): a bulk update mails developer + data team
+**What the nightly digest (06:00) contains**: a short plain-text summary, for management, of the **scheduled** runs
+only (`trigger` cron/chained): the nightly sync (all steps: household / structure / DSES registrations, daily
+reporting, family factsheets, mobilization, household encounters, members), the dashboard update, the form cache
+refresh and the cleanup — each step as `N synced (c created, u updated), f failed, s skipped` with a per-city table,
+plus one `Cause:` line where a step failed or a run hung. No record-level lines, no tracebacks, no attachments.
+Manual runs (console, admin, shell `--trigger manual`) are **not** in it: every queued request is mailed on its
+own as it finishes (activity report, developer + data team + requester). Bulk updates into AVNI and the `selftest`
+job are also out (`include_in_digest` off, set by the seed): a bulk update mails developer + data team
 immediately with `changes.csv`.
 
 Large spreadsheets (over the row cap) are run by the developer from the shell, any size, any worker count:
@@ -468,7 +471,7 @@ The crontab is not in the repo; each `deploy/*.sh` header carries its own line. 
 */2 * * * *   bash /srv/Shelter/deploy/PHOTO_EXPORT_RUNNER.sh       # queued photo exports
 0 23 1,16 * * bash /srv/Shelter/deploy/dashboard_update.sh         # fortnightly dashboard rebuild
 0 5 * * *     bash /srv/Shelter/deploy/CLEANUP_GENERATED_FILES.sh  # reaps job reports and exports
-0 6 * * *     bash /srv/Shelter/deploy/JOB_DIGEST.sh               # the daily digest mail
+0 6 * * *     bash /srv/Shelter/deploy/JOB_DIGEST.sh               # the nightly digest mail
 ```
 
 Keep the times in step with the `JobDefinition` rows in admin (`expected_times`, `expected_days_of_month`): those

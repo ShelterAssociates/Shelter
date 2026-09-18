@@ -177,37 +177,32 @@ class ExecuteTests(QueueTestCase):
 
 @override_settings(DEBUG=False, JOB_NOTIFY_FALLBACK_EMAILS=["team@shelter-associates.org"])
 class DigestQueueHealthTests(QueueTestCase):
-    """The daily digest covers manual runs and the queue's health."""
+    """The nightly digest leaves manual runs to their activity mail but flags a stuck queue."""
 
     def digest_body(self):
         from django.core import mail
-        from notification.services import email as job_email
+        from django.core.management import call_command
 
-        runs = list(JobRun.objects.all())
-        job_email.send_digest(runs, [], timezone.now() - timedelta(days=1), timezone.now())
-        return mail.outbox[-1].alternatives[0][0]
+        call_command("send_job_digest")
+        return mail.outbox[-1].body
 
-    def test_manual_runs_show_requester_and_params(self):
-        queue.enqueue("fake", {"items": ["1"], "from_date": "2026-01-01"}, self.user)
-        queue.run(queue.claim_next())
+    def test_manual_runs_are_not_in_the_nightly_digest(self):
+        queue.enqueue("fake", {"items": ["1", "bad"]}, self.user)
+        request = queue.run(queue.claim_next())
         body = self.digest_body()
-        self.assertIn("data-team", body)
-        self.assertIn("2026-01-01", body)
-        self.assertIn("Requested by", body)
+        self.assertNotIn("fake", body)
+        self.assertNotIn("bad item", body)
+        self.assertIn("No scheduled runs were recorded", body)
+        self.assertIsNone(JobRun.objects.get(pk=request.job_run.pk).included_in_digest_at)
 
     def test_stuck_queue_is_flagged(self):
         request = queue.enqueue("fake", {}, self.user)
         JobRequest.objects.filter(pk=request.pk).update(scheduled_for=timezone.now() - timedelta(hours=3))
         body = self.digest_body()
-        self.assertIn("JOB_QUEUE_RUNNER", body)
-        self.assertIn("#{}".format(request.pk), body)
+        self.assertIn("Status: FAILED (1 queued request(s) never picked up", body)
+        self.assertIn("#{} fake".format(request.pk), body)
 
-    def test_failed_requests_without_a_run_are_listed(self):
-        request = queue.enqueue("fake", {}, self.user)
-        JobRequest.objects.filter(pk=request.pk).update(status="failed", error=queue.ORPHAN_MESSAGE, finished_on=timezone.now())
+    def test_healthy_queue_has_no_queue_line(self):
         body = self.digest_body()
-        self.assertIn("Stopped unexpectedly", body)
-
-    def test_healthy_queue_has_no_queue_section(self):
-        body = self.digest_body()
-        self.assertNotIn("Queue problems", body)
+        self.assertIn("Status: OK", body)
+        self.assertNotIn("never picked up", body)
