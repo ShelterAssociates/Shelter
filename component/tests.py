@@ -8,10 +8,10 @@ from django.contrib.contenttypes.models import ContentType
 from django.contrib.gis.geos import Polygon
 from django.test import TestCase, override_settings
 
-from avni import locations
 from avni.models import AvniForm, AvniFormQuestion, AvniMapFilter
 from avni.tests.support import make_city, make_slum
 from component.models import Component, Metadata, Section, SubjectStructureMapping
+from survey.models import SlumAlias
 
 SLUM_UUID = "e275c12b-149e-485a-a9db-93f02a10547c"
 KEY = "test-gis-key"
@@ -44,14 +44,7 @@ class AvniMapTestCase(TestCase):
         section = Section.objects.create(name="Structures", order=1)
         self.structure = make_metadata("Structure", section)
         self.road = make_metadata("Road", section)
-        self.uuid_map = {str(self.slum.id): SLUM_UUID}
-        locations.slum_location_uuids.cache_clear()
-        locations.slum_ids_by_location_uuid.cache_clear()
-        patcher = mock.patch.object(locations, "slum_location_uuids", return_value=self.uuid_map)
-        patcher.start()
-        self.addCleanup(patcher.stop)
-        self.addCleanup(locations.slum_location_uuids.cache_clear)
-        self.addCleanup(locations.slum_ids_by_location_uuid.cache_clear)
+        SlumAlias.objects.create(slum=self.slum, provider="avni", external_id=SLUM_UUID)
 
     def get_structures(self, avni_uuid=SLUM_UUID, key=KEY, **extra):
         query = {"avni_uuid": avni_uuid} if avni_uuid is not None else {}
@@ -166,9 +159,8 @@ class GetStructuresTests(AvniMapTestCase):
         self.assertIn("no slum is mapped", response.json()["error"])
 
     def test_mapped_uuid_for_a_deleted_slum_is_404(self):
-        self.uuid_map[str(self.slum.id + 1000)] = "orphan-uuid"
-        locations.slum_ids_by_location_uuid.cache_clear()
-        self.assertEqual(self.get_structures(avni_uuid="orphan-uuid").status_code, 404)
+        with mock.patch("component.avni_map.slum_id_for_location_uuid", return_value=self.slum.id + 1000):
+            self.assertEqual(self.get_structures(avni_uuid="orphan-uuid").status_code, 404)
 
     def test_wrong_key_is_401(self):
         self.assertEqual(self.get_structures(key="wrong").status_code, 401)

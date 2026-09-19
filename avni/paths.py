@@ -42,3 +42,7 @@ def program_encounter(uuid):
 
 def program_enrolment(uuid):
     return "api/programEnrolment/" + uuid
+
+
+def locations(since):
+    return "api/locations?lastModifiedDateTime=" + quote(str(since), safe="")

@@ -111,7 +111,13 @@ JOBS = [
     {"key": "member_sync", "display_name": "Family member sync (manual)", "expected_times": "", "max_runtime_minutes": 180},
     {"key": "subject_sync", "display_name": "Subject sync from the explorer (manual)", "expected_times": "", "max_runtime_minutes": 240},
     {"key": "file_import", "display_name": "JSON file import (manual)", "expected_times": "", "max_runtime_minutes": 120},
-    {"key": "avni_form_cache_refresh", "display_name": "AVNI form cache refresh", "expected_times": "01:30", "max_runtime_minutes": 60},
+    {
+        "key": "avni_form_cache_refresh",
+        "display_name": "AVNI form cache refresh",
+        "expected_times": "01:30",
+        "max_runtime_minutes": 60,
+        "steps": ["form_cache_refresh", "survey_catalog", "slum_locations"],
+    },
     {
         "key": "dashboard_update",
         "display_name": "Dashboard update",

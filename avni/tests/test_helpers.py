@@ -2,9 +2,11 @@
 
 from datetime import date, datetime
 
-from django.test import SimpleTestCase
+from django.test import SimpleTestCase, TestCase
 
 from avni import locations, mappings, paths, window
+from avni.tests.support import make_city, make_slum
+from survey.models import SlumAlias
 
 
 class PathTests(SimpleTestCase):
@@ -109,15 +111,21 @@ class OverrideTests(SimpleTestCase):
         self.assertEqual(data, {"Type_of_structure_occupancy": "Shop"})
 
 
-class LocationLookupTests(SimpleTestCase):
+class LocationLookupTests(TestCase):
+    UUID = "9c393ef0-9c69-400d-b908-86aa1fcb75f2"
+
+    def setUp(self):
+        self.slum = make_slum(make_city())
+        SlumAlias.objects.create(slum=self.slum, provider="avni", external_id=self.UUID)
+
     def test_uuid_resolves_to_the_slum_it_was_mapped_from(self):
-        slum_id = locations.mapped_slum_ids()[0]
-        uuid = locations.slum_location_uuid(slum_id)
-        self.assertEqual(locations.slum_id_for_location_uuid(uuid), slum_id)
+        self.assertEqual(locations.mapped_slum_ids(), [self.slum.id])
+        self.assertEqual(locations.slum_location_uuid(self.slum.id), self.UUID)
+        self.assertEqual(locations.slum_id_for_location_uuid(self.UUID), self.slum.id)
+
+    def test_unmapped_slum_is_none(self):
+        self.assertIsNone(locations.slum_location_uuid(self.slum.id + 1000))
 
     def test_unknown_uuid_is_none(self):
         self.assertIsNone(locations.slum_id_for_location_uuid("00000000-0000-0000-0000-000000000000"))
         self.assertIsNone(locations.slum_id_for_location_uuid(None))
-
-    def test_every_uuid_maps_to_exactly_one_slum(self):
-        self.assertEqual(len(locations.slum_ids_by_location_uuid()), len(locations.slum_location_uuids()))

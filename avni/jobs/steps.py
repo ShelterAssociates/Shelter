@@ -10,7 +10,7 @@ logger = logging.getLogger(__name__)
 SYNC_LOGGERS = [
     "avni.sync.households", "avni.sync.encounters", "avni.sync.program_encounters",
     "avni.sync.mobilization", "avni.sync.rim", "avni.sync.file_imports", "avni.sync.members",
-    "avni.sync.structures", "avni.provider",
+    "avni.sync.structures", "avni.sync.locations", "avni.provider",
     "survey.connector", "survey.store", "survey.concepts", "survey.switches",
 ]
 

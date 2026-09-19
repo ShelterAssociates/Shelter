@@ -16,8 +16,8 @@ For that it needs two things from us:
   number afterwards.
 
 The slum is resolved from the AddressLevel uuid through the same
-slum_location_uuids.json the syncs use (avni.locations), so a slum is
-"map-enabled" as soon as it has an Avni location mapped there.
+survey.SlumAlias rows the syncs use (avni.locations; Survey > Slum aliases
+in the admin), so a slum is "map-enabled" as soon as it has an avni alias.
 
 Both endpoints are authenticated with a shared key the app sends in the
 ``X-Avni-Gis-Key`` header (``settings.AVNI_GIS_API_KEY``, per environment in
@@ -82,7 +82,7 @@ def slum_for_avni_uuid(avni_uuid):
         return None, error("no slum is mapped to avni_uuid {}".format(avni_uuid), 404)
     slum = Slum.objects.filter(id=slum_id).first()
     if slum is None:
-        logger.error("slum_location_uuids.json maps %s to slum %s, which does not exist", avni_uuid, slum_id)
+        logger.error("SlumAlias maps %s to slum %s, which does not exist", avni_uuid, slum_id)
         return None, error("slum {} for avni_uuid {} not found".format(slum_id, avni_uuid), 404)
     return slum, None
 

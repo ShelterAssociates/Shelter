@@ -76,6 +76,25 @@ class ConceptAlias(models.Model):
         return "{}:{}".format(self.provider, self.external_name or self.external_id)
 
 
+class SlumAlias(models.Model):
+    """How one provider identifies a slum: its own id (AVNI: the AddressLevel uuid)."""
+
+    slum = models.ForeignKey("master.Slum", on_delete=models.CASCADE, related_name="aliases")
+    provider = models.CharField(max_length=30)
+    external_id = models.CharField(max_length=200)
+    external_name = models.CharField(max_length=500, blank=True)
+
+    class Meta:
+        db_table = "survey_slum_alias"
+        unique_together = (("slum", "provider"), ("provider", "external_id"))
+        ordering = ("provider", "slum")
+        verbose_name = "Slum alias"
+        verbose_name_plural = "Slum aliases"
+
+    def __str__(self):
+        return "{}:{} -> {}".format(self.provider, self.external_id, self.slum)
+
+
 class SlumDataVersion(models.Model):
     """A slum's data starts again from `started_on`; earlier versions are frozen."""
 
