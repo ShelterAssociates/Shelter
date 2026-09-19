@@ -8,3 +8,4 @@ package-lock.json
 */migrations/0*.py
 .scannerwork/
 sonar-project.properties
+shelter/keys/shelter-generic-release-key.keystore

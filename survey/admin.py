@@ -6,7 +6,7 @@ from django.utils import timezone
 from django.utils.html import format_html
 
 from survey import switches
-from survey.models import Answer, Concept, ConceptAlias, Record, SlumDataVersion, SyncSwitch
+from survey.models import Answer, Concept, ConceptAlias, Record, SlumAlias, SlumDataVersion, SyncSwitch
 
 
 class ConceptAliasInline(admin.TabularInline):
@@ -66,6 +66,17 @@ class RecordAdmin(admin.ModelAdmin):
 
     def has_delete_permission(self, request, obj=None):
         return False
+
+
+@admin.register(SlumAlias)
+class SlumAliasAdmin(admin.ModelAdmin):
+    """Map a slum to a provider's location id here instead of a deploy."""
+
+    list_display = ("slum", "provider", "external_id", "external_name")
+    list_filter = ("provider",)
+    search_fields = ("slum__name", "external_id", "external_name")
+    raw_id_fields = ("slum",)
+    list_select_related = ("slum",)
 
 
 @admin.register(SlumDataVersion)

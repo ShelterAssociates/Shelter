@@ -2,12 +2,22 @@
 
 After the forms are cached, the survey concept dictionary claims a key for
 every question and answer and the sync switches are brought in line with the
-catalog. Run this before the first backfill so the clean keys win.
+catalog. Run this before the first backfill so the clean keys win. The last
+step aliases slums newly present in both AVNI and master.Slum (exact name +
+city only) so a slum is map-enabled the night after it is created in both.
 """
 
 from avni import metadata
+from avni.jobs.steps import run_step
+from avni.sync import locations
 from notification.services import reporting
 from survey import concepts, connector, switches
+
+
+def sync_slum_locations():
+    counts = locations.run(apply=True, out=locations.logger.info)
+    reporting.note(**counts)
+    return counts
 
 
 def run(recorder, params=None):
@@ -39,3 +49,4 @@ def run(recorder, params=None):
         for _ in catalog:
             with reporting.record():
                 pass
+    run_step(recorder, "slum_locations", sync_slum_locations)
