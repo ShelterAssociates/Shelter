@@ -21,7 +21,7 @@ import zipfile
 import time as pytime
 from concurrent.futures import ThreadPoolExecutor
 from calendar import monthrange
-from datetime import date, datetime
+from datetime import date, datetime as DateTime
 from django.contrib.auth.decorators import login_required
 from .kobotoolbox import *
 from .forms import KMLUpload
@@ -351,7 +351,7 @@ def kml_upload(request):
                     "uploaded_by": request.user.username,
                     "parsed": context_data["parsed"],
                     "unparsed": context_data["unparsed"],
-                    "timestamp": datetime.now(),
+                    "timestamp": DateTime.now(),
                     "metric": metric_info,
                 }
                 # Only notify on a real, fully-saved upload — a failed/
@@ -1231,7 +1231,7 @@ def delete_component(request):
             "deleted_count": deleted_count,
             "deleted_by": request.user.username,
             "reason": reason,
-            "timestamp": datetime.now(),
+            "timestamp": DateTime.now(),
             **location_context,
         }
 
@@ -1355,7 +1355,7 @@ def set_component_metric(request):
             "old_unit_label": existing.unit_label if existing else None,
             "updated_by": request.user.username,
             "reason": reason,
-            "timestamp": datetime.now(),
+            "timestamp": DateTime.now(),
             **location_context,
         }
 
