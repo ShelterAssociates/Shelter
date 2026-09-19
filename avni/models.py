@@ -72,3 +72,28 @@ class AvniFormQuestion(models.Model):
 
     def __str__(self):
         return "{} -> {}".format(self.question_name, self.concept_name)
+
+
+class AvniMapFilter(models.Model):
+    """A coded concept the mobile map offers as a household filter, picked from the cached AVNI form questions."""
+
+    question = models.ForeignKey(
+        AvniFormQuestion, on_delete=models.PROTECT, related_name="map_filters",
+        limit_choices_to={"data_type": "Coded", "is_active": True}, verbose_name="concept",
+    )
+    concept_uuid = models.CharField(max_length=100, unique=True, editable=False)
+    concept_name = models.CharField(max_length=500, editable=False)
+    order = models.FloatField(default=0)
+    is_active = models.BooleanField(default=True)
+
+    class Meta:
+        ordering = ("order", "concept_name")
+        verbose_name = "Map filter"
+
+    def save(self, *args, **kwargs):
+        self.concept_uuid = self.question.concept_uuid
+        self.concept_name = self.question.concept_name
+        super(AvniMapFilter, self).save(*args, **kwargs)
+
+    def __str__(self):
+        return self.concept_name

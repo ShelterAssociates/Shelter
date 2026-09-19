@@ -9,6 +9,7 @@ from django.contrib.gis.geos import Polygon
 from django.test import TestCase, override_settings
 
 from avni import locations
+from avni.models import AvniForm, AvniFormQuestion, AvniMapFilter
 from avni.tests.support import make_city, make_slum
 from component.models import Component, Metadata, Section, SubjectStructureMapping
 
@@ -128,6 +129,22 @@ class GetStructuresTests(AvniMapTestCase):
             {"name": "Rented", "concepts": ["Ownership status of the house_1"],
              "answers": ["Rented"], "polycolor": "#0000AA", "linecolor": None},
         ])
+
+    def test_map_filters_are_the_active_concepts_chosen_in_admin_in_order(self):
+        form = AvniForm.objects.create(uuid="f1", name="Household registration", form_type="IndividualProfile", definition={})
+        question = lambda uuid, name: AvniFormQuestion.objects.create(
+            form=form, uuid="q-" + uuid, question_name=name, concept_name=name, concept_uuid=uuid, data_type="Coded")
+        AvniMapFilter.objects.create(question=question("w", "Water source"), order=2)
+        AvniMapFilter.objects.create(question=question("t", "Do you have a toilet at home?"), order=1)
+        AvniMapFilter.objects.create(question=question("x", "Hidden"), order=0, is_active=False)
+        collection = json.loads(self.get_structures().content.decode("utf-8"))
+        self.assertEqual(collection["map_filters"], [
+            {"concept_uuid": "t", "concept_name": "Do you have a toilet at home?"},
+            {"concept_uuid": "w", "concept_name": "Water source"},
+        ])
+
+    def test_map_filters_is_empty_until_configured(self):
+        self.assertEqual(json.loads(self.get_structures().content.decode("utf-8"))["map_filters"], [])
 
     def test_gzips_when_the_client_accepts_it(self):
         response = self.get_structures(HTTP_ACCEPT_ENCODING="gzip")

@@ -39,6 +39,7 @@ from django.views.decorators.http import require_GET, require_POST
 
 from avni import mappings
 from avni.locations import slum_id_for_location_uuid
+from avni.models import AvniMapFilter
 from component.models import Component, Metadata, SubjectStructureMapping
 from master.models import Slum
 from survey.identity import household_number_from
@@ -102,6 +103,8 @@ def concepts_for_rhs_key(rhs_key):
     for concept, key in mappings.KNOWN_QUESTION_MAP.items():
         if key == rhs_key and concept not in concepts:
             concepts.append(concept)
+    if not concepts:
+        logger.info("Filter key %r has no Avni concept in avni.mappings; the app matches it by name", rhs_key)
     return concepts or [rhs_key]
 
 
@@ -122,6 +125,11 @@ def filter_styles():
             "linecolor": blob.get("linecolor"),
         })
     return styles
+
+
+def map_filters():
+    """Concepts the app may offer as filters; empty means not configured and the app offers every coded concept."""
+    return list(AvniMapFilter.objects.filter(is_active=True).values("concept_uuid", "concept_name"))
 
 
 def slum_boundary(slum):
@@ -148,6 +156,7 @@ def get_structures_for_avni(request):
         "slum_name": slum.name,
         "boundary": slum_boundary(slum),
         "filters": filter_styles(),
+        "map_filters": map_filters(),
         "total": len(features),
         "features": features,
     }
