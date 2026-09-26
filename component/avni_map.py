@@ -39,7 +39,7 @@ from django.views.decorators.http import require_GET, require_POST
 
 from avni import mappings
 from avni.locations import slum_id_for_location_uuid
-from avni.models import AvniMapFilter
+from avni.models import AvniFormMapping, AvniMapFilter
 from component.models import Component, Metadata, SubjectStructureMapping
 from master.models import Slum
 from survey.identity import household_number_from
@@ -132,6 +132,14 @@ def map_filters():
     return list(AvniMapFilter.objects.filter(is_active=True).values("concept_uuid", "concept_name"))
 
 
+def map_registration_subject_types():
+    """Subject types whose registration picks a structure on the map first; empty means every form opens directly."""
+    subject_types = AvniFormMapping.objects.filter(
+        is_active=True, form__is_active=True, form__shows_map=True, form__form_type="IndividualProfile",
+    ).values_list("subject_type", flat=True)
+    return sorted({name for name in subject_types if name})
+
+
 def slum_boundary(slum):
     uploaded = Component.objects.filter(component_slum=slum, metadata__name=BOUNDARY_METADATA_NAME).first()
     shape = uploaded.shape if uploaded is not None else slum.shape
@@ -157,6 +165,7 @@ def get_structures_for_avni(request):
         "boundary": slum_boundary(slum),
         "filters": filter_styles(),
         "map_filters": map_filters(),
+        "map_registration_subject_types": map_registration_subject_types(),
         "total": len(features),
         "features": features,
     }
