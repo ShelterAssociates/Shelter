@@ -20,6 +20,9 @@ class AvniForm(models.Model):
     definition = JSONField(null=True, blank=True)
     fetched_on = models.DateTimeField(default=timezone.now)
     is_active = models.BooleanField(default=True)
+    shows_map = models.BooleanField(
+        default=False, verbose_name="opens the slum map",
+        help_text="Subject registration forms only: the app picks the structure on the map before this form.")
 
     class Meta:
         ordering = ("name",)

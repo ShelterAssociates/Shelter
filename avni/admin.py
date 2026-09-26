@@ -12,8 +12,9 @@ class AvniFormMappingInline(admin.TabularInline):
 
 @admin.register(AvniForm)
 class AvniFormAdmin(admin.ModelAdmin):
-    list_display = ("name", "form_type", "is_active", "fetched_on", "question_count")
-    list_filter = ("form_type", "is_active")
+    list_display = ("name", "form_type", "shows_map", "is_active", "fetched_on", "question_count")
+    list_editable = ("shows_map",)
+    list_filter = ("form_type", "shows_map", "is_active")
     search_fields = ("name", "uuid")
     readonly_fields = ("uuid", "name", "form_type", "fetched_on", "is_active", "definition")
     inlines = [AvniFormMappingInline]
