@@ -22,6 +22,14 @@
           factsheet or recorded construction progress. Photos only exist for surveyed
           households. <a href="?all=1">Show all {{ total_count }}</a>
         {% endif %}
+        {% if selected_financial_year %}
+          &mdash; filtered to FY {{ selected_financial_year }} ({{ selected_date_field_label }}).
+          <a href="?{% if show_all %}all=1{% endif %}">Clear year filter</a>
+        {% endif %}
+        {% if selected_sponsor_names %}
+          &mdash; filtered to sponsor{{ selected_sponsor_names|length|pluralize }}
+          {{ selected_sponsor_names|join:", " }}.
+        {% endif %}
       </p>
     </div>
     {% if can_download %}
@@ -31,7 +39,7 @@
 
   {% if can_download %}
   <div class="ph-card">
-    <div class="ph-card-head"><h2 class="ph-card-title">Export filters</h2></div>
+    <div class="ph-card-head"><h2 class="ph-card-title">Filter &amp; export</h2></div>
     <div class="ph-card-body">
       <div class="ph-field">
         <span class="ph-label">Photo types to include</span>
@@ -53,7 +61,7 @@
           <select id="filterFY" class="ph-select" style="max-width:200px;">
             <option value="">Any</option>
             {% for year, label in financial_years %}
-              <option value="{{ year }}">{{ label }}</option>
+              <option value="{{ year }}" {% if year|stringformat:"s" == selected_financial_year %}selected{% endif %}>{{ label }}</option>
             {% endfor %}
           </select>
         </label>
@@ -61,7 +69,7 @@
           <span class="ph-label">Based on date</span>
           <select id="filterDateField" class="ph-select" style="max-width:240px;">
             {% for field, label in fy_date_fields %}
-              <option value="{{ field }}">{{ label }}</option>
+              <option value="{{ field }}" {% if field == selected_date_field %}selected{% endif %}>{{ label }}</option>
             {% endfor %}
           </select>
         </label>
@@ -71,6 +79,28 @@
                  style="max-width:300px;" placeholder="you@shelter-associates.org" />
         </label>
       </div>
+      <p class="ph-note" style="margin:8px 0 0;">
+        Financial year narrows both the table below and the export. Leave it on "Any" to see or export every household.
+      </p>
+
+      {% if sponsors %}
+        <div class="ph-field" style="margin-top:16px;">
+          <span class="ph-label">Sponsor</span>
+          <div class="ph-chiprow" id="sponsorRow">
+            {% for sponsor in sponsors %}
+              <label class="ph-check">
+                <input type="checkbox" class="filter-sponsor" value="{{ sponsor.id }}"
+                       {% if sponsor.id in selected_sponsor_ids %}checked{% endif %} />
+                {{ sponsor.organization_name }}
+              </label>
+            {% endfor %}
+          </div>
+          <p class="ph-note" style="margin:8px 0 0;">
+            Pick one or more sponsors to narrow the table to households covered by any of them. Leave all
+            unchecked to see every household.
+          </p>
+        </div>
+      {% endif %}
     </div>
   </div>
   {% endif %}
@@ -192,6 +222,26 @@
     });
 
     {% if can_download %}
+    // Changing the year or sponsor filter reloads the page so the table
+    // (server-side filtered) and the export payload always agree on what
+    // "this year" / "this sponsor" means.
+    function reloadWithFilters() {
+      var fy = $("#filterFY").val();
+      var params = new URLSearchParams();
+      {% if show_all %}params.set("all", "1");{% endif %}
+      if (fy) {
+        params.set("financial_year", fy);
+        params.set("date_field", $("#filterDateField").val());
+      }
+      $(".filter-sponsor:checked").each(function () {
+        params.append("sponsor", this.value);
+      });
+      var qs = params.toString();
+      window.location.href = window.location.pathname + (qs ? "?" + qs : "");
+    }
+    $("#filterFY, #filterDateField").on("change", reloadWithFilters);
+    $(".filter-sponsor").on("change", reloadWithFilters);
+
     var selected = {};
     function refresh() { $("#selectedCount").text(Object.keys(selected).length); }
 

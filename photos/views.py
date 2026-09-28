@@ -112,6 +112,25 @@ def photo_slum(request, slum_id):
 
     show_all = request.GET.get("all") == "1"
 
+    date_field = request.GET.get("date_field") or None
+    if date_field not in collect.FY_DATE_FIELD_NAMES:
+        date_field = None
+    financial_year = request.GET.get("financial_year") or None
+    fy_numbers = collect.households_matching_financial_year(
+        slum.id, date_field, financial_year
+    )
+
+    sponsors = collect.sponsors_for_slum(slum.id)
+    valid_sponsor_ids = {sponsor.id for sponsor in sponsors}
+    selected_sponsor_ids = {
+        int(value)
+        for value in request.GET.getlist("sponsor")
+        if value.isdigit() and int(value) in valid_sponsor_ids
+    }
+    sponsor_numbers = collect.households_matching_sponsors(
+        slum.id, selected_sponsor_ids
+    )
+
     tc_numbers = {
         normalize_household_number(number)
         for number in ToiletConstruction.objects.filter(slum_id=slum.id).values_list(
@@ -128,6 +147,10 @@ def photo_slum(request, slum_id):
     for record in queryset.order_by("household_number"):
         ff_data = record.ff_data or {}
         lookup_number = normalize_household_number(record.household_number)
+        if fy_numbers is not None and lookup_number not in fy_numbers:
+            continue
+        if sponsor_numbers is not None and lookup_number not in sponsor_numbers:
+            continue
         source = sources.household_source(ff_data, record.rhs_data)
         households.append(
             {
@@ -157,6 +180,16 @@ def photo_slum(request, slum_id):
             "photo_types": avni_media.PHOTO_TYPES,
             "fy_date_fields": collect.FY_DATE_FIELDS,
             "financial_years": financial_year_choices(),
+            "selected_financial_year": financial_year or "",
+            "selected_date_field": date_field or "",
+            "selected_date_field_label": dict(collect.FY_DATE_FIELDS).get(date_field, ""),
+            "sponsors": sponsors,
+            "selected_sponsor_ids": selected_sponsor_ids,
+            "selected_sponsor_names": [
+                sponsor.organization_name
+                for sponsor in sponsors
+                if sponsor.id in selected_sponsor_ids
+            ],
         },
     )
 
