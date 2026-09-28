@@ -20,6 +20,7 @@ from photos.utils import (
     household_number_variants,
     normalize_household_number,
 )
+from sponsor.models import Sponsor, SponsorProjectDetails
 
 logger = logging.getLogger(__name__)
 
@@ -137,6 +138,32 @@ def households_matching_financial_year(slum_id, date_field, fy_start_year):
         slum_id=slum_id, **{"{}__range".format(date_field): (start, end)}
     ).values_list("household_number", flat=True)
     return {normalize_household_number(number) for number in numbers}
+
+
+def sponsors_for_slum(slum_id):
+    """Sponsors that have a project covering this slum, for the filter dropdown."""
+    return (
+        Sponsor.objects.filter(sponsorprojectdetails__slum_id=slum_id)
+        .distinct()
+        .order_by("organization_name")
+    )
+
+
+def households_matching_sponsors(slum_id, sponsor_ids):
+    """Normalised household numbers covered by ANY of the given sponsors.
+
+    Returns None when no sponsor filter is active, same convention as
+    households_matching_financial_year.
+    """
+    if not sponsor_ids:
+        return None
+    numbers = set()
+    for household_code in SponsorProjectDetails.objects.filter(
+        slum_id=slum_id, sponsor_id__in=sponsor_ids
+    ).values_list("household_code", flat=True):
+        for code in household_code or []:
+            numbers.add(normalize_household_number(code))
+    return numbers
 
 
 def slum_household_records(slum_id, household_numbers=None, date_field=None,
