@@ -9,3 +9,4 @@ package-lock.json
 .scannerwork/
 sonar-project.properties
 shelter/keys/shelter-generic-release-key.keystore
+temp_scripts/
