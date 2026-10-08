@@ -349,13 +349,212 @@ $(document).ready(function () {
         if (step === "result") $uploadStepResult.show();
     }
 
-    function showUploadResult(isSuccess, message, detail) {
+    const $uploadDialog = $uploadModalOverlay.find(".ku-modal-dialog");
+    const $uploadErrorsBox = $uploadModalOverlay.find(".ku-upload-errors");
+    const $uploadErrorList = $uploadModalOverlay.find(".ku-upload-error-list");
+    const $copyErrorsBtn = $("#kmlUploadCopyErrorsBtn");
+    const COPY_ERRORS_LABEL = $copyErrorsBtn.text() || "Copy all errors";
+    let lastUploadErrors = [];
+
+    // '"<folder>" -> <placemark>: <reason>' as produced by KMLValidationError
+    const KML_ERROR_RE = /^"([^"]*)"\s*->\s*(.+?):\s([\s\S]*)$/;
+
+    /** Turn one raw server error reason into a readable title/explanation/fix. */
+    function classifyKmlError(reason) {
+        const lower = reason.toLowerCase();
+
+        if (lower.indexOf("degenerate") !== -1) {
+            return {
+                title: "Empty or zero-length geometry",
+                explanation: "This placemark has no usable shape — it holds no points, or all of its points sit on the exact same spot.",
+                fix: "Delete this feature, or redraw it with at least 2 distinct points."
+            };
+        }
+
+        if (lower.indexOf("self-intersect") !== -1 || lower.indexOf("self intersect") !== -1 || lower.indexOf("invalid") !== -1) {
+            const point = reason.match(/\[\s*(-?[\d.]+)[\s,]+(-?[\d.]+)\s*\]/);
+            let explanation = "The outline of this shape crosses over or touches itself, so its area cannot be calculated.";
+            if (point) {
+                explanation += " The problem point is at lon " + point[1] + ", lat " + point[2] + ".";
+            }
+            return {
+                title: "Shape crosses or touches itself",
+                explanation: explanation,
+                fix: "Remove duplicate or near-duplicate vertices and redraw that corner in QGIS or Google Earth, then export again."
+            };
+        }
+
+        const duplicate = reason.match(/duplicate placemark id\s+"([^"]*)"/i);
+        if (duplicate) {
+            return {
+                title: "Duplicate house number " + duplicate[1],
+                explanation: "Two placemarks in the same folder carry the house number " + duplicate[1] + ", so they cannot be told apart.",
+                fix: "Give each feature a unique HouseNo/ID value before exporting."
+            };
+        }
+
+        if (lower.indexOf("multigeometry polygon not supported") !== -1) {
+            const count = reason.match(/bundles\s+(\d+)\s+polygons?/);
+            const explanation = "This placemark is a multi-geometry polygon \u2014 "
+                + (count && count[1] === "1"
+                    ? "it wraps a single polygon in a multi-geometry container"
+                    : "it bundles " + (count ? count[1] + " separate polygons" : "several separate polygons") + " into one feature")
+                + ". Multi-geometry polygons are not supported, so this file cannot be uploaded as it is.";
+            return {
+                title: "Multi-geometry polygon \u2014 not supported",
+                explanation: explanation,
+                fix: 'Split it into one placemark per polygon \u2014 run "Multipart to Singleparts" in QGIS, then export the KML again.'
+            };
+        }
+
+        if (lower.indexOf("multigeometry has no linestring") !== -1) {
+            return {
+                title: "Unsupported multi-geometry",
+                explanation: "This placemark uses a multi-geometry that holds no lines, so there is nothing this importer can read. " + reason,
+                fix: 'Split it into single-part features ("Multipart to Singleparts" in QGIS) and export again.'
+            };
+        }
+
+        if (lower.indexOf("no such child") !== -1) {
+            return {
+                title: "Unsupported or missing geometry",
+                explanation: "This placemark has no geometry of a kind this importer can read (for example a multi-part or empty feature).",
+                fix: 'Run "Multipart to Singleparts" in QGIS before exporting, and make sure every placemark has a polygon or line.'
+            };
+        }
+
+        return {
+            title: "Could not read this placemark",
+            explanation: reason,
+            fix: "Check this placemark in QGIS or Google Earth and re-export the file."
+        };
+    }
+
+    /**
+     * Build one <li> for a raw error string. Every node is filled with .text()
+     * because these strings carry content from the uploaded KML file.
+     */
+    function buildUploadErrorItem(rawText, openByDefault) {
+        const match = KML_ERROR_RE.exec(rawText);
+        let info;
+        let where = "";
+
+        if (match) {
+            const folder = match[1];
+            const placemark = match[2].trim();
+            info = classifyKmlError(match[3].trim());
+            where = placemark + " · folder: " + folder;
+        } else {
+            info = classifyKmlError(rawText);
+        }
+
+        const $summary = $("<summary>").text(info.title);
+        if (where) {
+            $summary.append($("<span>").addClass("ku-upload-error-where").text(" — " + where));
+        }
+
+        const $body = $("<div>").addClass("ku-upload-error-body");
+        $body.append($("<p>").text(info.explanation));
+        $body.append($("<p>").text("How to fix: " + info.fix));
+        $body.append($("<code>").addClass("ku-upload-error-raw").text(rawText));
+
+        const $details = $("<details>").append($summary).append($body);
+        if (openByDefault) {
+            $details.attr("open", "open");
+        }
+
+        return $("<li>").addClass("ku-upload-error-item").append($details);
+    }
+
+    function renderUploadErrors(errors) {
+        lastUploadErrors = errors;
+        $uploadErrorList.empty();
+
+        if (!errors.length) {
+            $uploadErrorsBox.hide();
+            $copyErrorsBtn.hide();
+            $uploadDialog.removeClass("ku-wide");
+            return;
+        }
+
+        // A short list is more useful opened; a long one needs to stay scannable.
+        const openByDefault = errors.length <= 2;
+        errors.forEach(function (rawText) {
+            $uploadErrorList.append(buildUploadErrorItem(String(rawText), openByDefault));
+        });
+
+        $uploadErrorsBox.show().scrollTop(0);
+        $copyErrorsBtn.text(COPY_ERRORS_LABEL).show();
+        $uploadDialog.addClass("ku-wide");
+    }
+
+    function showUploadResult(isSuccess, message, detail, errors) {
         $uploadStepResult.removeClass("success error").addClass(isSuccess ? "success" : "error");
         $uploadStepResult.find(".ku-upload-result-icon").text(isSuccess ? "✓" : "✕");
         $uploadStepResult.find(".ku-upload-result-message").text(message);
         $uploadStepResult.find(".ku-upload-result-detail").text(detail || "");
+        renderUploadErrors(errors || []);
         showUploadStep("result");
     }
+
+    /** Shared by the success (res.success === false) and error AJAX callbacks. */
+    function showUploadFailure(res, fallbackMessage) {
+        res = res || {};
+        const allErrors = res.errors || {};
+        let kmlErrors = allErrors.kml_file || [];
+        if (!Array.isArray(kmlErrors)) {
+            kmlErrors = [kmlErrors];
+        }
+
+        const otherDetails = [];
+        Object.keys(allErrors).forEach(function (field) {
+            if (field === "kml_file") return;
+            const value = allErrors[field];
+            otherDetails.push(Array.isArray(value) ? value.join(", ") : String(value));
+        });
+
+        showUploadResult(false, res.message || fallbackMessage, otherDetails.join(" "), kmlErrors);
+    }
+
+    function copyWithExecCommand(text) {
+        try {
+            const textarea = document.createElement("textarea");
+            textarea.value = text;
+            textarea.setAttribute("readonly", "");
+            textarea.style.position = "fixed";
+            textarea.style.top = "-1000px";
+            document.body.appendChild(textarea);
+            textarea.select();
+            const copied = document.execCommand("copy");
+            document.body.removeChild(textarea);
+            return copied;
+        } catch (err) {
+            return false;
+        }
+    }
+
+    $copyErrorsBtn.on("click", function () {
+        if (!lastUploadErrors.length) return;
+
+        const text = lastUploadErrors.map(function (rawText, index) {
+            return (index + 1) + ". " + rawText;
+        }).join("\n");
+
+        function markCopied() {
+            $copyErrorsBtn.text("Copied");
+            setTimeout(function () {
+                $copyErrorsBtn.text(COPY_ERRORS_LABEL);
+            }, 1500);
+        }
+
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(text).then(markCopied, function () {
+                if (copyWithExecCommand(text)) markCopied();
+            });
+        } else if (copyWithExecCommand(text)) {
+            markCopied();
+        }
+    });
 
     $uploadForm.on("submit", function (e) {
         e.preventDefault();
@@ -399,18 +598,13 @@ $(document).ready(function () {
                         openMetricModal(res.needs_metric[0], res.object_id, "", "");
                     }
                 } else {
-                    let detail = "";
-                    if (res.errors) {
-                        detail = Object.keys(res.errors).map(function (field) {
-                            return res.errors[field].join(", ");
-                        }).join(" ");
-                    }
-                    showUploadResult(false, res.message || "Upload failed.", detail);
+                    showUploadFailure(res, "Upload failed.");
                 }
             },
             error: function (xhr) {
-                const res = xhr.responseJSON;
-                showUploadResult(false, (res && res.message) || "Failed to upload KML file. Please try again.", "");
+                // A rejected KML comes back as HTTP 400, so the readable error
+                // list has to be rendered from here too, not just on success.
+                showUploadFailure(xhr.responseJSON, "Failed to upload KML file. Please try again.");
             }
         });
     });

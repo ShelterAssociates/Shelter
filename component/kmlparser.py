@@ -87,7 +87,29 @@ class KMLParser(object):
             key = POINT
         else:
             if hasattr(placemark, "MultiGeometry"):
-                for coord in placemark["MultiGeometry"][LINESTRING]:
+                multi = placemark["MultiGeometry"]
+                # Only MultiGeometry of LineString is read. Bundled polygons
+                # are rejected by name so the uploader isn't left guessing.
+                if hasattr(multi, POLYGON):
+                    count = len(multi[POLYGON])
+                    raise ValueError(
+                        "MultiGeometry polygon not supported: this placemark "
+                        "bundles {} polygon{} into one feature".format(
+                            count, "" if count == 1 else "s"
+                        )
+                    )
+                if not hasattr(multi, LINESTRING):
+                    found = ", ".join(
+                        sorted(
+                            {child.tag.split("}")[-1] for child in multi.iterchildren()}
+                        )
+                    )
+                    raise ValueError(
+                        "MultiGeometry has no LineString (found: {})".format(
+                            found or "nothing"
+                        )
+                    )
+                for coord in multi[LINESTRING]:
                     geometry_data.append(str(coord.coordinates))
             else:
                 geometry_data.append(str(placemark[LINESTRING].coordinates))
@@ -196,6 +218,11 @@ class KMLParser(object):
                 except Exception as ex:
                     validation_errors.append("{}: {}".format(placemark_label, ex))
                     continue
+
+                # <name> is often a running serial; the field team identifies
+                # the house by its HouseNo/ID attribute, so show both.
+                if str(household_no) != str(pm.name):
+                    placemark_label += " (house no. {})".format(household_no)
 
                 if household_no in seen_housenumbers:
                     validation_errors.append(

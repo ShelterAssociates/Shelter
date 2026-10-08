@@ -812,6 +812,72 @@ input.ku-input[type='file'] {
     display: none;
 }
 
+.ku-modal-dialog.ku-wide {
+    width: min(94vw, 640px);
+}
+
+.ku-upload-errors {
+    max-height: 46vh;
+    overflow-y: auto;
+    text-align: left;
+    margin: 10px 0 4px;
+    padding: 4px 10px;
+    border: 1px solid var(--ku-g200);
+    border-radius: var(--ku-r);
+    background: var(--ku-g50);
+}
+
+.ku-upload-error-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+.ku-upload-error-item {
+    padding: 8px 0;
+    border-bottom: 1px solid var(--ku-g200);
+}
+
+.ku-upload-error-item:last-child {
+    border-bottom: none;
+}
+
+.ku-upload-error-item summary {
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--ku-g900);
+}
+
+.ku-upload-error-where {
+    font-weight: 400;
+    color: var(--ku-g600);
+}
+
+.ku-upload-error-body {
+    font-size: 12px;
+    color: var(--ku-g700);
+    line-height: 1.6;
+    margin: 6px 0 0;
+    padding-left: 14px;
+}
+
+.ku-upload-error-body p {
+    margin: 0 0 5px;
+}
+
+.ku-upload-error-raw {
+    display: block;
+    font-family: var(--ku-mono);
+    font-size: 11px;
+    color: var(--ku-g600);
+    white-space: pre-wrap;
+    word-break: break-word;
+    background: var(--ku-g100);
+    border-radius: 6px;
+    padding: 6px 8px;
+}
+
 @media (max-width: 640px) {
     .ku-modal-dialog {
         width: calc(100vw - 20px);

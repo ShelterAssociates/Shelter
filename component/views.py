@@ -229,12 +229,20 @@ HIDE_POST_SBM_SLUM_IDS = ["1971", "1972", "2023"]
 # TOWN_SLUM_IDS rename of "Slum boundary") is listed too.
 INLINE_GEOMETRY_NAMES = {"Slum boundary", "Town boundary", "Admin Ward Area"}
 
+# How many rejected-placemark errors the non-AJAX fallback banner shows before
+# it truncates. The AJAX upload modal always lists all of them.
+PREVIEW_ERROR_COUNT = 10
+
 
 @staff_member_required
 @permission_required("component.can_upload_KML", raise_exception=True)
 def kml_upload(request):
     context_data = {}
     is_ajax = request.headers.get("x-requested-with") == "XMLHttpRequest"
+    if request.method != "POST":
+        # The upload modal is the only reporter on this screen. Drain anything
+        # still queued so a stale banner can't reappear on refresh.
+        list(messages.get_messages(request))
     if request.method == "POST":
         form = KMLUpload(request.POST or None, request.FILES)
         if form.is_valid():
@@ -264,7 +272,7 @@ def kml_upload(request):
 
                 if upload_ok:
                     upload_message = "KML uploaded successfully"
-                    messages.success(request, upload_message)
+                    add_message = messages.success
                 elif context_data["parsed"]:
                     upload_message = (
                         "KML upload failed — saved: {}. NOT recognized / NOT "
@@ -273,7 +281,7 @@ def kml_upload(request):
                             ", ".join(context_data["unparsed"]),
                         )
                     )
-                    messages.error(request, upload_message)
+                    add_message = messages.error
                 elif context_data["unparsed"]:
                     upload_message = (
                         "KML upload failed — nothing was saved. No folder "
@@ -281,12 +289,15 @@ def kml_upload(request):
                             ", ".join(context_data["unparsed"])
                         )
                     )
-                    messages.error(request, upload_message)
+                    add_message = messages.error
                 else:
                     upload_message = (
                         "KML upload failed — no components found in the file."
                     )
-                    messages.error(request, upload_message)
+                    add_message = messages.error
+
+                if not is_ajax:
+                    add_message(request, upload_message)
 
                 city = form.cleaned_data.get("City")
                 admin_ward = form.cleaned_data.get("AdministrativeWard")
@@ -399,32 +410,39 @@ def kml_upload(request):
                         }
                     )
             except KMLValidationError as ve:
-                error_message = "KML upload rejected — {} issue(s) found. Nothing was saved:\n- {}".format(
-                    len(ve.errors), "\n- ".join(ve.errors)
+                summary = "KML upload rejected — {} issue(s) found. Nothing was saved.".format(
+                    len(ve.errors)
                 )
-                messages.error(request, error_message)
                 if is_ajax:
+                    # The upload modal renders the full list; adding a Django
+                    # message too would dump every error into the next page load.
                     return JsonResponse(
                         {
                             "success": False,
-                            "message": "KML upload rejected — {} issue(s) found. Nothing was saved.".format(
-                                len(ve.errors)
-                            ),
+                            "message": summary,
                             "errors": {"kml_file": ve.errors},
                         },
                         status=400,
                     )
+                # Non-AJAX fallback: a banner can't usefully hold thousands of
+                # lines, so show a summary plus the first few.
+                preview = ve.errors[:PREVIEW_ERROR_COUNT]
+                error_message = summary + "\n- " + "\n- ".join(preview)
+                remaining = len(ve.errors) - len(preview)
+                if remaining > 0:
+                    error_message += "\n- …and {} more.".format(remaining)
+                messages.error(request, error_message)
             except Exception as e:
                 error_message = (
                     "Some error occurred while parsing. KML file is not in the required format ("
                     + str(e)
                     + ")"
                 )
-                messages.error(request, error_message)
                 if is_ajax:
                     return JsonResponse(
                         {"success": False, "message": error_message}, status=400
                     )
+                messages.error(request, error_message)
         elif is_ajax:
             errors = {
                 field: [str(e) for e in errs] for field, errs in form.errors.items()
