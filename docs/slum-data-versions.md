@@ -78,6 +78,44 @@ hand to match the models (migrations are gitignored in this project). Its
 `RunPython` step marks existing aliases primary and treats existing versions as
 already switched on, so nothing already versioned changes behaviour.
 
+### PostgreSQL 9.3 on production
+
+Production runs **PostgreSQL 9.3.24** with Django 3.0.7; development runs
+PostgreSQL 16 with Django 3.2. Django 3.0 officially needs PostgreSQL 9.5+, and
+its PostgreSQL introspection query uses `unnest(...) WITH ORDINALITY`, which
+arrived in **9.4**. So anything that makes Django introspect the schema fails on
+production with:
+
+```
+psycopg2.errors.SyntaxError: syntax error at or near "WITH ORDINALITY"
+```
+
+`AlterUniqueTogether` is exactly that: a `unique_together`'s constraint name is
+generated, so Django introspects the table to find it before dropping it. A
+**named** `UniqueConstraint` is dropped by its name and needs no introspection.
+
+Two things follow, and both are done:
+
+1. **`SlumAlias` declares no `unique_together`.** Both uniqueness rules are
+   named constraints, so any future change to them is 9.3-safe.
+2. **The one-time removal of the old pairs** is wrapped in
+   `migrations.SeparateDatabaseAndState`: Django gets the state change, and the
+   database gets SQL from the migration's own `drop_unique_on(table, columns,
+   except_name)` helper, which finds a unique constraint **by its columns** and
+   drops it by name. Everything it uses (`DO` blocks, `format('%I')`,
+   `array_agg(... ORDER BY ...)`) predates 9.3. `except_name` exempts the
+   replacement constraint, which covers the same columns, so a re-run is a
+   genuine no-op.
+
+Verified on a throwaway database shaped like production: the old generated
+constraints go, the named one and the partial unique index arrive, a second
+location on one slum is allowed, a second primary and a duplicate uuid are both
+refused, and re-running the drops leaves the new constraint standing.
+
+`SlumDataVersion` and `SyncSwitch` still use `unique_together`. They are
+untouched by this work so no migration is generated for them, but if either ever
+changes, it will need the same treatment.
+
 ---
 
 ## 4. Code

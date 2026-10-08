@@ -93,9 +93,16 @@ class SlumAlias(models.Model):
 
     class Meta:
         db_table = "survey_slum_alias"
-        unique_together = (("provider", "external_id"),)
         ordering = ("provider", "slum", "-is_primary", "external_id")
+        # Named constraints, not unique_together: Django drops a named one by
+        # its name, while a unique_together's name is generated, so it has to
+        # introspect the table to find it -- and that query needs PostgreSQL
+        # 9.4, while production runs 9.3. See docs/slum-data-versions.md.
         constraints = [
+            models.UniqueConstraint(
+                fields=["provider", "external_id"],
+                name="survey_slum_alias_provider_external_id",
+            ),
             models.UniqueConstraint(
                 fields=["slum", "provider"],
                 condition=Q(is_primary=True),
