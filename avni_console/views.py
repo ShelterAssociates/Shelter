@@ -66,6 +66,7 @@ def index(request):
         "subject_types": catalog.enabled_subject_types(),
         "encounter_types": catalog.enabled_direct_encounter_types(),
         "household_encounter_types": catalog.household_encounter_choices(),
+        "locations": catalog.location_choices(),
         "limits": limits(),
         "can_write": can_write_avni(request.user),
         "cache_stale": metadata.cache_is_stale(),

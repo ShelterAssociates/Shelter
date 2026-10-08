@@ -1,0 +1,282 @@
+{% extends "admin/base_site.html" %}
+{% load static %}
+{% block bodyclass %}ph-body{% endblock %}
+{% block breadcrumbs %}{% endblock %}
+{% block extrastyle %}{% include "survey/partials/styles.html" %}{% endblock %}
+
+{% block content %}
+{{ slum_search_index|json_script:"slumVersionSearchData" }}
+<div class="ph-page">
+  <div class="ph-header">
+    <div>
+      <h1 class="ph-title">Slum data versions</h1>
+      <p class="ph-sub">
+        Make a slum's current data an old version and start a new one. The live tables keep serving the
+        old version until the new version's first household arrives, so nothing disappears early.
+        RIM is never switched automatically &mdash; you choose what happens to it.
+      </p>
+    </div>
+  </div>
+
+  {% if messages %}
+    {% for message in messages %}
+      <div class="ac-result {% if message.tags == 'error' %}ac-result--bad{% elif message.tags == 'warning' %}ac-result--warn{% endif %}" style="margin-bottom:12px">
+        {{ message }}
+      </div>
+    {% endfor %}
+  {% endif %}
+
+  <div class="sv-two">
+    <div class="ph-card">
+      <div class="ph-card-head"><h2 class="ph-card-title">Find a slum</h2></div>
+      <div class="ph-card-body">
+        <div class="ph-field sv-search">
+          <label class="ph-label" for="slumVersionSearchInput">Search slum</label>
+          <input class="ph-input" type="text" id="slumVersionSearchInput" placeholder="Type a slum name..."
+                 autocomplete="off" />
+          <div class="sv-results" id="slumVersionSearchResults" aria-live="polite"></div>
+          <p class="sv-hint">
+            Up and down arrows move through the results, Enter opens the slum, Escape clears the box.
+            A tag shows the slum's version, whether it is waiting for its first record, and how many AVNI
+            locations it has.
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <div class="ph-card">
+      <div class="ph-card-head"><h2 class="ph-card-title">Recently versioned</h2></div>
+      <div class="ph-card-body">
+        {% if recent %}
+          <div class="sv-recent" id="slumVersionRecent">
+            {% for row in recent %}
+              <button type="button" class="sv-row" data-slum-id="{{ row.id }}">
+                <span class="sv-row-name">{{ row.name }}</span>
+                <span class="sv-row-tags">
+                  <span class="sv-tag sv-tag--v">v{{ row.version }}</span>
+                  {% if row.waiting %}<span class="sv-tag sv-tag--wait">waiting</span>{% endif %}
+                </span>
+                <span class="sv-row-path">started {{ row.started_on|date:"d M Y H:i" }}  ·  #{{ row.id }}</span>
+              </button>
+            {% endfor %}
+          </div>
+        {% else %}
+          <p class="ac-card-desc">No slum has been given a new version yet.</p>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  {% if slum %}
+  <div class="ph-card" style="margin-top:18px">
+    <div class="ph-card-head"><h2 class="ph-card-title">{{ slum.name }} &mdash; version {{ current }}</h2></div>
+    <div class="ph-card-body">
+      {% if pending %}
+        <div class="ac-result ac-result--warn">
+          Version {{ pending.version }} started {{ pending.started_on|date:"d M Y H:i" }} and is waiting for its first
+          household. The live tables still serve version {{ pending.version|add:"-1" }}.
+        </div>
+      {% endif %}
+      {% if missing_backup %}
+        <div class="ac-result ac-result--warn">
+          Version {{ pending.version|add:"-1" }} has no backup of: <strong>{{ missing_backup|join:", " }}</strong>.
+          These are backed up automatically just before anything is cleared, but you can do it now.
+          <form method="post" action="{% url 'survey:backfill_backup' slum.id %}" style="margin-top:10px">{% csrf_token %}
+            <button class="ph-btn" type="submit">Back up what is missing</button>
+          </form>
+        </div>
+      {% endif %}
+      {% for entry in versions %}
+        {% if not entry.has_backup and entry.row.version > 1 %}
+          <div class="ac-result ac-result--bad">
+            Version {{ entry.row.version|add:"-1" }} has no backup, so this version was started outside this page.
+            The rows are backed up automatically just before they are cleared, but starting the version here is the
+            safer route.
+          </div>
+        {% endif %}
+      {% endfor %}
+
+      <h3>Live rows now</h3>
+      <div class="ac-table-wrap"><table class="ph-table">
+        <tr><th>Table</th><th>Rows</th></tr>
+        {% for label, count in household_counts.items %}
+          <tr><td>{{ label }}</td><td>{{ count }}</td></tr>
+        {% endfor %}
+        {% for label, count in rim_counts.items %}
+          <tr><td>{{ label }} <em>(RIM)</em></td><td>{{ count }}</td></tr>
+        {% endfor %}
+      </table></div>
+
+      <h3>Version history</h3>
+      {% if versions %}
+        <div class="ac-table-wrap"><table class="ph-table">
+          <tr><th>Version</th><th>Started</th><th>Status</th><th>Backed up from the version before</th><th>Note</th></tr>
+          {% for entry in versions %}
+            <tr>
+              <td>v{{ entry.row.version }}</td>
+              <td>{{ entry.row.started_on|date:"d M Y H:i" }}</td>
+              <td>
+                {% if entry.row.switched_on %}live since {{ entry.row.switched_on|date:"d M Y H:i" }}
+                {% else %}waiting for its first household{% endif %}
+              </td>
+              <td>
+                {% for model, count in entry.backup.items %}{{ model }}: {{ count }}{% if not forloop.last %}, {% endif %}{% empty %}&mdash;{% endfor %}
+              </td>
+              <td>{{ entry.row.note|default:"&mdash;" }}</td>
+            </tr>
+          {% endfor %}
+        </table></div>
+      {% else %}
+        <p class="ac-card-desc">Only version 1 so far: nothing has been versioned for this slum.</p>
+      {% endif %}
+    </div>
+  </div>
+
+  <div class="ph-card" style="margin-top:18px">
+    <div class="ph-card-head"><h2 class="ph-card-title">AVNI locations</h2></div>
+    <div class="ph-card-body">
+      <p class="ac-card-desc">
+        A slum can take data from more than one AVNI location. The RIM source is the only one the
+        RIM and toilet syncs read.
+      </p>
+      <div class="ac-table-wrap"><table class="ph-table">
+        <tr><th>Location uuid</th><th>Title in AVNI</th><th>RIM source</th><th></th></tr>
+        {% for alias in aliases %}
+          <tr>
+            <td><code>{{ alias.external_id }}</code></td>
+            <td>{{ alias.external_name|default:"&mdash;" }}</td>
+            <td>{% if alias.is_primary %}yes{% else %}no{% endif %}</td>
+            <td>
+              <div class="ac-row">
+                {% if not alias.is_primary %}
+                  <form method="post" action="{% url 'survey:make_primary' slum.id %}">{% csrf_token %}
+                    <input type="hidden" name="external_id" value="{{ alias.external_id }}">
+                    <button class="ph-btn" type="submit">Make RIM source</button>
+                  </form>
+                {% endif %}
+                <form method="post" action="{% url 'survey:remove_location' slum.id %}">{% csrf_token %}
+                  <input type="hidden" name="external_id" value="{{ alias.external_id }}">
+                  <button class="ph-btn" type="submit">Unmap</button>
+                </form>
+              </div>
+            </td>
+          </tr>
+        {% empty %}
+          <tr><td colspan="4">No AVNI location is mapped. Records reach this slum by name only.</td></tr>
+        {% endfor %}
+      </table></div>
+
+      <form method="post" action="{% url 'survey:add_location' slum.id %}" style="margin-top:14px">{% csrf_token %}
+        <div class="ph-field">
+          <label class="ph-label">Map another AVNI location</label>
+          <input class="ph-input" type="text" name="external_id" placeholder="AddressLevel uuid" required>
+        </div>
+        <div class="ph-field">
+          <label class="ph-label">Its title in AVNI (so records sent under that title reach this slum)</label>
+          <input class="ph-input" type="text" name="external_name" placeholder="e.g. Antule Nagar, Pisoli New">
+        </div>
+        <button class="ph-btn ph-btn--primary" type="submit">Map location</button>
+      </form>
+    </div>
+  </div>
+
+  <div class="ph-card" style="margin-top:18px">
+    <div class="ph-card-head"><h2 class="ph-card-title">Sync settings</h2></div>
+    <div class="ph-card-body">
+      <form method="post" action="{% url 'survey:save_settings' slum.id %}">{% csrf_token %}
+        <div class="ph-field ac-checks">
+          <label>
+            <input type="checkbox" name="sync_enabled" value="1" {% if not setting or setting.sync_enabled %}checked{% endif %}>
+            Sync this slum
+          </label>
+          <label>
+            <input type="checkbox" name="alias_locked" value="1" {% if setting and setting.alias_locked %}checked{% endif %}>
+            Lock its AVNI locations &mdash; the nightly location refresh never changes them
+          </label>
+        </div>
+        <p class="ac-card-desc">
+          With sync off, records arriving for this slum are skipped and the slum is named in the
+          nightly digest, so you still hear about data you are not taking.
+        </p>
+        <div class="ph-field">
+          <label class="ph-label">Why</label>
+          <input class="ph-input" type="text" name="note" value="{{ setting.note|default:'' }}">
+        </div>
+        <button class="ph-btn ph-btn--primary" type="submit">Save settings</button>
+      </form>
+    </div>
+  </div>
+
+  <div class="ph-card" style="margin-top:18px">
+    <div class="ph-card-head"><h2 class="ph-card-title">Start a new version</h2></div>
+    <div class="ph-card-body">
+      <p class="ac-card-desc">
+        Every live row above is copied into the backup table first. Household tables are cleared only
+        when the new version's first household arrives; records older than the start stay out of the
+        live tables from then on.
+      </p>
+      <form method="post" action="{% url 'survey:start_version' slum.id %}">{% csrf_token %}
+        <div class="ph-field">
+          <label class="ph-label">What should happen to RIM?</label>
+          {% for value, label in rim_choices %}
+            <label style="display:block">
+              <input type="radio" name="rim_choice" value="{{ value }}" {% if forloop.first %}checked{% endif %}> {{ label }}
+            </label>
+          {% endfor %}
+        </div>
+        <div class="ph-field">
+          <label class="ph-label">If you chose a new RIM source, which location?</label>
+          <select class="ph-select" name="rim_location">
+            <option value="">&mdash; none &mdash;</option>
+            {% for alias in aliases %}
+              <option value="{{ alias.external_id }}">{{ alias.external_name|default:alias.external_id }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="ph-field">
+          <label class="ph-label">Note (why this slum is being re-surveyed)</label>
+          <input class="ph-input" type="text" name="note">
+        </div>
+        <div class="ph-field">
+          <label class="ph-label">Type {{ confirm_word }} to confirm</label>
+          <input class="ph-input" type="text" name="confirm" autocomplete="off" required>
+        </div>
+        <button class="ph-btn ph-btn--primary" type="submit">Start new version</button>
+      </form>
+    </div>
+  </div>
+
+  <div class="ph-card" style="margin-top:18px">
+    <div class="ph-card-head"><h2 class="ph-card-title">Merge another slum into this one</h2></div>
+    <div class="ph-card-body">
+      <p class="ac-card-desc">
+        Moves the other slum's data onto {{ slum.name }}, maps its AVNI location here, then
+        <strong>deletes the other slum</strong>. Irreversible apart from the JSON backup it writes.
+        Always run the dry run first.
+      </p>
+      <form method="post" action="{% url 'survey:merge_slum' slum.id %}">{% csrf_token %}
+        <div class="ph-field">
+          <label class="ph-label">Slum to merge in and delete</label>
+          <select class="ph-select" name="source_id" required>
+            <option value="">&mdash; choose &mdash;</option>
+            {% for row in merge_candidates %}
+              <option value="{{ row.id }}">{{ row.name }} (#{{ row.id }}) &mdash; {{ row.path }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="ph-field">
+          <label class="ph-label">Type {{ merge_word }} to confirm (not needed for a dry run)</label>
+          <input class="ph-input" type="text" name="confirm" autocomplete="off">
+        </div>
+        <div class="ac-row">
+          <button class="ph-btn" type="submit" name="dry_run" value="1">Dry run</button>
+          <button class="ph-btn ph-btn--primary" type="submit">Merge and delete</button>
+        </div>
+      </form>
+    </div>
+  </div>
+  {% endif %}
+</div>
+
+<script src="{% static 'js/slum_version_search.js' %}"></script>
+{% endblock %}

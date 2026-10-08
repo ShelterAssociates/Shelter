@@ -410,7 +410,11 @@ class DigestContentTests(TestCase):
         self.assertNotIn("Traceback", message.body)
         self.assertNotIn("<table", message.body)
         self.assertEqual(message.attachments, [])
-        self.assertIn("<pre", message.alternatives[0][0])
+        html = message.alternatives[0][0]
+        self.assertIn("<table", html)
+        self.assertIn("Navi Mumbai", html)
+        self.assertIn("Cause: KeyError", html)
+        self.assertNotIn("Traceback", html)
 
     def test_hung_run_names_the_step_that_never_finished(self):
         from django.core.management import call_command

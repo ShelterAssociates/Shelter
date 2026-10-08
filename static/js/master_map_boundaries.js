@@ -145,6 +145,10 @@ var Slum = (function (_super) {
            Instead we check on-demand when this slum becomes active. */
     }
 
+    /* RIM versions the availability check reported for the active slum. A
+       re-surveyed slum keeps its earlier RIM, so more than one can be offered. */
+    var _factsheetVersions = [];
+
     /* Called when a slum becomes active (click or direct URL).
        activeSlumId is the slumId at the moment of activation — passed in
        so we never race against the async global_slum_id assignment. */
@@ -161,6 +165,7 @@ var Slum = (function (_super) {
                    the load (guards against fast slum-switching) */
                 if (data.available === true &&
                     String(activeSlumId) === String(_this.slumId)) {
+                    _factsheetVersions = data.versions || [];
                     _this._showFactsheetBtn();
                 }
             })
@@ -168,6 +173,22 @@ var Slum = (function (_super) {
                 console.error("Factsheet availability check failed:", err);
             });
     };
+
+    function factsheetVersionPicker() {
+        if (_factsheetVersions.length < 2) { return ""; }
+        var options = _factsheetVersions.map(function (item) {
+            var value = item.version === null ? "current" : item.version;
+            return "<option value='" + value + "'>" + item.label + "</option>";
+        }).join("");
+        return "<label class='factsheet-version'>Survey " +
+               "<select id='factsheetVersion'>" + options + "</select></label>";
+    }
+
+    function chosenFactsheetVersion() {
+        var picker = document.getElementById("factsheetVersion");
+        var value = picker ? picker.value : "current";
+        return value === "current" ? "" : "?version=" + encodeURIComponent(value);
+    }
 
     /* Renders the "View Factsheet" button using the shared .action-btn class */
     Slum.prototype._showFactsheetBtn = function () {
@@ -178,6 +199,7 @@ var Slum = (function (_super) {
             "Factsheet" +
             "</button>" +
             "<div class='collapsible-toggle__body' id='factsheetBody' style='display:" + (_factsheetExpanded ? "block" : "none") + ";'>" +
+            factsheetVersionPicker() +
             "<button class='action-btn' onclick='Slum.prototype.factsheet_click(this," + slumId + ")'>" +
             "View Factsheet" +
             "</button>" +
@@ -195,6 +217,7 @@ var Slum = (function (_super) {
     Slum.prototype.factsheet_click = function (element, slum_id) {
         $("#rimPreviewModal").fadeIn();
         $("#rimDownloadForm").attr("data-slum-id", slum_id);
+        $("#rimDownloadForm").attr("data-version", chosenFactsheetVersion());
 
         $("#rimDownloadBtn")
             .prop("disabled", true)
@@ -210,8 +233,10 @@ var Slum = (function (_super) {
             '</div></div>'
         );
 
+        var query = chosenFactsheetVersion();
+
         /* Preview */
-        fetch("/reports/preview-rim-factsheet/" + slum_id + "/")
+        fetch("/reports/preview-rim-factsheet/" + slum_id + "/" + query)
             .then(function (res) { return res.text(); })
             .then(function (html) { $("#rimPreviewBody").html(html); })
             .catch(function (err) {
@@ -222,7 +247,7 @@ var Slum = (function (_super) {
             });
 
         /* PDF generation */
-        fetch("/reports/api/rim_factsheet_generation/" + slum_id + "/")
+        fetch("/reports/api/rim_factsheet_generation/" + slum_id + "/" + query)
             .then(function (res) {
                 if (res.status === 405) { throw new Error("Please fill RIM form or sync data."); }
                 if (res.status === 406) { throw new Error("RIM data not found."); }
@@ -546,7 +571,8 @@ $(document).on("click", "#rimVerifyOTP", function () {
         .then(function (res) { return res.json(); })
         .then(function (data) {
             if (data.status === "verified") {
-                window.location.href = "/reports/api/rim_factsheet_pdf_fetch/" + slumId + "/";
+                var version = $("#rimDownloadForm").attr("data-version") || "";
+                window.location.href = "/reports/api/rim_factsheet_pdf_fetch/" + slumId + "/" + version;
             } else if (data.status === "blocked") {
                 btn.disabled = false;
                 btn.textContent = originalText;

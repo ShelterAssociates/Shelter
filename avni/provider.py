@@ -239,17 +239,31 @@ class AvniProvider(contracts.Provider):
         listed by type; the connector fetches them on demand (get_enrolment)."""
         return kind != "enrolment"
 
-    def list_path(self, kind, subject_type, program, encounter_type, since):
+    def list_path(self, kind, subject_type, program, encounter_type, since, location_uuid=None):
         if kind == "subject":
-            return paths.subjects(subject_type, since)
+            return paths.subjects(subject_type, since, location_uuid)
         if kind == "encounter":
             return paths.encounters(encounter_type, since)
         if kind == "program_encounter":
             return paths.program_encounters(encounter_type, since)
         raise ValueError("AVNI cannot list {} records by type".format(kind))
 
-    def iter_records(self, kind, subject_type, program="", encounter_type="", since=None):
-        path = self.list_path(kind, subject_type, program, encounter_type, since)
+    def iter_records(self, kind, subject_type, program="", encounter_type="", since=None, locations=()):
+        """`locations` narrows the AVNI request itself, which only subject lists
+        support; the connector filters the other kinds by slum after the fetch.
+        """
+        if locations and kind == "subject":
+            for location_uuid in locations:
+                for record in self.iter_path(
+                    self.list_path(kind, subject_type, program, encounter_type, since, location_uuid),
+                    kind, subject_type,
+                ):
+                    yield record
+            return
+        for record in self.iter_path(self.list_path(kind, subject_type, program, encounter_type, since), kind, subject_type):
+            yield record
+
+    def iter_path(self, path, kind, subject_type):
         first = self.read(path)
         pages = [first.get("content", [])]
         for number in range(1, first.get("totalPages", 0)):

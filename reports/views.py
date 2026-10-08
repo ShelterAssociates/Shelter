@@ -14,6 +14,26 @@ from reports.models import (
 from reports.services.monthly_report_service import monthly_report_details
 
 
+def wanted_version(request):
+    """The RIM version asked for, or None for the live one."""
+    raw = (request.GET.get("version") or "").strip()
+    if not raw or raw.lower() == "current":
+        return None
+    try:
+        return int(raw)
+    except ValueError:
+        return None
+
+
+def rim_cache_key(slum_id, version):
+    return "rim_context_{}_{}".format(slum_id, version if version is not None else "current")
+
+
+def rim_report_id(slum_id, version):
+    """The PDF service keys stored files by report id, so each version needs its own."""
+    return str(slum_id) if version is None else "{}-v{}".format(slum_id, version)
+
+
 # Internal report tooling home page (RIM factsheet + donor report PDFs)
 @staff_member_required
 def report_view(request):
@@ -33,7 +53,7 @@ def report_view(request):
 # HTML preview for RIM Factsheet
 def rim_factsheet_html_report(request, slum_id):
     """Renders HTML preview for RIM Factsheet report."""
-    context = rim_factsheet_view(slum_id)
+    context = rim_factsheet_view(slum_id, version=wanted_version(request))
     if not context.get("meta_data", {}).get("_exists"):
         return HttpResponse("Slum not found", status=404)
 
@@ -44,11 +64,12 @@ def rim_factsheet_html_report(request, slum_id):
 def rim_factsheet_pdf_generation(request, slum_id):
     """Generates PDF for RIM Factsheet and sends to PDF service."""
     force_generate = request.GET.get("force_generate", "false").lower() == "true"
-    cache_key = f"rim_context_{slum_id}"
+    version = wanted_version(request)
+    cache_key = rim_cache_key(slum_id, version)
     context = cache.get(cache_key)
 
     if context is None:
-        context = rim_factsheet_view(slum_id)
+        context = rim_factsheet_view(slum_id, version=version)
         cache.set(cache_key, context, timeout=120)
 
     if context.get("data") == "NA":
@@ -63,8 +84,8 @@ def rim_factsheet_pdf_generation(request, slum_id):
             headers={"X-PDF-KEY": settings.PDF_SECRET_KEY},
             json={
                 "html": html,
-                "report_id": slum_id,
-                "file_name": f"RIM_Factsheet_{context.get('meta_data',{}).get('city_name','City').replace(' ','_').replace('/','_')}_{context.get('meta_data',{}).get('slum_name','Slum').replace(' ','_').replace('/','_')}",
+                "report_id": rim_report_id(slum_id, version),
+                "file_name": f"RIM_Factsheet_{context.get('meta_data',{}).get('city_name','City').replace(' ','_').replace('/','_')}_{context.get('meta_data',{}).get('slum_name','Slum').replace(' ','_').replace('/','_')}{'' if version is None else f'_v{version}'}",
                 "force_generate": force_generate,
                 "report_type": "rim_factsheet",
             },
@@ -83,11 +104,12 @@ def rim_factsheet_pdf_generation(request, slum_id):
 # Preview generated RIM Factsheet PDF in browser
 def rim_factsheet_preview(request, slum_id):
     """Renders preview of RIM Factsheet PDF in browser without download."""
-    cache_key = f"rim_context_{slum_id}"
+    version = wanted_version(request)
+    cache_key = rim_cache_key(slum_id, version)
     context = cache.get(cache_key)
 
     if context is None:
-        context = rim_factsheet_view(slum_id)
+        context = rim_factsheet_view(slum_id, version=version)
         cache.set(cache_key, context, timeout=120)
 
     if context.get("data") == "NA":
@@ -115,9 +137,10 @@ def rim_factsheet_pdf_fetch(request, slum_id):
         if str(request.session.get("rim_otp_verified_slum_id")) != str(slum_id):
             return HttpResponseForbidden("OTP verification required")
 
+    report_id = rim_report_id(slum_id, wanted_version(request))
     try:
         resp = requests.get(
-            f"{settings.PDF_FETCH_URL}?report_id={slum_id}&report_type=rim_factsheet",
+            f"{settings.PDF_FETCH_URL}?report_id={report_id}&report_type=rim_factsheet",
             headers={"X-PDF-KEY": settings.PDF_SECRET_KEY},
             timeout=30,
         )

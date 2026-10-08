@@ -40,6 +40,15 @@
         </div>
         {% endif %}
 
+        {% if "locations" in job.fields %}
+        <div class="ph-field">
+          <label class="ph-label">Locations (nothing picked = every location)</label>
+          <select class="ph-select ac-select-multi" name="locations" multiple>
+            {% for uuid, label in locations %}<option value="{{ uuid }}">{{ label }}</option>{% endfor %}
+          </select>
+        </div>
+        {% endif %}
+
         {% if "subject_types" in job.fields %}
         <div class="ph-field ac-checks">
           <span class="ph-label">Subject types</span>

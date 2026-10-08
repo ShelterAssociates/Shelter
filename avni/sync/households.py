@@ -10,6 +10,8 @@ from avni.client import AvniError, client
 from avni.locations import slum_and_city_ids
 from graphs.models import HouseholdData
 from notification.services import reporting
+from survey import versioning
+from survey.store import parse_moment
 
 logger = logging.getLogger(__name__)
 
@@ -45,6 +47,10 @@ def save_household(record):
         if not household.number:
             raise ValueError("subject has no First name (household number)")
         slum_id, city_id = slum_and_city_ids(household.slum)
+        if not versioning.allows_write(slum_id, parse_moment(household.submitted_on)):
+            logger.info("Household %s in %s belongs to a frozen version; live tables left alone",
+                        household.number, household.slum)
+            return False
         retire_stale_rows(record["ID"], slum_id, city_id, household.number)
         existing = HouseholdData.objects.filter(
             household_number=household.number, city_id=city_id, slum_id=slum_id
@@ -139,15 +145,18 @@ def update_household(existing, record, observations):
     existing.update(rhs_data=rhs_data, **registration_fields(record))
 
 
-def sync_households(subject_type, from_date=None, api=None, context=None):
+def sync_households(subject_type, from_date=None, api=None, context=None, locations=None):
     """Pull every Household/Structure subject modified since the window start.
 
     Runs through survey.connector so the core store is fed in the same pass.
+    `locations` limits the pull to those AVNI locations.
     """
     from avni.provider import sync_context
     from survey import connector
 
-    return connector.sync_kind("subject", subject_type, from_date=from_date, context=context or sync_context(api))
+    return connector.sync_kind(
+        "subject", subject_type, from_date=from_date, context=context or sync_context(api), locations=locations,
+    )
 
 
 def save_household_record(record):
@@ -177,10 +186,11 @@ def sync_households_by_uuid(subject_uuids, api=None):
 
 def merge_into_rhs_data(household, data):
     """Merge encounter answers into the household's rhs_data, registering it first if unknown."""
-    rows = HouseholdData.objects.filter(slum_id__name=household.slum, household_number=household.number)
+    slum_id, _ = slum_and_city_ids(household.slum)
+    rows = HouseholdData.objects.filter(slum_id=slum_id, household_number=household.number)
     if not rows.exists():
         save_household(household.record)
-        rows = HouseholdData.objects.filter(slum_id__name=household.slum, household_number=household.number)
+        rows = HouseholdData.objects.filter(slum_id=slum_id, household_number=household.number)
     rhs_data = rows.values_list("rhs_data", flat=True)[0] or {}
     rhs_data.update(data)
     rows.update(rhs_data=rhs_data)

@@ -27,6 +27,8 @@ STATUS_COLOURS = {
     "running": "#1a73e8",
 }
 
+DIGEST_COLOURS = {"OK": "#1e8e3e", "PARTIAL": "#f29900", "FAILED": "#d93025", "MISSED": "#d93025"}
+
 
 def _run_payload(run):
     steps = []
@@ -75,9 +77,50 @@ def send_digest(runs, missed, since, until):
     day = timezone.localtime(until).strftime("%d %b %Y")
     text = nightly_text(day, status, runs, missed, stuck, since, until)
     subject = "Shelter Nightly Sync - {} - {}".format(day, status.split(" (")[0])
+    context = digest_payload(day, status, runs, missed, stuck, since, until)
+    context["text"] = text
     return _send(
-        to, cc, bcc, subject, "notification/nightly_digest_email.html", {"text": text}, [], plain=text
+        to, cc, bcc, subject, "notification/nightly_digest_email.html", context, [], plain=text
     )
+
+
+def digest_payload(day, status, runs, missed, stuck, since, until):
+    """The nightly digest as structured data, so the email can be laid out."""
+    label = status.split(" (")[0]
+    detail = status[len(label):].strip(" ()")
+    return {
+        "day": day,
+        "status": status,
+        "label": label,
+        "detail": detail,
+        "colour": DIGEST_COLOURS.get(label, DIGEST_COLOURS["FAILED"]),
+        "since": _when(since),
+        "until": _when(until),
+        "missed": [{"name": item["name"], "expected_at": _when(item["expected_at"])} for item in missed],
+        "stuck": ["#{} {}".format(item.pk, item.job_key) for item in stuck],
+        "runs": [digest_run(run) for run in runs],
+    }
+
+
+def digest_run(run):
+    steps = []
+    for step in run.steps.all().prefetch_related("city_stats"):
+        extras = step.extras or {}
+        steps.append({
+            "step": step,
+            "cities": list(step.city_stats.all()),
+            "split": "{} created, {} updated".format(extras["created"], extras.get("updated", 0))
+                     if "created" in extras else "",
+            "sync_off_slums": extras.get("sync_off_slums", ""),
+            "cause": last_line(step.error) if step.error else "",
+        })
+    return {
+        "run": run,
+        "name": run.job.display_name if run.job else run.job_key,
+        "colour": STATUS_COLOURS.get(run.status, STATUS_COLOURS["failed"]),
+        "steps": steps,
+        "cause": run_cause(run) if run.error else "",
+    }
 
 
 def digest_status(runs, missed, stuck):
@@ -137,6 +180,8 @@ def run_lines(run):
         lines.append("  {} — {} synced{}, {} failed, {} skipped".format(
             step.name, step.records_ok, split, step.records_failed, step.records_skipped
         ))
+        if extras.get("sync_off_slums"):
+            lines.append("    Data arrived for slums whose sync is off: " + extras["sync_off_slums"])
         lines.extend(city_table(step.city_stats.all(), "    "))
         if step.error:
             lines.append("    Cause: " + last_line(step.error))

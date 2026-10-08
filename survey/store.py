@@ -27,7 +27,7 @@ ISO_DAY_LENGTH = 10
 
 COUNTERS = (
     "created", "updated", "unchanged", "voided", "scheduled_only",
-    "unlinked", "duplicate_household", "failed", "legacy_saved",
+    "unlinked", "duplicate_household", "failed", "legacy_saved", "sync_off", "out_of_scope",
 )
 ALWAYS_NOTED = ("created", "updated")
 

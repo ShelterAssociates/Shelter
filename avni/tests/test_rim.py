@@ -9,6 +9,8 @@ from avni.sync import rim
 from avni.tests.support import FakeApi, make_city, make_slum, page, subject_record
 from graphs.models import SlumData
 from master.models import Rapid_Slum_Appraisal
+from survey import slum_sync
+from survey.models import SlumAlias
 
 
 def rim_record(uuid="rim-1", voided=False, **observations):
@@ -80,6 +82,32 @@ class RimSyncTests(TestCase):
         with mock.patch("avni.sync.rim.slum_location_uuid", return_value=None):
             self.assertEqual(rim.sync_slum_rim(self.slum.id), (False, 0, False))
             self.assertEqual(rim.sync_slum_toilets(self.slum.id), 0)
+
+    def test_a_slum_with_sync_off_is_not_touched(self):
+        slum_sync.update(self.slum.id, sync_enabled=False)
+        with mock.patch("avni.sync.rim.slum_location_uuid", return_value="loc-1"):
+            self.assertEqual(rim.sync_slum_rim(self.slum.id), (False, 0, False))
+            self.assertEqual(rim.sync_slum_toilets(self.slum.id), 0)
+
+    def test_rim_reads_the_primary_location_only(self):
+        """A second location must not feed RIM, or the factsheet would be overwritten."""
+        SlumAlias.objects.create(slum=self.slum, provider="avni", external_id="loc-1", is_primary=True)
+        SlumAlias.objects.create(slum=self.slum, provider="avni", external_id="loc-2", is_primary=False)
+        from avni.locations import slum_location_uuid, slum_location_uuids
+
+        self.assertEqual(slum_location_uuid(self.slum.id), "loc-1")
+        self.assertEqual(slum_location_uuids(self.slum.id), ["loc-1", "loc-2"])
+
+    def test_a_toilet_is_saved_against_the_slum_being_synced(self):
+        """Not against whatever slum shares the location title."""
+        name_concept = rim.rim_questions()["Toilet"]["ctb name"]
+        SlumData.objects.create(slum=self.slum, city=self.city, submission_date="2026-01-01T00:00:00Z", rim_data={})
+        record = subject_record("t1", number="", observations={name_concept: "CTB A"})
+        record["location"]["Slum"] = "Some Other Title"
+
+        self.assertTrue(rim.save_toilet_record(record, self.slum.id))
+        toilets = SlumData.objects.get(slum=self.slum).rim_data["Toilet"]
+        self.assertEqual([t["ctb name"] for t in toilets], ["CTB A"])
 
     def test_mapped_slum_syncs_and_counts(self):
         record, _ = rim_record()

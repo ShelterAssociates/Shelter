@@ -57,13 +57,40 @@ class LoadSlumLocationsTests(TestCase):
 
     def test_creates_known_and_skips_unknown_slums(self):
         out = self.load({str(self.slum.id): UUID, str(self.slum.id + 1000): "orphan"})
-        self.assertIn("1 created, 0 updated, 1 unknown", out)
+        self.assertIn("1 created, 0 already mapped, 0 locked, 1 unknown", out)
         self.assertIn("slum {} does not exist".format(self.slum.id + 1000), out)
         self.assertEqual(locations.slum_external_id("avni", self.slum.id), UUID)
+        self.assertTrue(SlumAlias.objects.get(slum=self.slum).is_primary)
 
-    def test_rerun_updates_in_place(self):
+    def test_a_rerun_never_repoints_an_existing_mapping(self):
+        """A slum may have several locations, and a hand-made mapping must stand."""
         self.load({str(self.slum.id): UUID})
         out = self.load({str(self.slum.id): "new-uuid"})
-        self.assertIn("0 created, 1 updated, 0 unknown", out)
+        self.assertIn("1 created", out)
+        self.assertEqual(
+            sorted(SlumAlias.objects.filter(slum=self.slum).values_list("external_id", flat=True)),
+            sorted([UUID, "new-uuid"]),
+        )
+        self.assertEqual(locations.slum_external_id("avni", self.slum.id), UUID, "the primary is untouched")
+
+    def test_the_same_uuid_twice_is_left_alone(self):
+        self.load({str(self.slum.id): UUID})
+        out = self.load({str(self.slum.id): UUID})
+        self.assertIn("0 created, 1 already mapped", out)
         self.assertEqual(SlumAlias.objects.count(), 1)
-        self.assertEqual(locations.slum_external_id("avni", self.slum.id), "new-uuid")
+
+    def test_a_locked_slum_is_left_alone(self):
+        from survey import slum_sync
+
+        slum_sync.update(self.slum.id, alias_locked=True)
+        out = self.load({str(self.slum.id): UUID})
+        self.assertIn("0 created, 0 already mapped, 1 locked", out)
+        self.assertIn("locations are locked", out)
+        self.assertFalse(SlumAlias.objects.exists())
+
+    def test_a_uuid_held_by_another_slum_is_reported_not_moved(self):
+        other = make_slum(make_city("Pune"), name="Other", code="OT9")
+        SlumAlias.objects.create(slum=other, provider="avni", external_id=UUID)
+        out = self.load({str(self.slum.id): UUID})
+        self.assertIn("uuid {} is mapped to slum {}".format(UUID, other.id), out)
+        self.assertEqual(SlumAlias.objects.get(external_id=UUID).slum_id, other.id)

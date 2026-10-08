@@ -9,6 +9,7 @@ from django.conf import settings
 from django.db import models
 from django.db.models import Q
 from django.utils import timezone
+from jsonfield import JSONField
 
 KIND_CHOICES = (
     ("subject", "Subject registration"),
@@ -77,17 +78,30 @@ class ConceptAlias(models.Model):
 
 
 class SlumAlias(models.Model):
-    """How one provider identifies a slum: its own id (AVNI: the AddressLevel uuid)."""
+    """How one provider identifies a slum: its own id (AVNI: the AddressLevel uuid).
+
+    A slum may have several aliases per provider -- a re-surveyed slum gets a
+    second location. Exactly one is primary: the location the RIM and other
+    slum-level syncs read.
+    """
 
     slum = models.ForeignKey("master.Slum", on_delete=models.CASCADE, related_name="aliases")
     provider = models.CharField(max_length=30)
     external_id = models.CharField(max_length=200)
     external_name = models.CharField(max_length=500, blank=True)
+    is_primary = models.BooleanField(default=True, help_text="The location RIM and slum-level syncs read")
 
     class Meta:
         db_table = "survey_slum_alias"
-        unique_together = (("slum", "provider"), ("provider", "external_id"))
-        ordering = ("provider", "slum")
+        unique_together = (("provider", "external_id"),)
+        ordering = ("provider", "slum", "-is_primary", "external_id")
+        constraints = [
+            models.UniqueConstraint(
+                fields=["slum", "provider"],
+                condition=Q(is_primary=True),
+                name="survey_alias_one_primary",
+            ),
+        ]
         verbose_name = "Slum alias"
         verbose_name_plural = "Slum aliases"
 
@@ -101,6 +115,10 @@ class SlumDataVersion(models.Model):
     slum = models.ForeignKey("master.Slum", on_delete=models.CASCADE, related_name="survey_versions")
     version = models.PositiveSmallIntegerField()
     started_on = models.DateTimeField()
+    switched_on = models.DateTimeField(
+        null=True, blank=True,
+        help_text="When the live tables switched to this version; empty means the older version is still in use",
+    )
     note = models.CharField(max_length=500, blank=True)
     created_by = models.ForeignKey(
         settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True
@@ -115,6 +133,68 @@ class SlumDataVersion(models.Model):
 
     def __str__(self):
         return "{} v{}".format(self.slum, self.version)
+
+    @property
+    def is_waiting(self):
+        """True while the live tables still hold the previous version's data."""
+        return self.switched_on is None
+
+
+class SlumSyncSetting(models.Model):
+    """Per-slum sync control. No row means the normal behaviour: synced, and its
+    locations matched by the nightly location refresh.
+    """
+
+    slum = models.OneToOneField("master.Slum", on_delete=models.CASCADE, related_name="sync_setting")
+    sync_enabled = models.BooleanField(
+        default=True, help_text="Off: records arriving for this slum are skipped and named in the job digest",
+    )
+    alias_locked = models.BooleanField(
+        default=False, help_text="On: the nightly location refresh never changes this slum's AVNI locations",
+    )
+    note = models.CharField(max_length=500, blank=True)
+    updated_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True
+    )
+    updated_on = models.DateTimeField(default=timezone.now)
+
+    class Meta:
+        db_table = "survey_slum_sync_setting"
+        ordering = ("slum",)
+        verbose_name = "Slum sync setting"
+
+    def __str__(self):
+        state = "sync on" if self.sync_enabled else "sync off"
+        return "{} ({}{})".format(self.slum, state, ", locations locked" if self.alias_locked else "")
+
+
+class SlumVersionBackup(models.Model):
+    """One row of an older data version, copied out of the live tables.
+
+    The live tables carry no version column: starting a new version copies the
+    slum's rows here, and they are removed from the live tables only once the
+    new version's first record arrives.
+    """
+
+    slum = models.ForeignKey("master.Slum", on_delete=models.CASCADE, related_name="version_backups")
+    version = models.PositiveSmallIntegerField()
+    source_model = models.CharField(max_length=100, help_text='app label and model, e.g. "graphs.HouseholdData"')
+    source_pk = models.CharField(max_length=50)
+    data = JSONField(null=True, blank=True)
+    archived_on = models.DateTimeField(default=timezone.now)
+
+    class Meta:
+        db_table = "survey_slum_version_backup"
+        ordering = ("slum", "version", "source_model", "source_pk")
+        indexes = [
+            models.Index(fields=["slum", "version"], name="survey_backup_slum_idx"),
+            models.Index(fields=["slum", "version", "source_model"], name="survey_backup_model_idx"),
+        ]
+        verbose_name = "Slum version backup"
+        verbose_name_plural = "Slum version backups"
+
+    def __str__(self):
+        return "{} v{} {} #{}".format(self.slum_id, self.version, self.source_model, self.source_pk)
 
 
 class SyncSwitch(models.Model):

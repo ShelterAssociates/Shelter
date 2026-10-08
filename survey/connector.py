@@ -14,7 +14,8 @@ from collections import OrderedDict
 from django.conf import settings
 
 from notification.services import reporting
-from survey import store, switches, window
+from survey import locations as locations_module
+from survey import slum_sync, store, switches, window
 from survey.models import Record
 from survey.store import SyncContext  # noqa: F401 (re-exported: callers build one from here)
 
@@ -69,8 +70,15 @@ def context_for(context=None):
 
 # -- one record ---------------------------------------------------------------
 
-def sync_record(kind, raw, context):
-    """Store one raw record and run its legacy writer. Returns True when legacy saved."""
+def resolve_slum_id(normalized, context):
+    return store.resolve_slum(normalized.slum_name, context)[0]
+
+
+def sync_record(kind, raw, context, only_slums=None):
+    """Store one raw record and run its legacy writer. Returns True when legacy saved.
+
+    `only_slums` limits the pass to those slum ids, for a location-filtered run.
+    """
     source = context.provider
     facts = source.facts(kind, raw)
     status = source.visit_status(kind, raw)
@@ -100,6 +108,15 @@ def sync_record(kind, raw, context):
         with reporting.record(key=facts.external_id):
             reporting.fail(exc)
         context.bump("failed")
+        return False
+
+    slum_id = resolve_slum_id(normalized, context)
+    if only_slums is not None and slum_id not in only_slums:
+        context.bump("out_of_scope")
+        return False
+
+    if slum_sync.refuses(slum_id, normalized.slum_name):
+        context.bump("sync_off")
         return False
 
     if kind == "program_encounter":
@@ -173,19 +190,33 @@ def store_quietly(kind, raw, context):
 
 # -- listing loops ------------------------------------------------------------
 
-def sync_kind(kind, subject_type, program="", encounter_type="", from_date=None, context=None):
+def slums_for_locations(locations, context):
+    """{slum id} the given provider location ids map to, or None for no filter."""
+    if not locations:
+        return None
+    key = context.provider.key
+    allowed = {locations_module.slum_id_for_external_id(key, uuid) for uuid in locations}
+    allowed.discard(None)
+    return allowed
+
+
+def sync_kind(kind, subject_type, program="", encounter_type="", from_date=None, context=None, locations=None):
     """Every record of one kind modified since the window start. Returns the saved count.
 
     After each record the step notes `checkpoint` (that record's last-modified
     stamp) and `processed`, so a run that stops can be resumed from there.
+    `locations` narrows the pull to those provider locations.
     """
     context = context_for(context)
     before = context.snapshot()
     since = window.window_start(subject_type, from_date, kind, program, encounter_type)
+    only_slums = slums_for_locations(locations, context)
+    if locations:
+        reporting.note(locations=len(locations))
     saved = 0
     processed = 0
-    for raw in context.provider.iter_records(kind, subject_type, program, encounter_type, since):
-        saved += int(sync_record(kind, raw, context))
+    for raw in context.provider.iter_records(kind, subject_type, program, encounter_type, since, locations or ()):
+        saved += int(sync_record(kind, raw, context, only_slums))
         processed += 1
         stamp = context.provider.facts(kind, raw).last_modified
         if stamp:

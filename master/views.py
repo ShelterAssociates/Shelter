@@ -794,17 +794,23 @@ def get_translations(request):
     return JsonResponse(output)
 
 def rim_factsheet_available(request, slum_id):
+    """Whether a factsheet can be shown, and which RIM versions exist.
 
-    rim_exists = Rapid_Slum_Appraisal.objects.filter(
-        slum_name_id=slum_id
-    ).exists()
+    A re-surveyed slum keeps its earlier RIM in survey.SlumVersionBackup, so the
+    factsheet stays available from an archived version even once the live tables
+    have moved on.
+    """
+    from survey import versioning
 
-    slum_exists = SlumData.objects.filter(
-        slum_id=slum_id
-    ).exists()
+    rim_exists = Rapid_Slum_Appraisal.objects.filter(slum_name_id=slum_id).exists()
+    slum_exists = SlumData.objects.filter(slum_id=slum_id).exists()
+    versions = versioning.rim_choices_for(slum_id)
 
     return JsonResponse({
-        "available": rim_exists and slum_exists
+        "available": bool((rim_exists and slum_exists) or versions),
+        "versions": [
+            {"version": choice["version"], "label": choice["label"]} for choice in versions
+        ],
     })
 
 def get_slum_transformation_photos(request, slum_id):

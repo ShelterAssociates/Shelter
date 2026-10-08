@@ -22,6 +22,7 @@ Photos in observations are raw S3 object URLs and are not publicly fetchable.
 They must be exchanged for a pre-signed URL via media/signedUrl.
 """
 
+import itertools
 import logging
 import re
 from concurrent.futures import ThreadPoolExecutor
@@ -33,7 +34,7 @@ from django.conf import settings
 
 from avni import mappings
 from avni.client import client
-from avni.locations import slum_location_uuid
+from avni.locations import slum_location_uuids
 
 logger = logging.getLogger(__name__)
 
@@ -212,14 +213,14 @@ def find_subject_uuid(slum_id, household_number, token=None):
     a paged scan of every subject in the slum, so it is the fallback, not the
     primary path.
     """
-    location_uuid = slum_location_uuid(slum_id)
-    if not location_uuid:
+    location_uuids = slum_location_uuids(slum_id)
+    if not location_uuids:
         return None
 
     token = token or get_token()
     target = mappings.household_number_from(household_number)
 
-    for subject_type in HOUSEHOLD_SUBJECT_TYPES:
+    for location_uuid, subject_type in itertools.product(location_uuids, HOUSEHOLD_SUBJECT_TYPES):
         page = 0
         while page < MAX_PAGES:
             payload = api_get(
