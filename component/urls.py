@@ -28,6 +28,11 @@ urlpatterns = [
     ),
     url(r"^get_component_list/$", views.get_component_list, name="get_component_list"),
     url(
+        r"^get_recent_slum_uploads/$",
+        views.get_recent_slum_uploads,
+        name="get_recent_slum_uploads",
+    ),
+    url(
         r"^get_kobo_RIM_data/(?P<slum_id>\d+)$",
         views.get_kobo_RIM_data,
         name="get_kobo_RIM_data",

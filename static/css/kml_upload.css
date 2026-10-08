@@ -86,9 +86,22 @@
 
 .ku-grid {
     display: grid;
-    grid-template-columns: minmax(420px, 640px) minmax(0, 1fr);
+    grid-template-columns: minmax(300px, 380px) minmax(420px, 620px) minmax(0, 1fr);
     gap: 28px;
     align-items: start;
+}
+
+/* Two columns: the recent-uploads shortcut drops under the form rather than
+   squeezing the form itself. */
+@media (max-width: 1280px) {
+    .ku-grid {
+        grid-template-columns: minmax(420px, 620px) minmax(0, 1fr);
+    }
+
+    .ku-grid > .ku-card:first-child {
+        grid-column: 1 / -1;
+        order: 1;
+    }
 }
 
 @media (max-width: 960px) {
@@ -398,6 +411,234 @@ input.ku-input[type='file'] {
     border: 1px solid var(--ku-g200);
     white-space: nowrap;
     user-select: all;
+}
+
+/* ---- recent uploads card ---- */
+
+.ku-recent-note {
+    margin: 0;
+    padding: 10px 16px 0;
+    font-size: 11.5px;
+    line-height: 1.6;
+    color: var(--ku-g600);
+}
+
+.ku-recent-list {
+    position: relative;
+    max-height: 420px;
+}
+
+.ku-recent-row {
+    display: block;
+    width: 100%;
+    box-sizing: border-box;
+    text-align: left;
+    padding: 9px 11px;
+    border: 1px solid var(--ku-g200);
+    border-radius: 8px;
+    background: #fff;
+    font-family: var(--ku-font);
+    cursor: pointer;
+    transition: background 0.12s, border-color 0.12s;
+}
+
+.ku-recent-row:hover,
+.ku-recent-row:focus,
+.ku-recent-row.is-active {
+    background: var(--ku-violet-mid);
+    border-color: var(--ku-violet);
+    outline: none;
+}
+
+.ku-recent-name {
+    font-size: 12.5px;
+    font-weight: 600;
+    color: var(--ku-g900);
+    line-height: 1.35;
+}
+
+.ku-recent-path {
+    font-size: 11px;
+    color: var(--ku-g600);
+    margin-top: 3px;
+}
+
+/* ---- slum search: shortcut that fills the four location dropdowns ---- */
+
+.ku-slum-search {
+    margin-bottom: 18px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid var(--ku-g200);
+}
+
+.ku-slum-search.has-error .ku-slum-search-input {
+    border-color: var(--ku-red) !important;
+}
+
+/* Inline "you must pick a slum first" message. */
+.ku-field-error {
+    display: none;
+    margin: 6px 0 0;
+    font-size: 11.5px;
+    font-weight: 600;
+    color: var(--ku-red);
+}
+
+/* Shows the chosen slum once one is picked, so the collapsed state still
+   says what the upload is for. */
+.ku-slum-chosen {
+    display: none;
+    margin-top: 8px;
+    padding: 9px 11px;
+    border: 1px solid var(--ku-green-bd);
+    border-radius: var(--ku-r);
+    background: var(--ku-green-bg);
+}
+
+.ku-slum-chosen-name {
+    font-size: 12.5px;
+    font-weight: 700;
+    color: var(--ku-green);
+}
+
+.ku-slum-chosen-path {
+    font-size: 11px;
+    color: var(--ku-g600);
+    margin-top: 2px;
+}
+
+/* Separates the two ways of choosing a slum: search above, cascade below. */
+.ku-or-divider {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 4px 0 16px;
+}
+
+.ku-or-divider::before,
+.ku-or-divider::after {
+    content: "";
+    flex: 1;
+    height: 1px;
+    background: var(--ku-g200);
+}
+
+.ku-or-divider span {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    color: var(--ku-g400);
+}
+
+/* .ku-search-input is sized for the compact list header; next to .ku-input in
+   the card body it has to match that instead. !important is required because
+   .ku-search-input sets padding and border with !important. The magnifier is a
+   background-image on .ku-search-input, so the left padding has to stay wider
+   than the icon inset. */
+.ku-slum-search-input {
+    padding: 11px 14px 11px 36px !important;
+    font-size: 13px;
+    min-height: 42px;
+    background-position: 13px center !important;
+}
+
+/* In flow, NOT absolutely positioned: .ku-card sets overflow:hidden, so an
+   absolute panel anchored inside the left card would be clipped at the card
+   edge. Hidden until there is a query, so the page is unchanged until used. */
+.ku-slum-search-results {
+    display: none;
+    position: relative;
+    max-height: 220px;
+    overflow-y: auto;
+    margin-top: 8px;
+    padding: 6px;
+    border: 1px solid var(--ku-g200);
+    border-radius: var(--ku-r);
+    background: var(--ku-g50);
+}
+
+.ku-slum-search-row {
+    display: block;
+    width: 100%;
+    box-sizing: border-box;
+    text-align: left;
+    padding: 8px 10px;
+    margin-bottom: 4px;
+    border: 1px solid var(--ku-g200);
+    border-radius: 8px;
+    background: #fff;
+    font-family: var(--ku-font);
+    cursor: pointer;
+    transition: background 0.12s, border-color 0.12s;
+}
+
+.ku-slum-search-row:last-child {
+    margin-bottom: 0;
+}
+
+.ku-slum-search-row:hover,
+.ku-slum-search-row:focus,
+.ku-slum-search-row.is-active {
+    background: var(--ku-blue-light);
+    border-color: var(--ku-blue);
+    outline: none;
+}
+
+.ku-slum-search-name {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--ku-g900);
+}
+
+.ku-slum-search-path {
+    font-size: 11.5px;
+    color: var(--ku-g600);
+    margin-top: 2px;
+}
+
+.ku-slum-search-tag {
+    margin-left: 6px;
+    padding: 1px 6px;
+    border-radius: 999px;
+    font-size: 10px;
+    font-weight: 700;
+    background: var(--ku-amber-bg);
+    border: 1px solid var(--ku-amber-bd);
+    color: var(--ku-amber);
+}
+
+.ku-slum-search-more,
+.ku-slum-search-hint {
+    font-size: 11px;
+    color: var(--ku-g400);
+    margin: 6px 0 0;
+}
+
+.ku-slum-pick-path {
+    margin: 0 0 4px;
+    padding: 12px 14px;
+    border: 1px solid var(--ku-g200);
+    border-radius: var(--ku-r);
+    background: var(--ku-g50);
+    font-size: 12.5px;
+}
+
+.ku-slum-pick-path dt {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--ku-g400);
+}
+
+.ku-slum-pick-path dd {
+    margin: 2px 0 8px;
+    color: var(--ku-g900);
+    font-weight: 600;
+}
+
+.ku-slum-pick-path dd:last-child {
+    margin-bottom: 0;
 }
 
 /* ---- component list panel ---- */

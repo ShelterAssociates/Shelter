@@ -57,6 +57,11 @@ class KMLUpload(forms.Form):
 
     def clean(self):
         cleaned_data = super().clean()
+        # slum_name stays required=False because a City-level upload doesn't use
+        # it, but a Slum-level upload without one would hand KMLParser a None
+        # object to attach components to.
+        if cleaned_data.get("level") == "Slum" and not cleaned_data.get("slum_name"):
+            self.add_error("slum_name", "Please select a slum before uploading.")
         metric_value = cleaned_data.get("metric_value")
         if metric_value is not None:
             if not cleaned_data.get("metric_unit"):
