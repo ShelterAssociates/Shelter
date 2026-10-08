@@ -8,6 +8,7 @@ from django.test import TestCase
 from avni import paths
 from avni.sync import locations
 from avni.tests.support import FakeApi, make_city, make_slum
+from survey import slum_sync
 from survey.models import SlumAlias
 
 LIST_PATH = paths.locations(locations.LOCATIONS_SINCE)
@@ -73,6 +74,32 @@ class MatchLocationsTests(TestCase):
         counts = self.match(api, apply=True)
         self.assertEqual((counts["conflict"], counts["ambiguous"], counts["created"]), (1, 1, 0))
         self.assertEqual(SlumAlias.objects.count(), 1)
+
+    def test_a_locked_slum_is_left_alone(self):
+        """A slum configured by hand must survive the nightly location refresh."""
+        slum_sync.update(self.slum.id, alias_locked=True)
+        api = self.api(slum_location("u-1", "Lokmanya Nagar"))
+        counts = self.match(api, apply=True)
+        self.assertEqual((counts["locked"], counts["created"]), (1, 0))
+        self.assertEqual(SlumAlias.objects.count(), 0)
+        self.assertIn("locations are locked", self.lines[0])
+
+    def test_a_locked_slum_keeps_the_aliases_it_has(self):
+        SlumAlias.objects.create(slum=self.slum, provider="avni", external_id="chosen", is_primary=True)
+        slum_sync.update(self.slum.id, alias_locked=True)
+        api = self.api(slum_location("u-1", "Lokmanya Nagar"))
+        self.match(api, apply=True)
+        alias = SlumAlias.objects.get(slum=self.slum)
+        self.assertEqual(alias.external_id, "chosen")
+        self.assertTrue(alias.is_primary)
+
+    def test_a_second_location_on_one_slum_is_treated_as_matched(self):
+        SlumAlias.objects.create(slum=self.slum, provider="avni", external_id="u-1", is_primary=True)
+        SlumAlias.objects.create(slum=self.slum, provider="avni", external_id="u-2", is_primary=False)
+        api = self.api(slum_location("u-1", "Lokmanya Nagar"), slum_location("u-2", "Lokmanya Nagar New"))
+        counts = self.match(api, apply=True)
+        self.assertEqual(sum(counts.values()), 0)
+        self.assertEqual(SlumAlias.objects.count(), 2)
 
     def test_command_dry_run_by_default(self):
         out = StringIO()

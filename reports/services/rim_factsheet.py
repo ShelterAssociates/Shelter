@@ -7,6 +7,9 @@ from master.models import Slum
 from graphs.models import SlumData
 from avni.client import client as avni_client
 from master.models import Slum, Rapid_Slum_Appraisal
+from django.utils.dateparse import parse_datetime
+
+from survey import versioning
 import logging
 
 logger = logging.getLogger(__name__)
@@ -377,12 +380,25 @@ def get_avni_token():
     return avni_client().token()
 
 
+def parse_stamp(value):
+    """A backed-up datetime comes back as an ISO string."""
+    if not value or not isinstance(value, str):
+        return value or None
+    try:
+        return parse_datetime(value)
+    except (TypeError, ValueError):
+        return None
+
+
 # ======================================================
 # CORE RIM FACTSHEET DATA
 # ======================================================
-def get_rim_factsheet_detail(slum_code):
+def get_rim_factsheet_detail(slum_code, version=None):
     """
     Prepare RIM factsheet core data for a given slum code.
+
+    `version` reads an older, frozen RIM out of survey.SlumVersionBackup instead
+    of the live table, so a re-surveyed slum's earlier factsheet stays readable.
     """
     result = OrderedDict()
 
@@ -391,33 +407,34 @@ def get_rim_factsheet_detail(slum_code):
     if not slum:
         return result
 
-    # ---- Fetch slum data
-    slum_data = (
-        SlumData.objects.only("rim_data", "submission_date", "modified_on")
-        .filter(slum_id=slum.id)
-        .first()
-    )
-    if not slum_data or not slum_data.rim_data:
+    # ---- Fetch slum data (live, or the frozen copy of an older version)
+    if version is None:
+        slum_data = (
+            SlumData.objects.only("rim_data", "submission_date", "modified_on")
+            .filter(slum_id=slum.id)
+            .first()
+        )
+        data = slum_data.rim_data if slum_data else None
+        submitted = slum_data.submission_date if slum_data else None
+        modified = slum_data.modified_on if slum_data else None
+    else:
+        frozen = versioning.backup_fields(slum.id, version, versioning.SLUM_DATA_LABEL) or {}
+        data = frozen.get("rim_data")
+        submitted = parse_stamp(frozen.get("submission_date"))
+        modified = parse_stamp(frozen.get("modified_on"))
+    if not data:
         result.update(
             {
                 "data": "NA",
             }
         )
         return result
-
-    data = slum_data.rim_data
     get = data.get
     update = result.update
 
     # ---- Dates
-    result["submission_date"] = (
-        slum_data.submission_date.strftime("%B %Y")
-        if slum_data.submission_date
-        else "NA"
-    )
-    result["modified_on"] = (
-        slum_data.modified_on.strftime("%B %Y") if slum_data.modified_on else "NA"
-    )
+    result["submission_date"] = submitted.strftime("%B %Y") if submitted else "NA"
+    result["modified_on"] = modified.strftime("%B %Y") if modified else "NA"
 
     # ---- Merge section helper
     def merge_section(section):
@@ -580,20 +597,27 @@ def resolve_rim_images(rim_record):
     return rim_record
 
 
-def rim_factsheet_view(slum_id, raw=False):
+def with_version(context, slum_id, version):
+    """map_rim_data rebuilds the context, so the version keys are re-attached."""
+    context["version"] = version
+    context["version_choices"] = versioning.rim_choices_for(slum_id)
+    return context
+
+
+def rim_factsheet_view(slum_id, raw=False, version=None):
     _ = raw
 
     slum_id = int(slum_id)
-    response = {"status": False, "image": False, "_exists": False}
+    response = {"status": False, "image": False, "_exists": False, "version": version}
 
     slum = Slum.objects.filter(id=slum_id).first()
     if not slum:
         return response
 
     response["_exists"] = True
-    response.update(get_rim_factsheet_detail(slum_id))
+    response.update(get_rim_factsheet_detail(slum_id, version))
     if response.get("data") == "NA":
-        return response
+        return with_version(response, slum_id, version)
 
     response["status"] = len(response) > 2
 
@@ -606,10 +630,13 @@ def rim_factsheet_view(slum_id, raw=False):
         }
     )
 
-    rim_image = Rapid_Slum_Appraisal.objects.filter(slum_name=slum).values().first()
+    if version is None:
+        rim_image = Rapid_Slum_Appraisal.objects.filter(slum_name=slum).values().first()
+    else:
+        _, rim_image = versioning.rim_at(slum_id, version)
     if not rim_image:
         response["_exists"] = False
-        return response
+        return with_version(response, slum_id, version)
 
     if rim_image:
         if response.get("number_of_community_toilet_blo") == 0:
@@ -619,4 +646,4 @@ def rim_factsheet_view(slum_id, raw=False):
         response.update(resolve_rim_images(rim_image))
         response["image"] = True
 
-    return map_rim_data(response)
+    return with_version(map_rim_data(response), slum_id, version)

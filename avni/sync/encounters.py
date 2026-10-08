@@ -6,7 +6,7 @@ import dateparser
 
 from avni import mappings
 from avni.client import AvniError
-from avni.locations import slum_and_city_ids
+from avni.locations import slum_and_city_ids, slum_id_for_name
 from avni.sync import households
 from graphs.models import FollowupData
 from notification.services import reporting
@@ -51,7 +51,7 @@ def save_encounter_for(household, record):
 
 
 def save_sanitation_followup(household, data):
-    rows = FollowupData.objects.filter(household_number=household.number, slum_id__name=household.slum)
+    rows = FollowupData.objects.filter(household_number=household.number, slum_id=slum_id_for_name(household.slum))
     if not rows.exists():
         slum_id, city_id = slum_and_city_ids(household.slum)
         FollowupData.objects.create(

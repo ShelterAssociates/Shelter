@@ -22,6 +22,7 @@ class FakeProvider(contracts.Provider):
         self.subject_calls = []
         self.legacy_calls = []
         self.normalize_calls = []
+        self.locations_asked = []
         self.legacy_result = True
         self.legacy_error = None
 
@@ -44,9 +45,10 @@ class FakeProvider(contracts.Provider):
             enrolment_external_id=raw.get("enrolment_id", ""),
         )
 
-    def iter_records(self, kind, subject_type, program="", encounter_type="", since=None):
+    def iter_records(self, kind, subject_type, program="", encounter_type="", since=None, locations=()):
         key = (kind, subject_type, program or "", encounter_type or "")
         self.windows[key] = since
+        self.locations_asked = list(locations)
         for record in self.listings.get(key, []):
             yield record
 

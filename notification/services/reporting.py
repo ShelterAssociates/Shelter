@@ -474,6 +474,16 @@ def note(**values):
         step.extras.update({k: str(v) for k, v in values.items()})
 
 
+def note_slum(key, slum):
+    """Add a slum name to a comma-separated list the active step carries."""
+    step = getattr(_state, "step", None)
+    if step is None or not slum:
+        return
+    names = {name for name in (step.extras.get(key) or "").split(", ") if name}
+    names.add(slum)
+    step.extras[key] = ", ".join(sorted(names))
+
+
 def skip(slum=None, reason=""):
     step = getattr(_state, "step", None)
     if step is not None:

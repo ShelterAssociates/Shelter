@@ -8,7 +8,7 @@ import json
 import logging
 
 from avni import mappings
-from avni.locations import slum_and_city_ids
+from avni.locations import slum_and_city_ids, slum_id_for_name
 from avni.sync import households
 from graphs.models import FollowupData, HouseholdData
 from notification.services import reporting
@@ -42,10 +42,11 @@ def load_rows(file_path):
 
 def household_rows(slum_name, household_number, household_uuid, api=None):
     """HouseholdData queryset for the row, registering the household from AVNI if missing."""
-    rows = HouseholdData.objects.filter(slum_id__name=slum_name, household_number=household_number)
+    slum_id = slum_id_for_name(slum_name)
+    rows = HouseholdData.objects.filter(slum_id=slum_id, household_number=household_number)
     if not rows.exists():
         households.save_household(households.fetch_subject(household_uuid, api))
-        rows = HouseholdData.objects.filter(slum_id__name=slum_name, household_number=household_number)
+        rows = HouseholdData.objects.filter(slum_id=slum_id, household_number=household_number)
     return rows
 
 
@@ -86,7 +87,7 @@ def import_encounter_rows(file_path, required_key=None, extra_keys=(), after_mer
 
 
 def save_followup(row, number, data):
-    rows = FollowupData.objects.filter(household_number=number, slum_id__name=row["Slum"])
+    rows = FollowupData.objects.filter(household_number=number, slum_id=slum_id_for_name(row["Slum"]))
     if not rows.exists():
         slum_id, city_id = slum_and_city_ids(row["Slum"])
         FollowupData.objects.create(

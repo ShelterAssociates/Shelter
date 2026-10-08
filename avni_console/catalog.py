@@ -18,7 +18,7 @@ JOBS = [
     Job("rhs_sync", "RHS registration (Household / Structure / Detailed Socio Economic Survey)",
         "Pull registrations modified since a date into the mastersheet. "
         "Dry run tells you how many records AVNI would send.",
-        ["from_date", "subject_types"], True, False),
+        ["from_date", "locations", "subject_types"], True, False),
     Job("daily_reporting_sync", "Daily Reporting (toilet construction)",
         "Program encounters that drive ToiletConstruction dates and status.", ["from_date"], False, False,
         ("Household", "program_encounter", "", DAILY_REPORTING)),
@@ -34,7 +34,7 @@ JOBS = [
         "Every enabled enrolment, encounter and program encounter of Household, Structure and Detailed Socio "
         "Economic Survey subjects: merged into rhs_data as today and mirrored into the survey tables. "
         "Nothing ticked = everything enabled.",
-        ["from_date", "household_subject_types", "household_encounter_types"], False, False),
+        ["from_date", "locations", "household_subject_types", "household_encounter_types"], False, False),
     Job("member_sync", "Family members",
         "Family Member subjects, their program enrolments and program encounters.", ["from_date"], False, False,
         (MEMBER_SUBJECT_TYPE, "subject", "", "")),
@@ -67,6 +67,21 @@ def enabled_subject_types():
 
 def enabled_direct_encounter_types():
     return [kind for kind in DIRECT_ENCOUNTER_TYPES if switches.is_enabled("Household", "encounter", "", kind)]
+
+
+def location_choices():
+    """[(uuid, label)] of every mapped AVNI location, so a run can be narrowed to one."""
+    from survey.models import SlumAlias
+
+    rows = (
+        SlumAlias.objects.filter(provider="avni")
+        .select_related("slum")
+        .order_by("slum__name", "-is_primary")
+    )
+    return [
+        (row.external_id, "{}{}".format(row.slum.name, "" if row.is_primary else " (second location)"))
+        for row in rows
+    ]
 
 
 def household_encounter_choices():
@@ -167,6 +182,17 @@ def encounter_types(params, data):
         params["encounter_types"] = chosen
 
 
+def locations(params, data):
+    """Nothing picked means every location, which is how the jobs behaved before."""
+    chosen = as_list(data.get("locations"))
+    if chosen:
+        known = {uuid for uuid, _ in location_choices()}
+        unknown = [uuid for uuid in chosen if uuid not in known]
+        if unknown:
+            raise ParamError("Unknown location(s): {}".format(", ".join(unknown)))
+        params["locations"] = chosen
+
+
 def slum_ids(params, data):
     chosen = as_int_list(data.get("slum_ids"), "Slum")
     if chosen:
@@ -189,6 +215,7 @@ BUILDERS = {
     "encounter_types": encounter_types, "slum_ids": slum_ids, "include_toilets": include_toilets,
     "city_ids": city_ids, "household_subject_types": household_subject_types,
     "household_encounter_types": household_encounter_types, "subject_ids": subject_ids,
+    "locations": locations,
 }
 
 

@@ -21,6 +21,7 @@ import json
 import logging
 from datetime import datetime
 
+from avni.locations import slum_id_for_name
 from graphs.models import MemberData, MemberEncounterData, MemberProgramData
 from master.models import Slum
 from notification.services import reporting
@@ -86,7 +87,7 @@ def member_for(member_uuid):
 # -- JSON export rows ---------------------------------------------------------
 
 def save_member(row):
-    slum = Slum.objects.filter(name=row["slum"]).first()
+    slum = Slum.objects.filter(id=slum_id_for_name(row["slum"])).first()
     if slum is None:
         return False
     fields = dict(row)
@@ -173,7 +174,7 @@ def member_household_number(record):
 
 def save_member_from_record(record):
     """One Family Member subject -> MemberData."""
-    slum = Slum.objects.filter(name=(record.get("location") or {}).get("Slum")).first()
+    slum = Slum.objects.filter(id=slum_id_for_name((record.get("location") or {}).get("Slum"))).first()
     if slum is None:
         return False
     observations = record.get("observations") or {}

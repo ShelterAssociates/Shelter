@@ -34,6 +34,14 @@ def setting(params, key, default=None):
     return (params or {}).get(key, default)
 
 
+def wanted_locations(params):
+    """The AVNI location uuids a run is limited to; empty means every location."""
+    chosen = setting(params, "locations") or []
+    if isinstance(chosen, str):
+        chosen = [chosen]
+    return [uuid for uuid in chosen if uuid]
+
+
 def set_since_window(recorder, from_date):
     recorder.set_window(window.window_label(from_date))
 
@@ -45,6 +53,7 @@ def ensure_enabled(label, subject_type, kind, program="", encounter_type=""):
 
 def rhs_sync(recorder, params=None):
     from_date = setting(params, "from_date")
+    locations = wanted_locations(params)
     subject_types = setting(params, "subject_types") or list(HOUSEHOLD_SUBJECT_TYPES)
     unknown = [kind for kind in subject_types if kind not in HOUSEHOLD_SUBJECT_TYPES]
     if unknown:
@@ -55,7 +64,7 @@ def rhs_sync(recorder, params=None):
     set_since_window(recorder, from_date)
     for subject_type in subject_types:
         run_step(recorder, "households:{}".format(subject_type), households.sync_households,
-                 resume=resume, subject_type=subject_type, from_date=from_date)
+                 resume=resume, subject_type=subject_type, from_date=from_date, locations=locations)
 
 
 def sync_slums(slum_ids, sync_one):
@@ -110,6 +119,7 @@ def encounter_sync(recorder, params=None):
 def household_encounter_sync(recorder, params=None):
     """Every enabled enrolment / encounter / program encounter of the household subject types."""
     from_date = setting(params, "from_date")
+    locations = wanted_locations(params)
     subject_types = setting(params, "subject_types") or list(HOUSEHOLD_SUBJECT_TYPES)
     unknown = [kind for kind in subject_types if kind not in HOUSEHOLD_SUBJECT_TYPES]
     if unknown:
@@ -129,11 +139,12 @@ def household_encounter_sync(recorder, params=None):
     context = connector.context_for()
     for row in rows:
         run_step(recorder, connector.step_name(row), sync_one_kind, resume=resume,
-                 row=row, from_date=from_date, context=context)
+                 row=row, from_date=from_date, context=context, locations=locations)
 
 
-def sync_one_kind(row, from_date, context):
-    return connector.sync_kind(row.kind, row.subject_type, row.program, row.encounter_type, from_date, context)
+def sync_one_kind(row, from_date, context, locations=None):
+    return connector.sync_kind(row.kind, row.subject_type, row.program, row.encounter_type,
+                               from_date, context, locations)
 
 
 def member_sync(recorder, params=None):

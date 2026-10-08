@@ -10,6 +10,7 @@ import dateparser
 from avni import paths, window
 from avni.client import client
 from avni.locations import data_file, slum_location_uuid
+from survey import slum_sync
 from graphs.models import SlumData
 from master.models import Rapid_Slum_Appraisal, Slum
 from notification.services import reporting
@@ -119,11 +120,16 @@ def save_rim_images(observations, slum_id):
     return False
 
 
-def save_toilet_record(record):
-    """Add or replace one community toilet block inside the slum's rim_data['Toilet']."""
+def save_toilet_record(record, slum_id=None):
+    """Add or replace one community toilet block inside the slum's rim_data['Toilet'].
+
+    `slum_id` comes from the slum being synced, so a toilet never lands anywhere
+    but the slum whose primary location it was fetched from.
+    """
     slum_name = record["location"]["Slum"]
     toilet = map_section(record["observations"], rim_questions()[TOILET_SECTION])
-    slum_id = Slum.objects.filter(name=slum_name).values_list("id", flat=True).first()
+    if slum_id is None:
+        slum_id = Slum.objects.filter(name=slum_name).values_list("id", flat=True).first()
     rows = SlumData.objects.filter(slum_id=slum_id)
     if not rows.exists():
         logger.error("No SlumData for slum %s (%s); toilet %s skipped", slum_name, slum_id, record.get("ID"))
@@ -148,7 +154,7 @@ def replace_toilet(toilets, toilet):
 def sync_slum_rim(slum_id, api=None):
     """(slum is mapped in AVNI, RIM records saved, images updated) for one slum."""
     location_uuid = slum_location_uuid(slum_id)
-    if not location_uuid:
+    if not location_uuid or not slum_sync.is_enabled(slum_id):
         return False, 0, False
     api = api or client()
     saved, images_updated = 0, False
@@ -169,7 +175,7 @@ def sync_slum_rim(slum_id, api=None):
 def sync_slum_toilets(slum_id, api=None):
     """Number of community toilet blocks saved for one slum."""
     location_uuid = slum_location_uuid(slum_id)
-    if not location_uuid:
+    if not location_uuid or not slum_sync.is_enabled(slum_id):
         return 0
     api = api or client()
     saved = 0
@@ -179,7 +185,7 @@ def sync_slum_toilets(slum_id, api=None):
                 continue
             with reporting.record(slum=record["location"].get("Slum"), key=record.get("ID")):
                 try:
-                    saved += int(save_toilet_record(record))
+                    saved += int(save_toilet_record(record, slum_id))
                 except Exception as exc:
                     logger.error("Toilet %s not saved: %s", record.get("ID"), exc)
                     reporting.fail(exc)

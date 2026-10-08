@@ -69,8 +69,13 @@ class Provider(object):
         """False when the provider cannot list this kind by type (AVNI: enrolments)."""
         return True
 
-    def iter_records(self, kind, subject_type, program="", encounter_type="", since=None):
-        """Yield raw records of one kind modified since `since`, page by page."""
+    def iter_records(self, kind, subject_type, program="", encounter_type="", since=None, locations=()):
+        """Yield raw records of one kind modified since `since`, page by page.
+
+        `locations` is the provider's own location ids to narrow the pull to;
+        a provider that cannot filter server-side may ignore it, because the
+        connector also filters by slum once each record is normalized.
+        """
         raise NotImplementedError
 
     def get_subject(self, subject_external_id):

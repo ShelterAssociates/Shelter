@@ -13,6 +13,7 @@ from avni import paths
 from avni.client import client
 from avni.locations import PROVIDER
 from master.models import Slum
+from survey import slum_sync
 from survey.models import SlumAlias
 
 logger = logging.getLogger(__name__)
@@ -57,8 +58,11 @@ def db_slums():
 
 def plan(api):
     """(creates, report) — creates = [(slum id, uuid, title)], report = {kind: [lines]}."""
-    aliases = dict(SlumAlias.objects.filter(provider=PROVIDER).values_list("slum_id", "external_id"))
-    slum_by_uuid = {uuid: slum_id for slum_id, uuid in aliases.items()}
+    alias_rows = list(SlumAlias.objects.filter(provider=PROVIDER).values_list("slum_id", "external_id", "is_primary"))
+    aliases = {slum_id: uuid for slum_id, uuid, is_primary in alias_rows if is_primary}
+    aliased_ids = {slum_id for slum_id, _, _ in alias_rows}
+    slum_by_uuid = {uuid: slum_id for slum_id, uuid, _ in alias_rows}
+    locked = slum_sync.locked_slum_ids()
     by_key = db_slums()
     cities_by_name = defaultdict(set)
     for (name, _), rows in by_key.items():
@@ -76,8 +80,10 @@ def plan(api):
         elif rows:
             slum_id = rows[0][0]
             matched_ids.add(slum_id)
-            if slum_id in aliases:
-                report["conflict"].append("%s (%s) is slum %s, already aliased to %s" % (title, city, slum_id, aliases[slum_id]))
+            if slum_id in locked:
+                report["locked"].append("%s (%s) is slum %s, whose locations are locked" % (title, city, slum_id))
+            elif slum_id in aliased_ids:
+                report["conflict"].append("%s (%s) is slum %s, already aliased to %s" % (title, city, slum_id, aliases.get(slum_id)))
             else:
                 creates.append((slum_id, uuid, title))
         else:
@@ -86,7 +92,7 @@ def plan(api):
             report["unmatched_avni"].append("%s (%s) %s%s" % (title, city, uuid, hint))
     for rows in by_key.values():
         for slum_id, name, city in rows:
-            if slum_id not in matched_ids and slum_id not in aliases:
+            if slum_id not in matched_ids and slum_id not in aliased_ids:
                 report["unmatched_db"].append("slum %s %s (%s)" % (slum_id, name, city))
     report["unmatched_db"].sort()
     return creates, report
@@ -97,7 +103,7 @@ def run(apply=False, api=None, out=print):
     creates, report = plan(api or client())
     for slum_id, uuid, title in creates:
         out("CREATE slum %s <- %s (%s)" % (slum_id, uuid, title))
-    for kind in ("conflict", "ambiguous", "unmatched_avni", "unmatched_db"):
+    for kind in ("locked", "conflict", "ambiguous", "unmatched_avni", "unmatched_db"):
         for line in report[kind]:
             out("%-14s %s" % (kind.upper(), line))
     if apply:

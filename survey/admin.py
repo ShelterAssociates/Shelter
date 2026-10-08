@@ -6,7 +6,17 @@ from django.utils import timezone
 from django.utils.html import format_html
 
 from survey import switches
-from survey.models import Answer, Concept, ConceptAlias, Record, SlumAlias, SlumDataVersion, SyncSwitch
+from survey.models import (
+    Answer,
+    Concept,
+    ConceptAlias,
+    Record,
+    SlumAlias,
+    SlumDataVersion,
+    SlumSyncSetting,
+    SlumVersionBackup,
+    SyncSwitch,
+)
 
 
 class ConceptAliasInline(admin.TabularInline):
@@ -72,8 +82,8 @@ class RecordAdmin(admin.ModelAdmin):
 class SlumAliasAdmin(admin.ModelAdmin):
     """Map a slum to a provider's location id here instead of a deploy."""
 
-    list_display = ("slum", "provider", "external_id", "external_name")
-    list_filter = ("provider",)
+    list_display = ("slum", "provider", "external_id", "external_name", "is_primary")
+    list_filter = ("provider", "is_primary")
     search_fields = ("slum__name", "external_id", "external_name")
     raw_id_fields = ("slum",)
     list_select_related = ("slum",)
@@ -81,7 +91,7 @@ class SlumAliasAdmin(admin.ModelAdmin):
 
 @admin.register(SlumDataVersion)
 class SlumDataVersionAdmin(admin.ModelAdmin):
-    list_display = ("slum", "version", "started_on", "note", "created_by", "created_on")
+    list_display = ("slum", "version", "started_on", "switched_on", "note", "created_by", "created_on")
     list_filter = ("version",)
     search_fields = ("slum__name", "note")
     autocomplete_fields = ("slum",)
@@ -108,6 +118,39 @@ class SlumDataVersionAdmin(admin.ModelAdmin):
             "Entered in {}.".format(timezone.get_current_timezone_name())
         )
         return form
+
+
+@admin.register(SlumSyncSetting)
+class SlumSyncSettingAdmin(admin.ModelAdmin):
+    """Per-slum sync control. The Slum data versions page is the usual way in."""
+
+    list_display = ("slum", "sync_enabled", "alias_locked", "note", "updated_by", "updated_on")
+    list_filter = ("sync_enabled", "alias_locked")
+    search_fields = ("slum__name", "note")
+    autocomplete_fields = ("slum",)
+    fields = ("slum", "sync_enabled", "alias_locked", "note")
+
+    def save_model(self, request, obj, form, change):
+        obj.updated_by = request.user
+        obj.updated_on = timezone.now()
+        super(SlumSyncSettingAdmin, self).save_model(request, obj, form, change)
+
+
+@admin.register(SlumVersionBackup)
+class SlumVersionBackupAdmin(admin.ModelAdmin):
+    """Read-only: the frozen rows of a slum's older versions."""
+
+    list_display = ("slum", "version", "source_model", "source_pk", "archived_on")
+    list_filter = ("version", "source_model")
+    search_fields = ("slum__name", "source_pk")
+    raw_id_fields = ("slum",)
+    list_select_related = ("slum",)
+
+    def has_add_permission(self, request):
+        return False
+
+    def has_change_permission(self, request, obj=None):
+        return False
 
 
 @admin.register(SyncSwitch)

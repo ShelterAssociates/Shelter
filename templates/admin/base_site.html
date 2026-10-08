@@ -37,6 +37,11 @@
                 <a class="drop-item" href="/component/">Upload KML</a>
               </li>
             {% endif %}
+            {% if user.is_superuser %}
+              <li>
+                <a class="drop-item" href="/slum-versions/">Slum data versions</a>
+              </li>
+            {% endif %}
           </ul>
         </div>
 
@@ -178,6 +183,9 @@
       {% endif %}
       {% if perms.component.can_upload_KML %}
         <a class="drop-item" href="/component/">Upload KML</a>
+      {% endif %}
+      {% if user.is_superuser %}
+        <a class="drop-item" href="/slum-versions/">Slum data versions</a>
       {% endif %}
 
       {% if perms.mastersheet.can_view_mastersheet or perms.mastersheet.can_view_mastersheet_report %}
