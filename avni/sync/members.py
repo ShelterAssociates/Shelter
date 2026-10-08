@@ -30,6 +30,13 @@ logger = logging.getLogger(__name__)
 GENDER_CODES = {"Male": "1", "Female": "2"}
 HOUSEHOLD_NUMBER_KEYS = ("Household number", "Househhold number", "House number", "Parent household number")
 
+# MemberEncounterData holds one row per (member, slum, program). These
+# encounter types represent "the member's follow-up status" - once one of
+# them is stored, a different encounter type under the same enrolment (e.g.
+# "MHM Pre/Post Impact Assessment") must not silently overwrite it just
+# because it happens to sync later; see save_member_encounter_from_record.
+FOLLOWUP_ENCOUNTER_TYPES = {"Menstrual hygiene Follow-up"}
+
 
 def load_rows(file_path):
     with open(file_path) as handle:
@@ -198,15 +205,35 @@ def save_member_program_from_record(record):
 
 
 def save_member_encounter_from_record(record):
-    """One program encounter of a Family Member -> MemberEncounterData."""
+    """One program encounter of a Family Member -> MemberEncounterData.
+
+    This table holds one row per (member, slum, program), so once it holds a
+    real Follow-up answer, a later-synced encounter of a different type under
+    the same enrolment (e.g. "MHM Pre/Post Impact Assessment") must not
+    silently overwrite it just because it happened to sync afterwards - it
+    doesn't carry the follow-up questions at all. Among Follow-ups, only one
+    at least as recent as what's stored replaces it, so out-of-order sync
+    processing can't put an older follow-up back over a newer one.
+    """
     member = member_for(record["Subject ID"])
     program = MemberProgramData.objects.filter(member=member, program_uuid=record.get("Enrolment ID") or "").first()
     if program is None:
         program = MemberProgramData.objects.filter(member=member).first()
+
     fields = {
         "encounter_uuid": record.get("ID") or "",
         "encounter_name": (record.get("Encounter type") or "")[:100],
         "encounter_data": record.get("observations") or {},
     }
     fields.update(audit_days(record))
+
+    existing = MemberEncounterData.objects.filter(member=member, slum=member.slum, program=program).first()
+    if existing:
+        existing_is_followup = existing.encounter_name in FOLLOWUP_ENCOUNTER_TYPES
+        incoming_is_followup = record.get("Encounter type") in FOLLOWUP_ENCOUNTER_TYPES
+        if existing_is_followup and not incoming_is_followup:
+            return False
+        if existing.submission_date and fields["submission_date"] and fields["submission_date"] < existing.submission_date:
+            return False
+
     return write_member_encounter(member, program, fields)
