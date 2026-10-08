@@ -29,6 +29,7 @@ from .kmlparser import KMLParser, KMLValidationError
 from .models import Metadata
 from .cipher import *
 from master.models import Slum, Rapid_Slum_Appraisal, drainage
+from photos.views import permitted_cities
 from sponsor.models import SponsorProject, SponsorProjectDetails
 from avni.client import client as avni_client
 from utils.utils_permission import (
@@ -40,6 +41,8 @@ from django.core.exceptions import PermissionDenied
 from django.db import close_old_connections, connection
 from django.db.models import F
 from django.db.models import Q
+from django.db.models import Max
+from django.contrib.contenttypes.models import ContentType
 from django.db.models.functions import TruncMonth
 from django.views.decorators.http import require_GET, require_POST
 from django.utils.text import slugify
@@ -232,6 +235,69 @@ INLINE_GEOMETRY_NAMES = {"Slum boundary", "Town boundary", "Admin Ward Area"}
 # How many rejected-placemark errors the non-AJAX fallback banner shows before
 # it truncates. The AJAX upload modal always lists all of them.
 PREVIEW_ERROR_COUNT = 10
+
+# How many recently-uploaded slums the shortcut card lists.
+RECENT_UPLOAD_COUNT = 10
+
+
+def build_slum_search_index(user):
+    """Flat slum -> full-path rows backing the "Search slum" box on the upload page.
+
+    Rendered into the page once and filtered client-side, the same way the
+    components list is. Deliberately avoids master:modelList, which is
+    @csrf_exempt with no @login_required.
+
+    values_list, not select_related: Slum.shape, ElectoralWard.shape and
+    AdministrativeWard.shape are all PolygonFields, so select_related would
+    transfer and parse three geometries per row on every page load.
+    """
+    rows = (
+        Slum.objects.filter(
+            electoral_ward__isnull=False,
+            electoral_ward__administrative_ward__isnull=False,
+            # Same city rule as Slum.has_permission, applied as one queryset
+            # filter instead of per object.
+            electoral_ward__administrative_ward__city__in=permitted_cities(user),
+        )
+        .order_by("name")
+        .values_list(
+            "id",
+            "name",
+            "status",
+            "electoral_ward__id",
+            "electoral_ward__name",
+            "electoral_ward__administrative_ward__id",
+            "electoral_ward__administrative_ward__name",
+            "electoral_ward__administrative_ward__city__id",
+            "electoral_ward__administrative_ward__city__name__city_name",
+        )
+    )
+    return [
+        {
+            "id": sid,
+            "name": name,
+            # Inactive slums stay listed: master.views.slumList has no status
+            # filter, so they are already selectable in the dropdowns below.
+            "active": status,
+            "ew_id": ew_id,
+            "ew": ew_name,
+            "aw_id": aw_id,
+            "aw": aw_name,
+            "city_id": city_id,
+            "city": city_name,
+        }
+        for (
+            sid,
+            name,
+            status,
+            ew_id,
+            ew_name,
+            aw_id,
+            aw_name,
+            city_id,
+            city_name,
+        ) in rows
+    ]
 
 
 @staff_member_required
@@ -461,6 +527,7 @@ def kml_upload(request):
         "code", flat=True
     )
     context_data["component"] = metadata_component
+    context_data["slum_search_index"] = build_slum_search_index(request.user)
     context_data["form"] = form
     return render(request, "kml_upload.html", context_data)
 
@@ -1148,6 +1215,63 @@ def get_kobo_drainage_report_data(request, slum_id):
         output["electoral_ward"] = slum[0].electoral_ward.name
         output["slum_name"] = slum[0].name
     return HttpResponse(json.dumps(output), content_type="application/json")
+
+
+@staff_member_required
+@permission_required("component.can_upload_KML", raise_exception=True)
+def get_recent_slum_uploads(request):
+    """JSON: the 10 slums whose KML components were saved most recently.
+
+    Component has no timestamp column, but an upload deletes and recreates a
+    slum's rows, so the highest Component.id per slum tracks the latest upload
+    without needing a schema change.
+    """
+    slum_type = ContentType.objects.get_for_model(Slum)
+    recent = (
+        Component.objects.filter(content_type=slum_type)
+        .values("object_id")
+        .annotate(last_id=Max("id"))
+        .order_by("-last_id")[:RECENT_UPLOAD_COUNT]
+    )
+    order = [row["object_id"] for row in recent]
+
+    slums = {
+        slum.id: slum
+        for slum in Slum.objects.filter(
+            id__in=order,
+            electoral_ward__isnull=False,
+            electoral_ward__administrative_ward__isnull=False,
+            electoral_ward__administrative_ward__city__in=permitted_cities(
+                request.user
+            ),
+        ).select_related(
+            "electoral_ward__administrative_ward__city__name"
+        )
+    }
+
+    payload = []
+    for slum_id in order:
+        slum = slums.get(slum_id)
+        if slum is None:
+            # Outside the user's cities, or missing its ward chain - either way
+            # the cascade below could not display it.
+            continue
+        electoral_ward = slum.electoral_ward
+        admin_ward = electoral_ward.administrative_ward
+        payload.append(
+            {
+                "id": slum.id,
+                "name": slum.name,
+                "active": slum.status,
+                "ew_id": electoral_ward.id,
+                "ew": electoral_ward.name,
+                "aw_id": admin_ward.id,
+                "aw": admin_ward.name,
+                "city_id": admin_ward.city.id,
+                "city": admin_ward.city.name.city_name,
+            }
+        )
+    return JsonResponse({"slums": payload})
 
 
 def get_component_list(request):

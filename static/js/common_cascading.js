@@ -16,11 +16,6 @@ function cityList(){
               str = str +json.idArray[i] +'"'+'>' + json.nameArray[i] + '</option>';
               $('#id_City').append(str);
            }
-           slumid=$('#id_slum_name').val();
-      		 if(slumid)
-      		 {
-          		filllist();
-      	 	}
         },
         sync:false
     });
@@ -95,33 +90,6 @@ function slumList(){
         async:false
     });
 
-}
-
-function filllist(){
-    var id = $('#id_slum_name').val();
-    var url = "{% url 'modelList' %}";
-
-    $.ajax({
-        url : url,
-        data : { id : id },
-        type: "POST",
-        contenttype : "json",
-        success :function(json){
-           var a=json.cid;
-           $("#id_City option[value='"+json.cid+"']").attr("selected", "selected");
-            administrativewardList();
-            $("#id_AdministrativeWard option:selected").val(json.aid);
-            $("#id_AdministrativeWard option:selected").text(json.aname);
-            electoralWardList();
-            $("id_ElectoralWard option[value='"+json.eid+"']").attr("selected", "selected");
-            $("#id_ElectoralWard option:selected").val(json.eid);
-            $("#id_ElectoralWard option:selected").text(json.ename);
-             slumList();
-            $("#id_slum_name option:selected").val(json.sid);
-            $("#id_slum_name option:selected").text(json.sname);
-        },
-        async:false
-    });
 }
 
 $(document).ready(function(){

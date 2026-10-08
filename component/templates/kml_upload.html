@@ -31,8 +31,9 @@
       var administrative_url = "{% url 'master:administrativewardList' %}"
       var electoral_url = "{% url 'master:electoralWardList' %}"
       var slum_url = "{% url 'master:slumList' %}"
-      var url = "{% url 'master:modelList' %}"
     </script>
+
+    {{ slum_search_index|json_script:"kmlSlumSearchData" }}
 
     {% if form.errors %}
       {% for field in form %}
@@ -45,11 +46,41 @@
       {% endfor %}
     {% endif %}
 
-    <form id="kml-upload-form" enctype="multipart/form-data" method="post">
+    <form id="kml-upload-form" enctype="multipart/form-data" method="post" novalidate>
       {% csrf_token %}
 
       <div class="ku-grid">
-        <!-- Left: upload form -->
+        <!-- Left: recently uploaded slums. A second shortcut into the same
+             confirmation modal the search box uses - selection only, it never
+             touches the upload itself. Filled from get_recent_slum_uploads. -->
+        <div class="ku-card">
+          <div class="ku-card-head">
+            <div class="ku-card-head-left">
+              <div class="ku-card-head-icon ku-icon-violet">
+                <svg viewBox="0 0 24 24">
+                  <circle cx="12" cy="12" r="9" />
+                  <polyline points="12 7 12 12 15 14" />
+                </svg>
+              </div>
+              <div>
+                <h3>Recent uploads</h3>
+                <p>Pick a slum you worked on lately</p>
+              </div>
+            </div>
+            <div class="ku-card-head-actions">
+              <button type="button" id="refreshRecentUploads" class="ku-icon-btn">
+                <svg viewBox="0 0 24 24">
+                  <polyline points="23 4 23 10 17 10" />
+                  <path d="M20.49 15a9 9 0 11-2.12-9.36L23 10" />
+                </svg>Refresh
+              </button>
+            </div>
+          </div>
+          <p class="ku-recent-note">Uploading for a slum you worked on recently? Select it here — it fills the location for you, no searching needed.</p>
+          <div class="ku-list ku-recent-list" id="recentUploadList"></div>
+        </div>
+
+        <!-- Middle: upload form -->
         <div class="ku-card">
           <div class="ku-card-head">
             <div class="ku-card-head-left">
@@ -73,29 +104,56 @@
           <div class="ku-card-body">
             <div class="ku-hidden-field">{{ form.level|add_class:'ku-select' }}</div>
 
-            <div class="ku-field" id="Cities">
-              <label>City</label>
-              {{ form.City|add_class:'ku-select' }}
+            <!-- Shortcut that fills the four dropdowns below. Filters the
+                 server-rendered index in #kmlSlumSearchData client-side, like
+                 the components list does. The input has no name attribute, so
+                 FormData() can never carry it into the upload POST. -->
+            <div class="ku-field ku-slum-search" id="SlumSearch">
+              <label for="kmlSlumSearchInput">Search slum</label>
+              <input type="text" id="kmlSlumSearchInput" class="ku-search-input ku-slum-search-input" placeholder="Type a slum name..." autocomplete="off" />
+              <div class="ku-slum-search-results" id="kmlSlumSearchResults" aria-live="polite"></div>
+              <div class="ku-slum-chosen" id="kmlSlumChosen">
+                <div class="ku-slum-chosen-name" id="kmlSlumChosenName"></div>
+                <div class="ku-slum-chosen-path" id="kmlSlumChosenPath"></div>
+              </div>
+              <p class="ku-field-error" id="kmlSlumRequiredError">Please select a slum before uploading.</p>
+              <p class="ku-slum-search-hint">Search a slum, or pick one from Recent uploads.</p>
             </div>
 
-            <div class="ku-field" id="AdministrativeWards">
-              <label>Administrative Ward</label>
-              {{ form.AdministrativeWard|add_class:'ku-select' }}
-            </div>
+            <!-- Hidden until a slum is chosen. It then shows the full path that
+                 was selected, and stays editable so any level can be adjusted. -->
+            <div id="manualLocation" style="display:none;">
+              <div class="ku-or-divider"><span>OR CHANGE MANUALLY</span></div>
 
-            <div class="ku-field" id="ElectoralWards">
-              <label>Electoral Ward</label>
-              {{ form.ElectoralWard|add_class:'ku-select' }}
-            </div>
+              <div class="ku-field" id="Cities">
+                <label>City</label>
+                {{ form.City|add_class:'ku-select' }}
+                <p class="ku-field-error" id="kmlCityError">Please select this first.</p>
+              </div>
 
-            <div class="ku-field" id="Slums">
-              <label>Slum name</label>
-              {{ form.slum_name|add_class:'ku-select' }}
+              <div class="ku-field" id="AdministrativeWards">
+                <label>Administrative Ward</label>
+                {{ form.AdministrativeWard|add_class:'ku-select' }}
+                <p class="ku-field-error" id="kmlAdminWardError">Please select this first.</p>
+              </div>
+
+              <div class="ku-field" id="ElectoralWards">
+                <label>Electoral Ward</label>
+                {{ form.ElectoralWard|add_class:'ku-select' }}
+                <p class="ku-field-error" id="kmlElectoralWardError">Please select this first.</p>
+              </div>
+
+              <div class="ku-field" id="Slums">
+                <label>Slum name</label>
+                {{ form.slum_name|add_class:'ku-select' }}
+                <p class="ku-field-error" id="kmlSlumFieldError">Please select this first.</p>
+              </div>
             </div>
 
             <div class="ku-field">
               {{ form.kml_file.label_tag }}
               {{ form.kml_file|add_class:'ku-input' }}
+              <p class="ku-field-error" id="kmlFileRequiredError">Please choose a KML file.</p>
             </div>
 
             <div class="ku-field ku-metric-inline">
@@ -273,6 +331,41 @@
             <button type="button" class="ku-btn-primary" id="kmlUploadModalCloseBtn">OK</button>
           </div>
         </div>
+      </div>
+    </div>
+  </div>
+  <!-- Confirms a slum picked from the search box. Two steps: the confirmation,
+       then a loading step shown while the three cascade requests run -
+       common_cascading.js uses async:false, so the browser blocks for their
+       duration. No result step: on success the modal just closes with the
+       dropdowns filled, and a failure is reported inline on the input step. -->
+  <div class="ku-modal" id="kmlSlumPickModalOverlay">
+    <div class="ku-modal-backdrop"></div>
+    <div class="ku-modal-dialog">
+      <div class="kml-modal-step-input">
+        <div class="ku-modal-body">
+          <h4>Use this slum?</h4>
+          <p>The four location dropdowns will be set to this slum. You can still change any of them afterwards.</p>
+          <dl class="ku-slum-pick-path">
+            <dt>Slum</dt>
+            <dd id="kmlSlumPickSlum"></dd>
+            <dt>Electoral ward</dt>
+            <dd id="kmlSlumPickEw"></dd>
+            <dt>Administrative ward</dt>
+            <dd id="kmlSlumPickAw"></dd>
+            <dt>City</dt>
+            <dd id="kmlSlumPickCity"></dd>
+          </dl>
+          <div class="ku-modal-error" id="kmlSlumPickError"></div>
+          <div class="ku-modal-actions">
+            <button type="button" class="ku-btn-secondary" id="kmlSlumPickCancelBtn">Cancel</button>
+            <button type="button" class="ku-btn-primary" id="kmlSlumPickConfirmBtn">Confirm</button>
+          </div>
+        </div>
+      </div>
+      <div class="kml-modal-loading ku-modal-loading">
+        <div class="ku-modal-spinner"></div>
+        <p>Setting location...</p>
       </div>
     </div>
   </div>

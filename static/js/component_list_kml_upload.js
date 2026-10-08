@@ -122,6 +122,22 @@ $(document).ready(function () {
         $searchInput.val("");
         updateComponentListTitle();
         loadComponentList();
+
+        if (selectedSlumId) {
+            setFieldError($("#kmlSlumRequiredError"), null);
+            $("#SlumSearch").removeClass("has-error");
+            // Keep the banner honest if the dropdowns were edited by hand.
+            showChosenSlum(
+                $(this).find("option:selected").text().trim(),
+                [
+                    $("#id_City option:selected").text().trim(),
+                    $("#id_AdministrativeWard option:selected").text().trim(),
+                    $("#id_ElectoralWard option:selected").text().trim()
+                ].filter(Boolean).join(" \u203a ")
+            );
+        } else {
+            showChosenSlum(null);
+        }
     });
 
     // -----------------------------
@@ -556,8 +572,104 @@ $(document).ready(function () {
         }
     });
 
+    // The four location levels, top-down, each with its own message slot.
+    const LOCATION_LEVELS = [
+        { select: "#id_City", error: "#kmlCityError", wrap: "#Cities", label: "city" },
+        { select: "#id_AdministrativeWard", error: "#kmlAdminWardError", wrap: "#AdministrativeWards", label: "administrative ward" },
+        { select: "#id_ElectoralWard", error: "#kmlElectoralWardError", wrap: "#ElectoralWards", label: "electoral ward" },
+        { select: "#id_slum_name", error: "#kmlSlumFieldError", wrap: "#Slums", label: "slum" }
+    ];
+
+    // jQuery 1.12 is in play and .ku-field-error is display:none in the
+    // stylesheet, so .show()/.toggle() can't be trusted to override it.
+    // Setting display explicitly is unambiguous.
+    function setFieldError($el, message) {
+        if (!$el.length) return;
+        if (message) {
+            $el.text(message).css("display", "block");
+        } else {
+            $el.css("display", "none");
+        }
+    }
+
+    /** Clears every location message. The shortcuts fill the selects with
+     *  .val(), which fires no change event, so their per-level handlers never
+     *  run and the messages would linger until the next submit. */
+    function clearLocationErrors() {
+        setFieldError($("#kmlSlumRequiredError"), null);
+        LOCATION_LEVELS.forEach(function (level) {
+            setFieldError($(level.error), null);
+        });
+        $("#SlumSearch").removeClass("has-error");
+    }
+
+    function clearUploadErrors() {
+        clearLocationErrors();
+        setFieldError($("#kmlFileRequiredError"), null);
+    }
+
+    /**
+     * Inline required-field checks. Returns true only if the form can go.
+     *
+     * The form carries novalidate: the browser's own required-field popup
+     * fires before the submit event and would otherwise suppress these
+     * messages entirely, showing only the file one.
+     */
+    function validateUploadForm() {
+        clearUploadErrors();
+
+        const $fileInput = $("#id_kml_file");
+        let $firstBad = null;
+
+        if ($("#manualLocation").is(":visible")) {
+            // The dropdowns are open, so point at the topmost level that is
+            // still unset - the cascade can't fill the ones below it anyway.
+            for (let i = 0; i < LOCATION_LEVELS.length; i++) {
+                const level = LOCATION_LEVELS[i];
+                if (!$(level.select).val()) {
+                    setFieldError($(level.error), "Please select a " + level.label + ".");
+                    $firstBad = $(level.wrap);
+                    break;
+                }
+            }
+        } else if (!$("#id_slum_name").val()) {
+            // Collapsed state: the search box is the only way to choose one.
+            setFieldError($("#kmlSlumRequiredError"), "Please select a slum before uploading.");
+            $("#SlumSearch").addClass("has-error");
+            $firstBad = $("#SlumSearch");
+        }
+
+        const hasFile = !!($fileInput.length && $fileInput[0].files && $fileInput[0].files.length);
+        if (!hasFile) {
+            setFieldError($("#kmlFileRequiredError"), "Please choose a KML file.");
+            if (!$firstBad) $firstBad = $fileInput;
+        }
+
+        if ($firstBad && $firstBad.length) {
+            // The card is tall enough that an error above the fold is missed.
+            const top = $firstBad.offset().top - 120;
+            $("html, body").animate({ scrollTop: top < 0 ? 0 : top }, 200);
+            if (!$("#manualLocation").is(":visible")) $slumSearchInput.trigger("focus");
+        }
+
+        return !$firstBad;
+    }
+
+    // Clear each message as soon as the user fixes that field.
+    $(document).on("change", "#id_kml_file", function () {
+        if (this.files && this.files.length) setFieldError($("#kmlFileRequiredError"), null);
+    });
+
+    LOCATION_LEVELS.forEach(function (level) {
+        $(document).on("change", level.select, function () {
+            if ($(this).val()) setFieldError($(level.error), null);
+        });
+    });
+
     $uploadForm.on("submit", function (e) {
         e.preventDefault();
+
+        if (!validateUploadForm()) return;
 
         const formData = new FormData(this);
         $uploadModalOverlay.addClass("active");
@@ -588,6 +700,7 @@ $(document).ready(function () {
 
                     updateComponentListTitle();
                     loadComponentList();
+                    loadRecentUploads();
 
                     // If a newly-uploaded line-type component still has no
                     // metric (and none was given inline above), prompt for
@@ -612,6 +725,472 @@ $(document).ready(function () {
     $("#kmlUploadModalCloseBtn").on("click", function () {
         $uploadModalOverlay.removeClass("active");
     });
+
+    // -----------------------------
+    // Search slum: a shortcut over the four cascading location dropdowns.
+    //
+    // Filters the server-rendered index in #kmlSlumSearchData by slum NAME only
+    // (substring, case-insensitive) - the same client-side approach the
+    // components list uses, so there is no new endpoint and no dependency on
+    // the unauthenticated master:modelList. On confirm it drives the global
+    // cascade helpers in common_cascading.js, which all use async:false and can
+    // therefore be chained synchronously.
+    // -----------------------------
+    const SLUM_SEARCH_LIMIT = 50;
+    const CASCADE_SELECTS = ["#id_City", "#id_AdministrativeWard", "#id_ElectoralWard", "#id_slum_name"];
+    const CASCADE_WRAPPERS = ["#manualLocation", "#AdministrativeWards", "#ElectoralWards", "#Slums"];
+
+    const $slumSearchInput = $("#kmlSlumSearchInput");
+    const $slumSearchResults = $("#kmlSlumSearchResults");
+    const $slumPickOverlay = $("#kmlSlumPickModalOverlay");
+    const $slumPickStepInput = $slumPickOverlay.find(".kml-modal-step-input");
+    const $slumPickLoading = $slumPickOverlay.find(".kml-modal-loading");
+    const $slumPickError = $("#kmlSlumPickError");
+
+    let slumSearchIndex = [];
+    let pendingSlumPick = null;   // the row awaiting confirmation
+    let slumPickSnapshot = null;  // dropdown state captured just before a fill
+
+    try {
+        const slumDataNode = document.getElementById("kmlSlumSearchData");
+        if (slumDataNode) {
+            slumSearchIndex = JSON.parse(slumDataNode.textContent) || [];
+        }
+    } catch (err) {
+        slumSearchIndex = [];
+    }
+
+    // Lower-case once at load rather than on every keystroke.
+    slumSearchIndex.forEach(function (row) {
+        row.haystack = String(row.name).toLowerCase();
+    });
+
+    // No index (no permitted cities, or an empty database) - hide the box
+    // rather than leave a dead input sitting above the dropdowns. Without a
+    // working search the dropdowns are the only way through, so show them.
+    if (!slumSearchIndex.length) {
+        $("#SlumSearch").hide();
+        $("#manualLocation").show();
+    }
+
+    // A re-render after a validation error comes back with a slum already
+    // selected; hiding a populated form would lose the user's place.
+    if ($("#id_slum_name").val()) {
+        $("#manualLocation").show();
+    }
+
+    function renderSlumSearchResults(query) {
+        $slumSearchResults.empty();
+
+        if (!query) {
+            $slumSearchResults.css("display", "none");
+            return;
+        }
+
+        const needle = query.toLowerCase();
+        const matches = [];
+        for (let i = 0; i < slumSearchIndex.length; i++) {
+            // Name only. City/ward are shown as context, not searched.
+            if (slumSearchIndex[i].haystack.indexOf(needle) !== -1) {
+                matches.push(slumSearchIndex[i]);
+                // One past the cap, so we can say "there are more" without
+                // scanning the rest of the index.
+                if (matches.length > SLUM_SEARCH_LIMIT) break;
+            }
+        }
+
+        $slumSearchResults.css("display", "block");
+
+        if (!matches.length) {
+            $slumSearchResults.append(
+                $("<div>").addClass("ku-component-empty").text("No slum matches that name.")
+            );
+            return;
+        }
+
+        matches.slice(0, SLUM_SEARCH_LIMIT).forEach(function (row) {
+            // Every node is filled with .text(), never .html(): slum and ward
+            // names are user-entered database values.
+            const $name = $("<div>").addClass("ku-slum-search-name").text(row.name);
+            if (!row.active) {
+                $name.append($("<span>").addClass("ku-slum-search-tag").text("Inactive"));
+            }
+
+            $slumSearchResults.append(
+                $("<button>")
+                    .attr("type", "button")
+                    .addClass("ku-slum-search-row")
+                    .attr("data-slum-id", row.id)
+                    .append($name)
+                    .append(
+                        $("<div>").addClass("ku-slum-search-path")
+                            .text(row.city + " › " + row.aw + " › " + row.ew)
+                    )
+            );
+        });
+
+        $slumSearchResults.trigger("listrendered");
+
+        if (matches.length > SLUM_SEARCH_LIMIT) {
+            $slumSearchResults.append(
+                $("<div>").addClass("ku-slum-search-more")
+                    .text("Showing the first " + SLUM_SEARCH_LIMIT + " matches - keep typing to narrow it down.")
+            );
+        }
+    }
+
+    $slumSearchInput.on("input", function () {
+        renderSlumSearchResults($(this).val().trim());
+    });
+
+    /**
+     * Arrow-key navigation for a list of result rows.
+     *
+     * opts.$input   - optional text field that keeps focus while arrowing (the
+     *                 search box); when absent, the rows take focus themselves.
+     * opts.onEscape - where to send focus when the list is dismissed.
+     *
+     * Rows are real <button>s, so Tab and Enter already work natively; this
+     * adds Up/Down, Enter-on-the-highlighted-row, and Escape.
+     */
+    function enableListKeyboard(opts) {
+        const $container = opts.$container;
+        const rowSelector = opts.rowSelector;
+        let activeIndex = -1;
+
+        function rows() {
+            return $container.find(rowSelector);
+        }
+
+        function scrollRowIntoView($row) {
+            if (!$row.length) return;
+            const top = $row.position().top + $container.scrollTop();
+            const bottom = top + $row.outerHeight();
+            const viewTop = $container.scrollTop();
+            const viewBottom = viewTop + $container.innerHeight();
+            if (top < viewTop) {
+                $container.scrollTop(top);
+            } else if (bottom > viewBottom) {
+                $container.scrollTop(bottom - $container.innerHeight());
+            }
+        }
+
+        function setActive(index) {
+            const $rows = rows();
+            if (!$rows.length) {
+                activeIndex = -1;
+                return;
+            }
+            // Wrap at both ends so Up from the top lands on the last row.
+            if (index < 0) index = $rows.length - 1;
+            if (index >= $rows.length) index = 0;
+            activeIndex = index;
+            $rows.removeClass("is-active");
+            const $active = $rows.eq(index).addClass("is-active");
+            scrollRowIntoView($active);
+            if (!opts.$input) $active.trigger("focus");
+        }
+
+        function clearActive() {
+            rows().removeClass("is-active");
+            activeIndex = -1;
+        }
+
+        function handleKey(e) {
+            if (e.key === "ArrowDown" || e.key === "Down") {
+                e.preventDefault();
+                setActive(activeIndex + 1);
+                return;
+            }
+            if (e.key === "ArrowUp" || e.key === "Up") {
+                e.preventDefault();
+                setActive(activeIndex - 1);
+                return;
+            }
+            if (e.key === "Enter") {
+                const $rows = rows();
+                if (!$rows.length) return;
+                // These rows live inside #kml-upload-form, so a stray Enter
+                // would otherwise submit the form and start a real upload.
+                e.preventDefault();
+                $rows.eq(activeIndex >= 0 ? activeIndex : 0).trigger("click");
+                return;
+            }
+            if (e.key === "Escape" || e.key === "Esc") {
+                e.preventDefault();
+                clearActive();
+                if (opts.onEscape) opts.onEscape();
+            }
+        }
+
+        if (opts.$input) opts.$input.on("keydown", handleKey);
+        // Also bind on the rows, so arrows still work after tabbing into them.
+        $container.on("keydown", rowSelector, handleKey);
+        // A fresh render invalidates the highlight.
+        $container.on("listrendered", clearActive);
+        // The mouse and the keyboard shouldn't disagree about what's selected.
+        $container.on("mouseenter", rowSelector, function () {
+            activeIndex = rows().index(this);
+            rows().removeClass("is-active");
+            $(this).addClass("is-active");
+        });
+    }
+
+    enableListKeyboard({
+        $input: $slumSearchInput,
+        $container: $slumSearchResults,
+        rowSelector: ".ku-slum-search-row",
+        onEscape: function () {
+            $slumSearchInput.val("").trigger("focus");
+            renderSlumSearchResults("");
+        }
+    });
+
+    // The cascade helpers empty() and refill their selects, so the option sets
+    // have to be saved, not just the selected values.
+    function snapshotCascade() {
+        const snap = { options: {}, values: {}, visible: {} };
+        CASCADE_SELECTS.forEach(function (sel) {
+            snap.options[sel] = $(sel).html();
+            snap.values[sel] = $(sel).val();
+        });
+        CASCADE_WRAPPERS.forEach(function (sel) {
+            snap.visible[sel] = $(sel).is(":visible");
+        });
+        return snap;
+    }
+
+    function restoreCascade(snap) {
+        if (!snap) return;
+        CASCADE_SELECTS.forEach(function (sel) {
+            $(sel).html(snap.options[sel]).val(snap.values[sel]);
+        });
+        CASCADE_WRAPPERS.forEach(function (sel) {
+            $(sel).toggle(snap.visible[sel]);
+        });
+    }
+
+    /**
+     * Point the four dropdowns at one slum by calling the cascade helpers in
+     * common_cascading.js directly. Their change handlers are not used: .val()
+     * does not fire change, and those handlers are gated on that file's
+     * module-scoped `flag`. Each helper uses async:false, so these run strictly
+     * in order and each sees its parent select already set.
+     *
+     * Returns false if any step failed to land - jQuery sets selectedIndex=-1
+     * when no option matches, so .val() then reads back null.
+     */
+    function fillCascadeForSlum(row) {
+        if (typeof flag === "undefined" || !flag) {
+            // Same bootstrap the template runs. It clears #id_City, so it must
+            // happen before the fill, never after.
+            $("#id_level").val("Slum").trigger("change");
+        }
+
+        $("#id_City").val(String(row.city_id));
+        if ($("#id_City").val() !== String(row.city_id)) return false;
+        $("#AdministrativeWards").show();
+
+        administrativewardList();
+        $("#id_AdministrativeWard").val(String(row.aw_id));
+        if ($("#id_AdministrativeWard").val() !== String(row.aw_id)) return false;
+        $("#ElectoralWards").show();
+
+        electoralWardList();
+        $("#id_ElectoralWard").val(String(row.ew_id));
+        if ($("#id_ElectoralWard").val() !== String(row.ew_id)) return false;
+        $("#Slums").show();
+
+        slumList();
+        $("#id_slum_name").val(String(row.id));
+        if ($("#id_slum_name").val() !== String(row.id)) return false;
+
+        return true;
+    }
+
+    /** Green confirmation line under the search box naming the chosen slum. */
+    function showChosenSlum(name, path) {
+        if (!name) {
+            $("#kmlSlumChosen").css("display", "none");
+            return;
+        }
+        $("#kmlSlumChosenName").text(name);
+        $("#kmlSlumChosenPath").text(path || "");
+        $("#kmlSlumChosen").css("display", "block");
+    }
+
+    function showSlumPickStep(step) {
+        $slumPickStepInput.hide();
+        $slumPickLoading.hide();
+        if (step === "input") $slumPickStepInput.show();
+        if (step === "loading") $slumPickLoading.show();
+    }
+
+    function openSlumPickModal(row) {
+        pendingSlumPick = row;
+        $("#kmlSlumPickSlum").text(row.name);
+        $("#kmlSlumPickEw").text(row.ew);
+        $("#kmlSlumPickAw").text(row.aw);
+        $("#kmlSlumPickCity").text(row.city);
+        $slumPickError.hide().text("");
+        showSlumPickStep("input");
+        $slumPickOverlay.addClass("active");
+        $("#kmlSlumPickConfirmBtn").trigger("focus");
+    }
+
+    function closeSlumPickModal() {
+        $slumPickOverlay.removeClass("active");
+        pendingSlumPick = null;
+    }
+
+    $(document).off("click", ".ku-slum-search-row").on("click", ".ku-slum-search-row", function (e) {
+        e.preventDefault();
+        const id = String($(this).attr("data-slum-id"));
+        const row = slumSearchIndex.filter(function (r) { return String(r.id) === id; })[0];
+        if (row) openSlumPickModal(row);
+    });
+
+    $("#kmlSlumPickConfirmBtn").on("click", function () {
+        if (!pendingSlumPick) return;
+        const row = pendingSlumPick;
+
+        slumPickSnapshot = snapshotCascade();
+        showSlumPickStep("loading");
+
+        // The cascade helpers use async:false and block the browser for three
+        // sequential requests. Without yielding once, the loading step above
+        // would never paint and the page would simply freeze.
+        setTimeout(function () {
+            let ok = false;
+            try {
+                ok = fillCascadeForSlum(row);
+            } catch (err) {
+                ok = false;
+            }
+
+            if (!ok) {
+                restoreCascade(slumPickSnapshot);
+                slumPickSnapshot = null;
+                $slumPickError
+                    .text("Could not set that location. Please pick it with the dropdowns below.")
+                    .show();
+                showSlumPickStep("input");
+                return;
+            }
+
+            // The dropdowns start hidden: the search box is the only way in
+            // until a slum is chosen. Now show the chosen path so it can be
+            // checked and adjusted.
+            $("#manualLocation").show();
+            showChosenSlum(row.name, row.city + " \u203a " + row.aw + " \u203a " + row.ew);
+
+            // Every level is now set, so no location message can still apply.
+            // The file message is left alone - it is independent of this.
+            clearLocationErrors();
+
+            // .val() does not fire change, and the components list is loaded by
+            // the delegated change handler on select[name='slum_name'].
+            $("#id_slum_name").trigger("change");
+
+            slumPickSnapshot = null;
+            closeSlumPickModal();
+            $slumSearchInput.val("");
+            renderSlumSearchResults("");
+        }, 0);
+    });
+
+    $("#kmlSlumPickCancelBtn").on("click", function () {
+        // In the normal path the fill has not run yet, so this restore is a
+        // no-op and "revert entirely" holds by construction. It still matters
+        // for a Cancel taken after a failed fill.
+        restoreCascade(slumPickSnapshot);
+        slumPickSnapshot = null;
+        closeSlumPickModal();
+        $slumSearchInput.trigger("focus");
+    });
+
+    // -----------------------------
+    // Recent uploads: the second shortcut into the same confirmation modal.
+    // Its own endpoint (get_recent_slum_uploads), separate from the components
+    // list. Selection only - it never touches the upload itself.
+    // -----------------------------
+    const $recentList = $("#recentUploadList");
+
+    function renderRecentUploads(slums) {
+        $recentList.empty();
+
+        if (!slums || !slums.length) {
+            $recentList.append(
+                $("<p>").addClass("ku-list-muted").text("No recent uploads yet.")
+            );
+            return;
+        }
+
+        slums.forEach(function (row) {
+            // .text() throughout: these are user-entered database values.
+            const $name = $("<div>").addClass("ku-recent-name").text(row.name);
+            if (!row.active) {
+                $name.append($("<span>").addClass("ku-slum-search-tag").text("Inactive"));
+            }
+
+            $recentList.append(
+                $("<button>")
+                    .attr("type", "button")
+                    .addClass("ku-recent-row")
+                    .data("slumRow", row)
+                    .append($name)
+                    .append(
+                        $("<div>").addClass("ku-recent-path")
+                            .text(row.city + " › " + row.aw + " › " + row.ew)
+                    )
+            );
+        });
+
+        $recentList.trigger("listrendered");
+    }
+
+    // No text field here, so the rows themselves take focus as you arrow.
+    enableListKeyboard({
+        $container: $recentList,
+        rowSelector: ".ku-recent-row",
+        onEscape: function () {
+            $recentList.find(".ku-recent-row").blur();
+        }
+    });
+
+    function loadRecentUploads() {
+        $recentList.html(
+            '<div class="ku-list-loading"><span class="ku-list-spinner"></span>Loading...</div>'
+        );
+
+        $.ajax({
+            url: "/component/get_recent_slum_uploads/",
+            dataType: "json",
+            cache: false,
+            success: function (res) {
+                renderRecentUploads(res && res.slums);
+            },
+            error: function () {
+                $recentList.html("");
+                $recentList.append(
+                    $("<p>").addClass("ku-list-muted").text("Could not load recent uploads.")
+                );
+            }
+        });
+    }
+
+    $(document).off("click", ".ku-recent-row").on("click", ".ku-recent-row", function (e) {
+        e.preventDefault();
+        const row = $(this).data("slumRow");
+        if (row) openSlumPickModal(row);
+    });
+
+    $(document).off("click", "#refreshRecentUploads").on("click", "#refreshRecentUploads", function (e) {
+        e.preventDefault();
+        loadRecentUploads();
+    });
+
+    loadRecentUploads();
 
     // -----------------------------
     // Load initial (if slum pre-selected)
