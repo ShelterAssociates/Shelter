@@ -30,11 +30,17 @@ from survey.models import SlumDataVersion, SlumVersionBackup
 # Obvious on sight in a slum list, and what --remove looks for.
 TEST_NAME = "ZZ LOCAL TEST SLUM (delete me)"
 TEST_CODE = "ZZTEST1"
+TEST_WARD = "ZZ TEST ADMIN WARD (delete me)"
+TEST_ELECTORAL = "ZZ TEST ELECTORAL WARD (delete me)"
 LOCAL_HOSTS = {"", "localhost", "127.0.0.1", "::1"}
+CONFIRM_WORD = "ZZTEST"
 
-# A square off the coast of nowhere, so it cannot be mistaken for a real slum
-# if it ever shows up on a map.
-SHAPE = Polygon(((0.0, 0.0), (0.0, 0.01), (0.01, 0.01), (0.01, 0.0), (0.0, 0.0)))
+# A ~100m square in open ground east of Pune, so it sits in the right city
+# without overlapping a real settlement.
+SHAPE = Polygon((
+    (73.9600, 18.5200), (73.9600, 18.5210),
+    (73.9610, 18.5210), (73.9610, 18.5200), (73.9600, 18.5200),
+))
 
 SAMPLE_TEXT = [
     "Yes", "No", "Partially", "Good", "Poor", "Average",
@@ -47,22 +53,38 @@ class Command(BaseCommand):
 
     def add_arguments(self, parser):
         parser.add_argument("--remove", action="store_true", help="Delete the test slum and everything under it.")
+        parser.add_argument(
+            "--production", action="store_true",
+            help="Allow this to run against a non-local database. Needs --confirm as well.",
+        )
+        parser.add_argument("--confirm", default="", help="Type {} to confirm --production.".format(CONFIRM_WORD))
+        parser.add_argument(
+            "--city", default="",
+            help="Put the test slum in this real city (e.g. Pune) instead of a test city of its own.",
+        )
         parser.add_argument("--source", type=int, default=0, help="Slum id to copy RIM answers from.")
         parser.add_argument("--seed", type=int, default=20261009, help="Random seed, so runs are repeatable.")
 
     # -- safety ---------------------------------------------------------------
 
-    def refuse_unless_local(self):
-        """Two independent checks, because this writes rows and deletes them."""
+    def check_target(self, options):
+        """Local by default; anywhere else needs saying so, twice."""
         host = (settings.DATABASES.get("default", {}).get("HOST") or "").strip()
         name = settings.DATABASES.get("default", {}).get("NAME", "?")
-        if host.lower() not in LOCAL_HOSTS:
-            raise CommandError(
-                "Refusing to run: the database host is '{}', not local. "
-                "This command only ever runs against a local copy.".format(host)
-            )
-        if not settings.DEBUG:
-            raise CommandError("Refusing to run: DEBUG is False, so this is not a development machine.")
+        local = host.lower() in LOCAL_HOSTS and settings.DEBUG
+
+        if not local:
+            if not options["production"]:
+                raise CommandError(
+                    "Refusing to run: database '{}' on host '{}' is not a local development copy. "
+                    "Re-run with --production --confirm {} if you really mean to write a test "
+                    "slum to this database.".format(name, host or "(socket)", CONFIRM_WORD)
+                )
+            if options["confirm"] != CONFIRM_WORD:
+                raise CommandError("Type --confirm {} to write a test slum to '{}'.".format(CONFIRM_WORD, name))
+            self.stdout.write(self.style.WARNING(
+                "WRITING A TEST SLUM TO A NON-LOCAL DATABASE: {} on {}".format(name, host)
+            ))
         self.stdout.write("database: {} on {}".format(name, host or "localhost socket"))
 
     # -- data -----------------------------------------------------------------
@@ -273,30 +295,53 @@ class Command(BaseCommand):
                     cursor.execute(
                         "DELETE FROM {} WHERE id = %s".format(AdministrativeWard._meta.db_table),
                         [admin_ward.id])
-                if city:
+                # Only a city this command invented goes; a real one stays.
+                own_city = bool(city and str(city.name.city_name).startswith("ZZ"))
+                if own_city:
                     cursor.execute("DELETE FROM {} WHERE id = %s".format(City._meta.db_table), [city.id])
-                if reference_id:
-                    cursor.execute(
-                        "DELETE FROM {} WHERE id = %s".format(CityReference._meta.db_table),
-                        [reference_id])
-            self.stdout.write("Removed test slum {} and its city/ward chain.".format(slum.id))
+                    if reference_id:
+                        cursor.execute(
+                            "DELETE FROM {} WHERE id = %s".format(CityReference._meta.db_table),
+                            [reference_id])
+            self.stdout.write("Removed test slum {} and its test wards{}.".format(
+                slum.id, " and test city" if own_city else " (the real city was left alone)",
+            ))
 
-    def build_slum(self):
-        reference = CityReference.objects.create(
-            city_name="ZZ Local Test City", city_code="ZZT", district_name="Test",
-            district_code="TST", state_name="MH", state_code="MH",
-        )
-        owner = User.objects.filter(is_superuser=True).first() or User.objects.first()
-        city = City.objects.create(
-            name=reference, city_code="ZZT", state_name="MH", state_code="MH",
-            district_name="Test", district_code="TST", shape=SHAPE, created_by=owner,
-        )
-        admin_ward = AdministrativeWard.objects.create(city=city, name="ZZ Test Admin Ward", shape=SHAPE)
+    def find_city(self, wanted):
+        """A real city by name, so the test slum sits where it can be found."""
+        city = City.objects.filter(name__city_name__icontains=wanted).first()
+        if city is None:
+            raise CommandError("No city matching '{}'. Leave --city off to build a test city.".format(wanted))
+        self.stdout.write("city: {} (id {})".format(city.name.city_name, city.id))
+        return city
+
+    def build_slum(self, wanted_city=""):
+        """The slum, under its own clearly-named wards so nothing real is touched.
+
+        `status=False` keeps it off the public map (master.views.slummapdisplay
+        is the only query that filters on status) and `associated_with_SA=False`
+        keeps it out of the dashboard aggregates.
+        """
+        if wanted_city:
+            city = self.find_city(wanted_city)
+        else:
+            reference = CityReference.objects.create(
+                city_name="ZZ Local Test City", city_code="ZZT", district_name="Test",
+                district_code="TST", state_name="MH", state_code="MH",
+            )
+            owner = User.objects.filter(is_superuser=True).first() or User.objects.first()
+            city = City.objects.create(
+                name=reference, city_code="ZZT", state_name="MH", state_code="MH",
+                district_name="Test", district_code="TST", shape=SHAPE, created_by=owner,
+            )
+
+        admin_ward = AdministrativeWard.objects.create(city=city, name=TEST_WARD, shape=SHAPE)
         ward = ElectoralWard.objects.create(
-            administrative_ward=admin_ward, name="ZZ Test Electoral Ward", shape=SHAPE,
+            administrative_ward=admin_ward, name=TEST_ELECTORAL, shape=SHAPE,
         )
         return Slum.objects.create(
             electoral_ward=ward, name=TEST_NAME, shape=SHAPE, shelter_slum_code=TEST_CODE,
+            status=False, associated_with_SA=False,
         )
 
     def write_rim(self, slum, city, rim_data):
@@ -312,7 +357,7 @@ class Command(BaseCommand):
 
     @transaction.atomic
     def handle(self, *args, **options):
-        self.refuse_unless_local()
+        self.check_target(options)
 
         if options["remove"]:
             self.remove()
@@ -328,7 +373,7 @@ class Command(BaseCommand):
         survey_b = self.next_survey(survey_a, rng)
         survey_c = self.next_survey(survey_b, rng)
 
-        slum = self.build_slum()
+        slum = self.build_slum(options["city"])
         city = slum.electoral_ward.administrative_ward.city
 
         donors, columns, differing = self.donor_pictures()
@@ -355,7 +400,7 @@ class Command(BaseCommand):
         self.stdout.write("  picture columns set across the three surveys: {}".format(swapped))
 
         self.stdout.write("")
-        self.stdout.write("Created slum {} - {}".format(slum.id, TEST_NAME))
+        self.stdout.write("Created slum {} - {} (status inactive)".format(slum.id, TEST_NAME))
         self.stdout.write("  archived RIM versions: {}".format(versioning.rim_backup_versions(slum.id)))
         self.stdout.write("  version picker offers: {}".format(
             [choice["label"] for choice in versioning.rim_choices_for(slum.id)]
