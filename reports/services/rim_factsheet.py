@@ -176,11 +176,22 @@ RIM_FIELD_DISPLAY_NAMES = {
 
 
 def is_image_reachable(url):
+    """Whether the URL really serves an image.
+
+    A ranged GET, not a HEAD: AVNI presigns its media for GET alone, so S3
+    refuses the HEAD with 403 and every AVNI-hosted map would read as missing.
+    The Range header keeps it to the first bytes rather than the whole file.
+    """
     try:
-        r = requests.head(url, timeout=3, allow_redirects=True)
-        return r.status_code == 200 and r.headers.get("Content-Type", "").startswith(
-            "image/"
+        r = requests.get(
+            url, timeout=5, allow_redirects=True, stream=True,
+            headers={"Range": "bytes=0-512"},
         )
+        try:
+            ok = r.status_code in (200, 206)
+            return ok and r.headers.get("Content-Type", "").startswith("image/")
+        finally:
+            r.close()
     except Exception:
         return False
 

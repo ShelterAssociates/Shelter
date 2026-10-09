@@ -12,6 +12,30 @@ from master.models import Slum
 SLUM_FILTER_PARAM = "slum__id__in"
 
 
+@admin.register(APICache)
+class APICacheAdmin(admin.ModelAdmin):
+    """Read-only view of the stale-while-revalidate API cache, newest entry first."""
+
+    list_display = ("request_hash", "created_at", "expires_at", "expired")
+    search_fields = ["=request_hash"]
+    ordering = ["-created_at"]
+    readonly_fields = ("request_hash", "created_at", "expires_at", "response")
+    list_per_page = 25
+
+    def get_queryset(self, request):
+        """Defer `response`: cached payloads are large and only needed on the detail page."""
+        return super().get_queryset(request).defer("response")
+
+    def has_add_permission(self, request):
+        return False
+
+    def expired(self, cache):
+        return cache.is_expired()
+
+    expired.boolean = True
+    expired.short_description = "Expired"
+
+
 class HouseholdDataAdmin(admin.ModelAdmin):
     change_list_template = "admin/graphs/householddata/change_list.html"
     list_filter = ["slum__electoral_ward__administrative_ward__city"]

@@ -1,0 +1,80 @@
+{# One block per section: the pictures side by side, then every question.
+   The summary line is not here: in the PDF it rides in the fixed header, and
+   on screen it sits above the panel. #}
+{% if not hide_summary %}
+    <div class="compare-summary">
+        <strong>{{ comparison.count }}</strong> change{{ comparison.count|pluralize }}
+        <span class="compare-versions">{{ old_label }} &rarr; {{ new_label }}</span>
+    </div>
+{% endif %}
+
+{% for section_name, section in comparison.sections.items %}
+    {# A long section is set tighter so it still lands on one page. #}
+    <div class="compare-section{% if section.fields|length > 9 %} compare-section--dense{% endif %}">
+        <div class="compare-section-title">
+            <span>{{ section_name }}</span>
+            {% if section.changed %}
+                <span class="compare-section-count">{{ section.changed }} changed</span>
+            {% else %}
+                <span class="compare-section-count compare-section-count--none">no change</span>
+            {% endif %}
+        </div>
+
+        {% if section.images %}
+            <table class="compare-images">
+                <thead>
+                    <tr>
+                        <th></th>
+                        <th>{{ old_label }}</th>
+                        <th>{{ new_label }}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for slot, picture in section.images.items %}
+                        <tr class="{% if picture.changed %}is-changed{% else %}is-same{% endif %}">
+                            <td class="compare-slot">
+                                {% if slot == "map" %}Map{% else %}Photo {{ forloop.counter|add:"-1" }}{% endif %}
+                                {% if picture.changed %}<span class="compare-slot-flag">changed</span>{% endif %}
+                            </td>
+                            <td class="compare-shot compare-shot--old">
+                                {% if picture.old and picture.old != "NA" %}
+                                    <img src="{{ picture.old }}" alt="">
+                                {% else %}
+                                    <span class="compare-shot-none">not available</span>
+                                {% endif %}
+                            </td>
+                            <td class="compare-shot compare-shot--new">
+                                {% if picture.new and picture.new != "NA" %}
+                                    <img src="{{ picture.new }}" alt="">
+                                {% else %}
+                                    <span class="compare-shot-none">not available</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% endif %}
+
+        <table class="compare-table">
+            <thead>
+                <tr>
+                    <th class="compare-label">Question</th>
+                    <th class="compare-old">{{ old_label }}</th>
+                    <th class="compare-arrow"></th>
+                    <th class="compare-new">{{ new_label }}</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for label, change in section.fields.items %}
+                    <tr class="{% if change.changed %}is-changed{% else %}is-same{% endif %}">
+                        <td class="compare-label">{{ label }}</td>
+                        <td class="compare-old">{{ change.old }}</td>
+                        <td class="compare-arrow">{% if change.changed %}&rarr;{% endif %}</td>
+                        <td class="compare-new">{{ change.new }}</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+{% endfor %}

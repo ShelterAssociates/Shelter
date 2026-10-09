@@ -45,21 +45,41 @@
 .report-layout{
 	display:grid;
 	grid-template-columns:1fr 1fr;
-	gap:24px;
-	align-items:start;
+	gap:28px;
+	/* stretch, so both cards share a top and a bottom edge */
+	align-items:stretch;
+	justify-items:stretch;
 }
 
 
 /* ================= CONTAINERS ================= */
 
+/* Fill the grid column instead of sitting at a fixed 569px inside it, which
+   left a wide empty margin on both sides of each card. Both cards are the same
+   box, and each scrolls its own contents rather than growing. */
 .report-container,
 .preview-container{
-	width:569px;
-	height:607px;
+	display:flex;
+	flex-direction:column;
+	width:100%;
+	max-width:780px;
+	height:calc(100vh - 180px);
+	min-height:620px;
 	border-radius:14px;
 	box-shadow:0 10px 28px rgba(0,0,0,0.08);
-	padding:24px;
+	padding:24px 28px;
 	margin:0 auto;
+	overflow-y:auto;
+}
+
+/* Only the pane scrolls, so the tab bar stays put at the top of the card. */
+.preview-container{
+	overflow:hidden;
+}
+
+.preview-body{
+	flex:1;
+	min-height:0;
 	overflow-y:auto;
 }
 
@@ -145,12 +165,15 @@
 /* ================= ACTION BUTTONS ================= */
 
 .report-actions{
-	text-align:center;
+	display:flex;
+	flex-wrap:wrap;
+	justify-content:center;
+	gap:10px;
 	margin-top:22px;
 }
 
 .report-actions button{
-	padding:10px 26px;
+	padding:10px 22px;
 	font-weight:600;
 	border-radius:9px;
 	border:none;
@@ -201,6 +224,202 @@
 }
 
 
+/* ================= SLUM SEARCH ================= */
+
+/* One flex child next to the label, or the dropdown and the chosen line
+   would sit side by side instead of stacking. */
+.slum-search-control{
+	flex:1;
+	position:relative;
+}
+
+.slum-search input{
+	width:100%;
+	padding:10px 12px;
+	height:38px;
+	border:1px solid #d1d5db;
+	border-radius:8px;
+	font-size:14px;
+	box-sizing:border-box;
+}
+
+.manual-pick{
+	display:block;
+	margin:-6px 0 14px 14px;
+	padding:0;
+	border:0;
+	background:none;
+	color:#2563eb;
+	font-size:12px;
+	text-decoration:underline;
+	cursor:pointer;
+}
+
+.slum-search-results{
+	display:none;
+	position:absolute;
+	z-index:20;
+	top:100%;
+	margin-top:4px;
+	left:0;
+	right:0;
+	max-height:260px;
+	overflow-y:auto;
+	background:#fff;
+	border:1px solid #d7dfea;
+	border-radius:4px;
+	box-shadow:0 4px 12px rgba(0,0,0,0.12);
+}
+
+/* The shared widget renders each match as a <button>, so the browser's own
+   button styling has to be cleared here. */
+.slum-search-row{
+	display:block;
+	width:100%;
+	text-align:left;
+	padding:7px 10px;
+	cursor:pointer;
+	border:0;
+	border-bottom:1px solid #f0f3f8;
+	background:none;
+	font:inherit;
+}
+
+.slum-search-row:hover,
+.slum-search-row.is-active{
+	background:#eaf1fb;
+}
+
+.slum-search-row.is-active{
+	outline:2px solid #2563eb;
+	outline-offset:-2px;
+}
+
+.slum-search-tag{
+	margin-left:6px;
+	padding:1px 5px;
+	border-radius:8px;
+	background:#fdecec;
+	color:#b91c1c;
+	font-size:10px;
+}
+
+.slum-search-more{
+	padding:6px 10px;
+	font-size:11px;
+	color:#8a94a6;
+	border-top:1px solid #f0f3f8;
+}
+
+.slum-search-name{
+	font-weight:600;
+	font-size:13px;
+	color:#1a5276;
+}
+
+.slum-search-path,
+.slum-search-empty{
+	font-size:11px;
+	color:#8a94a6;
+}
+
+.slum-search-empty{
+	padding:8px 10px;
+}
+
+.slum-search-chosen{
+	margin-top:6px;
+	padding:6px 9px;
+	border-radius:4px;
+	background:#eaf7f0;
+	border:1px solid #bfe3cf;
+	font-size:12px;
+	color:#1b7f4b;
+}
+
+
+/* ================= COMPARE PICKER ================= */
+
+.compare-pick-control{
+	display:flex;
+	flex:1;
+	align-items:center;
+	gap:8px;
+}
+
+.compare-pick-control select{
+	flex:1;
+	min-width:0;
+}
+
+.compare-pick-arrow{
+	color:#6b7a8d;
+	font-size:15px;
+}
+
+/* The right-hand side always mirrors Survey Version, so it reads as a label
+   rather than something else to set. */
+#rim_target{
+	background:#f1f4f9;
+	color:#44566c;
+}
+
+
+/* ================= PREVIEW TABS ================= */
+
+.preview-tabs{
+	display:inline-flex;
+	align-self:center;
+	flex:0 0 auto;
+	gap:4px;
+	margin:0 auto 14px;
+	padding:4px;
+	border-radius:10px;
+	background:#e8eef7;
+}
+
+.preview-tab{
+	padding:7px 18px;
+	border:0;
+	border-radius:7px;
+	background:none;
+	color:#44566c;
+	font-size:13px;
+	font-weight:600;
+	cursor:pointer;
+}
+
+.preview-tab:hover{
+	color:#1a3d6d;
+}
+
+.preview-tab.is-active{
+	background:#ffffff;
+	color:#1a3d6d;
+	box-shadow:0 1px 3px rgba(0,0,0,0.12);
+}
+
+.preview-tab-count{
+	margin-left:6px;
+	padding:1px 7px;
+	border-radius:9px;
+	background:#2f4e9b;
+	color:#fff;
+	font-size:11px;
+}
+
+.preview-tab.is-active .preview-tab-count{
+	background:#1b7f4b;
+}
+
+
+/* ================= COMPARISON ================= */
+
+#rim_comparison{
+	background:#ffffff;
+}
+
+
 /* ================= RESPONSIVE ================= */
 
 @media (max-width:1024px){
@@ -209,8 +428,14 @@
 		grid-template-columns:1fr;
 	}
 
+	.report-container,
 	.preview-container{
 		height:auto;
+		min-height:0;
+	}
+
+	.preview-body{
+		overflow:visible;
 	}
 
 }

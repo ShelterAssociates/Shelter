@@ -1,0 +1,11 @@
+{% load static %}
+{% comment %}
+Fragment for the reports page preview pane. The pane supplies the card, so this
+adds no page chrome of its own; the PDF template adds its own.
+{% endcomment %}
+{% include "reports/rim_factsheet/partials/compare_styles.html" %}
+
+<div class="compare-root" data-count="{{ comparison.count }}">
+    {% include "reports/rim_factsheet/full_page/header_html.html" %}
+    {% include "reports/rim_factsheet/partials/compare_body.html" %}
+</div>

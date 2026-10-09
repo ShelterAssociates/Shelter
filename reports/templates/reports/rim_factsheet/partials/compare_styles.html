@@ -1,0 +1,186 @@
+<style>
+    /* Shared by the on-screen comparison and its PDF, so the download looks
+       like what the reports page showed.
+
+       Every rule is scoped to .compare-root: on screen this block is injected
+       into the reports page, where a bare `body` or `*` rule would restyle the
+       whole page. The PDF template sets the page-level rules itself. */
+
+    .compare-root {
+        font-family: Roboto, sans-serif;
+        font-size: 9pt;
+        background: #fff;
+    }
+
+    .compare-root * { box-sizing: border-box; }
+
+    .compare-root .compare-summary {
+        margin: 10px 0 8px;
+        color: #33475b;
+    }
+
+    .compare-root .compare-summary strong { color: #2f4e9b; }
+
+    .compare-root .compare-versions {
+        display: inline-block;
+        margin-left: 6px;
+        padding: 2px 8px;
+        border-radius: 10px;
+        background: #eef2fa;
+        color: #2f4e9b;
+        font-weight: 600;
+        font-size: 8pt;
+    }
+
+    .compare-root .compare-section-title {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-top: 12px;
+        padding: 5px 9px;
+        background: #2f4e9b;
+        color: #fff;
+        font-weight: 600;
+        text-transform: uppercase;
+    }
+
+    .compare-root .compare-section-count {
+        padding: 1px 8px;
+        border-radius: 9px;
+        background: #ffffff;
+        color: #1b7f4b;
+        font-size: 8pt;
+        text-transform: none;
+    }
+
+    .compare-root .compare-section-count--none {
+        background: rgba(255, 255, 255, 0.22);
+        color: #e8eef7;
+    }
+
+    .compare-root .compare-table {
+        width: 100%;
+        border-collapse: collapse;
+        table-layout: fixed;
+    }
+
+    .compare-root .compare-table th {
+        background: #f4f6fa;
+        color: #33475b;
+        font-size: 8pt;
+        font-weight: 600;
+        text-align: left;
+        padding: 5px 9px;
+        border-bottom: 1px solid #d7dfea;
+    }
+
+    .compare-root .compare-table td {
+        padding: 6px 9px;
+        border-bottom: 1px solid #e8edf4;
+        vertical-align: top;
+        word-wrap: break-word;
+    }
+
+    .compare-root .compare-label { width: 38%; color: #33475b; }
+    .compare-root .compare-old { width: 27%; color: #5b6b7f; }
+    .compare-root .compare-arrow { width: 8%; text-align: center; color: #8a94a6; }
+    .compare-root .compare-new { width: 27%; color: #5b6b7f; }
+
+    /* An unchanged answer reads as plain factsheet text; only a changed one is
+       marked, so the eye goes straight to what moved. */
+    .compare-root tr.is-changed .compare-old {
+        color: #a0392f;
+        text-decoration: line-through;
+        background: #fdf0ee;
+    }
+
+    .compare-root tr.is-changed .compare-new {
+        color: #1b7f4b;
+        font-weight: 600;
+        background: #eaf7f0;
+    }
+
+    .compare-root tr.is-changed .compare-label { font-weight: 600; color: #1f3147; }
+    .compare-root tr.is-same td { color: #6b7a8d; }
+
+    /* ---- pictures, before and after ---- */
+
+    .compare-root .compare-images {
+        width: 100%;
+        border-collapse: collapse;
+        table-layout: fixed;
+        margin-bottom: 8px;
+    }
+
+    .compare-root .compare-images th {
+        background: #f4f6fa;
+        color: #33475b;
+        font-size: 8pt;
+        font-weight: 600;
+        text-align: left;
+        padding: 4px 9px;
+        border-bottom: 1px solid #d7dfea;
+    }
+
+    .compare-root .compare-images td {
+        padding: 6px 9px;
+        border-bottom: 1px solid #e8edf4;
+        vertical-align: top;
+        text-align: center;
+    }
+
+    .compare-root .compare-images .compare-slot {
+        width: 16%;
+        text-align: left;
+        color: #33475b;
+    }
+
+    .compare-root .compare-images .compare-shot { width: 42%; }
+
+    .compare-root .compare-images img {
+        width: 100%;
+        max-height: 5.4cm;
+        object-fit: contain;
+        border: 1px solid #e3e9f2;
+        background: #fafcff;
+    }
+
+    .compare-root .compare-shot-none {
+        display: block;
+        padding: 1.4cm 0;
+        color: #a8b2bf;
+        font-size: 8pt;
+    }
+
+    .compare-root .compare-slot-flag {
+        display: inline-block;
+        margin-left: 5px;
+        padding: 1px 6px;
+        border-radius: 8px;
+        background: #1b7f4b;
+        color: #fff;
+        font-size: 7pt;
+    }
+
+    /* A replaced picture is ringed on both sides, so the pair reads as the
+       change rather than two unrelated photos. */
+    .compare-root .compare-images tr.is-changed .compare-shot--old img {
+        border: 2px solid #c0564a;
+    }
+
+    .compare-root .compare-images tr.is-changed .compare-shot--new img {
+        border: 2px solid #1b7f4b;
+    }
+
+    .compare-root .compare-images tr.is-changed .compare-slot {
+        font-weight: 600;
+        color: #1f3147;
+    }
+
+    /* The PDF wraps the same body in a printable page. */
+    .compare-page {
+        width: 14cm;
+        margin: 1rem auto;
+        padding: 0.3cm;
+    }
+</style>

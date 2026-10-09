@@ -19,6 +19,21 @@ urlpatterns = [
         rim_factsheet_html_report,
         name="rim_factsheet_html",
     ),
+    url(
+        r"^api/rim_versions/(?P<slum_id>[0-9]+)/$",
+        rim_versions,
+        name="rim_versions",
+    ),
+    url(
+        r"^rim-comparison/(?P<slum_id>[0-9]+)/$",
+        rim_comparison,
+        name="rim_comparison",
+    ),
+    url(
+        r"^api/rim_comparison_generation/(?P<slum_id>[0-9]+)/$",
+        rim_comparison_pdf_generation,
+        name="rim_comparison_generating",
+    ),
     url(r"^$", report_view, name="report_home"),
     url(
         r"^preview-rim-factsheet/(?P<slum_id>[0-9]+)/$",

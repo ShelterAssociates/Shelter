@@ -1,5 +1,6 @@
 {% load static %}
 <script src="{% static 'admin/js/vendor/jquery/jquery.js' %}"></script>
+<script src="{% static 'js/slum_search.js' %}"></script>
 
 <script>
 
@@ -54,32 +55,50 @@ $.get("{% url 'master:cityList' %}", function(data){
 })
 
 
-/* ---------- CITY CHANGE ---------- */
+/* ---------- CASCADE ---------- */
 
-$('#city').change(function(){
+const WARD_URL = "{% url 'master:administrativewardList' %}"
+const ELECTORAL_URL = "{% url 'master:electoralWardList' %}"
+const SLUM_URL = "{% url 'master:slumList' %}"
 
+/* Fills one select from its parent's id. Returns a promise so the slum search
+   can run the four levels in order; the change handlers below ignore it. */
+function loadInto(select, url, parentId){
+
+	return $.post(url,{
+		id:parentId,
+		csrfmiddlewaretoken:'{{ csrf_token }}'
+	}).then(function(data){
+
+		$(select).prop('disabled',false)
+
+		$.each(data.nameArray,function(i,name){
+			$(select).append(`<option value="${data.idArray[i]}">${name}</option>`)
+		})
+
+		return data
+	})
+}
+
+
+function resetBelowCity(){
 	resetSelect('#admin_ward','--- Select Administrative Ward ---')
 	resetSelect('#electoral_ward','--- Select Electoral Ward ---')
 	resetSelect('#slum','--- Select Slum ---')
-
 	$('#generate').prop('disabled',true)
 	disableDownload()
+	hideVersions()
+}
+
+
+$('#city').change(function(){
+
+	resetBelowCity()
 
 	let id=$(this).val()
 	if(!id) return
 
-	$.post("{% url 'master:administrativewardList' %}",{
-		id:id,
-		csrfmiddlewaretoken:'{{ csrf_token }}'
-	},function(data){
-
-		$('#admin_ward').prop('disabled',false)
-
-		$.each(data.nameArray,function(i,name){
-			$('#admin_ward').append(`<option value="${data.idArray[i]}">${name}</option>`)
-		})
-
-	})
+	loadInto('#admin_ward', WARD_URL, id)
 
 })
 
@@ -90,25 +109,14 @@ $('#admin_ward').change(function(){
 
 	resetSelect('#electoral_ward','--- Select Electoral Ward ---')
 	resetSelect('#slum','--- Select Slum ---')
-
 	$('#generate').prop('disabled',true)
 	disableDownload()
+	hideVersions()
 
 	let id=$(this).val()
 	if(!id) return
 
-	$.post("{% url 'master:electoralWardList' %}",{
-		id:id,
-		csrfmiddlewaretoken:'{{ csrf_token }}'
-	},function(data){
-
-		$('#electoral_ward').prop('disabled',false)
-
-		$.each(data.nameArray,function(i,name){
-			$('#electoral_ward').append(`<option value="${data.idArray[i]}">${name}</option>`)
-		})
-
-	})
+	loadInto('#electoral_ward', ELECTORAL_URL, id)
 
 })
 
@@ -118,24 +126,129 @@ $('#admin_ward').change(function(){
 $('#electoral_ward').change(function(){
 
 	resetSelect('#slum','--- Select Slum ---')
-
 	$('#generate').prop('disabled',true)
 	disableDownload()
+	hideVersions()
 
 	let id=$(this).val()
 	if(!id) return
 
-	$.post("{% url 'master:slumList' %}",{
-		id:id,
-		csrfmiddlewaretoken:'{{ csrf_token }}'
-	},function(data){
+	loadInto('#slum', SLUM_URL, id)
 
-		$('#slum').prop('disabled',false)
+})
 
-		$.each(data.nameArray,function(i,name){
-			$('#slum').append(`<option value="${data.idArray[i]}">${name}</option>`)
+
+/* ---------- SLUM SEARCH ---------- */
+
+/* Same widget the KML upload page uses (static/js/slum_search.js): the whole
+   permitted slum list is rendered into the page and filtered here, with arrow
+   keys to move through the matches. Only the class prefix and what a pick does
+   differ between the two pages. */
+
+const SLUM_SEARCH_LIMIT = 15
+
+const slumSearch = SlumSearch.create({
+	index: SlumSearch.readIndex('slum-search-data'),
+	$input: $('#slumSearchInput'),
+	$results: $('#slumSearchResults'),
+	prefix: 'slum-search',
+	limit: SLUM_SEARCH_LIMIT,
+	onPick: function(row){ pickSlum(row) }
+})
+
+
+function pickSlum(row){
+
+	slumSearch.close()
+	$('#slumSearchInput').val('')
+	$('#slumSearchChosen')
+		.show()
+		.text(row.name + ' - ' + row.city + ' \u203a ' + row.aw + ' \u203a ' + row.ew)
+
+	fillCascadeForSlum(row).then(function(ok){
+		if(ok){
+			showCascade()
+			return
+		}
+		cascadeFailed()
+	}).catch(cascadeFailed)
+}
+
+
+function cascadeFailed(){
+	$('#slumSearchChosen').text(
+		'Could not set that location. Please pick it with the dropdowns below.'
+	)
+	showCascade()
+}
+
+
+/* The four dropdowns stay out of the way until there is something in them. */
+function showCascade(){
+	$('#cascadeFields').show()
+	$('#manualPickBtn').hide()
+}
+
+
+$('#manualPickBtn').on('click', function(){
+	showCascade()
+	$('#city').focus()
+})
+
+
+/* Runs the four levels in order; each step waits for its parent's options. */
+function fillCascadeForSlum(row){
+
+	$('#city').val(String(row.city_id))
+	resetBelowCity()
+
+	return loadInto('#admin_ward', WARD_URL, row.city_id)
+		.then(function(){
+			$('#admin_ward').val(String(row.aw_id))
+			return loadInto('#electoral_ward', ELECTORAL_URL, row.aw_id)
 		})
+		.then(function(){
+			$('#electoral_ward').val(String(row.ew_id))
+			return loadInto('#slum', SLUM_URL, row.ew_id)
+		})
+		.then(function(){
+			/* change fires the slum handler, which enables Generate and loads
+			   the version list. */
+			$('#slum').val(String(row.id)).trigger('change')
+			return $('#slum').val() === String(row.id)
+		})
+}
 
+
+$('#slumSearchInput').on('input', function(){
+	renderSlumSearchResults($(this).val())
+})
+
+
+$(document).on('click', '.slum-search-row', function(){
+
+	const id = String($(this).attr('data-slum-id'))
+	const row = slumSearchIndex.filter(r => String(r.id) === id)[0]
+	if(!row) return
+
+	$('#slumSearchResults').hide().html('')
+	$('#slumSearchInput').val('')
+	$('#slumSearchChosen')
+		.show()
+		.html(`<strong>${row.name}</strong><br>${row.city} &rsaquo; ${row.aw} &rsaquo; ${row.ew}`)
+
+	fillCascadeForSlum(row).then(function(ok){
+		if(ok){
+			showCascade()
+			return
+		}
+		$('#slumSearchChosen').html(
+			'Could not set that location. Please pick it with the dropdowns below.'
+		)
+	}).catch(function(){
+		$('#slumSearchChosen').html(
+			'Could not set that location. Please pick it with the dropdowns below.'
+		)
 	})
 
 })
@@ -150,7 +263,112 @@ $('#slum').change(function(){
 	$('#generate').prop('disabled',!selectedSlumId)
 
 	disableDownload()
+	resetPreviewTabs()
+	loadVersions()
 
+})
+
+
+/* ---------- SURVEY VERSIONS ---------- */
+
+/* Only a re-surveyed slum has more than one, so the picker stays hidden until
+   there is a real choice to make. */
+function hideVersions(){
+	$('#rim_version_row').hide()
+	$('#rim_compare_row').hide()
+	$('#rim_version').html('')
+	$('#rim_baseline').html('')
+	$('#rim_target').html('')
+	$('#compareBtn').hide()
+}
+
+function chosenVersion(){
+	const value = $('#rim_version').val()
+	return (!value || value === 'current') ? '' : `?version=${encodeURIComponent(value)}`
+}
+
+/* The version the Changes pane reads against. Always sent, so the two sides
+   are exactly what the picker shows and never an implied default. */
+function chosenBaseline(){
+	return $('#rim_baseline').val() || ''
+}
+
+function versionQuery(){
+	const version = chosenVersion()
+	const baseline = chosenBaseline()
+	if(!baseline) return version
+	return (version ? version + '&' : '?') + 'against=' + encodeURIComponent(baseline)
+}
+
+/* The right-hand side of the picker is the survey being viewed, and the left
+   offers every other one. */
+function syncComparePicker(){
+
+	const versions = loadedVersions
+	const target = $('#rim_version').val() || 'current'
+
+	$('#rim_target').html('')
+	$('#rim_baseline').html('')
+
+	versions.forEach(function(v){
+		const value = v.version === null ? 'current' : String(v.version)
+		if(value === target){
+			$('#rim_target').append(`<option value="${value}">${v.label}</option>`)
+		} else {
+			$('#rim_baseline').append(`<option value="${value}">${v.label}</option>`)
+		}
+	})
+
+	if(!$('#rim_baseline').find('option').length){
+		$('#rim_compare_row').hide()
+		return
+	}
+
+	/* Default to the survey just before the one being viewed. */
+	const earlier = versions
+		.filter(v => v.version !== null && (target === 'current' || v.version < Number(target)))
+		.map(v => String(v.version))
+	if(earlier.length) $('#rim_baseline').val(earlier[0])
+
+	$('#rim_compare_row').show()
+}
+
+let loadedVersions = []
+
+function loadVersions(){
+
+	hideVersions()
+	loadedVersions = []
+	if(!selectedSlumId) return
+
+	fetch(`/reports/api/rim_versions/${selectedSlumId}/`)
+	.then(res=>res.json())
+	.then(data=>{
+
+		loadedVersions = data.versions || []
+		if(loadedVersions.length < 2) return
+
+		loadedVersions.forEach(v=>{
+			const value = v.version === null ? 'current' : v.version
+			$('#rim_version').append(`<option value="${value}">${v.label}</option>`)
+		})
+
+		$('#rim_version_row').show()
+		syncComparePicker()
+	})
+	.catch(()=>{ /* no picker is the safe fallback: the latest is shown */ })
+}
+
+
+$('#rim_version').change(function(){
+	disableDownload()
+	resetPreviewTabs()
+	syncComparePicker()
+})
+
+
+$('#rim_baseline').change(function(){
+	resetPreviewTabs()
 })
 
 
@@ -173,16 +391,21 @@ $('#generate').click(function(){
 
 	const preview=$('#rim_preview')
 
+	resetPreviewTabs()
+
 	preview.html(`
 		<div class="preview-placeholder">
 			Generating preview...
 		</div>
 	`)
 
-	fetch(`/reports/preview-rim-factsheet/${selectedSlumId}/`)
+	const version = chosenVersion()
+
+	fetch(`/reports/preview-rim-factsheet/${selectedSlumId}/${version}`)
 	.then(res=>res.text())
 	.then(html=>{
 		preview.html(html)
+		loadComparison(versionQuery())
 	})
 	.catch(()=>{
 		preview.html(`
@@ -195,7 +418,7 @@ $('#generate').click(function(){
 
 	/* GENERATE PDF */
 
-	fetch(`/reports/api/rim_factsheet_generation/${selectedSlumId}/?force_generate=true`)
+	fetch(`/reports/api/rim_factsheet_generation/${selectedSlumId}/${version ? version + '&' : '?'}force_generate=true`)
 	.then(res=>{
 
 		if(res.status===405)
@@ -227,9 +450,103 @@ $('#generate').click(function(){
 /* ---------- DOWNLOAD button---------- */
 $('#downloadBtn').click(function(){
     if(selectedSlumId){
-        window.location.href = `/reports/api/rim_factsheet_pdf_fetch/${selectedSlumId}/`
+        window.location.href = `/reports/api/rim_factsheet_pdf_fetch/${selectedSlumId}/${chosenVersion()}`
         return
     }
+})
+
+
+/* ---------- PREVIEW TABS ---------- */
+
+/* One pane at a time: the factsheet, or what changed since the previous
+   survey. The Changes tab only exists when there is a difference. */
+function showPane(name){
+	const changes = name === 'changes'
+	$('#rim_preview').toggle(!changes)
+	$('#rim_comparison').toggle(changes)
+	$('.preview-tab').removeClass('is-active')
+	$('.preview-tab[data-pane="' + name + '"]').addClass('is-active')
+}
+
+
+function resetPreviewTabs(){
+	$('#rim_comparison').html('')
+	$('#changesTab').hide()
+	$('#previewTabs').hide()
+	$('#compareBtn').hide().text('Download Changes PDF')
+	disableCompareDownload()
+	showPane('factsheet')
+}
+
+
+$(document).on('click', '.preview-tab', function(){
+	showPane($(this).attr('data-pane'))
+})
+
+
+/* ---------- WHAT CHANGED SINCE THE PREVIOUS SURVEY ---------- */
+
+/* The endpoint answers with an empty body when the two versions match, so an
+   unchanged slum gets no Changes tab at all. */
+function loadComparison(version){
+
+	$('#rim_comparison').html('')
+	$('#changesTab').hide()
+	$('#compareBtn').hide()
+	$('#previewTabs').show()
+
+	fetch(`/reports/rim-comparison/${selectedSlumId}/${version}`)
+	.then(res=>res.text())
+	.then(html=>{
+		if(!html.trim()) return
+		$('#rim_comparison').html(html)
+		const count = $('#rim_comparison').find('.compare-root').attr('data-count')
+		$('#changesCount').text(count || '')
+		$('#changesTab').show()
+		generateComparisonPdf(version)
+	})
+	.catch(()=>{ /* the factsheet itself is still usable */ })
+}
+
+
+function disableCompareDownload(){
+	$('#compareBtn').prop('disabled',true).css('opacity','0.5')
+}
+
+function enableCompareDownload(){
+	$('#compareBtn').prop('disabled',false).css('opacity','1')
+}
+
+
+/* Same shape as the factsheet PDF: generated as soon as we know there is a
+   difference, and the button only lights up once the service has it. */
+function generateComparisonPdf(version){
+
+	disableCompareDownload()
+	$('#compareBtn').text('Preparing Changes PDF...').show()
+
+	fetch(`/reports/api/rim_comparison_generation/${selectedSlumId}/${version ? version + '&' : '?'}force_generate=true`)
+	.then(res=>{
+		if(res.status!==202) throw new Error('Changes PDF could not be generated.')
+		$('#compareBtn').text('Download Changes PDF')
+		enableCompareDownload()
+	})
+	.catch(()=>{
+		$('#compareBtn').text('Changes PDF unavailable')
+	})
+}
+
+
+$('#compareBtn').click(function(){
+
+	if($(this).prop('disabled')) return
+
+	const version=versionQuery()
+	const join = version ? version + '&' : '?'
+
+	window.location.href =
+		`/reports/api/rim_factsheet_pdf_fetch/${selectedSlumId}/${join}compare=1`
+
 })
 
 

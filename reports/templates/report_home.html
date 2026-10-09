@@ -101,6 +101,25 @@
 			<form id="rimForm">
 				{% csrf_token %}
 
+				{{ slum_search_index|json_script:"slum-search-data" }}
+
+				<div class="report-row slum-search">
+					<label>Search Slum</label>
+					<div class="slum-search-control">
+						<input type="text" id="slumSearchInput" autocomplete="off"
+						       placeholder="Type a slum name">
+						<div id="slumSearchResults" class="slum-search-results"></div>
+						<div id="slumSearchChosen" class="slum-search-chosen" style="display:none;"></div>
+					</div>
+				</div>
+
+				<button type="button" id="manualPickBtn" class="manual-pick">
+					or choose with the dropdowns
+				</button>
+
+				<!-- Stays hidden until a slum is picked, or the link above is used -->
+				<div id="cascadeFields" style="display:none;">
+
 				<div class="report-row">
 					<label>City</label>
 					<select id="city">
@@ -129,13 +148,35 @@
 					</select>
 				</div>
 
+				<div class="report-row" id="rim_version_row" style="display:none;">
+					<label>Survey Version</label>
+					<select id="rim_version"></select>
+				</div>
+
+				<!-- Which two surveys the Changes pane reads against each other.
+				     Shown whenever the slum has more than one. -->
+				<div class="report-row compare-pick" id="rim_compare_row" style="display:none;">
+					<label>Compare</label>
+					<div class="compare-pick-control">
+						<select id="rim_baseline"></select>
+						<span class="compare-pick-arrow">&rarr;</span>
+						<select id="rim_target" disabled></select>
+					</div>
+				</div>
+
+				</div><!-- /cascadeFields -->
+
 				<div class="report-actions">
 					<button type="button" id="generate" disabled>
 						Generate RIM Report
 					</button>
 
 					<button type="button" id="downloadBtn" disabled style="opacity:0.5">
-						Download PDF
+						Download Factsheet PDF
+					</button>
+
+					<button type="button" id="compareBtn" style="display:none;">
+						Download Changes PDF
 					</button>
 				</div>
 
@@ -155,9 +196,28 @@
 
 
 		<!-- RIGHT PREVIEW -->
-		<div class="preview-container" id="rim_preview">
-			<div class="preview-placeholder">
-				Select a slum to preview RIM factsheet
+		<div class="preview-container">
+
+			<!-- Inside the card, so both cards are the same box: same top edge,
+			     same bottom edge. One pane at a time; the Changes tab appears
+			     only when the chosen version differs from the one before it. -->
+			<div class="preview-tabs" id="previewTabs" style="display:none;">
+				<button type="button" class="preview-tab is-active" data-pane="factsheet">
+					Factsheet
+				</button>
+				<button type="button" class="preview-tab" id="changesTab" data-pane="changes" style="display:none;">
+					Changes <span class="preview-tab-count" id="changesCount"></span>
+				</button>
+			</div>
+
+			<div class="preview-body">
+				<div id="rim_preview">
+					<div class="preview-placeholder">
+						Select a slum to preview RIM factsheet
+					</div>
+				</div>
+
+				<div id="rim_comparison" style="display:none;"></div>
 			</div>
 		</div>
 

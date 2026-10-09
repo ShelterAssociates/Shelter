@@ -5,7 +5,7 @@ from django.contrib import admin, messages
 from django.utils import timezone
 from django.utils.html import format_html
 
-from survey import switches
+from survey import switches, versioning
 from survey.models import (
     Answer,
     Concept,
@@ -102,6 +102,14 @@ class SlumDataVersionAdmin(admin.ModelAdmin):
         if not change:
             obj.created_by = request.user
         super(SlumDataVersionAdmin, self).save_model(request, obj, form, change)
+        if not change:
+            # A version is a checkpoint. New RIM and household data overwrite
+            # the live rows in place, so the outgoing version is frozen here or
+            # it is lost -- the versions page does this through
+            # start_new_version, and adding one by hand must not skip it.
+            added = versioning.ensure_backup(obj.slum_id, obj.version - 1)
+            if added:
+                messages.info(request, "Archived version {}: {}.".format(obj.version - 1, added))
 
     def get_readonly_fields(self, request, obj=None):
         return ("slum", "version") if obj else ()
