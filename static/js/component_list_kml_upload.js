@@ -751,19 +751,7 @@ $(document).ready(function () {
     let pendingSlumPick = null;   // the row awaiting confirmation
     let slumPickSnapshot = null;  // dropdown state captured just before a fill
 
-    try {
-        const slumDataNode = document.getElementById("kmlSlumSearchData");
-        if (slumDataNode) {
-            slumSearchIndex = JSON.parse(slumDataNode.textContent) || [];
-        }
-    } catch (err) {
-        slumSearchIndex = [];
-    }
-
-    // Lower-case once at load rather than on every keystroke.
-    slumSearchIndex.forEach(function (row) {
-        row.haystack = String(row.name).toLowerCase();
-    });
+    slumSearchIndex = SlumSearch.readIndex("kmlSlumSearchData");
 
     // No index (no permitted cities, or an empty database) - hide the box
     // rather than leave a dead input sitting above the dropdowns. Without a
@@ -779,172 +767,19 @@ $(document).ready(function () {
         $("#manualLocation").show();
     }
 
-    function renderSlumSearchResults(query) {
-        $slumSearchResults.empty();
-
-        if (!query) {
-            $slumSearchResults.css("display", "none");
-            return;
-        }
-
-        const needle = query.toLowerCase();
-        const matches = [];
-        for (let i = 0; i < slumSearchIndex.length; i++) {
-            // Name only. City/ward are shown as context, not searched.
-            if (slumSearchIndex[i].haystack.indexOf(needle) !== -1) {
-                matches.push(slumSearchIndex[i]);
-                // One past the cap, so we can say "there are more" without
-                // scanning the rest of the index.
-                if (matches.length > SLUM_SEARCH_LIMIT) break;
-            }
-        }
-
-        $slumSearchResults.css("display", "block");
-
-        if (!matches.length) {
-            $slumSearchResults.append(
-                $("<div>").addClass("ku-component-empty").text("No slum matches that name.")
-            );
-            return;
-        }
-
-        matches.slice(0, SLUM_SEARCH_LIMIT).forEach(function (row) {
-            // Every node is filled with .text(), never .html(): slum and ward
-            // names are user-entered database values.
-            const $name = $("<div>").addClass("ku-slum-search-name").text(row.name);
-            if (!row.active) {
-                $name.append($("<span>").addClass("ku-slum-search-tag").text("Inactive"));
-            }
-
-            $slumSearchResults.append(
-                $("<button>")
-                    .attr("type", "button")
-                    .addClass("ku-slum-search-row")
-                    .attr("data-slum-id", row.id)
-                    .append($name)
-                    .append(
-                        $("<div>").addClass("ku-slum-search-path")
-                            .text(row.city + " › " + row.aw + " › " + row.ew)
-                    )
-            );
-        });
-
-        $slumSearchResults.trigger("listrendered");
-
-        if (matches.length > SLUM_SEARCH_LIMIT) {
-            $slumSearchResults.append(
-                $("<div>").addClass("ku-slum-search-more")
-                    .text("Showing the first " + SLUM_SEARCH_LIMIT + " matches - keep typing to narrow it down.")
-            );
-        }
-    }
-
-    $slumSearchInput.on("input", function () {
-        renderSlumSearchResults($(this).val().trim());
-    });
-
-    /**
-     * Arrow-key navigation for a list of result rows.
-     *
-     * opts.$input   - optional text field that keeps focus while arrowing (the
-     *                 search box); when absent, the rows take focus themselves.
-     * opts.onEscape - where to send focus when the list is dismissed.
-     *
-     * Rows are real <button>s, so Tab and Enter already work natively; this
-     * adds Up/Down, Enter-on-the-highlighted-row, and Escape.
-     */
-    function enableListKeyboard(opts) {
-        const $container = opts.$container;
-        const rowSelector = opts.rowSelector;
-        let activeIndex = -1;
-
-        function rows() {
-            return $container.find(rowSelector);
-        }
-
-        function scrollRowIntoView($row) {
-            if (!$row.length) return;
-            const top = $row.position().top + $container.scrollTop();
-            const bottom = top + $row.outerHeight();
-            const viewTop = $container.scrollTop();
-            const viewBottom = viewTop + $container.innerHeight();
-            if (top < viewTop) {
-                $container.scrollTop(top);
-            } else if (bottom > viewBottom) {
-                $container.scrollTop(bottom - $container.innerHeight());
-            }
-        }
-
-        function setActive(index) {
-            const $rows = rows();
-            if (!$rows.length) {
-                activeIndex = -1;
-                return;
-            }
-            // Wrap at both ends so Up from the top lands on the last row.
-            if (index < 0) index = $rows.length - 1;
-            if (index >= $rows.length) index = 0;
-            activeIndex = index;
-            $rows.removeClass("is-active");
-            const $active = $rows.eq(index).addClass("is-active");
-            scrollRowIntoView($active);
-            if (!opts.$input) $active.trigger("focus");
-        }
-
-        function clearActive() {
-            rows().removeClass("is-active");
-            activeIndex = -1;
-        }
-
-        function handleKey(e) {
-            if (e.key === "ArrowDown" || e.key === "Down") {
-                e.preventDefault();
-                setActive(activeIndex + 1);
-                return;
-            }
-            if (e.key === "ArrowUp" || e.key === "Up") {
-                e.preventDefault();
-                setActive(activeIndex - 1);
-                return;
-            }
-            if (e.key === "Enter") {
-                const $rows = rows();
-                if (!$rows.length) return;
-                // These rows live inside #kml-upload-form, so a stray Enter
-                // would otherwise submit the form and start a real upload.
-                e.preventDefault();
-                $rows.eq(activeIndex >= 0 ? activeIndex : 0).trigger("click");
-                return;
-            }
-            if (e.key === "Escape" || e.key === "Esc") {
-                e.preventDefault();
-                clearActive();
-                if (opts.onEscape) opts.onEscape();
-            }
-        }
-
-        if (opts.$input) opts.$input.on("keydown", handleKey);
-        // Also bind on the rows, so arrows still work after tabbing into them.
-        $container.on("keydown", rowSelector, handleKey);
-        // A fresh render invalidates the highlight.
-        $container.on("listrendered", clearActive);
-        // The mouse and the keyboard shouldn't disagree about what's selected.
-        $container.on("mouseenter", rowSelector, function () {
-            activeIndex = rows().index(this);
-            rows().removeClass("is-active");
-            $(this).addClass("is-active");
-        });
-    }
-
-    enableListKeyboard({
+    // Shared with the reports page; this page only decides what a pick does.
+    const slumSearch = SlumSearch.create({
+        index: slumSearchIndex,
         $input: $slumSearchInput,
-        $container: $slumSearchResults,
-        rowSelector: ".ku-slum-search-row",
-        onEscape: function () {
-            $slumSearchInput.val("").trigger("focus");
-            renderSlumSearchResults("");
-        }
+        $results: $slumSearchResults,
+        prefix: "ku-slum-search",
+        limit: SLUM_SEARCH_LIMIT,
+        onPick: function (row) { openSlumPickModal(row); }
     });
+
+    function renderSlumSearchResults(query) {
+        slumSearch.render(query);
+    }
 
     // The cascade helpers empty() and refill their selects, so the option sets
     // have to be saved, not just the selected values.
@@ -1042,13 +877,6 @@ $(document).ready(function () {
         $slumPickOverlay.removeClass("active");
         pendingSlumPick = null;
     }
-
-    $(document).off("click", ".ku-slum-search-row").on("click", ".ku-slum-search-row", function (e) {
-        e.preventDefault();
-        const id = String($(this).attr("data-slum-id"));
-        const row = slumSearchIndex.filter(function (r) { return String(r.id) === id; })[0];
-        if (row) openSlumPickModal(row);
-    });
 
     $("#kmlSlumPickConfirmBtn").on("click", function () {
         if (!pendingSlumPick) return;
@@ -1150,7 +978,7 @@ $(document).ready(function () {
     }
 
     // No text field here, so the rows themselves take focus as you arrow.
-    enableListKeyboard({
+    SlumSearch.enableListKeyboard({
         $container: $recentList,
         rowSelector: ".ku-recent-row",
         onEscape: function () {

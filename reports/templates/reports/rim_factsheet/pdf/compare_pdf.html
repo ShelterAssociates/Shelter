@@ -1,0 +1,84 @@
+{% load static %}
+{% load tz %}
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>RIM Factsheet Changes</title>
+
+    {% include "reports/rim_factsheet/partials/compare_styles.html" %}
+
+    <style>
+      /* A3 portrait, not the factsheet's 14x15cm: this page carries four text
+         columns and a before/after picture pair per slot, so it needs both the
+         width and the height to hold a whole section without spilling. */
+      @page {
+        size: 29.7cm 42cm;
+        margin: 0.8cm;
+      }
+
+      body {
+        font-family: Roboto, sans-serif;
+        font-size: 10pt;
+        margin: 0;
+        padding: 0;
+      }
+
+      /* Repeated on every page by the print engine. The change count rides in
+         the header rather than taking a page of its own. */
+      .pdf-header { position: fixed; top: 0; left: 0; right: 0; }
+      .pdf-footer { position: fixed; bottom: 0; left: 0; right: 0; }
+
+      .pdf-header .compare-summary {
+        margin: 0;
+        padding: 4px 10px;
+        background: #eef2fa;
+        border-bottom: 1px solid #d7dfea;
+        text-align: center;
+      }
+
+      /* Clear of the fixed header (factsheet bar + summary strip) and footer. */
+      .compare-root .compare-section {
+        padding-top: 2.4cm;
+        padding-bottom: 1.8cm;
+      }
+
+      /* One section per page. */
+      .compare-root .compare-section { page-break-after: always; }
+      .compare-root .compare-section:last-child { page-break-after: auto; }
+
+      /* A section with many questions is set tighter so it still fits. */
+      .compare-root .compare-section--dense { font-size: 8.5pt; }
+      .compare-root .compare-section--dense .compare-table td,
+      .compare-root .compare-section--dense .compare-images td { padding: 3px 7px; }
+      .compare-root .compare-section--dense .compare-images img { max-height: 6cm; }
+
+      /* Should a section still run long, break between rows rather than
+         through one, and repeat the column headings. */
+      .compare-root .compare-table thead,
+      .compare-root .compare-images thead { display: table-header-group; }
+      .compare-root .compare-table tr,
+      .compare-root .compare-images tr { page-break-inside: avoid; }
+      .compare-root .compare-section-title { page-break-after: avoid; }
+      .compare-root .compare-images { page-break-inside: avoid; }
+    </style>
+  </head>
+
+  <body>
+    <div class="pdf-header">
+      {% include 'reports/rim_factsheet/pdf/header.html' %}
+      <div class="compare-summary">
+        <strong>{{ comparison.count }}</strong> change{{ comparison.count|pluralize }}
+        <span class="compare-versions">{{ old_label }} &rarr; {{ new_label }}</span>
+      </div>
+    </div>
+
+    <div class="pdf-footer">
+      {% include 'reports/rim_factsheet/pdf/footer.html' %}
+    </div>
+
+    <div class="compare-root">
+      {% include "reports/rim_factsheet/partials/compare_body.html" with hide_summary=True %}
+    </div>
+  </body>
+</html>

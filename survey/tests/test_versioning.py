@@ -236,3 +236,34 @@ class SlumSyncSettingTests(TestCase):
         self.assertFalse(setting.sync_enabled)
         self.assertTrue(setting.alias_locked)
         self.assertEqual(setting.note, "just a note")
+
+
+class LateOldVersionRowsTests(TestCase):
+    """Old-version rows that arrive after the checkpoint must still be archived.
+
+    Between starting a version and its first new record the live tables are
+    still the old version, so data keeps landing in them. Those rows belong to
+    the outgoing version and go_live deletes them, so the snapshot has to cover
+    them -- the one taken at the checkpoint is already out of date by then.
+    """
+
+    def setUp(self):
+        self.city = make_city()
+        self.slum = make_slum(self.city)
+        populate(self.slum, self.city)
+
+    def test_a_household_arriving_after_the_checkpoint_is_archived_too(self):
+        versioning.start_new_version(self.slum.id)
+        populate_households(self.slum, self.city, number="202")
+
+        versioning.go_live(self.slum.id)
+
+        archived = SlumVersionBackup.objects.filter(
+            slum=self.slum, version=1, source_model="graphs.HouseholdData",
+        )
+        self.assertEqual(
+            sorted(row.data["fields"]["household_number"] for row in archived),
+            ["101", "202"],
+            "both old-version households are recoverable",
+        )
+        self.assertEqual(HouseholdData.objects.filter(slum=self.slum).count(), 0)

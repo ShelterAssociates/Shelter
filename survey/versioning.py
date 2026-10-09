@@ -253,6 +253,26 @@ def ensure_backup(slum_id, version):
     return added
 
 
+def refresh_household_backup(slum_id, version):
+    """Re-archive the live household rows as `version`, replacing the earlier copy.
+
+    The live tables keep taking the outgoing version's data between the
+    checkpoint and the switch, so the snapshot taken at the checkpoint is
+    already incomplete by the time these rows are deleted. RIM and the
+    components keep their checkpoint copy: they are not cleared here.
+    """
+    refreshed = {}
+    for table in HOUSEHOLD_TABLES:
+        rows = rows_for(table, slum_id)
+        if not rows.exists():
+            continue
+        SlumVersionBackup.objects.filter(
+            slum_id=slum_id, version=version, source_model=label_for(table),
+        ).delete()
+        refreshed[table.label] = archive(table, slum_id, version)
+    return refreshed
+
+
 @transaction.atomic
 def go_live(slum_id, pending=None):
     """Delete the slum's old household rows, backing them up first if need be.
@@ -266,6 +286,7 @@ def go_live(slum_id, pending=None):
     if not locked.exists():
         return {}
     ensure_backup(slum_id, pending.version - 1)
+    refresh_household_backup(slum_id, pending.version - 1)
     removed = {}
     for table in HOUSEHOLD_TABLES:
         rows = rows_for(table, slum_id)

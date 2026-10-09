@@ -6,12 +6,14 @@ from django.template.loader import render_to_string
 from django.conf import settings
 from django.contrib.admin.views.decorators import staff_member_required
 from django.core.cache import cache
+from .services.rim_compare import compare
 from .services.rim_factsheet import rim_factsheet_view
 from reports.models import (
     SponsorProjectMonthlyReportDetails,
     SponsorProjectReportDetails,
 )
 from reports.services.monthly_report_service import monthly_report_details
+from survey import versioning
 
 
 def wanted_version(request):
@@ -29,16 +31,65 @@ def rim_cache_key(slum_id, version):
     return "rim_context_{}_{}".format(slum_id, version if version is not None else "current")
 
 
-def rim_report_id(slum_id, version):
-    """The PDF service keys stored files by report id, so each version needs its own."""
-    return str(slum_id) if version is None else "{}-v{}".format(slum_id, version)
+def version_tag(version):
+    """How a version appears in a report id: 'current' or 'v2'."""
+    return "current" if version is None else "v{}".format(version)
+
+
+def rim_report_id(slum_id, version, compared_with=None):
+    """The PDF service keys stored files by report id, so each view needs its own."""
+    base = str(slum_id) if version is None else "{}-v{}".format(slum_id, version)
+    return base if compared_with is None else "{}-vs-{}".format(base, compared_with)
+
+
+def previous_version(slum_id, version):
+    """The archived RIM version just before the one being viewed, or None."""
+    archived = versioning.rim_backup_versions(slum_id)
+    earlier = [v for v in archived if version is None or v < version]
+    return earlier[0] if earlier else None
+
+
+def wanted_baseline(request, slum_id, version):
+    """The version to compare against: the one asked for, else the one before.
+
+    `against=current` is a real choice -- an older version can be read against
+    the live survey -- so an absent parameter and `current` mean different
+    things and None cannot stand for both.
+    """
+    raw = (request.GET.get("against") or "").strip()
+    if not raw:
+        return previous_version(slum_id, version)
+    if raw.lower() == "current":
+        return None
+    try:
+        return int(raw)
+    except ValueError:
+        return previous_version(slum_id, version)
+
+
+def rim_context(slum_id, version):
+    """The factsheet context for one version, briefly cached."""
+    key = rim_cache_key(slum_id, version)
+    context = cache.get(key)
+    if context is None:
+        context = rim_factsheet_view(slum_id, version=version)
+        cache.set(key, context, timeout=120)
+    return context
+
+
+def version_label(version):
+    return "Current" if version is None else "Version {}".format(version)
 
 
 # Internal report tooling home page (RIM factsheet + donor report PDFs)
 @staff_member_required
 def report_view(request):
     """Renders the report home page with factsheet data if provided."""
-    context = {}
+    # Same index the KML upload page filters client-side, already limited to
+    # the cities this user may see.
+    from component.views import build_slum_search_index
+
+    context = {"slum_search_index": build_slum_search_index(request.user)}
 
     if request.method == "POST":
         slum_id = request.POST.get("slum_id")
@@ -60,17 +111,109 @@ def rim_factsheet_html_report(request, slum_id):
     return render(request, "reports/rim_factsheet/full_page/factsheet.html", context)
 
 
+# Survey versions the reports page may show for a slum
+@staff_member_required
+def rim_versions(request, slum_id):
+    """JSON: the RIM versions on offer, newest first."""
+    choices = versioning.rim_choices_for(slum_id)
+    return JsonResponse({
+        "versions": [{"version": c["version"], "label": c["label"]} for c in choices],
+    })
+
+
+def rim_raw(slum_id, version):
+    """The appraisal row as stored, which is what tells a picture apart.
+
+    The URLs in the rendered context are signed afresh on every fetch, so they
+    cannot be compared; the stored column behind them can.
+    """
+    return versioning.rim_at(slum_id, version)[1] or {}
+
+
+def comparison_for(slum_id, version, baseline):
+    """(comparison, baseline) for one version read against another."""
+    if baseline == version:
+        return None, baseline
+    result = compare(
+        rim_context(slum_id, baseline), rim_context(slum_id, version),
+        old_raw=rim_raw(slum_id, baseline), new_raw=rim_raw(slum_id, version),
+    )
+    return result, baseline
+
+
+def comparison_context(slum_id, version, result, earlier):
+    return {
+        "comparison": result,
+        "old_label": version_label(earlier),
+        "new_label": version_label(version),
+        "meta_data": rim_context(slum_id, version).get("meta_data", {}),
+    }
+
+
+# What changed between the chosen version and the one before it
+@staff_member_required
+def rim_comparison(request, slum_id):
+    """HTML of the changed fields, or nothing at all when they match."""
+    version = wanted_version(request)
+    baseline = wanted_baseline(request, slum_id, version)
+    result, earlier = comparison_for(slum_id, version, baseline)
+    if not result:
+        return HttpResponse("")
+    return render(
+        request,
+        "reports/rim_factsheet/compare.html",
+        comparison_context(slum_id, version, result, earlier),
+    )
+
+
+# Trigger PDF generation for the comparison
+@staff_member_required
+def rim_comparison_pdf_generation(request, slum_id):
+    """Sends the comparison to the PDF service under its own report id."""
+    version = wanted_version(request)
+    baseline = wanted_baseline(request, slum_id, version)
+    result, earlier = comparison_for(slum_id, version, baseline)
+    if not result:
+        return HttpResponse("Nothing changed between these versions", status=406)
+
+    context = comparison_context(slum_id, version, result, earlier)
+    html = render_to_string("reports/rim_factsheet/pdf/compare_pdf.html", context)
+    meta = context["meta_data"]
+    name = "RIM_Changes_{}_{}_{}_to_{}".format(
+        str(meta.get("city_name", "City")).replace(" ", "_").replace("/", "_"),
+        str(meta.get("slum_name", "Slum")).replace(" ", "_").replace("/", "_"),
+        version_tag(earlier),
+        version_tag(version),
+    )
+    try:
+        resp = requests.post(
+            settings.PDF_SERVICE_URL,
+            headers={"X-PDF-KEY": settings.PDF_SECRET_KEY},
+            json={
+                "html": html,
+                "report_id": rim_report_id(slum_id, version, compared_with=version_tag(earlier)),
+                "file_name": name,
+                "force_generate": request.GET.get("force_generate", "false").lower() == "true",
+                # Deliberately the existing type: the PDF service only knows
+                # rim_factsheet and donor_report, and the report id keeps the
+                # stored file apart from the factsheet's own.
+                "report_type": "rim_factsheet",
+            },
+            timeout=120,
+        )
+        if resp.status_code == 200:
+            return HttpResponse("PDF generated and saved successfully", status=202)
+        return HttpResponse("PDF generation failed", status=500)
+    except requests.exceptions.Timeout:
+        return HttpResponse("PDF generation timed out", status=504)
+
+
 # Trigger PDF generation for RIM Factsheet
 def rim_factsheet_pdf_generation(request, slum_id):
     """Generates PDF for RIM Factsheet and sends to PDF service."""
     force_generate = request.GET.get("force_generate", "false").lower() == "true"
     version = wanted_version(request)
-    cache_key = rim_cache_key(slum_id, version)
-    context = cache.get(cache_key)
-
-    if context is None:
-        context = rim_factsheet_view(slum_id, version=version)
-        cache.set(cache_key, context, timeout=120)
+    context = rim_context(slum_id, version)
 
     if context.get("data") == "NA":
         return HttpResponse("No data available for PDF generation", status=405)
@@ -105,12 +248,7 @@ def rim_factsheet_pdf_generation(request, slum_id):
 def rim_factsheet_preview(request, slum_id):
     """Renders preview of RIM Factsheet PDF in browser without download."""
     version = wanted_version(request)
-    cache_key = rim_cache_key(slum_id, version)
-    context = cache.get(cache_key)
-
-    if context is None:
-        context = rim_factsheet_view(slum_id, version=version)
-        cache.set(cache_key, context, timeout=120)
+    context = rim_context(slum_id, version)
 
     if context.get("data") == "NA":
         return HttpResponse("No data available for PDF generation", status=404)
@@ -137,7 +275,12 @@ def rim_factsheet_pdf_fetch(request, slum_id):
         if str(request.session.get("rim_otp_verified_slum_id")) != str(slum_id):
             return HttpResponseForbidden("OTP verification required")
 
-    report_id = rim_report_id(slum_id, wanted_version(request))
+    version = wanted_version(request)
+    compared_with = (
+        version_tag(wanted_baseline(request, slum_id, version))
+        if request.GET.get("compare") == "1" else None
+    )
+    report_id = rim_report_id(slum_id, version, compared_with=compared_with)
     try:
         resp = requests.get(
             f"{settings.PDF_FETCH_URL}?report_id={report_id}&report_type=rim_factsheet",

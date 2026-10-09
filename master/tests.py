@@ -53,10 +53,11 @@ class RimDisplayFilterTests(TestCase):
 
 		rimdisplay(request)
 
-		queryset.filter.assert_any_call(slum_name__electoral_ward__administrative_ward__city_id="10")
-		queryset.filter.assert_any_call(slum_name__electoral_ward__administrative_ward_id="11")
-		queryset.filter.assert_any_call(slum_name__electoral_ward_id="12")
-		queryset.filter.assert_any_call(slum_name_id="13")
+		# The filters take a list per level, so each one is an __in lookup.
+		queryset.filter.assert_any_call(slum_name__electoral_ward__administrative_ward__city_id__in=["10"])
+		queryset.filter.assert_any_call(slum_name__electoral_ward__administrative_ward_id__in=["11"])
+		queryset.filter.assert_any_call(slum_name__electoral_ward_id__in=["12"])
+		queryset.filter.assert_any_call(slum_name_id__in=["13"])
 		queryset.filter.assert_any_call(slum_name__name__icontains="alpha")
 
 		context = mock_render.call_args[0][2]
@@ -102,4 +103,4 @@ class RimDisplayFilterTests(TestCase):
 		response = filterMasterList(request)
 
 		self.assertEqual(response.status_code, 200)
-		slum_queryset.filter.assert_called_with(electoral_ward_id="7")
+		slum_queryset.filter.assert_called_with(electoral_ward_id__in=["7"])

@@ -104,31 +104,26 @@ class FactsheetAvailabilityTests(TestCase):
     def test_a_slum_with_no_rim_has_no_factsheet(self):
         body = self.client.get(self.url).json()
         self.assertFalse(body["available"])
-        self.assertEqual(body["versions"], [])
 
-    def test_a_slum_with_live_rim_offers_one_version(self):
+    def test_a_slum_with_live_rim_has_a_factsheet(self):
         self.rim()
         body = self.client.get(self.url).json()
         self.assertTrue(body["available"])
-        self.assertEqual(body["versions"], [{"version": None, "label": "Current"}])
 
-    def test_after_a_re_survey_both_versions_are_offered(self):
+    def test_the_map_offers_no_version_choice(self):
+        """Versions are a reports-page concern; the map shows the latest only."""
         self.rim()
         versioning.start_new_version(self.slum.id)
         body = self.client.get(self.url).json()
         self.assertTrue(body["available"])
-        self.assertEqual(
-            body["versions"],
-            [{"version": None, "label": "Current"}, {"version": 1, "label": "Version 1"}],
-        )
+        self.assertNotIn("versions", body)
 
-    def test_a_cleared_rim_keeps_the_factsheet_available_from_the_backup(self):
-        """Clearing RIM must not make the factsheet button vanish."""
+    def test_a_cleared_rim_removes_the_factsheet_from_the_map(self):
+        """With no live RIM the map shows nothing; the backup is reached from reports."""
         self.rim()
         versioning.start_new_version(self.slum.id, rim_choice=versioning.RIM_CLEAR)
         body = self.client.get(self.url).json()
-        self.assertTrue(body["available"])
-        self.assertEqual(body["versions"], [{"version": 1, "label": "Version 1"}])
+        self.assertFalse(body["available"])
 
 
 class FactsheetReadsTheChosenVersionTests(TestCase):
@@ -248,3 +243,69 @@ class SlumSearchIndexTests(TestCase):
         self.assertEqual(
             [r["id"] for r in views.recently_versioned()], [self.slum.id],
         )
+
+
+class EveryCheckpointArchivesRimTests(TestCase):
+    """A version is a RIM checkpoint: the live RIM is frozen whatever else happens.
+
+    New RIM later overwrites the live row in place (avni.sync.rim.save_rim_record),
+    so the snapshot taken here is the only copy of that survey's answers and is
+    what the reports page compares against.
+    """
+
+    def setUp(self):
+        self.city = make_city()
+        self.slum = make_slum(self.city)
+        SlumData.objects.create(
+            slum=self.slum, city=self.city, submission_date=timezone.now(), rim_data=V1_RIM,
+        )
+        Rapid_Slum_Appraisal.objects.create(slum_name=self.slum, approximate_population="1250")
+
+    def archived(self, version, model):
+        return SlumVersionBackup.objects.filter(
+            slum=self.slum, version=version, source_model=model,
+        ).count()
+
+    def assert_rim_frozen(self, version=1):
+        self.assertEqual(self.archived(version, "graphs.SlumData"), 1)
+        self.assertEqual(self.archived(version, "master.Rapid_Slum_Appraisal"), 1)
+
+    def test_keeping_the_rim_still_archives_it(self):
+        versioning.start_new_version(self.slum.id, rim_choice=versioning.RIM_KEEP)
+        self.assert_rim_frozen()
+
+    def test_clearing_the_rim_archives_it_before_deleting(self):
+        versioning.start_new_version(self.slum.id, rim_choice=versioning.RIM_CLEAR)
+        self.assert_rim_frozen()
+        self.assertFalse(SlumData.objects.filter(slum=self.slum).exists())
+
+    def test_every_checkpoint_keeps_its_own_snapshot(self):
+        """Each version compares against the one before it, so none may be missing."""
+        versioning.start_new_version(self.slum.id)
+        SlumData.objects.filter(slum=self.slum).update(rim_data=V2_RIM)
+        versioning.start_new_version(self.slum.id)
+
+        self.assertEqual(versioning.rim_backup_versions(self.slum.id), [2, 1])
+        self.assertEqual(versioning.rim_at(self.slum.id, 1)[0], V1_RIM)
+        self.assertEqual(versioning.rim_at(self.slum.id, 2)[0], V2_RIM)
+
+    def test_a_version_added_through_the_admin_archives_the_rim_too(self):
+        """The admin bypasses start_new_version, so it must take the snapshot itself."""
+        from django.contrib.auth.models import User
+
+        User.objects.create_superuser("boss", "b@example.com", "pw")
+        self.client.login(username="boss", password="pw")
+
+        response = self.client.post(
+            "/accounts/survey/slumdataversion/add/",
+            {
+                "slum": self.slum.id,
+                "version": 2,
+                "started_on_0": "2026-10-09",
+                "started_on_1": "00:00:00",
+                "note": "added by hand",
+            },
+        )
+
+        self.assertEqual(response.status_code, 302)
+        self.assert_rim_frozen()
