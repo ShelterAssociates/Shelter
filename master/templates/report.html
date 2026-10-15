@@ -169,40 +169,6 @@ function cityList(){
 
 
 
-function formList(){
-
-    var url = "{% url 'master:formList' %}";
-
-    $.ajax({
-
-        url : url,
-
-        type: "GET",
-
-        contenttype : "json",
-
-        success : function(json){
-
-              var str='<option value="';
-              str = str +"0" +'"'+'>' + "---select---" + '</option>';
-              $('#id_form').append(str);
-
-
-        for (i = 0; i < json.nameArray.length; i++){
-                var str='<option value="';
-                str = str +json.idArray[i] +'"'+'>' + json.nameArray[i] + '</option>';
-                $('#id_form').append(str);
-            }
-
-        }
-
-
-    });
-
-}
-
-
-
 $(document).ready(function(){
 
      $("#id_Slum").on('change',function()
@@ -221,7 +187,6 @@ $(document).ready(function(){
     $("#HouseNos").hide();
 
     cityList();
-    formList();
 
     $("#id_City").on('change',function()
     {

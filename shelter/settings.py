@@ -367,6 +367,16 @@ ADMIN_SITE_HEADER = "Shelter Administration"
 
 LOGIN_REDIRECT_URL = "login_success"
 
+# Self-service reset is retired, so every password is typed by the administrator
+# into the admin's set-password form, which runs these. create_user() in code
+# bypasses them, and existing weak passwords stay valid until changed.
+AUTH_PASSWORD_VALIDATORS = [
+    {"NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator"},
+    {"NAME": "django.contrib.auth.password_validation.MinimumLengthValidator"},
+    {"NAME": "django.contrib.auth.password_validation.CommonPasswordValidator"},
+    {"NAME": "django.contrib.auth.password_validation.NumericPasswordValidator"},
+]
+
 # ---------------------------------------------------------------------------
 # LOGGING
 #

@@ -140,6 +140,14 @@
       font-size: 12px;
     }
     
+    /* Override .login-card a, which fades and greys every link in the card. */
+    .login-help a.btn {
+      opacity: 1;
+      color: #333;
+      font-size: 14px;
+      margin-top: 8px;
+    }
+    
     @media (max-width: 768px) {
       body {
         background-attachment: scroll !important;
@@ -266,18 +274,12 @@
             {{ form.password.label_tag }} {{ form.password }}
             <input type="hidden" name="next" value="{{ next }}" />
           </div>
-          {% url 'admin_password_reset' as password_reset_url %}
-          {% if password_reset_url %}
-            <div class="password-reset-link">
-              <a href="{{ password_reset_url }}">{% trans 'Forgotten your password or username?' %}</a>
-            </div>
-          {% endif %}
           <div style="margin-top:10px;">
             <input type="submit" class="btn btn-lg btn-primary btn-block" value="{% trans 'Log in' %}" />
           </div>
         </form>
-        <div class="login-help" style="display:none;">
-          <a href="{% url 'password_reset' %}">Forgot Password</a>
+        <div class="login-help">
+          <a class="btn btn-default btn-block" href="{% url 'password_reset' %}">{% trans 'Password Reset' %}</a>
         </div>
       </div>
     </div>

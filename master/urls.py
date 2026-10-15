@@ -18,7 +18,7 @@ Including another URLconf
 
 from django.conf.urls import include, url
 from django.contrib import admin
-from rest_auth.views import LoginView
+from rest_auth.views import LoginView, LogoutView, UserDetailsView
 
 from master.views import (
     index,
@@ -133,12 +133,12 @@ urlpatterns = [
     ),
     # Redirect user to new url
     url(r"^user_login/$", user_login, name="user_login"),
-    # Using built in rest URLS for QGIS plugin login
-    url("rest-auth/", include("rest_auth.urls")),
+    # Built-in rest URLs for QGIS plugin login. Listed explicitly rather than
+    # include("rest_auth.urls"): the password/reset/ endpoints it also ships are
+    # AllowAny and mail working reset links to every account sharing an address.
+    # Paths are unchanged from what the include produced, so clients see no diff.
+    url(r"^rest-auth/login/$", LoginView.as_view(), name="rest_login"),
+    url(r"^rest-auth/logout/$", LogoutView.as_view(), name="rest_logout"),
+    url(r"^rest-auth/user/$", UserDetailsView.as_view(), name="rest_user_details"),
     # url(r'^sponsors/$',sponsors, name='sponsors'),
-    # url(r'^password_reset/$', auth_views.password_reset, name='password_reset'),
-    # url(r'^password_reset/done/$', auth_views.password_reset_done, name='password_reset_done'),
-    # url(r'^reset-password/confirm/(?P<uidb64>[0-9A-Za-z]+)-(?P<token>.+)/$',
-    #    auth_views.password_reset_confirm, name='password_reset_confirm'),
-    # url(r'^reset/done/$', auth_views.password_reset_complete, name='password_reset_complete'),
 ]

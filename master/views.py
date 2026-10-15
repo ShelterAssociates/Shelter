@@ -2,16 +2,14 @@
 # -*- coding: utf-8 -*-
 """The Django Views Page for master app"""
 import json
-import psycopg2
 import logging
 from django.urls import reverse
 from django.contrib.admin.views.decorators import staff_member_required
 from django.contrib.auth.decorators import login_required, permission_required, user_passes_test
 from django.template import RequestContext, loader
-from django.http import HttpResponse, HttpResponseRedirect, JsonResponse
+from django.http import HttpResponse, HttpResponseGone, HttpResponseRedirect, JsonResponse
 from django.views.generic import ListView
 from django.views.decorators.csrf import csrf_exempt
-from django.views.generic.edit import FormView
 from django.shortcuts import get_object_or_404
 from django.views.generic.base import View
 from django.shortcuts import render
@@ -25,7 +23,7 @@ from django.views.decorators.clickjacking import xframe_options_exempt
 from master.models import Survey, CityReference, Rapid_Slum_Appraisal, \
     Slum, AdministrativeWard, ElectoralWard, City, \
     WardOfficeContact, ElectedRepresentative, drainage ,SlumTransformationPhase , SlumTransformationImage
-from master.forms import SurveyCreateForm, ReportForm, Rapid_Slum_AppraisalForm, DrainageForm, LoginForm 
+from master.forms import ReportForm, Rapid_Slum_AppraisalForm, DrainageForm, LoginForm
 from sponsor.models import SponsorProjectDetails
 from django.contrib.auth import authenticate, login
 from django.contrib.auth import *
@@ -64,50 +62,17 @@ class SurveyListView(ListView):
             object_list = self.model.objects.all()
         return object_list
 
-class SurveyCreateView(FormView):
-    """Fetches and renders the Add New Survey Mapping template in browser"""
-    template_name = 'SurveyCreate_form.html'
-    form_class = SurveyCreateForm
-    success_url = '/admin/surveymapping/'
+class SurveyCreateView(View):
+    """Retired: survey add/edit needed KoboToolbox, which is decommissioned."""
 
-    def dispatch(self, request, *args, **kwargs):
-        """Signal Dispatcher"""
-        try:
-            self.survey = 0
-            if kwargs['survey']:
-                self.survey = kwargs['survey']
-        except KeyError:
-            logger.error('Error')
-        return super(SurveyCreateView, self).dispatch(request, *args,
-                                                      **kwargs)
+    def get(self, request, *args, **kwargs):
+        return HttpResponseGone("This endpoint has been retired.")
 
-    def get_form(self, form_class=None):
-        """
-        Check if the user already saved contact details. If so, then show
-        the form populated with those details, to let user change them.
-        """
-        try:
-            survey = Survey.objects.get(id=self.survey)
-            return self.form_class(instance=survey, **self.get_form_kwargs())
-        except Survey.DoesNotExist:
-            return self.form_class(**self.get_form_kwargs())
+    post = get
 
-    def form_valid(self, form):
-        """Actions to perform if form is valid"""
-        form.save()
-        return super(SurveyCreateView, self).form_valid(form)
-
-def survey_delete_view(survey):
-    """Delete Survey Object"""
-    obj = Survey.objects.get(id=survey)
-    if obj:
-        obj.delete()
-        message = 'Success'
-    else:
-        message = 'Failure'
-    data = {}
-    data['message'] = message
-    return HttpResponseRedirect('/admin/surveymapping/')
+def survey_delete_view(request, survey):
+    """Retired: survey deletion was never functional and is no longer offered."""
+    return HttpResponseGone("This endpoint has been retired.")
 
 @csrf_exempt
 def search(request):
@@ -639,23 +604,8 @@ def cityList(request):
 
 @staff_member_required
 def formList(request):
-    """ Form List"""
-    db = settings.KOBOCAT_DATABASES
-    old = psycopg2.connect(database=db['DBNAME'], user=db['USER'], password=db['PASSWORD'],
-                           host=db['HOST'], port=db['PORT'])
-    cursor_old = old.cursor()
-    cursor_old.execute("select id, title from logger_xform;")
-    fetch_data = cursor_old.fetchall()
-    idArray = []
-    nameArray = []
-    for i in fetch_data:
-        nameArray.append(str(i[1]))
-        idArray.append(i[0])
-    data ={}
-    data = { 'idArray'  : idArray,
-             'nameArray': nameArray
-           }
-    return HttpResponse(json.dumps(data),content_type='application/json')
+    """Retired: the KoboToolbox form list database has been decommissioned."""
+    return HttpResponseGone("This endpoint has been retired.")
 
 
 @csrf_exempt
