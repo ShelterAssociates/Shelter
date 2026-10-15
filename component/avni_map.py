@@ -37,6 +37,7 @@ from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.gzip import gzip_page
 from django.views.decorators.http import require_GET, require_POST
 
+from avni import map_filters as filter_presets
 from avni import mappings
 from avni.locations import slum_id_for_location_uuid
 from avni.models import AvniFormMapping, AvniMapFilter
@@ -169,6 +170,10 @@ def get_structures_for_avni(request):
         "total": len(features),
         "features": features,
     }
+    # Omitted entirely when no preset applies, so a slum without one gets the payload it always got.
+    custom = filter_presets.payload(slum)
+    if custom:
+        collection["custom_filters"] = custom
     # Compact separators: "s" instead of "housenumber" and no whitespace save
     # a few hundred KB before gzip on a large slum.
     return HttpResponse(json.dumps(collection, separators=(",", ":")), content_type="application/json")
