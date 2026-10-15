@@ -154,7 +154,7 @@
           <ul class="drop-menu drop-menu-right" style="min-width:160px;">
             {% if user.has_usable_password %}
               <li>
-                <a class="drop-item" href="{% url 'admin:password_change' %}">Change password</a>
+                <a class="drop-item" href="{% url 'password_reset' %}">Password help</a>
               </li>
               <li class="drop-div"></li>
             {% endif %}
@@ -221,7 +221,7 @@
 
       <div class="drop-div"></div>
       {% if user.has_usable_password %}
-        <a class="drop-item" href="{% url 'admin:password_change' %}">Change password</a>
+        <a class="drop-item" href="{% url 'password_reset' %}">Password help</a>
       {% endif %}
       <a class="drop-item" href="{% url 'admin:logout' %}">Log out</a>
     </div>

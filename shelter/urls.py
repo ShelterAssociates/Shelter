@@ -17,6 +17,7 @@ from django.conf.urls import include, url
 from django.contrib import admin
 from django.contrib.auth import views as auth_views
 from django.conf.urls.static import static
+from django.views.generic import TemplateView
 from django.conf import settings
 from .settings import *
 from master.views import (
@@ -27,7 +28,6 @@ from master.views import (
     dashboard_view,
 )
 from rest_framework import urls
-from rest_auth import views
 from master.api import CityViewset
 from component.api import MetadataViewSet
 from rest_framework import routers
@@ -44,7 +44,27 @@ urlpatterns = (
     [
         url(r"^$", slummap, name="slummap"),
         url(r"^home/", login_success, name="login_success"),
-        url(r"^accounts/", include("django.contrib.auth.urls")),
+        # Self-service password reset and change are retired: both names render a
+        # static page pointing at the administrator, and the token routes are
+        # gone so links already emailed no longer work. The admin's own
+        # set-password form (/accounts/auth/user/<id>/password/) is a separate
+        # route and is unaffected -- that is how passwords get changed now.
+        url(r"^accounts/login/$", auth_views.LoginView.as_view(), name="login"),
+        url(r"^accounts/logout/$", auth_views.LogoutView.as_view(), name="logout"),
+        url(
+            r"^accounts/password_reset/$",
+            TemplateView.as_view(
+                template_name="registration/password_reset_contact.html"
+            ),
+            name="password_reset",
+        ),
+        url(
+            r"^accounts/password_change/$",
+            TemplateView.as_view(
+                template_name="registration/password_reset_contact.html"
+            ),
+            name="password_change",
+        ),
         url(r"^accounts/", admin.site.urls),
         url(
             r"^(?P<key>{})$".format(base64_pattern),

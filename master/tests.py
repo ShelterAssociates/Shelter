@@ -103,3 +103,50 @@ class RimDisplayFilterTests(TestCase):
 
 		self.assertEqual(response.status_code, 200)
 		slum_queryset.filter.assert_called_with(electoral_ward_id="7")
+
+
+class RetiredEndpointTests(TestCase):
+	"""deletesurvey and formList are retired stubs: routes kept, behaviour gone."""
+
+	def setUp(self):
+		self.staff = User.objects.create_superuser("retire_boss", "b@example.org", "x")
+
+	def test_deletesurvey_returns_gone_and_deletes_nothing(self):
+		from master.models import Survey
+
+		before = Survey.objects.count()
+		response = self.client.get("/admin/deletesurvey/1/")
+		self.assertEqual(response.status_code, 410)
+		self.assertEqual(Survey.objects.count(), before)
+
+	def test_formlist_returns_gone_for_staff(self):
+		self.client.force_login(self.staff)
+		self.assertEqual(self.client.get("/admin/formList/").status_code, 410)
+
+	def test_formlist_still_requires_staff(self):
+		response = self.client.get("/admin/formList/")
+		self.assertEqual(response.status_code, 302)
+
+	def test_survey_list_page_no_longer_links_to_deletesurvey(self):
+		self.client.force_login(self.staff)
+		response = self.client.get("/admin/surveymapping/")
+		self.assertEqual(response.status_code, 200)
+		self.assertNotContains(response, "deletesurvey")
+
+	def test_survey_add_and_edit_return_gone(self):
+		self.client.force_login(self.staff)
+		for path in ("/admin/survey/", "/admin/survey/1/"):
+			self.assertEqual(self.client.get(path).status_code, 410, path)
+			self.assertEqual(self.client.post(path, {}).status_code, 410, path)
+
+	def test_survey_list_page_no_longer_links_to_add_or_edit(self):
+		self.client.force_login(self.staff)
+		response = self.client.get("/admin/surveymapping/")
+		self.assertEqual(response.status_code, 200)
+		self.assertNotContains(response, "Add New Survey")
+		self.assertNotContains(response, 'href = "/admin/survey/')
+
+	def test_report_page_no_longer_calls_formlist(self):
+		self.client.force_login(self.staff)
+		response = self.client.get("/admin/report/")
+		self.assertNotContains(response, "formList", status_code=response.status_code)
