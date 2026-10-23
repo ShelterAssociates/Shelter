@@ -374,10 +374,30 @@ $(document).ready(function () {
 
     // '"<folder>" -> <placemark>: <reason>' as produced by KMLValidationError
     const KML_ERROR_RE = /^"([^"]*)"\s*->\s*(.+?):\s([\s\S]*)$/;
+    // '"<folder>": <reason>' for a folder-level rule, where no single
+    // placemark is to blame. Unambiguous against the above: that one needs
+    // "->" between the quoted folder and the colon.
+    const KML_FOLDER_ERROR_RE = /^"([^"]*)":\s([\s\S]*)$/;
 
     /** Turn one raw server error reason into a readable title/explanation/fix. */
     function classifyKmlError(reason) {
         const lower = reason.toLowerCase();
+
+        if (lower.indexOf("no houseno attribute") !== -1) {
+            return {
+                title: "Missing HouseNo",
+                explanation: "The house base layer identifies every house by its HouseNo attribute, and these placemarks do not have one.",
+                fix: "Add a HouseNo field to every feature in this layer and export again. An ID field is not a substitute — it has to be called HouseNo."
+            };
+        }
+
+        if (lower.indexOf("may use houseno") !== -1) {
+            return {
+                title: "HouseNo on the wrong layer",
+                explanation: "Only the house base layer uses HouseNo. This layer carries it, which usually means house footprints were exported into the wrong folder.",
+                fix: "Remove the HouseNo field from this layer, or move these features into the HousesBaseLayer folder."
+            };
+        }
 
         if (lower.indexOf("degenerate") !== -1) {
             return {
@@ -461,7 +481,13 @@ $(document).ready(function () {
             info = classifyKmlError(match[3].trim());
             where = placemark + " · folder: " + folder;
         } else {
-            info = classifyKmlError(rawText);
+            const folderMatch = KML_FOLDER_ERROR_RE.exec(rawText);
+            if (folderMatch) {
+                info = classifyKmlError(folderMatch[2].trim());
+                where = "folder: " + folderMatch[1];
+            } else {
+                info = classifyKmlError(rawText);
+            }
         }
 
         const $summary = $("<summary>").text(info.title);
