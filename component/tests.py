@@ -10,6 +10,7 @@ from django.test import TestCase, override_settings
 
 from avni.models import AvniForm, AvniFormQuestion, AvniMapFilter
 from avni.tests.support import make_city, make_slum
+from component.kmlparser import HOUSE_BASE_LAYER_CODE, KMLParser, KMLValidationError
 from component.models import Component, Metadata, Section, SubjectStructureMapping
 from survey.models import SlumAlias
 
@@ -241,3 +242,156 @@ class MapSubjectToStructureTests(AvniMapTestCase):
         self.assertEqual(self.post_mapping(body, key=None).status_code, 401)
         self.assertEqual(self.client.get(MAPPING_URL, HTTP_X_AVNI_GIS_KEY=KEY).status_code, 405)
         self.assertEqual(SubjectStructureMapping.objects.count(), 0)
+
+
+# ---------------------------------------------------------------------------
+# KML upload: the HouseNo rule
+# ---------------------------------------------------------------------------
+
+def simple_data(attributes):
+    return "".join(
+        '<SimpleData name="{}">{}</SimpleData>'.format(name, value)
+        for name, value in attributes.items()
+    )
+
+
+def placemark_xml(name, attributes, with_extended_data=True):
+    """One polygon placemark, optionally carrying ExtendedData/SchemaData."""
+    extended = ""
+    if with_extended_data:
+        extended = (
+            "<ExtendedData><SchemaData>{}</SchemaData></ExtendedData>".format(
+                simple_data(attributes)
+            )
+        )
+    return (
+        "<Placemark><name>{}</name>{}"
+        "<Polygon><outerBoundaryIs><LinearRing><coordinates>"
+        "73.80,18.50 73.81,18.50 73.81,18.51 73.80,18.51 73.80,18.50"
+        "</coordinates></LinearRing></outerBoundaryIs></Polygon>"
+        "</Placemark>".format(name, extended)
+    )
+
+
+def kml(folder_name, placemarks):
+    return (
+        '<?xml version="1.0" encoding="UTF-8"?>'
+        '<kml xmlns="http://www.opengis.net/kml/2.2"><Document>'
+        "<Folder><name>{}</name>{}</Folder>"
+        "</Document></kml>".format(folder_name, "".join(placemarks))
+    ).encode("utf-8")
+
+
+class HouseNoRuleTests(TestCase):
+    """HouseNo is required on the house base layer and forbidden elsewhere."""
+
+    def setUp(self):
+        self.city = make_city()
+        self.slum = make_slum(self.city)
+        section = Section.objects.create(name="Housing", order=1)
+        self.house_layer = make_metadata("Structure", section, code=HOUSE_BASE_LAYER_CODE)
+        self.roads = make_metadata("Roads", section, code="Roads")
+
+    def upload(self, folder_name, placemarks):
+        KMLParser(kml(folder_name, placemarks), self.slum, False).other_components()
+
+    def rejection(self, folder_name, placemarks):
+        with self.assertRaises(KMLValidationError) as caught:
+            self.upload(folder_name, placemarks)
+        return caught.exception.errors
+
+    def components_of(self, metadata):
+        return Component.objects.filter(
+            metadata=metadata,
+            content_type=ContentType.objects.get_for_model(self.slum),
+            object_id=self.slum.id,
+        )
+
+    # --- the house base layer requires it ---
+
+    def test_house_layer_with_houseno_on_every_placemark_is_saved(self):
+        self.upload(
+            HOUSE_BASE_LAYER_CODE,
+            [
+                placemark_xml("1", {"HouseNo": "101"}),
+                placemark_xml("2", {"HouseNo": "102"}),
+            ],
+        )
+
+        self.assertEqual(
+            sorted(self.components_of(self.house_layer).values_list("housenumber", flat=True)),
+            ["101", "102"],
+        )
+
+    def test_house_layer_with_only_id_is_rejected(self):
+        errors = self.rejection(
+            HOUSE_BASE_LAYER_CODE,
+            [placemark_xml("1", {"ID": "101"}), placemark_xml("2", {"ID": "102"})],
+        )
+
+        self.assertEqual(len(errors), 1)
+        self.assertIn('"HousesBaseLayer"', errors[0])
+        self.assertIn("2 of 2", errors[0])
+        self.assertIn("no HouseNo attribute", errors[0])
+        self.assertFalse(self.components_of(self.house_layer).exists())
+
+    def test_count_names_only_the_placemarks_that_are_missing_it(self):
+        errors = self.rejection(
+            HOUSE_BASE_LAYER_CODE,
+            [
+                placemark_xml("1", {"HouseNo": "101"}),
+                placemark_xml("2", {"ID": "102"}),
+                placemark_xml("3", {"ID": "103"}),
+            ],
+        )
+
+        self.assertEqual(len(errors), 1)
+        self.assertIn("2 of 3", errors[0])
+
+    def test_houseno_is_matched_whatever_its_case(self):
+        for spelling in ("HouseNo", "houseno", "HOUSENO"):
+            with self.subTest(spelling=spelling):
+                self.components_of(self.house_layer).delete()
+                self.upload(HOUSE_BASE_LAYER_CODE, [placemark_xml("1", {spelling: "101"})])
+                self.assertEqual(self.components_of(self.house_layer).count(), 1)
+
+    # --- every other layer forbids it ---
+
+    def test_other_layer_carrying_houseno_is_rejected(self):
+        errors = self.rejection(
+            "Roads", [placemark_xml("1", {"HouseNo": "101"}), placemark_xml("2", {"ID": "2"})]
+        )
+
+        self.assertEqual(len(errors), 1)
+        self.assertIn('"Roads"', errors[0])
+        self.assertIn("1 of 2", errors[0])
+        self.assertIn("only the house base layer may use HouseNo", errors[0])
+        self.assertFalse(self.components_of(self.roads).exists())
+
+    def test_other_layer_with_only_id_is_saved(self):
+        self.upload("Roads", [placemark_xml("1", {"ID": "1"}), placemark_xml("2", {"ID": "2"})])
+
+        self.assertEqual(
+            sorted(self.components_of(self.roads).values_list("housenumber", flat=True)),
+            ["1", "2"],
+        )
+
+    # --- interaction with the existing per-placemark errors ---
+
+    def test_a_placemark_without_extended_data_is_reported_once(self):
+        # component_latlong already fails on it; the rule must not pile a
+        # second error on top of the same placemark.
+        errors = self.rejection(
+            HOUSE_BASE_LAYER_CODE, [placemark_xml("1", {}, with_extended_data=False)]
+        )
+
+        self.assertEqual(len(errors), 1)
+        self.assertIn("no such child", errors[0])
+
+    def test_an_unrecognised_folder_never_reaches_the_rule(self):
+        # No Metadata.code matches, so the folder is skipped as unparsed.
+        KMLParser(
+            kml("NotAComponent", [placemark_xml("1", {"HouseNo": "101"})]), self.slum, False
+        ).other_components()
+
+        self.assertFalse(Component.objects.filter(object_id=self.slum.id).exists())

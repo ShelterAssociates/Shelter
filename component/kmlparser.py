@@ -8,6 +8,11 @@ POINT = "Point"
 POLYGON = "Polygon"
 LINESTRING = "LineString"
 
+# The house-footprint layer, by Metadata.code (its display name is "Structure").
+# Only this layer identifies features by HouseNo; every other layer must not.
+HOUSE_BASE_LAYER_CODE = "HousesBaseLayer"
+HOUSE_NO_ATTRIBUTE = "houseno"
+
 
 class KMLValidationError(Exception):
     """Raised when one or more placemarks fail geometry/topology validation.
@@ -47,6 +52,58 @@ def _validate_geometry(geom, label):
     if not geom.valid:
         return [f"{label}: invalid/self-intersecting geometry ({geom.valid_reason})"]
     return []
+
+
+def placemark_attributes(placemark):
+    """Lower-cased ExtendedData/SchemaData attribute names on one placemark.
+
+    Never raises: a placemark without SchemaData already fails inside
+    component_latlong and is reported there, so returning an empty set keeps
+    it at one error instead of two.
+    """
+    extended = getattr(placemark, "ExtendedData", None)
+    schema_data = getattr(extended, "SchemaData", None) if extended is not None else None
+    if schema_data is None:
+        return set()
+    return {
+        child.get("name").lower()
+        for child in schema_data.iterchildren()
+        if child.get("name")
+    }
+
+
+def house_no_errors(folder_name, total, missing):
+    """The HouseNo rule for one folder, as a list of error strings.
+
+    HouseNo is required on every placemark of the house base layer and
+    forbidden everywhere else, so house footprints exported into the wrong
+    folder (or a house layer exported without the field the field team
+    identifies a house by) are caught before anything is written. An ID
+    attribute is deliberately not a substitute, even though
+    component_latlong would happily fall back to it.
+
+    One line per folder, not per placemark: when the attribute is missing it
+    is normally missing from every placemark, and a slum's house layer runs
+    to hundreds of them.
+    """
+    if not total:
+        return []
+    if folder_name == HOUSE_BASE_LAYER_CODE:
+        if not missing:
+            return []
+        return [
+            '"{}": {} of {} placemark(s) have no HouseNo attribute - the house '
+            "base layer requires HouseNo on every placemark".format(
+                folder_name, missing, total
+            )
+        ]
+    present = total - missing
+    if not present:
+        return []
+    return [
+        '"{}": {} of {} placemark(s) carry a HouseNo attribute - only the house '
+        "base layer may use HouseNo".format(folder_name, present, total)
+    ]
 
 
 class KMLParser(object):
@@ -211,6 +268,8 @@ class KMLParser(object):
 
             component_data = []
             seen_housenumbers = set()
+            counted = 0
+            missing_house_no = 0
             for pm in folder.Placemark:
                 placemark_label = '"{}" -> {}'.format(kml_name, str(pm.name))
                 try:
@@ -218,6 +277,12 @@ class KMLParser(object):
                 except Exception as ex:
                     validation_errors.append("{}: {}".format(placemark_label, ex))
                     continue
+
+                # Counted only once the placemark parsed, so an unreadable one
+                # is reported by the branch above and not again by the rule.
+                counted += 1
+                if HOUSE_NO_ATTRIBUTE not in placemark_attributes(pm):
+                    missing_house_no += 1
 
                 # <name> is often a running serial; the field team identifies
                 # the house by its HouseNo/ID attribute, so show both.
@@ -238,6 +303,10 @@ class KMLParser(object):
                 component_data.append(
                     {"house_no": household_no, "coordinates": coordinates}
                 )
+
+            validation_errors.extend(
+                house_no_errors(kml_name, counted, missing_house_no)
+            )
             folder_plan.append((kml_name, component_data))
 
         if validation_errors:
