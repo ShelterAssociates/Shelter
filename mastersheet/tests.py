@@ -199,3 +199,157 @@ class FactsheetByHouseholdTests(SimpleTestCase):
             self.record("44", {}),
         ])
         self.assertEqual(list(rows), ["42"])
+
+
+CTB_A = {
+    "ctb name": "CTB A",
+    "is_the_CTB_in_use": "Yes",
+    "number_of_seats_allotted_to_me": "6",
+}
+CTB_B = {"ctb name": "CTB B", "is_the_CTB_in_use": "Closed"}
+TOILET_COMMENT_ENTRY = {"toilet_comment": "No CTB in this slum"}
+RIM_DATA = {
+    "General": {"landmark": "Old temple"},
+    "Toilet": [TOILET_COMMENT_ENTRY, CTB_A, CTB_B],
+}
+
+
+def rim_slum():
+    city = SimpleNamespace(name=SimpleNamespace(city_name="Pune"))
+    return SimpleNamespace(
+        name="Slum One",
+        shelter_slum_code="S-1",
+        electoral_ward=SimpleNamespace(
+            administrative_ward=SimpleNamespace(city=city)
+        ),
+    )
+
+
+def rim_patches(rim_data):
+    """Patches the one SlumData row (and an absent appraisal) the builders read."""
+    row = SimpleNamespace(
+        rim_data=rim_data,
+        submission_date=datetime.datetime(2026, 1, 2),
+        modified_on=datetime.datetime(2026, 3, 4),
+    )
+    return patch.multiple(
+        "mastersheet.views",
+        SlumData=MagicMock(
+            **{"objects.filter.return_value.order_by.return_value.first.return_value": row}
+        ),
+        Rapid_Slum_Appraisal=MagicMock(
+            **{"objects.filter.return_value.first.return_value": None}
+        ),
+    )
+
+
+class CtbEntriesTests(SimpleTestCase):
+    """A Toilet entry is a toilet block only if it carries a "ctb name"; the
+    RIM registration form's slum-level comment entry is not one."""
+
+    def test_general_form_comment_alone_is_not_a_ctb(self):
+        from mastersheet.views import _count_ctbs
+        self.assertEqual(_count_ctbs({"Toilet": [TOILET_COMMENT_ENTRY]}), 0)
+
+    def test_comment_skipped_and_named_blocks_counted_in_order(self):
+        from mastersheet.views import _count_ctbs, ctb_entries
+        self.assertEqual(_count_ctbs(RIM_DATA), 2)
+        self.assertEqual(
+            [entry["ctb name"] for entry in ctb_entries(RIM_DATA)], ["CTB A", "CTB B"]
+        )
+
+    def test_entry_with_answers_but_no_name_does_not_count(self):
+        # Legacy Kobo-era entries carry real answers but no "ctb name".
+        from mastersheet.views import _count_ctbs
+        self.assertEqual(_count_ctbs({"Toilet": [{"is_the_CTB_in_use": "Closed"}]}), 0)
+
+    def test_repeated_name_counts_once(self):
+        from mastersheet.views import _count_ctbs
+        self.assertEqual(_count_ctbs({"Toilet": [CTB_A, dict(CTB_A)]}), 1)
+
+    def test_blank_name_does_not_count(self):
+        from mastersheet.views import _count_ctbs
+        self.assertEqual(_count_ctbs({"Toilet": [{"ctb name": ""}]}), 0)
+
+    def test_missing_or_malformed_toilet_section(self):
+        from mastersheet.views import _count_ctbs
+        for rim_data in (None, {}, {"Toilet": None}, {"Toilet": "x"}, {"Toilet": [None, 7]}):
+            self.assertEqual(_count_ctbs(rim_data), 0, rim_data)
+
+
+class SlumToiletCommentTests(SimpleTestCase):
+    def test_taken_from_the_entry_without_a_ctb_name(self):
+        from mastersheet.views import slum_toilet_comment
+        self.assertEqual(
+            slum_toilet_comment([TOILET_COMMENT_ENTRY, CTB_A]), "No CTB in this slum"
+        )
+
+    def test_a_comment_on_a_named_block_is_not_the_slum_comment(self):
+        from mastersheet.views import slum_toilet_comment
+        self.assertIsNone(slum_toilet_comment([dict(CTB_A, toilet_comment="block note")]))
+
+    def test_none_when_absent(self):
+        from mastersheet.views import slum_toilet_comment
+        for entries in ([CTB_A], [], None, "x"):
+            self.assertIsNone(slum_toilet_comment(entries), entries)
+
+    def test_blank_comment_is_still_a_value(self):
+        # "" is an answered-but-empty note; only a missing key means no column.
+        from mastersheet.views import slum_toilet_comment
+        self.assertEqual(slum_toilet_comment([{"toilet_comment": ""}]), "")
+
+
+class RimSummaryCsvTests(SimpleTestCase):
+    def test_toilet_section_contributes_only_the_slum_comment(self):
+        from mastersheet.views import _build_rim_csv_rows
+        with rim_patches(RIM_DATA):
+            rows = _build_rim_csv_rows([rim_slum()], ["General", "Toilet"])
+
+        groups, fields, data = rows
+        # Toilet sits right after General, per RIM_SECTION_ORDER.
+        self.assertEqual(groups[6:], ["General", "Toilet"])
+        self.assertEqual(fields[6:], ["landmark", "toilet_comment"])
+        self.assertEqual(data[5], 2)  # Number of CTBs
+        self.assertEqual(data[6:], ["Old temple", "No CTB in this slum"])
+
+    def test_toilet_column_absent_when_section_not_selected(self):
+        from mastersheet.views import _build_rim_csv_rows
+        with rim_patches(RIM_DATA):
+            rows = _build_rim_csv_rows([rim_slum()], ["General"])
+
+        self.assertNotIn("toilet_comment", rows[1])
+        self.assertEqual(rows[2][5], 2)  # the count column is always included
+
+    def test_no_column_when_the_slum_has_no_comment_entry(self):
+        from mastersheet.views import _build_rim_csv_rows
+        with rim_patches({"General": {"landmark": "X"}, "Toilet": [CTB_A]}):
+            rows = _build_rim_csv_rows([rim_slum()], ["General", "Toilet"])
+
+        self.assertNotIn("toilet_comment", rows[1])
+
+
+class RimToiletCsvTests(SimpleTestCase):
+    def test_only_named_blocks_become_rows_renumbered_from_one(self):
+        from mastersheet.views import _build_rim_toilet_csv_rows
+        with rim_patches(RIM_DATA):
+            rows = _build_rim_toilet_csv_rows([rim_slum()])
+
+        self.assertEqual(rows[0][:4], ["Slum Name", "Slum Code", "CTB #", "ctb name"])
+        self.assertNotIn("toilet_comment", rows[0])
+        self.assertEqual([row[2] for row in rows[1:]], [1, 2])
+        self.assertEqual([row[3] for row in rows[1:]], ["CTB A", "CTB B"])
+
+    def test_comment_only_slum_produces_no_rows(self):
+        from mastersheet.views import _build_rim_toilet_csv_rows
+        with rim_patches({"Toilet": [TOILET_COMMENT_ENTRY]}):
+            rows = _build_rim_toilet_csv_rows([rim_slum()])
+
+        self.assertEqual(len(rows), 1)  # header only
+
+    def test_row_count_matches_the_summary_csv_count(self):
+        from mastersheet.views import _build_rim_csv_rows, _build_rim_toilet_csv_rows
+        with rim_patches(RIM_DATA):
+            summary = _build_rim_csv_rows([rim_slum()], ["Toilet"])
+            toilet_rows = _build_rim_toilet_csv_rows([rim_slum()])
+
+        self.assertEqual(summary[2][5], len(toilet_rows) - 1)

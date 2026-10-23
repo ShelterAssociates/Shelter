@@ -3295,50 +3295,60 @@ def _csv_safe(value):
     return str(value)
 
 
-def _count_ctbs(rim_data):
+def ctb_entries(rim_data):
     """
-    CTB (Community Toilet Block) count for a slum: the number of entries in
-    the Toilet section's list that represent an actual surveyed toilet
-    block.
+    The real Community Toilet Blocks in a slum's rim_data: the Toilet
+    entries that carry a "ctb name".
 
-    NOTE: reports/services/rim_factsheet.py and component/kobotoolbox.py
-    count CTBs by checking for a "ctb name" key on each entry, but that key
-    is essentially absent from real data - a DB check across all Pune slums
-    with a non-empty Toilet list (279 slums, 795 toilet entries) found "ctb
-    name" present on entries in only 7 slums (26 entries total), so that
-    rule undercounts to 0 for the vast majority of slums. What's actually
-    present on 788/795 entries is real answer data; the remaining entries
-    are placeholder stubs Avni sync writes when no CTB has been surveyed yet
-    for that slum, e.g. {"toilet_comment": "No CTB in this slum"} - a single
-    free-text key and nothing else. So an entry counts as a real CTB here
-    if it has any key other than that free-text "toilet_comment" field.
+    The Toilet section is a list fed by two different forms. The RIM
+    registration ("general") form resets it to a single entry holding only
+    the slum-level free-text note, {"toilet_comment": ...} - that is a slum
+    observation, not a toilet block, and it has no "ctb name". Each real
+    block comes from its own Toilet subject record and is keyed on "ctb
+    name" (see avni.sync.rim.replace_toilet). This is the same rule
+    reports/services/rim_factsheet.py uses, so the factsheet and this export
+    now agree on what a CTB is.
 
-    A second, separate data issue: some slums' Toilet lists contain
-    byte-for-byte duplicate entries (e.g. slum 616 "Janata Vasahat, Parvati"
-    has the same {"is_the_CTB_in_use": "Closed", ...} stub repeated 6 times
-    at positions 33/37/38/41/42/44 out of 45 entries, and this recurs in 12
-    of 279 Pune slums, 35 redundant entries total) - a sync/edit artifact,
-    not 6 distinct toilet blocks. So entries are also deduplicated by exact
-    content before counting.
+    Entries are deduplicated on "ctb name" - the identity key
+    avni.sync.rim.replace_toilet already overwrites by - so a sync or edit
+    artifact that repeated a block cannot inflate the count.
     """
-    if not rim_data:
-        return 0
-    toilet_entries = rim_data.get(RIM_TOILET_SECTION) or []
-    if not isinstance(toilet_entries, list):
-        return 0
-    seen_entries = set()
-    count = 0
-    for entry in toilet_entries:
+    entries = (rim_data or {}).get(RIM_TOILET_SECTION) or []
+    if not isinstance(entries, list):
+        return []
+    seen = set()
+    ctbs = []
+    for entry in entries:
         if not isinstance(entry, dict):
             continue
-        if not any(key != "toilet_comment" for key in entry.keys()):
+        name = entry.get("ctb name")
+        if not name or name in seen:
             continue
-        dedupe_key = json.dumps(entry, sort_keys=True, default=str)
-        if dedupe_key in seen_entries:
+        seen.add(name)
+        ctbs.append(entry)
+    return ctbs
+
+
+def slum_toilet_comment(toilet_entries):
+    """
+    The slum-level toilet note written by the RIM registration ("general")
+    form: the "toilet_comment" on the one Toilet entry that is not a CTB.
+    Returns None when the slum has no such entry, so the caller can leave
+    the column out entirely rather than emit a blank one.
+    """
+    if not isinstance(toilet_entries, list):
+        return None
+    for entry in toilet_entries:
+        if not isinstance(entry, dict) or entry.get("ctb name"):
             continue
-        seen_entries.add(dedupe_key)
-        count += 1
-    return count
+        if "toilet_comment" in entry:
+            return entry["toilet_comment"]
+    return None
+
+
+def _count_ctbs(rim_data):
+    """Number of real CTBs for a slum; see ctb_entries for the rule."""
+    return len(ctb_entries(rim_data))
 
 
 def _normalize_rim_sections(sections):
@@ -3352,17 +3362,17 @@ def _build_rim_csv_rows(slums, sections=None):
     """
     Returns rows for the main RIM CSV: leading identifier columns (including
     the CTB count) plus one section-group per selected top-level rim_data key
-    - excluding "Toilet", which (being a list of toilet blocks per slum
-    rather than a flat dict like every other section) always ships as its
-    own long-format CSV instead, see _build_rim_toilet_csv_rows - and a "RIM
-    Additional Info" group for Rapid_Slum_Appraisal fields. Row 1 = section
-    group (shown once, at the first column of that section's range, blank
-    for the rest - the closest CSV equivalent of a merged header), row 2 =
-    field name, row 3+ = one row per slum.
+    and a "RIM Additional Info" group for Rapid_Slum_Appraisal fields. Row 1
+    = section group (shown once, at the first column of that section's range,
+    blank for the rest - the closest CSV equivalent of a merged header), row
+    2 = field name, row 3+ = one row per slum.
+
+    "Toilet" is a list of toilet blocks rather than a flat dict like every
+    other section, so it contributes just one column here: the slum-level
+    toilet_comment from the RIM registration form. The blocks themselves
+    ship as their own long-format CSV, see _build_rim_toilet_csv_rows.
     """
-    want_sections = [
-        name for name in _normalize_rim_sections(sections) if name != RIM_TOILET_SECTION
-    ]
+    want_sections = _normalize_rim_sections(sections)
 
     leading_columns = [
         "City",
@@ -3406,8 +3416,12 @@ def _build_rim_csv_rows(slums, sections=None):
                 ctb_count = _count_ctbs(slum_data.rim_data)
                 for section_name, section_value in slum_data.rim_data.items():
                     if section_name == RIM_TOILET_SECTION:
-                        continue
-                    if isinstance(section_value, (dict, list)):
+                        comment = slum_toilet_comment(section_value)
+                        if comment is None:
+                            continue
+                        flat = {"toilet_comment": comment}
+                        group_name = RIM_TOILET_SECTION
+                    elif isinstance(section_value, (dict, list)):
                         flat = _flatten_rim_json(section_value)
                         group_name = section_name
                     else:
@@ -3494,6 +3508,11 @@ def _build_rim_toilet_csv_rows(slums):
     into the main CSV - unioned across every slum in the export - is what
     made the combined export balloon in width for cities with many CTBs.
     Here, row count scales with the real CTB count instead.
+
+    Only entries with a "ctb name" become rows (see ctb_entries), so the
+    slum-level toilet_comment entry is not mistaken for a toilet block, and
+    "CTB #" runs 1..N over real blocks. Row count per slum therefore matches
+    that slum's "Number of CTBs" in the main CSV.
     """
     toilet_fields = []  # ordered list of flat field keys seen across all CTBs
     entries = []  # (slum, ctb_index, flat_dict)
@@ -3504,12 +3523,7 @@ def _build_rim_toilet_csv_rows(slums):
         )
         if not slum_data or not slum_data.rim_data:
             continue
-        toilet_entries = slum_data.rim_data.get(RIM_TOILET_SECTION) or []
-        if not isinstance(toilet_entries, list):
-            continue
-        for ctb_index, entry in enumerate(toilet_entries, start=1):
-            if not isinstance(entry, dict):
-                continue
+        for ctb_index, entry in enumerate(ctb_entries(slum_data.rim_data), start=1):
             flat = _flatten_rim_json(entry)
             entries.append((slum, ctb_index, flat))
             for key in flat:
