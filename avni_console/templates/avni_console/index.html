@@ -1,4 +1,5 @@
 {% extends "admin/base_site.html" %}
+{% load static %}
 {% block bodyclass %}ph-body{% endblock %}
 {% block breadcrumbs %}{% endblock %}
 {% block extrastyle %}{% include "avni_console/partials/styles.html" %}{% endblock %}
@@ -26,6 +27,9 @@
   </div>
   {% endif %}
 
+  {{ location_search_index|json_script:"ac-locations-index" }}
+  {{ slum_search_index|json_script:"ac-slums-index" }}
+
   <div class="ac-grid">
     {% for job in jobs %}
     <div class="ph-card" data-job="{{ job.key }}">
@@ -42,10 +46,14 @@
 
         {% if "locations" in job.fields %}
         <div class="ph-field">
-          <label class="ph-label">Locations (nothing picked = every location)</label>
-          <select class="ph-select ac-select-multi" name="locations" multiple>
-            {% for uuid, label in locations %}<option value="{{ uuid }}">{{ label }}</option>{% endfor %}
-          </select>
+          <label class="ph-label">Locations <span class="ac-note" style="display:inline">(nothing picked = every location, {{ location_count }})</span></label>
+          <div class="ac-slum-search" data-search="locations">
+            <input type="text" class="ph-input ac-slum-search-input" placeholder="Type a slum name" autocomplete="off">
+            <div class="ac-slum-search-results"></div>
+            <div class="ac-slum-search-chosen"></div>
+            <!-- Starts empty; the search box adds the picked options. -->
+            <select name="locations" multiple hidden></select>
+          </div>
         </div>
         {% endif %}
 
@@ -83,10 +91,14 @@
 
         {% if "slum_ids" in job.fields %}
         <div class="ph-field">
-          <label class="ph-label">Slums <span class="ac-note" style="display:inline">(none selected = every mapped slum, {{ slums|length }})</span></label>
-          <select class="ph-select ac-select-multi" name="slum_ids" multiple>
-            {% for slum in slums %}<option value="{{ slum.id }}">{{ slum.name }}</option>{% endfor %}
-          </select>
+          <label class="ph-label">Slums <span class="ac-note" style="display:inline">(none selected = every mapped slum, {{ slum_count }})</span></label>
+          <div class="ac-slum-search" data-search="slum_ids">
+            <input type="text" class="ph-input ac-slum-search-input" placeholder="Type a slum name" autocomplete="off">
+            <div class="ac-slum-search-results"></div>
+            <div class="ac-slum-search-chosen"></div>
+            <!-- Starts empty; the search box adds the picked options. -->
+            <select name="slum_ids" multiple hidden></select>
+          </div>
         </div>
         {% endif %}
         {% if "include_toilets" in job.fields %}
@@ -200,5 +212,32 @@
     });
   });
 })();
+</script>
+
+<!-- jQuery already comes from templates/admin/base.html; loading a second
+     copy would replace window.jQuery and take Bootstrap's plugins with it. -->
+<script src="{% static 'js/slum_search.js' %}"></script>
+<script>
+/* Searchable pickers for the two long lists. Same widget as the reports and
+   KML upload pages (static/js/slum_search.js); every card that takes one gets
+   its own box over its own hidden <select multiple>, and the two indexes are
+   rendered into the page once and shared. */
+(function ($) {
+  var indexes = {
+    locations: SlumSearch.readIndex("ac-locations-index"),
+    slum_ids: SlumSearch.readIndex("ac-slums-index")
+  };
+  $(".ac-slum-search").each(function () {
+    var $box = $(this);
+    SlumSearch.createMulti({
+      index: indexes[$box.attr("data-search")] || [],
+      $input: $box.find(".ac-slum-search-input"),
+      $results: $box.find(".ac-slum-search-results"),
+      $chosen: $box.find(".ac-slum-search-chosen"),
+      $select: $box.find("select"),
+      prefix: "ac-slum-search"
+    });
+  });
+}(jQuery));
 </script>
 {% endblock %}
