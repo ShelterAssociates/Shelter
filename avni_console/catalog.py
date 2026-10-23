@@ -84,6 +84,70 @@ def location_choices():
     ]
 
 
+def location_search_index():
+    """[{id: AVNI location uuid, name, city, aw, ew, tag}] for the locations search box.
+
+    Same rows as location_choices, carrying the slum's full path so the search
+    box can show it the way the reports and KML upload pages do. Keyed on the
+    AVNI location uuid, which is what the jobs take.
+
+    values_list, not select_related: Slum.shape and both ward shapes are
+    PolygonFields, so select_related would transfer and parse three geometries
+    per row on every page load (same reason as
+    component.views.build_slum_search_index).
+    """
+    from survey.models import SlumAlias
+
+    rows = (
+        SlumAlias.objects.filter(provider="avni")
+        .order_by("slum__name", "-is_primary")
+        .values_list(
+            "external_id",
+            "is_primary",
+            "slum__name",
+            "slum__electoral_ward__name",
+            "slum__electoral_ward__administrative_ward__name",
+            "slum__electoral_ward__administrative_ward__city__name__city_name",
+        )
+    )
+    index = []
+    for external_id, is_primary, name, ew, aw, city in rows:
+        row = {"id": external_id, "name": name, "ew": ew or "", "aw": aw or "", "city": city or ""}
+        if not is_primary:
+            # A slum can be mapped to two AVNI locations; the search box tags
+            # the non-primary one, as the old option labels did. Left off the
+            # primaries rather than sent empty: this index ships ~800 rows.
+            row["tag"] = "second location"
+        index.append(row)
+    return index
+
+
+def slum_search_index():
+    """[{id: slum id, name, city, aw, ew}] for the RIM slum search box.
+
+    Every mapped slum, the same set the plain multi-select listed. values_list
+    for the same PolygonField reason as location_search_index.
+    """
+    from avni.locations import mapped_slum_ids
+    from master.models import Slum
+
+    rows = (
+        Slum.objects.filter(id__in=mapped_slum_ids())
+        .order_by("name")
+        .values_list(
+            "id",
+            "name",
+            "electoral_ward__name",
+            "electoral_ward__administrative_ward__name",
+            "electoral_ward__administrative_ward__city__name__city_name",
+        )
+    )
+    return [
+        {"id": slum_id, "name": name, "ew": ew or "", "aw": aw or "", "city": city or ""}
+        for slum_id, name, ew, aw, city in rows
+    ]
+
+
 def household_encounter_choices():
     """[(encounter type, label)] for every enabled non-registration kind of the household types."""
     choices = []

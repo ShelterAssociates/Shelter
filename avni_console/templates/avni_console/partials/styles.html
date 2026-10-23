@@ -19,7 +19,31 @@
   .ac-code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px; }
   .ac-note { font-size: 12.5px; color: var(--ph-muted); margin: 6px 0 0; }
   .ac-table-wrap { overflow-x: auto; }
-  .ac-select-multi { min-height: 120px; width: 100%; }
+  /* Searchable slum/location picker: the shared widget in static/js/slum_search.js
+     with the ac-slum-search prefix, as used by the reports and KML upload pages. */
+  .ac-slum-search { position: relative; }
+  .ac-slum-search-results { display: none; position: absolute; z-index: 30; top: 100%; left: 0; right: 0;
+                            margin-top: 4px; max-height: 260px; overflow-y: auto; background: var(--ph-surface);
+                            border: 1px solid var(--ph-line); border-radius: var(--ph-r-sm); box-shadow: var(--ph-sh-2); }
+  /* Each match is rendered as a <button>, so the browser's button styling is cleared here. */
+  .ac-slum-search-row { display: block; width: 100%; text-align: left; padding: 7px 10px; cursor: pointer;
+                        border: 0; border-bottom: 1px solid var(--ph-line-soft); background: none; font: inherit; }
+  .ac-slum-search-row:last-child { border-bottom: 0; }
+  .ac-slum-search-row:hover, .ac-slum-search-row.is-active { background: var(--ph-accent-soft); }
+  .ac-slum-search-row.is-active { outline: 2px solid var(--ph-accent); outline-offset: -2px; }
+  .ac-slum-search-name { font-weight: 600; font-size: 13px; color: var(--ph-ink); }
+  .ac-slum-search-path, .ac-slum-search-empty { font-size: 11px; color: var(--ph-muted); }
+  .ac-slum-search-empty { padding: 8px 10px; }
+  .ac-slum-search-more { padding: 6px 10px; font-size: 11px; color: var(--ph-muted);
+                         border-top: 1px solid var(--ph-line-soft); }
+  .ac-slum-search-tag { margin-left: 6px; padding: 1px 5px; border-radius: 8px;
+                        background: var(--ph-amber-soft); color: var(--ph-amber); font-size: 10px; }
+  .ac-slum-search-chosen { display: none; margin-top: 8px; }
+  .ac-slum-search-chip { display: inline-flex; align-items: center; gap: 6px; margin: 0 6px 6px 0; padding: 3px 9px;
+                         border: 1px solid #a7f3d0; border-radius: 999px; background: var(--ph-green-soft);
+                         color: var(--ph-green); font: inherit; font-size: 12px; cursor: pointer; }
+  .ac-slum-search-chip:hover { background: var(--ph-red-soft); color: var(--ph-red); border-color: #fecdd3; }
+  .ac-slum-search-chip-x { font-size: 13px; line-height: 1; }
   .ac-sticky { position: sticky; top: 16px; }
   .ac-stat { display: inline-block; margin-right: 18px; }
   .ac-stat b { font-size: 18px; display: block; }

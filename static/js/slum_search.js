@@ -166,21 +166,31 @@
 
             matches.slice(0, limit).forEach(function (row) {
                 const $name = $("<div>").addClass(prefix + "-name").text(row.name);
-                if (row.active === false) {
+                // row.tag lets an index label its own rows (e.g. a slum's
+                // second AVNI location). Indexes without one keep the
+                // Inactive tag they always had.
+                if (row.tag) {
+                    $name.append($("<span>").addClass(prefix + "-tag").text(row.tag));
+                } else if (row.active === false) {
                     $name.append($("<span>").addClass(prefix + "-tag").text("Inactive"));
                 }
 
-                $results.append(
-                    $("<button>")
-                        .attr("type", "button")
-                        .addClass(prefix + "-row")
-                        .attr("data-slum-id", row.id)
-                        .append($name)
-                        .append(
-                            $("<div>").addClass(prefix + "-path")
-                                .text(row.city + " › " + row.aw + " › " + row.ew)
-                        )
-                );
+                const $row = $("<button>")
+                    .attr("type", "button")
+                    .addClass(prefix + "-row")
+                    .attr("data-slum-id", row.id)
+                    .append($name);
+
+                // Empty parts are skipped: a slum with no ward chain would
+                // otherwise render as a path of bare separators.
+                const trail = [row.city, row.aw, row.ew].filter(function (part) {
+                    return part;
+                }).join(" › ");
+                if (trail) {
+                    $row.append($("<div>").addClass(prefix + "-path").text(trail));
+                }
+
+                $results.append($row);
             });
 
             $results.trigger("listrendered");
@@ -222,5 +232,88 @@
         };
     }
 
-    global.SlumSearch = { create: create, readIndex: readIndex, enableListKeyboard: enableListKeyboard };
+    /**
+     * Multi-pick search over an existing <select multiple>.
+     *
+     * The select is the form contract and stays in the DOM: this only adds and
+     * removes selected <option>s, so a page collecting values from
+     * selectedOptions keeps working and "nothing picked" still means
+     * everything. It starts empty, which is how a page with several of these
+     * can render one shared index instead of thousands of <option> tags.
+     *
+     * opts.$select - the <select multiple> carrying the field name
+     * opts.$chosen - container for the chips of what has been picked
+     * plus index/$input/$results/prefix/limit, as create() takes them.
+     */
+    function createMulti(opts) {
+        const $select = opts.$select;
+        const $chosen = opts.$chosen;
+        const $input = opts.$input;
+        const prefix = opts.prefix;
+        const byId = {};
+        opts.index.forEach(function (row) { byId[String(row.id)] = row; });
+
+        function label(id) {
+            const row = byId[id];
+            if (!row) return id;
+            return row.tag ? row.name + " (" + row.tag + ")" : row.name;
+        }
+
+        // Matched in JS, not with an attribute selector: ids are database
+        // values and a uuid or name in a selector would need escaping.
+        function options(id) {
+            return $select.find("option").filter(function () {
+                return String(this.value) === id;
+            });
+        }
+
+        function renderChips() {
+            $chosen.empty();
+            const $options = $select.find("option");
+            $chosen.css("display", $options.length ? "block" : "none");
+            $options.each(function () {
+                const id = String(this.value);
+                $chosen.append(
+                    $("<button>")
+                        .attr("type", "button")
+                        .attr("title", "Remove")
+                        .attr("data-remove", id)
+                        .addClass(prefix + "-chip")
+                        .text(label(id))
+                        .append($("<span>").addClass(prefix + "-chip-x").text("\u00d7"))
+                );
+            });
+        }
+
+        const box = create($.extend({}, opts, {
+            onPick: function (row) {
+                const id = String(row.id);
+                if (!options(id).length) {
+                    $select.append(
+                        $("<option>").attr("value", id).prop("selected", true).text(label(id))
+                    );
+                }
+                renderChips();
+                $input.val("");
+                box.close();
+                $input.trigger("focus");
+            }
+        }));
+
+        $chosen.on("click", "." + prefix + "-chip", function (e) {
+            e.preventDefault();
+            options(String($(this).attr("data-remove"))).remove();
+            renderChips();
+        });
+
+        renderChips();
+        return box;
+    }
+
+    global.SlumSearch = {
+        create: create,
+        createMulti: createMulti,
+        readIndex: readIndex,
+        enableListKeyboard: enableListKeyboard
+    };
 }(window, jQuery));

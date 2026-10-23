@@ -14,14 +14,13 @@ from openpyxl import Workbook
 
 from avni import excel, metadata
 from avni.client import AvniError
-from avni.locations import mapped_slum_ids
 from avni.models import AvniForm
 from avni_console import catalog
 from avni_console.models import BulkUpdate
 from avni_console.permissions import can_write_avni, console_required, write_required
 from avni_console.services import dry_run, headers, schedule
 from graphs.jobs.dashboard_update import ACTIVE_CITY_NAMES
-from master.models import City, Slum
+from master.models import City
 from avni.jobs import resume as resuming
 from notification.models import JobRequest
 from notification.services import queue
@@ -57,16 +56,21 @@ def request_payload(request):
 @console_required
 @require_GET
 def index(request):
-    slums = Slum.objects.filter(id__in=mapped_slum_ids()).order_by("name").values("id", "name")
     cities = City.objects.filter(name__city_name__in=ACTIVE_CITY_NAMES).order_by("name__city_name")
+    # Rendered once each as json_script and searched in the browser, instead of
+    # ~800 <option> tags per picker on every card that takes one.
+    slum_index = catalog.slum_search_index()
+    location_index = catalog.location_search_index()
     context = {
         "jobs": catalog.visible_jobs(),
-        "slums": list(slums),
+        "slum_search_index": slum_index,
+        "slum_count": len(slum_index),
         "cities": [(city.id, city.name.city_name) for city in cities],
         "subject_types": catalog.enabled_subject_types(),
         "encounter_types": catalog.enabled_direct_encounter_types(),
         "household_encounter_types": catalog.household_encounter_choices(),
-        "locations": catalog.location_choices(),
+        "location_search_index": location_index,
+        "location_count": len(location_index),
         "limits": limits(),
         "can_write": can_write_avni(request.user),
         "cache_stale": metadata.cache_is_stale(),
