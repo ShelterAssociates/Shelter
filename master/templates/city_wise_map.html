@@ -6,15 +6,19 @@
   <link rel="stylesheet" type="text/css" href="{% static 'css/bootstrap.min.css' %}" />
   <link rel="stylesheet" type="text/css" href="{% static 'css/jquery.dataTables.min.css' %}" />
   <link rel="stylesheet" type="text/css" href="{% static 'css/leaflet.css' %}" />
+  {% if can_view_3d %}<link rel="stylesheet" href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css" />{% endif %}
   <script>
     const csrftoken = '{{ csrf_token }}'
     const canGISExport = {% if user.username == "GIS" %}true{% else %}false{% endif %};
+    const canView3D = {% if can_view_3d %}true{% else %}false{% endif %};
   </script>
   <script src="{% static 'js/jquery.min.js' %}"></script>
   <script src="{% static 'js/master_map_boundaries.js' %}"></script>
   <script src="{% static 'js/master_map_breadcrumb.js' %}"></script>
   <script src="{% static 'js/master_map_component.js' %}"></script>
+  {% if can_view_3d %}<script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>{% endif %}
   <script src="{% static 'js/city_wise_map.js' %}"></script>
+  {% if can_view_3d %}<script src="{% static 'js/map3d.js' %}"></script>{% endif %}
   <script src="{% static 'js/ward_breakdown.js' %}"></script>
   <script src="{% static 'js/leaflet.js' %}"></script>
   <script src="{% static 'js/leaflet-google.js' %}"></script>
@@ -145,6 +149,118 @@
     }
     #action-btn-row {
       flex-direction: column;
+    }
+    #view3d-toggle-row {
+      display: none;
+      align-items: center;
+      gap: 8px;
+      margin: 18px 12px 0 10px;
+      font-size: 13px;
+      font-weight: 600;
+      color: #1a5276;
+    }
+    .switch3d {
+      position: relative;
+      display: inline-block;
+      width: 40px;
+      height: 22px;
+      margin: 0;
+    }
+    .switch3d input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+    .switch3d__slider {
+      position: absolute;
+      cursor: pointer;
+      inset: 0;
+      background: #bdc3c7;
+      border-radius: 22px;
+      transition: background 0.2s;
+    }
+    .switch3d__slider:before {
+      content: "";
+      position: absolute;
+      height: 16px;
+      width: 16px;
+      left: 3px;
+      top: 3px;
+      background: #fff;
+      border-radius: 50%;
+      transition: transform 0.2s;
+    }
+    .switch3d input:checked + .switch3d__slider {
+      background: #2471a3;
+    }
+    .switch3d input:checked + .switch3d__slider:before {
+      transform: translateX(18px);
+    }
+    .switch3d input:disabled + .switch3d__slider {
+      opacity: 0.6;
+      cursor: wait;
+    }
+    #map3d-help {
+      display: none;
+      position: absolute;
+      top: 62px;
+      right: 58px;
+      width: 190px;
+      z-index: 5;
+      padding: 6px 22px 6px 8px;
+      background: #fff;
+      border-radius: 6px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+      font-size: 11px;
+      line-height: 1.35;
+      color: #2c3e50;
+    }
+    #map3d-help:after {
+      content: "";
+      position: absolute;
+      top: 12px;
+      right: -6px;
+      border: 6px solid transparent;
+      border-right: 0;
+      border-left: 6px solid #fff;
+    }
+    #map3d-help .help-text {
+      display: none;
+      margin: 0 0 4px !important;
+      font-size: 11px !important;
+      font-weight: normal !important;
+      line-height: 1.35 !important;
+    }
+    #map3d-help .help-text.is-active {
+      display: block;
+    }
+    #map3d-help .help-langs {
+      font-size: 10px;
+    }
+    #map3d-help .help-langs a {
+      cursor: pointer;
+      color: #2471a3;
+      margin-right: 6px;
+    }
+    #map3d-help .help-langs a.is-active {
+      font-weight: bold;
+      text-decoration: underline;
+    }
+    #map3d-help-close {
+      position: absolute;
+      top: 0;
+      right: 6px;
+      border: 0;
+      background: none;
+      font-size: 16px;
+      line-height: 1.2;
+      cursor: pointer;
+      color: #555;
+    }
+    #map3d {
+      display: none;
+      height: 80vh;
+      width: 100%;
     }
     #factsheet-btn-slot,
     #kml-btn-slot {
@@ -799,6 +915,18 @@
   </style>
 {% endblock %}
 
+{% block navextra %}
+  {% if can_view_3d %}
+  <div id="view3d-toggle-row" class="pull-right">
+    <label class="switch3d">
+      <input type="checkbox" id="view3dToggle" />
+      <span class="switch3d__slider"></span>
+    </label>
+    <span>3D view</span>
+  </div>
+  {% endif %}
+{% endblock %}
+
 {% block content %}
   <input type="text" class="hide" id="city_id" value="{{ city_id }}" />
   <input type="text" class="hide" id="city_name" value="{{ city_name }}" />
@@ -817,11 +945,20 @@
       <div id="wdaddress" style="width:750px;"></div>
       <div id="wdofficer" style="width:750px;"></div>
       <div id="maplink" style="margin-top:10px; padding-top:8px;"></div>
-
       <div style="display:flex; flex-direction:row; gap:15px; align-items:flex-start;">
         <!-- Left: Map -->
         <div style="flex:0 0 75%; min-width:0; display:flex; flex-direction:column; position:relative;">
           <div id="map"></div>
+          <div id="map3d"></div>
+          <div id="map3d-help">
+            <button type="button" id="map3d-help-close" aria-label="Close">&times;</button>
+            <div class="help-text is-active" data-lang="en"><b>Rotate:</b> drag the compass button below + / &minus; left or right. Up or down tilts. Click it to face north.</div>
+            <div class="help-text" data-lang="mr"><b>फिरवा:</b> + / &minus; खालील होकायंत्र बटण डावीकडे किंवा उजवीकडे ओढा. वर/खाली ओढल्यास तिरका होईल. उत्तरेकडे वळवण्यासाठी क्लिक करा.</div>
+            <div class="help-text" data-lang="hi"><b>घुमाएँ:</b> + / &minus; के नीचे दिए कंपास बटन को बाएँ या दाएँ खींचें। ऊपर/नीचे खींचने पर झुकाव बदलेगा। उत्तर की ओर करने के लिए क्लिक करें।</div>
+            <div class="help-langs">
+              <a class="is-active" data-lang="en">EN</a><a data-lang="mr">मराठी</a><a data-lang="hi">हिन्दी</a>
+            </div>
+          </div>
 
           <div id="photo-timeline-container" class="photo-tl-container">
             <div id="sra-photo-label" class="photo-tl-label"></div>

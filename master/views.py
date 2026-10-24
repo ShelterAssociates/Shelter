@@ -31,6 +31,7 @@ from django.contrib.auth import authenticate, login
 from django.contrib.auth import *
 from django.contrib.auth.models import User, Group
 from component.cipher import *
+from component.view3d import can_view_3d
 from utils.utils_permission import access_right
 import urllib
 import numpy as np
@@ -724,7 +725,7 @@ def city_wise_map(request, key, slumname=None, flag=True):
         city = cipher.decrypt(key.split('::')[1])
         city = City.objects.get(id=city)
 
-    context = {}
+    context = {'can_view_3d': can_view_3d(request.user)}
     if slumname:
         context['slum_name'] = slumname
     if city:

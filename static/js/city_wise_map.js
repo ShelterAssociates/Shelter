@@ -178,6 +178,7 @@ function _geomMerge(layerName, child) {
         _populateHousesFrom(child);
         setHouseholdSearchEnabled(true);
         renderKMLDownloadButton();
+        if (canView3D) { render3DViewToggle(); }
     }
 
     /* If the user ticked this layer while it was still loading, draw it now. */
@@ -186,6 +187,7 @@ function _geomMerge(layerName, child) {
         _showCheckedLayer(layerName);
     }
 
+    if (canView3D) { refresh3DLayers(); }
     _geomResolve(layerName);
 }
 
@@ -472,6 +474,7 @@ function updateActionButtonRow() {
 }
 
 function clearActionButtons() {
+    if (canView3D) { close3DView(); }
     $("#factsheet-btn-slot").hide().html("");
     $("#kml-btn-slot").hide().html("");
     updateActionButtonRow();
@@ -823,6 +826,7 @@ function generate_filter(globalJsonData, slumId, result) {
 
     compochk.html(panel_component);
     renderKMLDownloadButton();
+    if (canView3D) { render3DViewToggle(); }
 
     /* Previously staggered over timeouts that waited on nothing. Order still
        matters: pinSponsorToBottom() clones the Sponsor accordion, and jQuery's

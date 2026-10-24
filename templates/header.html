@@ -33,6 +33,7 @@
 				<button type="button" class="btn btn-default pull-right" style="margin-top:10px;" >logout</button> 
 			</a>
 			<div class="pull-right" style="padding:10px;"> <h5>Welcome {{user}} </h5> </div>
+			{% block navextra %}{% endblock %}
 			{% if user.is_staff %}
                         <a style="margin-top:5px;" href="/admin">
                                 <button type="button" class="btn btn-default pull-right" style="margin-top:10px;" >Admin</button> 
