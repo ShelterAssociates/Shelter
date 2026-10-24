@@ -1,4 +1,6 @@
+from django.views.decorators.http import require_GET
 from . import views
+from .view3d import can_view_3d, get_3d_view_data
 from graphs.models import APICache
 from django.http import HttpResponse, JsonResponse
 from django.db import IntegrityError, connection, close_old_connections, transaction
@@ -201,3 +203,16 @@ def get_component_geometry_api(request, slum_id):
     return _cached_view(
         request, slum_id, views.get_component_geometry, endpoint="component_geometry"
     )
+
+
+@require_GET
+def get_3d_view_data_api(request, slum_id):
+    """Cached /component/get_3d_view_data/<slum_id>.
+
+    The permission check runs before the cache: _cached_view would otherwise
+    store the 403 and replay it to an allowed user as a 200. The key is per
+    user, so a user removed from the group is refused on the next request.
+    """
+    if not can_view_3d(request.user):
+        return JsonResponse({"error": "Not allowed"}, status=403)
+    return _cached_view(request, slum_id, get_3d_view_data, endpoint="3d_view_data")

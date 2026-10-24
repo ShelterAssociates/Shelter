@@ -17,6 +17,11 @@ urlpatterns = [
         get_component_api.get_component_geometry_api,
         name="get_component_geometry",
     ),
+    url(
+        r"^get_3d_view_data/(?P<slum_id>\d+)$",
+        get_component_api.get_3d_view_data_api,
+        name="get_3d_view_data",
+    ),
     url(r"^delete_component/$", views.delete_component, name="delete_component"),
     # Avni mobile app map picker (component/avni_map.py)
     url(r"^get_structures_for_avni/$", avni_map.get_structures_for_avni, name="get_structures_for_avni"),
