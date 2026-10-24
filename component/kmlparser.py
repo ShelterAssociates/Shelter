@@ -12,6 +12,9 @@ LINESTRING = "LineString"
 # Only this layer identifies features by HouseNo; every other layer must not.
 HOUSE_BASE_LAYER_CODE = "HousesBaseLayer"
 HOUSE_NO_ATTRIBUTE = "houseno"
+# Component.housenumber was max_length=5 before migration 0004 widened it;
+# 5 is still the house number the field team writes on the door.
+HOUSE_NO_MAX_LENGTH = 5
 
 
 class KMLValidationError(Exception):
@@ -55,55 +58,88 @@ def _validate_geometry(geom, label):
 
 
 def placemark_attributes(placemark):
-    """Lower-cased ExtendedData/SchemaData attribute names on one placemark.
+    """Lower-cased ExtendedData/SchemaData attribute names -> stripped values.
 
     Never raises: a placemark without SchemaData already fails inside
-    component_latlong and is reported there, so returning an empty set keeps
+    component_latlong and is reported there, so returning an empty dict keeps
     it at one error instead of two.
     """
     extended = getattr(placemark, "ExtendedData", None)
     schema_data = getattr(extended, "SchemaData", None) if extended is not None else None
     if schema_data is None:
-        return set()
+        return {}
     return {
-        child.get("name").lower()
+        child.get("name").lower(): str(child).strip()
         for child in schema_data.iterchildren()
         if child.get("name")
     }
 
 
-def house_no_errors(folder_name, total, missing):
+def usable_house_no(value):
+    """A HouseNo has to be there and fit on a door plate."""
+    return bool(value) and len(value) <= HOUSE_NO_MAX_LENGTH
+
+
+def quoted_examples(values, limit=5):
+    """Up to `limit` distinct values, quoted, so they can be found in QGIS."""
+    distinct = []
+    for value in values:
+        if value not in distinct:
+            distinct.append(value)
+    shown = ['"{}"'.format(value) for value in distinct[:limit]]
+    if len(distinct) > limit:
+        shown.append("and {} more".format(len(distinct) - limit))
+    return ", ".join(shown)
+
+
+def house_no_errors(folder_name, total, missing, invalid=()):
     """The HouseNo rule for one folder, as a list of error strings.
 
-    HouseNo is required on every placemark of the house base layer and
-    forbidden everywhere else, so house footprints exported into the wrong
-    folder (or a house layer exported without the field the field team
-    identifies a house by) are caught before anything is written. An ID
-    attribute is deliberately not a substitute, even though
-    component_latlong would happily fall back to it.
+    On the house base layer every placemark needs a HouseNo carrying a value
+    of at most HOUSE_NO_MAX_LENGTH characters; every other layer must not
+    carry a HouseNo at all. So a house layer exported without the field the
+    field team identifies a house by, a blank or building-name HouseNo, and
+    house footprints exported into the wrong folder are all caught before
+    anything is written. An ID attribute is deliberately not a substitute,
+    even though component_latlong would happily fall back to it.
 
-    One line per folder, not per placemark: when the attribute is missing it
-    is normally missing from every placemark, and a slum's house layer runs
-    to hundreds of them.
+    One line per folder, not per placemark: a missing attribute is normally
+    missing from every placemark, and a slum's house layer runs to hundreds
+    of them. Bad values are usually a handful, so those are quoted.
     """
     if not total:
         return []
-    if folder_name == HOUSE_BASE_LAYER_CODE:
-        if not missing:
+
+    if folder_name != HOUSE_BASE_LAYER_CODE:
+        present = total - missing
+        if not present:
             return []
         return [
+            '"{}": {} of {} placemark(s) carry a HouseNo attribute - only the house '
+            "base layer may use HouseNo".format(folder_name, present, total)
+        ]
+
+    errors = []
+    if missing:
+        errors.append(
             '"{}": {} of {} placemark(s) have no HouseNo attribute - the house '
             "base layer requires HouseNo on every placemark".format(
                 folder_name, missing, total
             )
-        ]
-    present = total - missing
-    if not present:
-        return []
-    return [
-        '"{}": {} of {} placemark(s) carry a HouseNo attribute - only the house '
-        "base layer may use HouseNo".format(folder_name, present, total)
-    ]
+        )
+    if invalid:
+        errors.append(
+            '"{}": {} of {} placemark(s) have an unusable HouseNo (blank, or longer '
+            "than {} characters): {} - HouseNo must be 1 to {} characters".format(
+                folder_name,
+                len(invalid),
+                total,
+                HOUSE_NO_MAX_LENGTH,
+                quoted_examples(invalid),
+                HOUSE_NO_MAX_LENGTH,
+            )
+        )
+    return errors
 
 
 class KMLParser(object):
@@ -270,6 +306,7 @@ class KMLParser(object):
             seen_housenumbers = set()
             counted = 0
             missing_house_no = 0
+            invalid_house_no = []
             for pm in folder.Placemark:
                 placemark_label = '"{}" -> {}'.format(kml_name, str(pm.name))
                 try:
@@ -281,8 +318,11 @@ class KMLParser(object):
                 # Counted only once the placemark parsed, so an unreadable one
                 # is reported by the branch above and not again by the rule.
                 counted += 1
-                if HOUSE_NO_ATTRIBUTE not in placemark_attributes(pm):
+                attributes = placemark_attributes(pm)
+                if HOUSE_NO_ATTRIBUTE not in attributes:
                     missing_house_no += 1
+                elif not usable_house_no(attributes[HOUSE_NO_ATTRIBUTE]):
+                    invalid_house_no.append(attributes[HOUSE_NO_ATTRIBUTE])
 
                 # <name> is often a running serial; the field team identifies
                 # the house by its HouseNo/ID attribute, so show both.
@@ -305,7 +345,7 @@ class KMLParser(object):
                 )
 
             validation_errors.extend(
-                house_no_errors(kml_name, counted, missing_house_no)
+                house_no_errors(kml_name, counted, missing_house_no, invalid_house_no)
             )
             folder_plan.append((kml_name, component_data))
 

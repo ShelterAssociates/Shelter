@@ -6,11 +6,17 @@ from unittest import mock
 
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.gis.geos import Polygon
-from django.test import TestCase, override_settings
+from django.test import SimpleTestCase, TestCase, override_settings
 
 from avni.models import AvniForm, AvniFormQuestion, AvniMapFilter
 from avni.tests.support import make_city, make_slum
-from component.kmlparser import HOUSE_BASE_LAYER_CODE, KMLParser, KMLValidationError
+from component.kmlparser import (
+    HOUSE_BASE_LAYER_CODE,
+    KMLParser,
+    KMLValidationError,
+    quoted_examples,
+    usable_house_no,
+)
 from component.models import Component, Metadata, Section, SubjectStructureMapping
 from survey.models import SlumAlias
 
@@ -395,3 +401,119 @@ class HouseNoRuleTests(TestCase):
         ).other_components()
 
         self.assertFalse(Component.objects.filter(object_id=self.slum.id).exists())
+
+
+class HouseNoValueTests(HouseNoRuleTests):
+    """A HouseNo also has to carry a value, of at most 5 characters."""
+
+    def test_blank_houseno_is_rejected(self):
+        errors = self.rejection(
+            HOUSE_BASE_LAYER_CODE,
+            [placemark_xml("1", {"HouseNo": "101"}), placemark_xml("2", {"HouseNo": ""})],
+        )
+
+        self.assertEqual(len(errors), 1)
+        self.assertIn("1 of 2", errors[0])
+        self.assertIn("unusable HouseNo", errors[0])
+        self.assertFalse(self.components_of(self.house_layer).exists())
+
+    def test_houseno_longer_than_five_characters_is_rejected(self):
+        errors = self.rejection(
+            HOUSE_BASE_LAYER_CODE, [placemark_xml("1", {"HouseNo": "Church"})]
+        )
+
+        self.assertEqual(len(errors), 1)
+        self.assertIn('"Church"', errors[0])
+        self.assertIn("must be 1 to 5 characters", errors[0])
+
+    def test_exactly_five_characters_is_accepted(self):
+        self.upload(HOUSE_BASE_LAYER_CODE, [placemark_xml("1", {"HouseNo": "12345"})])
+
+        self.assertEqual(
+            list(self.components_of(self.house_layer).values_list("housenumber", flat=True)),
+            ["12345"],
+        )
+
+    def test_letter_suffixed_sub_unit_is_accepted(self):
+        # 2,383 real house footprints use this convention (7366B, 7369A) for
+        # sub-units, so the limit is 5 characters and not 5 digits.
+        self.upload(HOUSE_BASE_LAYER_CODE, [placemark_xml("1", {"HouseNo": "7366B"})])
+
+        self.assertEqual(
+            list(self.components_of(self.house_layer).values_list("housenumber", flat=True)),
+            ["7366B"],
+        )
+
+    def test_surrounding_whitespace_does_not_count_towards_the_limit(self):
+        self.upload(HOUSE_BASE_LAYER_CODE, [placemark_xml("1", {"HouseNo": "  101  "})])
+
+        self.assertEqual(self.components_of(self.house_layer).count(), 1)
+
+    def test_whitespace_only_houseno_counts_as_blank(self):
+        errors = self.rejection(HOUSE_BASE_LAYER_CODE, [placemark_xml("1", {"HouseNo": "   "})])
+
+        self.assertEqual(len(errors), 1)
+        self.assertIn("unusable HouseNo", errors[0])
+
+    def test_repeated_bad_value_also_trips_the_duplicate_rule(self):
+        # Two placemarks sharing one bad HouseNo is both unusable and a
+        # duplicate, and each rule reports it.
+        errors = self.rejection(
+            HOUSE_BASE_LAYER_CODE,
+            [placemark_xml("1", {"HouseNo": "Mandir"}), placemark_xml("2", {"HouseNo": "Mandir"})],
+        )
+
+        self.assertTrue(any("duplicate placemark id" in e for e in errors))
+        self.assertTrue(any("unusable HouseNo" in e for e in errors))
+
+    def test_more_than_five_distinct_bad_values_are_summarised(self):
+        errors = self.rejection(
+            HOUSE_BASE_LAYER_CODE,
+            [placemark_xml(str(i), {"HouseNo": "Mandir-{}".format(i)}) for i in range(8)],
+        )
+
+        self.assertIn("and 3 more", errors[0])
+
+    def test_missing_and_unusable_are_reported_separately(self):
+        errors = self.rejection(
+            HOUSE_BASE_LAYER_CODE,
+            [
+                placemark_xml("1", {"ID": "1"}),
+                placemark_xml("2", {"HouseNo": ""}),
+                placemark_xml("3", {"HouseNo": "103"}),
+            ],
+        )
+
+        self.assertEqual(len(errors), 2)
+        self.assertIn("no HouseNo attribute", errors[0])
+        self.assertIn("unusable HouseNo", errors[1])
+
+    def test_other_layers_are_not_length_checked(self):
+        # Roads must not carry HouseNo at all; its ID can be any length.
+        self.upload("Roads", [placemark_xml("1", {"ID": "Main approach road"})])
+
+        self.assertEqual(self.components_of(self.roads).count(), 1)
+
+
+class HouseNoHelperTests(SimpleTestCase):
+    """The pure helpers behind the HouseNo rule."""
+
+    def test_usable_house_no(self):
+        for value in ("1", "101", "12345", "7366B"):
+            self.assertTrue(usable_house_no(value), value)
+        for value in ("", "123456", "Church", "Mahadev Mandir"):
+            self.assertFalse(usable_house_no(value), value)
+
+    def test_quoted_examples_are_distinct_and_ordered(self):
+        self.assertEqual(
+            quoted_examples(["Church", "Masjid", "Church"]), '"Church", "Masjid"'
+        )
+
+    def test_quoted_examples_caps_at_five_distinct(self):
+        self.assertEqual(
+            quoted_examples(["a", "b", "c", "d", "e", "f", "g"]),
+            '"a", "b", "c", "d", "e", and 2 more',
+        )
+
+    def test_quoted_examples_of_nothing(self):
+        self.assertEqual(quoted_examples([]), "")
