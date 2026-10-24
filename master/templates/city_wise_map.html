@@ -150,8 +150,17 @@
     #action-btn-row {
       flex-direction: column;
     }
-    #view3d-toggle-row {
+    #view3d-spinner {
       display: none;
+      width: 14px;
+      height: 14px;
+      border: 2px solid #ddd;
+      border-top-color: #2471a3;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+    #view3d-toggle-row {
+      display: flex;
       align-items: center;
       gap: 8px;
       margin: 18px 12px 0 10px;
@@ -198,7 +207,7 @@
     }
     .switch3d input:disabled + .switch3d__slider {
       opacity: 0.6;
-      cursor: wait;
+      cursor: not-allowed;
     }
     #map3d-help {
       display: none;
@@ -224,25 +233,30 @@
       border-right: 0;
       border-left: 6px solid #fff;
     }
-    #map3d-help .help-text {
+    #map3d-help .help-text,
+    #map3d-note .help-text {
       display: none;
       margin: 0 0 4px !important;
       font-size: 11px !important;
       font-weight: normal !important;
       line-height: 1.35 !important;
     }
-    #map3d-help .help-text.is-active {
+    #map3d-help .help-text.is-active,
+    #map3d-note .help-text.is-active {
       display: block;
     }
-    #map3d-help .help-langs {
+    #map3d-help .help-langs,
+    #map3d-note .help-langs {
       font-size: 10px;
     }
-    #map3d-help .help-langs a {
+    #map3d-help .help-langs a,
+    #map3d-note .help-langs a {
       cursor: pointer;
       color: #2471a3;
       margin-right: 6px;
     }
-    #map3d-help .help-langs a.is-active {
+    #map3d-help .help-langs a.is-active,
+    #map3d-note .help-langs a.is-active {
       font-weight: bold;
       text-decoration: underline;
     }
@@ -923,6 +937,7 @@
       <span class="switch3d__slider"></span>
     </label>
     <span>3D view</span>
+    <span id="view3d-spinner"></span>
   </div>
   {% endif %}
 {% endblock %}
@@ -945,10 +960,21 @@
       <div id="wdaddress" style="width:750px;"></div>
       <div id="wdofficer" style="width:750px;"></div>
       <div id="maplink" style="margin-top:10px; padding-top:8px;"></div>
+      {% if can_view_3d %}
+      <div id="map3d-note" style="display:none; margin-top:6px; font-size:12px; color:#c62828;">
+        <span class="help-text is-active" data-lang="en"><b>Note:</b> The 3D structures are drawn at a uniform, assumed height from each polygon boundary. They do not denote the actual height or length of the structures.</span>
+        <span class="help-text" data-lang="mr"><b>टीप:</b> 3D रचना प्रत्येक बहुभुज (पॉलीगॉन) सीमेवरून एकसमान, गृहीत उंचीने काढलेल्या आहेत. त्या रचनांची प्रत्यक्ष उंची किंवा लांबी दर्शवत नाहीत.</span>
+        <span class="help-text" data-lang="hi"><b>नोट:</b> 3D संरचनाएँ प्रत्येक पॉलीगॉन सीमा के आधार पर एक समान, मानी हुई ऊँचाई पर बनाई गई हैं। ये संरचनाओं की वास्तविक ऊँचाई या लंबाई नहीं दर्शाती हैं।</span>
+        <span class="help-langs">
+          <a class="is-active" data-lang="en">EN</a><a data-lang="mr">मराठी</a><a data-lang="hi">हिन्दी</a>
+        </span>
+      </div>
+      {% endif %}
       <div style="display:flex; flex-direction:row; gap:15px; align-items:flex-start;">
         <!-- Left: Map -->
         <div style="flex:0 0 75%; min-width:0; display:flex; flex-direction:column; position:relative;">
           <div id="map"></div>
+          {% if can_view_3d %}
           <div id="map3d"></div>
           <div id="map3d-help">
             <button type="button" id="map3d-help-close" aria-label="Close">&times;</button>
@@ -959,6 +985,7 @@
               <a class="is-active" data-lang="en">EN</a><a data-lang="mr">मराठी</a><a data-lang="hi">हिन्दी</a>
             </div>
           </div>
+          {% endif %}
 
           <div id="photo-timeline-container" class="photo-tl-container">
             <div id="sra-photo-label" class="photo-tl-label"></div>

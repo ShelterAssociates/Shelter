@@ -178,7 +178,7 @@ function _geomMerge(layerName, child) {
         _populateHousesFrom(child);
         setHouseholdSearchEnabled(true);
         renderKMLDownloadButton();
-        if (canView3D) { render3DViewToggle(); }
+        if (canView3D) { render3DViewToggle(false); }
     }
 
     /* If the user ticked this layer while it was still loading, draw it now. */
@@ -474,7 +474,7 @@ function updateActionButtonRow() {
 }
 
 function clearActionButtons() {
-    if (canView3D) { close3DView(); }
+    if (canView3D) { close3DView(); render3DViewToggle(false); }
     $("#factsheet-btn-slot").hide().html("");
     $("#kml-btn-slot").hide().html("");
     updateActionButtonRow();
@@ -508,6 +508,7 @@ function readJSONFile(filePath, callback, param1, param2) {
 /* ── Slum data fetch ─────────────────────────────────────────────────────── */
 function slum_data_fetch(slumId) {
     $("#right-panel").addClass("active");
+    if (canView3D) { render3DViewToggle(true); }
 
     /* Clear existing highlight and reset search input when switching slum */
     fullResetHouseholdSearch();
@@ -826,7 +827,7 @@ function generate_filter(globalJsonData, slumId, result) {
 
     compochk.html(panel_component);
     renderKMLDownloadButton();
-    if (canView3D) { render3DViewToggle(); }
+    if (canView3D) { render3DViewToggle(_hasDeferredStructure()); }
 
     /* Previously staggered over timeouts that waited on nothing. Order still
        matters: pinSponsorToBottom() clones the Sponsor accordion, and jQuery's
