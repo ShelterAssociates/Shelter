@@ -391,6 +391,14 @@ $(document).ready(function () {
             };
         }
 
+        if (lower.indexOf("unusable houseno") !== -1) {
+            return {
+                title: "Blank or over-long HouseNo",
+                explanation: "Every house needs a HouseNo of 1 to 5 characters. These placemarks have one that is empty or too long — a building or landmark name in the HouseNo field is the usual cause.",
+                fix: "Give each of these features a HouseNo of at most 5 characters. A building name belongs in a different field, not HouseNo."
+            };
+        }
+
         if (lower.indexOf("may use houseno") !== -1) {
             return {
                 title: "HouseNo on the wrong layer",
