@@ -16,12 +16,19 @@ var view3dHouses = [];
 var view3dPolygons = null;
 var view3dLabels = null;
 
-function render3DViewToggle() {
+/* The switch is on the page from the start; it stays disabled (with a spinner while
+   a slum's houses are loading) until there are houses to show. */
+function render3DViewToggle(loading) {
     var hasHouses = typeof maplibregl !== "undefined" && houses && Object.keys(houses).length > 0;
     if (!hasHouses) { close3DView(); }
-    $("#view3dToggle").prop("checked", view3dOpen).prop("disabled", false);
-    $("#view3d-toggle-row").css("display", hasHouses ? "flex" : "none");
+    $("#view3dToggle")
+        .prop("checked", view3dOpen)
+        .prop("disabled", !hasHouses || !!loading)
+        .attr("title", hasHouses || loading ? "" : "Select a slum to use the 3D view");
+    $("#view3d-spinner").toggle(!!loading);
 }
+
+$(function () { render3DViewToggle(false); });
 
 /* Shrinks every ring toward the outer ring's centre so neighbouring houses show a gap. */
 function insetPolygon(rings) {
@@ -298,6 +305,7 @@ function fit3DMap() {
 function open3DView() {
     var slumId = global_slum_id;
     $("#view3dToggle").prop("disabled", true);
+    $("#view3d-spinner").show();
     $.getJSON("/component/get_3d_view_data/" + encodeURIComponent(slumId))
         .done(function (json) {
             if (String(global_slum_id) !== String(slumId)) { return; }
@@ -305,6 +313,7 @@ function open3DView() {
             view3dOpen = true;
             $("#map").hide();
             $("#map3d").show();
+            $("#map3d-note").show();
             $("#map3d-help").show().find("a[data-lang=en]").click();
             if (!map3d) {
                 init3DMap();
@@ -316,11 +325,11 @@ function open3DView() {
                 refresh3DLayers();
                 fit3DMap();
             }
-            render3DViewToggle();
+            render3DViewToggle(false);
         })
         .fail(function (xhr) {
             alert(xhr.status === 403 ? "You do not have access to the 3D view." : "Could not load the 3D view.");
-            render3DViewToggle();
+            render3DViewToggle(false);
         });
 }
 
@@ -330,6 +339,7 @@ function close3DView() {
     view3dHouses = [];
     $("#map3d").hide();
     $("#map3d-help").hide();
+    $("#map3d-note").hide();
     $("#map").show();
     if (map) { map.invalidateSize(); }
 }
@@ -350,9 +360,11 @@ $(document).on("click", "#map3d-help-close", function () {
     $("#map3d-help").hide();
 });
 
-$(document).on("click", "#map3d-help .help-langs a", function () {
+/* One language choice for the helper and the note. */
+$(document).on("click", "#map3d-help .help-langs a, #map3d-note .help-langs a", function () {
     var lang = $(this).data("lang");
-    $("#map3d-help .help-langs a").removeClass("is-active");
-    $(this).addClass("is-active");
-    $("#map3d-help .help-text").removeClass("is-active").filter("[data-lang=" + lang + "]").addClass("is-active");
+    $("#map3d-help, #map3d-note").each(function () {
+        $(this).find(".help-langs a").removeClass("is-active").filter("[data-lang=" + lang + "]").addClass("is-active");
+        $(this).find(".help-text").removeClass("is-active").filter("[data-lang=" + lang + "]").addClass("is-active");
+    });
 });
