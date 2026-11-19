@@ -89,6 +89,51 @@ function onEachFeature(feature, layer) {
     }
 }
 
+// Blob keys polycolor_2, polycolor_3, ... fill polygons with stripes; see content.md.
+var STRIPE_WIDTH = 6;
+var _stripePatterns = {};
+
+function _isCssColor(value) {
+    if (typeof value !== "string") { return false; }
+    return window.CSS && CSS.supports ? CSS.supports("color", value) : /^#[0-9a-f]{3,8}$/i.test(value);
+}
+
+function stripeSpec(blob) {
+    var keys = Object.keys(blob || {}).filter(function (key) { return /^polycolor_\d+$/.test(key); });
+    if (!keys.length) { return null; }
+    keys.sort(function (a, b) { return a.split("_")[1] - b.split("_")[1]; });
+    var colors = [blob.polycolor].concat(keys.map(function (key) { return blob[key]; })).filter(_isCssColor);
+    return colors.length > 1 ? { colors: colors, horizontal: blob.stripe_direction === "horizontal" } : null;
+}
+
+function stripePattern(spec) {
+    var key = spec.colors.join() + spec.horizontal;
+    if (!_stripePatterns[key]) {
+        var size = spec.colors.length * STRIPE_WIDTH;
+        var tile = document.createElement("canvas");
+        tile.width = spec.horizontal ? 1 : size;
+        tile.height = spec.horizontal ? size : 1;
+        var ctx = tile.getContext("2d");
+        spec.colors.forEach(function (color, i) {
+            ctx.fillStyle = color;
+            if (spec.horizontal) {
+                ctx.fillRect(0, i * STRIPE_WIDTH, 1, STRIPE_WIDTH);
+            } else {
+                ctx.fillRect(i * STRIPE_WIDTH, 0, STRIPE_WIDTH, 1);
+            }
+        });
+        _stripePatterns[key] = ctx.createPattern(tile, "repeat") || spec.colors[0];
+    }
+    return _stripePatterns[key];
+}
+
+function stripeCssBackground(spec) {
+    var stops = spec.colors.map(function (color, i) {
+        return color + " " + i * 3 + "px " + (i + 1) * 3 + "px";
+    });
+    return "repeating-linear-gradient(" + (spec.horizontal ? "180deg" : "90deg") + ", " + stops.join(", ") + ")";
+}
+
 var BaseShape = (function () {
     function BaseShape(obj_component) {
         this.icon = obj_component.icon;
@@ -100,6 +145,7 @@ var BaseShape = (function () {
         if (this.fillflag == undefined) {
             this.fillflag = true;
         }
+        this.stripes = stripeSpec(obj_component.blob);
         this.type = obj_component.type;
         this.count = obj_component.count;
         this.child = obj_component.child;
@@ -175,6 +221,8 @@ var BaseShape = (function () {
             };
             if (!this.fillflag) {
                 style_geometry['style']['fillOpacity'] = 0;
+            } else if (this.stripes && map.options.preferCanvas) {
+                style_geometry['style']['fillColor'] = stripePattern(this.stripes);
             }
         }
 

@@ -512,6 +512,7 @@ function slum_data_fetch(slumId) {
 
     /* Clear existing highlight and reset search input when switching slum */
     fullResetHouseholdSearch();
+    closeZoomList();
 
     var compochk = $("#compochk");
     compochk.html(
@@ -772,6 +773,8 @@ function generate_filter(globalJsonData, slumId, result) {
 
         $.each(v, function (k1, v1) {
             var chkcolor = v1["blob"]["polycolor"];
+            var chkstripes = stripeSpec(v1["blob"]);
+            var chkstripe_css = chkstripes ? "background-image:" + stripeCssBackground(chkstripes) + ";" : "";
             var inner_label = Object.keys(globalJsonData).length > 0 ? globalJsonData[k1] : k1;
             var metric = v1["metric"];
             /* _entryFeatureCount, not child.length: a deferred layer has an
@@ -786,7 +789,7 @@ function generate_filter(globalJsonData, slumId, result) {
             panel_component +=
                 '<div name="div_group" class="wb-filter-row">&nbsp;&nbsp;&nbsp;' +
                 '<input name="chk1" class="chk"' +
-                ' style="background:' + chkcolor + ';background-color:' + chkcolor + ';"' +
+                ' style="background:' + chkcolor + ';background-color:' + chkcolor + ';' + chkstripe_css + '"' +
                 ' selection="' + k + '"' +
                 ' data-section-name="' + k + '"' +
                 ' component_type="' + v1["type"] + '"' +
@@ -799,6 +802,10 @@ function generate_filter(globalJsonData, slumId, result) {
                       ' data-section-name="' + k + '"' +
                       ' data-item-type="' + v1["type"] + '"' +
                       ' data-total-count="' + child_length + '">(' + child_length + ')</span>'
+                    : '') +
+                (v1["show_zoom_list"] && v1["type"] === "C"
+                    ? ' <button type="button" class="wb-icon-btn wb-zoom-list-btn" data-item-name="' + k1 + '"' +
+                      ' title="Go to location">' + ICON_LOCATION + '</button>'
                     : '') +
                 (icon ? ' <img src="' + icon + '">' : '') +
                 '</div>';
@@ -875,6 +882,137 @@ function autoSelectBoundaryCheckbox() {
 
 
 /* ── Checkbox event handlers ─────────────────────────────────────────────── */
+function _materialIcon(path) {
+    return '<svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="' + path + '"/></svg>';
+}
+
+var ICON_LOCATION = _materialIcon("M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5a2.5 2.5 0 1 1 0-5 2.5 2.5 0 0 1 0 5z");
+var ICON_PREV = _materialIcon("M15.41 7.41 14 6l-6 6 6 6 1.41-1.41L10.83 12z");
+var ICON_NEXT = _materialIcon("M10 6 8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z");
+
+var _zoomList = null;
+
+$(document).on("click", ".wb-zoom-list-btn", function (e) {
+    e.preventDefault();
+    e.stopPropagation();
+    showZoomList(this);
+});
+
+document.addEventListener("scroll", function (e) {
+    if (!$(e.target).closest("#wb-zoom-list").length) { closeZoomList(); }
+}, true);
+
+function closeZoomList() {
+    $("#wb-zoom-list").remove();
+    _zoomList = null;
+}
+
+function endZoomList() {
+    var restoreView = _zoomList && _zoomList.restoreView;
+    closeZoomList();
+    clearHouseholdHighlight();
+    if (restoreView) { map.setView(restoreView.center, restoreView.zoom); }
+}
+
+function showZoomList(button) {
+    var layerName = $(button).attr("data-item-name");
+    closeZoomList();
+
+    var box = $(
+        '<div id="wb-zoom-list" class="wb-zoom-list">' +
+        '<div class="wb-zoom-list-head"><span></span><button type="button" class="close" title="Close and go back to the slum">&times;</button></div>' +
+        '<div class="wb-zoom-list-body">Loading…</div>' +
+        '<div class="wb-zoom-list-nav" style="display:none;">' +
+        '<button type="button" class="wb-icon-btn" data-step="-1" title="Previous location">' + ICON_PREV + '</button>' +
+        '<span></span>' +
+        '<button type="button" class="wb-icon-btn" data-step="1" title="Next location">' + ICON_NEXT + '</button>' +
+        '</div>' +
+        '</div>'
+    );
+    box.find(".wb-zoom-list-head span").text(layerName);
+    box.find(".close").on("click", endZoomList);
+    box.find(".wb-zoom-list-nav button").on("click", function () {
+        if (!_zoomList || !_zoomList.items.length) { return; }
+        var count = _zoomList.items.length;
+        var next = _zoomList.index < 0 ? 0 : _zoomList.index + Number($(this).attr("data-step"));
+        selectZoomItem((next + count) % count);
+    });
+    $("body").append(box);
+    positionZoomList(box, button);
+
+    var state = { layerName: layerName, items: [], index: -1, restoreView: null, box: box };
+    _zoomList = state;
+
+    whenLayerReady(layerName).then(function (entry) {
+        if (_zoomList !== state) { return; }
+        state.items = ((entry && entry.child) || []).filter(function (item) { return item && item.shape; });
+        var body = box.find(".wb-zoom-list-body").empty();
+        if (!state.items.length) {
+            body.text("Nothing to show.");
+            return;
+        }
+        state.items.forEach(function (item, i) {
+            $('<a href="#"></a>').text(layerName + " " + (i + 1)).on("click", function (ev) {
+                ev.preventDefault();
+                selectZoomItem(i);
+            }).appendTo(body);
+        });
+        box.find(".wb-zoom-list-nav").show();
+        updateZoomListCounter();
+        positionZoomList(box, button);
+    });
+}
+
+function selectZoomItem(index) {
+    var state = _zoomList;
+    if (!state.restoreView) {
+        state.restoreView = { center: map.getCenter(), zoom: map.getZoom() };
+    }
+    state.index = index;
+
+    var body = state.box.find(".wb-zoom-list-body");
+    var link = body.find("a").removeClass("active").eq(index).addClass("active")[0];
+    if (link.offsetTop < body.scrollTop()) {
+        body.scrollTop(link.offsetTop);
+    } else if (link.offsetTop + link.offsetHeight > body.scrollTop() + body.innerHeight()) {
+        body.scrollTop(link.offsetTop + link.offsetHeight - body.innerHeight());
+    }
+    updateZoomListCounter();
+    zoomToFeature(state.layerName, state.layerName + " " + (index + 1), state.items[index].shape);
+}
+
+function updateZoomListCounter() {
+    var state = _zoomList;
+    state.box.find(".wb-zoom-list-nav span").text((state.index < 0 ? "–" : state.index + 1) + " / " + state.items.length);
+}
+
+function positionZoomList(box, button) {
+    var row = $(button).closest(".wb-filter-row");
+    var offset = row.offset();
+    var top = offset.top - box.outerHeight() - 4;
+    if (top < $(window).scrollTop()) { top = offset.top + row.outerHeight() + 4; }
+    box.css({ top: top, left: offset.left, width: row.outerWidth() });
+}
+
+function zoomToFeature(layerName, label, shape) {
+    var box = $("[name=chk1]").filter(function () { return this.value === layerName; });
+    if (box.length && !box.is(":checked")) { box.click(); }
+
+    clearHouseholdHighlight();
+    var highlight = L.geoJson(shape, {
+        style: { color: "#FFD700", weight: 2, opacity: 1, fill: false },
+        onEachFeature: function (feature, layer) { layer.bindPopup(label, { autoPan: false, offset: [0, -6] }); }
+    }).addTo(map);
+    window._householdHighlight = highlight;
+
+    var bounds = highlight.getBounds();
+    if (!bounds.isValid()) { return; }
+    // Whole zoom levels only: the Google layer leaves fractional zooms grey.
+    map.setView(bounds.getCenter(), Math.min(20, Math.floor(map.getBoundsZoom(bounds))));
+    var top = L.latLng(bounds.getNorth(), bounds.getCenter().lng);
+    highlight.eachLayer(function (layer) { layer.openPopup(top); });
+}
+
 function checkSingleGroup(singlechk) {
     $.each(arr_poly_disp, function (k, v) { map.removeLayer(v.shape); });
 
