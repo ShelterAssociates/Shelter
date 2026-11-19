@@ -68,6 +68,69 @@
       content: '\2713';
       position: relative;
     }
+    .wb-icon-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 22px;
+      height: 22px;
+      padding: 0;
+      border: 0;
+      border-radius: 4px;
+      background: transparent;
+      color: #337ab7;
+      vertical-align: middle;
+      cursor: pointer;
+    }
+    .wb-icon-btn:hover,
+    .wb-icon-btn:focus {
+      background: #eef3ff;
+      color: #23527c;
+      outline: none;
+    }
+    .wb-zoom-list {
+      position: absolute;
+      z-index: 1050;
+      background: #fff;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+      font-size: 12px;
+    }
+    .wb-zoom-list-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 4px 8px;
+      border-bottom: 1px solid #eee;
+      font-weight: bold;
+    }
+    .wb-zoom-list-body {
+      position: relative;
+      max-height: 180px;
+      overflow-y: auto;
+    }
+    .wb-zoom-list-nav {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 3px 8px;
+      border-top: 1px solid #eee;
+    }
+    .wb-zoom-list-body a {
+      display: block;
+      padding: 4px 8px;
+      color: #333;
+      text-decoration: none;
+    }
+    .wb-zoom-list-body a:hover,
+    .wb-zoom-list-body a.active {
+      background: #eef3ff;
+    }
+    .wb-zoom-list-body a.active {
+      color: #23527c;
+      font-weight: 600;
+    }
     
     /* ── TABLE ───────────────────────────────────────────── */
     .table > tbody > tr > td {

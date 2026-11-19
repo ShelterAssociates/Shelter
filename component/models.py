@@ -69,6 +69,7 @@ class Metadata(models.Model):
     visible = models.BooleanField()  # BooleanField
     authenticate = models.BooleanField(default=False)
     show_metric = models.BooleanField(default=True)  # show count/length badge on the feature box
+    show_zoom_list = models.BooleanField(default=False)  # list button in the panel that zooms to each feature
     order = models.FloatField()
     blob = JSONField()
     icon = models.ImageField(upload_to=COMPONENT_ICON, blank=True, null=True)

@@ -53,7 +53,7 @@ admin.site.register(Section, SectionAdmin)
 
 
 class MetadataAdmin(admin.ModelAdmin):
-    list_display = ("name", "section_name", "type", "visible", "show_metric")
+    list_display = ("name", "section_name", "type", "visible", "show_metric", "show_zoom_list")
     search_fields = ["name"]
     ordering = ["name", "section__name", "type", "visible"]
     list_filter = [SectionListFilter]
