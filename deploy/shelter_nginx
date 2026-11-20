@@ -1,5 +1,7 @@
 # Production nginx config. Lives at /etc/nginx/sites-enabled/ on the server;
 # keep this copy in sync with it.
+# TLS protocols and ciphers are set in the http block of nginx.conf and in
+# certbot's options-ssl-nginx.conf by deploy/harden_nginx_tls.sh, not here.
 
 upstream shelter_app {
     server 127.0.0.1:8011 fail_timeout=10;
