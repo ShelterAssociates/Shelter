@@ -19,6 +19,12 @@ $(document).ready(function () {
     // -----------------------------
     // Render component list
     // -----------------------------
+    function escapeHtml(value) {
+        return String(value === null || value === undefined ? "" : value).replace(/[&<>"']/g, function (c) {
+            return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c];
+        });
+    }
+
     function renderComponents(components) {
         $("#componentList").empty();
 
@@ -32,15 +38,15 @@ $(document).ready(function () {
         components.forEach(function (comp) {
             const metric = comp.metric;
             const metricHtml = metric
-                ? `<span class="ku-metric-badge ${metric.source}">${metric.value} ${metric.unit}${metric.source === "manual" ? " (manual)" : " (auto)"}</span>`
+                ? `<span class="ku-metric-badge ${escapeHtml(metric.source)}">${escapeHtml(metric.value)} ${escapeHtml(metric.unit)}${metric.source === "manual" ? " (manual)" : " (auto)"}</span>`
                 : "";
             const metricBtnHtml = metric
-                ? `<button class="ku-metric-btn set-metric" type="button" data-current-value="${metric.value}" data-current-unit="${metric.unit}">${metric.source === "manual" ? "Edit" : "Add"} metric</button>`
+                ? `<button class="ku-metric-btn set-metric" type="button" data-current-value="${escapeHtml(metric.value)}" data-current-unit="${escapeHtml(metric.unit)}">${metric.source === "manual" ? "Edit" : "Add"} metric</button>`
                 : "";
             $("#componentList").append(`
-                <div class="ku-component-row component-item" data-component-name="${comp.name}">
+                <div class="ku-component-row component-item" data-component-name="${escapeHtml(comp.name)}">
                     <div class="ku-component-row-main">
-                        <div>${comp.name}</div>
+                        <div>${escapeHtml(comp.name)}</div>
                         ${metricHtml}
                     </div>
                     <div class="ku-component-row-actions">

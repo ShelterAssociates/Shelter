@@ -36,12 +36,12 @@ var Breadcrumbs = (function () {
         //breadcrumb doesn't repeat the same label back-to-back.
         var crumbs = [{
             label: city.name,
-            html: '<label id="Home" onclick="Breadcrumbs.prototype.breadcrumb_onClick(this, false);">' + " <span style='text-decoration: underline;cursor:pointer;color:blue;'>" + city.name + "</span></label>"
+            html: '<label id="Home" onclick="Breadcrumbs.prototype.breadcrumb_onClick(this, false);">' + " <span style='text-decoration: underline;cursor:pointer;color:blue;'>" + escapeHtml(city.name) + "</span></label>"
         }];
         $.each(this.val, function (key, val) {
             crumbs.push({
                 label: val,
-                html: '<label id="' + val + '" onclick="Breadcrumbs.prototype.breadcrumb_onClick(this, true);">' + " <span style='text-decoration: underline;cursor:pointer;color:blue;'>" + val + "</span></label>"
+                html: '<label id="' + escapeHtml(val) + '" onclick="Breadcrumbs.prototype.breadcrumb_onClick(this, true);">' + " <span style='text-decoration: underline;cursor:pointer;color:blue;'>" + escapeHtml(val) + "</span></label>"
             });
         });
 

@@ -11,6 +11,7 @@ from django.contrib.auth.models import User
 from django.utils.html import format_html
 from django.contrib import messages
 from django.core.exceptions import ValidationError
+from utils.validators import PlainTextAdminMixin
 
 # class CustomButton():
 #     class Media:
@@ -37,7 +38,7 @@ class BaseAdmin(admin.ModelAdmin):
         return form
 
 
-class VendorTypeAdmin(admin.ModelAdmin):
+class VendorTypeAdmin(PlainTextAdminMixin, admin.ModelAdmin):
     list_display = ("name", "description", "display_flag", "display_order")
     search_fields = ["name"]
     ordering = ["name"]
@@ -145,7 +146,7 @@ class InvoiceAdmin(admin.ModelAdmin):
 admin.site.register(Invoice, InvoiceAdmin)
 
 
-class MaterialTypeAdmin(admin.ModelAdmin):
+class MaterialTypeAdmin(PlainTextAdminMixin, admin.ModelAdmin):
     list_display = ("name", "description", "display_flag", "display_order")
     search_fields = ["name"]
     ordering = ["name"]
@@ -190,7 +191,7 @@ class InvoiceItemsAdmin(admin.ModelAdmin):
 admin.site.register(InvoiceItems, InvoiceItemsAdmin)
 
 
-class VendorAdmin(admin.ModelAdmin):
+class VendorAdmin(PlainTextAdminMixin, admin.ModelAdmin):
     list_display = ("name", "gst_number", "phone_number", "email_address")
     search_fields = ["name", "gst_number", "phone_number", "email_address"]
     ordering = ["name"]
@@ -231,7 +232,7 @@ class VendorHouseholdInvoiceDetailAdmin(BaseAdmin):
 admin.site.register(VendorHouseholdInvoiceDetail, VendorHouseholdInvoiceDetailAdmin)
 
 
-class SBMUploadAdmin(BaseAdmin):
+class SBMUploadAdmin(PlainTextAdminMixin, BaseAdmin):
     list_display = (
         "slum_name",
         "household_number",
@@ -294,7 +295,7 @@ class ToiletConstructionAdmin(BaseAdmin):
 admin.site.register(ToiletConstruction, ToiletConstructionAdmin)
 
 
-class ActivityTypeAdmin(admin.ModelAdmin):
+class ActivityTypeAdmin(PlainTextAdminMixin, admin.ModelAdmin):
     list_display = ("name", "key", "display_flag", "display_order")
     search_fields = ["name"]
     ordering = ["name"]

@@ -2,6 +2,7 @@ import hashlib
 import json
 import logging
 import random
+import re
 from datetime import date, datetime, timedelta
 
 from django.contrib.admin.views.decorators import staff_member_required
@@ -232,9 +233,9 @@ def verify_otp(request):
     logger.info("verify_otp: OTP verified successfully for email=%s task=%s", email, task)
 
     FormSubmission.objects.create(
-        name=name,
+        name=re.sub(r"[<>]", "", str(name))[:200],
         email=email,
-        mobile=mobile,
+        mobile=re.sub(r"[<>]", "", str(mobile))[:15],
         task=task,
         slum=record.slum,
         otp_verified=True,

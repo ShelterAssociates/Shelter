@@ -1,3 +1,6 @@
+// Table cells and tree titles hold city/ward/slum names: show them as text, never as HTML.
+$.fn.dataTable.defaults.column.mRender = $.fn.dataTable.render.text();
+
 	var report_table_covid = null;
 	var tag  = null;
 	var key = null;
@@ -214,6 +217,7 @@
 	        success : function (data) {
 	        	$('#city_list').fancytree({
 	       		   checkbox: true,
+			       escapeTitles: true,
 			       source :set_root(data),
 			       selectMode: 3,
 			       extensions: ['filter'],

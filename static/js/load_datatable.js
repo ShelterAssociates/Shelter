@@ -1,6 +1,46 @@
 var report_short_datatable = null;
 var report_member_datatable = null;
 var columns_defs;
+
+function escapeHtml(value) {
+  if (value === null || value === undefined) return value;
+  return String(value).replace(/[&<>"']/g, function (c) {
+    return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c];
+  });
+}
+
+function safeUrl(url) {
+  return /^(https?:\/\/|\/)/i.test(String(url || "").trim()) ? String(url).trim() : "#";
+}
+
+function popupLink(url, html) {
+  return '<a href="' + escapeHtml(safeUrl(url)) + '" class="popup-link">' + html + "</a>";
+}
+
+function highlight(color, html) {
+  return "<p class='highlight_p' style='background-color: " + escapeHtml(color) + ";'>" + html + "</p>";
+}
+
+// Cell values and titles come from survey/admin data: show them as text, never as HTML.
+function escapeColumns(columns) {
+  columns.forEach(function (col) {
+    if (col.escaped) return;
+    col.escaped = true;
+    col.key = col.title;
+    col.title = escapeHtml(col.key);
+    var custom = col.render;
+    col.render = function (data, type, row, meta) {
+      var value = type === "display" ? escapeHtml(data) : data;
+      return custom ? custom(value, type, row, meta) : value;
+    };
+  });
+  return columns;
+}
+
+$(document).on("click", "a.popup-link", function (e) {
+  e.preventDefault();
+  window.open(this.href, "_blank", "width=850,height=750");
+});
 var table = null;
 var divider = 1000 * 60 * 60 * 24;
 var window = 8 * 1000 * 60 * 60 * 24;
@@ -27,10 +67,7 @@ function sponsorprojectList() {
       str = str + "0" + '"' + ">" + "---select---" + "</option>";
       $("#sponsor_project").append(str);
       for (i = 0; i < json.nameArray.length; i++) {
-        var str = '<option value="';
-        str =
-          str + json.idArray[i] + '"' + ">" + json.nameArray[i] + "</option>";
-        $("#sponsor_project").append(str);
+        $("#sponsor_project").append($("<option>").val(json.idArray[i]).text(json.nameArray[i]));
       }
     },
   });
@@ -63,11 +100,7 @@ $(document).ready(function () {
             url_RHS = row["rhs_url"];
             if (type === "display") {
               data =
-                '<a href = "#" onclick="window.open(\'' +
-                url_RHS +
-                "', '_blank', 'width=850,height=750');\">" +
-                data +
-                "</a>";
+                popupLink(url_RHS, data);
             }
             return data;
           }
@@ -86,11 +119,7 @@ $(document).ready(function () {
               url_FF = row["ff_url"];
               if (type === "display") {
                 data =
-                  '<a href = "#" onclick="window.open(\'' +
-                  url_FF +
-                  "', '_blank', 'width=850,height=750');\">" +
-                  data +
-                  "</a>";
+                  popupLink(url_FF, data);
               }
             }
             return data;
@@ -113,9 +142,9 @@ $(document).ready(function () {
             url_download_TF = row["toilet_photo_url"];
             if (type === "display") {
               data =
-                '<a target="_blank" href = " ' +
-                url_download_TF +
-                '" >Download Photo</a>';
+                '<a target="_blank" href="' +
+                escapeHtml(safeUrl(url_download_TF)) +
+                '">Download Photo</a>';
             }
             return data;
           }
@@ -132,9 +161,9 @@ $(document).ready(function () {
             url_download_FF = row["family_photo_url"];
             if (type === "display") {
               data =
-                '<a target="_blank" href = "' +
-                url_download_FF +
-                '" >Download Photo</a>';
+                '<a target="_blank" href="' +
+                escapeHtml(safeUrl(url_download_FF)) +
+                '">Download Photo</a>';
             }
             return data;
           }
@@ -153,23 +182,19 @@ $(document).ready(function () {
           if (typeof data != "undefined") {
             url_daily_reporting =
               String("/accounts/mastersheet/communitymobilization/") +
-              row[columns_defs["data"][meta.col]["title"] + "_id"] +
+              row[columns_defs["data"][meta.col]["key"] + "_id"] +
               String("/");
             if (data.length > 11) {
               url_daily_reporting =
                 String(
                   "/accounts/mastersheet/communitymobilizationactivityattendance/"
                 ) +
-                row[columns_defs["data"][meta.col]["title"] + "_id"] +
+                row[columns_defs["data"][meta.col]["key"] + "_id"] +
                 String("/");
             }
             if (type === "display") {
               data =
-                '<a href = "#" onclick="window.open(\'' +
-                url_daily_reporting +
-                "', '_blank', 'width=850,height=750');\">" +
-                data +
-                "</a>";
+                popupLink(url_daily_reporting, data);
             }
             return data;
           }
@@ -188,15 +213,11 @@ $(document).ready(function () {
           if (typeof data != "undefined") {
             url_accounts =
               String("/accounts/mastersheet/invoice/") +
-              row[columns_defs["data"][meta.col]["title"] + "_id"] +
+              row[columns_defs["data"][meta.col]["key"] + "_id"] +
               String("/");
             if (type === "display") {
               data =
-                '<a href = "#" onclick="window.open(\'' +
-                url_accounts +
-                "', '_blank', 'width=850,height=750');\">" +
-                data +
-                "</a>";
+                popupLink(url_accounts, data);
             }
             return data;
           }
@@ -219,11 +240,7 @@ $(document).ready(function () {
               String("/");
             if (type === "display") {
               data =
-                '<a href = "#" onclick="window.open(\'' +
-                url_SBM +
-                "', '_blank', 'width=850,height=750');\">" +
-                data +
-                "</a>";
+                popupLink(url_SBM, data);
             }
             return data;
           }
@@ -239,20 +256,12 @@ $(document).ready(function () {
                   String("/");
                 if (type === "display") {
                   data =
-                    '<a href = "#" onclick="window.open(\'' +
-                    url_SBM +
-                    "', '_blank', 'width=850,height=750');\">" +
-                    data +
-                    "</a>";
+                    popupLink(url_SBM, data);
                 }
               }
               if (row["no_rhs_flag"] != "") {
                 data =
-                  "<p class = 'highlight_p' style = 'background-color : " +
-                  row["no_rhs_flag"] +
-                  ";'>" +
-                  data +
-                  "</p>";
+                  highlight(row["no_rhs_flag"], data);
               }
               return data;
             }
@@ -276,11 +285,7 @@ $(document).ready(function () {
                 String("/");
               if (type === "display") {
                 data =
-                  '<a href = "#" onclick="window.open(\'' +
-                  url_TC +
-                  "', '_blank', 'width=850,height=750');\">" +
-                  data +
-                  "</a>";
+                  popupLink(url_TC, data);
               }
               return data;
             }
@@ -300,19 +305,11 @@ $(document).ready(function () {
                 String("/");
               if (type === "display") {
                 data =
-                  '<a href = "#" onclick="window.open(\'' +
-                  url_TC +
-                  "', '_blank', 'width=850,height=750');\">" +
-                  data +
-                  "</a>";
+                  popupLink(url_TC, data);
               }
               if (row["delay_flag"] != "") {
                 data =
-                  "<p class = 'highlight_p' style = 'background-color : " +
-                  row["delay_flag"] +
-                  ";'>" +
-                  data +
-                  "</p>";
+                  highlight(row["delay_flag"], data);
               }
               return data;
             }
@@ -332,27 +329,15 @@ $(document).ready(function () {
                 String("/");
               if (type === "display") {
                 data =
-                  '<a href = "#" onclick="window.open(\'' +
-                  url_TC +
-                  "', '_blank', 'width=850,height=750');\">" +
-                  data +
-                  "</a>";
+                  popupLink(url_TC, data);
               }
               if (row["a_missing"] != "") {
                 data =
-                  "<p class = 'highlight_p' style = 'background-color : " +
-                  row["a_missing"] +
-                  ";'>" +
-                  data +
-                  "</p>";
+                  highlight(row["a_missing"], data);
               }
               if (row["a_amb"] != "") {
                 data =
-                  "<p class = 'highlight_p' style = 'background-color : " +
-                  row["a_amb"] +
-                  ";'>" +
-                  data +
-                  "</p>";
+                  highlight(row["a_amb"], data);
               }
               return data;
             }
@@ -375,27 +360,15 @@ $(document).ready(function () {
                 String("/");
               if (type === "display") {
                 data =
-                  '<a href = "#" onclick="window.open(\'' +
-                  url_TC +
-                  "', '_blank', 'width=850,height=750');\">" +
-                  data +
-                  "</a>";
+                  popupLink(url_TC, data);
               }
               if (row["p1_missing"] != "") {
                 data =
-                  "<p class = 'highlight_p' style = 'background-color : " +
-                  row["p1_missing"] +
-                  ";'>" +
-                  data +
-                  "</p>";
+                  highlight(row["p1_missing"], data);
               }
               if (row["p1_amb"] != "") {
                 data =
-                  "<p class = 'highlight_p' style = 'background-color : " +
-                  row["p1_amb"] +
-                  ";'>" +
-                  data +
-                  "</p>";
+                  highlight(row["p1_amb"], data);
               }
               return data;
             }
@@ -418,27 +391,15 @@ $(document).ready(function () {
                 String("/");
               if (type === "display") {
                 data =
-                  '<a href = "#" onclick="window.open(\'' +
-                  url_TC +
-                  "', '_blank', 'width=850,height=750');\">" +
-                  data +
-                  "</a>";
+                  popupLink(url_TC, data);
               }
               if (row["p2_missing"] != "") {
                 data =
-                  "<p class = 'highlight_p' style = 'background-color : " +
-                  row["p2_missing"] +
-                  ";'>" +
-                  data +
-                  "</p>";
+                  highlight(row["p2_missing"], data);
               }
               if (row["p2_amb"] != "") {
                 data =
-                  "<p class = 'highlight_p' style = 'background-color : " +
-                  row["p2_amb"] +
-                  ";'>" +
-                  data +
-                  "</p>";
+                  highlight(row["p2_amb"], data);
               }
               return data;
             }
@@ -461,27 +422,15 @@ $(document).ready(function () {
                 String("/");
               if (type === "display") {
                 data =
-                  '<a href = "#" onclick="window.open(\'' +
-                  url_TC +
-                  "', '_blank', 'width=850,height=750');\">" +
-                  data +
-                  "</a>";
+                  popupLink(url_TC, data);
               }
               if (row["p3_missing"] != "") {
                 data =
-                  "<p class = 'highlight_p' style = 'background-color : " +
-                  row["p3_missing"] +
-                  ";'>" +
-                  data +
-                  "</p>";
+                  highlight(row["p3_missing"], data);
               }
               if (row["p3_amb"] != "") {
                 data =
-                  "<p class = 'highlight_p' style = 'background-color : " +
-                  row["p3_amb"] +
-                  ";'>" +
-                  data +
-                  "</p>";
+                  highlight(row["p3_amb"], data);
               }
               return data;
             }
@@ -501,19 +450,11 @@ $(document).ready(function () {
                 String("/");
               if (type === "display") {
                 data =
-                  '<a href = "#" onclick="window.open(\'' +
-                  url_TC +
-                  "', '_blank', 'width=850,height=750');\">" +
-                  data +
-                  "</a>";
+                  popupLink(url_TC, data);
               }
               if (row["c_amb"] != "") {
                 data =
-                  "<p class = 'highlight_p' style = 'background-color : " +
-                  row["c_amb"] +
-                  ";'>" +
-                  data +
-                  "</p>";
+                  highlight(row["c_amb"], data);
               }
               return data;
             }
@@ -608,14 +549,9 @@ $(document).ready(function () {
               try {
                 if (index.indexOf("error") != -1) {
                   var error_log = document.createElement("div");
-                  error_log.innerHTML =
-                    "<p>" +
-                    index +
-                    ": " +
-                    String(value) +
-                    "[ total:" +
-                    value.length +
-                    " ]</p>";
+                  $(error_log).append(
+                    $("<p>").text(index + ": " + String(value) + "[ total:" + value.length + " ]")
+                  );
                   $("#error_log").append(error_log);
                   $("#error_log").addClass("error_display");
                   $("#error_log").addClass("alert alert-danger");
@@ -623,16 +559,14 @@ $(document).ready(function () {
               } catch (error) { }
             });
             var success_log = document.createElement("div");
-            success_log.innerHTML =
-              "<p>Number of records in the uploaded sheet: " +
-              response.total_records +
-              "<br>Total records updated: " +
-              total_updates +
-              "<br>Number of new records added: " +
-              total_new +
-              "<br>No Household Available: " +
-              total_not_available +
-              "</p>";
+            $(success_log).append(
+              $("<p>").text(
+                "Number of records in the uploaded sheet: " + response.total_records +
+                "\nTotal records updated: " + total_updates +
+                "\nNumber of new records added: " + total_new +
+                "\nNo Household Available: " + total_not_available
+              ).css("white-space", "pre-line")
+            );
             $("#success_log").append(success_log);
             $("#success_log").addClass("alert alert-success");
             $(".overlay").hide();
@@ -860,7 +794,7 @@ $(document).ready(function () {
 
         buttons: btn_default,
 
-        columns: columns_defs["data"],
+        columns: escapeColumns(columns_defs["data"]),
         fixedColumns: {
           leftColumns: 1,
         },
@@ -1141,7 +1075,7 @@ $(document).ready(function () {
           { footer: true },
           { targets: 0, visible: false, searchable: false },
         ],
-        columns: [
+        columns: escapeColumns([
           { data: "slum", title: "Slum" },
           { data: "household_number", title: "Household Number" },
           { data: "pluscodes", title: "Plus Code" },
@@ -1181,7 +1115,7 @@ $(document).ready(function () {
           { data: "invoice_phase_2", title: "Invoice Phase 2 (Yes/No)" },
           { data: "invoice_phase_3", title: "Invoice Phase 3 (Yes/No)" },
           { data: "factsheetAssignStatus", title: "Factsheet Assign Status" },
-        ],
+        ]),
       });
       $("div.dt-buttons>button").addClass("pull-left");
       add_search_box();
@@ -1391,7 +1325,7 @@ $(document).ready(function () {
           { footer: true },
           { targets: 0, visible: false, searchable: false },
         ],
-        columns: [
+        columns: escapeColumns([
           { data: "slum_id__name", title: "Slum" },
           { data: "household_number", title: "Household Number" },
           { data: "created_date_str", title: "Created Date" },
@@ -1407,7 +1341,7 @@ $(document).ready(function () {
           { data: "Are you menstruating ?", title: "Are you menstruating ?" },
           { data: "Are you a person with disability ?", title: "Are you a person with disability ?" },
           { data: "What Type of disablity ?", title: "Select the type of disablity ?" },
-        ],
+        ]),
       });
       $("div.dt-buttons>button").addClass("pull-left");
       add_search_box();
@@ -1459,12 +1393,9 @@ $(document).ready(function () {
             var slum_info = document.createElement("div");
             slum_info.classList.add("display_line");
             slum_info.setAttribute("id", "slum_info");
-            slum_info.innerHTML =
-              "<p>" +
-              data["Name of the slum"] +
-              ", " +
-              data["Electoral Ward"] +
-              "</p>";
+            $(slum_info).append(
+              $("<p>").text(data["Name of the slum"] + ", " + data["Electoral Ward"])
+            );
             $("#slum_form p").append(slum_info);
           }
         },
@@ -1498,12 +1429,9 @@ $(document).ready(function () {
             var slum_info = document.createElement("div");
             slum_info.classList.add("display_line");
             slum_info.setAttribute("id", "slum_info");
-            slum_info.innerHTML =
-              "<p>" +
-              data["Name of the slum"] +
-              ", " +
-              data["Electoral Ward"] +
-              "</p>";
+            $(slum_info).append(
+              $("<p>").text(data["Name of the slum"] + ", " + data["Electoral Ward"])
+            );
             $("#slum_form p").append(slum_info);
           }
         },
@@ -1537,12 +1465,9 @@ $(document).ready(function () {
             var slum_info = document.createElement("div");
             slum_info.classList.add("display_line");
             slum_info.setAttribute("id", "slum_info");
-            slum_info.innerHTML =
-              "<p>" +
-              data["Name of the slum"] +
-              ", " +
-              data["Electoral Ward"] +
-              "</p>";
+            $(slum_info).append(
+              $("<p>").text(data["Name of the slum"] + ", " + data["Electoral Ward"])
+            );
             $("#slum_form p").append(slum_info);
           }
         },
@@ -1634,12 +1559,10 @@ $(document).ready(function () {
       var title = $(this).text();
       something = $(this).parent().parent().parent();
       title = something.find("thead tr th:eq(" + index + ")")[0].innerText;
-      $(this).html(
-        '<input id = "search_box" dt_index = ' +
-        visible_indices[index] +
-        '  type="text" placeholder="Search ' +
-        title +
-        '" />'
+      $(this).empty().append(
+        $('<input id="search_box" type="text">')
+          .attr("dt_index", visible_indices[index])
+          .attr("placeholder", "Search " + title)
       );
     });
   }

@@ -31,6 +31,7 @@ import json
 from .kmllevelparser import KMLLevelParser
 from utils.kml import UnsafeKMLError
 from django import forms
+from utils.validators import PlainTextAdminMixin
 
 # Common filters for querying model depending on model type
 data_filter = {
@@ -211,8 +212,9 @@ class BaseModelAdmin(admin.ModelAdmin):
 
 
 # City Reference
-class CityReferenceAdmin(BaseModelAdmin):
+class CityReferenceAdmin(PlainTextAdminMixin, BaseModelAdmin):
     """Display panel of CityReference Model"""
+    plain_text_fields = ("city_name", "district_name", "state_name")
 
     list_display = (
         "city_name",
@@ -229,7 +231,7 @@ admin.site.register(CityReference, CityReferenceAdmin)
 
 
 # slum
-class SlumDetailAdmin(BaseModelAdmin):
+class SlumDetailAdmin(PlainTextAdminMixin, BaseModelAdmin):
     form = SlumForm
     list_display = (
         "name",
@@ -348,14 +350,15 @@ admin.site.register(City, CityAdmin)
 
 
 # Administrative Ward
-class WardOfficeContactInline(admin.TabularInline):
+class WardOfficeContactInline(PlainTextAdminMixin, admin.TabularInline):
     """Display panel of WardOfficeContacts Model"""
+    plain_text_fields = ("title", "name")
 
     model = WardOfficeContact
     search_fields = ("name",)
 
 
-class AdministrativeWardAdmin(BaseModelAdmin):
+class AdministrativeWardAdmin(PlainTextAdminMixin, BaseModelAdmin):
     form = AdministrativeWardFrom
     list_display = ("name", "ward_no", "city", "office_address")
     inlines = [WardOfficeContactInline]
@@ -366,14 +369,14 @@ admin.site.register(AdministrativeWard, AdministrativeWardAdmin)
 
 
 # Electoral Ward
-class ElectedRepresentativeInline(admin.TabularInline):
+class ElectedRepresentativeInline(PlainTextAdminMixin, admin.TabularInline):
     """Display panel of ElectedRepresentative Model"""
 
     model = ElectedRepresentative
     search_fields = ("name",)
 
 
-class ElectoralWardFormAdmin(BaseModelAdmin):
+class ElectoralWardFormAdmin(PlainTextAdminMixin, BaseModelAdmin):
     form = ElectoralWardForm
     list_display = ("name", "ward_no", "ward_code", "administrative_ward", "city_name")
     search_fields = ("name",)
@@ -393,7 +396,8 @@ admin.site.register(ElectoralWard, ElectoralWardFormAdmin)
 
 
 # Ward office contact
-class WardOfficeContactAdmin(BaseModelAdmin):
+class WardOfficeContactAdmin(PlainTextAdminMixin, BaseModelAdmin):
+    plain_text_fields = ("title", "name")
     list_display = (
         "name",
         "administrative_ward",
@@ -412,7 +416,7 @@ admin.site.register(WardOfficeContact, WardOfficeContactAdmin)
 
 
 # Elected Representative
-class ElectedRepresentativeAdmin(BaseModelAdmin):
+class ElectedRepresentativeAdmin(PlainTextAdminMixin, BaseModelAdmin):
     list_display = (
         "name",
         "electoral_ward",

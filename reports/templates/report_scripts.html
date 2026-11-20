@@ -48,7 +48,7 @@ disableDownload()
 $.get("{% url 'master:cityList' %}", function(data){
 
 	$.each(data.nameArray,function(i,name){
-		$('#city').append(`<option value="${data.idArray[i]}">${name}</option>`)
+		$('#city').append($('<option>').val(data.idArray[i]).text(name))
 	})
 
 })
@@ -76,7 +76,7 @@ $('#city').change(function(){
 		$('#admin_ward').prop('disabled',false)
 
 		$.each(data.nameArray,function(i,name){
-			$('#admin_ward').append(`<option value="${data.idArray[i]}">${name}</option>`)
+			$('#admin_ward').append($('<option>').val(data.idArray[i]).text(name))
 		})
 
 	})
@@ -105,7 +105,7 @@ $('#admin_ward').change(function(){
 		$('#electoral_ward').prop('disabled',false)
 
 		$.each(data.nameArray,function(i,name){
-			$('#electoral_ward').append(`<option value="${data.idArray[i]}">${name}</option>`)
+			$('#electoral_ward').append($('<option>').val(data.idArray[i]).text(name))
 		})
 
 	})
@@ -133,7 +133,7 @@ $('#electoral_ward').change(function(){
 		$('#slum').prop('disabled',false)
 
 		$.each(data.nameArray,function(i,name){
-			$('#slum').append(`<option value="${data.idArray[i]}">${name}</option>`)
+			$('#slum').append($('<option>').val(data.idArray[i]).text(name))
 		})
 
 	})
@@ -248,9 +248,7 @@ fetch("/reports/api/donor-projects/")
 .then(data=>{
 
 	data.projects.forEach(p=>{
-		$('#donor_project').append(
-			`<option value="${p.id}">${p.name}</option>`
-		)
+		$('#donor_project').append($('<option>').val(p.id).text(p.name))
 	})
 
 })
@@ -277,9 +275,7 @@ $('#donor_project').change(function(){
 	.then(data=>{
 
 		data.months.forEach(m=>{
-			$('#donor_month').append(
-				`<option value="${m.id}">${m.month}</option>`
-			)
+			$('#donor_month').append($('<option>').val(m.id).text(m.month))
 		})
 
 	})

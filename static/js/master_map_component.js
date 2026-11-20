@@ -28,7 +28,7 @@ function familyfactsheet_click(slum, house) {
 
 function household_details(housenumber) {
     let div_modal = $("#household_data");
-    div_modal.find('#modelhdtext').html("House : " + housenumber);
+    div_modal.find('#modelhdtext').text("House : " + housenumber);
     div_modal.find('#modelbody').html('<div class="overlay" style="display: block;"><div id="loading-img"></div></div>');
     div_modal.modal('show');
     $.ajax({
@@ -47,16 +47,19 @@ function household_details(housenumber) {
                     }
                 });
                 if (flag) {
-                    spstr += '<tr><td colspan="2"><a href="javascript:familyfactsheet_click(' + global_slum_id + ', ' + housenumber + ')" style="cursor:pointer;color:darkred;">View Factsheet</a></td></tr>';
+                    spstr += '<tr><td colspan="2"><a href="#" class="ff-link" data-house="' + escapeHtml(housenumber) + '" style="cursor:pointer;color:darkred;">View Factsheet</a></td></tr>';
                 }
             }
             $.each(json, function (k, v) {
                 if (k != 'FFReport') {
-                    spstr += '<tr><td>' + k + '</td><td>' + v + '</td></tr>';
+                    spstr += '<tr><td>' + escapeHtml(k) + '</td><td>' + escapeHtml(v) + '</td></tr>';
                 }
             });
             spstr += '</tbody></table>';
-            div_modal.find('#modelbody').html(spstr);
+            div_modal.find('#modelbody').html(spstr).find('a.ff-link').on('click', function (e) {
+                e.preventDefault();
+                familyfactsheet_click(global_slum_id, $(this).data('house'));
+            });
         },
         error: function (response) {
             div_modal.modal('hide');
@@ -71,9 +74,9 @@ function onEachFeature(feature, layer) {
     if ('properties' in feature && 'name' in feature.properties) {
         var name = feature.properties.name;
         if ('Level' in feature.properties) {
-            layer.bindPopup("Admin Ward:" + name);
+            layer.bindPopup("Admin Ward:" + escapeHtml(name));
         } else {
-            layer.bindPopup("House:" + name);
+            layer.bindPopup("House:" + escapeHtml(name));
         }
         layer.on('mouseover', function (e) { this.openPopup(); });
         layer.on('mouseout', function (e) { this.closePopup(); });

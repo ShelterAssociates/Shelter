@@ -6,6 +6,7 @@ from django.contrib import admin
 
 from django.contrib.auth.admin import UserAdmin
 from django.contrib.auth.models import User
+from utils.validators import PlainTextAdminMixin
 
 
 class SectionListFilter(admin.SimpleListFilter):
@@ -34,7 +35,7 @@ class SectionListFilter(admin.SimpleListFilter):
         return queryset.filter(**cust_filter)
 
 
-class MetadataInline(admin.TabularInline):
+class MetadataInline(PlainTextAdminMixin, admin.TabularInline):
     """Inline to add metadata while adding sections"""
 
     model = Metadata
@@ -44,7 +45,7 @@ class MetadataInline(admin.TabularInline):
     can_delete = False
 
 
-class SectionAdmin(admin.ModelAdmin):
+class SectionAdmin(PlainTextAdminMixin, admin.ModelAdmin):
     inlines = [MetadataInline]
     search_fields = ["name"]
 
@@ -52,7 +53,7 @@ class SectionAdmin(admin.ModelAdmin):
 admin.site.register(Section, SectionAdmin)
 
 
-class MetadataAdmin(admin.ModelAdmin):
+class MetadataAdmin(PlainTextAdminMixin, admin.ModelAdmin):
     list_display = ("name", "section_name", "type", "visible", "show_metric")
     search_fields = ["name"]
     ordering = ["name", "section__name", "type", "visible"]

@@ -116,7 +116,12 @@
       j.questions.forEach(function (q) {
         var tr = document.createElement("tr");
         if (!q.supported) tr.style.opacity = ".45";
-        tr.innerHTML = "<td>" + q.question_name + "</td><td class='ac-code'>" + q.concept_name + "</td><td>" + q.data_type + (q.multi ? " (multi)" : "") + (q.supported ? "" : " — not via spreadsheet") + "</td><td>" + (q.answers.join(" · ")) + "</td>";
+        [q.question_name, q.concept_name, q.data_type + (q.multi ? " (multi)" : "") + (q.supported ? "" : " — not via spreadsheet"), q.answers.join(" · ")].forEach(function (value, i) {
+          var td = document.createElement("td");
+          if (i === 1) td.className = "ac-code";
+          td.textContent = value;
+          tr.appendChild(td);
+        });
         tbody.appendChild(tr);
       });
       reserved.textContent = "Also accepted as columns: uuid (required), " + j.reserved.join(", ") + ".";

@@ -6,9 +6,11 @@ from django.http import HttpResponseRedirect
 from django.contrib import messages
 from django.urls import reverse
 from .forms import ProjectDocumentForm, ProjectImageForm, SponsorForm, SponsorProjectDetailsSubFieldsForm
+from utils.validators import PlainTextAdminMixin
 
 
-class SponsorAdmin(admin.ModelAdmin):
+class SponsorAdmin(PlainTextAdminMixin, admin.ModelAdmin):
+    plain_text_fields = ("organization_name",)
     form = SponsorForm
     list_display = (
         "organization_name",
@@ -196,7 +198,7 @@ class ProjectImagesInline(admin.TabularInline):
     form = ProjectImageForm
 
 
-class SponsorProjectAdmin(admin.ModelAdmin):
+class SponsorProjectAdmin(PlainTextAdminMixin, admin.ModelAdmin):
     list_display = (
         "name",
         "sponsor",

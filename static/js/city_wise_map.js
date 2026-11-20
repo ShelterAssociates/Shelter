@@ -603,7 +603,7 @@ function generate_RIM(result) {
 
     $.each(result, function (k, v) {
         var modal = $("#myModal").clone();
-        modal.find("#modelhdtext").html(modelsection[k]);
+        modal.find("#modelhdtext").text(modelsection[k] || "");
         modal.attr("id", k);
 
         var spstr = "";
@@ -617,7 +617,7 @@ function generate_RIM(result) {
 
             for (var i = 0; i < v.length; i++) {
                 if (v[i].hasOwnProperty("ctb_name")) {
-                    toilet_header += "<th>" + v[i]["ctb_name"] + "</th>";
+                    toilet_header += "<th>" + escapeHtml(v[i]["ctb_name"]) + "</th>";
                     delete v[i]["ctb_name"];
                 } else {
                     toilet_header += "<th>CTB" + (i + 1) + "</th>";
@@ -633,9 +633,9 @@ function generate_RIM(result) {
                 var keys_headers = keys_all.filter(function (item, idx) { return keys_all.indexOf(item) === idx; });
 
                 $.each(keys_headers, function (key, val) {
-                    toilet_body += '<tr><td style="font-weight:bold;width:200px;">' + val + "</td>";
+                    toilet_body += '<tr><td style="font-weight:bold;width:200px;">' + escapeHtml(val) + "</td>";
                     for (var i = 0; i < v.length; i++) {
-                        toilet_body += "<td>" + (v[i][val] !== undefined ? v[i][val] : "None") + "</td>";
+                        toilet_body += "<td>" + escapeHtml(v[i][val] !== undefined ? v[i][val] : "None") + "</td>";
                     }
                     toilet_body += "</tr>";
                 });
@@ -649,9 +649,9 @@ function generate_RIM(result) {
             spstr += "<tbody>";
             $.each(v, function (key, val) {
                 if (key.indexOf("comment") !== -1 || key.indexOf("Describe") !== -1) {
-                    commentstr += '<tr><td colspan=2><label style="font-weight:bold;">' + key + ": </label> " + val + "</td></tr>";
+                    commentstr += '<tr><td colspan=2><label style="font-weight:bold;">' + escapeHtml(key) + ": </label> " + escapeHtml(val) + "</td></tr>";
                 } else {
-                    spstr += '<tr><td style="font-weight:bold;width:50%;">' + key + "</td><td>" + val + "</td></tr>";
+                    spstr += '<tr><td style="font-weight:bold;width:50%;">' + escapeHtml(key) + "</td><td>" + escapeHtml(val) + "</td></tr>";
                 }
             });
         }
@@ -762,9 +762,9 @@ function generate_filter(globalJsonData, slumId, result) {
             '<div name="div_group" class="panel panel-default panel-heading">' +
             '<input class="chk" name="grpchk" type="checkbox" onclick="checkAllGroup(this)">' +
             '&nbsp;&nbsp;<a name="chk_group" data-toggle="collapse" data-parent="#compochk" href="#' + counter + '">' +
-            "<b><span>" + label + "</span></b></a><br>";
+            "<b><span>" + escapeHtml(label) + "</span></b></a><br>";
 
-        panel_component += '<div id="' + counter + '" class="panel-collapse collapse" name="' + k + '">';
+        panel_component += '<div id="' + counter + '" class="panel-collapse collapse" name="' + escapeHtml(k) + '">';
 
         $.each(v, function (k1, v1) {
             var chkcolor = v1["blob"]["polycolor"];
@@ -782,21 +782,21 @@ function generate_filter(globalJsonData, slumId, result) {
             panel_component +=
                 '<div name="div_group" class="wb-filter-row">&nbsp;&nbsp;&nbsp;' +
                 '<input name="chk1" class="chk"' +
-                ' style="background:' + chkcolor + ';background-color:' + chkcolor + ';"' +
-                ' selection="' + k + '"' +
-                ' data-section-name="' + k + '"' +
-                ' component_type="' + v1["type"] + '"' +
-                ' data-filter-name="' + k1 + '"' +
-                ' type="checkbox" value="' + k1 + '"' +
+                ' style="background:' + escapeHtml(chkcolor) + ';background-color:' + escapeHtml(chkcolor) + ';"' +
+                ' selection="' + escapeHtml(k) + '"' +
+                ' data-section-name="' + escapeHtml(k) + '"' +
+                ' component_type="' + escapeHtml(v1["type"]) + '"' +
+                ' data-filter-name="' + escapeHtml(k1) + '"' +
+                ' type="checkbox" value="' + escapeHtml(k1) + '"' +
                 ' onclick="checkSingleGroup(this);">' +
-                '<a class="wb-filter-label">&nbsp;' + inner_label + '</a>&nbsp;' +
+                '<a class="wb-filter-label">&nbsp;' + escapeHtml(inner_label) + '</a>&nbsp;' +
                 (show_metric
-                    ? '<span class="wb-item-count" data-item-name="' + k1 + '"' +
-                      ' data-section-name="' + k + '"' +
-                      ' data-item-type="' + v1["type"] + '"' +
-                      ' data-total-count="' + child_length + '">(' + child_length + ')</span>'
+                    ? '<span class="wb-item-count" data-item-name="' + escapeHtml(k1) + '"' +
+                      ' data-section-name="' + escapeHtml(k) + '"' +
+                      ' data-item-type="' + escapeHtml(v1["type"]) + '"' +
+                      ' data-total-count="' + escapeHtml(child_length) + '">(' + escapeHtml(child_length) + ')</span>'
                     : '') +
-                (icon ? ' <img src="' + icon + '">' : '') +
+                (icon ? ' <img src="' + escapeHtml(icon) + '">' : '') +
                 '</div>';
 
             /* Both need the `properties` tag so onEachFeature binds the right
@@ -1016,7 +1016,7 @@ function focusHouseOnMap(houseNo) {
         var highlightLayer = L.geoJson(shape, {
             style: { color: "#FFD700", weight: 4, opacity: 1, fillColor: "#FFFF00", fillOpacity: 0.6 },
             onEachFeature: function (feature, layer) {
-                layer.bindPopup("House: " + houseNo, { autoPan: true });
+                layer.bindPopup("House: " + escapeHtml(houseNo), { autoPan: true });
                 layer.on("mouseover", function () { this.openPopup(); });
                 layer.on("mouseout", function () { this.closePopup(); });
                 layer.on("click", function () { household_details(houseNo); });
@@ -1671,7 +1671,7 @@ function highlightMultipleHouses(houseList) {
         onEachFeature: function (feature, layer) {
             if (feature && feature.properties && feature.properties.name) {
                 var name = feature.properties.name;
-                layer.bindPopup("House: " + name, { autoPan: true });
+                layer.bindPopup("House: " + escapeHtml(name), { autoPan: true });
                 layer.on("mouseover", function () { this.openPopup(); });
                 layer.on("mouseout", function () { this.closePopup(); });
                 layer.on("click", function () { household_details(name); });
@@ -1767,9 +1767,9 @@ function renderMapTimeline() {
         html += '<span class="' +
             (stop.type === "mid" ? "tl-month" : "tl-year") +
             activeClass +
-            '" data-stop="' + k + '">' +
-            stop.label +
-            '<small>' + stop.total + '</small>' +
+            '" data-stop="' + escapeHtml(k) + '">' +
+            escapeHtml(stop.label) +
+            '<small>' + escapeHtml(stop.total) + '</small>' +
             '</span>';
 
         html += '<span class="tl-dash">—</span>';
@@ -2068,7 +2068,7 @@ function buildTransformationSlider(slumId, photosData) {
     }
 
     var labelsHtml = months.map(function (m) {
-        return '<span style="flex:1;text-align:center;font-size:10px;">' + m + '</span>';
+        return '<span style="flex:1;text-align:center;font-size:10px;">' + escapeHtml(m) + '</span>';
     }).join('');
 
     $("#sra-photo-label").text(months[0]);

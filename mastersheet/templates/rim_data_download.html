@@ -165,12 +165,18 @@
           listEl.innerHTML = '<em>No slums found for this city.</em>';
           return;
         }
-        listEl.innerHTML = data.slums.map(function (slum) {
-          return '<label style="display:block;">' +
-            '<input type="checkbox" class="rim-slum-checkbox" value="' + slum.id + '"> ' +
-            slum.name + (slum.shelter_slum_code ? ' (' + slum.shelter_slum_code + ')' : '') +
-            '</label>';
-        }).join('');
+        listEl.innerHTML = '';
+        data.slums.forEach(function (slum) {
+          var label = document.createElement('label');
+          label.style.display = 'block';
+          var box = document.createElement('input');
+          box.type = 'checkbox';
+          box.className = 'rim-slum-checkbox';
+          box.value = slum.id;
+          label.appendChild(box);
+          label.appendChild(document.createTextNode(' ' + slum.name + (slum.shelter_slum_code ? ' (' + slum.shelter_slum_code + ')' : '')));
+          listEl.appendChild(label);
+        });
       })
       .catch(function () {
         listEl.innerHTML = '';

@@ -10,6 +10,7 @@ from .models import (
     SlumPhotoUpload,
     SponsorPhotoConfig,
 )
+from utils.validators import PlainTextAdminMixin
 
 
 @admin.register(OTPVerification)
@@ -41,7 +42,7 @@ class ReminderTrackerAdmin(admin.ModelAdmin):
 
 
 @admin.register(PhotoTypeItem)
-class PhotoTypeItemAdmin(admin.ModelAdmin):
+class PhotoTypeItemAdmin(PlainTextAdminMixin, admin.ModelAdmin):
     list_display = ["full_path_display", "parent", "is_visible", "order"]
     list_editable = ["is_visible", "order"]
     list_filter = ["is_visible"]
@@ -54,7 +55,7 @@ class PhotoTypeItemAdmin(admin.ModelAdmin):
 
 
 @admin.register(SponsorPhotoConfig)
-class SponsorPhotoConfigAdmin(admin.ModelAdmin):
+class SponsorPhotoConfigAdmin(PlainTextAdminMixin, admin.ModelAdmin):
     list_display = (
         "sponsor",
         "name",

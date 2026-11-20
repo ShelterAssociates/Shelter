@@ -510,7 +510,7 @@
     function rsPopulateSelect($select, json, placeholder) {
         $select.empty().append('<option value="0">' + placeholder + '</option>');
         for (var i = 0; i < json.nameArray.length; i++) {
-            $select.append('<option value="' + json.idArray[i] + '">' + json.nameArray[i] + '</option>');
+            $select.append($('<option>').val(json.idArray[i]).text(json.nameArray[i]));
         }
     }
 

@@ -4,6 +4,14 @@
 */
 
 
+function parse_houses(text){
+    try {
+        var value = JSON.parse(text);
+        return Array.isArray(value) ? value : [];
+    } catch (e) {
+        return [];
+    }
+}
 function more_click(element){
     $(element).parent().parent().hide();
     $(element).parent().parent().parent().find('div.lesslist').show();
@@ -18,9 +26,11 @@ $(document).ready(function(){
         if($('#result_list').length > 0){
             $('#result_list thead tr').append('<th>Count</th>');
             $.each($('.field-household_code'), function(index, house){
-                houses = $(house).html();
-                $(house).html("<div class='lesslist' style='display:none;'>"+houses+"&nbsp;&nbsp;<b><a onclick='less_click(this);'>Less</a></b></div>");
-                $(house).append("<div class='morelist'>"+houses.split(',').splice(0,10).join()+" ...<b><a onclick='more_click(this);'>More</a></b></div>");
+                houses = $(house).text();
+                $(house).empty().append(
+                    $("<div class='lesslist' style='display:none;'>").text(houses).append("&nbsp;&nbsp;<b><a onclick='less_click(this);'>Less</a></b>"),
+                    $("<div class='morelist'>").text(houses.split(',').splice(0,10).join() + " ...").append("<b><a onclick='more_click(this);'>More</a></b>")
+                );
                 $(house).parent().append('<td>'+houses.split(',').length+'</td>');
             });
         }
@@ -31,12 +41,12 @@ $(document).ready(function(){
     if ($("#id_sponsor option:selected").text() != "SBM Toilets" && $("#id_sponsor").val() != ""){
         $("textArea[name=household_code], div.field-household_code p.help").addClass('hide');
         var household = $("textArea[name=household_code]").val();
-        $("textArea[name=household_code]").parent().append('<p class="householdcode">'+household+'</p>');
+        $("textArea[name=household_code]").parent().append($('<p class="householdcode">').text(household));
         $("input[name=_save]").click(function(){
             var data = [];
             $.each($("td.field-household_code"), function(index, element){
                 var element_text = $(element).find('textArea')
-                var d = eval(element_text.val());
+                var d = parse_houses(element_text.val());
                 //var dup = check_for_duplicate(element_text);
                 if (d!= undefined && d!="" && d.length>0){
                     data = data.concat(d);
@@ -44,19 +54,19 @@ $(document).ready(function(){
            });
            data.sort();
             $("textArea[name=household_code]").val("["+data.join(', ')+"]");
-            $("textArea[name=household_code]").parent().find('p.householdcode').html('['+data.join(', ')+']');
+            $("textArea[name=household_code]").parent().find('p.householdcode').text('['+data.join(', ')+']');
             return true;
         });
     }
 //Checking for duplicate values within the list.
     function check_for_duplicate(element){
-       var check_houses = eval($(element).val());
+       var check_houses = parse_houses($(element).val());
        var duplicate = []
        if (check_houses.length > 0)
        {
 
          $.each($("td.field-household_code").find("textArea.vLargeTextField"), function(index, elem){
-            var houses = eval($(elem).val());
+            var houses = parse_houses($(elem).val());
             if(houses!=undefined && houses!="" && houses.length>0){
                 duplicate[index]=[]
                 if($(elem).attr('id')!=$(element).attr('id')){

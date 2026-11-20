@@ -26,6 +26,12 @@ function getColor(d) {
     : "#0000ff";
 }
 
+function escapeHtml(value) {
+  return String(value === null || value === undefined ? "" : value).replace(/[&<>"']/g, function (c) {
+    return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c];
+  });
+}
+
 function get_message(layer) {
   var content = [];
   var properties = layer.feature.properties;
@@ -36,7 +42,7 @@ function get_message(layer) {
     properties.scores[level_sel.toLowerCase()] != "" &&
     !isNaN(parseInt(properties.scores[level_sel.toLowerCase()]))
   ) {
-    content.push('Click on area "' + properties.name + '" for details');
+    content.push('Click on area "' + escapeHtml(properties.name) + '" for details');
     content.push(
       "" +
         level_sel +
@@ -45,7 +51,7 @@ function get_message(layer) {
         "%"
     );
   } else {
-    content.push('No data available for "' + properties.name + '"');
+    content.push('No data available for "' + escapeHtml(properties.name) + '"');
   }
   return content.join("<br>");
 }
@@ -69,7 +75,7 @@ function change_text(name) {
     $("#report_selections")
       .html(text)
       .append("<div class='chip' id ='contact-chip'>Add text</div> ");
-    $(".chip").html(name).append("<span class='closebtn'>&times</span>");
+    $(".chip").text(name).append("<span class='closebtn'>&times</span>");
     $(".closebtn").on({
       click: function () {
         fun_call();
@@ -103,7 +109,7 @@ function display_cards(names, level) {
         section_card = $(section_card)
           .attr("name", "section_card")
           .removeClass("hide");
-        section_card.find("span")[0].innerHTML = value;
+        section_card.find("span")[0].textContent = value;
         section_card.find("span")[1].innerHTML = Object.values(
           card_data["metadata"]["Cards"][section][key]
         )[0];
@@ -396,7 +402,7 @@ $(document).ready(function () {
       $("#total_score").html(
         parseInt(card_data["city"][names]["scores"]["totalscore_percentile"])
       );
-      $("#total_score_text").html("Overall score for " + names + " City");
+      $("#total_score_text").text("Overall score for " + names + " City");
       $(".overall-score").removeClass("hide");
       //          $("#levels_tag").trigger('change');
       display_cards(selected_name, set_level);

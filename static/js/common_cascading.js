@@ -12,9 +12,7 @@ function cityList(){
         success : function(json){
 
             for (i = 0; i < json.nameArray.length; i++){
-              var str='<option value="';
-              str = str +json.idArray[i] +'"'+'>' + json.nameArray[i] + '</option>';
-              $('#id_City').append(str);
+              $('#id_City').append($('<option>').val(json.idArray[i]).text(json.nameArray[i]));
            }
            slumid=$('#id_slum_name').val();
       		 if(slumid)
@@ -40,9 +38,7 @@ function administrativewardList(){
         contenttype : "json",
         success : function(json){
         for (i = 0; i < json.nameArray.length; i++){
-                var str='<option value="';
-                str = str +json.idArray[i] +'"'+'>' + json.nameArray[i] + '</option>';
-                $('#id_AdministrativeWard').append(str);
+                $('#id_AdministrativeWard').append($('<option>').val(json.idArray[i]).text(json.nameArray[i]));
             }
         },
         async:false
@@ -64,9 +60,7 @@ function electoralWardList(){
         contenttype : "json",
         success : function(json){
         for (i = 0; i < json.nameArray.length; i++) {
-            var str='<option value="';
-            str = str +json.idArray[i] +'"'+'>' + json.nameArray[i] + '</option>';
-            $('#id_ElectoralWard').append(str);
+            $('#id_ElectoralWard').append($('<option>').val(json.idArray[i]).text(json.nameArray[i]));
         }
         },
         async:false
@@ -87,9 +81,7 @@ function slumList(){
         contenttype : "json",
         success : function(json){
         for (i = 0; i < json.nameArray.length; i++) {
-            var str='<option value="';
-            str = str +json.idArray[i] +'"'+'>' + json.nameArray[i] + '</option>';
-            $('#id_slum_name').append(str);
+            $('#id_slum_name').append($('<option>').val(json.idArray[i]).text(json.nameArray[i]));
             }
         },
         async:false
