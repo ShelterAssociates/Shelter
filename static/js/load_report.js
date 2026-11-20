@@ -909,6 +909,10 @@ $.fn.dataTable.defaults.column.mRender = $.fn.dataTable.render.text();
 	}
 
 	$(document).ready(function() {
+		$("#open_dropdown").on("click", showDropdown);
+		$("#close_dropdown").on("click", closeFunction);
+		$("#filter_nodes").on("keyup", find_node);
+		$("#apply_level, #radioForm input[name=optradio]").on("click", changeDatatableLevel);
 		todayDate = changeDateFormat(todayTime);
 		startDate = StartDate(todayTime);
 		$("#startDate").val(startDate);

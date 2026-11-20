@@ -34,6 +34,7 @@ import inspect
 
 MIDDLEWARE = (
     "django.middleware.security.SecurityMiddleware",
+    "shelter.middleware.ContentSecurityPolicyMiddleware",
     "shelter.middleware.RequestLoggingMiddleware",
     "django.middleware.gzip.GZipMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
@@ -255,6 +256,36 @@ INSTALLED_APPS = (
 # REST FRAMEWORK
 # ---------------------------------------------------------------------------
 
+# Sent on every response by shelter.middleware.ContentSecurityPolicyMiddleware, which adds a
+# per-request nonce to script-src: inline <script> tags need nonce="{{ csp_nonce }}" and inline
+# event handlers are not allowed. Images may come from any https host (S3 survey photos, AVNI,
+# map tiles). Set CSP_REPORT_ONLY = True to only report.
+CSP_REPORT_ONLY = False
+CSP_REPORT_URI = "/csp-report/"
+CSP_POLICY = {
+    "default-src": ["'self'"],
+    "script-src": [
+        "'self'", "https://maps.googleapis.com", "https://maps.gstatic.com", "https://cdn.jsdelivr.net",
+        "https://cdn.datatables.net", "https://cdn.sheetjs.com", "https://cdnjs.cloudflare.com",
+    ],
+    "style-src": [
+        "'self'", "'unsafe-inline'", "https://fonts.googleapis.com", "https://cdn.jsdelivr.net",
+        "https://maxcdn.bootstrapcdn.com", "https://cdnjs.cloudflare.com", "https://cdn.datatables.net",
+    ],
+    "font-src": ["'self'", "data:", "https://fonts.gstatic.com", "https://maxcdn.bootstrapcdn.com"],
+    "img-src": ["'self'", "data:", "blob:", "https:"],
+    "connect-src": [
+        "'self'", "https://maps.googleapis.com", "https://s3.ap-south-1.amazonaws.com",
+        "https://*.s3.ap-south-1.amazonaws.com", "https://*.s3.amazonaws.com",
+    ],
+    "frame-src": ["'self'", "https://graphs.shelter-associates.org"],
+    "worker-src": ["'self'", "blob:"],
+    "object-src": ["'none'"],
+    "base-uri": ["'self'"],
+    "form-action": ["'self'"],
+    "frame-ancestors": ["'self'"],
+}
+
 AUTHENTICATION_BACKENDS = ["shelter.auth_throttle.ThrottledModelBackend"]
 
 # Failed sign-in counters must be shared by all gunicorn workers, so they live on disk.
@@ -312,6 +343,7 @@ TEMPLATES = [
                 "django.template.context_processors.request",
                 "django.contrib.auth.context_processors.auth",
                 "django.contrib.messages.context_processors.messages",
+                "shelter.context_processors.csp_nonce",
             ],
         },
     },

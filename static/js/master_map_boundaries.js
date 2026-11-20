@@ -184,7 +184,7 @@ var Slum = (function (_super) {
             "Factsheet" +
             "</button>" +
             "<div class='collapsible-toggle__body' id='factsheetBody' style='display:" + (_factsheetExpanded ? "block" : "none") + ";'>" +
-            "<button class='action-btn' onclick='Slum.prototype.factsheet_click(this," + slumId + ")'>" +
+            "<button class='action-btn' data-factsheet-slum='" + escapeHtml(slumId) + "'>" +
             "View Factsheet" +
             "</button>" +
             "</div>"
@@ -197,6 +197,10 @@ var Slum = (function (_super) {
 
         updateActionButtonRow();
     };
+
+    $(document).on("click", "[data-factsheet-slum]", function () {
+        Slum.prototype.factsheet_click(this, $(this).data("factsheet-slum"));
+    });
 
     Slum.prototype.factsheet_click = function (element, slum_id) {
         $("#rimPreviewModal").fadeIn();

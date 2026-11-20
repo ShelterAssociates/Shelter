@@ -127,7 +127,7 @@
   {% endif %}
 </div>
 
-<script>
+<script nonce="{{ csp_nonce }}">
 (function () {
   var card = document.getElementById("sync-card");
   if (!card) return;

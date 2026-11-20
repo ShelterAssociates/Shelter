@@ -55,6 +55,9 @@ function mouse_out(event) {
     document.getElementById(event).style.display = 'none';
 }
 
+$(document).on("mouseover", "[data-hover-popup]", function () { mouseup($(this).data("hover-popup")); });
+$(document).on("mouseout", "[data-hover-popup]", function () { mouse_out($(this).data("hover-popup")); });
+
 
 $(document).ready(function() {
     todayDate = changeDateFormat(todayTime);

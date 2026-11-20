@@ -266,7 +266,7 @@
   <script src="{% static 'js/helpers/photo_upload_flowchart.js' %}"></script>
 
   {% if not is_superuser %}
-    <script>
+    <script nonce="{{ csp_nonce }}">
       if (!window.PHOTO_UPLOAD_FLOWCHART_EXTERNAL) {
         /* ── Flowchart Guide (non-superuser only) ── */
         /* Uses /helpers/photo-type-tree/ which returns full nested tree:

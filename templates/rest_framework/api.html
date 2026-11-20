@@ -1,0 +1,22 @@
+{% extends "rest_framework/base.html" %}
+{% load static %}
+{% comment %}Same scripts as DRF's base.html, with the page's CSP nonce on the two inline ones.{% endcomment %}
+{% block script %}
+      <script nonce="{{ csp_nonce }}">
+        window.drf = {
+          csrfHeaderName: "{{ csrf_header_name|default:'X-CSRFToken' }}",
+          csrfToken: "{% if request %}{{ csrf_token }}{% endif %}"
+        };
+      </script>
+      <script src="{% static "rest_framework/js/jquery-3.4.1.min.js" %}"></script>
+      <script src="{% static "rest_framework/js/ajax-form.js" %}"></script>
+      <script src="{% static "rest_framework/js/csrf.js" %}"></script>
+      <script src="{% static "rest_framework/js/bootstrap.min.js" %}"></script>
+      <script src="{% static "rest_framework/js/prettify-min.js" %}"></script>
+      <script src="{% static "rest_framework/js/default.js" %}"></script>
+      <script nonce="{{ csp_nonce }}">
+        $(document).ready(function() {
+          $('form').ajaxForm();
+        });
+      </script>
+{% endblock %}

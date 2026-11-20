@@ -1,7 +1,7 @@
 {% load static %}
 <script src="{% static 'admin/js/vendor/jquery/jquery.js' %}"></script>
 
-<script>
+<script nonce="{{ csp_nonce }}">
 
 /* ================= TAB SWITCH ================= */
 
@@ -17,6 +17,10 @@ function switchReport(id, el){
 /* ================= MAIN SCRIPT ================= */
 
 $(document).ready(function(){
+
+$('.reports-tab[data-report]').on('click', function(){
+	switchReport(this.dataset.report, this)
+})
 
 	
 /* ==================================================

@@ -214,7 +214,7 @@
 {% endblock %}
 
 {% block content %}
-  <script>
+  <script nonce="{{ csp_nonce }}">
     $(document).ready(function () {
       $.each($('#login-form').find('input'), function () {
         label = $(this).parent().find('label')

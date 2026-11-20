@@ -7,6 +7,17 @@ from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
 from django.contrib.auth.models import User
 from utils.validators import PlainTextAdminMixin
+from django.contrib.gis.db import models as gis_models
+from django.contrib.gis.forms.widgets import OpenLayersWidget
+
+
+class CspMapWidget(OpenLayersWidget):
+    """Django's map widget without inline script, so it works under the Content-Security-Policy."""
+
+    template_name = "component/openlayers.html"
+
+    class Media:
+        js = ("js/openlayers_widget.js",)
 
 
 class SectionListFilter(admin.SimpleListFilter):
@@ -109,6 +120,7 @@ class LevelListFilter(admin.SimpleListFilter):
 
 
 class ComponentAdmin(admin.ModelAdmin):
+    formfield_overrides = {gis_models.GeometryField: {"widget": CspMapWidget}}
     list_display = ("name", "content_type", "component_name", "number", "shape_type")
     search_fields = [
         "component_city__name__city_name",

@@ -15,8 +15,8 @@
 <link rel="stylesheet" href="{% static "admin/css/rtl.css" %}">
 {% endif %}
 
-<script>window.__admin_media_prefix__ = "{% filter escapejs %}{% static "admin/" %}{% endfilter %}";</script>
-<script>window.__admin_utc_offset__ = "{% filter escapejs %}{% now "Z" %}{% endfilter %}";</script>
+<script nonce="{{ csp_nonce }}">window.__admin_media_prefix__ = "{% filter escapejs %}{% static "admin/" %}{% endfilter %}";</script>
+<script nonce="{{ csp_nonce }}">window.__admin_utc_offset__ = "{% filter escapejs %}{% now "Z" %}{% endfilter %}";</script>
 <script src="{% static "js/jquery.min.js" %}"></script>
 <script src="{% static "js/bootstrap.min.js" %}"></script>
 {% block extrahead %}{% endblock %}
@@ -331,7 +331,7 @@
   {% block footer %}<div id="footer"></div>{% endblock %}
 </div>
 
-<script>
+<script nonce="{{ csp_nonce }}">
   const ham = document.querySelector('.nav-hamburger');
   const mob = document.getElementById('mobile-nav');
   if (ham && mob) {

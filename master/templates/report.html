@@ -7,7 +7,7 @@
 <ol class="breadcrumb">
     <li><a href="{% url 'master:index' %}">Home</a></li>
 </ol>
-<script type="text/javascript">
+<script nonce="{{ csp_nonce }}" type="text/javascript">
 function administrativewardList(){
 
     $('#id_AdministrativeWard').empty();

@@ -41,6 +41,11 @@ $(document).on("click", "a.popup-link", function (e) {
   e.preventDefault();
   window.open(this.href, "_blank", "width=850,height=750");
 });
+
+$(document).on("click", "[data-popup-url]", function (e) {
+  e.preventDefault();
+  window.open($(this).data("popup-url"), "_blank", "width=850,height=750");
+});
 var table = null;
 var divider = 1000 * 60 * 60 * 24;
 var window = 8 * 1000 * 60 * 60 * 24;

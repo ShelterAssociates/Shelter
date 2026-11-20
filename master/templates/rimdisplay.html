@@ -707,7 +707,7 @@
         {% if RA.paginator.count %}
           <span class="rim-header-count"><b>{{ RA.paginator.count }}</b> record{{ RA.paginator.count|pluralize }}</span>
         {% endif %}
-        <a href="#" onclick="openRimSelectModal(); return false;" class="rim-btn rim-btn-primary">+ Add New</a>	
+        <a href="#" id="rim-add-new" class="rim-btn rim-btn-primary">+ Add New</a>	
         <button type="submit" form="rim-delete-form" id="rim-delete-btn" class="rim-btn rim-btn-danger">Delete selected</button>
         <a href="{% url 'master:index' %}" class="rim-btn rim-btn-ghost">Back</a>
       </div>

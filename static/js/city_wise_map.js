@@ -356,7 +356,8 @@ var Parser = (function () {
         var details = [];
         $.extend(details, legends);
         dataval["legend"] = details || [];
-        var ward = new (eval(WARDLEVEL[this.index]))(dataval);
+        var WardClass = { AdministrativeWard: AdministrativeWard, ElectoralWard: ElectoralWard, Slum: Slum }[WARDLEVEL[this.index]];
+        var ward = new WardClass(dataval);
         ward.setListeners();
         return ward;
     };
@@ -760,7 +761,7 @@ function generate_filter(globalJsonData, slumId, result) {
 
         panel_component +=
             '<div name="div_group" class="panel panel-default panel-heading">' +
-            '<input class="chk" name="grpchk" type="checkbox" onclick="checkAllGroup(this)">' +
+            '<input class="chk" name="grpchk" type="checkbox">' +
             '&nbsp;&nbsp;<a name="chk_group" data-toggle="collapse" data-parent="#compochk" href="#' + counter + '">' +
             "<b><span>" + escapeHtml(label) + "</span></b></a><br>";
 
@@ -787,8 +788,7 @@ function generate_filter(globalJsonData, slumId, result) {
                 ' data-section-name="' + escapeHtml(k) + '"' +
                 ' component_type="' + escapeHtml(v1["type"]) + '"' +
                 ' data-filter-name="' + escapeHtml(k1) + '"' +
-                ' type="checkbox" value="' + escapeHtml(k1) + '"' +
-                ' onclick="checkSingleGroup(this);">' +
+                ' type="checkbox" value="' + escapeHtml(k1) + '">' +
                 '<a class="wb-filter-label">&nbsp;' + escapeHtml(inner_label) + '</a>&nbsp;' +
                 (show_metric
                     ? '<span class="wb-item-count" data-item-name="' + escapeHtml(k1) + '"' +
@@ -815,7 +815,8 @@ function generate_filter(globalJsonData, slumId, result) {
                 });
             }
 
-            parse_component[k1] = new (eval(TYPE_COMPONENT[v1.type]))(v1);
+            var ComponentClass = { Component: Component, Sponsor: Sponsor, Filter: Filter }[TYPE_COMPONENT[v1.type]];
+            parse_component[k1] = new ComponentClass(v1);
         });
 
         panel_component += "</div></div>";
@@ -1927,6 +1928,11 @@ $(document).off("click.toggleTimeline", "#toggleTimeline")
             $(this).text("Hide Impact Over Time");
         }
     });
+
+/* Filter panel checkboxes; bound before structureWatch so they run first, as the old inline handlers did. */
+$(document).off("click.filterPanel")
+    .on("click.filterPanel", "[name=grpchk]", function () { checkAllGroup(this); })
+    .on("click.filterPanel", "[name=chk1]", function () { checkSingleGroup(this); });
 
 /* Hide timeline when Structure checkbox is unchecked */
 $(document).off("click.structureWatch", "[name=chk1]")

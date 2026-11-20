@@ -26,7 +26,7 @@
       </div>
     </div>
 
-    <script>
+    <script nonce="{{ csp_nonce }}">
       var city_url = "{% url 'master:cityList' %}"
       var administrative_url = "{% url 'master:administrativewardList' %}"
       var electoral_url = "{% url 'master:electoralWardList' %}"
@@ -273,7 +273,7 @@
     </div>
   </div>
   <script src="{% static 'js/component_list_kml_upload.js' %}"></script>
-  <script>
+  <script nonce="{{ csp_nonce }}">
     $(function () {
       $('#id_level').val('Slum').trigger('change');
     });

@@ -85,7 +85,7 @@ class InvoiceItemsInline(AmountRangeAdminMixin, admin.TabularInline):
 
     def copy_above(self, obj):
         return format_html(
-            '<button type="button" onclick = "copy_this(this)" class="btn-sm glyphicon glyphicon-copy" ></button>'
+            '<button type="button" class="btn-sm glyphicon glyphicon-copy copy-above"></button>'
         )
 
     copy_above.allow_tags = True

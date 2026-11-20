@@ -41,8 +41,7 @@
       <input id="export_mastersheet" type="hidden" value="{{perms.mastersheet.can_export_mastersheet}}" />
       <form id="slum_form" style="display: inline-block;" method="POST">{% csrf_token %}
         {{ form.as_p }}
-        <button type="button" id="btnFetchShort" class="btn btn-primary"><span class="glyphicon glyphicon-search"
-            onClick="reloadP()"></span> Search Summary View</button>
+        <button type="button" id="btnFetchShort" class="btn btn-primary"><span class="glyphicon glyphicon-search"></span> Search Summary View</button>
         
         {% if request.user|has_group:"GIS" == True or request.user|has_group:"Data" == True or request.user.is_superuser %}
         <button type="button" id="btnFetchGisTab" class="btn btn-primary"><span

@@ -123,3 +123,24 @@ class SessionBindingMiddleware:
         elif device != _digest(request.COOKIES.get(DEVICE_COOKIE, "")):
             return "device cookie missing or wrong"
         return None
+
+
+class ContentSecurityPolicyMiddleware:
+    """Adds settings.CSP_POLICY, with a fresh script nonce, to responses that do not set their own policy."""
+
+    def __init__(self, get_response):
+        self.get_response = get_response
+
+    def __call__(self, request):
+        request.csp_nonce = secrets.token_urlsafe(18)
+        response = self.get_response(request)
+        if "Content-Security-Policy" in response or "Content-Security-Policy-Report-Only" in response:
+            return response
+        directives = {name: list(values) for name, values in settings.CSP_POLICY.items()}
+        directives.setdefault("script-src", ["'self'"]).append("'nonce-%s'" % request.csp_nonce)
+        policy = "; ".join(" ".join([name] + values) for name, values in directives.items())
+        if settings.CSP_REPORT_URI:
+            policy += "; report-uri " + settings.CSP_REPORT_URI
+        header = "Content-Security-Policy-Report-Only" if settings.CSP_REPORT_ONLY else "Content-Security-Policy"
+        response[header] = policy
+        return response

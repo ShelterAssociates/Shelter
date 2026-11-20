@@ -4,18 +4,14 @@
     <meta name="viewport" content="initial-scale=1.0, user-scalable=no">
 <script src="{% static "js/jquery.min.js" %}"></script>
 <script src="{% static "js/draw.js" %}"></script>
-</script>
 <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDBbW857iVnZP7t1MlqDUwvIha9UVTnzt0&callback=initialise"
 async defer></script>
 
-<script>
-     var url = "{% url 'master:modelmapdisplay' %}";
-</script>
 </head>
 <body>
  <input id="id_shape" type="hidden" name="shape" value="{{ POLYGON }}">
 
-<div id="main-map"  style="width:1200px; height:600px"></div>	
+<div id="main-map" data-url="{% url 'master:modelmapdisplay' %}" style="width:1200px; height:600px"></div>	
 
 <input id="reset" value="Reset and Redraw Polygon" type="button" class="navi"/>
 

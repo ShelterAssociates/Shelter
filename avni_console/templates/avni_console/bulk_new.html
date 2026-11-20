@@ -78,7 +78,7 @@
   </div>
 </div>
 
-<script>
+<script nonce="{{ csp_nonce }}">
 (function () {
   var levelsUrl = "{% url 'avni_console:levels_json' %}";
   var questionsUrlTemplate = "{% url 'avni_console:questions_json' 0 %}";

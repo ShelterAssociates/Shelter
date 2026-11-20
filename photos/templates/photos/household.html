@@ -86,7 +86,7 @@
 </div>
 
 {% if can_download %}
-<script>
+<script nonce="{{ csp_nonce }}">
   (function () {
     var form = document.getElementById("householdDownloadForm");
     if (!form) return;

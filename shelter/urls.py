@@ -21,6 +21,7 @@ from django.views.generic import TemplateView
 from django.conf import settings
 from django.http import HttpResponseForbidden
 from shelter.auth_throttle import ThrottledAuthenticationForm
+from shelter.views import csp_report
 from .settings import *
 from master.views import (
     slummap,
@@ -124,6 +125,7 @@ urlpatterns = (
         # Setting URL for QGIS plugin login
         url("api-token-auth/", obtain_auth_token, name="api_token_auth"),
         url("api/", include(router.urls)),
+        url(r"^csp-report/$", csp_report, name="csp_report"),
         url(PRIVATE_MEDIA, private_media),
     ]
     + static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)

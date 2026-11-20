@@ -39,7 +39,7 @@
 <script src="https://cdn.jsdelivr.net/npm/pivottable@2.23.0/dist/pivot.min.js"></script>
 <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
 <script src="{% static "js/bootstrap-datepicker.js" %}"></script>
-<script>
+<script nonce="{{ csp_nonce }}">
   $(document).ready(function () {
     $(".datepicker").datepicker({
       format: "dd-mm-yyyy",

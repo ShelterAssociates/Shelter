@@ -24,7 +24,7 @@
       <form method="get" action="">
         <label class="ph-field" style="margin-bottom:0;">
           <span class="ph-label">City</span>
-          <select name="city_id" class="ph-select" onchange="this.form.submit();">
+          <select name="city_id" class="ph-select">
             <option value="">Select a city&hellip;</option>
             {% for city in cities %}
               <option value="{{ city.id }}"{% if selected_city_id == city.id|stringformat:"s" %} selected{% endif %}>
@@ -100,7 +100,11 @@
   </div>
 </div>
 
-<script>
+<script nonce="{{ csp_nonce }}">
+  (function () {
+    var city = document.querySelector("select[name=city_id]");
+    if (city) city.addEventListener("change", function () { city.form.submit(); });
+  })();
   (function () {
     var input = document.getElementById("slumSearch");
     var grid = document.getElementById("slumGrid");

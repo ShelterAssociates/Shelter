@@ -489,6 +489,11 @@
     var RIM_EDIT_BASE = $page.data('rim-edit-base');
     var RIM_INSERT_URL = $page.data('rim-insert-url');
 
+    $(document).on('click', '#rim-add-new', function (e) {
+        e.preventDefault();
+        window.openRimSelectModal();
+    });
+
     window.openRimSelectModal = function () {
         $('#rs-overlay').addClass('rs-open');
         rsResetModal();

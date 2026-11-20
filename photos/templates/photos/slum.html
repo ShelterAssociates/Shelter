@@ -174,7 +174,7 @@
 
 <script src="{% static 'js/jquery.min.js' %}"></script>
 <script src="{% static 'js/jquery.dataTables.min.js' %}"></script>
-<script>
+<script nonce="{{ csp_nonce }}">
   jQuery(function ($) {
     var table = $("#householdTable").DataTable({
       pageLength: 50,

@@ -4,7 +4,7 @@
 {% load static %}
 {% endblock %}
 {% block sidebar %}
-<script>
+<script nonce="{{ csp_nonce }}">
     $(document).ready(function(){
         $("#custom_iframe").parent().css("margin","0px");
         $("#custom_iframe").parent().css("height","88vh");

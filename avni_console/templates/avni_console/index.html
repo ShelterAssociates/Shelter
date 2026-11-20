@@ -125,7 +125,7 @@
   {% endif %}
 </div>
 
-<script>
+<script nonce="{{ csp_nonce }}">
 (function () {
   var csrf = "{{ csrf_token }}";
   var dryRunUrl = "{% url 'avni_console:dry_run_rhs' %}";
