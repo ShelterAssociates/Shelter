@@ -29,6 +29,7 @@ from django.conf.urls import include, url
 from django.http import HttpResponse
 import json
 from .kmllevelparser import KMLLevelParser
+from utils.kml import UnsafeKMLError
 from django import forms
 
 # Common filters for querying model depending on model type
@@ -120,9 +121,13 @@ class UploadKMLBase(admin.ModelAdmin):
                     )
                 if response["message"] == "":
                     response["message"] = "Nothing parsed"
-            except Exception as e:
+            except UnsafeKMLError as e:
                 response["status"] = False
                 response["message"] = str(e)
+            except Exception:
+                logger.exception("Admin KML upload failed")
+                response["status"] = False
+                response["message"] = "KML file could not be processed. Check the file format."
         return HttpResponse(json.dumps(response), content_type="application/json")
 
 

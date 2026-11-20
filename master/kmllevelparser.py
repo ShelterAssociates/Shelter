@@ -1,6 +1,6 @@
 from pdb import pm
 from django.apps import apps
-from pykml import parser
+from utils.kml import parse_kml
 from django.contrib.gis.geos import GEOSGeometry
 from .models import *
 
@@ -15,7 +15,7 @@ parse_link = {"AdministrativeWard": "ElectoralWard", "ElectoralWard": "Slum"}
 
 class KMLLevelParser(object):
     def __init__(self, docFile, city_id, chk_delete, action_title):
-        root = parser.fromstring(docFile)
+        root = parse_kml(docFile)
         self.city_id = int(city_id)
         self.chk_delete = chk_delete
         self.folders = []

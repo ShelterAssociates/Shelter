@@ -26,6 +26,7 @@ from django.contrib.auth.decorators import login_required
 from .kobotoolbox import *
 from .forms import KMLUpload
 from .kmlparser import KMLParser, KMLValidationError
+from utils.kml import UnsafeKMLError
 from .models import Metadata
 from .cipher import *
 from master.models import Slum, Rapid_Slum_Appraisal, drainage
@@ -242,8 +243,8 @@ def kml_upload(request):
             data = form.cleaned_data["slum_name"]
             if form.cleaned_data["level"] == "City":
                 data = form.cleaned_data["City"]
-            objKML = KMLParser(docFile, data, form.cleaned_data["delete_flag"])
             try:
+                objKML = KMLParser(docFile, data, form.cleaned_data["delete_flag"])
                 parsed_data = objKML.other_components()
                 context_data["parsed"] = [
                     k for k, v in parsed_data.items() if v == True
@@ -414,12 +415,16 @@ def kml_upload(request):
                         },
                         status=400,
                     )
-            except Exception as e:
-                error_message = (
-                    "Some error occurred while parsing. KML file is not in the required format ("
-                    + str(e)
-                    + ")"
-                )
+            except UnsafeKMLError as e:
+                error_message = str(e)
+                messages.error(request, error_message)
+                if is_ajax:
+                    return JsonResponse(
+                        {"success": False, "message": error_message}, status=400
+                    )
+            except Exception:
+                logger.exception("KML upload parse failed")
+                error_message = "Some error occurred while parsing. KML file is not in the required format."
                 messages.error(request, error_message)
                 if is_ajax:
                     return JsonResponse(
