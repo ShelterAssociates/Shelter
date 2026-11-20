@@ -5,9 +5,11 @@ from django.contrib.auth.admin import UserAdmin
 from django.http import HttpResponseRedirect
 from django.contrib import messages
 from django.urls import reverse
+from .forms import ProjectDocumentForm, ProjectImageForm, SponsorForm, SponsorProjectDetailsSubFieldsForm
 
 
 class SponsorAdmin(admin.ModelAdmin):
+    form = SponsorForm
     list_display = (
         "organization_name",
         "address",
@@ -25,6 +27,7 @@ admin.site.register(Sponsor, SponsorAdmin)
 # admin.site.register(SponsorContact)
 class SponsorProjectDetailsSubFieldsInline(admin.TabularInline):
     model = SponsorProjectDetailsSubFields
+    form = SponsorProjectDetailsSubFieldsForm
     min_num = 1
     extra = 0
 
@@ -185,10 +188,12 @@ class ProjectDetailsInline(admin.TabularInline):
 
 class ProjectDocumentsInline(admin.TabularInline):
     model = ProjectDocuments
+    form = ProjectDocumentForm
 
 
 class ProjectImagesInline(admin.TabularInline):
     model = ProjectImages
+    form = ProjectImageForm
 
 
 class SponsorProjectAdmin(admin.ModelAdmin):

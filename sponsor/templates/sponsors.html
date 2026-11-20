@@ -51,7 +51,7 @@
 			<div class="carousel-inner">
 				{% for img in entry.images %}
 				<div class="item {% if forloop.first %}active{% endif %}">
-					<img src="{{ img.image.url }}">
+					<img src="{% url 'sponsor_project_file' 'image' img.pk %}">
 				</div>
 				{% endfor %}
 			</div>
@@ -145,7 +145,7 @@
 						Slums Impacted: {{ entry.slums_in_project|length }}<br><br>
 
 						{% for doc in entry.documents %}
-							<a target="_blank" href="{{ doc.document.url }}">
+							<a href="{% url 'sponsor_project_file' 'document' doc.pk %}">
 								{{ doc.givename }}
 							</a><br>
 						{% endfor %}

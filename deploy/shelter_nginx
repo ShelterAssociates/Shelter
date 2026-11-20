@@ -56,6 +56,17 @@ server {
         return 403;
     }
 
+    location /media/sponsor_project {
+        deny all;
+        return 403;
+    }
+
+    # Uploads are never served as a type the browser would execute.
+    location ~* ^/media/.*\.(html?|xhtml|shtml|svgz?|xml|xsl|js|mjs|php\d?|phtml|jsp|aspx?|swf)$ {
+        deny all;
+        return 403;
+    }
+
     location /media {
         alias /srv/media/;
     }

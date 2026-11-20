@@ -3,6 +3,8 @@
 """The Django Forms Page for master app"""
 
 from django import forms
+from django.core.files.uploadedfile import UploadedFile
+from utils.uploads import validate_pdf
 
 from master.models import (
     Survey,
@@ -102,6 +104,12 @@ class SlumForm(forms.ModelForm):
         if shape == "None":
             raise forms.ValidationError("Please draw Polygon")
         return shape
+
+    def clean_factsheet(self):
+        upload = self.cleaned_data.get("factsheet")
+        if isinstance(upload, UploadedFile):
+            validate_pdf(upload)
+        return upload
 
 
 class Rapid_Slum_AppraisalForm(forms.ModelForm):

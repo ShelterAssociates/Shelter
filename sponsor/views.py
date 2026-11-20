@@ -1,11 +1,13 @@
-from django.shortcuts import render
-from django.http import HttpResponse
+from django.shortcuts import render, get_object_or_404
+from django.http import HttpResponse, FileResponse, Http404
 from sponsor.models import *
 from master.models import *
 from django.views.decorators.csrf import csrf_exempt
 from django.core.files.storage import default_storage
 from django.contrib.auth.decorators import login_required
 from django.conf import settings
+from sponsor.forms import SERVED_DOCUMENT_EXTENSIONS, SERVED_IMAGE_EXTENSIONS
+from utils.uploads import file_extension
 
 import json
 from component.cipher import *
@@ -116,6 +118,51 @@ def sponsors(request):
     # Render
     # -----------------------------
     return render(request, "sponsors.html", {"projects": projects_under_sponsor_array})
+
+
+PROJECT_FILES = {
+    "document": (ProjectDocuments, "document", SERVED_DOCUMENT_EXTENSIONS),
+    "image": (ProjectImages, "image", SERVED_IMAGE_EXTENSIONS),
+}
+CONTENT_TYPES = {
+    "pdf": "application/pdf",
+    "jpg": "image/jpeg",
+    "jpeg": "image/jpeg",
+    "jfif": "image/jpeg",
+    "png": "image/png",
+    "ppt": "application/vnd.ms-powerpoint",
+    "pptx": "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+    "doc": "application/msword",
+    "docx": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+}
+
+
+@login_required(login_url="/accounts/login/")
+def project_file(request, kind, pk):
+    model, field, allowed = PROJECT_FILES[kind]
+    obj = get_object_or_404(model.objects.select_related("sponsor_project__sponsor"), pk=pk)
+    sponsor = obj.sponsor_project.sponsor
+    if not (request.user.is_staff or (sponsor and sponsor.user_id == request.user.id)):
+        raise Http404
+    stored = getattr(obj, field)
+    ext = file_extension(stored.name)
+    if ext not in allowed or not stored.storage.exists(stored.name):
+        raise Http404
+    handle = stored.open("rb")
+    if ext == "pdf" and b"%PDF-" not in handle.read(1024):
+        handle.close()
+        raise Http404
+    handle.seek(0)
+    response = FileResponse(
+        handle,
+        as_attachment=kind == "document",
+        filename=os.path.basename(stored.name),
+        content_type=CONTENT_TYPES[ext],
+    )
+    response["X-Content-Type-Options"] = "nosniff"
+    response["Content-Security-Policy"] = "default-src 'none'; sandbox"
+    response["Cache-Control"] = "private, no-store"
+    return response
 
 
 @login_required(login_url="/accounts/login/")
