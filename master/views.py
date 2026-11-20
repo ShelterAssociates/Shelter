@@ -9,6 +9,8 @@ from django.contrib.auth.decorators import login_required, permission_required, 
 from django.template import RequestContext, loader
 from django.http import HttpResponse, HttpResponseGone, HttpResponseRedirect, JsonResponse
 from django.views.generic import ListView
+from django.contrib.auth.mixins import PermissionRequiredMixin
+from django.utils.http import url_has_allowed_host_and_scheme
 from django.views.decorators.csrf import csrf_exempt
 from django.shortcuts import get_object_or_404
 from django.views.generic.base import View
@@ -46,10 +48,12 @@ def index(request):
     context ={ 'site_url':'/'}
     return render(request, 'index.html', context)
 
-class SurveyListView(ListView):
+class SurveyListView(PermissionRequiredMixin, ListView):
     """Renders the Survey View template in browser"""
     template_name = 'SurveyListView.html'
     model = Survey
+    permission_required = "master.view_survey"
+    login_url = "/accounts/login/"
 
     def get_queryset(self):
         try:
@@ -261,12 +265,14 @@ def riminsert(request):
     return render(request, 'riminsert.html', {'form': form})
 
 @csrf_exempt
+@staff_member_required
 def report(request):
     """ RIM Report Form"""
     form = ReportForm()
     return render(request,'report.html', {'form':form})
 
 @csrf_exempt
+@login_required(login_url="/accounts/login/")
 def administrativewardList(request):
     """Administrativeward List Display"""
     cid = request.POST['id']
@@ -283,6 +289,7 @@ def administrativewardList(request):
     return HttpResponse(json.dumps(data),content_type='application/json')
 
 @csrf_exempt
+@login_required(login_url="/accounts/login/")
 def electoralWardList(request):
     """Electoral Ward List"""
     Aid = request.POST['id']
@@ -297,6 +304,7 @@ def electoralWardList(request):
     return HttpResponse(json.dumps(data),content_type='application/json')
 
 @csrf_exempt
+@login_required(login_url="/accounts/login/")
 def slumList(request):
     """Slum Ward List"""
     Eid = request.POST['id']
@@ -311,6 +319,7 @@ def slumList(request):
     return HttpResponse(json.dumps(data),content_type='application/json')
 
 @csrf_exempt
+@staff_member_required
 def rimreportgenerate(request):
     """Generate RIM Report"""
     sid = request.POST['Sid']
@@ -321,6 +330,7 @@ def rimreportgenerate(request):
     return HttpResponse(json.dumps(data),content_type='application/json')
 
 @csrf_exempt
+@staff_member_required
 def drainagereportgenerate(request):
     """Generate RIM Report"""
     sid = request.POST['Sid']
@@ -335,6 +345,7 @@ def drainagereportgenerate(request):
 
 
 @csrf_exempt
+@staff_member_required
 def vulnerabilityreport(request):
     """Generate Vulnerability Report """
     string = settings.BIRT_REPORT_URL + "Birt/frameset?__format=pdf&__report=Vulnerability_Report.rptdesign"
@@ -588,6 +599,7 @@ def sluminformation(request):
 
 
 @csrf_exempt
+@login_required(login_url="/accounts/login/")
 def cityList(request):
     """city List Display"""
     Cobj = City.objects.all()
@@ -698,8 +710,11 @@ def login_success(request):
         elif (request.user.groups.filter(name__in=['MLG']).exists()):
             return HttpResponseRedirect('/city::Mohanlalganj%20City')
 
-    if return_to:
-        return HttpResponseRedirect(return_to.strip().replace(" ", "+"))
+    return_to = return_to.strip().replace(" ", "+")
+    if return_to and url_has_allowed_host_and_scheme(
+        return_to, allowed_hosts={request.get_host()}, require_https=request.is_secure()
+    ):
+        return HttpResponseRedirect(return_to)
     else:
         return HttpResponseRedirect('/admin/')
 

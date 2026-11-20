@@ -66,9 +66,9 @@ urlpatterns = [
     url(r"^$", index, name="index"),
     url(r"^filterMasterList/$", filterMasterList, name="filterMasterList"),# added a new end point with all the filters for master list
 
-    url(r"^surveymapping/", SurveyListView.as_view(), name="SurveyCreate"),
+    url(r"^surveymapping/$", SurveyListView.as_view(), name="SurveyCreate"),
     url(
-        r"^surveymapping/(?P<name>\w[a-zA-Z_0-9]+)/$",
+        r"^surveymapping/(?P<name>[^/]+)/$",
         SurveyListView.as_view(),
         name="SurveyCreate",
     ),

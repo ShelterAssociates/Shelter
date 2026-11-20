@@ -1,6 +1,8 @@
 from django.shortcuts import render, get_object_or_404
 from django.http import HttpResponse, JsonResponse, HttpResponseForbidden
 from django.contrib.auth.decorators import login_required, user_passes_test, permission_required
+from utils.utils_permission import has_mastersheet_access
+from django.core.exceptions import PermissionDenied
 from django.views.decorators.http import require_GET, require_POST
 from django.db import close_old_connections
 from django.core.cache import cache
@@ -84,6 +86,8 @@ def normalize_household_number(value):
 # The views in this file correspond to the mastersheet functionality of shelter app.
 @login_required(login_url="/accounts/login/")
 def give_details(request):
+    if not has_mastersheet_access(request.user):
+        raise PermissionDenied
     slum_info_dict = {}
     try:
         delimiter = "&"

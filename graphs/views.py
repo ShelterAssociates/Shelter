@@ -4,7 +4,9 @@ from django.shortcuts import render
 from django.conf import settings
 from django.contrib.auth.decorators import login_required, permission_required
 from django.shortcuts import get_object_or_404
-from django.http import HttpResponse
+from django.http import HttpResponse, Http404
+from django.core.exceptions import PermissionDenied
+from utils.utils_permission import has_mastersheet_access
 from itertools import groupby
 from django.db.models import Avg, Sum, Count
 from collections import OrderedDict
@@ -139,6 +141,10 @@ CARDS = {
 
 @login_required(login_url="/accounts/login/")
 def graphs_display(request, graph_type):
+    if not has_mastersheet_access(request.user):
+        raise PermissionDenied
+    if graph_type not in settings.GRAPH_DETAILS:
+        raise Http404
     custom_url = settings.GRAPHS_BUILD_URL % settings.GRAPH_DETAILS[graph_type][1::-1]
     return render(request, "graphs.html", {"custom_url": custom_url})
 
@@ -1022,7 +1028,10 @@ def dashboard_all_cards(request, key):
     return HttpResponse(json.dumps(result), content_type="application/json")
 
 
+@login_required(login_url="/accounts/login/")
 def covid_data(request):
+    if not has_mastersheet_access(request.user):
+        raise PermissionDenied
     return render(request, "covid_data.html")
 
 

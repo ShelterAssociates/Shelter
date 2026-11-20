@@ -102,6 +102,9 @@ class UploadKMLBase(admin.ModelAdmin):
 
     def process_action(self, request, city_id, action_title):
         response = {"status": True, "message": ""}
+        if not request.user.has_perm("master.change_%s" % action_title.lower()):
+            response = {"status": False, "message": "You do not have permission to upload %s KML." % action_title}
+            return HttpResponse(json.dumps(response), content_type="application/json", status=403)
         if request.method == "POST":
             docFile = request.FILES["file"].read()
             chk_delete = request.POST["chk_delete"]

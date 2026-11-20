@@ -112,3 +112,11 @@ def access_right(func):
         return func(request, *args, **kwargs)
 
     return wrapper
+
+
+MASTERSHEET_VIEW_PERMISSIONS = ("mastersheet.can_view_mastersheet", "mastersheet.can_view_mastersheet_report")
+
+
+def has_mastersheet_access(user):
+    """Matches the menu rule that shows the Analytics pages."""
+    return any(user.has_perm(perm) for perm in MASTERSHEET_VIEW_PERMISSIONS)

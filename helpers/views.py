@@ -36,6 +36,7 @@ logger = logging.getLogger(__name__)
 # ============= Digipin Generation =============
 
 
+@staff_member_required
 def digipin_generate(request):
     logger.info("digipin_generate: rendering digipin generate page")
     return render(request, "helpers/digipin_generate.html")
