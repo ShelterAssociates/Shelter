@@ -95,6 +95,13 @@ class SponsorProjectDetailsSubFieldsForm(forms.ModelForm):
         model = SponsorProjectDetailsSubFields
         fields = "__all__"
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        widget = ProtectedFileInput()
+        if self.instance.pk:
+            widget.protected_url = reverse("sponsor_ff_report_zip", args=[self.instance.pk])
+        self.fields["zip_file"].widget = widget
+
     def clean_zip_file(self):
         upload = self.cleaned_data.get("zip_file")
         if isinstance(upload, UploadedFile):

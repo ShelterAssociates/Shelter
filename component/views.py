@@ -2123,7 +2123,11 @@ def _send_gis_export_email(email, slum, export_meta, base_url):
 
 
 @require_GET
+@login_required(login_url="/accounts/login/")
 def gis_export_download(request, export_id):
+    """Emailed GIS export link: needs a login that may request GIS exports (VAPT #6)."""
+    if not (request.user.username == "GIS" or request.user.is_superuser):
+        return JsonResponse({"error": "You do not have permission to download GIS exports."}, status=403)
     export_dir = os.path.join(settings.MEDIA_ROOT, "gis_exports", export_id)
     if not os.path.isdir(export_dir):
         return JsonResponse({"error": "Export not found or expired."}, status=404)
@@ -2143,6 +2147,8 @@ def gis_export_download(request, export_id):
         response["Content-Disposition"] = 'attachment; filename="{}"'.format(
             os.path.basename(file_path)
         )
+        response["X-Content-Type-Options"] = "nosniff"
+        response["Cache-Control"] = "private, no-store"
         return response
 
 

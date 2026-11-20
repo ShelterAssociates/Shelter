@@ -61,6 +61,28 @@ server {
         return 403;
     }
 
+    # Household factsheet ZIPs and emailed GIS/RIM exports hold PII: served only
+    # by login-checked Django views (VAPT #6).
+    location /media/FFReport {
+        deny all;
+        return 403;
+    }
+
+    location /media/gis_exports {
+        deny all;
+        return 403;
+    }
+
+    location /media/rim_exports {
+        deny all;
+        return 403;
+    }
+
+    location ~ ^/media/[^/]+\.zip$ {
+        deny all;
+        return 403;
+    }
+
     # Uploads are never served as a type the browser would execute.
     location ~* ^/media/.*\.(html?|xhtml|shtml|svgz?|xml|xsl|js|mjs|php\d?|phtml|jsp|aspx?|swf)$ {
         deny all;

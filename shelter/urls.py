@@ -19,6 +19,7 @@ from django.contrib.auth import views as auth_views
 from django.conf.urls.static import static
 from django.views.generic import TemplateView
 from django.conf import settings
+from django.http import HttpResponseForbidden
 from .settings import *
 from master.views import (
     slummap,
@@ -38,6 +39,18 @@ admin.autodiscover()
 router = routers.DefaultRouter()
 router.register(r"metadata", MetadataViewSet)
 router.register(r"city", CityViewset)
+
+# runserver copy of the nginx /media deny rules (deploy/shelter_nginx). In production nginx
+# answers /media itself, so this only keeps local testing honest.
+PRIVATE_MEDIA = (
+    r"^media/(?:FFReport|gis_exports|rim_exports|sponsor_project|photo_exports|shelter/attachments"
+    r"|avni_bulk_updates|job_reports)/|^media/[^/]+\.zip$"
+)
+
+
+def private_media(request):
+    return HttpResponseForbidden()
+
 
 base64_pattern = r"city::(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)"
 urlpatterns = (
@@ -107,6 +120,7 @@ urlpatterns = (
         # Setting URL for QGIS plugin login
         url("api-token-auth/", obtain_auth_token, name="api_token_auth"),
         url("api/", include(router.urls)),
+        url(PRIVATE_MEDIA, private_media),
     ]
     + static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
     + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

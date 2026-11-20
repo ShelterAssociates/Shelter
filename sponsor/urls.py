@@ -8,6 +8,7 @@ urlpatterns = [
         project_file,
         name="sponsor_project_file",
     ),
+    url(r"^ffreport/(?P<pk>\d+)/$", ff_report_zip, name="sponsor_ff_report_zip"),
     url(r"^(?P<slumname>.*)/$", create_zip, name="create_zip"),
     url(r"^$", sponsors, name="sponsors"),
 ]

@@ -3844,7 +3844,11 @@ def rim_data_download_submit(request):
 
 
 @require_GET
+@login_required(login_url="/accounts/login/")
 def rim_export_download(request, export_id):
+    """Emailed RIM export link: needs a login that may use RIM data downloads (VAPT #6)."""
+    if not can_access_rim_download(request.user):
+        return JsonResponse({"error": "You do not have permission to access RIM data downloads."}, status=403)
     export_dir = os.path.join(settings.MEDIA_ROOT, "rim_exports", export_id)
     matches = glob.glob(os.path.join(export_dir, "rim-data-export*"))
     if not matches:
@@ -3856,6 +3860,8 @@ def rim_export_download(request, export_id):
     with open(file_path, "rb") as export_file:
         response = HttpResponse(export_file.read(), content_type=content_type)
         response["Content-Disposition"] = 'attachment; filename="{}"'.format(filename)
+        response["X-Content-Type-Options"] = "nosniff"
+        response["Cache-Control"] = "private, no-store"
         return response
 
 

@@ -127,7 +127,7 @@
 											No of households: {{ zipfile.household_code|length }}
 											{% if zipfile.zip_file %}
 											<span style="font-style:italic;">
-												(<a href="{{ zipfile.zip_file.url }}">Download</a>)
+												(<a href="{% url 'sponsor_ff_report_zip' zipfile.pk %}">Download</a>)
 											</span>
 											{% endif %}
 										</li>

@@ -6,6 +6,7 @@ from django.views.decorators.csrf import csrf_exempt
 from django.core.files.storage import default_storage
 from django.contrib.auth.decorators import login_required
 from django.conf import settings
+from django.utils.text import slugify
 from sponsor.forms import SERVED_DOCUMENT_EXTENSIONS, SERVED_IMAGE_EXTENSIONS
 from utils.uploads import file_extension
 
@@ -15,6 +16,7 @@ from sponsor.birt_ff_report import build_command, report_exec
 import zipfile
 import shutil
 import os
+import tempfile
 
 
 @login_required(login_url="/accounts/login/")
@@ -165,52 +167,49 @@ def project_file(request, kind, pk):
     return response
 
 
+def _private(response):
+    response["X-Content-Type-Options"] = "nosniff"
+    response["Cache-Control"] = "private, no-store"
+    return response
+
+
+@login_required(login_url="/accounts/login/")
+def ff_report_zip(request, pk):
+    """Household factsheet ZIP of one sponsored slum: staff, or the sponsor that owns it (VAPT #6)."""
+    sub = get_object_or_404(
+        SponsorProjectDetailsSubFields.objects.select_related("sponsor_project_details__sponsor"), pk=pk
+    )
+    if not (request.user.is_staff or sub.sponsor_project_details.sponsor.user_id == request.user.id):
+        raise Http404
+    stored = sub.zip_file
+    if not stored or file_extension(stored.name) != "zip" or not stored.storage.exists(stored.name):
+        raise Http404
+    return _private(FileResponse(
+        stored.open("rb"), as_attachment=True, filename=os.path.basename(stored.name), content_type="application/zip"
+    ))
+
+
 @login_required(login_url="/accounts/login/")
 def create_zip(request, slumname):
-    cipher = AESCipher()
-    user_id = request.user.id
-    logged_sponsor = Sponsor.objects.get(user__id=user_id)
-    SlumObj = Slum.objects.get(name=slumname)
-
-    sponsored_slums = SponsorProjectDetails.objects.filter(slum=SlumObj).filter(
-        sponsor=logged_sponsor
+    """Builds the household factsheet PDFs of one of the sponsor's slums in a throwaway folder."""
+    details = (
+        SponsorProjectDetails.objects.filter(sponsor__user=request.user, slum__name=slumname)
+        .select_related("slum")
+        .first()
     )
-
-    rp_slum_code = str(SlumObj.shelter_slum_code)
-    folder_name = os.path.join(settings.MEDIA_ROOT, str(request.user))
-    if os.path.isfile(folder_name + ".zip"):
-
-        zip_file = open(folder_name + ".zip", "rb")
-        response = HttpResponse(zip_file, content_type="application/force-download")
-        response["Content-Disposition"] = 'attachment; filename="%s"' % str(
-            request.user
-        )
-        return response
-    else:
-
-        os.mkdir(folder_name)
-        i = 0
-        for household_code in sponsored_slums[0].household_code:
-            key = cipher.encrypt(
-                str(rp_slum_code)
-                + "|"
-                + str(household_code)
-                + "|"
-                + str(request.user.id)
-            )
-            pdf_file = os.path.join(
-                folder_name, "household_code_{}.pdf".format(household_code)
-            )
+    if details is None:
+        raise Http404
+    cipher = AESCipher()
+    slum_code = str(details.slum.shelter_slum_code)
+    with tempfile.TemporaryDirectory() as workdir:
+        folder = os.path.join(workdir, "households")
+        os.mkdir(folder)
+        for household_code in details.household_code or []:
+            key = cipher.encrypt("%s|%s|%s" % (slum_code, household_code, request.user.id))
+            pdf_file = os.path.join(folder, "household_code_{}.pdf".format(household_code))
             report_exec(build_command(settings.BIRT_REPORT_CMD, pdf_file, key))
-            i = i + 1
-
-        shutil.make_archive(folder_name, "zip", folder_name)
-
-        zip_file = open(folder_name + ".zip", "rb")
-        response = HttpResponse(zip_file, content_type="application/force-download")
-        response["Content-Disposition"] = 'attachment; filename="%s"' % str(
-            request.user
-        )
-
-        shutil.rmtree(folder_name, ignore_errors=True)
-        return response
+        with open(shutil.make_archive(folder, "zip", folder), "rb") as archive:
+            content = archive.read()
+    response = HttpResponse(content, content_type="application/zip")
+    response["Content-Disposition"] = 'attachment; filename="%s.zip"' % (slugify(slumname) or "households")
+    return _private(response)
