@@ -18,7 +18,6 @@ from mastersheet.forms import find_slum
 from django.db.models import Q
 import csv
 from sponsor.models import *
-from django.views.decorators.csrf import csrf_exempt
 from utils.utils_permission import apply_permissions_ajax
 from django.db.models import Count, F
 from django.contrib.auth.models import Group
@@ -1035,7 +1034,6 @@ def covid_data(request):
     return render(request, "covid_data.html")
 
 
-@csrf_exempt
 @apply_permissions_ajax("mastersheet.can_view_mastersheet_report")
 def give_report_covid_data(request):  # view for covid data
     tag_key_dict = json.loads(request.body)
@@ -1929,7 +1927,6 @@ def member_data(request):
     return render(request, "member_data.html", {"form": slum_search_field})
 
 
-@csrf_exempt
 @apply_permissions_ajax("mastersheet.can_view_mastersheet")
 def MemberDataView(request):
 

@@ -11,6 +11,7 @@
     const canGISExport = {% if user.username == "GIS" %}true{% else %}false{% endif %};
   </script>
   <script src="{% static 'js/jquery.min.js' %}"></script>
+  <script src="{% static 'js/csrf.js' %}" data-token="{{ csrf_token }}"></script>
   <script src="{% static 'js/master_map_boundaries.js' %}"></script>
   <script src="{% static 'js/master_map_breadcrumb.js' %}"></script>
   <script src="{% static 'js/master_map_component.js' %}"></script>

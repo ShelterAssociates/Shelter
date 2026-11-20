@@ -11,7 +11,6 @@ from django.http import HttpResponse, HttpResponseGone, HttpResponseRedirect, Js
 from django.views.generic import ListView
 from django.contrib.auth.mixins import PermissionRequiredMixin
 from django.utils.http import url_has_allowed_host_and_scheme
-from django.views.decorators.csrf import csrf_exempt
 from django.shortcuts import get_object_or_404
 from django.views.generic.base import View
 from django.shortcuts import render
@@ -78,7 +77,6 @@ def survey_delete_view(request, survey):
     """Retired: survey deletion was never functional and is no longer offered."""
     return HttpResponseGone("This endpoint has been retired.")
 
-@csrf_exempt
 def search(request):
     """Autofill add city form fields based on City ID"""
     sid = request.POST['id']
@@ -227,7 +225,6 @@ def rim_select_slum(request):
 
 @login_required(login_url="/accounts/login/")
 @permission_required("master.view_rapid_slum_appraisal", raise_exception=True)
-@csrf_exempt
 def rim_check_exists(request):
     """AJAX: does a Rapid_Slum_Appraisal already exist for this slum?"""
     slum_id = request.POST.get('slum_id')
@@ -264,14 +261,12 @@ def riminsert(request):
         form = Rapid_Slum_AppraisalForm(initial=initial)
     return render(request, 'riminsert.html', {'form': form})
 
-@csrf_exempt
 @staff_member_required
 def report(request):
     """ RIM Report Form"""
     form = ReportForm()
     return render(request,'report.html', {'form':form})
 
-@csrf_exempt
 @login_required(login_url="/accounts/login/")
 def administrativewardList(request):
     """Administrativeward List Display"""
@@ -288,7 +283,6 @@ def administrativewardList(request):
             }
     return HttpResponse(json.dumps(data),content_type='application/json')
 
-@csrf_exempt
 @login_required(login_url="/accounts/login/")
 def electoralWardList(request):
     """Electoral Ward List"""
@@ -303,7 +297,6 @@ def electoralWardList(request):
     data = { 'idArray'  : idArray,'nameArray': nameArray }
     return HttpResponse(json.dumps(data),content_type='application/json')
 
-@csrf_exempt
 @login_required(login_url="/accounts/login/")
 def slumList(request):
     """Slum Ward List"""
@@ -318,7 +311,6 @@ def slumList(request):
     data = { 'idArray' :idArray,'nameArray':nameArray}
     return HttpResponse(json.dumps(data),content_type='application/json')
 
-@csrf_exempt
 @staff_member_required
 def rimreportgenerate(request):
     """Generate RIM Report"""
@@ -329,7 +321,6 @@ def rimreportgenerate(request):
     data = {'string': string}
     return HttpResponse(json.dumps(data),content_type='application/json')
 
-@csrf_exempt
 @staff_member_required
 def drainagereportgenerate(request):
     """Generate RIM Report"""
@@ -344,7 +335,6 @@ def drainagereportgenerate(request):
     return HttpResponse(json.dumps(data),content_type='application/json')
 
 
-@csrf_exempt
 @staff_member_required
 def vulnerabilityreport(request):
     """Generate Vulnerability Report """
@@ -357,7 +347,6 @@ def slummap(request):
     context = {"request":request}
     return render(request, 'slummapdisplay.html', context)
 
-@csrf_exempt
 @access_right
 def citymapdisplay(request):
     city_dict={}
@@ -376,7 +365,6 @@ def citymapdisplay(request):
 
     return HttpResponse(json.dumps(city_main),content_type='application/json')
 
-@csrf_exempt
 @access_right
 def slummapdisplay(request,id):
     slum_list=[]
@@ -517,7 +505,6 @@ def slummapdisplay(request,id):
             pass
     return HttpResponse(json.dumps(city_main),content_type='application/json')
 
-@csrf_exempt
 def modelmapdisplay(request):
     """ ftech reference polygon """
     shape = "";
@@ -598,7 +585,6 @@ def sluminformation(request):
     return render(request,'sluminformation.html')
 
 
-@csrf_exempt
 @login_required(login_url="/accounts/login/")
 def cityList(request):
     """city List Display"""
@@ -620,7 +606,6 @@ def formList(request):
     return HttpResponseGone("This endpoint has been retired.")
 
 
-@csrf_exempt
 def modelList(request):
     """city adminstravive electrol ward dropdown list"""
     sid = request.POST['id']
@@ -646,7 +631,6 @@ def modelList(request):
            }
     return HttpResponse(json.dumps(data),content_type='application/json')
 
-@csrf_exempt
 @login_required
 @user_passes_test(lambda u: u.is_superuser or u.has_perm('master.can_generate_reports') or u.groups.filter(name='sponsor').exists())
 def familyrportgenerate(request):
@@ -798,7 +782,6 @@ def get_slum_transformation_photos(request, slum_id):
     return JsonResponse({slum_id: data})
 
 
-@csrf_exempt
 def filterMasterList(request):
     """Generic filter API"""
     filter_type = request.POST.get("type")

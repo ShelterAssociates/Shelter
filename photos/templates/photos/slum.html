@@ -173,6 +173,7 @@
 </div>
 
 <script src="{% static 'js/jquery.min.js' %}"></script>
+<script src="{% static 'js/csrf.js' %}" data-token="{{ csrf_token }}"></script>
 <script src="{% static 'js/jquery.dataTables.min.js' %}"></script>
 <script nonce="{{ csp_nonce }}">
   jQuery(function ($) {

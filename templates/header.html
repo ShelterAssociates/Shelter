@@ -3,6 +3,7 @@
 {%block scriptblock %}
 <link rel="stylesheet"  type="text/css" href="{% static "css/bootstrap.min.css" %}"/>
 <script src="{% static "js/jquery.min.js" %}"></script>
+<script src="{% static "js/csrf.js" %}" data-token="{{ csrf_token }}"></script>
 <script src="{% static "js/bootstrap.min.js" %}"></script>
 {%endblock %}
 

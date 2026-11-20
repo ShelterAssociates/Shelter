@@ -38,7 +38,6 @@ from mastersheet.models import *
 from sponsor.models import *
 from itertools import chain
 from master.models import *
-from django.views.decorators.csrf import csrf_exempt
 import json
 from django.urls import reverse
 import requests
@@ -144,7 +143,6 @@ def factsheet_by_household(household_data):
     return rows
 
 
-@csrf_exempt
 @apply_permissions_ajax("mastersheet.can_view_mastersheet")
 @deco_city_permission
 def masterSheet(request, slum_code=0, FF_code=0, RHS_code=0):
@@ -1428,7 +1426,6 @@ def check_bool(s):
         return False
 
 
-@csrf_exempt
 @apply_permissions_ajax("mastersheet.can_delete_kobo_record")
 def delete_selected(request):
     """
@@ -1621,7 +1618,6 @@ level_data = {
 """ Mastersheet Report Tab Methods"""
 
 
-@csrf_exempt
 @apply_permissions_ajax("mastersheet.can_view_mastersheet_report")
 def give_report_table_numbers(request):  # view for toilet construction
     try:
@@ -1853,7 +1849,6 @@ def give_report_table_numbers(request):  # view for toilet construction
         return HttpResponse(json.dumps([]), content_type="application/json", status=500)
 
 
-@csrf_exempt
 @apply_permissions_ajax("mastersheet.can_view_mastersheet_report")
 def report_table_cm(request):
     tag_key_dict = json.loads(request.body)
@@ -1949,7 +1944,6 @@ def report_table_cm(request):
     )
 
 
-@csrf_exempt
 @apply_permissions_ajax("mastersheet.can_view_mastersheet_report")
 def report_table_cm_activity_count(request):
     tag_key_dict = json.loads(request.body)
@@ -2049,7 +2043,6 @@ def report_table_cm_activity_count(request):
     )
 
 
-@csrf_exempt
 @apply_permissions_ajax("mastersheet.can_view_mastersheet_report")
 def give_report_table_numbers_accounts(request):
     tag_key_dict = json.loads(request.body)
@@ -2824,7 +2817,6 @@ def factsheetAssignCheck(dataList):
 
 
 # For Mastersheet Summery View Processing data
-@csrf_exempt
 @apply_permissions_ajax("mastersheet.can_view_mastersheet")
 @deco_city_permission
 def ProcessShortView(request, slum_details=0):
@@ -3871,7 +3863,6 @@ def rim_export_download(request, export_id):
         return response
 
 
-@csrf_exempt
 @apply_permissions_ajax("mastersheet.can_view_mastersheet")
 def addSponsor(request):
     response = {}
@@ -3986,7 +3977,6 @@ def addSponsor(request):
     return HttpResponse(json.dumps(response), content_type="application/json")
 
 
-@csrf_exempt
 @apply_permissions_ajax("mastersheet.can_view_mastersheet")
 def sponsorprojectList(request):
     """Administrativeward List Display"""

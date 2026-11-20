@@ -12,7 +12,6 @@ from django.http import HttpResponse, JsonResponse
 from django.shortcuts import render
 from django.urls import reverse
 from django.utils import timezone
-from django.views.decorators.csrf import csrf_exempt
 from requests import request
 from scipy import record
 
@@ -68,7 +67,6 @@ def digipin_generate(request):
 # {status:"otp_sent"} when OTP email successfully triggered
 # {status:"wait"} when rate limit prevents new OTP request
 # ----------------------------------------------------------------------
-@csrf_exempt
 def send_otp(request):
     logger.info("send_otp: request received, method=%s", request.method)
 
