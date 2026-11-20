@@ -6,7 +6,9 @@ from django.http import HttpResponseRedirect
 from django.contrib import messages
 from django.urls import reverse
 from .forms import ProjectDocumentForm, ProjectImageForm, SponsorForm, SponsorProjectDetailsSubFieldsForm
-from utils.validators import PlainTextAdminMixin
+from utils.validators import AmountRangeAdminMixin, PlainTextAdminMixin
+
+FUND_RANGE = (0, 99999999.99)
 
 
 class SponsorAdmin(PlainTextAdminMixin, admin.ModelAdmin):
@@ -198,7 +200,8 @@ class ProjectImagesInline(admin.TabularInline):
     form = ProjectImageForm
 
 
-class SponsorProjectAdmin(PlainTextAdminMixin, admin.ModelAdmin):
+class SponsorProjectAdmin(PlainTextAdminMixin, AmountRangeAdminMixin, admin.ModelAdmin):
+    amount_ranges = {"funds_sponsored": FUND_RANGE, "funds_utilised": FUND_RANGE}
     list_display = (
         "name",
         "sponsor",
@@ -257,7 +260,8 @@ class SponsorProjectAdmin(PlainTextAdminMixin, admin.ModelAdmin):
 admin.site.register(SponsorProject, SponsorProjectAdmin)
 
 
-class SponsorProjectMOUAdmin(admin.ModelAdmin):
+class SponsorProjectMOUAdmin(AmountRangeAdminMixin, admin.ModelAdmin):
+    amount_ranges = {"fund_released": FUND_RANGE}
     list_display = ("sponsor_project", "quarter", "fund_released", "release_date")
     search_fields = ["sponsor_project__name"]
     ordering = ["sponsor_project__name", "quarter"]

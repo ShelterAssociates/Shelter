@@ -81,6 +81,12 @@ class VendorHouseholdInvoiceDetail(models.Model):
         )
 
 
+def item_total(household_numbers, quantity, rate, tax):
+    """Same formula as static/js/calculate_total_invoice.js."""
+    households = len(household_numbers) if isinstance(household_numbers, list) else 0
+    return round(households * (quantity or 0) * (rate or 0) * (1 + (tax or 0) / 100.0), 2)
+
+
 class Invoice(models.Model):
     vendor = models.ForeignKey(Vendor, on_delete=models.CASCADE)
     sponsor_project = models.ForeignKey(SponsorProject, on_delete=models.SET_NULL, null=True, blank=True)
@@ -110,6 +116,20 @@ class Invoice(models.Model):
     def __str__(self):
         """Returns string representation of object"""
         return self.vendor.name + "(" + self.invoice_number + ")"
+
+    def recalculate_totals(self):
+        """Stores totals computed from the items; values sent by the browser are never kept."""
+        total = 0
+        for item in self.invoiceitems_set.all():
+            item_total = item.computed_total()
+            if item.total != item_total:
+                InvoiceItems.objects.filter(pk=item.pk).update(total=item_total)
+            total += item_total
+        self.total = round(total, 2)
+        self.final_total = round(
+            self.total + self.loading_unloading_charges + self.transport_charges + self.roundoff, 2
+        )
+        Invoice.objects.filter(pk=self.pk).update(total=self.total, final_total=self.final_total)
 
 
 class MaterialType(models.Model):
@@ -159,6 +179,9 @@ class InvoiceItems(models.Model):
     def __str__(self):
         """Returns string representation of object"""
         return self.material_type.name
+
+    def computed_total(self):
+        return item_total(self.household_numbers, self.quantity, self.rate, self.tax)
 
 
 class SBMUpload(models.Model):

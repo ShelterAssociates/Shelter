@@ -241,3 +241,30 @@ class SponsorForm(forms.Form):
         self.fields["sponsor_quarter"].widget.attrs.update(
             {"name": "sponsor_quarter", "id": "sponsor_quarter"}
         )
+
+
+class InvoiceItemsForm(forms.ModelForm):
+    class Meta:
+        model = InvoiceItems
+        fields = "__all__"
+
+    def clean_household_numbers(self):
+        households = self.cleaned_data.get("household_numbers")
+        if not isinstance(households, list):
+            raise forms.ValidationError('Enter the household numbers as a list, e.g. ["101", "102"].')
+        return households
+
+
+class InvoiceItemsFormSet(forms.BaseInlineFormSet):
+    def clean(self):
+        super().clean()
+        invoice = self.instance
+        total = sum(
+            item_total(form.cleaned_data.get("household_numbers"), form.cleaned_data.get("quantity"),
+                       form.cleaned_data.get("rate"), form.cleaned_data.get("tax"))
+            for form in self.forms
+            if form.cleaned_data and not form.cleaned_data.get("DELETE")
+        )
+        charges = sum(getattr(invoice, name) or 0 for name in ("loading_unloading_charges", "transport_charges", "roundoff"))
+        if total + charges < 0:
+            raise forms.ValidationError("The final total of the invoice cannot be negative.")

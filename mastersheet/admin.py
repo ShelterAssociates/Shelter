@@ -5,13 +5,22 @@ from .forms import (
     SBMUploadForm,
     ToiletConstructionForm,
     CommunityMobilizationForm,
+    InvoiceItemsForm,
+    InvoiceItemsFormSet,
 )
 import datetime
 from django.contrib.auth.models import User
 from django.utils.html import format_html
 from django.contrib import messages
 from django.core.exceptions import ValidationError
-from utils.validators import PlainTextAdminMixin
+from utils.validators import MAX_AMOUNT, AmountRangeAdminMixin, PlainTextAdminMixin
+
+INVOICE_ITEM_RANGES = {"quantity": (0, 1000000), "rate": (0, MAX_AMOUNT), "tax": (0, 100)}
+INVOICE_RANGES = {
+    "loading_unloading_charges": (0, MAX_AMOUNT),
+    "transport_charges": (0, MAX_AMOUNT),
+    "roundoff": (-1000, 1000),
+}
 
 # class CustomButton():
 #     class Media:
@@ -47,8 +56,11 @@ class VendorTypeAdmin(PlainTextAdminMixin, admin.ModelAdmin):
 admin.site.register(VendorType, VendorTypeAdmin)
 
 
-class InvoiceItemsInline(admin.TabularInline):
+class InvoiceItemsInline(AmountRangeAdminMixin, admin.TabularInline):
     model = InvoiceItems
+    form = InvoiceItemsForm
+    formset = InvoiceItemsFormSet
+    amount_ranges = INVOICE_ITEM_RANGES
     fields = [
         "copy_above",
         "invoice",
@@ -97,7 +109,8 @@ class InvoiceItemsInline(admin.TabularInline):
     )
 
 
-class InvoiceAdmin(admin.ModelAdmin):
+class InvoiceAdmin(AmountRangeAdminMixin, admin.ModelAdmin):
+    amount_ranges = INVOICE_RANGES
     list_filter = ["vendor"]
     list_display = ("vendor", "invoice_number", "challan_number", "invoice_date", "sponsor_project")
     search_fields = ["vendor__name", "invoice_number", "challan_number", "invoice_date", "sponsor_project__name"]
@@ -123,8 +136,10 @@ class InvoiceAdmin(admin.ModelAdmin):
                 instance.save()
         except Exception as e:
             messages.add_message(request, messages.ERROR, str(e))
+            form.instance.recalculate_totals()
             return
         super(InvoiceAdmin, self).save_related(request, form, formset, change)
+        form.instance.recalculate_totals()
 
     def save_model(self, request, obj, form, change):
         user = User.objects.get(pk=request.user.id)
@@ -155,7 +170,9 @@ class MaterialTypeAdmin(PlainTextAdminMixin, admin.ModelAdmin):
 admin.site.register(MaterialType, MaterialTypeAdmin)
 
 
-class InvoiceItemsAdmin(admin.ModelAdmin):
+class InvoiceItemsAdmin(AmountRangeAdminMixin, admin.ModelAdmin):
+    form = InvoiceItemsForm
+    amount_ranges = INVOICE_ITEM_RANGES
     list_display = (
         "invoice",
         "material_type",
@@ -183,9 +200,9 @@ class InvoiceItemsAdmin(admin.ModelAdmin):
         "modified_on",
     )
 
-    # def save_model(self, request, obj, form, change):
-    #     print 'gotcha'
-    #     super(InvoiceItemAdmin, self).save_model(request, obj, form, change)
+    def save_model(self, request, obj, form, change):
+        super().save_model(request, obj, form, change)
+        obj.invoice.recalculate_totals()
 
 
 admin.site.register(InvoiceItems, InvoiceItemsAdmin)

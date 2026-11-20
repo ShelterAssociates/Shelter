@@ -1,3 +1,4 @@
+import math
 from urllib import request
 
 import logging
@@ -1328,6 +1329,10 @@ def set_component_metric(request):
     except ValueError:
         return JsonResponse(
             {"success": False, "message": "Value must be a number"}, status=400
+        )
+    if not math.isfinite(value) or not 0 <= value < 10 ** 10:
+        return JsonResponse(
+            {"success": False, "message": "Value must be zero or more"}, status=400
         )
 
     slum = Slum.objects.filter(pk=object_id).first()

@@ -1,3 +1,4 @@
+import math
 import re
 
 from django.core.exceptions import ValidationError
@@ -43,4 +44,39 @@ class PlainTextAdminMixin:
     def get_formset(self, request, obj=None, **kwargs):
         formset = super().get_formset(request, obj, **kwargs)
         formset.form = plain_text_form(formset.form, self.plain_text_fields)
+        return formset
+
+
+MAX_AMOUNT = 1000000000
+
+
+def range_form(form_class, ranges):
+    """Subclass of form_class that keeps each listed number finite and within (minimum, maximum)."""
+
+    class RangeForm(form_class):
+        def clean(self):
+            cleaned = super().clean()
+            for name, (minimum, maximum) in ranges.items():
+                value = cleaned.get(name)
+                if name not in self.fields or value is None:
+                    continue
+                if not math.isfinite(float(value)) or not minimum <= value <= maximum:
+                    self.add_error(name, "Must be between %s and %s." % (minimum, maximum))
+            return cleaned
+
+    RangeForm.__name__ = form_class.__name__
+    return RangeForm
+
+
+class AmountRangeAdminMixin:
+    """For a ModelAdmin or inline: numbers in amount_ranges must lie in their (minimum, maximum)."""
+
+    amount_ranges = {}
+
+    def get_form(self, request, obj=None, **kwargs):
+        return range_form(super().get_form(request, obj, **kwargs), self.amount_ranges)
+
+    def get_formset(self, request, obj=None, **kwargs):
+        formset = super().get_formset(request, obj, **kwargs)
+        formset.form = range_form(formset.form, self.amount_ranges)
         return formset
