@@ -1,5 +1,6 @@
 """Community mobilization subjects and activity attendance."""
 
+import itertools
 from datetime import date
 
 from django.test import TestCase
@@ -12,11 +13,13 @@ from mastersheet.models import ActivityType, CommunityMobilization, CommunityMob
 from notification.services import reporting
 
 
+_activity_keys = itertools.count()
+
+
 def make_activity(name):
-    activity = ActivityType.objects.create(name=name, key="0", display_order=1)
-    activity.key = str(activity.id)
-    activity.save()
-    return activity
+    """Sync stores the key as the activity id, and key is two characters, so both use a small explicit id."""
+    number = 10 + next(_activity_keys) % 90
+    return ActivityType.objects.create(id=number, name=name, key=str(number), display_order=1)
 
 
 def mobilization_record(uuid="mob-1", activity="Samitee meeting 1", date_text="2026-02-01", voided=False, **attendees):
