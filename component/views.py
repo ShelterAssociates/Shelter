@@ -3430,7 +3430,8 @@ def export_filtered_kml(request):
     )
 
     if email_export:
-        base_url = request.build_absolute_uri("/").rstrip("/")
+        # Emailed links never take their domain from the request's Host header (VAPT #7).
+        base_url = settings.BASE_APP_URL.rstrip("/")
         # Recorded before the thread starts, so the request is visible even if
         # a deploy restart kills the thread mid-run.
         export_request_id = _create_gis_export_tracker(

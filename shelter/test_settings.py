@@ -23,5 +23,7 @@ class DisableMigrations(dict):
 
 MIGRATION_MODULES = DisableMigrations()
 DEBUG = False
+# Explicit hosts, as on a real server (utils/checks.py refuses '*' when DEBUG is off).
+ALLOWED_HOSTS = ["testserver", "localhost", "127.0.0.1"]
 EMAIL_BACKEND = "django.core.mail.backends.locmem.EmailBackend"
 PASSWORD_HASHERS = ["django.contrib.auth.hashers.MD5PasswordHasher"]

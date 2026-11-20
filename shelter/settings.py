@@ -80,6 +80,9 @@ PARENT_DIR = os.path.dirname(BASE_DIR)
 DEBUG = False  # overridden to True in local_settings.py for dev
 SECRET_KEY = ""  # MUST be set in local_settings.py
 ALLOWED_HOSTS = []  # MUST be set in local_settings.py
+# This server's https:// address. Emailed links are built from it, never from the
+# request's Host header. Set in local_settings.py; `manage.py check` warns when it is off.
+BASE_APP_URL = ""
 
 # Empty by default so that if local_settings.py ever fails to define this,
 # delete_component blocks the delete (no one configured to notify) rather

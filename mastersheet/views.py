@@ -3797,7 +3797,8 @@ def rim_data_download_submit(request):
     slum_ids_final = [slum.id for slum in slums]
 
     if email_export:
-        base_url = request.build_absolute_uri("/").rstrip("/")
+        # Emailed links never take their domain from the request's Host header (VAPT #7).
+        base_url = settings.BASE_APP_URL.rstrip("/")
 
         # Record the request in the unified export register before starting the
         # thread, so it is visible even if the thread dies (a deploy restart
