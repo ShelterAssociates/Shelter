@@ -125,6 +125,23 @@ class SessionBindingMiddleware:
         return None
 
 
+class CookieFlagsMiddleware:
+    """Every cookie the app sends, deletions included, is HttpOnly, SameSite=Lax and (outside DEBUG) Secure."""
+
+    def __init__(self, get_response):
+        self.get_response = get_response
+
+    def __call__(self, request):
+        response = self.get_response(request)
+        secure = settings.SESSION_COOKIE_SECURE or not settings.DEBUG
+        for morsel in response.cookies.values():
+            morsel["httponly"] = True
+            morsel["samesite"] = morsel["samesite"] or "Lax"
+            if secure:
+                morsel["secure"] = True
+        return response
+
+
 class ContentSecurityPolicyMiddleware:
     """Adds settings.CSP_POLICY, with a fresh script nonce, to responses that do not set their own policy."""
 

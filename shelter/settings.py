@@ -35,6 +35,7 @@ import inspect
 MIDDLEWARE = (
     "django.middleware.security.SecurityMiddleware",
     "shelter.middleware.ContentSecurityPolicyMiddleware",
+    "shelter.middleware.CookieFlagsMiddleware",
     "shelter.middleware.RequestLoggingMiddleware",
     "django.middleware.gzip.GZipMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
@@ -51,6 +52,10 @@ SESSION_COOKIE_SECURE = True
 SESSION_COOKIE_AGE = 8 * 60 * 60
 SESSION_SAVE_EVERY_REQUEST = True
 SESSION_EXPIRE_AT_BROWSER_CLOSE = True
+
+# No JavaScript reads the CSRF cookie: pages take the token from {% csrf_token %}.
+CSRF_COOKIE_SECURE = True
+CSRF_COOKIE_HTTPONLY = True
 
 # ---------------------------------------------------------------------------
 # PATHS
