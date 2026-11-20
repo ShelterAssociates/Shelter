@@ -94,6 +94,7 @@ class LogoutAndExpiryTests(SessionCase):
             self.assertEqual(cookie["max-age"], "", name)
             self.assertEqual(cookie["expires"], "", name)
             self.assertTrue(cookie["httponly"], name)
+            self.assertTrue(cookie["secure"], name)
             self.assertEqual(cookie["samesite"], "Lax", name)
 
     def test_idle_timeout_is_eight_hours_and_slides_with_activity(self):
@@ -110,6 +111,11 @@ class LogoutAndExpiryTests(SessionCase):
         self.assert_logged_out(victim.get(PAGE))
 
 
-class MiddlewareOrderTests(TestCase):
+class SettingsTests(TestCase):
     def test_security_middleware_runs_first(self):
         self.assertEqual(settings.MIDDLEWARE[0], "django.middleware.security.SecurityMiddleware")
+
+    def test_session_cookie_is_secure_without_local_settings(self):
+        import shelter.settings as base
+        source = open(base.__file__).read().split("from shelter.local_settings import")[0]
+        self.assertIn("SESSION_COOKIE_SECURE = True", source)

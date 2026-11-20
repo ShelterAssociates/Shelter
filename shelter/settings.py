@@ -47,6 +47,8 @@ MIDDLEWARE = (
 
 # Sessions (VAPT #4): end after 8 idle hours, and when the browser closes.
 # SESSION_SAVE_EVERY_REQUEST slides the 8 hours forward on each request.
+# Secure: the session cookie is only ever sent over HTTPS.
+SESSION_COOKIE_SECURE = True
 SESSION_COOKIE_AGE = 8 * 60 * 60
 SESSION_SAVE_EVERY_REQUEST = True
 SESSION_EXPIRE_AT_BROWSER_CLOSE = True
