@@ -1,4 +1,4 @@
-"""VAPT #3: pages hidden from a user's menu must also be refused by the server."""
+"""Pages hidden from a user's menu must also be refused by the server."""
 
 from django.contrib.auth.models import Permission, User
 from django.test import TestCase, override_settings

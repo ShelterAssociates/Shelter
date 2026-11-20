@@ -45,9 +45,7 @@ MIDDLEWARE = (
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
 )
 
-# Sessions (VAPT #4): end after 8 idle hours, and when the browser closes.
-# SESSION_SAVE_EVERY_REQUEST slides the 8 hours forward on each request.
-# Secure: the session cookie is only ever sent over HTTPS.
+# Sessions end after 8 idle hours (renewed on each request) or when the browser closes.
 SESSION_COOKIE_SECURE = True
 SESSION_COOKIE_AGE = 8 * 60 * 60
 SESSION_SAVE_EVERY_REQUEST = True
@@ -80,8 +78,7 @@ PARENT_DIR = os.path.dirname(BASE_DIR)
 DEBUG = False  # overridden to True in local_settings.py for dev
 SECRET_KEY = ""  # MUST be set in local_settings.py
 ALLOWED_HOSTS = []  # MUST be set in local_settings.py
-# This server's https:// address. Emailed links are built from it, never from the
-# request's Host header. Set in local_settings.py; `manage.py check` warns when it is off.
+# This server's https:// address; emailed links are built from it. Set in local_settings.py.
 BASE_APP_URL = ""
 
 # Empty by default so that if local_settings.py ever fails to define this,

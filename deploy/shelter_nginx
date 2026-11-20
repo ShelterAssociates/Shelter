@@ -6,7 +6,7 @@ upstream shelter_app {
 }
 
 # Requests for a hostname that is not one of ours (Host: attacker.com) get no
-# answer at all, instead of falling through to the first site (VAPT #7).
+# answer at all, instead of falling through to the first site.
 server {
     listen 80 default_server;
     server_name _;
@@ -79,7 +79,7 @@ server {
     }
 
     # Household factsheet ZIPs and emailed GIS/RIM exports hold PII: served only
-    # by login-checked Django views (VAPT #6).
+    # by login-checked Django views.
     location /media/FFReport {
         deny all;
         return 403;

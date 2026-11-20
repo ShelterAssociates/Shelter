@@ -7,7 +7,7 @@ from datetime import date, datetime, timedelta
 
 from django.contrib.admin.views.decorators import staff_member_required
 from django.contrib.auth.decorators import login_required
-from django.core.exceptions import ImproperlyConfigured, ObjectDoesNotExist
+from django.core.exceptions import ImproperlyConfigured, ObjectDoesNotExist, ValidationError
 from django.http import HttpResponse, JsonResponse
 from django.shortcuts import render
 from django.urls import reverse
@@ -31,6 +31,7 @@ from .models import (
 )
 from .services.google_drive import upload_photos_to_slum_drive_folder
 from .services.photo_upload import *
+from utils.uploads import inspect_photo
   
 logger = logging.getLogger(__name__)
 
@@ -489,7 +490,6 @@ def sponsor_list(request):
     logger.info("sponsor_list: returning %s sponsor configs", len(response_data))
     return JsonResponse(response_data, safe=False)
 
-@csrf_exempt
 @staff_member_required
 def upload_slum_photos_to_drive(request):
     logger.info("upload_slum_photos_to_drive: request received, method=%s", request.method)
@@ -536,6 +536,14 @@ def upload_slum_photos_to_drive(request):
     if len(uploaded_files) > 5:
         logger.warning("upload_slum_photos_to_drive: too many files uploaded, count=%s", len(uploaded_files))
         return JsonResponse({"status": "error", "message": "You can upload a maximum of 5 photos at a time."}, status=400)
+
+    # Check every file before anything goes to Drive.
+    for upload in uploaded_files:
+        try:
+            inspect_photo(upload)
+        except ValidationError as error:
+            logger.warning("upload_slum_photos_to_drive: rejected %s", error.messages[0])
+            return JsonResponse({"status": "error", "message": error.messages[0]}, status=400)
 
     if is_city_level and is_other_upload:
         logger.warning("upload_slum_photos_to_drive: both is_city_level and is_other_upload set")
@@ -589,13 +597,13 @@ def upload_slum_photos_to_drive(request):
     except ImproperlyConfigured as exc:
         logger.exception("upload_slum_photos_to_drive: service improperly configured")
         return JsonResponse({"status": "error", "message": str(exc)}, status=500)
-    except Exception as exc:
+    except Exception:
         logger.exception("upload_slum_photos_to_drive: photo upload service failed")
-        return JsonResponse({"status": "error", "message": "Photo upload service failed.", "details": str(exc)}, status=500)
+        return JsonResponse({"status": "error", "message": "Photo upload service failed."}, status=500)
 
     logger.info("upload_slum_photos_to_drive: drive upload succeeded for slum_id=%s, %s file(s) processed", slum_id, len(result.get("files", [])))
 
-    slum = Slum.objects.filter(id=slum_id).first()
+    slum = Slum.objects.filter(id=slum_id).first() if str(slum_id or "").isdigit() else None
     if not slum and not is_city_level and not is_other_upload:
         logger.warning("upload_slum_photos_to_drive: slum not found for slum_id=%s after upload", slum_id)
         return JsonResponse({"status": "error", "message": "Slum not found."}, status=404)

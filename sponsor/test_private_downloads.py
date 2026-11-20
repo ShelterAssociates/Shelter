@@ -1,4 +1,4 @@
-"""VAPT #6: household ZIPs and emailed GIS/RIM exports hold PII - never downloadable without the right login."""
+"""Household ZIPs and emailed GIS/RIM exports hold PII: never downloadable without the right login."""
 
 import io
 import os

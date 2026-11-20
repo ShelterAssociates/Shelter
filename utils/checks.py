@@ -6,7 +6,7 @@ from django.core.checks import Error, Tags, Warning, register
 
 @register(Tags.security)
 def allowed_hosts_are_explicit(app_configs, **kwargs):
-    """VAPT #7: outside development the app answers only for its own hostnames."""
+    """Outside development the app answers only for its own hostnames."""
     if settings.DEBUG:
         return []
     hosts = list(settings.ALLOWED_HOSTS)

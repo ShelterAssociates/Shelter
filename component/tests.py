@@ -258,7 +258,7 @@ SECRET = "XXE-LOCAL-FILE-MARKER-7731"
 
 
 class KMLEntityTests(TestCase):
-    """VAPT #2: KML uploads must never resolve external entities (local file disclosure)."""
+    """KML uploads must never resolve external entities."""
 
     def setUp(self):
         import tempfile

@@ -1,4 +1,4 @@
-"""VAPT #4: a copied session cookie must not keep working from another browser, and sessions must expire."""
+"""A copied session cookie must not keep working from another browser, and sessions must expire."""
 
 from datetime import timedelta
 

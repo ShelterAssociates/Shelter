@@ -2125,7 +2125,7 @@ def _send_gis_export_email(email, slum, export_meta, base_url):
 @require_GET
 @login_required(login_url="/accounts/login/")
 def gis_export_download(request, export_id):
-    """Emailed GIS export link: needs a login that may request GIS exports (VAPT #6)."""
+    """Emailed GIS export link: needs a login that may request GIS exports."""
     if not (request.user.username == "GIS" or request.user.is_superuser):
         return JsonResponse({"error": "You do not have permission to download GIS exports."}, status=403)
     export_dir = os.path.join(settings.MEDIA_ROOT, "gis_exports", export_id)
@@ -3430,7 +3430,7 @@ def export_filtered_kml(request):
     )
 
     if email_export:
-        # Emailed links never take their domain from the request's Host header (VAPT #7).
+        # Never build emailed links from the request's Host header.
         base_url = settings.BASE_APP_URL.rstrip("/")
         # Recorded before the thread starts, so the request is visible even if
         # a deploy restart kills the thread mid-run.

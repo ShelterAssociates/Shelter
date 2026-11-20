@@ -175,7 +175,7 @@ def _private(response):
 
 @login_required(login_url="/accounts/login/")
 def ff_report_zip(request, pk):
-    """Household factsheet ZIP of one sponsored slum: staff, or the sponsor that owns it (VAPT #6)."""
+    """Household factsheet ZIP of one sponsored slum: staff, or the sponsor that owns it."""
     sub = get_object_or_404(
         SponsorProjectDetailsSubFields.objects.select_related("sponsor_project_details__sponsor"), pk=pk
     )

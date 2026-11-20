@@ -2,7 +2,8 @@ from django.shortcuts import render, get_object_or_404
 from django.http import HttpResponse, JsonResponse, HttpResponseForbidden
 from django.contrib.auth.decorators import login_required, user_passes_test, permission_required
 from utils.utils_permission import has_mastersheet_access
-from django.core.exceptions import PermissionDenied
+from django.core.exceptions import PermissionDenied, ValidationError
+from utils.uploads import validate_spreadsheet
 from django.views.decorators.http import require_GET, require_POST
 from django.db import close_old_connections
 from django.core.cache import cache
@@ -1017,7 +1018,6 @@ def renderMastersheet(request):
     )
 
 
-@csrf_exempt
 @apply_permissions_ajax("mastersheet.can_upload_mastersheet")
 def file_ops(request):
     slum_code = request.POST.get("slum_code")
@@ -1026,8 +1026,13 @@ def file_ops(request):
     response = []
     resp = {}
     if request.method == "POST":
+        upload = request.FILES.get("file")
         try:
-            resp = handle_uploaded_file(request.FILES.get("file"), response, slum_code)
+            validate_spreadsheet(upload)
+        except ValidationError as error:
+            return HttpResponse(json.dumps([("error msg", error.messages[0])]), content_type="application/json")
+        try:
+            resp = handle_uploaded_file(upload, response, slum_code)
             response = resp
         except Exception as e:
             response.append(("error msg", str(e)))
@@ -3797,7 +3802,7 @@ def rim_data_download_submit(request):
     slum_ids_final = [slum.id for slum in slums]
 
     if email_export:
-        # Emailed links never take their domain from the request's Host header (VAPT #7).
+        # Never build emailed links from the request's Host header.
         base_url = settings.BASE_APP_URL.rstrip("/")
 
         # Record the request in the unified export register before starting the
@@ -3847,7 +3852,7 @@ def rim_data_download_submit(request):
 @require_GET
 @login_required(login_url="/accounts/login/")
 def rim_export_download(request, export_id):
-    """Emailed RIM export link: needs a login that may use RIM data downloads (VAPT #6)."""
+    """Emailed RIM export link: needs a login that may use RIM data downloads."""
     if not can_access_rim_download(request.user):
         return JsonResponse({"error": "You do not have permission to access RIM data downloads."}, status=403)
     export_dir = os.path.join(settings.MEDIA_ROOT, "rim_exports", export_id)

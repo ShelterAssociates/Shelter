@@ -1,4 +1,4 @@
-"""VAPT #7: a forged Host header must not be answered or end up in links the app sends out."""
+"""A forged Host header must not be answered or end up in links the app sends out."""
 
 import json
 from unittest import mock

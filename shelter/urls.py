@@ -40,8 +40,7 @@ router = routers.DefaultRouter()
 router.register(r"metadata", MetadataViewSet)
 router.register(r"city", CityViewset)
 
-# runserver copy of the nginx /media deny rules (deploy/shelter_nginx). In production nginx
-# answers /media itself, so this only keeps local testing honest.
+# Mirrors the nginx /media deny rules for runserver; in production nginx serves /media.
 PRIVATE_MEDIA = (
     r"^media/(?:FFReport|gis_exports|rim_exports|sponsor_project|photo_exports|shelter/attachments"
     r"|avni_bulk_updates|job_reports)/|^media/[^/]+\.zip$"

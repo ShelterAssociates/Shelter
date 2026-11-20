@@ -1,4 +1,4 @@
-"""VAPT #5: names typed in admin are shown on other pages, so HTML in them is refused (output is also escaped in the JS)."""
+"""Names typed in admin are shown on other pages, so HTML in them is refused."""
 
 import hashlib
 import json

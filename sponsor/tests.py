@@ -1,4 +1,4 @@
-"""VAPT #1: sponsor project uploads must not let HTML/JS run in the application's origin."""
+"""Sponsor project uploads must not let HTML/JS run in the application's origin."""
 
 import io
 import shutil
@@ -17,7 +17,7 @@ from sponsor.forms import ProjectDocumentForm, ProjectImageForm, SponsorForm, Sp
 from sponsor.models import ProjectDocuments, ProjectImages, Sponsor, SponsorProject
 
 PDF = b"%PDF-1.4\n1 0 obj<<>>endobj\ntrailer<<>>\n%%EOF"
-HTML = b"<html><script>alert('VAPT-UPLOAD-TEST')</script></html>"
+HTML = b"<html><script>alert('UPLOAD-TEST')</script></html>"
 
 
 def image_bytes(fmt):
@@ -131,7 +131,7 @@ class AdminUploadTests(SponsorFixtureMixin, TestCase):
         return self.client.post(
             "/accounts/sponsor/sponsorproject/add/",
             {
-                "name": "VAPT project", "project_type": "1", "funds_sponsored": "10", "status": "2",
+                "name": "Test project", "project_type": "1", "funds_sponsored": "10", "status": "2",
                 "projectdocuments_set-TOTAL_FORMS": "1", "projectdocuments_set-INITIAL_FORMS": "0",
                 "projectdocuments_set-MIN_NUM_FORMS": "0", "projectdocuments_set-MAX_NUM_FORMS": "1000",
                 "projectdocuments_set-0-document": document,
@@ -143,7 +143,7 @@ class AdminUploadTests(SponsorFixtureMixin, TestCase):
     def test_admin_refuses_the_auditors_html_upload(self):
         response = self.post_project(upload("text.html", HTML, "text/html"))
         self.assertEqual(response.status_code, 200)
-        self.assertFalse(SponsorProject.objects.filter(name="VAPT project").exists())
+        self.assertFalse(SponsorProject.objects.filter(name="Test project").exists())
         self.assertFalse(ProjectDocuments.objects.exists())
 
     def test_admin_change_page_links_existing_files_through_the_protected_view(self):

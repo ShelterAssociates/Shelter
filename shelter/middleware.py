@@ -84,12 +84,7 @@ def unbind_session_from_client(sender, request, user, **kwargs):
 
 
 class SessionBindingMiddleware:
-    """Ties a logged-in session to the browser that logged in (VAPT #4).
-
-    Two checks: the browser's User-Agent, and a random device cookie issued at login next to the
-    session cookie. Copying only the sessionid into another browser or a private window fails both
-    or the second; the session is then deleted server-side.
-    """
+    """Ties a logged-in session to its browser (User-Agent + a device cookie set at login); a mismatch ends it."""
 
     def __init__(self, get_response):
         self.get_response = get_response
