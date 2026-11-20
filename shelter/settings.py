@@ -33,16 +33,23 @@ import inspect
 
 
 MIDDLEWARE = (
+    "django.middleware.security.SecurityMiddleware",
     "shelter.middleware.RequestLoggingMiddleware",
     "django.middleware.gzip.GZipMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
+    "shelter.middleware.SessionBindingMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
-    "django.middleware.security.SecurityMiddleware",
 )
+
+# Sessions (VAPT #4): end after 8 idle hours, and when the browser closes.
+# SESSION_SAVE_EVERY_REQUEST slides the 8 hours forward on each request.
+SESSION_COOKIE_AGE = 8 * 60 * 60
+SESSION_SAVE_EVERY_REQUEST = True
+SESSION_EXPIRE_AT_BROWSER_CLOSE = True
 
 # ---------------------------------------------------------------------------
 # PATHS
