@@ -255,6 +255,17 @@ INSTALLED_APPS = (
 # REST FRAMEWORK
 # ---------------------------------------------------------------------------
 
+AUTHENTICATION_BACKENDS = ["shelter.auth_throttle.ThrottledModelBackend"]
+
+# Failed sign-in counters must be shared by all gunicorn workers, so they live on disk.
+CACHES = {
+    "default": {"BACKEND": "django.core.cache.backends.locmem.LocMemCache"},
+    "auth_throttle": {
+        "BACKEND": "django.core.cache.backends.filebased.FileBasedCache",
+        "LOCATION": os.path.join(PARENT_DIR, "cache", "auth_throttle"),
+    },
+}
+
 REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": (
         "rest_framework.authentication.BasicAuthentication",

@@ -32,6 +32,7 @@ from .models import (
 from .services.google_drive import upload_photos_to_slum_drive_folder
 from .services.photo_upload import *
 from utils.uploads import inspect_photo
+from shelter.auth_throttle import add_otp_failure, otp_blocked
   
 logger = logging.getLogger(__name__)
 
@@ -180,7 +181,7 @@ def verify_otp(request):
     session_key = f"otp_attempts_{email}_{task}"
     attempts = request.session.get(session_key, 0)
 
-    if attempts >= 5:
+    if attempts >= 5 or otp_blocked(email, task):
         logger.warning(
             "verify_otp: blocked due to too many attempts for email=%s task=%s",
             email,
@@ -217,6 +218,7 @@ def verify_otp(request):
 
     if record.otp != input_hash:
         request.session[session_key] = attempts + 1
+        add_otp_failure(email, task)
         logger.warning(
             "verify_otp: invalid OTP attempt %s for email=%s task=%s",
             attempts + 1,

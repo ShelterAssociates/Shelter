@@ -14,3 +14,4 @@ class MasterAppConfig(AppConfig):
         """Imports the signals file into django.apps"""
         import master.signals
         import utils.checks  # noqa: F401  registers the deployment system checks
+        import shelter.auth_throttle  # noqa: F401  connects the failed-login counters

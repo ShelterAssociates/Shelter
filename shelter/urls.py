@@ -20,6 +20,7 @@ from django.conf.urls.static import static
 from django.views.generic import TemplateView
 from django.conf import settings
 from django.http import HttpResponseForbidden
+from shelter.auth_throttle import ThrottledAuthenticationForm
 from .settings import *
 from master.views import (
     slummap,
@@ -61,7 +62,11 @@ urlpatterns = (
         # gone so links already emailed no longer work. The admin's own
         # set-password form (/accounts/auth/user/<id>/password/) is a separate
         # route and is unaffected -- that is how passwords get changed now.
-        url(r"^accounts/login/$", auth_views.LoginView.as_view(), name="login"),
+        url(
+            r"^accounts/login/$",
+            auth_views.LoginView.as_view(authentication_form=ThrottledAuthenticationForm),
+            name="login",
+        ),
         url(r"^accounts/logout/$", auth_views.LogoutView.as_view(), name="logout"),
         url(
             r"^accounts/password_reset/$",
