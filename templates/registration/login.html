@@ -231,7 +231,8 @@
   <script nonce="{{ csp_nonce }}">
     $(document).ready(function () {
       $.each($('#login-form').find('input'), function () {
-        label = $(this).parent().find('label')
+        var label = $(this).parent().find('label')
+        if (!label.length) return
         label.hide()
         $(this).attr('placeholder', label.html().replace(':', ''))
       })
