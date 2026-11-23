@@ -5,7 +5,7 @@
 from django import forms
 from django.conf import settings
 from django.core.files.uploadedfile import UploadedFile
-from utils.uploads import validate_pdf
+from utils.uploads import validate_image, validate_pdf
 
 from master.models import (
     Survey,
@@ -141,9 +141,19 @@ class ReportForm(forms.Form):
 class DrainageForm(forms.ModelForm):
     """Drainage sForm"""
 
+    IMAGE_MAX_BYTES = 3 * 1024 * 1024
+
     class Meta:
         model = drainage
         fields = "__all__"
+
+    def clean_drainage_image(self):
+        upload = self.cleaned_data.get("drainage_image")
+        if isinstance(upload, UploadedFile):
+            if upload.size > self.IMAGE_MAX_BYTES:
+                raise ValidationError("The image is larger than 3 MB.")
+            validate_image(upload)
+        return upload
 
 
 class LoginForm(forms.Form):

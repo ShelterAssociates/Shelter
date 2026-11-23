@@ -527,7 +527,7 @@ def modelmapdisplay(request):
     return HttpResponse(json.dumps(data),content_type='application/json')
 
 @login_required(login_url="/accounts/login/")
-@permission_required("master.view_drainage", raise_exception=True)
+@permission_required("master.add_drainage", raise_exception=True)
 def drainageinsert(request):
     """ RIM Report Form"""
     if request.method == 'POST':
@@ -567,7 +567,7 @@ def drainagedisplay(request):
     return render(request, 'drainagedisplay.html',{'R':R,'RA':RA})
 
 @login_required(login_url="/accounts/login/")
-@permission_required("master.view_drainage", raise_exception=True)
+@permission_required("master.change_drainage", raise_exception=True)
 def drainageedit(request,drainage_id):
     if request.method == 'POST':
         d = drainage.objects.get(pk=drainage_id)
@@ -581,6 +581,7 @@ def drainageedit(request,drainage_id):
     return render(request, 'drainageinsert.html', {'form': form})
 
 
+@login_required(login_url="/accounts/login/")
 def sluminformation(request):
     return render(request,'sluminformation.html')
 

@@ -89,7 +89,7 @@ class FileOpsViewTests(TestCase):
         with mock.patch("mastersheet.views.handle_uploaded_file") as parser:
             response = self.client.post(URL, {"file": upload("x.xlsx", bad), "slum_code": "1"}, **AJAX)
         parser.assert_not_called()
-        self.assertIn("DOCTYPE", response.json()[0][1])
+        self.assertIn("DOCTYPE", response.json()["Upload error"][0])
 
     def test_real_workbook_is_processed(self):
         with mock.patch("mastersheet.views.handle_uploaded_file", return_value=[["total_records", 1]]) as parser:

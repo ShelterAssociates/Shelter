@@ -1,6 +1,7 @@
 from django.db import models
 from django.contrib.auth.models import User
 from django.contrib import messages
+from django.core.exceptions import ValidationError
 from master.models import City, Slum
 from graphs.models import *
 from jsonfield import JSONField
@@ -81,9 +82,14 @@ class VendorHouseholdInvoiceDetail(models.Model):
         )
 
 
+def household_list(value):
+    """InvoiceItems.household_numbers as a list; anything else stored there counts as no households."""
+    return value if isinstance(value, list) else []
+
+
 def item_total(household_numbers, quantity, rate, tax):
     """Same formula as static/js/calculate_total_invoice.js."""
-    households = len(household_numbers) if isinstance(household_numbers, list) else 0
+    households = len(household_list(household_numbers))
     return round(households * (quantity or 0) * (rate or 0) * (1 + (tax or 0) / 100.0), 2)
 
 
@@ -589,6 +595,8 @@ def handle_shifted_material(sender, instance, **kwargs):
 
 @receiver(pre_save, sender=InvoiceItems)
 def check_duplicate_house(sender, instance, **kwargs):
+    if not isinstance(instance.household_numbers, list):
+        raise ValidationError("household_numbers must be a list of household numbers.")
     errors = []
     if instance.id is not None:
         all_records = InvoiceItems.objects.filter(slum=instance.slum).exclude(
@@ -600,7 +608,7 @@ def check_duplicate_house(sender, instance, **kwargs):
     for record in all_records:
         if record.material_type == instance.material_type:
             common_households = list(
-                set(record.household_numbers).intersection(instance.household_numbers)
+                set(household_list(record.household_numbers)).intersection(instance.household_numbers)
             )
             if len(common_households) != 0:
                 errors.append(

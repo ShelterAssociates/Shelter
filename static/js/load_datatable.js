@@ -507,6 +507,7 @@ $(document).ready(function () {
     add_search_box();
   });
   $("#upload_file_1").on("click", function () {
+    clearUploadMessages("#myModal");
     $(".overlay").show();
     var input = $("#upload_file")[0];
     var formData = new FormData(input);
@@ -564,6 +565,10 @@ $(document).ready(function () {
                 }
               } catch (error) { }
             });
+            if (response.total_records === undefined) {
+              $(".overlay").hide();
+              return;
+            }
             var success_log = document.createElement("div");
             $(success_log).append(
               $("<p>").text(
@@ -592,7 +597,16 @@ $(document).ready(function () {
     }
   });
 
-  // Clearing modal after it is closed
+  // The message areas are emptied, never removed, so every upload can show its result.
+  function clearUploadMessages(modal) {
+    $(modal).find("#error_log, #success_log").empty().removeClass("alert alert-danger alert-success error_display");
+  }
+
+  $("#myModal").on("hidden.bs.modal", function () {
+    clearUploadMessages(this);
+    $("#upload_file")[0].reset();
+  });
+
   $("#btnUpload").on("click", function () {
     var slum_code = $("#slum_form")[0][1].value;
     if (slum_code.length == 0) {
@@ -600,26 +614,16 @@ $(document).ready(function () {
     } else {
       $("#myModal").modal("show");
     }
-    $("#myModal").on("hidden.bs.modal", function () {
-      $(this).find("#error_log").html("");
-      $(this).find("#error_log").remove();
-      $(this).find("#success_log").html("");
-      $(this).find("#success_log").remove();
-      $("#upload_file")[0].reset();
-    });
   });
 
   // Handling Download GIS Data button click event.
+  $("#GISModal").on("hidden.bs.modal", function () {
+    clearUploadMessages(this);
+    $("#GISModal_selection")[0].reset();
+  });
+
   $("#btnFetchGisTab").on("click", function () {
-    var slum_code = $("#slum_form")[0][1].value;
     $("#GISModal").modal("show");
-    $("#GISModal").on("hidden.bs.modal", function () {
-      $(this).find("#error_log").html("");
-      $(this).find("#error_log").remove();
-      $(this).find("#success_log").html("");
-      $(this).find("#success_log").remove();
-      $("#GISModal_selection")[0].reset();
-    });
   });
 
   // when we submit  GIS data download tab we check if slum is selected or not.

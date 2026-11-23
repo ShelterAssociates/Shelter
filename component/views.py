@@ -1289,8 +1289,9 @@ def delete_component(request):
                 "message": f'Component "{comp_name}" deleted successfully',
             }
         )
-    except Exception as e:
-        return JsonResponse({"success": False, "message": str(e)}, status=500)
+    except Exception:
+        logger.exception("delete_component failed")
+        return JsonResponse({"success": False, "message": "The component could not be deleted. Please try again."}, status=500)
 
 
 @login_required(login_url="/accounts/login/")
@@ -1432,8 +1433,9 @@ def set_component_metric(request):
                 "metric": {"source": "manual", "value": str(value), "unit": unit},
             }
         )
-    except Exception as e:
-        return JsonResponse({"success": False, "message": str(e)}, status=500)
+    except Exception:
+        logger.exception("set_component_metric failed")
+        return JsonResponse({"success": False, "message": "The metric could not be saved. Please try again."}, status=500)
 
 
 # ================== New API for Sponsor Toilet Household Month End Dates ==================

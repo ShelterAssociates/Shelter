@@ -594,9 +594,9 @@ def upload_slum_photos_to_drive(request):
     except ObjectDoesNotExist:
         logger.warning("upload_slum_photos_to_drive: slum not found for slum_id=%s", slum_id)
         return JsonResponse({"status": "error", "message": "Slum not found."}, status=404)
-    except ImproperlyConfigured as exc:
+    except ImproperlyConfigured:
         logger.exception("upload_slum_photos_to_drive: service improperly configured")
-        return JsonResponse({"status": "error", "message": str(exc)}, status=500)
+        return JsonResponse({"status": "error", "message": "Photo upload is not available right now. Please contact the administrator."}, status=500)
     except Exception:
         logger.exception("upload_slum_photos_to_drive: photo upload service failed")
         return JsonResponse({"status": "error", "message": "Photo upload service failed."}, status=500)

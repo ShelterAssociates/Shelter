@@ -163,3 +163,29 @@ class MastersheetDetailsTests(AccessControlCase):
         self.assertEqual(self.client.get("/mastersheet/details/").status_code, 403)
         self.plain.user_permissions.add(perm("can_view_mastersheet"))
         self.assertNotEqual(self.client.get("/mastersheet/details/").status_code, 403)
+
+
+
+class SlumInformationPagesTests(AccessControlCase):
+    DISPLAY, INSERT = "/admin/sluminformation/drainage/display/", "/admin/sluminformation/drainage/insert/"
+
+    def test_anonymous_user_is_sent_to_login(self):
+        for url in ("/admin/sluminformation/", self.DISPLAY, self.INSERT):
+            self.assert_sent_to_login(self.client.get(url))
+
+    def test_user_without_view_drainage_gets_403(self):
+        self.client.force_login(self.plain)
+        for url in (self.DISPLAY, self.INSERT):
+            self.assertEqual(self.client.get(url).status_code, 403, url)
+
+    def test_view_permission_opens_the_list_but_not_the_form(self):
+        self.plain.user_permissions.add(perm("view_drainage"))
+        self.client.force_login(self.plain)
+        self.assertEqual(self.client.get("/admin/sluminformation/").status_code, 200)
+        self.assertEqual(self.client.get(self.DISPLAY).status_code, 200)
+        self.assertEqual(self.client.get(self.INSERT).status_code, 403)
+
+    def test_add_permission_opens_the_form(self):
+        self.plain.user_permissions.add(perm("add_drainage"))
+        self.client.force_login(self.plain)
+        self.assertEqual(self.client.get(self.INSERT).status_code, 200)

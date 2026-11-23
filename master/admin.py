@@ -21,7 +21,7 @@ from master.models import (
     SlumTransformationPhase,
     SlumTransformationImage,
 )
-from master.forms import CityFrom, AdministrativeWardFrom, ElectoralWardForm, SlumForm
+from master.forms import CityFrom, AdministrativeWardFrom, DrainageForm, ElectoralWardForm, SlumForm
 from django.contrib.auth.models import Group
 from django.utils.html import format_html
 from django.urls import reverse
@@ -459,7 +459,7 @@ admin.site.register(ElectedRepresentative, ElectedRepresentativeAdmin)
 
 admin.site.register(Rapid_Slum_Appraisal, RapidSlumAppraisalAdmin)
 
-admin.site.register(drainage)
+admin.site.register(drainage, form=DrainageForm)
 
 
 # =========================
