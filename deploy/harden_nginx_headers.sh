@@ -3,7 +3,7 @@
 #  - http block of nginx.conf: "server_tokens off" (no version or OS anywhere) and,
 #    when the headers-more module is installed (Ubuntu package nginx-extras),
 #    "more_clear_headers Server" (no Server header at all);
-#  - installs deploy/nginx_error_pages.conf as /etc/nginx/snippets/shelter-error-pages.conf
+#  - installs deploy/nginx/error-pages.conf as /etc/nginx/snippets/shelter-error-pages.conf
 #    for the server blocks to include (generic error and redirect pages).
 #
 #   sudo deploy/harden_nginx_headers.sh           show the changes, change nothing
@@ -13,7 +13,7 @@ set -euo pipefail
 
 NGINX=${NGINX:-nginx}
 CONF=$(readlink -f "${NGINX_CONF:-/etc/nginx/nginx.conf}")
-SNIPPET_SRC="$(cd "$(dirname "$0")" && pwd)/nginx_error_pages.conf"
+SNIPPET_SRC="$(cd "$(dirname "$0")" && pwd)/nginx/error-pages.conf"
 SNIPPET=${SNIPPET:-/etc/nginx/snippets/shelter-error-pages.conf}
 
 if "$NGINX" -V 2>&1 | grep -q "headers-more"; then
