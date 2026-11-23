@@ -145,7 +145,8 @@ def graphs_display(request, graph_type):
     if graph_type not in settings.GRAPH_DETAILS:
         raise Http404
     custom_url = settings.GRAPHS_BUILD_URL % settings.GRAPH_DETAILS[graph_type][1::-1]
-    return render(request, "graphs.html", {"custom_url": custom_url})
+    graphs_login_url = settings.GRAPHS_PUBLIC_URL.rstrip("/") + "/login/"
+    return render(request, "graphs.html", {"custom_url": custom_url, "graphs_login_url": graphs_login_url})
 
 
 def get_dashboard_card(request, key):

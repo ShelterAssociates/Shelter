@@ -25,6 +25,7 @@ Expected folder structure:
 import os
 import builtins
 import inspect
+from urllib.parse import urlparse
 
 
 # ---------------------------------------------------------------------------
@@ -86,6 +87,9 @@ SECRET_KEY = ""  # MUST be set in local_settings.py
 ALLOWED_HOSTS = []  # MUST be set in local_settings.py
 # This server's https:// address; emailed links are built from it. Set in local_settings.py.
 BASE_APP_URL = ""
+# Superset as browsers reach it: embedded on the graphs page and allowed by the CSP.
+# Each server points at its own (UAT: https://uat-graphs.shelter-associates.org/).
+GRAPHS_PUBLIC_URL = "https://graphs.shelter-associates.org/"
 
 # Empty by default so that if local_settings.py ever fails to define this,
 # delete_component blocks the delete (no one configured to notify) rather
@@ -283,7 +287,7 @@ CSP_POLICY = {
         "'self'", "https://maps.googleapis.com", "https://s3.ap-south-1.amazonaws.com",
         "https://*.s3.ap-south-1.amazonaws.com", "https://*.s3.amazonaws.com",
     ],
-    "frame-src": ["'self'", "https://graphs.shelter-associates.org"],
+    "frame-src": ["'self'", "{0.scheme}://{0.netloc}".format(urlparse(GRAPHS_PUBLIC_URL))],
     "worker-src": ["'self'", "blob:"],
     "object-src": ["'none'"],
     "base-uri": ["'self'"],
