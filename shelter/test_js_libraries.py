@@ -3,6 +3,7 @@
 import re
 import subprocess
 
+from django.apps import apps
 from django.contrib.staticfiles import finders
 from django.test import SimpleTestCase
 
@@ -19,11 +20,6 @@ LIBRARIES = [
 # Old copies still to be replaced, by published path.
 PENDING = {
     "js/jquery.min.js": "jQuery 1.12 for every page",
-    "js/jquery.fancytree-all-deps.js": "bundled jQuery UI 1.12",
-    "js/jquery.fancytree-all-deps.min.js": "bundled jQuery UI 1.12",
-    "rest_framework/js/jquery-3.4.1.min.js": "Django REST framework's own copy",
-    "rest_framework/css/bootstrap.min.css": "Django REST framework's own copy (3.4.0)",
-    "rest_framework/css/bootstrap-theme.min.css": "Django REST framework's own copy (3.4.0)",
 }
 
 STATIC_TAG = re.compile(r"""\{%\s*static\s+['"]([^'"]+\.(?:js|css))['"]\s*%\}""")
@@ -37,7 +33,7 @@ def version(text):
 
 def published_files():
     for finder in finders.get_finders():
-        for path, storage in finder.list(["*.map"]):
+        for path, storage in finder.list(apps.get_app_config("staticfiles").ignore_patterns + ["*.map"]):
             if path.endswith((".js", ".css")):
                 yield path, storage
 

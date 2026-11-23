@@ -221,7 +221,7 @@ INSTALLED_APPS = (
     "django.contrib.contenttypes",
     "django.contrib.sessions",
     "django.contrib.messages",
-    "django.contrib.staticfiles",
+    "shelter.apps.StaticFilesConfig",
     "django.contrib.gis",
     "master",
     "component",
@@ -316,6 +316,9 @@ REST_FRAMEWORK = {
         "rest_framework.authentication.TokenAuthentication",
     ),
     "DEFAULT_PERMISSION_CLASSES": ("rest_framework.permissions.AllowAny",),
+    # The HTML ("browsable") API only for development; servers answer JSON.
+    "DEFAULT_RENDERER_CLASSES": ("rest_framework.renderers.JSONRenderer",)
+    + (("rest_framework.renderers.BrowsableAPIRenderer",) if DEBUG else ()),
 }
 
 
