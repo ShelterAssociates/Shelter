@@ -3,6 +3,7 @@
 """The Django Forms Page for master app"""
 
 from django import forms
+from django.conf import settings
 from django.core.files.uploadedfile import UploadedFile
 from utils.uploads import validate_pdf
 
@@ -29,7 +30,7 @@ class LocationWidget(widgets.TextInput):
     template_name = "draw.html"
 
     def render(self, name, value, attrs=None, renderer=None):
-        context = {"POLYGON": value}
+        context = {"POLYGON": value, "GOOGLE_API_KEY": settings.GOOGLE_API_KEY}
         return mark_safe(render_to_string(self.template_name, context))
 
 

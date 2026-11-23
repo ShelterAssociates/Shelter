@@ -87,6 +87,10 @@ SECRET_KEY = ""  # MUST be set in local_settings.py
 ALLOWED_HOSTS = []  # MUST be set in local_settings.py
 # This server's https:// address; emailed links are built from it. Set in local_settings.py.
 BASE_APP_URL = ""
+# Google Maps JavaScript API key for the map pages (it is visible in the browser by design).
+# Set per server in local_settings.py; in Google Cloud Console restrict it to this server's
+# websites (HTTP referrers) and to the Maps JavaScript API only.
+GOOGLE_API_KEY = ""
 # Superset as browsers reach it: embedded on the graphs page and allowed by the CSP.
 # Each server points at its own (UAT: https://uat-graphs.shelter-associates.org/).
 GRAPHS_PUBLIC_URL = "https://graphs.shelter-associates.org/"
@@ -353,6 +357,7 @@ TEMPLATES = [
                 "django.contrib.auth.context_processors.auth",
                 "django.contrib.messages.context_processors.messages",
                 "shelter.context_processors.csp_nonce",
+                "shelter.context_processors.google_api_key",
             ],
         },
     },

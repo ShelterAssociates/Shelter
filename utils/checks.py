@@ -65,3 +65,16 @@ def birt_report_design_exists(app_configs, **kwargs):
             id="shelter.W003",
         )]
     return []
+
+
+@register()
+def google_maps_key_is_set(app_configs, **kwargs):
+    """Without it the public map, the dashboard and the admin polygon editor show no Google map."""
+    if settings.DEBUG or getattr(settings, "GOOGLE_API_KEY", ""):
+        return []
+    return [Warning(
+        "GOOGLE_API_KEY is empty: the map pages cannot load Google Maps.",
+        hint="Set this server's browser key in shelter/local_settings.py (restricted to its websites "
+             "and to the Maps JavaScript API in Google Cloud Console).",
+        id="shelter.W004",
+    )]
