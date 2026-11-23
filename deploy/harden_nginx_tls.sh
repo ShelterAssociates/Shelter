@@ -31,6 +31,23 @@ if at_least "$nginx_version" 1.13.0 && at_least "${openssl_version:-0}" 1.1.1; t
 fi
 echo "nginx $nginx_version, OpenSSL ${openssl_version:-unknown} -> ssl_protocols $PROTOCOLS"
 
+# BIRT fetches report data and images from https://app.shelter-associates.org.
+# Java 7 has no AES-GCM suites, so after this change it cannot connect at all.
+old_java=""
+for java in $(command -v java 2>/dev/null) $(for p in $(pgrep -x java 2>/dev/null); do readlink -f "/proc/$p/exe"; done) ${EXTRA_JAVA:-}; do
+    [ -x "$java" ] || continue
+    v=$("$java" -version 2>&1 | sed -n '1s/.*version "\([^"]*\)".*/\1/p')
+    major=${v#1.}; major=${major%%[._-]*}
+    echo "Java found: $java  ($v)"
+    if [ -n "$major" ] && [ "$major" -lt 8 ] 2>/dev/null; then old_java="$old_java $java($v)"; fi
+done
+if [ -n "$old_java" ] && [ "${ALLOW_OLD_JAVA:-}" != 1 ]; then
+    echo "STOP: Java older than 8 on this server:$old_java" >&2
+    echo "      BIRT reports would fail to load their data and images after this change." >&2
+    echo "      Give BIRT Java 8 first (deploy checklist, step N4a), then run this again." >&2
+    exit 1
+fi
+
 files=()
 for f in "$ETC/nginx.conf" "$ETC"/sites-enabled/* "$ETC"/conf.d/*.conf "$CERTBOT_OPTIONS"; do
     [ -f "$f" ] || continue
