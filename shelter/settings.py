@@ -279,13 +279,13 @@ CSP_POLICY = {
     "default-src": ["'self'"],
     "script-src": [
         "'self'", "https://maps.googleapis.com", "https://maps.gstatic.com", "https://cdn.jsdelivr.net",
-        "https://cdn.datatables.net", "https://cdn.sheetjs.com", "https://cdnjs.cloudflare.com",
+        "https://cdn.datatables.net", "https://cdnjs.cloudflare.com",
     ],
     "style-src": [
         "'self'", "'unsafe-inline'", "https://fonts.googleapis.com", "https://cdn.jsdelivr.net",
-        "https://maxcdn.bootstrapcdn.com", "https://cdnjs.cloudflare.com", "https://cdn.datatables.net",
+        "https://cdnjs.cloudflare.com", "https://cdn.datatables.net",
     ],
-    "font-src": ["'self'", "data:", "https://fonts.gstatic.com", "https://maxcdn.bootstrapcdn.com"],
+    "font-src": ["'self'", "data:", "https://fonts.gstatic.com"],
     "img-src": ["'self'", "data:", "blob:", "https:"],
     "connect-src": [
         "'self'", "https://maps.googleapis.com", "https://s3.ap-south-1.amazonaws.com",

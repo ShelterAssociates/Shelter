@@ -83,7 +83,8 @@ $(document).ready(function () {
 
   var csrf_token = document.getElementsByName("csrfmiddlewaretoken")[0].value;
 
-  $.ajax({
+  // Tables are built from these column definitions; a Fetch click waits for them.
+  var columnsLoaded = $.ajax({
     url: "/mastersheet/columns/",
     type: "GET",
     dataType: "json",
@@ -1405,7 +1406,7 @@ $(document).ready(function () {
           }
         },
       });
-      load_data_datatable();
+      columnsLoaded.done(load_data_datatable);
     }
   });
 
@@ -1441,7 +1442,7 @@ $(document).ready(function () {
           }
         },
       });
-      load_short_datatable();
+      columnsLoaded.done(load_short_datatable);
     }
   });
 
@@ -1477,7 +1478,7 @@ $(document).ready(function () {
           }
         },
       });
-      load_member_datatable();
+      columnsLoaded.done(load_member_datatable);
     }
   });
 

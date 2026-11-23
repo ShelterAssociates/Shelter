@@ -9,7 +9,7 @@
 {% block blockbots %}<meta name="robots" content="NONE,NOARCHIVE">{% endblock %}
 
 <link rel="stylesheet" href="{% static "admin/css/base.css" %}">
-<link rel="stylesheet" type="text/css" href="{% static "css/bootstrap.min.css" %}">
+<link rel="stylesheet" type="text/css" href="{% static "css/bootstrap-3.4.1.min.css" %}">
 {% block extrastyle %}{% endblock %}
 {% if LANGUAGE_BIDI %}
 <link rel="stylesheet" href="{% static "admin/css/rtl.css" %}">
@@ -19,7 +19,7 @@
 <script nonce="{{ csp_nonce }}">window.__admin_utc_offset__ = "{% filter escapejs %}{% now "Z" %}{% endfilter %}";</script>
 <script src="{% static "js/jquery.min.js" %}"></script>
 <script src="{% static "js/csrf.js" %}" data-token="{{ csrf_token }}"></script>
-<script src="{% static "js/bootstrap.min.js" %}"></script>
+<script src="{% static "js/bootstrap-3.4.1.js" %}"></script>
 {% block extrahead %}{% endblock %}
 
 <style>
