@@ -1002,6 +1002,7 @@ def define_columns(request):
     return HttpResponse(json.dumps(final_data), content_type="application/json")
 
 
+@login_required(login_url="/accounts/login/")
 @permission_required("mastersheet.can_view_mastersheet", raise_exception=True)
 def renderMastersheet(request):
     slum_search_field = find_slum()
@@ -1499,6 +1500,7 @@ def sync_kobo_data(request):
 """ Mastersheet Report Tab """
 
 
+@login_required(login_url="/accounts/login/")
 @permission_required("mastersheet.can_view_mastersheet_report", raise_exception=True)
 def render_report(request):
     return render(request, "mastersheet_report.html")
@@ -2573,6 +2575,7 @@ def accounts_slums_for_city(request):
     )
     return JsonResponse({"slums": slums})
 
+@login_required(login_url="/accounts/login/")
 @permission_required("mastersheet.can_view_mastersheet", raise_exception=True)
 def renderSummery(request):
     slum_search_field = find_slum()
