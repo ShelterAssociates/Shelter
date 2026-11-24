@@ -73,12 +73,6 @@ class ReportEndpointTests(TestCase):
         self.assertEqual(self.client.post("/csp-report/", "not json", content_type="application/json").status_code, 204)
         self.assertEqual(self.client.get("/csp-report/").status_code, 405)
 
-    def test_jquery_feature_test_is_not_logged(self):
-        with self.assertRaises(AssertionError):
-            with self.assertLogs("shelter.views", "WARNING"):
-                self.post({"violated-directive": "script-src-attr", "blocked-uri": "inline",
-                           "source-file": "https://uat.shelter-associates.org/static/js/jquery.min.js"})
-
 
 class CodeGuardTests(SimpleTestCase):
     """Fails when new code would need 'unsafe-inline' again."""

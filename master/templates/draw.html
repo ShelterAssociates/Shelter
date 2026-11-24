@@ -2,7 +2,6 @@
 <html> 
 <head> 
     <meta name="viewport" content="initial-scale=1.0, user-scalable=no">
-<script src="{% static "js/jquery.min.js" %}"></script>
 <script src="{% static "js/csrf.js" %}" data-token="{{ csrf_token }}"></script>
 <script src="{% static "js/draw.js" %}"></script>
 <script src="https://maps.googleapis.com/maps/api/js?key={{ GOOGLE_API_KEY|urlencode }}&callback=initialise"

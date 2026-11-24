@@ -19,7 +19,6 @@ LIBRARIES = [
 
 # Old copies still to be replaced, by published path.
 PENDING = {
-    "js/jquery.min.js": "jQuery 1.12 for every page",
 }
 
 STATIC_TAG = re.compile(r"""\{%\s*static\s+['"]([^'"]+\.(?:js|css))['"]\s*%\}""")

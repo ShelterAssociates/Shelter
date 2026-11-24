@@ -10,7 +10,7 @@
     const csrftoken = '{{ csrf_token }}'
     const canGISExport = {% if user.username == "GIS" %}true{% else %}false{% endif %};
   </script>
-  <script src="{% static 'js/jquery.min.js' %}"></script>
+  <script src="{% static 'js/jquery-3.7.1.min.js' %}"></script>
   <script src="{% static 'js/csrf.js' %}" data-token="{{ csrf_token }}"></script>
   <script src="{% static 'js/master_map_boundaries.js' %}"></script>
   <script src="{% static 'js/master_map_breadcrumb.js' %}"></script>
@@ -889,7 +889,7 @@
                 <button type="button" class="close" data-dismiss="modal"></button>
               </h4>
             </div>
-            <div id="modelbody" class="modal-body" style="padding-top:0; padding-bottom:0; height:70%; overflow:auto;"></div>
+            <div id="modelbody" class="modal-body" style="padding-top:0; padding-bottom:0; height:70vh; overflow:auto;"></div>
             <div class="modal-footer">
               <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
             </div>
@@ -907,7 +907,7 @@
                 <button type="button" class="close" data-dismiss="modal"></button>
               </h4>
             </div>
-            <div id="modelbody" class="modal-body" style="padding-top:0; padding-bottom:0; height:70%; overflow:auto;"></div>
+            <div id="modelbody" class="modal-body" style="padding-top:0; padding-bottom:0; height:70vh; overflow:auto;"></div>
             <div class="modal-footer">
               <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
             </div>

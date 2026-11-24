@@ -17,7 +17,7 @@
 
 <script nonce="{{ csp_nonce }}">window.__admin_media_prefix__ = "{% filter escapejs %}{% static "admin/" %}{% endfilter %}";</script>
 <script nonce="{{ csp_nonce }}">window.__admin_utc_offset__ = "{% filter escapejs %}{% now "Z" %}{% endfilter %}";</script>
-<script src="{% static "js/jquery.min.js" %}"></script>
+<script src="{% static "js/jquery-3.7.1.min.js" %}"></script>
 <script src="{% static "js/csrf.js" %}" data-token="{{ csrf_token }}"></script>
 <script src="{% static "js/bootstrap-3.4.1.js" %}"></script>
 {% block extrahead %}{% endblock %}

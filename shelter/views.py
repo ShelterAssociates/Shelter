@@ -18,9 +18,6 @@ def csp_report(request):
         report = {}
     directive = str(report.get("violated-directive") or report.get("effective-directive") or "")
     source = str(report.get("source-file") or "")
-    if directive.startswith("script-src-attr") and source.endswith("/jquery.min.js") and not report.get("script-sample"):
-        # jQuery 1.x sets a test "on…" attribute at start-up; harmless, gone after the jQuery upgrade.
-        return HttpResponse(status=204)
     logger.warning(
         "CSP violation: %r blocked %r on %r (source %r line %r sample %r)",
         directive[:100],
