@@ -189,3 +189,32 @@ class SlumInformationPagesTests(AccessControlCase):
         self.plain.user_permissions.add(perm("add_drainage"))
         self.client.force_login(self.plain)
         self.assertEqual(self.client.get(self.INSERT).status_code, 200)
+
+
+class SignedOutVisitorTests(AccessControlCase):
+    PAGES = (
+        "/mastersheet/show/mastersheet/",
+        "/mastersheet/report/",
+        "/mastersheet/show/summery/",
+        "/photos/",
+        "/photos/slum/1/",
+        "/photos/slum/1/household/101/",
+        "/photos/exports/",
+        "/photos/exports/1/download/",
+        "/photos/encounter/",
+    )
+
+    def test_signed_out_visitor_is_sent_to_login_and_back(self):
+        for url in self.PAGES:
+            response = self.client.get(url)
+            self.assert_sent_to_login(response)
+            self.assertIn("next=" + url, response["Location"], url)
+
+    def test_signed_in_user_without_permission_still_gets_403(self):
+        self.client.force_login(self.plain)
+        for url in self.PAGES:
+            self.assertEqual(self.client.get(url).status_code, 403, url)
+
+    def test_photo_actions_still_refuse_a_signed_out_post(self):
+        for url in ("/photos/slum/1/household/101/download/", "/photos/slum/1/export/"):
+            self.assertEqual(self.client.post(url).status_code, 403, url)
