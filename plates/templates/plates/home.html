@@ -1,0 +1,60 @@
+{% extends "admin/base_site.html" %}
+{% block title %}Plates{% endblock %}
+{% block bodyclass %}pl-body{% endblock %}
+{% block breadcrumbs %}{% endblock %}
+{% block extrastyle %}{% include "plates/partials/styles.html" %}{% endblock %}
+
+{% block content %}
+<div class="pl-page">
+  {% include "plates/partials/nav.html" with active="home" %}
+  <div class="pl-header">
+    <div>
+      <h1 class="pl-title">DIGIPIN and Plus Code plates</h1>
+      <p class="pl-lead">Printable house plates, one plate type per run. A single plate downloads straight away; an Excel upload is checked and shown as demo plates first, and made in the background after you confirm.</p>
+    </div>
+  </div>
+
+  <section class="pl-section">
+    <div class="pl-tasks">
+      <div class="pl-task">
+        <div>
+          <h2 class="pl-task-title">Make one plate</h2>
+          <p>Type one house's code, location, slum and house number; preview it and download the PNG. Nothing is stored.</p>
+        </div>
+        <div class="pl-actions">
+          <a class="pl-btn pl-btn--primary" href="{% url 'plates:single' %}?type=digipin">DIGIPIN plate</a>
+          <a class="pl-btn" href="{% url 'plates:single' %}?type=pluscode">Plus Code plate</a>
+        </div>
+      </div>
+      <div class="pl-task">
+        <div>
+          <h2 class="pl-task-title">Make many plates from Excel</h2>
+          <p>Fill in the Excel format, upload it, check the rows and the demo plates, then confirm. You get an email when the zip is ready.</p>
+        </div>
+        <div class="pl-actions">
+          <a class="pl-btn pl-btn--primary" href="{% url 'plates:bulk_new' %}">Upload Excel</a>
+          <a class="pl-btn" href="{% url 'plates:excel_format_download' 'digipin' %}">{% include "plates/partials/download_icon.html" %} DIGIPIN Excel format</a>
+          <a class="pl-btn" href="{% url 'plates:excel_format_download' 'pluscode' %}">{% include "plates/partials/download_icon.html" %} Plus Code Excel format</a>
+        </div>
+      </div>
+      {% if can_edit %}
+      <div class="pl-task">
+        <div>
+          <h2 class="pl-task-title">Templates</h2>
+          <p>Size, DPI, colours, fonts, logos, drill holes, side panel and the QR link of each plate design.</p>
+        </div>
+        <div class="pl-actions"><a class="pl-btn" href="{% url 'plates:templates' %}">Open templates</a></div>
+      </div>
+      {% endif %}
+    </div>
+  </section>
+
+  <section class="pl-section">
+    <div class="pl-section-head">
+      <h2 class="pl-h2">Recent batches</h2>
+      {% if recent %}<a href="{% url 'plates:batches' %}">All batches</a>{% endif %}
+    </div>
+    {% if recent %}{% include "plates/partials/batch_table.html" with batches=recent %}{% else %}<p class="pl-empty">No batches yet. Upload an Excel file to make your first batch.</p>{% endif %}
+  </section>
+</div>
+{% endblock %}

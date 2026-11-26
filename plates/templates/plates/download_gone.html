@@ -1,0 +1,14 @@
+{% extends "admin/base_site.html" %}
+{% block title %}Download{% endblock %}
+{% block bodyclass %}pl-body{% endblock %}
+{% block breadcrumbs %}{% endblock %}
+{% block extrastyle %}{% include "plates/partials/styles.html" %}{% endblock %}
+
+{% block content %}
+<div class="pl-page">
+  {% include "plates/partials/nav.html" with active="batches" %}
+  <h1 class="pl-title">Download not available</h1>
+  <p class="pl-lead" style="margin-bottom:20px">{{ message }}</p>
+  <a class="pl-btn pl-btn--primary" href="{% url 'plates:batch_detail' batch.public_id %}">Open the batch page</a>
+</div>
+{% endblock %}

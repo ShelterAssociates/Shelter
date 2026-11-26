@@ -1,0 +1,10 @@
+{% load plates_tags %}
+<nav class="pl-tabs" aria-label="Plates">
+  <a href="{% url 'plates:home' %}"{% if active == "home" %} class="is-active" aria-current="page"{% endif %}>Overview</a>
+  <a href="{% url 'plates:single' %}"{% if active == "single" %} class="is-active" aria-current="page"{% endif %}>Single plate</a>
+  <a href="{% url 'plates:bulk_new' %}"{% if active == "bulk" %} class="is-active" aria-current="page"{% endif %}>Excel upload</a>
+  <a href="{% url 'plates:batches' %}"{% if active == "batches" %} class="is-active" aria-current="page"{% endif %}>Batches</a>
+  {% if user|can_edit_plate_templates %}<a href="{% url 'plates:templates' %}"{% if active == "templates" %} class="is-active" aria-current="page"{% endif %}>Templates</a>{% endif %}
+  <a href="{% url 'plates:help' %}"{% if active == "help" %} class="is-active" aria-current="page"{% endif %}>How to use</a>
+  <a class="pl-tabs-end" href="/helpers/digipin_generate/">DIGIPIN tool</a>
+</nav>

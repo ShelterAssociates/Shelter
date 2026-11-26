@@ -1,0 +1,23 @@
+{% if batches %}
+<div class="pl-table-wrap">
+  <table class="pl-table">
+    <thead><tr><th>Batch</th><th>Type</th><th>Slum or file</th><th>Template</th><th class="pl-num">Rows</th><th class="pl-num">Made</th><th class="pl-num">Skipped</th>{% if show_requester %}<th>Requested by</th>{% endif %}<th>Created</th><th>Status</th></tr></thead>
+    <tbody>
+    {% for batch in batches %}
+      <tr>
+        <td><a href="{% url 'plates:batch_detail' batch.public_id %}">#{{ batch.pk }}</a></td>
+        <td>{{ batch.get_plate_type_display }}</td>
+        <td>{{ batch.slum_name|default:batch.original_name|default:"—" }}</td>
+        <td class="pl-muted">{{ batch.template.name }} v{{ batch.template.version }}</td>
+        <td class="pl-num">{{ batch.row_count }}</td>
+        <td class="pl-num">{{ batch.made_count }}</td>
+        <td class="pl-num">{{ batch.skipped_count }}</td>
+        {% if show_requester %}<td>{{ batch.requested_by.get_username|default:"—" }}</td>{% endif %}
+        <td class="pl-muted">{{ batch.created_on|date:"j M Y, H:i" }}</td>
+        <td>{% include "plates/partials/status.html" with status=batch.status %}</td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% else %}<p class="pl-empty">No batches yet.</p>{% endif %}

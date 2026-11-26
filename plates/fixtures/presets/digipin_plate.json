@@ -1,0 +1,256 @@
+{
+  "preset_key": "digipin_plate",
+  "name": "DIGIPIN plate 5 x 1.5 in",
+  "plate_type": "digipin",
+  "output_kind": "plate",
+  "width_mm": 127.0,
+  "height_mm": 38.1,
+  "dpi": 600,
+  "mode": "designed",
+  "background": {
+    "fill": "gradient",
+    "colours": [
+      "#2A2468",
+      "#4B42A8"
+    ],
+    "gradient_angle": 18.434949,
+    "grid": {
+      "on": true,
+      "opacity": 0.094118,
+      "major": 0.5,
+      "divisions": 4
+    },
+    "border": {
+      "on": true,
+      "inset": 0.037778,
+      "radius": 0.051111,
+      "width": 0.005556,
+      "colour": "#FFFFFF",
+      "opacity": 1
+    },
+    "strip": {
+      "on": false,
+      "position": "bottom",
+      "height": 0.03,
+      "colours": [
+        "#F58220",
+        "#FFFFFF",
+        "#138808"
+      ]
+    }
+  },
+  "elements": [
+    {
+      "id": "qr_card",
+      "type": "card",
+      "box": [
+        0.721667,
+        0.1,
+        0.208,
+        0.8
+      ],
+      "z": 1,
+      "fill": "#FFFFFF",
+      "radius": 0.044444,
+      "shadow": {
+        "on": true,
+        "dx": 0.008889,
+        "dy": 0.013333,
+        "blur": 0.013333,
+        "opacity": 0.352941
+      },
+      "outline": {
+        "on": false
+      }
+    },
+    {
+      "id": "qr",
+      "type": "qr",
+      "box": [
+        0.737667,
+        0.153333,
+        0.176,
+        0.586667
+      ],
+      "z": 2,
+      "parent": "qr_card",
+      "source": "link",
+      "fg": "#2A2468",
+      "bg": "#FFFFFF",
+      "quiet_zone": 0
+    },
+    {
+      "id": "qr_caption",
+      "type": "text",
+      "box": [
+        0.721667,
+        0.788889,
+        0.208,
+        0.037778
+      ],
+      "z": 3,
+      "parent": "qr_card",
+      "source": "qr_caption",
+      "font": "Liberation Sans Bold",
+      "max_size": 0.047778,
+      "min_size": 0.047778,
+      "letter_spacing": 0.14,
+      "colour": "#2A2468",
+      "align": "centre",
+      "valign": "top",
+      "wrap": "never",
+      "max_lines": 1,
+      "uppercase": false
+    },
+    {
+      "id": "badge",
+      "type": "badge",
+      "box": [
+        0.070333,
+        0.197778,
+        0.181333,
+        0.604444
+      ],
+      "z": 4,
+      "fill": "#FFFFFF",
+      "ring_colour": "#FFFFFF",
+      "ring_width": 0.014444,
+      "gap": 0.014444,
+      "gap_colour": "#2A2468",
+      "child": {
+        "asset": "auto:digipin_symbol",
+        "recolour": "#2A2468",
+        "size": 0.648374
+      }
+    },
+    {
+      "id": "title",
+      "type": "text",
+      "box": [
+        0.261,
+        0.121111,
+        0.267333,
+        0.136667
+      ],
+      "z": 7,
+      "source": "fixed",
+      "text": "DIGIPIN",
+      "font": "Merriweather Bold",
+      "max_size": 0.16,
+      "min_size": 0.16,
+      "letter_spacing": 0.16,
+      "colour": "#FFFFFF",
+      "align": "left",
+      "valign": "top",
+      "wrap": "never",
+      "max_lines": 1,
+      "uppercase": false
+    },
+    {
+      "id": "ip_card",
+      "type": "card",
+      "box": [
+        0.535333,
+        0.087778,
+        0.090333,
+        0.2
+      ],
+      "z": 5,
+      "fill": "#FFFFFF",
+      "radius": 0.026667,
+      "shadow": {
+        "on": true,
+        "dx": 0.008889,
+        "dy": 0.013333,
+        "blur": 0.013333,
+        "opacity": 0.352941
+      },
+      "outline": {
+        "on": false
+      }
+    },
+    {
+      "id": "ip_logo",
+      "type": "image",
+      "box": [
+        0.541333,
+        0.103333,
+        0.078333,
+        0.168889
+      ],
+      "z": 6,
+      "parent": "ip_card",
+      "asset": "auto:india_post_logo",
+      "fit": "contain",
+      "recolour": null
+    },
+    {
+      "id": "code",
+      "type": "text",
+      "box": [
+        0.253,
+        0.393333,
+        0.467333,
+        0.17
+      ],
+      "z": 8,
+      "source": "digipin_display",
+      "font": "Liberation Sans Bold",
+      "max_size": 0.217778,
+      "min_size": 0.152222,
+      "letter_spacing": 0,
+      "colour": "#FFFFFF",
+      "align": "left",
+      "valign": "top",
+      "wrap": "never",
+      "max_lines": 1,
+      "uppercase": true
+    },
+    {
+      "id": "slum",
+      "type": "text",
+      "box": [
+        0.254333,
+        0.637778,
+        0.466,
+        0.261111
+      ],
+      "z": 9,
+      "source": "slum",
+      "font": "Liberation Sans Bold",
+      "max_size": 0.093333,
+      "min_size": 0.06,
+      "letter_spacing": 0.06,
+      "colour": "#CDC8F0",
+      "align": "left",
+      "valign": "top",
+      "wrap": "words",
+      "max_lines": 2,
+      "uppercase": false
+    }
+  ],
+  "holes": {
+    "on": true,
+    "diameter_mm": 4.5,
+    "edge_mm": 5,
+    "position": "sides",
+    "fill": "#FFFFFF",
+    "outline": "#2A2468",
+    "marker": true
+  },
+  "side_panel": {
+    "on": false,
+    "side": "right",
+    "width_mm": 19.1,
+    "style": "labelled",
+    "fields": [
+      "house_no",
+      "slum"
+    ],
+    "cut_line": true
+  },
+  "qr_link_pattern": "https://dac.indiapost.gov.in/mydigipin/home/{digipin}",
+  "qr_caption": "SCAN FOR LOCATION",
+  "slum_suffix": ", IMC",
+  "is_default": true
+}

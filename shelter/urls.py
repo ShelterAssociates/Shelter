@@ -45,7 +45,7 @@ router.register(r"city", CityViewset)
 # Mirrors the nginx /media deny rules for runserver; in production nginx serves /media.
 PRIVATE_MEDIA = (
     r"^media/(?:(?:FFReport|gis_exports|rim_exports|sponsor_project|photo_exports|shelter/attachments"
-    r"|avni_bulk_updates|job_reports|slum_merges)/.*|[^/]+\.zip)$"
+    r"|avni_bulk_updates|job_reports|slum_merges|plate_[^/]*)/.*|[^/]+\.zip)$"
 )
 
 
@@ -122,6 +122,7 @@ urlpatterns = (
         url(r"^photos/", include("photos.urls")),
         # Internal-only AVNI sync console (manual syncs, bulk updates into AVNI)
         url(r"^avni-console/", include("avni_console.urls")),
+        url(r"^plates/", include("plates.urls")),
         # Internal-only, superusers: slum data versions, AVNI locations, per-slum sync
         url(r"^slum-versions/", include("survey.urls")),
         # Setting URL for QGIS plugin login

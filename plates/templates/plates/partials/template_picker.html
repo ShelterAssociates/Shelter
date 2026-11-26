@@ -1,0 +1,25 @@
+{% comment %}Shows only the templates of the chosen plate type. Needs #id_plate_type, #id_template and template_types.{% endcomment %}
+{{ template_types|json_script:"plate-template-types" }}
+<script nonce="{{ csp_nonce }}">
+(function () {
+  var typeSelect = document.getElementById("id_plate_type"), templateSelect = document.getElementById("id_template");
+  if (!typeSelect || !templateSelect) return;
+  var types = {}, defaults = {};
+  JSON.parse(document.getElementById("plate-template-types").textContent).forEach(function (item) {
+    types[String(item.id)] = item.type;
+    if (item.is_default) defaults[item.type] = String(item.id);
+  });
+  function filter() {
+    var chosen = typeSelect.value, keep = false;
+    Array.prototype.forEach.call(templateSelect.options, function (option) {
+      var show = !option.value || types[option.value] === chosen;
+      option.hidden = !show;
+      option.disabled = !show;
+      if (show && option.selected && option.value) keep = true;
+    });
+    if (!keep) templateSelect.value = defaults[chosen] || "";
+  }
+  typeSelect.addEventListener("change", filter);
+  filter();
+})();
+</script>

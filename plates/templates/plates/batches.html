@@ -1,0 +1,21 @@
+{% extends "admin/base_site.html" %}
+{% block title %}Plate batches{% endblock %}
+{% block bodyclass %}pl-body{% endblock %}
+{% block breadcrumbs %}{% endblock %}
+{% block extrastyle %}{% include "plates/partials/styles.html" %}{% endblock %}
+
+{% block content %}
+<div class="pl-page">
+  {% include "plates/partials/nav.html" with active="batches" %}
+  <div class="pl-header">
+    <div>
+      <h1 class="pl-title">Batches</h1>
+      <p class="pl-lead">{% if user.is_superuser %}Every user's batches.{% else %}Your batches.{% endif %} A zip is kept until the first nightly cleanup (05:00) at least 24 hours after it was made; the record stays.</p>
+    </div>
+    <a class="pl-btn pl-btn--primary" href="{% url 'plates:bulk_new' %}">Upload Excel</a>
+  </div>
+  <section class="pl-section">
+    {% include "plates/partials/batch_table.html" with batches=batches show_requester=user.is_superuser %}
+  </section>
+</div>
+{% endblock %}
