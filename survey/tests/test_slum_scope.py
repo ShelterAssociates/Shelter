@@ -238,8 +238,10 @@ class PageAccessTests(TestCase):
         self.slum = make_slum(self.city)
         self.url = "/slum-versions/{}/".format(self.slum.id)
 
-    def test_anonymous_is_refused(self):
-        self.assertEqual(self.client.get(self.url).status_code, 403)
+    def test_anonymous_is_sent_to_login(self):
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, 302)
+        self.assertTrue(response["Location"].startswith("/accounts/login/"))
 
     def test_a_staff_user_who_is_not_a_superuser_is_refused(self):
         User.objects.create_user("staffer", password="pw", is_staff=True)

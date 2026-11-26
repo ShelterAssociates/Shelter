@@ -202,9 +202,10 @@
   {% endif %}
 </div>
 
-<script src="{% static 'js/jquery.min.js' %}"></script>
+<script src="{% static 'js/jquery-3.7.1.min.js' %}"></script>
+<script src="{% static 'js/csrf.js' %}" data-token="{{ csrf_token }}"></script>
 <script src="{% static 'js/jquery.dataTables.min.js' %}"></script>
-<script>
+<script nonce="{{ csp_nonce }}">
   jQuery(function ($) {
     var table = $("#householdTable").DataTable({
       pageLength: 50,
@@ -356,7 +357,7 @@
     $("#queueExport").on("click", function () {
       if (inFlight) { return; }
 
-      var email = $.trim($email.val());
+      var email = String($email.val() || '').trim();
       if (!email) {
         message("Enter the email address to send the download link to.", false, $email);
         return;

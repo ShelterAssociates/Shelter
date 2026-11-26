@@ -89,7 +89,7 @@ $(document).ready(function () {
         },
       },
       columns: ACCOUNTS_REPORT_COLUMNS.map(function (title) {
-        return { title: title };
+        return { title: title, render: $.fn.dataTable.render.text() };
       }),
       scrollX: true,
     });

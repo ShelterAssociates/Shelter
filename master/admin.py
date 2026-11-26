@@ -21,7 +21,7 @@ from master.models import (
     SlumTransformationPhase,
     SlumTransformationImage,
 )
-from master.forms import CityFrom, AdministrativeWardFrom, ElectoralWardForm, SlumForm
+from master.forms import CityFrom, AdministrativeWardFrom, DrainageForm, ElectoralWardForm, SlumForm
 from django.contrib.auth.models import Group
 from django.utils.html import format_html
 from django.urls import reverse
@@ -29,7 +29,9 @@ from django.conf.urls import include, url
 from django.http import HttpResponse
 import json
 from .kmllevelparser import KMLLevelParser
+from utils.kml import UnsafeKMLError
 from django import forms
+from utils.validators import PlainTextAdminMixin
 
 # Common filters for querying model depending on model type
 data_filter = {
@@ -101,6 +103,9 @@ class UploadKMLBase(admin.ModelAdmin):
 
     def process_action(self, request, city_id, action_title):
         response = {"status": True, "message": ""}
+        if not request.user.has_perm("master.change_%s" % action_title.lower()):
+            response = {"status": False, "message": "You do not have permission to upload %s KML." % action_title}
+            return HttpResponse(json.dumps(response), content_type="application/json", status=403)
         if request.method == "POST":
             docFile = request.FILES["file"].read()
             chk_delete = request.POST["chk_delete"]
@@ -120,9 +125,13 @@ class UploadKMLBase(admin.ModelAdmin):
                     )
                 if response["message"] == "":
                     response["message"] = "Nothing parsed"
-            except Exception as e:
+            except UnsafeKMLError as e:
                 response["status"] = False
                 response["message"] = str(e)
+            except Exception:
+                logger.exception("Admin KML upload failed")
+                response["status"] = False
+                response["message"] = "KML file could not be processed. Check the file format."
         return HttpResponse(json.dumps(response), content_type="application/json")
 
 
@@ -203,8 +212,9 @@ class BaseModelAdmin(admin.ModelAdmin):
 
 
 # City Reference
-class CityReferenceAdmin(BaseModelAdmin):
+class CityReferenceAdmin(PlainTextAdminMixin, BaseModelAdmin):
     """Display panel of CityReference Model"""
+    plain_text_fields = ("city_name", "district_name", "state_name")
 
     list_display = (
         "city_name",
@@ -221,7 +231,7 @@ admin.site.register(CityReference, CityReferenceAdmin)
 
 
 # slum
-class SlumDetailAdmin(BaseModelAdmin):
+class SlumDetailAdmin(PlainTextAdminMixin, BaseModelAdmin):
     form = SlumForm
     list_display = (
         "name",
@@ -340,14 +350,15 @@ admin.site.register(City, CityAdmin)
 
 
 # Administrative Ward
-class WardOfficeContactInline(admin.TabularInline):
+class WardOfficeContactInline(PlainTextAdminMixin, admin.TabularInline):
     """Display panel of WardOfficeContacts Model"""
+    plain_text_fields = ("title", "name")
 
     model = WardOfficeContact
     search_fields = ("name",)
 
 
-class AdministrativeWardAdmin(BaseModelAdmin):
+class AdministrativeWardAdmin(PlainTextAdminMixin, BaseModelAdmin):
     form = AdministrativeWardFrom
     list_display = ("name", "ward_no", "city", "office_address")
     inlines = [WardOfficeContactInline]
@@ -358,14 +369,14 @@ admin.site.register(AdministrativeWard, AdministrativeWardAdmin)
 
 
 # Electoral Ward
-class ElectedRepresentativeInline(admin.TabularInline):
+class ElectedRepresentativeInline(PlainTextAdminMixin, admin.TabularInline):
     """Display panel of ElectedRepresentative Model"""
 
     model = ElectedRepresentative
     search_fields = ("name",)
 
 
-class ElectoralWardFormAdmin(BaseModelAdmin):
+class ElectoralWardFormAdmin(PlainTextAdminMixin, BaseModelAdmin):
     form = ElectoralWardForm
     list_display = ("name", "ward_no", "ward_code", "administrative_ward", "city_name")
     search_fields = ("name",)
@@ -385,7 +396,8 @@ admin.site.register(ElectoralWard, ElectoralWardFormAdmin)
 
 
 # Ward office contact
-class WardOfficeContactAdmin(BaseModelAdmin):
+class WardOfficeContactAdmin(PlainTextAdminMixin, BaseModelAdmin):
+    plain_text_fields = ("title", "name")
     list_display = (
         "name",
         "administrative_ward",
@@ -404,7 +416,7 @@ admin.site.register(WardOfficeContact, WardOfficeContactAdmin)
 
 
 # Elected Representative
-class ElectedRepresentativeAdmin(BaseModelAdmin):
+class ElectedRepresentativeAdmin(PlainTextAdminMixin, BaseModelAdmin):
     list_display = (
         "name",
         "electoral_ward",
@@ -447,7 +459,7 @@ admin.site.register(ElectedRepresentative, ElectedRepresentativeAdmin)
 
 admin.site.register(Rapid_Slum_Appraisal, RapidSlumAppraisalAdmin)
 
-admin.site.register(drainage)
+admin.site.register(drainage, form=DrainageForm)
 
 
 # =========================

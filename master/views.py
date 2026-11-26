@@ -2,16 +2,15 @@
 # -*- coding: utf-8 -*-
 """The Django Views Page for master app"""
 import json
-import psycopg2
 import logging
 from django.urls import reverse
 from django.contrib.admin.views.decorators import staff_member_required
 from django.contrib.auth.decorators import login_required, permission_required, user_passes_test
 from django.template import RequestContext, loader
-from django.http import HttpResponse, HttpResponseRedirect, JsonResponse
+from django.http import HttpResponse, HttpResponseGone, HttpResponseRedirect, JsonResponse
 from django.views.generic import ListView
-from django.views.decorators.csrf import csrf_exempt
-from django.views.generic.edit import FormView
+from django.contrib.auth.mixins import PermissionRequiredMixin
+from django.utils.http import url_has_allowed_host_and_scheme
 from django.shortcuts import get_object_or_404
 from django.views.generic.base import View
 from django.shortcuts import render
@@ -25,7 +24,7 @@ from django.views.decorators.clickjacking import xframe_options_exempt
 from master.models import Survey, CityReference, Rapid_Slum_Appraisal, \
     Slum, AdministrativeWard, ElectoralWard, City, \
     WardOfficeContact, ElectedRepresentative, drainage ,SlumTransformationPhase , SlumTransformationImage
-from master.forms import SurveyCreateForm, ReportForm, Rapid_Slum_AppraisalForm, DrainageForm, LoginForm 
+from master.forms import ReportForm, Rapid_Slum_AppraisalForm, DrainageForm, LoginForm
 from sponsor.models import SponsorProjectDetails
 from django.contrib.auth import authenticate, login
 from django.contrib.auth import *
@@ -49,10 +48,12 @@ def index(request):
     context ={ 'site_url':'/'}
     return render(request, 'index.html', context)
 
-class SurveyListView(ListView):
+class SurveyListView(PermissionRequiredMixin, ListView):
     """Renders the Survey View template in browser"""
     template_name = 'SurveyListView.html'
     model = Survey
+    permission_required = "master.view_survey"
+    login_url = "/accounts/login/"
 
     def get_queryset(self):
         try:
@@ -65,52 +66,18 @@ class SurveyListView(ListView):
             object_list = self.model.objects.all()
         return object_list
 
-class SurveyCreateView(FormView):
-    """Fetches and renders the Add New Survey Mapping template in browser"""
-    template_name = 'SurveyCreate_form.html'
-    form_class = SurveyCreateForm
-    success_url = '/admin/surveymapping/'
+class SurveyCreateView(View):
+    """Retired: survey add/edit needed KoboToolbox, which is decommissioned."""
 
-    def dispatch(self, request, *args, **kwargs):
-        """Signal Dispatcher"""
-        try:
-            self.survey = 0
-            if kwargs['survey']:
-                self.survey = kwargs['survey']
-        except KeyError:
-            logger.error('Error')
-        return super(SurveyCreateView, self).dispatch(request, *args,
-                                                      **kwargs)
+    def get(self, request, *args, **kwargs):
+        return HttpResponseGone("This endpoint has been retired.")
 
-    def get_form(self, form_class=None):
-        """
-        Check if the user already saved contact details. If so, then show
-        the form populated with those details, to let user change them.
-        """
-        try:
-            survey = Survey.objects.get(id=self.survey)
-            return self.form_class(instance=survey, **self.get_form_kwargs())
-        except Survey.DoesNotExist:
-            return self.form_class(**self.get_form_kwargs())
+    post = get
 
-    def form_valid(self, form):
-        """Actions to perform if form is valid"""
-        form.save()
-        return super(SurveyCreateView, self).form_valid(form)
+def survey_delete_view(request, survey):
+    """Retired: survey deletion was never functional and is no longer offered."""
+    return HttpResponseGone("This endpoint has been retired.")
 
-def survey_delete_view(survey):
-    """Delete Survey Object"""
-    obj = Survey.objects.get(id=survey)
-    if obj:
-        obj.delete()
-        message = 'Success'
-    else:
-        message = 'Failure'
-    data = {}
-    data['message'] = message
-    return HttpResponseRedirect('/admin/surveymapping/')
-
-@csrf_exempt
 def search(request):
     """Autofill add city form fields based on City ID"""
     sid = request.POST['id']
@@ -259,7 +226,6 @@ def rim_select_slum(request):
 
 @login_required(login_url="/accounts/login/")
 @permission_required("master.view_rapid_slum_appraisal", raise_exception=True)
-@csrf_exempt
 def rim_check_exists(request):
     """AJAX: does a Rapid_Slum_Appraisal already exist for this slum?"""
     slum_id = request.POST.get('slum_id')
@@ -296,13 +262,13 @@ def riminsert(request):
         form = Rapid_Slum_AppraisalForm(initial=initial)
     return render(request, 'riminsert.html', {'form': form})
 
-@csrf_exempt
+@staff_member_required
 def report(request):
     """ RIM Report Form"""
     form = ReportForm()
     return render(request,'report.html', {'form':form})
 
-@csrf_exempt
+@login_required(login_url="/accounts/login/")
 def administrativewardList(request):
     """Administrativeward List Display"""
     cid = request.POST['id']
@@ -318,7 +284,7 @@ def administrativewardList(request):
             }
     return HttpResponse(json.dumps(data),content_type='application/json')
 
-@csrf_exempt
+@login_required(login_url="/accounts/login/")
 def electoralWardList(request):
     """Electoral Ward List"""
     Aid = request.POST['id']
@@ -332,7 +298,7 @@ def electoralWardList(request):
     data = { 'idArray'  : idArray,'nameArray': nameArray }
     return HttpResponse(json.dumps(data),content_type='application/json')
 
-@csrf_exempt
+@login_required(login_url="/accounts/login/")
 def slumList(request):
     """Slum Ward List"""
     Eid = request.POST['id']
@@ -346,7 +312,7 @@ def slumList(request):
     data = { 'idArray' :idArray,'nameArray':nameArray}
     return HttpResponse(json.dumps(data),content_type='application/json')
 
-@csrf_exempt
+@staff_member_required
 def rimreportgenerate(request):
     """Generate RIM Report"""
     sid = request.POST['Sid']
@@ -356,7 +322,7 @@ def rimreportgenerate(request):
     data = {'string': string}
     return HttpResponse(json.dumps(data),content_type='application/json')
 
-@csrf_exempt
+@staff_member_required
 def drainagereportgenerate(request):
     """Generate RIM Report"""
     sid = request.POST['Sid']
@@ -370,7 +336,7 @@ def drainagereportgenerate(request):
     return HttpResponse(json.dumps(data),content_type='application/json')
 
 
-@csrf_exempt
+@staff_member_required
 def vulnerabilityreport(request):
     """Generate Vulnerability Report """
     string = settings.BIRT_REPORT_URL + "Birt/frameset?__format=pdf&__report=Vulnerability_Report.rptdesign"
@@ -382,7 +348,6 @@ def slummap(request):
     context = {"request":request}
     return render(request, 'slummapdisplay.html', context)
 
-@csrf_exempt
 @access_right
 def citymapdisplay(request):
     city_dict={}
@@ -401,7 +366,6 @@ def citymapdisplay(request):
 
     return HttpResponse(json.dumps(city_main),content_type='application/json')
 
-@csrf_exempt
 @access_right
 def slummapdisplay(request,id):
     slum_list=[]
@@ -542,7 +506,6 @@ def slummapdisplay(request,id):
             pass
     return HttpResponse(json.dumps(city_main),content_type='application/json')
 
-@csrf_exempt
 def modelmapdisplay(request):
     """ ftech reference polygon """
     shape = "";
@@ -565,7 +528,7 @@ def modelmapdisplay(request):
     return HttpResponse(json.dumps(data),content_type='application/json')
 
 @login_required(login_url="/accounts/login/")
-@permission_required("master.view_drainage", raise_exception=True)
+@permission_required("master.add_drainage", raise_exception=True)
 def drainageinsert(request):
     """ RIM Report Form"""
     if request.method == 'POST':
@@ -605,7 +568,7 @@ def drainagedisplay(request):
     return render(request, 'drainagedisplay.html',{'R':R,'RA':RA})
 
 @login_required(login_url="/accounts/login/")
-@permission_required("master.view_drainage", raise_exception=True)
+@permission_required("master.change_drainage", raise_exception=True)
 def drainageedit(request,drainage_id):
     if request.method == 'POST':
         d = drainage.objects.get(pk=drainage_id)
@@ -619,11 +582,12 @@ def drainageedit(request,drainage_id):
     return render(request, 'drainageinsert.html', {'form': form})
 
 
+@login_required(login_url="/accounts/login/")
 def sluminformation(request):
     return render(request,'sluminformation.html')
 
 
-@csrf_exempt
+@login_required(login_url="/accounts/login/")
 def cityList(request):
     """city List Display"""
     Cobj = City.objects.all()
@@ -640,26 +604,10 @@ def cityList(request):
 
 @staff_member_required
 def formList(request):
-    """ Form List"""
-    db = settings.KOBOCAT_DATABASES
-    old = psycopg2.connect(database=db['DBNAME'], user=db['USER'], password=db['PASSWORD'],
-                           host=db['HOST'], port=db['PORT'])
-    cursor_old = old.cursor()
-    cursor_old.execute("select id, title from logger_xform;")
-    fetch_data = cursor_old.fetchall()
-    idArray = []
-    nameArray = []
-    for i in fetch_data:
-        nameArray.append(str(i[1]))
-        idArray.append(i[0])
-    data ={}
-    data = { 'idArray'  : idArray,
-             'nameArray': nameArray
-           }
-    return HttpResponse(json.dumps(data),content_type='application/json')
+    """Retired: the KoboToolbox form list database has been decommissioned."""
+    return HttpResponseGone("This endpoint has been retired.")
 
 
-@csrf_exempt
 def modelList(request):
     """city adminstravive electrol ward dropdown list"""
     sid = request.POST['id']
@@ -685,7 +633,6 @@ def modelList(request):
            }
     return HttpResponse(json.dumps(data),content_type='application/json')
 
-@csrf_exempt
 @login_required
 @user_passes_test(lambda u: u.is_superuser or u.has_perm('master.can_generate_reports') or u.groups.filter(name='sponsor').exists())
 def familyrportgenerate(request):
@@ -749,8 +696,11 @@ def login_success(request):
         elif (request.user.groups.filter(name__in=['MLG']).exists()):
             return HttpResponseRedirect('/city::Mohanlalganj%20City')
 
-    if return_to:
-        return HttpResponseRedirect(return_to.strip().replace(" ", "+"))
+    return_to = return_to.strip().replace(" ", "+")
+    if return_to and url_has_allowed_host_and_scheme(
+        return_to, allowed_hosts={request.get_host()}, require_https=request.is_secure()
+    ):
+        return HttpResponseRedirect(return_to)
     else:
         return HttpResponseRedirect('/admin/')
 
@@ -831,7 +781,6 @@ def get_slum_transformation_photos(request, slum_id):
     return JsonResponse({slum_id: data})
 
 
-@csrf_exempt
 def filterMasterList(request):
     """Generic filter API"""
     filter_type = request.POST.get("type")

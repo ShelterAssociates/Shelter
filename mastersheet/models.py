@@ -1,6 +1,7 @@
 from django.db import models
 from django.contrib.auth.models import User
 from django.contrib import messages
+from django.core.exceptions import ValidationError
 from master.models import City, Slum
 from graphs.models import *
 from jsonfield import JSONField
@@ -81,6 +82,17 @@ class VendorHouseholdInvoiceDetail(models.Model):
         )
 
 
+def household_list(value):
+    """InvoiceItems.household_numbers as a list; anything else stored there counts as no households."""
+    return value if isinstance(value, list) else []
+
+
+def item_total(household_numbers, quantity, rate, tax):
+    """Same formula as static/js/calculate_total_invoice.js."""
+    households = len(household_list(household_numbers))
+    return round(households * (quantity or 0) * (rate or 0) * (1 + (tax or 0) / 100.0), 2)
+
+
 class Invoice(models.Model):
     vendor = models.ForeignKey(Vendor, on_delete=models.CASCADE)
     sponsor_project = models.ForeignKey(SponsorProject, on_delete=models.SET_NULL, null=True, blank=True)
@@ -110,6 +122,20 @@ class Invoice(models.Model):
     def __str__(self):
         """Returns string representation of object"""
         return self.vendor.name + "(" + self.invoice_number + ")"
+
+    def recalculate_totals(self):
+        """Stores totals computed from the items; values sent by the browser are never kept."""
+        total = 0
+        for item in self.invoiceitems_set.all():
+            item_total = item.computed_total()
+            if item.total != item_total:
+                InvoiceItems.objects.filter(pk=item.pk).update(total=item_total)
+            total += item_total
+        self.total = round(total, 2)
+        self.final_total = round(
+            self.total + self.loading_unloading_charges + self.transport_charges + self.roundoff, 2
+        )
+        Invoice.objects.filter(pk=self.pk).update(total=self.total, final_total=self.final_total)
 
 
 class MaterialType(models.Model):
@@ -159,6 +185,9 @@ class InvoiceItems(models.Model):
     def __str__(self):
         """Returns string representation of object"""
         return self.material_type.name
+
+    def computed_total(self):
+        return item_total(self.household_numbers, self.quantity, self.rate, self.tax)
 
 
 class SBMUpload(models.Model):
@@ -566,6 +595,8 @@ def handle_shifted_material(sender, instance, **kwargs):
 
 @receiver(pre_save, sender=InvoiceItems)
 def check_duplicate_house(sender, instance, **kwargs):
+    if not isinstance(instance.household_numbers, list):
+        raise ValidationError("household_numbers must be a list of household numbers.")
     errors = []
     if instance.id is not None:
         all_records = InvoiceItems.objects.filter(slum=instance.slum).exclude(
@@ -577,7 +608,7 @@ def check_duplicate_house(sender, instance, **kwargs):
     for record in all_records:
         if record.material_type == instance.material_type:
             common_households = list(
-                set(record.household_numbers).intersection(instance.household_numbers)
+                set(household_list(record.household_numbers)).intersection(instance.household_numbers)
             )
             if len(common_households) != 0:
                 errors.append(

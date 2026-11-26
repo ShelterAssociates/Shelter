@@ -146,7 +146,7 @@
   {% endif %}
 </div>
 
-<script>
+<script nonce="{{ csp_nonce }}">
 (function () {
   var csrf = "{{ csrf_token }}";
   var dryRunUrl = "{% url 'avni_console:dry_run_rhs' %}";
@@ -217,7 +217,7 @@
 <!-- jQuery already comes from templates/admin/base.html; loading a second
      copy would replace window.jQuery and take Bootstrap's plugins with it. -->
 <script src="{% static 'js/slum_search.js' %}"></script>
-<script>
+<script nonce="{{ csp_nonce }}">
 /* Searchable pickers for the two long lists. Same widget as the reports and
    KML upload pages (static/js/slum_search.js); every card that takes one gets
    its own box over its own hidden <select multiple>, and the two indexes are

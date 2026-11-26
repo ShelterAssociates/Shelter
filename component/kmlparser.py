@@ -1,4 +1,4 @@
-from pykml import parser
+from utils.kml import parse_kml
 from .models import Component, Metadata
 from django.contrib.gis.geos import GEOSGeometry
 from django.contrib.contenttypes.models import ContentType
@@ -150,7 +150,7 @@ class KMLParser(object):
     def __init__(self, docFile, object_type, delete_flag):
         self.object_type = object_type
         self.delete_flag = delete_flag
-        self.root = parser.fromstring(docFile)
+        self.root = parse_kml(docFile)
 
     def component_latlong(self, placemark):
         """Get latlong and data from the placemark object"""

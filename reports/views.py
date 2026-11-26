@@ -17,7 +17,12 @@ from survey import versioning
 
 
 def wanted_version(request):
-    """The RIM version asked for, or None for the live one."""
+    """The RIM version asked for, or None for the live one.
+
+    Archived versions are internal: only signed-in staff (the reports page) get them.
+    """
+    if not (request.user.is_authenticated and request.user.is_staff):
+        return None
     raw = (request.GET.get("version") or "").strip()
     if not raw or raw.lower() == "current":
         return None
@@ -278,7 +283,7 @@ def rim_factsheet_pdf_fetch(request, slum_id):
     version = wanted_version(request)
     compared_with = (
         version_tag(wanted_baseline(request, slum_id, version))
-        if request.GET.get("compare") == "1" else None
+        if is_internal and request.GET.get("compare") == "1" else None
     )
     report_id = rim_report_id(slum_id, version, compared_with=compared_with)
     try:

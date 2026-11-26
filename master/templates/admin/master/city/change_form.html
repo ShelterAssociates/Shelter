@@ -47,7 +47,7 @@
     {{ adminform.form.non_field_errors }}
 {% endif %}
 
-<script>
+<script nonce="{{ csp_nonce }}">
 function myFunction(){
     var cityname = django.jQuery("#id_name option:selected").text();
     var id = django.jQuery("#id_name option:selected").val();
@@ -101,7 +101,7 @@ django.jQuery(document).ready(function(){
 {% block submit_buttons_bottom %}{% submit_row %}{% endblock %}
 
 {% block admin_change_form_document_ready %}
-    <script type="text/javascript">
+    <script nonce="{{ csp_nonce }}" type="text/javascript">
         (function($) {
             $(document).ready(function() {
                 $('.add-another').click(function(e) {

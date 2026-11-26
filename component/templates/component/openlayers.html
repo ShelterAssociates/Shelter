@@ -1,0 +1,16 @@
+{% load i18n l10n %}
+{% comment %}Django's gis/openlayers.html without inline script or javascript: link; js/openlayers_widget.js starts the map.{% endcomment %}
+<style type="text/css">{% get_current_language_bidi as LANGUAGE_BIDI %}
+    #{{ id }}_map { width: {{ map_width }}px; height: {{ map_height }}px; }
+    #{{ id }}_map .aligned label { float: inherit; }
+    #{{ id }}_div_map { position: relative; vertical-align: top; float: {{ LANGUAGE_BIDI|yesno:"right,left" }}; }
+    {% if not display_raw %}#{{ id }} { display: none; }{% endif %}
+</style>
+
+<div id="{{ id }}_div_map" class="ol-map-widget" data-module="{{ module }}" data-widget-id="{{ id }}"
+     data-geom-name="{{ geom_type }}" data-map-srid="{{ map_srid|unlocalize }}" data-name="{{ name }}">
+    <div id="{{ id }}_map"></div>
+    {% if not disabled %}<span class="clear_features"><a href="#" class="ol-clear-features">{% trans "Delete all Features" %}</a></span>{% endif %}
+    {% if display_raw %}<p>{% trans "Debugging window (serialized value)" %}</p>{% endif %}
+    <textarea id="{{ id }}" class="vSerializedField required" cols="150" rows="10" name="{{ name }}">{{ serialized }}</textarea>
+</div>

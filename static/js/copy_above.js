@@ -1,8 +1,6 @@
-$(document).ready(function () {
-
-
-
-})
+$(document).on("click", ".copy-above", function () {
+	copy_this(this);
+});
 
 function copy_this(e) {
 	index = $(e).parents('tr').index();

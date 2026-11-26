@@ -1,3 +1,6 @@
+// Table cells and tree titles hold city/ward/slum names: show them as text, never as HTML.
+$.fn.dataTable.defaults.column.mRender = $.fn.dataTable.render.text();
+
 	var report_table = null;
 	var report_table_aggregated = null;
 	var report_table_cm = null;
@@ -906,6 +909,10 @@
 	}
 
 	$(document).ready(function() {
+		$("#open_dropdown").on("click", showDropdown);
+		$("#close_dropdown").on("click", closeFunction);
+		$("#filter_nodes").on("keyup", find_node);
+		$("#apply_level, #radioForm input[name=optradio]").on("click", changeDatatableLevel);
 		todayDate = changeDateFormat(todayTime);
 		startDate = StartDate(todayTime);
 		$("#startDate").val(startDate);
@@ -925,6 +932,7 @@
 	        success : function (data) {	
 	        	$('#city_list').fancytree({
 	       		   checkbox: true,
+			       escapeTitles: true,
 			       source :set_root(data),
 			       selectMode: 3,
 			       extensions: ['filter'],

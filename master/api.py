@@ -1,6 +1,6 @@
 from django.http import request
 from rest_framework import viewsets
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import DjangoModelPermissions, IsAuthenticated
 from django.core.exceptions import PermissionDenied
 from .serializers import CitySerializer
 from .models import City
@@ -8,7 +8,7 @@ from .models import City
 
 class CityViewset(viewsets.ModelViewSet):
     serializer_class = CitySerializer
-    permission_classes = (IsAuthenticated,)
+    permission_classes = (IsAuthenticated, DjangoModelPermissions)
     queryset = City.objects.order_by("id")
 
     def get_queryset(self):

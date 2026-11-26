@@ -1,6 +1,7 @@
 from pdb import pm
 from django.apps import apps
-from pykml import parser
+from utils.kml import UnsafeKMLError, parse_kml
+from utils.validators import MARKUP_MESSAGE, contains_markup
 from django.contrib.gis.geos import GEOSGeometry
 from .models import *
 
@@ -15,7 +16,7 @@ parse_link = {"AdministrativeWard": "ElectoralWard", "ElectoralWard": "Slum"}
 
 class KMLLevelParser(object):
     def __init__(self, docFile, city_id, chk_delete, action_title):
-        root = parser.fromstring(docFile)
+        root = parse_kml(docFile)
         self.city_id = int(city_id)
         self.chk_delete = chk_delete
         self.folders = []
@@ -89,6 +90,10 @@ class KMLLevelParser(object):
             parent_model_data.delete()
 
     def parse_kml(self):
+        for folder in self.folders:
+            for pm in folder.Placemark:
+                if contains_markup(getattr(pm, "name", "")):
+                    raise UnsafeKMLError("%s Found: %s" % (MARKUP_MESSAGE, str(pm.name)[:80]))
         if self.chk_delete == "true":
             self.delete_history()
         cnt = {"updated": 0, "created": 0}

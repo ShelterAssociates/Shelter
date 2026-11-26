@@ -8,7 +8,7 @@
 
 {% block nav-global %}{% endblock %}
 
-<script type="text/javascript">
+<script nonce="{{ csp_nonce }}" type="text/javascript">
     function dismissAddAnotherPopup(win) {
         console.log("script is called");
     win.close();

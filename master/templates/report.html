@@ -7,7 +7,7 @@
 <ol class="breadcrumb">
     <li><a href="{% url 'master:index' %}">Home</a></li>
 </ol>
-<script type="text/javascript">
+<script nonce="{{ csp_nonce }}" type="text/javascript">
 function administrativewardList(){
 
     $('#id_AdministrativeWard').empty();
@@ -36,9 +36,7 @@ function administrativewardList(){
 
 
         for (i = 0; i < json.nameArray.length; i++){
-                var str='<option value="';
-                str = str +json.idArray[i] +'"'+'>' + json.nameArray[i] + '</option>';
-                $('#id_AdministrativeWard').append(str);
+                $('#id_AdministrativeWard').append($('<option>').val(json.idArray[i]).text(json.nameArray[i]));
             }
 
         }
@@ -78,9 +76,7 @@ function electoralWardList(){
 
 
         for (i = 0; i < json.nameArray.length; i++) {
-            var str='<option value="';
-            str = str +json.idArray[i] +'"'+'>' + json.nameArray[i] + '</option>';
-            $('#id_ElectoralWard').append(str);
+            $('#id_ElectoralWard').append($('<option>').val(json.idArray[i]).text(json.nameArray[i]));
 
 
         }
@@ -119,9 +115,7 @@ function slumList(){
 
 
         for (i = 0; i < json.nameArray.length; i++) {
-            var str='<option value="';
-            str = str +json.idArray[i] +'"'+'>' + json.nameArray[i] + '</option>';
-            $('#id_Slum').append(str);
+            $('#id_Slum').append($('<option>').val(json.idArray[i]).text(json.nameArray[i]));
 
             }
 
@@ -155,43 +149,7 @@ function cityList(){
 
 
         for (i = 0; i < json.nameArray.length; i++){
-                var str='<option value="';
-                str = str +json.idArray[i] +'"'+'>' + json.nameArray[i] + '</option>';
-                $('#id_City').append(str);
-            }
-
-        }
-
-
-    });
-
-}
-
-
-
-function formList(){
-
-    var url = "{% url 'master:formList' %}";
-
-    $.ajax({
-
-        url : url,
-
-        type: "GET",
-
-        contenttype : "json",
-
-        success : function(json){
-
-              var str='<option value="';
-              str = str +"0" +'"'+'>' + "---select---" + '</option>';
-              $('#id_form').append(str);
-
-
-        for (i = 0; i < json.nameArray.length; i++){
-                var str='<option value="';
-                str = str +json.idArray[i] +'"'+'>' + json.nameArray[i] + '</option>';
-                $('#id_form').append(str);
+                $('#id_City').append($('<option>').val(json.idArray[i]).text(json.nameArray[i]));
             }
 
         }
@@ -221,7 +179,6 @@ $(document).ready(function(){
     $("#HouseNos").hide();
 
     cityList();
-    formList();
 
     $("#id_City").on('change',function()
     {

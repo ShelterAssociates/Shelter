@@ -117,13 +117,13 @@ pre.result {
   </style>
 
   <!-- SheetJS library, used only to parse uploaded input Excel files -->
-  <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
+  <script src="{% static 'js/xlsx-0.20.3.full.min.js' %}"></script>
 
   <!-- ExcelJS library, used to build the output workbook so the DIGIPIN symbol image can be embedded per row -->
   <script src="https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js"></script>
 
   <!-- Official DIGIPIN symbol/logo URL, consumed by digipin.js -->
-  <script>window.DIGIPIN_LOGO_URL = "{% static 'images/digipin_logo.png' %}";</script>
+  <script nonce="{{ csp_nonce }}">window.DIGIPIN_LOGO_URL = "{% static 'images/digipin_logo.png' %}";</script>
 
   <!-- Custom JS for DIGIPIN functionality -->
   <script src="{% static 'js/digipin.js' %}"></script>

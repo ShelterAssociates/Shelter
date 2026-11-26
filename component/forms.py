@@ -39,6 +39,7 @@ class KMLUpload(forms.Form):
     )
     metric_value = forms.DecimalField(
         required=False,
+        min_value=0,
         label="Known length/metric (optional)",
         max_digits=12,
         decimal_places=2,

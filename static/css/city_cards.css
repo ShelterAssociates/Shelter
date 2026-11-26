@@ -72,6 +72,10 @@ a:focus {
   gap: 16px;
 }
 
+.dashboard-topbar__brand {
+  display: flex;
+}
+
 .dashboard-topbar__brand-link {
   display: inline-flex;
   align-items: center;

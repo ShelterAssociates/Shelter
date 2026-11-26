@@ -40,7 +40,7 @@
 </div>
 
 
-<script>
+<script nonce="{{ csp_nonce }}">
 
 document.addEventListener("DOMContentLoaded", function(){
 
@@ -109,12 +109,12 @@ document.getElementById("monthSelect").addEventListener("change", function(){
 
     const reportActions = document.getElementById("reportActions")
 
-    reportActions.innerHTML = `
-        <button onclick="generateReport(${report_id})" 
-        style="padding:10px 20px; font-size:16px">
-        Generate Report
-        </button>
-    `
+    const button = document.createElement("button")
+    button.textContent = "Generate Report"
+    button.style.cssText = "padding:10px 20px; font-size:16px"
+    button.addEventListener("click", () => generateReport(report_id))
+    reportActions.innerHTML = ""
+    reportActions.appendChild(button)
 
 })
 

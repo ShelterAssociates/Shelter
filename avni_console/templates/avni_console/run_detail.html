@@ -67,7 +67,7 @@
   </div>
   {% endfor %}
 </div>
-<script id="retry-script">
+<script nonce="{{ csp_nonce }}" id="retry-script">
 (function () {
   var button = document.getElementById("retry");
   if (!button) return;

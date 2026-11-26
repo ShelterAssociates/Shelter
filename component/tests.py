@@ -517,3 +517,90 @@ class HouseNoHelperTests(SimpleTestCase):
 
     def test_quoted_examples_of_nothing(self):
         self.assertEqual(quoted_examples([]), "")
+
+
+VALID_KML = b"""<?xml version="1.0" encoding="UTF-8"?>
+<kml xmlns="http://www.opengis.net/kml/2.2"><Document><Folder><name>Road</name>
+<Placemark><name>r1</name><Point><coordinates>73.8,18.5,0</coordinates></Point></Placemark>
+</Folder></Document></kml>"""
+
+XXE_KML = """<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE kml [ <!ENTITY xxe SYSTEM "file://{path}"> ]>
+<kml xmlns="http://www.opengis.net/kml/2.2"><Document><Folder><name>&xxe;</name>
+<Placemark><name>probe</name><Point><coordinates>73.8,18.5,0</coordinates></Point></Placemark>
+</Folder></Document></kml>"""
+
+SECRET = "XXE-LOCAL-FILE-MARKER-7731"
+
+
+class KMLEntityTests(TestCase):
+    """KML uploads must never resolve external entities."""
+
+    def setUp(self):
+        import tempfile
+        from django.contrib.auth.models import Permission, User
+
+        handle = tempfile.NamedTemporaryFile("w", suffix=".txt", delete=False)
+        handle.write(SECRET)
+        handle.close()
+        self.secret_path = handle.name
+        self.city = make_city()
+        self.user = User.objects.create_user("gis", password="x", is_staff=True)
+        perm, _ = Permission.objects.get_or_create(
+            codename="can_upload_KML", content_type=ContentType.objects.get_for_model(Component),
+            defaults={"name": "Can upload KML"},
+        )
+        self.user.user_permissions.add(perm)
+        self.client.force_login(self.user)
+
+    def tearDown(self):
+        import os
+        os.unlink(self.secret_path)
+
+    def upload(self, content):
+        from django.core.files.uploadedfile import SimpleUploadedFile
+        return self.client.post(
+            "/component/",
+            {"level": "City", "City": self.city.id, "kml_file": SimpleUploadedFile("p.kml", content)},
+            HTTP_X_REQUESTED_WITH="XMLHttpRequest",
+        )
+
+    def test_valid_kml_still_parses(self):
+        from utils.kml import parse_kml
+        self.assertEqual(str(parse_kml(VALID_KML).Document.Folder.name), "Road")
+
+    def test_parser_rejects_doctype_and_entity_declarations(self):
+        from utils.kml import UnsafeKMLError, parse_kml
+        with self.assertRaises(UnsafeKMLError):
+            parse_kml(XXE_KML.format(path=self.secret_path).encode())
+        with self.assertRaises(UnsafeKMLError):
+            parse_kml(b'<!doctype kml><kml xmlns="http://www.opengis.net/kml/2.2"/>')
+
+    def test_utf16_and_utf32_encoded_doctype_cannot_slip_past_the_byte_check(self):
+        from utils.kml import UnsafeKMLError, parse_kml
+        payload = XXE_KML.format(path=self.secret_path)
+        for codec, label in (("utf-16", "UTF-16"), ("utf-16-be", "UTF-16"), ("utf-32", "UTF-32")):
+            data = payload.replace('encoding="UTF-8"', 'encoding="%s"' % label).encode(codec)
+            with self.assertRaises(UnsafeKMLError, msg=codec):
+                parse_kml(data)
+
+    def test_xinclude_is_never_expanded(self):
+        from utils.kml import parse_kml
+        data = (
+            '<kml xmlns="http://www.opengis.net/kml/2.2" xmlns:xi="http://www.w3.org/2001/XInclude">'
+            '<Document><Folder><name><xi:include href="file://%s" parse="text"/></name></Folder></Document></kml>'
+            % self.secret_path
+        ).encode()
+        from lxml import etree
+        self.assertNotIn(SECRET, etree.tostring(parse_kml(data), encoding="unicode"))
+
+    def test_xxe_upload_is_rejected_and_leaks_no_file_content(self):
+        response = self.upload(XXE_KML.format(path=self.secret_path).encode())
+        self.assertEqual(response.status_code, 400)
+        self.assertNotIn(SECRET, response.content.decode())
+        self.assertIn("DOCTYPE", response.json()["message"])
+
+    def test_broken_kml_returns_generic_error_without_parser_details(self):
+        response = self.upload(b"<kml><Document><unclosed></kml>")
+        self.assertEqual(response.status_code, 400)
+        self.assertNotIn("line", response.json()["message"].lower())

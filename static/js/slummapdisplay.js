@@ -46,7 +46,7 @@ $(document).ready(function () {
             var dashboardEl = cardEl.querySelector('.dashboard-url');
             var gisEl = cardEl.querySelector('.gis-url');
 
-            if (cityNameEl) cityNameEl.innerHTML = name;
+            if (cityNameEl) cityNameEl.textContent = name;
             if (slumsEl) slumsEl.innerHTML = formatNumber(data['slum_count']) + " / " + formatNumber(data['total_slum_count']);
             if (householdsEl) householdsEl.innerHTML = formatNumber(data['household_count__sum']);
             if (dashboardEl) dashboardEl.href = "/dashboard/" + data['city_id'];

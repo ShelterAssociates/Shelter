@@ -166,7 +166,7 @@ function laodmap(){
     }
    
     $.ajax({
-        url : url,
+        url : $('#main-map').data('url'),
         type : "POST",
        data : { 'id' : id,'model':model},
   
@@ -202,7 +202,7 @@ function laodmap2(){
     }
     
    $.ajax({
-        url : url,
+        url : $('#main-map').data('url'),
         type : "POST",
        data : { 'id' : id,'model':model},
   

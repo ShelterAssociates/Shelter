@@ -2,16 +2,16 @@ import hashlib
 import json
 import logging
 import random
+import re
 from datetime import date, datetime, timedelta
 
 from django.contrib.admin.views.decorators import staff_member_required
 from django.contrib.auth.decorators import login_required
-from django.core.exceptions import ImproperlyConfigured, ObjectDoesNotExist
+from django.core.exceptions import ImproperlyConfigured, ObjectDoesNotExist, ValidationError
 from django.http import HttpResponse, JsonResponse
 from django.shortcuts import render
 from django.urls import reverse
 from django.utils import timezone
-from django.views.decorators.csrf import csrf_exempt
 from requests import request
 from scipy import record
 
@@ -30,12 +30,15 @@ from .models import (
 )
 from .services.google_drive import upload_photos_to_slum_drive_folder
 from .services.photo_upload import *
+from utils.uploads import inspect_photo
+from shelter.auth_throttle import add_otp_failure, otp_blocked
   
 logger = logging.getLogger(__name__)
 
 # ============= Digipin Generation =============
 
 
+@staff_member_required
 def digipin_generate(request):
     logger.info("digipin_generate: rendering digipin generate page")
     return render(request, "helpers/digipin_generate.html")
@@ -64,7 +67,6 @@ def digipin_generate(request):
 # {status:"otp_sent"} when OTP email successfully triggered
 # {status:"wait"} when rate limit prevents new OTP request
 # ----------------------------------------------------------------------
-@csrf_exempt
 def send_otp(request):
     logger.info("send_otp: request received, method=%s", request.method)
 
@@ -177,7 +179,7 @@ def verify_otp(request):
     session_key = f"otp_attempts_{email}_{task}"
     attempts = request.session.get(session_key, 0)
 
-    if attempts >= 5:
+    if attempts >= 5 or otp_blocked(email, task):
         logger.warning(
             "verify_otp: blocked due to too many attempts for email=%s task=%s",
             email,
@@ -214,6 +216,7 @@ def verify_otp(request):
 
     if record.otp != input_hash:
         request.session[session_key] = attempts + 1
+        add_otp_failure(email, task)
         logger.warning(
             "verify_otp: invalid OTP attempt %s for email=%s task=%s",
             attempts + 1,
@@ -231,9 +234,9 @@ def verify_otp(request):
     logger.info("verify_otp: OTP verified successfully for email=%s task=%s", email, task)
 
     FormSubmission.objects.create(
-        name=name,
+        name=re.sub(r"[<>]", "", str(name))[:200],
         email=email,
-        mobile=mobile,
+        mobile=re.sub(r"[<>]", "", str(mobile))[:15],
         task=task,
         slum=record.slum,
         otp_verified=True,
@@ -487,7 +490,6 @@ def sponsor_list(request):
     logger.info("sponsor_list: returning %s sponsor configs", len(response_data))
     return JsonResponse(response_data, safe=False)
 
-@csrf_exempt
 @staff_member_required
 def upload_slum_photos_to_drive(request):
     logger.info("upload_slum_photos_to_drive: request received, method=%s", request.method)
@@ -534,6 +536,14 @@ def upload_slum_photos_to_drive(request):
     if len(uploaded_files) > 5:
         logger.warning("upload_slum_photos_to_drive: too many files uploaded, count=%s", len(uploaded_files))
         return JsonResponse({"status": "error", "message": "You can upload a maximum of 5 photos at a time."}, status=400)
+
+    # Check every file before anything goes to Drive.
+    for upload in uploaded_files:
+        try:
+            inspect_photo(upload)
+        except ValidationError as error:
+            logger.warning("upload_slum_photos_to_drive: rejected %s", error.messages[0])
+            return JsonResponse({"status": "error", "message": error.messages[0]}, status=400)
 
     if is_city_level and is_other_upload:
         logger.warning("upload_slum_photos_to_drive: both is_city_level and is_other_upload set")
@@ -584,16 +594,16 @@ def upload_slum_photos_to_drive(request):
     except ObjectDoesNotExist:
         logger.warning("upload_slum_photos_to_drive: slum not found for slum_id=%s", slum_id)
         return JsonResponse({"status": "error", "message": "Slum not found."}, status=404)
-    except ImproperlyConfigured as exc:
+    except ImproperlyConfigured:
         logger.exception("upload_slum_photos_to_drive: service improperly configured")
-        return JsonResponse({"status": "error", "message": str(exc)}, status=500)
-    except Exception as exc:
+        return JsonResponse({"status": "error", "message": "Photo upload is not available right now. Please contact the administrator."}, status=500)
+    except Exception:
         logger.exception("upload_slum_photos_to_drive: photo upload service failed")
-        return JsonResponse({"status": "error", "message": "Photo upload service failed.", "details": str(exc)}, status=500)
+        return JsonResponse({"status": "error", "message": "Photo upload service failed."}, status=500)
 
     logger.info("upload_slum_photos_to_drive: drive upload succeeded for slum_id=%s, %s file(s) processed", slum_id, len(result.get("files", [])))
 
-    slum = Slum.objects.filter(id=slum_id).first()
+    slum = Slum.objects.filter(id=slum_id).first() if str(slum_id or "").isdigit() else None
     if not slum and not is_city_level and not is_other_upload:
         logger.warning("upload_slum_photos_to_drive: slum not found for slum_id=%s after upload", slum_id)
         return JsonResponse({"status": "error", "message": "Slum not found."}, status=404)
