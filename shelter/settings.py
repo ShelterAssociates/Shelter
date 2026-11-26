@@ -172,6 +172,28 @@ AVNI_FORM_CACHE_MAX_AGE_HOURS = 48
 # the background like any other console job.
 AVNI_SUBJECT_PREVIEW_MAX_IDS = 25
 
+# DIGIPIN and Plus Code plates (plates app). Override in local_settings.py.
+# Groups allowed to make plates; superusers always can. Empty = superusers only.
+PLATES_GROUPS = ["sticker_plates_generation"]
+# Groups allowed to create and edit plate templates. Empty = superusers only.
+PLATES_TEMPLATE_GROUPS = []
+PLATES_MAX_ROWS = 15000
+PLATES_MAX_UPLOAD_MB = 10
+PLATES_MAX_ASSET_MB = 5
+# Uploaded Excel of a confirmed batch is kept this long so it can be generated again.
+PLATES_UPLOAD_KEEP_DAYS = 180
+# Drafts never confirmed are deleted (row and file) after this many days.
+PLATES_DRAFT_KEEP_DAYS = 7
+PLATES_MIN_FREE_DISK_GB = 5
+# Folders under MEDIA_ROOT; nginx denies /media/plate_* and the exports name must
+# match EXPORT_DIRS in deploy/CLEANUP_GENERATED_FILES.sh.
+PLATES_EXPORT_DIR_NAME = "plate_exports"
+PLATES_UPLOAD_DIR_NAME = "plate_uploads"
+PLATES_ASSET_DIR_NAME = "plate_assets"
+PLATES_FONT_DIR_NAME = "plate_fonts"
+# Hosts a template's QR link may point to.
+PLATES_QR_ALLOWED_HOSTS = ["dac.indiapost.gov.in", "www.google.com"]
+
 # ---------------------------------------------------------------------------
 # SURVEY DATA CORE
 # ---------------------------------------------------------------------------
@@ -235,6 +257,7 @@ INSTALLED_APPS = (
     "avni_console.apps.AvniConsoleConfig",
     "survey.apps.SurveyConfig",
     "photos",
+    "plates.apps.PlatesConfig",
     "reports.apps.ReportsConfig",
     "rest_framework",
     "rest_framework.authtoken",

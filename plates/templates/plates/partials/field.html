@@ -1,0 +1,6 @@
+<div class="pl-field{% if field.field.widget.input_type == 'checkbox' %} pl-checklist{% endif %}">
+  <label class="pl-label" for="{{ field.id_for_label }}">{{ field.label }}{% if field.field.required %} <span class="pl-required" title="Required">*</span>{% endif %}</label>
+  {% if field.errors %}<ul class="pl-errors">{% for error in field.errors %}<li>{{ error }}</li>{% endfor %}</ul>{% endif %}
+  {{ field }}
+  {% if field.help_text %}<p class="pl-help">{{ field.help_text }}</p>{% endif %}
+</div>

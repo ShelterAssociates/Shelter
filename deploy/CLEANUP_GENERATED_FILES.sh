@@ -6,7 +6,7 @@
 # 05:00 is clear of the 23:00 dashboard job and the nightly Avni sync.
 #
 # ---------------------------------------------------------------------------
-# THIS SCRIPT ONLY EVER TOUCHES THE THREE EXPORT DIRECTORIES LISTED BELOW.
+# THIS SCRIPT ONLY EVER TOUCHES THE EXPORT DIRECTORIES LISTED BELOW.
 #
 # It is an allowlist, not a sweep of media/. Everything else under media/ is
 # either a user upload or referenced from the database, and deleting any of it
@@ -42,7 +42,9 @@ RETENTION_MINUTES=1440
 # The ONLY directories this script may delete from, relative to MEDIA_DIR.
 #   job_reports/ holds per-run sync detail reports. NotificationJobRun
 #   .detail_file_path is a plain CharField, so reaping these breaks no DB rows.
-EXPORT_DIRS=("photo_exports" "gis_exports" "rim_exports" "job_reports")
+#   plate_exports/ holds plate zips; PlateBatch.file_path is a plain CharField and
+#   the batch page shows "expired" once its zip is gone.
+EXPORT_DIRS=("photo_exports" "gis_exports" "rim_exports" "job_reports" "plate_exports")
 
 DRY_RUN=false
 if [ "$1" = "--dry-run" ]; then
@@ -133,6 +135,14 @@ for NAME in "${EXPORT_DIRS[@]}"; do
 	fi
 	TOTAL_REMOVED=$((TOTAL_REMOVED + COUNT))
 done
+
+# Plates: confirmed uploads after PLATES_UPLOAD_KEEP_DAYS, unconfirmed drafts after
+# PLATES_DRAFT_KEEP_DAYS, and batches whose zip was just removed marked expired.
+if $DRY_RUN; then
+	"$PROJECT_DIR/ENV3/bin/python" "$PROJECT_DIR/manage.py" cleanup_plate_uploads --dry-run
+else
+	"$PROJECT_DIR/ENV3/bin/python" "$PROJECT_DIR/manage.py" cleanup_plate_uploads
+fi
 
 AFTER_KB=$(df -Pk "$MEDIA_DIR" | awk 'NR==2 {print $4}')
 RECLAIMED_MB=$(((AFTER_KB - BEFORE_KB) / 1024))

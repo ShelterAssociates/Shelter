@@ -17,6 +17,8 @@ FAILURE_PURPOSE = "job_failure"
 ACTIVITY_PURPOSE = "avni_console_activity"
 BULK_PURPOSE = "avni_bulk_update"
 BULK_JOB_KEY = "avni_bulk_update"
+# Jobs that send their own emails (plates/services/email.py), not the AVNI activity report.
+SILENT_JOB_KEYS = ("plate_batch",)
 INLINE_CHANGE_ROWS = 200
 
 STATUS_COLOURS = {
@@ -307,6 +309,8 @@ def send_activity_report(request, run):
     Syncs go to the activity purpose with the requester in CC; bulk updates into
     AVNI go to the bulk purpose only (developer + data team).
     """
+    if request.job_key in SILENT_JOB_KEYS:
+        return None
     is_bulk = request.job_key == BULK_JOB_KEY
     to, cc, bcc = contacts.recipients_for(BULK_PURPOSE if is_bulk else ACTIVITY_PURPOSE)
     if not to:
