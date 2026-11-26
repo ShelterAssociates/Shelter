@@ -206,3 +206,45 @@ def save(template, spec, values, user):
     fresh.save()
     PlateTemplate.objects.filter(pk=template.pk).update(is_active=False, is_default=False)
     return fresh, True
+
+
+def family(template):
+    """The template and all its older versions (each version points to the one before it)."""
+    members, current = [], template
+    while current is not None:
+        members.append(current)
+        current = current.parent
+    return members
+
+
+def is_archived(template):
+    return template.is_latest and not template.is_active
+
+
+def archive(template):
+    PlateTemplate.objects.filter(pk=template.pk).update(is_active=False, is_default=False)
+
+
+def restore(template):
+    PlateTemplate.objects.filter(pk=template.pk).update(is_active=True)
+
+
+def batch_count(template):
+    from plates.models import PlateBatch
+
+    return PlateBatch.objects.filter(template__in=[member.pk for member in family(template)]).count()
+
+
+@transaction.atomic
+def delete_permanently(template):
+    """Delete an archived template with all its versions, newest first. Refused while any batch used one of them."""
+    if not is_archived(template):
+        raise ValueError("Only an archived template can be deleted. Archive it first.")
+    used = batch_count(template)
+    if used:
+        raise ValueError("This template was used by {} batch{}, so it cannot be deleted: those batches must stay "
+                         "possible to make again. It stays archived and hidden from every picker.".format(used, "" if used == 1 else "es"))
+    members = family(template)
+    for member in members:
+        member.delete()
+    return len(members)

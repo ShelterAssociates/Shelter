@@ -7,6 +7,7 @@
 {% block content %}
 <div class="pl-page">
   {% include "plates/partials/nav.html" with active="batches" %}
+  {% url 'plates:batch_detail' batch.public_id as back_url %}{% include "plates/partials/back.html" with back_label="Back to the batch" %}
   <h1 class="pl-title">Download not available</h1>
   <p class="pl-lead" style="margin-bottom:20px">{{ message }}</p>
   <a class="pl-btn pl-btn--primary" href="{% url 'plates:batch_detail' batch.public_id %}">Open the batch page</a>

@@ -1,23 +1,37 @@
 {% if batches %}
 <div class="pl-table-wrap">
-  <table class="pl-table">
-    <thead><tr><th>Batch</th><th>Type</th><th>Slum or file</th><th>Template</th><th class="pl-num">Rows</th><th class="pl-num">Made</th><th class="pl-num">Skipped</th>{% if show_requester %}<th>Requested by</th>{% endif %}<th>Created</th><th>Status</th></tr></thead>
+  <table class="pl-table pl-grid" data-grid id="{{ grid_id|default:'batch-grid' }}">
+    <thead><tr>
+      <th aria-sort="none"><button type="button" data-sort="number">Batch</button></th>
+      <th aria-sort="none"><button type="button" data-sort="text">Type</button></th>
+      <th aria-sort="none"><button type="button" data-sort="text">Slum or file</button></th>
+      <th aria-sort="none"><button type="button" data-sort="text">Template</button></th>
+      <th class="pl-num" aria-sort="none"><button type="button" data-sort="number">Rows</button></th>
+      <th class="pl-num" aria-sort="none"><button type="button" data-sort="number">Made</button></th>
+      <th class="pl-num" aria-sort="none"><button type="button" data-sort="number">Skipped</button></th>
+      {% if show_requester %}<th aria-sort="none"><button type="button" data-sort="text">Requested by</button></th>{% endif %}
+      <th aria-sort="descending"><button type="button" data-sort="number">Created</button></th>
+      <th aria-sort="none"><button type="button" data-sort="text">Status</button></th>
+      <th><span class="pl-visually-hidden">Download</span></th>
+    </tr></thead>
     <tbody>
     {% for batch in batches %}
-      <tr>
-        <td><a href="{% url 'plates:batch_detail' batch.public_id %}">#{{ batch.pk }}</a></td>
+      <tr data-href="{% url 'plates:batch_detail' batch.public_id %}" data-status="{{ batch.status }}" tabindex="0" aria-label="Open batch {{ batch.pk }}">
+        <td data-value="{{ batch.pk }}"><a href="{% url 'plates:batch_detail' batch.public_id %}" tabindex="-1">#{{ batch.pk }}</a></td>
         <td>{{ batch.get_plate_type_display }}</td>
         <td>{{ batch.slum_name|default:batch.original_name|default:"—" }}</td>
         <td class="pl-muted">{{ batch.template.name }} v{{ batch.template.version }}</td>
-        <td class="pl-num">{{ batch.row_count }}</td>
-        <td class="pl-num">{{ batch.made_count }}</td>
-        <td class="pl-num">{{ batch.skipped_count }}</td>
+        <td class="pl-num" data-value="{{ batch.row_count }}">{{ batch.row_count }}</td>
+        <td class="pl-num" data-value="{{ batch.made_count }}">{{ batch.made_count }}</td>
+        <td class="pl-num" data-value="{{ batch.skipped_count }}">{{ batch.skipped_count }}</td>
         {% if show_requester %}<td>{{ batch.requested_by.get_username|default:"—" }}</td>{% endif %}
-        <td class="pl-muted">{{ batch.created_on|date:"j M Y, H:i" }}</td>
+        <td class="pl-muted" data-value="{{ batch.created_on|date:'U' }}">{{ batch.created_on|date:"j M Y, H:i" }}</td>
         <td>{% include "plates/partials/status.html" with status=batch.status %}</td>
+        <td>{% if batch.status == "done" %}<a class="pl-btn pl-btn--sm" href="{% url 'plates:batch_download' batch.public_id %}">{% include "plates/partials/download_icon.html" %} Download</a>{% endif %}</td>
       </tr>
     {% endfor %}
     </tbody>
   </table>
 </div>
+<p class="pl-empty" data-grid-empty hidden>No batches match. Clear the search or choose another status.</p>
 {% else %}<p class="pl-empty">No batches yet.</p>{% endif %}

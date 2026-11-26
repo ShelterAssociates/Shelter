@@ -75,6 +75,13 @@ PURPOSES = [
         "cc": [],
     },
     {
+        "key": "plates_batch",
+        "display_name": "Plates batch copy",
+        "description": "Copy of every plates batch email (queued, ready, failed, cancelled). The person who confirmed the batch gets the original.",
+        "to": ["developer"],
+        "cc": [],
+    },
+    {
         "key": "dev_redirect",
         "display_name": "Development redirect",
         "description": "With DEBUG on, every outbound mail goes ONLY to these contacts.",

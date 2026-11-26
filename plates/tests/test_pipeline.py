@@ -61,8 +61,8 @@ class PlatesTestCase(TestCase):
         self.upload(content or workbook_bytes(HEADERS[plate_type], good_rows(20, plate_type)), plate_type)
         return PlateBatch.objects.latest("pk")
 
-    def confirm(self, batch):
-        return self.client.post(reverse("plates:bulk_confirm", args=[batch.public_id]), {"checked_demo": "yes"})
+    def confirm(self, batch, email="maker@shelter-associates.org"):
+        return self.client.post(reverse("plates:bulk_confirm", args=[batch.public_id]), {"checked_demo": "yes", "email": email})
 
     def run_queue(self):
         request = queue.claim_next()
@@ -145,6 +145,30 @@ class BulkFlowTests(PlatesTestCase):
         second = self.draft()
         response = self.confirm(second)
         self.assertIn("You+already+have+a+batch+queued", response["Location"])
+
+    def test_confirm_needs_a_shelter_email_which_gets_the_mails_and_the_developer_a_copy(self):
+        from notification.models import EmailContact, EmailPurpose, EmailRecipient
+
+        purpose = EmailPurpose.objects.create(key="plates_batch", display_name="Plates batch copy")
+        EmailRecipient.objects.create(purpose=purpose, contact=EmailContact.objects.create(name="Developer", email="dev@shelter-associates.org"), kind="to")
+        batch = self.draft()
+        page = self.client.get(reverse("plates:bulk_check", args=[batch.public_id]))
+        self.assertContains(page, 'value="maker@shelter-associates.org"')
+        for bad in ("", "someone@gmail.com"):
+            response = self.confirm(batch, email=bad)
+            self.assertIn("Enter+the+%40shelter-associates.org+email", response["Location"])
+        batch.refresh_from_db()
+        self.assertEqual(batch.status, "draft")
+        self.confirm(batch, email="field.team@shelter-associates.org")
+        batch.refresh_from_db()
+        self.assertEqual(batch.email, "field.team@shelter-associates.org")
+        queued = mail.outbox[-1]
+        self.assertEqual((queued.to, queued.cc), (["field.team@shelter-associates.org"], ["dev@shelter-associates.org"]))
+        mail.outbox.clear()
+        self.run_queue()
+        ready = mail.outbox[-1]
+        self.assertIn(reverse("plates:batch_download", args=[batch.public_id]), ready.body)
+        self.assertEqual(ready.cc, ["dev@shelter-associates.org"])
 
     def test_zero_valid_rows_cannot_be_queued(self):
         batch = self.draft(workbook_bytes(HEADERS["digipin"], [["1", "BAD", 16.69, 74.45, "Nimajga Mal"]]))

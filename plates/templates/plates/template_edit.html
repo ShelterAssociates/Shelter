@@ -8,16 +8,26 @@
 {% block content %}
 <div class="pl-page">
   {% include "plates/partials/nav.html" with active="templates" %}
+  {% url 'plates:templates' as back_url %}{% include "plates/partials/back.html" with back_label="Back to templates" %}
   <div class="pl-header">
     <div>
       <h1 class="pl-title">{% if template %}{{ template.name }} v{{ template.version }}{% else %}New template{% endif %}</h1>
       <p class="pl-lead">Positions and sizes are in millimetres, font sizes in points. Saving a changed look makes a new version.</p>
     </div>
     {% if template %}
-    <form method="post" action="{% url 'plates:template_copy' template.pk %}" class="pl-inline">{% csrf_token %}<button class="pl-btn" type="submit">Copy as a new template</button></form>
+    <div class="pl-actions">
+      <form method="post" action="{% url 'plates:template_copy' template.pk %}" class="pl-inline">{% csrf_token %}<button class="pl-btn" type="submit" data-busy="Copying…">Copy as a new template</button></form>
+      {% if template.is_latest and template.is_active %}
+        <form method="post" action="{% url 'plates:template_archive' template.pk %}" class="pl-inline">{% csrf_token %}<button class="pl-btn" type="submit" data-busy="Archiving…">Archive</button></form>
+      {% elif template.is_latest %}
+        <form method="post" action="{% url 'plates:template_restore' template.pk %}" class="pl-inline">{% csrf_token %}<button class="pl-btn" type="submit" data-busy="Restoring…">Restore from archive</button></form>
+        <a class="pl-btn pl-btn--danger" href="{% url 'plates:template_delete' template.pk %}">Delete permanently</a>
+      {% endif %}
+    </div>
     {% endif %}
   </div>
 
+  {% if template and template.is_latest and not template.is_active %}<div class="pl-note" style="margin-top:16px">This template is archived and hidden from every picker. Restore it to use it again.</div>{% endif %}
   {% if read_only %}<div class="pl-note pl-note--warn" style="margin-top:16px">This is an older version and is read-only. Batches made with it can still be made again exactly. Open the current version from the templates list to change it.</div>{% endif %}
   {% if form.non_field_errors %}<div class="pl-note pl-note--bad" style="margin-top:16px">{% for error in form.non_field_errors %}{{ error }}<br>{% endfor %}</div>{% endif %}
 
@@ -96,7 +106,12 @@
       <div class="pl-sticky">
         <h2 class="pl-h2" style="margin-bottom:12px">Preview</h2>
         <label class="pl-check-line"><input type="checkbox" id="preview-worst"> <span>Show the longest values</span></label>
-        <img class="pl-plate" id="preview-image" data-preview alt="Template preview" style="margin-top:12px" hidden>
+        <div class="pl-preview-area" id="preview-area" style="margin-top:12px">
+          <div class="pl-skeleton" data-preview-skeleton></div>
+          <img class="pl-plate" id="preview-image" data-preview alt="Template preview" hidden>
+          <div class="pl-progress" id="preview-progress" role="progressbar" aria-label="Drawing the preview"></div>
+          <p class="pl-busy-note" id="preview-note">Drawing the preview…</p>
+        </div>
         <ul class="pl-errors" id="preview-problems" style="margin-top:12px"></ul>
         <p class="pl-note pl-note--ok" id="preview-ok" style="margin-top:12px" hidden>No layout problems: no overlaps, clear of the holes and edges, and the longest values fit.</p>
       </div>
@@ -105,7 +120,10 @@
     <section class="pl-section">
       <div class="pl-section-head"><h2 class="pl-h2">Elements</h2></div>
       <p class="pl-muted" style="margin:-6px 0 14px">Every part of the plate. Left and Top are measured in millimetres from the plate's left and top edges; Width and Height are the box size in millimetres; Largest and Smallest are font sizes in points. To move something left, make Left smaller; to move it down, make Top bigger. Layer decides what is drawn on top.</p>
-      <img class="pl-plate" data-preview alt="Template preview" style="max-width:720px;margin-bottom:16px" hidden>
+      <div style="max-width:720px;margin-bottom:16px">
+        <div class="pl-skeleton" data-preview-skeleton></div>
+        <img class="pl-plate" data-preview alt="Template preview" hidden>
+      </div>
       <div class="pl-table-wrap"><table class="pl-table pl-elements" id="element-table"><thead><tr><th>Id</th><th>Type</th><th>Left (mm)</th><th>Top (mm)</th><th>Width (mm)</th><th>Height (mm)</th><th>Layer</th><th>Font / logo</th><th>Largest (pt)</th><th>Smallest (pt)</th><th>Colour</th><th>Text</th></tr></thead><tbody></tbody></table></div>
       <details><summary>All element settings (JSON)</summary>{% include "plates/partials/field.html" with field=form.elements_json %}</details>
     </section>
@@ -115,7 +133,7 @@
         {% include "plates/partials/check.html" with field=form.is_default %}
         {% include "plates/partials/check.html" with field=form.is_active %}
       </div>
-      {% if not read_only %}<div class="pl-form-actions"><button class="pl-btn pl-btn--primary" type="submit">Save template</button></div>{% endif %}
+      {% if not read_only %}<div class="pl-form-actions"><button class="pl-btn pl-btn--primary" type="submit" data-busy="Checking and saving…">Save template</button></div>{% endif %}
     </section>
   </form>
 </div>

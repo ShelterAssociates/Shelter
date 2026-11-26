@@ -25,6 +25,17 @@ def batch_url(batch):
     return page_url("plates:batch_detail", batch.public_id)
 
 
+COPY_PURPOSE = "plates_batch"
+
+
+def developer_copies():
+    """(cc, bcc) for batch emails, from the email address book (purpose plates_batch, seeded by seed_notification_config)."""
+    from notification.services import contacts
+
+    to, cc, bcc = contacts.recipients_for(COPY_PURPOSE)
+    return list(to) + list(cc), list(bcc)
+
+
 def label(batch):
     return batch.slum_name or batch.original_name or "plates"
 
@@ -60,25 +71,32 @@ def batch_facts(batch):
     ]
 
 
-def deliver(to, subject, context, text, attachments=None, cc=None):
+def deliver(to, subject, context, text, attachments=None, cc=None, bcc=None):
     to = addresses(to)
     if not to:
         logger.warning("Plates email not sent (no @shelter-associates.org address): %s", subject)
         return None
     try:
-        return send_email(to, subject, TEMPLATE, context, text, cc=addresses(cc or []) or None, attachments=attachments)
+        return send_email(to, subject, TEMPLATE, context, text, cc=addresses(cc or []) or None,
+                          bcc=addresses(bcc or []) or None, attachments=attachments)
     except Exception:
         logger.exception("Plates email could not be sent: %s", subject)
         return None
 
 
-def send_batch(batch, kind, subject, lines, facts=(), rows=(), button="Open the batch page", to=None):
+def send_batch(batch, kind, subject, lines, facts=(), rows=(), button="Open the batch page", link=None):
+    """To the address given at confirm, the developer in copy."""
+    link = link or batch_url(batch)
     context = {
         "title": subject, "colour": COLOURS.get(kind, COLOURS["template"]), "lines": lines,
-        "facts": list(batch_facts(batch)) + list(facts), "rows": list(rows), "link": batch_url(batch), "button": button,
+        "facts": list(batch_facts(batch)) + list(facts), "rows": list(rows), "link": link, "button": button,
+        "page_link": batch_url(batch) if link != batch_url(batch) else "",
     }
-    text = "\n".join([subject, ""] + list(lines) + ["", batch_url(batch)])
-    return deliver(to or [batch.email], subject, context, text)
+    text = "\n".join([subject, ""] + list(lines) + ["", link] + (["Batch page: " + batch_url(batch)] if link != batch_url(batch) else []))
+    to = addresses([batch.email])
+    cc, bcc = developer_copies()
+    cc = [address for address in addresses(cc) if address.lower() not in [item.lower() for item in to]]
+    return deliver(to or cc, subject, context, text, cc=cc if to else None, bcc=bcc)
 
 
 def send_queued(batch):
@@ -93,22 +111,19 @@ def send_queued(batch):
 def send_done(batch):
     subject = "Plates ready: {}, {}, {} made, {} skipped".format(label(batch), batch.get_plate_type_display(), batch.made_count, batch.skipped_count)
     until = retention.available_until(batch)
-    lines = ["Your plates are ready. Log in and download the zip from the batch page.",
+    lines = ["Your plates are ready. Press Download zip below (you will be asked to log in), or open the batch page.",
              "Available until {}. After that the zip is deleted by the nightly cleanup; you can generate it again from the batch page.".format(until)]
     facts = [("Plates made", batch.made_count), ("Rows skipped", batch.skipped_count), ("Warnings", batch.warning_count),
              ("Zip size", size_text(batch.bytes_total)), ("Available until", until)]
     skipped = [("Row {}".format(item["row"]), item["reason"]) for item in (batch.failures or [])[:10]]
-    return send_batch(batch, "done", subject, lines, facts, skipped, "Download (login needed)")
+    return send_batch(batch, "done", subject, lines, facts, skipped, "Download zip (login needed)", page_url("plates:batch_download", batch.public_id))
 
 
 def send_failed(batch):
-    from notification.services import contacts
-
-    to, cc, bcc = contacts.recipients_for("job_failure")
     subject = "Plates failed: {}, {}".format(label(batch), batch.get_plate_type_display())
     made = "{} plates were drawn before it stopped, but no zip was kept.".format(batch.made_count) if batch.made_count else "Nothing was made."
     lines = [batch.error or "The batch stopped.", made, "Press Generate again on the batch page to start a new run."]
-    return send_batch(batch, "failed", subject, lines, button="Generate again", to=[batch.email] + list(to) + list(cc) + list(bcc))
+    return send_batch(batch, "failed", subject, lines, button="Generate again")
 
 
 def send_cancelled(batch):

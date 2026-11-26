@@ -89,11 +89,11 @@
 </ul>
 
 <h3>4.4 Demo plates and confirm</h3>
-<p>Up to three demo plates are drawn exactly as they will print: the first row, the row with the widest code and the row with the longest slum name. Each shows its file name and the QR link. Look at them carefully. Then tick <b>I have checked the demo plates</b> and press <b>Generate N plates</b>. The button stays off until the box is ticked.</p>
+<p>Up to three demo plates are drawn exactly as they will print: the first row, the row with the widest code and the row with the longest slum name. Each shows its file name and the QR link. Look at them carefully. Then check <b>Send emails to</b> (filled in with your account's email; change it if needed; it must be an @shelter-associates.org address), tick <b>I have checked the demo plates</b> and press <b>Generate N plates</b>. The button stays off until the box is ticked.</p>
 <p>After you confirm, the batch is <b>queued</b> and you get an email. The server picks it up within about 2 minutes and makes the plates one by one. The batch page shows progress every 100 plates and refreshes by itself. You can have one queued or running batch at a time.</p>
 
 <h3>4.5 Download</h3>
-<p>When the batch is done you get an email "Plates ready". It links to the batch page, which needs you to log in. Press <b>Download zip</b>. The zip contains:</p>
+<p>When the batch is done, the address you gave gets an email "Plates ready" with a <b>Download zip</b> button (you are asked to log in). The developer gets a copy of every batch email. You can also download from <b>Plates &rarr; Batches</b>: finished batches have a <b>Download</b> button in their row, and clicking anywhere on a row opens the batch page. The list can be searched, filtered by status and sorted by any column. The zip contains:</p>
 <ul>
   <li><code>images/</code>: one PNG per plate, named code_house-number, e.g. <code>4J6M8286K8_1.png</code> or <code>7J8PMFV5+5RCH_1.png</code>.</li>
   <li><code>plates.xlsx</code>: the <b>Plates</b> sheet has every uploaded column in the original order, then <b>Image file name</b>, <b>Status</b> (made or skipped), <b>Reason</b>, <b>Code on plate</b> and <b>QR link</b>. The <b>Batch</b> sheet records the template and version, size, DPI, drill holes, side panel, and who asked for and confirmed it, and when.</li>
@@ -113,7 +113,7 @@
 </table>
 <p><b>How long a zip is kept.</b> Zips are deleted only by the nightly cleanup at 05:00 (India time), and only once they are at least 24 hours old, so a zip is available for 24 to 48 hours. The exact time is shown on the batch page and in the email, for example "Available until 28 Nov 2026, 05:00". After that the page says "This download has been deleted by the nightly cleanup. Generate it again from the batch page."</p>
 <p><b>Generate again</b> makes a new draft from the stored Excel file, with the same template version. You check the demo plates and confirm again. The uploaded Excel is kept for 180 days.</p>
-<p><b>Emails</b> are sent when a batch is queued, done, failed or cancelled, only to <code>@shelter-associates.org</code> addresses. They never contain a file, only a link to the batch page.</p>
+<p><b>Emails</b> are sent when a batch is queued, done, failed or cancelled, to the address given when confirming, with a copy to the contacts of the <b>Plates batch copy</b> purpose in the email address book (Admin &rarr; Email purposes; seeded with the developer). Only <code>@shelter-associates.org</code> addresses. They never contain a file, only links to pages that need a login.</p>
 <h3>Reasons a row is skipped</h3>
 <table>
   <tr><th>Reason</th><th>What to do</th></tr>
@@ -130,7 +130,8 @@
 <h3>6.1 Versions</h3>
 <ul>
   <li>Every saved change to how a template looks makes a <b>new version</b>. The old version becomes read-only and is switched off, so earlier batches can be made again exactly as before. Changing only the name, Default or Active keeps the same version.</li>
-  <li>Templates are never deleted; untick <b>Active</b> to hide one from the pickers.</li>
+  <li><b>Archive</b> (Templates page or the editor) hides a template from every picker; it moves to <b>Archived templates</b> (button next to New template). <b>Restore</b> brings it back. If you archive the default template, mark another one as default.</li>
+  <li><b>Delete permanently</b> is only offered in the Archived list and asks for confirmation. It removes the template and all its older versions and cannot be undone. A template that was used for any batch cannot be deleted, so that batch can always be made again; it simply stays archived.</li>
   <li><b>Default</b> picks the template that is chosen automatically for its plate type and kind. There is one default per plate type and kind.</li>
 </ul>
 <h3>6.2 Create, copy, edit</h3>
@@ -218,6 +219,7 @@
   <li>nginx: the <code>location ^~ /media/plate_ { deny all; return 403; }</code> rule (in deploy/nginx/prod.conf and uat.conf), then <code>nginx -t</code> and reload.</li>
   <li>Cron: <code>deploy/JOB_QUEUE_RUNNER.sh</code> every 2 minutes and <code>deploy/CLEANUP_GENERATED_FILES.sh</code> at 05:00 (the cleanup now also removes plate_exports and runs cleanup_plate_uploads).</li>
   <li>Settings in local_settings.py if needed: PLATES_GROUPS, PLATES_TEMPLATE_GROUPS.</li>
+  <li><code>python manage.py seed_notification_config</code>: adds the <b>Plates batch copy</b> email purpose (developer gets a copy of every batch email). Change its recipients in Admin &rarr; Email purposes.</li>
   <li>Add the users to the group, restart the app, make one single plate of each type, print at 100% scale, measure 5 x 1.5 in and scan the QR with phones.</li>
 </ol>
 <h3>7.3 Settings</h3>

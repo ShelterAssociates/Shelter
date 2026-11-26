@@ -10,11 +10,12 @@
   <div class="pl-header">
     <div>
       <h1 class="pl-title">Templates</h1>
-      <p class="pl-lead">Each change to a template's look saves a new version; old versions stay read-only so earlier batches can be made again exactly. Templates are never deleted, only switched off.</p>
+      <p class="pl-lead">Each change to a template's look saves a new version; old versions stay read-only so earlier batches can be made again exactly. Archive a template you no longer need; an archived template that no batch used can be deleted permanently.</p>
     </div>
     <div class="pl-actions">
       <a class="pl-btn pl-btn--primary" href="{% url 'plates:template_new' %}?type=digipin">New DIGIPIN template</a>
       <a class="pl-btn" href="{% url 'plates:template_new' %}?type=pluscode">New Plus Code template</a>
+      <a class="pl-btn" href="{% url 'plates:templates_archived' %}">Archived templates ({{ archived_count }})</a>
     </div>
   </div>
   {% if message %}<div class="pl-note" style="margin-top:16px">{{ message }}</div>{% endif %}
@@ -32,16 +33,16 @@
             <td>{{ template.get_plate_type_display }}</td>
             <td class="pl-muted">{{ template.width_mm }} x {{ template.height_mm }} mm<br>{{ template.dpi }} DPI</td>
             <td>v{{ template.version }}</td>
-            <td>{% if template.is_default %}Default{% endif %}{% if not template.is_active %}<span class="pl-muted">Off</span>{% endif %}</td>
-            <td><form method="post" action="{% url 'plates:template_copy' template.pk %}" class="pl-inline">{% csrf_token %}<button class="pl-btn pl-btn--sm" type="submit">Copy</button></form></td>
+            <td>{% if template.is_default %}Default{% endif %}</td>
+            <td><div class="pl-actions">
+              <form method="post" action="{% url 'plates:template_copy' template.pk %}" class="pl-inline">{% csrf_token %}<button class="pl-btn pl-btn--sm" type="submit" data-busy="Copying…">Copy</button></form>
+              <form method="post" action="{% url 'plates:template_archive' template.pk %}" class="pl-inline">{% csrf_token %}<button class="pl-btn pl-btn--sm" type="submit" data-busy="Archiving…">Archive</button></form>
+            </div></td>
           </tr>
         {% empty %}<tr><td colspan="7" class="pl-muted">No templates yet. Run <span class="pl-code">manage.py seed_plate_presets</span>.</td></tr>{% endfor %}
         </tbody>
       </table>
     </div>
-    {% if older %}
-      <p class="pl-muted pl-small" style="margin-top:14px">Older versions (read-only): {% for template in older %}<a href="{% url 'plates:template_edit' template.pk %}">{{ template.name }} v{{ template.version }}</a>{% if not forloop.last %}, {% endif %}{% endfor %}</p>
-    {% endif %}
   </section>
 
   <section class="pl-section pl-split" style="grid-template-columns: 1fr 1fr">

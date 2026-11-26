@@ -7,6 +7,7 @@
 {% block content %}
 <div class="pl-page">
   {% include "plates/partials/nav.html" with active="batches" %}
+  {% url 'plates:batches' as back_url %}{% include "plates/partials/back.html" with back_label="Back to batches" %}
   <div class="pl-header">
     <div>
       <h1 class="pl-title">Batch #{{ batch.pk }} &middot; {{ batch.slum_name|default:batch.original_name }}</h1>
@@ -17,10 +18,10 @@
         <a class="pl-btn pl-btn--primary" href="{% url 'plates:batch_download' batch.public_id %}">{% include "plates/partials/download_icon.html" %} Download zip</a>
       {% endif %}
       {% if can_generate_again %}
-        <form method="post" action="{% url 'plates:batch_regenerate' batch.public_id %}" class="pl-inline">{% csrf_token %}<button class="pl-btn pl-btn--primary" type="submit">Generate again</button></form>
+        <form method="post" action="{% url 'plates:batch_regenerate' batch.public_id %}" class="pl-inline">{% csrf_token %}<button class="pl-btn pl-btn--primary" type="submit" data-busy="Preparing…">Generate again</button></form>
       {% endif %}
       {% if batch.status == "queued" %}
-        <form method="post" action="{% url 'plates:batch_cancel' batch.public_id %}" class="pl-inline">{% csrf_token %}<button class="pl-btn pl-btn--danger" type="submit">Cancel</button></form>
+        <form method="post" action="{% url 'plates:batch_cancel' batch.public_id %}" class="pl-inline">{% csrf_token %}<button class="pl-btn pl-btn--danger" type="submit" data-busy="Cancelling…">Cancel</button></form>
       {% endif %}
     </div>
   </div>
@@ -55,6 +56,7 @@
       <dt>Drill holes</dt><dd>{% if batch.holes %}as in the template{% else %}off (full plates){% endif %}</dd>
       <dt>Side panel</dt><dd>{% if batch.side_panel %}on{% else %}as in the template{% endif %}</dd>
       <dt>Requested by</dt><dd>{{ batch.requested_by.get_username|default:"—" }} on {{ batch.created_on|date:"j M Y, H:i" }}</dd>
+      <dt>Emails go to</dt><dd>{{ batch.email|default:"—" }}</dd>
       <dt>Confirmed by</dt><dd>{{ batch.confirmed_by.get_username|default:"—" }}{% if batch.confirmed_on %} on {{ batch.confirmed_on|date:"j M Y, H:i" }}{% endif %}</dd>
       <dt>Started</dt><dd>{{ batch.started_on|date:"j M Y, H:i"|default:"—" }}</dd>
       <dt>Finished</dt><dd>{{ batch.finished_on|date:"j M Y, H:i"|default:"—" }}</dd>

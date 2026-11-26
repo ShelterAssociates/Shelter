@@ -1,4 +1,7 @@
-{% load plates_tags %}
+{% load plates_tags static %}
+<div class="pl-progress pl-page-progress" id="pl-page-progress" role="progressbar" aria-label="Loading" hidden></div>
+<script src="{% static 'plates/loading.js' %}" defer></script>
+<script src="{% static 'plates/grid.js' %}" defer></script>
 <nav class="pl-tabs" aria-label="Plates">
   <a href="{% url 'plates:home' %}"{% if active == "home" %} class="is-active" aria-current="page"{% endif %}>Overview</a>
   <a href="{% url 'plates:single' %}"{% if active == "single" %} class="is-active" aria-current="page"{% endif %}>Single plate</a>

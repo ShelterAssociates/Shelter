@@ -106,12 +106,17 @@ def holes(canvas, geometry):
 
 
 def shadow(canvas, box, radius, settings, length):
+    """Soft shadow under a card. Only the area around the card is blurred (the rest is transparent anyway)."""
     x, y, width, height = box
     dx, dy, blur = length(settings.get("dx", 0.009)), length(settings.get("dy", 0.013)), length(settings.get("blur", 0.013))
-    layer = Image.new("RGBA", canvas.size, (0, 0, 0, 0))
+    margin = 4 * blur + 2
+    layer = Image.new("RGBA", (width + 2 * margin + 1, height + 2 * margin + 1), (0, 0, 0, 0))
     ImageDraw.Draw(layer).rounded_rectangle(
-        [x + dx, y + dy, x + width + dx, y + height + dy], radius, fill=(0, 0, 0, int(round(255 * float(settings.get("opacity", 0.35))))))
-    canvas.alpha_composite(layer.filter(ImageFilter.GaussianBlur(blur)))
+        [margin, margin, margin + width, margin + height], radius, fill=(0, 0, 0, int(round(255 * float(settings.get("opacity", 0.35))))))
+    blurred = layer.filter(ImageFilter.GaussianBlur(blur))
+    left, top = x + dx - margin, y + dy - margin
+    visible = blurred.crop((max(0, -left), max(0, -top), min(blurred.width, canvas.width - left), min(blurred.height, canvas.height - top)))
+    canvas.alpha_composite(visible, (max(0, left), max(0, top)))
 
 
 def card(canvas, element, box, length):

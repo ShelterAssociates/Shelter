@@ -119,20 +119,45 @@
     previewTimer = setTimeout(preview, 600);
   }
 
+  var previewArea = document.getElementById("preview-area");
+  var previewNumber = 0, previewRequest = null;
+
+  function showLoading(on) {
+    previewArea.classList.toggle("is-loading", on);
+    document.getElementById("preview-progress").hidden = !on;
+    document.getElementById("preview-note").hidden = !on;
+  }
+
+  function showPreview(result) {
+    Array.prototype.forEach.call(document.querySelectorAll("[data-preview-skeleton]"), function (box) { box.hidden = true; });
+    Array.prototype.forEach.call(document.querySelectorAll("img[data-preview]"), function (image) {
+      image.hidden = !result.image;
+      if (result.image) image.src = result.image;
+    });
+    showList(document.getElementById("preview-problems"), result.problems);
+    document.getElementById("preview-ok").hidden = result.problems.length > 0;
+  }
+
   function preview() {
+    // Only the newest request counts; an older, slower one is cancelled so the preview never jumps back.
+    var mine = ++previewNumber;
+    if (previewRequest) previewRequest.abort();
+    previewRequest = window.AbortController ? new AbortController() : null;
     var data = new FormData(form);
     data.append("base", form.getAttribute("data-base"));
     if (document.getElementById("preview-worst").checked) data.append("worst", "1");
-    fetch(form.getAttribute("data-preview-url"), { method: "POST", body: data, credentials: "same-origin" })
-      .then(function (response) { return response.json(); })
-      .then(function (result) {
-        Array.prototype.forEach.call(document.querySelectorAll("img[data-preview]"), function (image) {
-          image.hidden = !result.image;
-          if (result.image) image.src = result.image;
-        });
-        showList(document.getElementById("preview-problems"), result.problems);
-        document.getElementById("preview-ok").hidden = result.problems.length > 0;
-      });
+    showLoading(true);
+    fetch(form.getAttribute("data-preview-url"), { method: "POST", body: data, credentials: "same-origin", signal: previewRequest ? previewRequest.signal : undefined })
+      .then(function (response) {
+        if (!response.ok) throw new Error("HTTP " + response.status);
+        return response.json();
+      })
+      .then(function (result) { if (mine === previewNumber) showPreview(result); })
+      .catch(function (error) {
+        if (error.name === "AbortError" || mine !== previewNumber) return;
+        showList(document.getElementById("preview-problems"), ["The preview could not be drawn. Check the connection, then change a value to try again."]);
+      })
+      .then(function () { if (mine === previewNumber) showLoading(false); });
   }
 
   function checkLink() {
@@ -140,6 +165,7 @@
     data.append("pattern", document.getElementById("id_qr_link_pattern").value);
     data.append("plate_type", document.getElementById("id_plate_type").value);
     data.append("csrfmiddlewaretoken", form.querySelector("input[name=csrfmiddlewaretoken]").value);
+    document.getElementById("link-filled").textContent = "Checking…";
     fetch(form.getAttribute("data-link-url"), { method: "POST", body: data, credentials: "same-origin" })
       .then(function (response) { return response.json(); })
       .then(function (result) {

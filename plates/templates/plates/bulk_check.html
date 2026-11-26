@@ -7,12 +7,13 @@
 {% block content %}
 <div class="pl-page">
   {% include "plates/partials/nav.html" with active="bulk" %}
+  {% url 'plates:bulk_new' as back_url %}{% include "plates/partials/back.html" with back_label="Back to Excel upload" %}
   <div class="pl-header">
     <div>
       <h1 class="pl-title">Check {{ batch.original_name }}</h1>
       <p class="pl-lead">{{ batch.get_plate_type_display }} plates, template {{ batch.template.name }} v{{ batch.template.version }}, {{ size_text }}, {% if batch.holes %}with drill holes{% else %}without drill holes{% endif %}{% if batch.side_panel %}, with the side panel{% endif %}. Nothing is made until you confirm.</p>
     </div>
-    <form method="post" action="{% url 'plates:batch_cancel' batch.public_id %}" class="pl-inline">{% csrf_token %}<button class="pl-btn pl-btn--danger" type="submit">Cancel this upload</button></form>
+    <form method="post" action="{% url 'plates:batch_cancel' batch.public_id %}" class="pl-inline">{% csrf_token %}<button class="pl-btn pl-btn--danger" type="submit" data-busy="Cancelling…">Cancel this upload</button></form>
   </div>
 
   {% if message %}<div class="pl-note pl-note--warn" style="margin-top:16px">{{ message }}</div>{% endif %}
@@ -23,7 +24,7 @@
     {% csrf_token %}
     <label class="pl-label" for="sheet_name" style="margin:0">Sheet</label>
     <select class="pl-select" name="sheet_name" id="sheet_name" style="width:auto">{% for name in sheets %}<option value="{{ name }}"{% if name == batch.sheet_name %} selected{% endif %}>{{ name }}</option>{% endfor %}</select>
-    <button class="pl-btn pl-btn--sm" type="submit">Use this sheet</button>
+    <button class="pl-btn pl-btn--sm" type="submit" data-busy="Checking…">Use this sheet</button>
   </form>
   {% endif %}
 
@@ -89,9 +90,14 @@
     <div class="pl-section-head"><h2 class="pl-h2">Confirm</h2></div>
     <form method="post" action="{% url 'plates:bulk_confirm' batch.public_id %}">
       {% csrf_token %}
+      <div class="pl-field" style="max-width:420px">
+        <label class="pl-label" for="notify_email">Send emails to <span class="pl-required" title="Required">*</span></label>
+        <input class="pl-input" type="email" name="email" id="notify_email" value="{{ default_email }}" required maxlength="254" placeholder="name@shelter-associates.org">
+        <p class="pl-help">You get an email when the batch is queued and when the zip is ready, with a Download zip button. The developer gets a copy. Only @shelter-associates.org addresses.</p>
+      </div>
       <label class="pl-check-line"><input type="checkbox" name="checked_demo" value="yes" id="checked_demo"{% if not checked.made %} disabled{% endif %}> <span>I have checked the demo plates</span></label>
       <p class="pl-help">The plates are made as PNG files in a zip, with plates.xlsx listing every row.</p>
-      <div class="pl-form-actions"><button class="pl-btn pl-btn--primary" type="submit" id="generate" disabled>Generate {{ checked.made|length }} plates</button></div>
+      <div class="pl-form-actions"><button class="pl-btn pl-btn--primary" type="submit" id="generate" data-busy="Queuing…" disabled>Generate {{ checked.made|length }} plates</button></div>
     </form>
   </section>
   {% endif %}

@@ -54,7 +54,7 @@
       <h2 class="pl-h2">Recent batches</h2>
       {% if recent %}<a href="{% url 'plates:batches' %}">All batches</a>{% endif %}
     </div>
-    {% if recent %}{% include "plates/partials/batch_table.html" with batches=recent %}{% else %}<p class="pl-empty">No batches yet. Upload an Excel file to make your first batch.</p>{% endif %}
+    {% if recent %}{% include "plates/partials/batch_table.html" with batches=recent grid_id="recent-grid" %}{% else %}<p class="pl-empty">No batches yet. Upload an Excel file to make your first batch.</p>{% endif %}
   </section>
 </div>
 {% endblock %}

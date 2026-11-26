@@ -184,8 +184,8 @@ def active_batch(user, exclude=None):
     return PlateBatch.objects.filter(requested_by=user, status__in=("queued", "running")).exclude(pk=exclude).first()
 
 
-def confirm(batch, user, checked):
-    """Queue a checked draft. Raises BatchError with the message to show."""
+def confirm(batch, user, checked, address=None):
+    """Queue a checked draft; notifications go to address (default: the user's email). Raises BatchError."""
     if not checked.made:
         raise BatchError("None of the rows can be made into plates. Check the reasons below; nothing has been queued.")
     with transaction.atomic():
@@ -198,7 +198,7 @@ def confirm(batch, user, checked):
             raise BatchError("You already have a batch queued ({}, {}). Wait for it to finish or cancel it first.".format(
                 email.label(running), running.get_plate_type_display()))
         apply_check(locked, checked)
-        locked.confirmed_by, locked.confirmed_on, locked.email = user, timezone.now(), user.email or ""
+        locked.confirmed_by, locked.confirmed_on, locked.email = user, timezone.now(), address or user.email or ""
         locked.status = "queued"
         locked.job_request = queue.enqueue(JOB_KEY, {"batch": str(locked.public_id)}, user)
         locked.save()
