@@ -30,6 +30,7 @@
               <table class="facts">{% for key, value in rows %}<tr><td class="key">{{ key }}</td><td>{{ value }}</td></tr>{% endfor %}</table>
             {% endif %}
             <a class="button" style="background: {{ colour }};" href="{{ link }}">{{ button }}</a>
+            {% if page_link %}<p style="margin-top:16px;font-size:14px">Batch page: <a href="{{ page_link }}">{{ page_link }}</a></p>{% endif %}
           </div>
           <div class="footer">Shelter Associates plates. The link opens a page that needs you to log in.</div>
         </div>

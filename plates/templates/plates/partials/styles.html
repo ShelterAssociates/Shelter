@@ -27,6 +27,10 @@ whitespace and thin rules rather than boxes.
   .pl-page .pl-tabs a.is-active { color: var(--pl-accent); border-bottom-color: var(--pl-accent); }
   .pl-tabs .pl-tabs-end { margin-left: auto; }
 
+  .pl-back { margin: -12px 0 14px; font-size: 14px; }
+  .pl-page .pl-back a { color: var(--pl-muted); }
+  .pl-page .pl-back a:hover { color: var(--pl-accent); text-decoration: none; }
+
   /* headings and text */
   .pl-header { display: flex; justify-content: space-between; align-items: flex-start; gap: 24px; flex-wrap: wrap; margin-bottom: 8px; }
   .pl-page h1.pl-title { font-size: 22px; font-weight: 600; color: var(--pl-ink); margin: 0 0 6px; line-height: 1.3; }
@@ -80,6 +84,20 @@ whitespace and thin rules rather than boxes.
   .pl-table tr:last-child td { border-bottom: 0; }
   .pl-table .pl-num { text-align: right; font-variant-numeric: tabular-nums; }
   .pl-empty { color: var(--pl-muted); padding: 4px 0; margin: 0; }
+  .pl-grid tbody tr[data-href] { cursor: pointer; }
+  .pl-grid tbody tr[data-href]:hover td { background: var(--pl-subtle); }
+  .pl-grid tbody tr[data-href]:focus-visible { outline: 2px solid var(--pl-accent); outline-offset: -2px; }
+  .pl-grid td:first-child, .pl-grid th:first-child { padding-left: 8px; }
+  .pl-page .pl-grid th button { all: unset; cursor: pointer; display: inline-flex; align-items: center; gap: 4px; }
+  .pl-page .pl-grid th button:hover { color: var(--pl-ink); }
+  .pl-page .pl-grid th button:focus-visible { outline: 2px solid var(--pl-accent); outline-offset: 2px; }
+  .pl-grid th[aria-sort="ascending"] button::after { content: "\2191"; }
+  .pl-grid th[aria-sort="descending"] button::after { content: "\2193"; }
+  .pl-grid th[aria-sort="ascending"], .pl-grid th[aria-sort="descending"] { color: var(--pl-ink); }
+  .pl-grid-toolbar { display: flex; flex-wrap: wrap; gap: 10px 16px; align-items: center; margin: 0 0 14px; }
+  .pl-page .pl-grid-toolbar .pl-input { width: 280px; max-width: 100%; }
+  .pl-page .pl-grid-toolbar .pl-select { width: auto; }
+  .pl-visually-hidden { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 
   /* status */
   .pl-status { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; color: var(--pl-text); white-space: nowrap; }
@@ -152,6 +170,29 @@ whitespace and thin rules rather than boxes.
   .pl-guide th { font-size: 12.5px; font-weight: 500; color: var(--pl-muted); }
   .pl-guide code { font-size: 13px; background: var(--pl-subtle); border: 1px solid var(--pl-line); padding: 0 4px; border-radius: 3px; }
   .pl-guide-lead { font-size: 16px; color: var(--pl-muted); }
+
+  /* loading: a thin bar while the server works, plate-shaped placeholders until images arrive */
+  .pl-progress { position: relative; height: 3px; overflow: hidden; background: var(--pl-accent-soft); border-radius: 2px; }
+  .pl-progress::after { content: ""; position: absolute; top: 0; bottom: 0; left: -40%; width: 40%; background: var(--pl-accent);
+                        animation: pl-progress 1.1s ease-in-out infinite; }
+  @keyframes pl-progress { from { left: -40%; } to { left: 100%; } }
+  .pl-page-progress { position: fixed; top: 0; left: 0; right: 0; z-index: 1000; border-radius: 0; }
+  .pl-busy-note { font-size: 13px; color: var(--pl-muted); margin: 8px 0 0; }
+  .pl-skeleton { aspect-ratio: 10 / 3; border: 1px solid var(--pl-line);
+                 background: linear-gradient(90deg, #f1f4f7 25%, #e8ecf1 50%, #f1f4f7 75%); background-size: 200% 100%;
+                 animation: pl-shimmer 1.4s linear infinite; }
+  @keyframes pl-shimmer { from { background-position: 200% 0; } to { background-position: -200% 0; } }
+  img.pl-plate, img.pl-thumb { aspect-ratio: auto 10 / 3; background: linear-gradient(90deg, #f1f4f7 25%, #e8ecf1 50%, #f1f4f7 75%);
+                               background-size: 200% 100%; animation: pl-shimmer 1.4s linear infinite; }
+  img.pl-plate.is-loaded, img.pl-thumb.is-loaded { animation: none; background: var(--pl-subtle); }
+  .pl-preview-area { position: relative; }
+  .pl-preview-area .pl-progress { margin: 12px 0 0; }
+  .pl-preview-area.is-loading img.pl-plate { opacity: .45; transition: opacity .15s; }
+  .pl-page .pl-btn.is-busy { pointer-events: none; opacity: .7; }
+  @media (prefers-reduced-motion: reduce) {
+    .pl-progress::after { animation: none; left: 0; width: 100%; opacity: .5; }
+    .pl-skeleton, img.pl-plate, img.pl-thumb { animation: none; }
+  }
 
   @media (max-width: 860px) {
     .pl-split { grid-template-columns: 1fr; gap: 32px; }

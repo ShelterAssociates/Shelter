@@ -30,6 +30,7 @@ def every_url():
         reverse("plates:templates"), reverse("plates:template_new"), reverse("plates:template_preview"),
         reverse("plates:link_preview"), reverse("plates:asset_upload"), reverse("plates:font_upload"),
         reverse("plates:template_edit", args=[1]), reverse("plates:template_copy", args=[1]), reverse("plates:template_image", args=[1]),
+        reverse("plates:templates_archived"), reverse("plates:template_archive", args=[1]), reverse("plates:template_restore", args=[1]), reverse("plates:template_delete", args=[1]),
     ]
 
 
@@ -90,6 +91,13 @@ class AccessTests(PlatesTestCase):
         self.client.get(reverse("plates:bulk_check", args=[batch.public_id]))
         self.assertEqual(self.client.get(reverse("plates:bulk_demo_image", args=[batch.public_id, 2])).status_code, 200)
         self.assertEqual(self.client.get(reverse("plates:bulk_demo_image", args=[batch.public_id, 9])).status_code, 404)
+
+    def test_batch_list_rows_open_the_batch_and_inner_pages_have_a_back_link(self):
+        batch = self.draft()
+        page = self.client.get(reverse("plates:batches"))
+        self.assertContains(page, 'data-href="{}"'.format(reverse("plates:batch_detail", args=[batch.public_id])))
+        self.assertContains(page, 'data-grid-search="batch-grid"')
+        self.assertContains(self.client.get(reverse("plates:bulk_check", args=[batch.public_id])), "&larr; Back to Excel upload")
 
     def test_urls_use_the_random_public_id(self):
         batch = self.draft()
@@ -247,6 +255,49 @@ class TemplateEditorTests(PlatesTestCase):
         response = self.client.post(reverse("plates:link_preview"), {"plate_type": "digipin", "pattern": "https://evil.example.com/{x}"})
         self.assertEqual(response.json()["link"], "")
         self.assertTrue(response.json()["problems"])
+
+    def copied(self):
+        self.client.post(reverse("plates:template_copy", args=[self.template().pk]))
+        return PlateTemplate.objects.latest("pk")
+
+    def test_archive_hides_the_template_and_restore_brings_it_back(self):
+        from plates.forms import usable_templates
+
+        original = self.template()
+        response = self.client.post(reverse("plates:template_archive", args=[original.pk]))
+        self.assertIn("Archived", response["Location"])
+        original.refresh_from_db()
+        self.assertEqual((original.is_active, original.is_default), (False, False))
+        self.assertNotIn(original, usable_templates())
+        self.assertContains(self.client.get(reverse("plates:templates")), "Archived templates (1)")
+        self.assertContains(self.client.get(reverse("plates:templates_archived")), reverse("plates:template_restore", args=[original.pk]))
+        self.client.post(reverse("plates:template_restore", args=[original.pk]))
+        original.refresh_from_db()
+        self.assertTrue(original.is_active)
+        self.assertIn(original, usable_templates())
+
+    def test_delete_removes_an_unused_archived_template_with_all_its_versions(self):
+        copy = self.copied()
+        self.client.post(reverse("plates:template_edit", args=[copy.pk]), self.payload(copy, qr_caption="SCAN HERE"))
+        latest = PlateTemplate.objects.get(parent=copy)
+        self.client.post(reverse("plates:template_archive", args=[latest.pk]))
+        page = self.client.get(reverse("plates:template_delete", args=[latest.pk]))
+        self.assertContains(page, "all 2 versions of it")
+        response = self.client.post(reverse("plates:template_delete", args=[latest.pk]))
+        self.assertIn("Deleted", response["Location"])
+        self.assertFalse(PlateTemplate.objects.filter(pk__in=[copy.pk, latest.pk]).exists())
+        self.assertTrue(PlateActivity.objects.filter(action="template_changed", detail__startswith="deleted").exists())
+
+    def test_delete_is_refused_for_a_used_or_active_template(self):
+        copy = self.copied()
+        response = self.client.post(reverse("plates:template_delete", args=[copy.pk]))
+        self.assertIn("Only+an+archived+template", response["Location"])
+        PlateBatch.objects.create(template=copy, plate_type="digipin")
+        self.client.post(reverse("plates:template_archive", args=[copy.pk]))
+        self.assertContains(self.client.get(reverse("plates:template_delete", args=[copy.pk])), "used by 1 batch")
+        response = self.client.post(reverse("plates:template_delete", args=[copy.pk]))
+        self.assertIn("cannot+be+deleted", response["Location"])
+        self.assertTrue(PlateTemplate.objects.filter(pk=copy.pk).exists())
 
     def test_uploads_are_checked(self):
         svg = SimpleUploadedFile("logo.svg", b"<svg xmlns='http://www.w3.org/2000/svg'/>")

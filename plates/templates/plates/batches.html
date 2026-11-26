@@ -15,6 +15,17 @@
     <a class="pl-btn pl-btn--primary" href="{% url 'plates:bulk_new' %}">Upload Excel</a>
   </div>
   <section class="pl-section">
+    {% if batches %}
+    <div class="pl-grid-toolbar">
+      <input class="pl-input" type="search" placeholder="Search slum, file, template, user…" aria-label="Search batches" data-grid-search="batch-grid">
+      <select class="pl-select" aria-label="Filter by status" data-grid-status="batch-grid">
+        <option value="">All statuses</option>
+        <option value="done">Done</option><option value="queued">Queued</option><option value="running">Running</option>
+        <option value="failed">Failed</option><option value="cancelled">Cancelled</option><option value="expired">Expired</option><option value="draft">Draft</option>
+      </select>
+      <span class="pl-muted pl-small" data-grid-count="batch-grid" aria-live="polite"></span>
+    </div>
+    {% endif %}
     {% include "plates/partials/batch_table.html" with batches=batches show_requester=user.is_superuser %}
   </section>
 </div>

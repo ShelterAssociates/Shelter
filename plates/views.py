@@ -12,6 +12,7 @@ from django.urls import reverse
 from django.utils.http import urlencode
 from django.views.decorators.http import require_GET, require_POST
 
+from helpers.validators import validate_shelter_email
 from plates import forms
 from plates.models import PlateAsset, PlateBatch, PlateFont, PlateTemplate
 from plates.permissions import can_edit_templates, forbidden, plates_required, templates_required
@@ -167,6 +168,7 @@ def bulk_check(request, public_id):
 
 def check_context(batch, checked, demos, error, message):
     return {
+        "default_email": batch.email or (batch.requested_by.email if batch.requested_by else ""),
         "batch": batch, "checked": checked, "demos": demos, "error": error, "message": message,
         "sheets": excel.sheet_names(batch.upload.path) if batch.upload else [],
         "skipped": checked.skipped[:SHOWN_ROWS] if checked else [], "warned": checked.warned[:SHOWN_ROWS] if checked else [],
@@ -204,9 +206,12 @@ def bulk_confirm(request, public_id):
         return forbidden()
     if request.POST.get("checked_demo") != "yes":
         return redirect_with_message(batch, 'Tick "I have checked the demo plates" to continue.')
+    address = (request.POST.get("email") or "").strip()
+    if not validate_shelter_email(address) or "<" in address or ">" in address or len(address) > 254:
+        return redirect_with_message(batch, "Enter the @shelter-associates.org email address that should get the notifications.")
     try:
         checked = batches.checked_batch(batch)[1]
-        batch = batches.confirm(batch, request.user, checked)
+        batch = batches.confirm(batch, request.user, checked, address)
     except (batches.BatchError, excel.UploadError) as exc:
         return redirect_with_message(batch, str(exc))
     activity.log(request, "confirm", batch=batch, template=batch.template)
@@ -340,16 +345,15 @@ def template_or_404(pk):
 
 
 def sample_png(spec, worst=False, scale=1):
-    """The template drawn with a sample (or worst-case) row, as PNG bytes; None when a text cannot fit."""
+    """The template drawn with a sample (or worst-case) row, as PNG bytes; scale < 1 draws at a lower DPI (previews)."""
     rows_for = editor.WORST_ROWS if worst else editor.SAMPLE_ROWS
+    drawn = dict(spec, dpi=max(1, int(spec["dpi"] * scale)))
     try:
-        image = PlateRenderer(spec, Resources.from_database()).render(rows_for[spec["plate_type"]])
+        image = PlateRenderer(drawn, Resources.from_database()).render(rows_for[spec["plate_type"]])
     except (TextDoesNotFit, MissingResource):
         return None
-    if scale != 1:
-        image = image.resize((max(1, int(image.width * scale)), max(1, int(image.height * scale))))
     buffer = io.BytesIO()
-    save_png(image, buffer, spec["dpi"])
+    save_png(image, buffer, drawn["dpi"])
     return buffer.getvalue()
 
 
@@ -358,8 +362,8 @@ def sample_png(spec, worst=False, scale=1):
 @templates_required
 def templates(request):
     context = {
-        "latest": PlateTemplate.objects.filter(versions__isnull=True).order_by("plate_type", "-is_active", "name"),
-        "older": PlateTemplate.objects.filter(versions__isnull=False).distinct().order_by("plate_type", "name", "-version"),
+        "latest": PlateTemplate.objects.filter(versions__isnull=True, is_active=True).order_by("plate_type", "-is_default", "name"),
+        "archived_count": PlateTemplate.objects.filter(versions__isnull=True, is_active=False).count(),
         "assets": PlateAsset.objects.all(), "fonts": PlateFont.objects.all(),
         "asset_form": forms.AssetForm(), "font_form": forms.FontForm(), "message": request.GET.get("message", ""),
     }
@@ -519,3 +523,63 @@ def help_pdf(request):
     if not os.path.isfile(GUIDE_PDF):
         raise Http404()
     return private(FileResponse(open(GUIDE_PDF, "rb"), as_attachment=True, filename="plates-guide.pdf", content_type="application/pdf"))
+
+
+def templates_redirect(message, page="plates:templates"):
+    return redirect("{}?{}".format(reverse(page), urlencode({"message": message})))
+
+
+@login_required(login_url=LOGIN_URL)
+@require_GET
+@templates_required
+def templates_archived(request):
+    context = {
+        "archived": PlateTemplate.objects.filter(versions__isnull=True, is_active=False).order_by("plate_type", "name"),
+        "older": PlateTemplate.objects.filter(versions__isnull=False).distinct().order_by("plate_type", "name", "-version"),
+        "message": request.GET.get("message", ""),
+    }
+    return render(request, "plates/templates_archived.html", context)
+
+
+@login_required(login_url=LOGIN_URL)
+@require_POST
+@templates_required
+def template_archive(request, pk):
+    template = template_or_404(pk)
+    if not template.is_latest:
+        return templates_redirect("Only the current version of a template can be archived.")
+    was_default = template.is_default
+    editor.archive(template)
+    activity.log(request, "template_changed", template=template, detail="archived")
+    note = " It was the default, so choose another default {} template.".format(template.get_plate_type_display()) if was_default else ""
+    return templates_redirect("Archived {}. It is hidden from every picker; find it under Archived templates to restore or delete it.{}".format(template.name, note))
+
+
+@login_required(login_url=LOGIN_URL)
+@require_POST
+@templates_required
+def template_restore(request, pk):
+    template = template_or_404(pk)
+    if not editor.is_archived(template):
+        return templates_redirect("This template is not archived.", "plates:templates_archived")
+    editor.restore(template)
+    activity.log(request, "template_changed", template=template, detail="restored from the archive")
+    return templates_redirect("Restored {}. It is back in the pickers.".format(template.name))
+
+
+@login_required(login_url=LOGIN_URL)
+@templates_required
+def template_delete(request, pk):
+    """GET: confirmation page. POST: delete the archived template and all its versions."""
+    template = template_or_404(pk)
+    if request.method == "POST":
+        name = template.name
+        try:
+            removed = editor.delete_permanently(template)
+        except ValueError as exc:
+            return templates_redirect(str(exc), "plates:templates_archived")
+        activity.log(request, "template_changed", detail="deleted {} permanently ({} version{})".format(name, removed, "" if removed == 1 else "s"))
+        return templates_redirect("Deleted {} permanently ({} version{}).".format(name, removed, "" if removed == 1 else "s"), "plates:templates_archived")
+    context = {"template": template, "archived": editor.is_archived(template), "versions": editor.family(template),
+               "batches": editor.batch_count(template)}
+    return render(request, "plates/template_delete.html", context)
