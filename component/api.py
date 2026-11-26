@@ -1,6 +1,6 @@
 from rest_framework import viewsets
 from rest_framework import exceptions
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import DjangoModelPermissions, IsAuthenticated
 from .serializers import MetadataSerializer
 from .models import Metadata
 
@@ -16,7 +16,7 @@ class MetadataViewSet(viewsets.ModelViewSet):
     """
 
     serializer_class = MetadataSerializer
-    permission_classes = (IsAuthenticated,)
+    permission_classes = (IsAuthenticated, DjangoModelPermissions)
     queryset = Metadata.objects.filter(type="C")
 
     def get_queryset(self):

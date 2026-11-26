@@ -1,6 +1,9 @@
 from django.shortcuts import render, get_object_or_404
 from django.http import HttpResponse, JsonResponse, HttpResponseForbidden
 from django.contrib.auth.decorators import login_required, user_passes_test, permission_required
+from utils.utils_permission import has_mastersheet_access
+from django.core.exceptions import PermissionDenied, ValidationError
+from utils.uploads import validate_spreadsheet
 from django.views.decorators.http import require_GET, require_POST
 from django.db import close_old_connections
 from django.core.cache import cache
@@ -35,7 +38,6 @@ from mastersheet.models import *
 from sponsor.models import *
 from itertools import chain
 from master.models import *
-from django.views.decorators.csrf import csrf_exempt
 import json
 from django.urls import reverse
 import requests
@@ -84,6 +86,8 @@ def normalize_household_number(value):
 # The views in this file correspond to the mastersheet functionality of shelter app.
 @login_required(login_url="/accounts/login/")
 def give_details(request):
+    if not has_mastersheet_access(request.user):
+        raise PermissionDenied
     slum_info_dict = {}
     try:
         delimiter = "&"
@@ -139,7 +143,6 @@ def factsheet_by_household(household_data):
     return rows
 
 
-@csrf_exempt
 @apply_permissions_ajax("mastersheet.can_view_mastersheet")
 @deco_city_permission
 def masterSheet(request, slum_code=0, FF_code=0, RHS_code=0):
@@ -440,7 +443,7 @@ def masterSheet(request, slum_code=0, FF_code=0, RHS_code=0):
             logger.debug("dummy_formdict initialized with %s keys", len(dummy_formdict))
 
             for y in invoices:
-                for z in y.household_numbers:
+                for z in household_list(y.household_numbers):
                     z = normalize_household_number(z)
                     if z not in dummy_formdict.keys():
                         dummy_formdict[z] = {
@@ -999,6 +1002,7 @@ def define_columns(request):
     return HttpResponse(json.dumps(final_data), content_type="application/json")
 
 
+@login_required(login_url="/accounts/login/")
 @permission_required("mastersheet.can_view_mastersheet", raise_exception=True)
 def renderMastersheet(request):
     slum_search_field = find_slum()
@@ -1013,7 +1017,6 @@ def renderMastersheet(request):
     )
 
 
-@csrf_exempt
 @apply_permissions_ajax("mastersheet.can_upload_mastersheet")
 def file_ops(request):
     slum_code = request.POST.get("slum_code")
@@ -1022,11 +1025,17 @@ def file_ops(request):
     response = []
     resp = {}
     if request.method == "POST":
+        upload = request.FILES.get("file")
         try:
-            resp = handle_uploaded_file(request.FILES.get("file"), response, slum_code)
+            validate_spreadsheet(upload)
+        except ValidationError as error:
+            return HttpResponse(json.dumps({"Upload error": [error.messages[0]]}), content_type="application/json")
+        try:
+            resp = handle_uploaded_file(upload, response, slum_code)
             response = resp
-        except Exception as e:
-            response.append(("error msg", str(e)))
+        except Exception:
+            logger.exception("Mastersheet upload failed for slum %s", slum_code)
+            response = {"Upload error": [UPLOAD_FAILED]}
     return HttpResponse(json.dumps(response), content_type="application/json")
 
 
@@ -1034,6 +1043,15 @@ def file_ops(request):
 # In the sheet that is being uploaded, the 'Agreement Cancelled' field should be blank if the agreement
 # is not cancelled. If it has any entry, the agreement_cancelled field in the database will be set to
 #  True
+UPLOAD_FAILED = "The file could not be processed. Check the column names, the household numbers and the slum."
+
+
+def upload_row_error(response, message, row_id, error):
+    """The user sees which rows were skipped; the exception itself goes to the server log only."""
+    logger.warning("Mastersheet upload: %s, household %s: %r", message, row_id, error)
+    response.append((message, str(row_id)))
+
+
 def handle_uploaded_file(f, response, slum_code):
     df = pandas.read_excel(f)
 
@@ -1046,7 +1064,8 @@ def handle_uploaded_file(f, response, slum_code):
         response.append(("total_records", len(df1.index.values)))
     except Exception as e:
         flag_overall = 1
-        response.append(("Household number error", e))
+        logger.warning("Mastersheet upload: no household numbers: %r", e)
+        response.append(("Household number error", "The first column must hold the household numbers."))
 
         # We divide the dataframe into subframes for vendors, their invoices and community mobilization
 
@@ -1054,7 +1073,7 @@ def handle_uploaded_file(f, response, slum_code):
     flag_SBM = 0
     flag_ComMob = 0
     flag_TC = 0
-    flag_rhs_data = 0
+    flag_rhs_data = 1
     # Checking that the file is for RHS update or not
     if "rhs_update" in list(df1.columns):
         flag_rhs_data = 0
@@ -1124,7 +1143,7 @@ def handle_uploaded_file(f, response, slum_code):
                                 )
                             )
                     except Exception as e:
-                        response.append(("RHS row error: " + str(e), str(row_id)))
+                        upload_row_error(response, "RHS row error (row skipped)", row_id, e)
 
                 if flag_SBM != 1:
                     try:
@@ -1190,25 +1209,13 @@ def handle_uploaded_file(f, response, slum_code):
                             SBM_instance_1.save()
                             response.append(("newly created sbm", row_id))
                     except Exception as e:
-                        response.append(
-                            (
-                                "The error says: "
-                                + str(e)
-                                + ". This error is with SBM columns for following household numbers",
-                                row_id,
-                            )
-                        )
+                        upload_row_error(response, "SBM columns error (row skipped)", row_id, e)
 
                 if flag_ComMob != 1:
                     try:
                         commob_row = df_ComMob.loc[row_id]
                     except Exception as e:
-                        response.append(
-                            (
-                                "Skipped ComMob row (lookup error): " + str(e),
-                                str(row_id),
-                            )
-                        )
+                        upload_row_error(response, "Community mobilization row error (row skipped)", row_id, e)
                         commob_row = None
 
                     if commob_row is not None:
@@ -1249,26 +1256,14 @@ def handle_uploaded_file(f, response, slum_code):
                                                 ("newly created ComMob", row_id)
                                             )
                                 except Exception as e:
-                                    response.append(
-                                        (
-                                            "The error says: "
-                                            + str(e)
-                                            + ". This error is in Commuinity Mobilization columns for "
-                                            + p
-                                            + ", for the following household numbers",
-                                            row_id,
-                                        )
+                                    upload_row_error(
+                                        response, "Community mobilization error in column %s (row skipped)" % p, row_id, e
                                     )
                 if flag_accounts != 1:
                     try:
                         vendor_row = df_vendors.loc[row_id]
                     except Exception as e:
-                        response.append(
-                            (
-                                "Skipped Accounts row (lookup error): " + str(e),
-                                str(row_id),
-                            )
-                        )
+                        upload_row_error(response, "Accounts row error (row skipped)", row_id, e)
                         vendor_row = None
 
                     if vendor_row is not None:
@@ -1309,15 +1304,8 @@ def handle_uploaded_file(f, response, slum_code):
                                             VHID_instance.save()
                                             response.append(("newly created VHID", row_id))
                                 except Exception as e:
-                                    response.append(
-                                        (
-                                            "The error says: "
-                                            + str(e)
-                                            + ". This error is in Vendor Invoice Details Columns for "
-                                            + m
-                                            + ", for the following household numbers",
-                                            row_id,
-                                        )
+                                    upload_row_error(
+                                        response, "Vendor invoice error for %s (row skipped)" % m, row_id, e
                                     )
                 if flag_TC != 1:
                     try:
@@ -1375,30 +1363,14 @@ def handle_uploaded_file(f, response, slum_code):
                             TC_instance.save()
                             response.append(("newly created TC", row_id))
                     except Exception as e:
-                        response.append(
-                            (
-                                "The error says: "
-                                + str(e)
-                                + ". This error is with Toilet Construction Columns for following household numbers",
-                                row_id,
-                            )
-                        )
+                        upload_row_error(response, "Toilet construction columns error (row skipped)", row_id, e)
 
         else:
-            response.append(
-                (
-                    "The error says: ",
-                    "This is an overall error. Please check the uploaded Excle sheet for column names, slum names etc.",
-                )
-            )
+            response.append(("Upload error", UPLOAD_FAILED))
 
-    except Exception as e:
-        response.append(
-            (
-                "The error says: " + str(e),
-                "This is an overall error. Please check the uploaded Excle sheet for column names, slum names etc.",
-            )
-        )
+    except Exception:
+        logger.exception("Mastersheet upload failed for slum %s", slum_code)
+        response.append(("Upload error", UPLOAD_FAILED))
     d = defaultdict(list)
     for k, v in response:
         d[k].append(v)
@@ -1419,7 +1391,6 @@ def check_bool(s):
         return False
 
 
-@csrf_exempt
 @apply_permissions_ajax("mastersheet.can_delete_kobo_record")
 def delete_selected(request):
     """
@@ -1519,10 +1490,7 @@ def sync_kobo_data(request):
     except Exception as e:
         data["flag"] = False
         logger.error("SYNC KOBO ERROR: %s", traceback.format_exc())
-        data["msg"] = (
-            "Error occurred while sync from kobo. Please contact administrator."
-            + str(e)
-        )
+        data["msg"] = "Error occurred while sync from kobo. Please contact administrator."
     return HttpResponse(
         json.dumps(data, ensure_ascii=False).encode("utf-8"),
         content_type="application/json; charset=utf-8",
@@ -1532,6 +1500,7 @@ def sync_kobo_data(request):
 """ Mastersheet Report Tab """
 
 
+@login_required(login_url="/accounts/login/")
 @permission_required("mastersheet.can_view_mastersheet_report", raise_exception=True)
 def render_report(request):
     return render(request, "mastersheet_report.html")
@@ -1612,7 +1581,6 @@ level_data = {
 """ Mastersheet Report Tab Methods"""
 
 
-@csrf_exempt
 @apply_permissions_ajax("mastersheet.can_view_mastersheet_report")
 def give_report_table_numbers(request):  # view for toilet construction
     try:
@@ -1844,7 +1812,6 @@ def give_report_table_numbers(request):  # view for toilet construction
         return HttpResponse(json.dumps([]), content_type="application/json", status=500)
 
 
-@csrf_exempt
 @apply_permissions_ajax("mastersheet.can_view_mastersheet_report")
 def report_table_cm(request):
     tag_key_dict = json.loads(request.body)
@@ -1940,7 +1907,6 @@ def report_table_cm(request):
     )
 
 
-@csrf_exempt
 @apply_permissions_ajax("mastersheet.can_view_mastersheet_report")
 def report_table_cm_activity_count(request):
     tag_key_dict = json.loads(request.body)
@@ -2040,7 +2006,6 @@ def report_table_cm_activity_count(request):
     )
 
 
-@csrf_exempt
 @apply_permissions_ajax("mastersheet.can_view_mastersheet_report")
 def give_report_table_numbers_accounts(request):
     tag_key_dict = json.loads(request.body)
@@ -2169,10 +2134,10 @@ def give_report_table_numbers_accounts(request):
                 city_name = record["city_name"]
                 if record["slum_id"] in slum_wise_acc_data:
                     temp = slum_wise_acc_data[record["slum_id"]]
-                    temp.extend(record["household_numbers"])
+                    temp.extend(household_list(record["household_numbers"]))
                     slum_wise_acc_data[record["slum_id"]] = list(set(temp))
                 else:
-                    slum_wise_acc_data[record["slum_id"]] = record["household_numbers"]
+                    slum_wise_acc_data[record["slum_id"]] = household_list(record["household_numbers"])
             phasecnt = sum(
                 list(map(len, slum_wise_acc_data.values()))
             )  # Generating total count of households phase wise
@@ -2415,7 +2380,7 @@ def build_accounts_report_rows(
             logger.error(e, house, slum)
 
     for i in invoiceItems:
-        for j in i.household_numbers:
+        for j in household_list(i.household_numbers):
             try:
                 dict_of_dict[(j, i.slum)].update({i.material_type: i})
             except:
@@ -2610,6 +2575,7 @@ def accounts_slums_for_city(request):
     )
     return JsonResponse({"slums": slums})
 
+@login_required(login_url="/accounts/login/")
 @permission_required("mastersheet.can_view_mastersheet", raise_exception=True)
 def renderSummery(request):
     slum_search_field = find_slum()
@@ -2815,7 +2781,6 @@ def factsheetAssignCheck(dataList):
 
 
 # For Mastersheet Summery View Processing data
-@csrf_exempt
 @apply_permissions_ajax("mastersheet.can_view_mastersheet")
 @deco_city_permission
 def ProcessShortView(request, slum_details=0):
@@ -2849,7 +2814,7 @@ def ProcessShortView(request, slum_details=0):
                     [
                         normalize_household_number(num)
                         for sublist in group
-                        for num in sublist[1]
+                        for num in household_list(sublist[1])
                     ]
                 )
             )
@@ -3807,7 +3772,8 @@ def rim_data_download_submit(request):
     slum_ids_final = [slum.id for slum in slums]
 
     if email_export:
-        base_url = request.build_absolute_uri("/").rstrip("/")
+        # Never build emailed links from the request's Host header.
+        base_url = settings.BASE_APP_URL.rstrip("/")
 
         # Record the request in the unified export register before starting the
         # thread, so it is visible even if the thread dies (a deploy restart
@@ -3854,7 +3820,11 @@ def rim_data_download_submit(request):
 
 
 @require_GET
+@login_required(login_url="/accounts/login/")
 def rim_export_download(request, export_id):
+    """Emailed RIM export link: needs a login that may use RIM data downloads."""
+    if not can_access_rim_download(request.user):
+        return JsonResponse({"error": "You do not have permission to access RIM data downloads."}, status=403)
     export_dir = os.path.join(settings.MEDIA_ROOT, "rim_exports", export_id)
     matches = glob.glob(os.path.join(export_dir, "rim-data-export*"))
     if not matches:
@@ -3866,10 +3836,11 @@ def rim_export_download(request, export_id):
     with open(file_path, "rb") as export_file:
         response = HttpResponse(export_file.read(), content_type=content_type)
         response["Content-Disposition"] = 'attachment; filename="{}"'.format(filename)
+        response["X-Content-Type-Options"] = "nosniff"
+        response["Cache-Control"] = "private, no-store"
         return response
 
 
-@csrf_exempt
 @apply_permissions_ajax("mastersheet.can_view_mastersheet")
 def addSponsor(request):
     response = {}
@@ -3984,7 +3955,6 @@ def addSponsor(request):
     return HttpResponse(json.dumps(response), content_type="application/json")
 
 
-@csrf_exempt
 @apply_permissions_ajax("mastersheet.can_view_mastersheet")
 def sponsorprojectList(request):
     """Administrativeward List Display"""

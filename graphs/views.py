@@ -4,7 +4,9 @@ from django.shortcuts import render
 from django.conf import settings
 from django.contrib.auth.decorators import login_required, permission_required
 from django.shortcuts import get_object_or_404
-from django.http import HttpResponse
+from django.http import HttpResponse, Http404
+from django.core.exceptions import PermissionDenied
+from utils.utils_permission import has_mastersheet_access
 from itertools import groupby
 from django.db.models import Avg, Sum, Count
 from collections import OrderedDict
@@ -16,7 +18,6 @@ from mastersheet.forms import find_slum
 from django.db.models import Q
 import csv
 from sponsor.models import *
-from django.views.decorators.csrf import csrf_exempt
 from utils.utils_permission import apply_permissions_ajax
 from django.db.models import Count, F
 from django.contrib.auth.models import Group
@@ -139,8 +140,13 @@ CARDS = {
 
 @login_required(login_url="/accounts/login/")
 def graphs_display(request, graph_type):
+    if not has_mastersheet_access(request.user):
+        raise PermissionDenied
+    if graph_type not in settings.GRAPH_DETAILS:
+        raise Http404
     custom_url = settings.GRAPHS_BUILD_URL % settings.GRAPH_DETAILS[graph_type][1::-1]
-    return render(request, "graphs.html", {"custom_url": custom_url})
+    graphs_login_url = settings.GRAPHS_PUBLIC_URL.rstrip("/") + "/login/"
+    return render(request, "graphs.html", {"custom_url": custom_url, "graphs_login_url": graphs_login_url})
 
 
 def get_dashboard_card(request, key):
@@ -1022,11 +1028,13 @@ def dashboard_all_cards(request, key):
     return HttpResponse(json.dumps(result), content_type="application/json")
 
 
+@login_required(login_url="/accounts/login/")
 def covid_data(request):
+    if not has_mastersheet_access(request.user):
+        raise PermissionDenied
     return render(request, "covid_data.html")
 
 
-@csrf_exempt
 @apply_permissions_ajax("mastersheet.can_view_mastersheet_report")
 def give_report_covid_data(request):  # view for covid data
     tag_key_dict = json.loads(request.body)
@@ -1920,7 +1928,6 @@ def member_data(request):
     return render(request, "member_data.html", {"form": slum_search_field})
 
 
-@csrf_exempt
 @apply_permissions_ajax("mastersheet.can_view_mastersheet")
 def MemberDataView(request):
 

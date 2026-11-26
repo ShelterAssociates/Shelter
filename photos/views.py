@@ -19,7 +19,7 @@ import os
 import re
 from urllib.parse import quote
 
-from django.contrib.auth.decorators import permission_required
+from django.contrib.auth.decorators import login_required, permission_required
 from django.http import (
     FileResponse,
     HttpResponse,
@@ -73,6 +73,7 @@ def _slum_or_forbidden(request, slum_id):
 
 
 @require_GET
+@login_required(login_url="/accounts/login/")
 @permission_required("mastersheet.can_view_mastersheet", raise_exception=True)
 def photo_index(request):
     """City/slum picker, plus a box for looking one encounter up by UUID."""
@@ -98,6 +99,7 @@ def photo_index(request):
 
 
 @require_GET
+@login_required(login_url="/accounts/login/")
 @permission_required("mastersheet.can_view_mastersheet", raise_exception=True)
 def photo_slum(request, slum_id):
     """Households in one slum.
@@ -263,6 +265,7 @@ def _with_recorded_activity(slum_id, tc_numbers):
 
 
 @require_GET
+@login_required(login_url="/accounts/login/")
 @permission_required("mastersheet.can_view_mastersheet", raise_exception=True)
 def photo_household(request, slum_id, household_number):
     """One household's photos, from Avni or the Kobo backup."""
@@ -490,6 +493,7 @@ def photo_export_submit(request, slum_id):
 
 
 @require_GET
+@login_required(login_url="/accounts/login/")
 @permission_required("mastersheet.can_view_mastersheet", raise_exception=True)
 def photo_export_list(request):
     """The requester's own photo exports."""
@@ -502,6 +506,7 @@ def photo_export_list(request):
 
 
 @require_GET
+@login_required(login_url="/accounts/login/")
 @permission_required("mastersheet.can_view_mastersheet", raise_exception=True)
 def photo_export_download(request, export_id):
     """Download a finished export.
@@ -538,6 +543,7 @@ def photo_export_download(request, export_id):
 
 
 @require_GET
+@login_required(login_url="/accounts/login/")
 @permission_required("mastersheet.can_view_mastersheet", raise_exception=True)
 def photo_encounter(request):
     """One program encounter looked up directly by UUID."""

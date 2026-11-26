@@ -1,8 +1,9 @@
 {% load static %}
 <script src="{% static 'admin/js/vendor/jquery/jquery.js' %}"></script>
+<script src="{% static 'js/csrf.js' %}" data-token="{{ csrf_token }}"></script>
 <script src="{% static 'js/slum_search.js' %}"></script>
 
-<script>
+<script nonce="{{ csp_nonce }}">
 
 /* ================= TAB SWITCH ================= */
 
@@ -18,6 +19,10 @@ function switchReport(id, el){
 /* ================= MAIN SCRIPT ================= */
 
 $(document).ready(function(){
+
+$('.reports-tab[data-report]').on('click', function(){
+	switchReport(this.dataset.report, this)
+})
 
 	
 /* ==================================================
@@ -49,7 +54,7 @@ disableDownload()
 $.get("{% url 'master:cityList' %}", function(data){
 
 	$.each(data.nameArray,function(i,name){
-		$('#city').append(`<option value="${data.idArray[i]}">${name}</option>`)
+		$('#city').append($('<option>').val(data.idArray[i]).text(name))
 	})
 
 })
@@ -73,7 +78,7 @@ function loadInto(select, url, parentId){
 		$(select).prop('disabled',false)
 
 		$.each(data.nameArray,function(i,name){
-			$(select).append(`<option value="${data.idArray[i]}">${name}</option>`)
+			$(select).append($('<option>').val(data.idArray[i]).text(name))
 		})
 
 		return data
@@ -220,40 +225,6 @@ function fillCascadeForSlum(row){
 }
 
 
-$('#slumSearchInput').on('input', function(){
-	renderSlumSearchResults($(this).val())
-})
-
-
-$(document).on('click', '.slum-search-row', function(){
-
-	const id = String($(this).attr('data-slum-id'))
-	const row = slumSearchIndex.filter(r => String(r.id) === id)[0]
-	if(!row) return
-
-	$('#slumSearchResults').hide().html('')
-	$('#slumSearchInput').val('')
-	$('#slumSearchChosen')
-		.show()
-		.html(`<strong>${row.name}</strong><br>${row.city} &rsaquo; ${row.aw} &rsaquo; ${row.ew}`)
-
-	fillCascadeForSlum(row).then(function(ok){
-		if(ok){
-			showCascade()
-			return
-		}
-		$('#slumSearchChosen').html(
-			'Could not set that location. Please pick it with the dropdowns below.'
-		)
-	}).catch(function(){
-		$('#slumSearchChosen').html(
-			'Could not set that location. Please pick it with the dropdowns below.'
-		)
-	})
-
-})
-
-
 /* ---------- SLUM SELECT ---------- */
 
 $('#slum').change(function(){
@@ -313,9 +284,9 @@ function syncComparePicker(){
 	versions.forEach(function(v){
 		const value = v.version === null ? 'current' : String(v.version)
 		if(value === target){
-			$('#rim_target').append(`<option value="${value}">${v.label}</option>`)
+			$('#rim_target').append($('<option>').val(value).text(v.label))
 		} else {
-			$('#rim_baseline').append(`<option value="${value}">${v.label}</option>`)
+			$('#rim_baseline').append($('<option>').val(value).text(v.label))
 		}
 	})
 
@@ -350,7 +321,7 @@ function loadVersions(){
 
 		loadedVersions.forEach(v=>{
 			const value = v.version === null ? 'current' : v.version
-			$('#rim_version').append(`<option value="${value}">${v.label}</option>`)
+			$('#rim_version').append($('<option>').val(value).text(v.label))
 		})
 
 		$('#rim_version_row').show()
@@ -565,9 +536,7 @@ fetch("/reports/api/donor-projects/")
 .then(data=>{
 
 	data.projects.forEach(p=>{
-		$('#donor_project').append(
-			`<option value="${p.id}">${p.name}</option>`
-		)
+		$('#donor_project').append($('<option>').val(p.id).text(p.name))
 	})
 
 })
@@ -594,9 +563,7 @@ $('#donor_project').change(function(){
 	.then(data=>{
 
 		data.months.forEach(m=>{
-			$('#donor_month').append(
-				`<option value="${m.id}">${m.month}</option>`
-			)
+			$('#donor_month').append($('<option>').val(m.id).text(m.month))
 		})
 
 	})

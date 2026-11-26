@@ -2,11 +2,10 @@
 # -*- coding: utf-8 -*-
 """The Django Forms Page for master app"""
 
-from urllib import request as urllib2
-import json
-import psycopg2
 from django import forms
 from django.conf import settings
+from django.core.files.uploadedfile import UploadedFile
+from utils.uploads import validate_image, validate_pdf
 
 from master.models import (
     Survey,
@@ -24,68 +23,6 @@ from django.core.exceptions import ValidationError
 
 from django.contrib.auth.forms import AuthenticationForm
 
-SURVEY_LIST = []
-
-
-class SurveyCreateForm(forms.ModelForm):
-    """Create a new survey"""
-
-    kobotool_survey_id = forms.ChoiceField(widget=forms.Select(), required=True)
-    kobotool_survey_url = forms.CharField(required=True)
-
-    def __init__(self, *args, **kwargs):
-        """Initialization"""
-        super(SurveyCreateForm, self).__init__(*args, **kwargs)
-        self.list_i = get_kobo_id_list()
-        self.fields["kobotool_survey_id"].choices = self.list_i
-        self.fields["kobotool_survey_id"].initial = [0]
-        self.fields["kobotool_survey_url"].required = False
-
-        # self.fields['kobotoolSurvey_url'].widget.attrs['readonly'] = True
-
-    class Meta:
-        """Metadata for class SurveyCreateForm"""
-
-        model = Survey
-        fields = [
-            "name",
-            "description",
-            "city",
-            "survey_type",
-            "analysis_threshold",
-            "kobotool_survey_id",
-        ]
-
-    def save(self, *args, **kwargs):
-        """Method to create a new Mapping Survey Form"""
-        instance = super(SurveyCreateForm, self).save(commit=False)
-        kobourl = ""
-        for survey_value in SURVEY_LIST:
-            if survey_value[0] == int(instance.kobotool_survey_id):
-                kobourl = survey_value[1]
-        instance.kobotool_survey_url = kobourl
-        instance.save()
-        return instance
-
-
-def get_kobo_id_list():
-
-    # url="http://kc.shelter-associates.org/api/v1/forms?format=json"
-    """Method which fetches the KoboCat ID's and URL's from the Kobo Toolbox API"""
-
-    url = settings.KOBOCAT_FORM_URL + "forms?format=json"
-    req = urllib2.Request(url)
-    req.add_header("Authorization", settings.KOBOCAT_TOKEN)
-    resp = urllib2.urlopen(req)
-    content = resp.read()
-    data = json.loads(content)
-
-    output = []
-    for value in data:
-        output.append((value["formid"], value["title"]))
-        SURVEY_LIST.append((value["formid"], str(value["url"])))
-    return output
-
 
 class LocationWidget(widgets.TextInput):
     """Map Widget"""
@@ -93,7 +30,7 @@ class LocationWidget(widgets.TextInput):
     template_name = "draw.html"
 
     def render(self, name, value, attrs=None, renderer=None):
-        context = {"POLYGON": value}
+        context = {"POLYGON": value, "GOOGLE_API_KEY": settings.GOOGLE_API_KEY}
         return mark_safe(render_to_string(self.template_name, context))
 
 
@@ -169,6 +106,12 @@ class SlumForm(forms.ModelForm):
             raise forms.ValidationError("Please draw Polygon")
         return shape
 
+    def clean_factsheet(self):
+        upload = self.cleaned_data.get("factsheet")
+        if isinstance(upload, UploadedFile):
+            validate_pdf(upload)
+        return upload
+
 
 class Rapid_Slum_AppraisalForm(forms.ModelForm):
     """Rapid Slum AppraisalForm"""
@@ -198,9 +141,19 @@ class ReportForm(forms.Form):
 class DrainageForm(forms.ModelForm):
     """Drainage sForm"""
 
+    IMAGE_MAX_BYTES = 3 * 1024 * 1024
+
     class Meta:
         model = drainage
         fields = "__all__"
+
+    def clean_drainage_image(self):
+        upload = self.cleaned_data.get("drainage_image")
+        if isinstance(upload, UploadedFile):
+            if upload.size > self.IMAGE_MAX_BYTES:
+                raise ValidationError("The image is larger than 3 MB.")
+            validate_image(upload)
+        return upload
 
 
 class LoginForm(forms.Form):

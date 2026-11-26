@@ -9,6 +9,12 @@ var __extends = (this && this.__extends) || function (d, b) {
     d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
 };
 
+function escapeHtml(value) {
+    return String(value === null || value === undefined ? "" : value).replace(/[&<>"']/g, function (c) {
+        return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c];
+    });
+}
+
 /* ── Polygon base class ──────────────────────────────────────────────────── */
 var Polygon = (function () {
     function Polygon(obj_data) {
@@ -65,7 +71,7 @@ var Polygon = (function () {
         if (this.type === "Slum") {
             shapename = "Slum : " + this.name;
         }
-        this.shape.bindPopup(shapename, { autoPan: true });
+        this.shape.bindPopup(escapeHtml(shapename), { autoPan: true });
         this.shape.on({
             mouseover: function () { this.openPopup(); },
             mouseout: function () { this.closePopup(); }
@@ -94,11 +100,11 @@ var Polygon = (function () {
 
         /* Header */
         var myheader = $("#maphead");
-        myheader.html('<h4>' + this.name + '</h4>');
+        myheader.empty().append($("<h4>").text(this.name));
         myheader.find("h4").css("padding-top", "15px");
 
         /* Info */
-        $("#mapdesc").html(this.info);
+        $("#mapdesc").text(this.info || "");
 
         /* Ward details */
         var wdhd = "";
@@ -109,14 +115,14 @@ var Polygon = (function () {
             wdhd = "<div><b>Details: </b></div>";
 
             wdadd = "<div class='row'><div class='col-md-2' style='margin-left:25px'><b>Address :</b> </div>";
-            wdadd += "<div class='col-md-9'>" + (this.officeAddress ? this.officeAddress.trim() : " - ") + "</div></div>";
+            wdadd += "<div class='col-md-9'>" + escapeHtml(this.officeAddress ? this.officeAddress.trim() : " - ") + "</div></div>";
 
             wdname = "<div class='row'><div class='row' style='margin-left:25px'>";
             wdname += "<div class='col-md-2'><b>Name :</b></div>";
-            wdname += "<div class='col-md-10'>" + (this.officerName || " - ") + "</div></div>";
+            wdname += "<div class='col-md-10'>" + escapeHtml(this.officerName || " - ") + "</div></div>";
             wdname += "<div class='row' style='margin-left:25px'>";
             wdname += "<div class='col-md-2'><b>Contact :</b></div>";
-            wdname += "<div class='col-md-10'>" + (this.officerTel || " - ") + "</div></div></div>";
+            wdname += "<div class='col-md-10'>" + escapeHtml(this.officerTel || " - ") + "</div></div></div>";
         }
 
         $("#wdhead").html(wdhd);
@@ -168,13 +174,17 @@ var Slum = (function (_super) {
     /* Renders the "View Factsheet" button using the shared .action-btn class */
     Slum.prototype._showFactsheetBtn = function () {
         $("#factsheet-btn-slot").html(
-            "<button class='action-btn' onclick='Slum.prototype.factsheet_click(this," + this.slumId + ")'>" +
+            "<button class='action-btn' data-factsheet-slum='" + escapeHtml(this.slumId) + "'>" +
             "View Factsheet" +
             "</button>"
         ).show();
 
         updateActionButtonRow();
     };
+
+    $(document).on("click", "[data-factsheet-slum]", function () {
+        Slum.prototype.factsheet_click(this, $(this).data("factsheet-slum"));
+    });
 
     Slum.prototype.factsheet_click = function (element, slum_id) {
         $("#rimPreviewModal").fadeIn();

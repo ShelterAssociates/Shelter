@@ -14,6 +14,7 @@ from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
 
 from master.models import Slum
+from utils.uploads import PHOTO_FORMATS
 
 logger = logging.getLogger(__name__)
 
@@ -334,21 +335,15 @@ class BinaryAESCipher(object):
 
 
 def compress_uploaded_image(uploaded_file):
+    """Re-encodes a JPEG/PNG; extension and content type come from the decoded image, not the client."""
     uploaded_file.seek(0)
-    try:
-        image = Image.open(uploaded_file)
-        image.load()
-    except Exception:
-        uploaded_file.seek(0)
-        return (
-            uploaded_file.read(),
-            uploaded_file.name,
-            uploaded_file.content_type or "application/octet-stream",
-        )
-
-    image_format = image.format or "JPEG"
-    image_format = image_format.upper()
-    if image.mode not in ("RGB", "L") and image_format in ("JPEG", "JPG"):
+    image = Image.open(uploaded_file)
+    image.load()
+    image_format = image.format
+    if image_format not in PHOTO_FORMATS:
+        raise ValueError("Only JPEG and PNG photos are accepted.")
+    extension, content_type = PHOTO_FORMATS[image_format]
+    if image.mode not in ("RGB", "L") and image_format == "JPEG":
         image = image.convert("RGB")
 
     image.thumbnail(
@@ -357,17 +352,14 @@ def compress_uploaded_image(uploaded_file):
 
     output = io.BytesIO()
     save_kwargs = {"format": image_format}
-    if image_format in ("JPEG", "JPG"):
+    if image_format == "JPEG":
         save_kwargs["quality"] = DEFAULT_IMAGE_QUALITY
         save_kwargs["optimize"] = True
     elif image_format == "PNG":
         save_kwargs["optimize"] = True
 
     image.save(output, **save_kwargs)
-    content_type = uploaded_file.content_type or Image.MIME.get(
-        image_format, "application/octet-stream"
-    )
-    return output.getvalue(), uploaded_file.name, content_type
+    return output.getvalue(), extension, content_type
 
 
 def build_encrypted_zip_payload(uploaded_files):
@@ -376,15 +368,15 @@ def build_encrypted_zip_payload(uploaded_files):
 
     with zipfile.ZipFile(zip_buffer, "w", zipfile.ZIP_DEFLATED) as zip_file:
         for index, uploaded_file in enumerate(uploaded_files, start=1):
-            compressed_bytes, file_name, content_type = compress_uploaded_image(
+            compressed_bytes, extension, content_type = compress_uploaded_image(
                 uploaded_file
             )
-            safe_file_name = clean_drive_name(build_upload_file_name(file_name))
+            safe_file_name = clean_drive_name(build_upload_file_name("photo." + extension))
             zip_file.writestr(safe_file_name, compressed_bytes)
             file_summaries.append(
                 {
                     "name": safe_file_name,
-                    "original_name": clean_drive_name(file_name),
+                    "original_name": clean_drive_name(uploaded_file.name),
                     "content_type": content_type,
                     "size": len(compressed_bytes),
                 }

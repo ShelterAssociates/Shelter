@@ -17,7 +17,11 @@ from django.conf.urls import include, url
 from django.contrib import admin
 from django.contrib.auth import views as auth_views
 from django.conf.urls.static import static
+from django.views.generic import TemplateView
 from django.conf import settings
+from django.http import HttpResponseForbidden
+from shelter.auth_throttle import ThrottledAuthenticationForm
+from shelter.views import csp_report
 from .settings import *
 from master.views import (
     slummap,
@@ -27,7 +31,6 @@ from master.views import (
     dashboard_view,
 )
 from rest_framework import urls
-from rest_auth import views
 from master.api import CityViewset
 from component.api import MetadataViewSet
 from rest_framework import routers
@@ -39,12 +42,47 @@ router = routers.DefaultRouter()
 router.register(r"metadata", MetadataViewSet)
 router.register(r"city", CityViewset)
 
+# Mirrors the nginx /media deny rules for runserver; in production nginx serves /media.
+PRIVATE_MEDIA = (
+    r"^media/(?:(?:FFReport|gis_exports|rim_exports|sponsor_project|photo_exports|shelter/attachments"
+    r"|avni_bulk_updates|job_reports|slum_merges)/.*|[^/]+\.zip)$"
+)
+
+
+def private_media(request):
+    return HttpResponseForbidden()
+
+
 base64_pattern = r"city::(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)"
 urlpatterns = (
     [
         url(r"^$", slummap, name="slummap"),
         url(r"^home/", login_success, name="login_success"),
-        url(r"^accounts/", include("django.contrib.auth.urls")),
+        # Self-service password reset and change are retired: both names render a
+        # static page pointing at the administrator, and the token routes are
+        # gone so links already emailed no longer work. The admin's own
+        # set-password form (/accounts/auth/user/<id>/password/) is a separate
+        # route and is unaffected -- that is how passwords get changed now.
+        url(
+            r"^accounts/login/$",
+            auth_views.LoginView.as_view(authentication_form=ThrottledAuthenticationForm),
+            name="login",
+        ),
+        url(r"^accounts/logout/$", auth_views.LogoutView.as_view(), name="logout"),
+        url(
+            r"^accounts/password_reset/$",
+            TemplateView.as_view(
+                template_name="registration/password_reset_contact.html"
+            ),
+            name="password_reset",
+        ),
+        url(
+            r"^accounts/password_change/$",
+            TemplateView.as_view(
+                template_name="registration/password_reset_contact.html"
+            ),
+            name="password_change",
+        ),
         url(r"^accounts/", admin.site.urls),
         url(
             r"^(?P<key>{})$".format(base64_pattern),
@@ -89,6 +127,8 @@ urlpatterns = (
         # Setting URL for QGIS plugin login
         url("api-token-auth/", obtain_auth_token, name="api_token_auth"),
         url("api/", include(router.urls)),
+        url(r"^csp-report/$", csp_report, name="csp_report"),
+        url(PRIVATE_MEDIA, private_media),
     ]
     + static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
     + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

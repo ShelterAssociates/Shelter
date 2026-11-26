@@ -9,7 +9,8 @@ from avni import paths
 from avni.sync import by_uuid, structures
 from avni.tests.support import FakeApi, encounter_record, make_city, make_slum, page, program_encounter_record, subject_record
 from graphs.models import HouseholdData
-from mastersheet.models import ActivityType, CommunityMobilizationActivityAttendance, ToiletConstruction
+from avni.tests.test_mobilization import make_activity
+from mastersheet.models import CommunityMobilizationActivityAttendance, ToiletConstruction
 from notification.services import reporting
 
 
@@ -17,9 +18,7 @@ class ByUuidTests(TestCase):
     def setUp(self):
         self.city = make_city()
         self.slum = make_slum(self.city)
-        activity = ActivityType.objects.create(name="Workshop for Women", key="0", display_order=1)
-        activity.key = str(activity.id)
-        activity.save()
+        make_activity("Workshop for Women")
         self.api = FakeApi({
             paths.subject("sub-1"): subject_record(),
             paths.subject("sub-v"): subject_record("sub-v", voided=True),
@@ -63,9 +62,7 @@ class ByUuidTests(TestCase):
     def test_mobilization_subject_type(self):
         from mastersheet.models import CommunityMobilization
 
-        activity = ActivityType.objects.create(name="Samitee meeting 1", key="0", display_order=1)
-        activity.key = str(activity.id)
-        activity.save()
+        make_activity("Samitee meeting 1")
         self.api.routes[paths.subject("mob")] = subject_record("mob", number="", observations={
             "Type of Activity": "Samitee meeting 1", "Date of Survey": "2026-02-01"})
         counts = by_uuid.sync_by_uuid("subject", ["mob"], api=self.api, subject_type="New_Mobilization_Form")

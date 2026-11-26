@@ -1,3 +1,4 @@
+import math
 from urllib import request
 
 import logging
@@ -26,6 +27,7 @@ from django.contrib.auth.decorators import login_required
 from .kobotoolbox import *
 from .forms import KMLUpload
 from .kmlparser import KMLParser, KMLValidationError
+from utils.kml import UnsafeKMLError
 from .models import Metadata
 from .cipher import *
 from master.models import Slum, Rapid_Slum_Appraisal, drainage
@@ -316,8 +318,8 @@ def kml_upload(request):
             data = form.cleaned_data["slum_name"]
             if form.cleaned_data["level"] == "City":
                 data = form.cleaned_data["City"]
-            objKML = KMLParser(docFile, data, form.cleaned_data["delete_flag"])
             try:
+                objKML = KMLParser(docFile, data, form.cleaned_data["delete_flag"])
                 parsed_data = objKML.other_components()
                 context_data["parsed"] = [
                     k for k, v in parsed_data.items() if v == True
@@ -498,12 +500,16 @@ def kml_upload(request):
                 if remaining > 0:
                     error_message += "\n- …and {} more.".format(remaining)
                 messages.error(request, error_message)
-            except Exception as e:
-                error_message = (
-                    "Some error occurred while parsing. KML file is not in the required format ("
-                    + str(e)
-                    + ")"
-                )
+            except UnsafeKMLError as e:
+                error_message = str(e)
+                if is_ajax:
+                    return JsonResponse(
+                        {"success": False, "message": error_message}, status=400
+                    )
+                messages.error(request, error_message)
+            except Exception:
+                logger.exception("KML upload parse failed")
+                error_message = "Some error occurred while parsing. KML file is not in the required format."
                 if is_ajax:
                     return JsonResponse(
                         {"success": False, "message": error_message}, status=400
@@ -1426,8 +1432,9 @@ def delete_component(request):
                 "message": f'Component "{comp_name}" deleted successfully',
             }
         )
-    except Exception as e:
-        return JsonResponse({"success": False, "message": str(e)}, status=500)
+    except Exception:
+        logger.exception("delete_component failed")
+        return JsonResponse({"success": False, "message": "The component could not be deleted. Please try again."}, status=500)
 
 
 @login_required(login_url="/accounts/login/")
@@ -1466,6 +1473,10 @@ def set_component_metric(request):
     except ValueError:
         return JsonResponse(
             {"success": False, "message": "Value must be a number"}, status=400
+        )
+    if not math.isfinite(value) or not 0 <= value < 10 ** 10:
+        return JsonResponse(
+            {"success": False, "message": "Value must be zero or more"}, status=400
         )
 
     slum = Slum.objects.filter(pk=object_id).first()
@@ -1565,8 +1576,9 @@ def set_component_metric(request):
                 "metric": {"source": "manual", "value": str(value), "unit": unit},
             }
         )
-    except Exception as e:
-        return JsonResponse({"success": False, "message": str(e)}, status=500)
+    except Exception:
+        logger.exception("set_component_metric failed")
+        return JsonResponse({"success": False, "message": "The metric could not be saved. Please try again."}, status=500)
 
 
 # ================== New API for Sponsor Toilet Household Month End Dates ==================
@@ -2261,7 +2273,11 @@ def _send_gis_export_email(email, slum, export_meta, base_url):
 
 
 @require_GET
+@login_required(login_url="/accounts/login/")
 def gis_export_download(request, export_id):
+    """Emailed GIS export link: needs a login that may request GIS exports."""
+    if not (request.user.username == "GIS" or request.user.is_superuser):
+        return JsonResponse({"error": "You do not have permission to download GIS exports."}, status=403)
     export_dir = os.path.join(settings.MEDIA_ROOT, "gis_exports", export_id)
     if not os.path.isdir(export_dir):
         return JsonResponse({"error": "Export not found or expired."}, status=404)
@@ -2281,6 +2297,8 @@ def gis_export_download(request, export_id):
         response["Content-Disposition"] = 'attachment; filename="{}"'.format(
             os.path.basename(file_path)
         )
+        response["X-Content-Type-Options"] = "nosniff"
+        response["Cache-Control"] = "private, no-store"
         return response
 
 
@@ -3562,7 +3580,8 @@ def export_filtered_kml(request):
     )
 
     if email_export:
-        base_url = request.build_absolute_uri("/").rstrip("/")
+        # Never build emailed links from the request's Host header.
+        base_url = settings.BASE_APP_URL.rstrip("/")
         # Recorded before the thread starts, so the request is visible even if
         # a deploy restart kills the thread mid-run.
         export_request_id = _create_gis_export_tracker(

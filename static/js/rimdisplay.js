@@ -489,6 +489,11 @@
     var RIM_EDIT_BASE = $page.data('rim-edit-base');
     var RIM_INSERT_URL = $page.data('rim-insert-url');
 
+    $(document).on('click', '#rim-add-new', function (e) {
+        e.preventDefault();
+        window.openRimSelectModal();
+    });
+
     window.openRimSelectModal = function () {
         $('#rs-overlay').addClass('rs-open');
         rsResetModal();
@@ -510,7 +515,7 @@
     function rsPopulateSelect($select, json, placeholder) {
         $select.empty().append('<option value="0">' + placeholder + '</option>');
         for (var i = 0; i < json.nameArray.length; i++) {
-            $select.append('<option value="' + json.idArray[i] + '">' + json.nameArray[i] + '</option>');
+            $select.append($('<option>').val(json.idArray[i]).text(json.nameArray[i]));
         }
     }
 

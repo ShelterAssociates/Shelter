@@ -6,7 +6,7 @@ photo. Requests are capped so a household with many photos doesn't fire dozens
 of parallel round trips; each thumbnail resolves independently, so one slow or
 failed photo never blocks the rest.
 {% endcomment %}
-<script>
+<script nonce="{{ csp_nonce }}">
   (function () {
     var SIGN_URL = "{% url 'photos:photo_sign' %}";
     var MAX_PARALLEL = 4;

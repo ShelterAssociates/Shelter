@@ -57,7 +57,7 @@
         <div class="ac-row">
           <button class="ph-btn" type="submit" name="action" value="dry_run" {% if not can_run %}disabled{% endif %}>Dry run</button>
           <button class="ph-btn ph-btn--primary" type="submit" name="action" value="apply" {% if not can_run %}disabled{% endif %}
-                  onclick="return confirm('Write these changes into AVNI? This cannot be undone from here.');">Apply to AVNI</button>
+                  data-confirm="Write these changes into AVNI? This cannot be undone from here.">Apply to AVNI</button>
         </div>
       {% endif %}
       <p class="ac-note">Both run in the background (within two minutes) and email the developer and data team with your name and every change.</p>
@@ -74,4 +74,11 @@
     </div>
   </div>
 </div>
+<script nonce="{{ csp_nonce }}">
+  document.querySelectorAll("[data-confirm]").forEach(function (button) {
+    button.addEventListener("click", function (event) {
+      if (!window.confirm(button.dataset.confirm)) event.preventDefault();
+    });
+  });
+</script>
 {% endblock %}

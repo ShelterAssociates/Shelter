@@ -332,3 +332,50 @@ class ImageReachabilityTests(SimpleTestCase):
 
         with mock.patch.object(rim_factsheet.requests, "get", lambda url, **kw: Response()):
             self.assertFalse(rim_factsheet.is_image_reachable("https://s3/gone"))
+
+
+class ArchivedVersionAccessTests(TestCase):
+    """Archived RIM versions are internal: only signed-in staff can ask for one."""
+
+    def request(self, user=None, query="?version=2"):
+        from django.contrib.auth.models import AnonymousUser
+        from django.test import RequestFactory
+
+        request = RequestFactory().get("/reports/preview-rim-factsheet/1/" + query)
+        request.user = user or AnonymousUser()
+        return request
+
+    def test_anonymous_gets_the_live_version(self):
+        from reports.views import wanted_version
+
+        self.assertIsNone(wanted_version(self.request()))
+
+    def test_signed_in_non_staff_gets_the_live_version(self):
+        from reports.views import wanted_version
+
+        user = User.objects.create_user("viewer", password="pw")
+        self.assertIsNone(wanted_version(self.request(user)))
+
+    def test_staff_gets_the_version_asked_for(self):
+        from reports.views import wanted_version
+
+        staff = User.objects.create_user("staffer", password="pw", is_staff=True)
+        self.assertEqual(wanted_version(self.request(staff)), 2)
+
+    def test_public_pdf_fetch_ignores_version_and_compare(self):
+        session = self.client.session
+        session["rim_otp_verified_slum_id"] = "5"
+        session.save()
+        with mock.patch("reports.views.requests.get") as fetch:
+            fetch.return_value = mock.Mock(status_code=404, headers={})
+            self.client.get("/reports/api/rim_factsheet_pdf_fetch/5/?version=1&compare=1")
+        self.assertIn("report_id=5&", fetch.call_args[0][0])
+
+    def test_staff_pdf_fetch_honours_version_and_compare(self):
+        staff = User.objects.create_user("staffer", password="pw", is_staff=True)
+        self.client.force_login(staff)
+        with mock.patch("reports.views.requests.get") as fetch, \
+                mock.patch("reports.views.wanted_baseline", return_value=None):
+            fetch.return_value = mock.Mock(status_code=404, headers={})
+            self.client.get("/reports/api/rim_factsheet_pdf_fetch/5/?version=1&compare=1")
+        self.assertIn("report_id=5-v1-vs-current&", fetch.call_args[0][0])

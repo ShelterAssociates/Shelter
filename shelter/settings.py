@@ -25,6 +25,7 @@ Expected folder structure:
 import os
 import builtins
 import inspect
+from urllib.parse import urlparse
 
 
 # ---------------------------------------------------------------------------
@@ -33,16 +34,29 @@ import inspect
 
 
 MIDDLEWARE = (
+    "django.middleware.security.SecurityMiddleware",
+    "shelter.middleware.ContentSecurityPolicyMiddleware",
+    "shelter.middleware.CookieFlagsMiddleware",
     "shelter.middleware.RequestLoggingMiddleware",
     "django.middleware.gzip.GZipMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
+    "shelter.middleware.SessionBindingMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
-    "django.middleware.security.SecurityMiddleware",
 )
+
+# Sessions end after 8 idle hours (renewed on each request) or when the browser closes.
+SESSION_COOKIE_SECURE = True
+SESSION_COOKIE_AGE = 8 * 60 * 60
+SESSION_SAVE_EVERY_REQUEST = True
+SESSION_EXPIRE_AT_BROWSER_CLOSE = True
+
+# No JavaScript reads the CSRF cookie: pages take the token from {% csrf_token %}.
+CSRF_COOKIE_SECURE = True
+CSRF_COOKIE_HTTPONLY = True
 
 # ---------------------------------------------------------------------------
 # PATHS
@@ -71,6 +85,15 @@ PARENT_DIR = os.path.dirname(BASE_DIR)
 DEBUG = False  # overridden to True in local_settings.py for dev
 SECRET_KEY = ""  # MUST be set in local_settings.py
 ALLOWED_HOSTS = []  # MUST be set in local_settings.py
+# This server's https:// address; emailed links are built from it. Set in local_settings.py.
+BASE_APP_URL = ""
+# Google Maps JavaScript API key for the map pages (it is visible in the browser by design).
+# Set per server in local_settings.py; in Google Cloud Console restrict it to this server's
+# websites (HTTP referrers) and to the Maps JavaScript API only.
+GOOGLE_API_KEY = ""
+# Superset as browsers reach it: embedded on the graphs page and allowed by the CSP.
+# Each server points at its own (UAT: https://uat-graphs.shelter-associates.org/).
+GRAPHS_PUBLIC_URL = "https://graphs.shelter-associates.org/"
 
 # Empty by default so that if local_settings.py ever fails to define this,
 # delete_component blocks the delete (no one configured to notify) rather
@@ -198,7 +221,7 @@ INSTALLED_APPS = (
     "django.contrib.contenttypes",
     "django.contrib.sessions",
     "django.contrib.messages",
-    "django.contrib.staticfiles",
+    "shelter.apps.StaticFilesConfig",
     "django.contrib.gis",
     "master",
     "component",
@@ -246,12 +269,58 @@ INSTALLED_APPS = (
 # REST FRAMEWORK
 # ---------------------------------------------------------------------------
 
+# Sent on every response by shelter.middleware.ContentSecurityPolicyMiddleware, which adds a
+# per-request nonce to script-src: inline <script> tags need nonce="{{ csp_nonce }}" and inline
+# event handlers are not allowed. Images may come from any https host (S3 survey photos, AVNI,
+# map tiles). Set CSP_REPORT_ONLY = True to only report.
+CSP_REPORT_ONLY = False
+CSP_REPORT_URI = "/csp-report/"
+CSP_POLICY = {
+    "default-src": ["'self'"],
+    "script-src": [
+        "'self'", "https://maps.googleapis.com", "https://maps.gstatic.com", "https://cdn.jsdelivr.net",
+        "https://cdn.datatables.net", "https://cdnjs.cloudflare.com",
+    ],
+    "style-src": [
+        "'self'", "'unsafe-inline'", "https://fonts.googleapis.com", "https://cdn.jsdelivr.net",
+        "https://cdnjs.cloudflare.com", "https://cdn.datatables.net",
+    ],
+    "font-src": ["'self'", "data:", "https://fonts.gstatic.com"],
+    "img-src": ["'self'", "data:", "blob:", "https:"],
+    "connect-src": [
+        "'self'", "https://maps.googleapis.com", "https://s3.ap-south-1.amazonaws.com",
+        "https://*.s3.ap-south-1.amazonaws.com", "https://*.s3.amazonaws.com",
+        # 3D slum view (static/js/map3d.js): MapLibre glyphs and satellite tiles
+        "https://demotiles.maplibre.org", "https://server.arcgisonline.com",
+    ],
+    "frame-src": ["'self'", "{0.scheme}://{0.netloc}".format(urlparse(GRAPHS_PUBLIC_URL))],
+    "worker-src": ["'self'", "blob:"],
+    "object-src": ["'none'"],
+    "base-uri": ["'self'"],
+    "form-action": ["'self'"],
+    "frame-ancestors": ["'self'"],
+}
+
+AUTHENTICATION_BACKENDS = ["shelter.auth_throttle.ThrottledModelBackend"]
+
+# Failed sign-in counters must be shared by all gunicorn workers, so they live on disk.
+CACHES = {
+    "default": {"BACKEND": "django.core.cache.backends.locmem.LocMemCache"},
+    "auth_throttle": {
+        "BACKEND": "django.core.cache.backends.filebased.FileBasedCache",
+        "LOCATION": os.path.join(PARENT_DIR, "cache", "auth_throttle"),
+    },
+}
+
 REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": (
         "rest_framework.authentication.BasicAuthentication",
         "rest_framework.authentication.TokenAuthentication",
     ),
     "DEFAULT_PERMISSION_CLASSES": ("rest_framework.permissions.AllowAny",),
+    # The HTML ("browsable") API only for development; servers answer JSON.
+    "DEFAULT_RENDERER_CLASSES": ("rest_framework.renderers.JSONRenderer",)
+    + (("rest_framework.renderers.BrowsableAPIRenderer",) if DEBUG else ()),
 }
 
 
@@ -292,6 +361,8 @@ TEMPLATES = [
                 "django.template.context_processors.request",
                 "django.contrib.auth.context_processors.auth",
                 "django.contrib.messages.context_processors.messages",
+                "shelter.context_processors.csp_nonce",
+                "shelter.context_processors.google_api_key",
             ],
         },
     },
@@ -366,6 +437,16 @@ ADMIN_SITE_HEADER = "Shelter Administration"
 # ---------------------------------------------------------------------------
 
 LOGIN_REDIRECT_URL = "login_success"
+
+# Self-service reset is retired, so every password is typed by the administrator
+# into the admin's set-password form, which runs these. create_user() in code
+# bypasses them, and existing weak passwords stay valid until changed.
+AUTH_PASSWORD_VALIDATORS = [
+    {"NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator"},
+    {"NAME": "django.contrib.auth.password_validation.MinimumLengthValidator"},
+    {"NAME": "django.contrib.auth.password_validation.CommonPasswordValidator"},
+    {"NAME": "django.contrib.auth.password_validation.NumericPasswordValidator"},
+]
 
 # ---------------------------------------------------------------------------
 # LOGGING

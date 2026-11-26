@@ -13,6 +13,7 @@ from .models import (
 )
 
 from master.models import Slum
+from utils.validators import PlainTextAdminMixin
 
 # =================================================
 # INLINE CONFIGURATIONS
@@ -119,7 +120,7 @@ class SponsorProjectMonthlyReportAdmin(admin.ModelAdmin):
 
 
 @admin.register(Deliverable)
-class DeliverableAdmin(admin.ModelAdmin):
+class DeliverableAdmin(PlainTextAdminMixin, admin.ModelAdmin):
 
     list_display = ("name", "is_active")
 
@@ -129,7 +130,7 @@ class DeliverableAdmin(admin.ModelAdmin):
 
 
 @admin.register(WorkProgressParameter)
-class WorkProgressParameterAdmin(admin.ModelAdmin):
+class WorkProgressParameterAdmin(PlainTextAdminMixin, admin.ModelAdmin):
 
     list_display = ("name", "unit", "is_active")
 
@@ -139,7 +140,7 @@ class WorkProgressParameterAdmin(admin.ModelAdmin):
 
 
 @admin.register(BeneficiaryIndicator)
-class BeneficiaryIndicatorAdmin(admin.ModelAdmin):
+class BeneficiaryIndicatorAdmin(PlainTextAdminMixin, admin.ModelAdmin):
 
     list_display = ("name", "unit", "is_active")
 

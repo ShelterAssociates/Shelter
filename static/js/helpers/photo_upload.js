@@ -476,7 +476,9 @@
     var confirmAccepted = false
 
     function escapeHtml(value) {
-        return $('<div>').text(value == null ? '' : String(value)).html()
+        return String(value == null ? '' : value).replace(/[&<>"']/g, function (c) {
+            return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]
+        })
     }
 
     function selectedText($element, fallback) {
@@ -574,9 +576,9 @@
 
                 if (isSuccess) {
                     var link = payload && payload.folder_url
-                        ? ' <a href="' + payload.folder_url + '" target="_blank">View folder ↗</a>'
+                        ? ' <a href="' + escapeHtml(/^https?:\/\//i.test(payload.folder_url) ? payload.folder_url : '#') + '" target="_blank" rel="noopener">View folder ↗</a>'
                         : ''
-                    setStatus('success', '✅ ' + ((payload && payload.message) || (resp && resp.message) || 'Photos uploaded successfully!') + link)
+                    setStatus('success', '✅ ' + escapeHtml((payload && payload.message) || (resp && resp.message) || 'Photos uploaded successfully!') + link)
                     $('#photoUploadForm')[0].reset()
                     $photoDate.val(cfg.defaultPhotoDate || today)
                     $photoDate.attr('max', today)
@@ -596,7 +598,7 @@
                     $('#cityField, #adminWardField, #electoralWardField, #slumField, #photoTypeField').removeClass('pu-hidden')
                     clearValidationState()
                 } else {
-                    setStatus('error', '❌ ' + (resp && resp.message ? resp.message : 'Upload failed. Please try again.'))
+                    setStatus('error', '❌ ' + escapeHtml(resp && resp.message ? resp.message : 'Upload failed. Please try again.'))
                 }
                 $('#uploadButton').prop('disabled', false)
                 checkUploadReady()
@@ -609,7 +611,7 @@
                     var r = JSON.parse(xhr.responseText)
                     if (r && r.message) msg = r.message
                 } catch (ex) { }
-                setStatus('error', '❌ ' + msg)
+                setStatus('error', '❌ ' + escapeHtml(msg))
                 $('#uploadButton').prop('disabled', false)
                 checkUploadReady()
                 closeConfirmModal()

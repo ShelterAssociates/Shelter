@@ -36,12 +36,12 @@ var Breadcrumbs = (function () {
         //breadcrumb doesn't repeat the same label back-to-back.
         var crumbs = [{
             label: city.name,
-            html: '<label id="Home" onclick="Breadcrumbs.prototype.breadcrumb_onClick(this, false);">' + " <span style='text-decoration: underline;cursor:pointer;color:blue;'>" + city.name + "</span></label>"
+            html: '<label id="Home" class="crumb" data-crumb-level="city">' + " <span style='text-decoration: underline;cursor:pointer;color:blue;'>" + escapeHtml(city.name) + "</span></label>"
         }];
         $.each(this.val, function (key, val) {
             crumbs.push({
                 label: val,
-                html: '<label id="' + val + '" onclick="Breadcrumbs.prototype.breadcrumb_onClick(this, true);">' + " <span style='text-decoration: underline;cursor:pointer;color:blue;'>" + val + "</span></label>"
+                html: '<label id="' + escapeHtml(val) + '" class="crumb" data-crumb-level="area">' + " <span style='text-decoration: underline;cursor:pointer;color:blue;'>" + escapeHtml(val) + "</span></label>"
             });
         });
 
@@ -74,6 +74,13 @@ var Breadcrumbs = (function () {
 
     }
     //Breadcrumb click event
+    $(document).on("click", "#maplink label.crumb", function () {
+        Breadcrumbs.prototype.breadcrumb_onClick(this, $(this).data("crumb-level") !== "city");
+    });
+    $(document).on("click", "span.datatable-slum", function () {
+        Breadcrumbs.prototype.datatableSlum_onClick(this);
+    });
+
     Breadcrumbs.prototype.breadcrumb_onClick = function (tag, flag) {
         let removeIndi = 0;
         let obj_click = city;
@@ -150,7 +157,7 @@ var Breadcrumbs = (function () {
                         var desc = "";
                         if (setval.legend.length > 0)
                             desc = ' (' + setval.legend.join(" >> ") + ')';
-                        return '<div><span onclick="Breadcrumbs.prototype.datatableSlum_onClick(this);" style="font-weight: 900;font-size: small;color: blue;cursor: pointer;" name="divSlum" data="' + setval.legend.join(":") + ":" + setval.name + '">' + setval.name + desc + ' </span></div>' + '<div style="font-size: small;">' + setval.info + '</div>';
+                        return '<div><span class="datatable-slum" style="font-weight: 900;font-size: small;color: blue;cursor: pointer;" name="divSlum" data="' + escapeHtml(setval.legend.join(":") + ":" + setval.name) + '">' + escapeHtml(setval.name + desc) + ' </span></div>' + '<div style="font-size: small;">' + escapeHtml(setval.info) + '</div>';
                     }
                 }]
             });

@@ -9,7 +9,7 @@
     <title>Shelter</title>
 <style>
   #map {
-      height: 80%;
+      height: 80vh;
       width: 100%;
       margin-top: 10px;
       padding: 0px;
@@ -52,7 +52,7 @@
 <script src="{% static "js/leaflet-google.js" %}"></script>
 <script src="{% static "js/external_dashboard.js" %}"></script>
 <script src="{% static "js/external_dashboard_subheader.js" %}"></script>
-<script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCs114b6ZNpVH5BGnrfgy0f1K49vfBK4gs&callback=initMap" async defer></script>
+<script src="https://maps.googleapis.com/maps/api/js?key={{ GOOGLE_API_KEY|urlencode }}&callback=initMap" async defer></script>
 {% endblock %}
 
 {%block content %}
@@ -176,7 +176,7 @@
   </div>
   </div>
 <!--Content ends here-->
-<script type="text/javascript">
+<script nonce="{{ csp_nonce }}" type="text/javascript">
 </script>
 
 

@@ -12,6 +12,7 @@ from functools import wraps
 
 from django.conf import settings
 from django.contrib import messages
+from django.contrib.auth.decorators import login_required
 from django.http import HttpResponseForbidden
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
@@ -41,7 +42,7 @@ def lock_locations(slum_id, user):
 
 
 def dump_dir():
-    path = getattr(settings, "SLUM_MERGE_DUMP_DIR", None) or os.path.join(settings.MEDIA_ROOT, "slum_merges")
+    path = getattr(settings, "SLUM_MERGE_DUMP_DIR", None) or os.path.join(settings.PARENT_DIR, "slum_merges")
     if not os.path.isdir(path):
         os.makedirs(path)
     return path
@@ -107,6 +108,7 @@ def recently_versioned(limit=8):
     return recent
 
 
+@login_required(login_url="/accounts/login/")
 @superuser_required
 def slum_versions(request, slum_id=None):
     slum = get_object_or_404(Slum, pk=slum_id) if slum_id else None
