@@ -25,6 +25,10 @@ class FakeProvider(contracts.Provider):
         self.locations_asked = []
         self.legacy_result = True
         self.legacy_error = None
+        self.needs_first = {}
+        self.legacy_gaps = set()
+        self.enrolment_listings = set()
+        self.household_numbers = {}
 
     def catalog(self):
         return list(self.catalog_entries)
@@ -90,6 +94,18 @@ class FakeProvider(contracts.Provider):
 
     def legacy_handles(self, kind, subject_type, encounter_type=""):
         return subject_type == "Household" and kind != "enrolment"
+
+    def lists_enrolments(self, subject_type, program):
+        return (subject_type, program) in self.enrolment_listings
+
+    def subjects_needed_first(self, kind, raw, context):
+        return list(self.needs_first.get(raw["normalized"].external_id, ()))
+
+    def legacy_missing(self, kind, raw):
+        return raw["normalized"].external_id in self.legacy_gaps
+
+    def household_number_for(self, normalized, identity_raw, context):
+        return self.household_numbers.get(normalized.external_id, normalized.household_number)
 
 
 def raw(normalized, status="done", legacy_skip=False):

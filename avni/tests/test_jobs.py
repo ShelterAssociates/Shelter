@@ -234,6 +234,7 @@ class ManualSyncTests(JobTestCase):
         self.switch("Family Member")
         self.switch("Family Member", kind="enrolment", program="MHM")
         self.api.routes[paths.subjects("Family Member", SINCE)] = page([])
+        self.api.routes[paths.enrolments("MHM", SINCE)] = page([])
         run = self.run_job("member_sync", {"from_date": "2026-01-01"})
         self.assertEqual([s.name for s in run.steps.all()], ["members"])
         self.assertEqual(run.status, "success")

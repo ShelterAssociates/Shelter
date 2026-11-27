@@ -7,7 +7,9 @@ encounters (save_*_from_record). The record adapters read these AVNI fields:
   subject           ID, location.Slum, observations["First name" / "Last name"],
                     "Date of birth" and "Gender" (top level, falling back to
                     observations), household number from observations
-                    (HOUSEHOLD_NUMBER_KEYS) or the first entry of "Groups"
+                    (HOUSEHOLD_NUMBER_KEYS). AVNI names the member's household
+                    only as subject uuids under "Groups", so avni.provider
+                    reads that household's number and passes it in.
   enrolment         ID, Subject ID, Program, Enrolment datetime, Exit datetime,
                     observations
   program encounter ID, Subject ID, Enrolment ID, Encounter type,
@@ -63,6 +65,9 @@ def import_rows(file_path, save_row):
 # -- writers shared by both sources ------------------------------------------
 
 def write_member(slum, member_uuid, fields):
+    """A record that names no household keeps the number the member already has."""
+    if not fields.get("household_number"):
+        fields = {name: value for name, value in fields.items() if name != "household_number"}
     MemberData.objects.update_or_create(slum=slum, member_uuid=member_uuid, defaults=fields)
     return True
 
@@ -160,20 +165,17 @@ def audit_days(record):
 
 
 def member_household_number(record):
+    """A household number among the member's own answers, on forms that ask for one."""
     observations = record.get("observations") or {}
     for key in HOUSEHOLD_NUMBER_KEYS:
         if observations.get(key) not in (None, ""):
             return str(observations[key]).strip()[:5]
-    groups = record.get("Groups") or []
-    if groups and isinstance(groups[0], dict):
-        number = groups[0].get("Household number") or groups[0].get("First name")
-        if number:
-            return str(number).strip()[:5]
     return None
 
 
-def save_member_from_record(record):
-    """One Family Member subject -> MemberData."""
+def save_member_from_record(record, household_number=None):
+    """One Family Member subject -> MemberData. `household_number` is that of the household
+    AVNI lists the member under, used when her own answers carry none."""
     slum = Slum.objects.filter(id=slum_id_for_name((record.get("location") or {}).get("Slum"))).first()
     if slum is None:
         return False
@@ -183,7 +185,7 @@ def save_member_from_record(record):
         "member_last_name": (observations.get("Last name") or record.get("Last name") or "")[:100],
         "date_of_birth": record_day(record.get("Date of birth") or observations.get("Date of birth")),
         "gender": GENDER_CODES.get(record.get("Gender") or observations.get("Gender"), "3"),
-        "household_number": member_household_number(record),
+        "household_number": member_household_number(record) or (str(household_number).strip()[:5] if household_number else None),
         "member_data": observations,
     }
     fields.update(audit_days(record))
