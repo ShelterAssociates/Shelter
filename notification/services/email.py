@@ -17,8 +17,8 @@ FAILURE_PURPOSE = "job_failure"
 ACTIVITY_PURPOSE = "avni_console_activity"
 BULK_PURPOSE = "avni_bulk_update"
 BULK_JOB_KEY = "avni_bulk_update"
-# Jobs that send their own emails (plates/services/email.py), not the AVNI activity report.
-SILENT_JOB_KEYS = ("plate_batch",)
+# Jobs that send their own emails (design_studio/services/email.py), not the AVNI activity report.
+SILENT_JOB_KEYS = ("design_batch",)
 INLINE_CHANGE_ROWS = 200
 
 STATUS_COLOURS = {

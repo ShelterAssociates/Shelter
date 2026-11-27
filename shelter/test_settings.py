@@ -30,6 +30,7 @@ BIRT_REPORT_URL = ""
 BIRT_REPORT_CMD = ""
 GOOGLE_API_KEY = "test-google-maps-key"
 # Failed-login counters off by default; shelter/test_login_throttle.py switches them on.
-CACHES = dict(CACHES, auth_throttle={"BACKEND": "django.core.cache.backends.dummy.DummyCache"})
+CACHES = dict(CACHES, auth_throttle={"BACKEND": "django.core.cache.backends.dummy.DummyCache"},
+              design_preview={"BACKEND": "django.core.cache.backends.dummy.DummyCache"})
 EMAIL_BACKEND = "django.core.mail.backends.locmem.EmailBackend"
 PASSWORD_HASHERS = ["django.contrib.auth.hashers.MD5PasswordHasher"]

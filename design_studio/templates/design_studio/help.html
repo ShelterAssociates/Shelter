@@ -1,0 +1,15 @@
+{% extends "admin/base_site.html" %}
+{% block title %}How to use Design Studio{% endblock %}
+{% block bodyclass %}ds-body{% endblock %}
+{% block breadcrumbs %}{% endblock %}
+{% block extrastyle %}{% include "design_studio/partials/styles.html" %}{% endblock %}
+
+{% block content %}
+<div class="ds-page">
+  {% include "design_studio/partials/nav.html" with active="help" %}
+  <div class="ds-actions" style="margin-bottom:24px">
+    <a class="ds-btn" href="{% url 'design_studio:help_pdf' %}">{% include "design_studio/partials/download_icon.html" %} Download this guide (PDF)</a>
+  </div>
+  {% include "design_studio/partials/guide.html" %}
+</div>
+{% endblock %}

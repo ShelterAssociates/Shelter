@@ -1,0 +1,60 @@
+{% extends "admin/base_site.html" %}
+{% block title %}Single plate{% endblock %}
+{% block bodyclass %}ds-body{% endblock %}
+{% block breadcrumbs %}{% endblock %}
+{% block extrastyle %}{% include "design_studio/partials/styles.html" %}{% endblock %}
+
+{% block content %}
+<div class="ds-page">
+  {% include "design_studio/partials/nav.html" with active="single" %}
+  <div class="ds-header">
+    <div>
+      <h1 class="ds-title">Single plate</h1>
+      <p class="ds-lead">The same checks as an Excel row. Preview the plate, then download it at print size. Nothing is stored on the server.</p>
+    </div>
+  </div>
+
+  <section class="ds-section ds-split">
+    <form method="post" novalidate>
+      {% csrf_token %}
+      {% if form.non_field_errors %}<div class="ds-note ds-note--bad">{% for error in form.non_field_errors %}{{ error }} {% endfor %}</div>{% endif %}
+      <div class="ds-fields-2">
+        {% include "design_studio/partials/field.html" with field=form.plate_type %}
+        {% include "design_studio/partials/field.html" with field=form.template %}
+      </div>
+      {% include "design_studio/partials/field.html" with field=form.code %}
+      <div class="ds-fields-2">
+        {% include "design_studio/partials/field.html" with field=form.lat %}
+        {% include "design_studio/partials/field.html" with field=form.long %}
+      </div>
+      {% include "design_studio/partials/field.html" with field=form.slum %}
+      <div class="ds-fields-2">
+        {% include "design_studio/partials/field.html" with field=form.house_no %}
+        {% include "design_studio/partials/field.html" with field=form.ward %}
+      </div>
+      {% include "design_studio/partials/field.html" with field=form.city %}
+      <div class="ds-check-row">
+        {% include "design_studio/partials/check.html" with field=form.holes %}
+        {% include "design_studio/partials/check.html" with field=form.side_panel %}
+      </div>
+      <p class="ds-help">Untick Drill holes for a full plate without the hole marks. The side panel adds a 19.1 mm strip with the house number and slum name that is cut off and kept.</p>
+      <div class="ds-form-actions">
+        <button class="ds-btn ds-btn--primary" type="submit" name="action" value="preview" data-busy="Making preview…">Preview</button>
+        <button class="ds-btn" type="submit" name="action" value="download">{% include "design_studio/partials/download_icon.html" %} Download PNG</button>
+      </div>
+    </form>
+
+    <div class="ds-sticky">
+      <h2 class="ds-h2" style="margin-bottom:12px">Preview</h2>
+      {% if preview %}
+        <img class="ds-plate" src="{{ preview }}" alt="Plate preview">
+        <p class="ds-caption">{{ template.name }} v{{ template.version }}, {{ template.width_mm }} x {{ template.height_mm }} mm at {{ template.dpi }} DPI. The download is full size.</p>
+        {% for warning in warnings %}<div class="ds-note ds-note--warn" style="margin-top:12px">{{ warning }}</div>{% endfor %}
+      {% else %}
+        <div class="ds-preview-empty">Fill in the details and press Preview.</div>
+      {% endif %}
+    </div>
+  </section>
+</div>
+{% include "design_studio/partials/template_picker.html" %}
+{% endblock %}

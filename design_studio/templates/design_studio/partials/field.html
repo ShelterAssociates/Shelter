@@ -1,0 +1,6 @@
+<div class="ds-field{% if field.field.widget.input_type == 'checkbox' %} ds-checklist{% endif %}">
+  <label class="ds-label" for="{{ field.id_for_label }}">{{ field.label }}{% if field.field.required %} <span class="ds-required" title="Required">*</span>{% endif %}</label>
+  {% if field.errors %}<ul class="ds-errors">{% for error in field.errors %}<li>{{ error }}</li>{% endfor %}</ul>{% endif %}
+  {{ field }}
+  {% if field.help_text %}<p class="ds-help">{{ field.help_text }}</p>{% endif %}
+</div>

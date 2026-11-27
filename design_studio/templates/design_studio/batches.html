@@ -1,0 +1,32 @@
+{% extends "admin/base_site.html" %}
+{% block title %}Batches{% endblock %}
+{% block bodyclass %}ds-body{% endblock %}
+{% block breadcrumbs %}{% endblock %}
+{% block extrastyle %}{% include "design_studio/partials/styles.html" %}{% endblock %}
+
+{% block content %}
+<div class="ds-page">
+  {% include "design_studio/partials/nav.html" with active="batches" %}
+  <div class="ds-header">
+    <div>
+      <h1 class="ds-title">Batches</h1>
+      <p class="ds-lead">{% if user.is_superuser %}Every user's batches.{% else %}Your batches.{% endif %} A zip is kept until the first nightly cleanup (05:00) at least 24 hours after it was made; the record stays.</p>
+    </div>
+    <a class="ds-btn ds-btn--primary" href="{% url 'design_studio:bulk_new' %}">Upload Excel</a>
+  </div>
+  <section class="ds-section">
+    {% if batches %}
+    <div class="ds-grid-toolbar">
+      <input class="ds-input" type="search" placeholder="Search slum, file, template, user…" aria-label="Search batches" data-grid-search="batch-grid">
+      <select class="ds-select" aria-label="Filter by status" data-grid-status="batch-grid">
+        <option value="">All statuses</option>
+        <option value="done">Done</option><option value="queued">Queued</option><option value="running">Running</option>
+        <option value="failed">Failed</option><option value="cancelled">Cancelled</option><option value="expired">Expired</option><option value="draft">Draft</option>
+      </select>
+      <span class="ds-muted ds-small" data-grid-count="batch-grid" aria-live="polite"></span>
+    </div>
+    {% endif %}
+    {% include "design_studio/partials/batch_table.html" with batches=batches show_requester=user.is_superuser %}
+  </section>
+</div>
+{% endblock %}

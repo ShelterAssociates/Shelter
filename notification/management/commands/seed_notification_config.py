@@ -75,9 +75,9 @@ PURPOSES = [
         "cc": [],
     },
     {
-        "key": "plates_batch",
-        "display_name": "Plates batch copy",
-        "description": "Copy of every plates batch email (queued, ready, failed, cancelled). The person who confirmed the batch gets the original.",
+        "key": "design_studio_batch",
+        "display_name": "Design Studio batch copy",
+        "description": "Copy of every Design Studio batch email (queued, ready, failed, cancelled). The person who confirmed the batch gets the original.",
         "to": ["developer"],
         "cc": [],
     },

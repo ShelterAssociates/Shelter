@@ -1,0 +1,81 @@
+{% extends "admin/base_site.html" %}
+{% block title %}Templates{% endblock %}
+{% block bodyclass %}ds-body{% endblock %}
+{% block breadcrumbs %}{% endblock %}
+{% block extrastyle %}{% include "design_studio/partials/styles.html" %}{% endblock %}
+
+{% block content %}
+<div class="ds-page">
+  {% include "design_studio/partials/nav.html" with active="templates" %}
+  <div class="ds-header">
+    <div>
+      <h1 class="ds-title">Templates</h1>
+      <p class="ds-lead">Each change to a template's look saves a new version; old versions stay read-only so earlier batches can be made again exactly. Archive a template you no longer need; an archived template that no batch used can be deleted permanently.</p>
+    </div>
+    <div class="ds-actions">
+      <a class="ds-btn ds-btn--primary" href="{% url 'design_studio:template_new' %}?type=digipin">New DIGIPIN template</a>
+      <a class="ds-btn" href="{% url 'design_studio:template_new' %}?type=pluscode">New Plus Code template</a>
+      <a class="ds-btn" href="{% url 'design_studio:templates_archived' %}">Archived templates ({{ archived_count }})</a>
+    </div>
+  </div>
+  {% if message %}<div class="ds-note" style="margin-top:16px">{{ message }}</div>{% endif %}
+
+  <section class="ds-section">
+    <div class="ds-section-head"><h2 class="ds-h2">Current templates</h2></div>
+    <div class="ds-table-wrap">
+      <table class="ds-table">
+        <thead><tr><th>Preview</th><th>Name</th><th>Type</th><th>Size</th><th>Version</th><th>State</th><th></th></tr></thead>
+        <tbody>
+        {% for template in latest %}
+          <tr>
+            <td><img class="ds-thumb" src="{% url 'design_studio:template_image' template.pk %}?small=1" alt="" loading="lazy"></td>
+            <td><a href="{% url 'design_studio:template_edit' template.pk %}">{{ template.name }}</a><br><span class="ds-muted ds-small">{{ template.get_output_kind_display }}</span></td>
+            <td>{{ template.get_plate_type_display }}</td>
+            <td class="ds-muted">{{ template.width_mm }} x {{ template.height_mm }} mm<br>{{ template.dpi }} DPI</td>
+            <td>v{{ template.version }}</td>
+            <td>{% if template.is_default %}Default{% endif %}</td>
+            <td><div class="ds-actions">
+              <form method="post" action="{% url 'design_studio:template_copy' template.pk %}" class="ds-inline">{% csrf_token %}<button class="ds-btn ds-btn--sm" type="submit" data-busy="Copying…">Copy</button></form>
+              <form method="post" action="{% url 'design_studio:template_archive' template.pk %}" class="ds-inline">{% csrf_token %}<button class="ds-btn ds-btn--sm" type="submit" data-busy="Archiving…">Archive</button></form>
+            </div></td>
+          </tr>
+        {% empty %}<tr><td colspan="7" class="ds-muted">No templates yet. Run <span class="ds-code">manage.py seed_design_presets</span>.</td></tr>{% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="ds-section ds-split" style="grid-template-columns: 1fr 1fr">
+    <div>
+      <h2 class="ds-h2" style="margin-bottom:12px">Logos and background images</h2>
+      <table class="ds-table" style="margin-bottom:20px"><thead><tr><th>Id</th><th>Name</th><th>Kind</th><th>Default</th></tr></thead><tbody>
+      {% for asset in assets %}<tr><td>{{ asset.pk }}</td><td>{{ asset.name }}</td><td class="ds-muted">{{ asset.get_kind_display }}</td><td>{% if asset.is_default %}Yes{% endif %}</td></tr>{% endfor %}
+      </tbody></table>
+      <form method="post" action="{% url 'design_studio:asset_upload' %}" enctype="multipart/form-data">
+        {% csrf_token %}
+        {% include "design_studio/partials/field.html" with field=asset_form.name %}
+        {% include "design_studio/partials/field.html" with field=asset_form.kind %}
+        {% include "design_studio/partials/field.html" with field=asset_form.image %}
+        <div class="ds-check-row">
+          {% include "design_studio/partials/check.html" with field=asset_form.recolourable %}
+          {% include "design_studio/partials/check.html" with field=asset_form.is_default %}
+        </div>
+        <p class="ds-help">PNG or JPEG only, up to 5 MB and 4000 pixels a side. A default image is used wherever a template asks for that kind automatically.</p>
+        <div class="ds-form-actions"><button class="ds-btn" type="submit">Upload image</button></div>
+      </form>
+    </div>
+    <div>
+      <h2 class="ds-h2" style="margin-bottom:12px">Fonts</h2>
+      <table class="ds-table" style="margin-bottom:20px"><thead><tr><th>Name</th><th>Style</th></tr></thead><tbody>
+      {% for font in fonts %}<tr><td>{{ font.name }}</td><td class="ds-muted">{{ font.variation|default:"—" }}</td></tr>{% endfor %}
+      </tbody></table>
+      <form method="post" action="{% url 'design_studio:font_upload' %}" enctype="multipart/form-data">
+        {% csrf_token %}
+        {% for field in font_form %}{% include "design_studio/partials/field.html" %}{% endfor %}
+        <p class="ds-help">.ttf or .otf. For a variable font, give the style name, e.g. Bold.</p>
+        <div class="ds-form-actions"><button class="ds-btn" type="submit">Upload font</button></div>
+      </form>
+    </div>
+  </section>
+</div>
+{% endblock %}

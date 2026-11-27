@@ -1,0 +1,13 @@
+{% load design_studio_tags static %}
+<div class="ds-progress ds-page-progress" id="ds-page-progress" role="progressbar" aria-label="Loading" hidden></div>
+<script src="{% static 'design_studio/loading.js' %}" defer></script>
+<script src="{% static 'design_studio/grid.js' %}" defer></script>
+<nav class="ds-tabs" aria-label="Design Studio">
+  <a href="{% url 'design_studio:home' %}"{% if active == "home" %} class="is-active" aria-current="page"{% endif %}>Overview</a>
+  <a href="{% url 'design_studio:single' %}"{% if active == "single" %} class="is-active" aria-current="page"{% endif %}>Single plate</a>
+  <a href="{% url 'design_studio:bulk_new' %}"{% if active == "bulk" %} class="is-active" aria-current="page"{% endif %}>Excel upload</a>
+  <a href="{% url 'design_studio:batches' %}"{% if active == "batches" %} class="is-active" aria-current="page"{% endif %}>Batches</a>
+  {% if user|can_edit_design_templates %}<a href="{% url 'design_studio:templates' %}"{% if active == "templates" %} class="is-active" aria-current="page"{% endif %}>Templates</a>{% endif %}
+  <a href="{% url 'design_studio:help' %}"{% if active == "help" %} class="is-active" aria-current="page"{% endif %}>How to use</a>
+  <a class="ds-tabs-end" href="/helpers/digipin_generate/">DIGIPIN tool</a>
+</nav>

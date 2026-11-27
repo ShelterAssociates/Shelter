@@ -1,0 +1,29 @@
+{% extends "admin/base_site.html" %}
+{% block title %}Delete template{% endblock %}
+{% block bodyclass %}ds-body{% endblock %}
+{% block breadcrumbs %}{% endblock %}
+{% block extrastyle %}{% include "design_studio/partials/styles.html" %}{% endblock %}
+
+{% block content %}
+<div class="ds-page">
+  {% include "design_studio/partials/nav.html" with active="templates" %}
+  {% url 'design_studio:templates_archived' as back_url %}{% include "design_studio/partials/back.html" with back_label="Back to archived templates" %}
+  <h1 class="ds-title">Delete {{ template.name }} permanently?</h1>
+  {% if not archived %}
+    <div class="ds-note ds-note--warn" style="margin-top:16px">Only an archived template can be deleted. Archive it first from the Templates page.</div>
+  {% elif batches %}
+    <div class="ds-note ds-note--warn" style="margin-top:16px">This template was used by {{ batches }} batch{{ batches|pluralize:"es" }}, so it cannot be deleted: those batches must stay possible to make again. It stays archived and hidden from every picker.</div>
+  {% else %}
+    <p class="ds-lead" style="margin:8px 0 16px">This removes the template and all {{ versions|length }} version{{ versions|length|pluralize }} of it. It cannot be undone. No batch was made with it.</p>
+    <img class="ds-thumb" src="{% url 'design_studio:template_image' template.pk %}?small=1" alt="" style="width:420px;margin-bottom:20px">
+    <form method="post">
+      {% csrf_token %}
+      <div class="ds-actions">
+        <button class="ds-btn ds-btn--danger" type="submit" data-busy="Deleting…">Delete permanently</button>
+        <a class="ds-btn" href="{% url 'design_studio:templates_archived' %}">Keep it</a>
+      </div>
+    </form>
+  {% endif %}
+  {% if not archived or batches %}<p style="margin-top:20px"><a href="{% url 'design_studio:templates_archived' %}">Back to archived templates</a></p>{% endif %}
+</div>
+{% endblock %}
