@@ -1,0 +1,57 @@
+{% extends "admin/base_site.html" %}
+{% block title %}Excel upload{% endblock %}
+{% block bodyclass %}ds-body{% endblock %}
+{% block breadcrumbs %}{% endblock %}
+{% block extrastyle %}{% include "design_studio/partials/styles.html" %}{% endblock %}
+
+{% block content %}
+<div class="ds-page">
+  {% include "design_studio/partials/nav.html" with active="bulk" %}
+  <div class="ds-header">
+    <div>
+      <h1 class="ds-title">Many plates from Excel</h1>
+      <p class="ds-lead">One plate type per upload. After the upload you see every row's check and the demo plates; nothing is made until you confirm.</p>
+    </div>
+  </div>
+
+  <section class="ds-section ds-split">
+    <form method="post" enctype="multipart/form-data" novalidate>
+      {% csrf_token %}
+      {% if form.non_field_errors %}<div class="ds-note ds-note--bad">{% for error in form.non_field_errors %}{{ error }} {% endfor %}</div>{% endif %}
+      <div class="ds-fields-2">
+        {% include "design_studio/partials/field.html" with field=form.plate_type %}
+        {% include "design_studio/partials/field.html" with field=form.template %}
+      </div>
+      {% include "design_studio/partials/field.html" with field=form.file %}
+      {% include "design_studio/partials/field.html" with field=form.sheet_name %}
+      {% include "design_studio/partials/field.html" with field=form.email %}
+      <div class="ds-check-row">
+        {% include "design_studio/partials/check.html" with field=form.holes %}
+        {% include "design_studio/partials/check.html" with field=form.side_panel %}
+      </div>
+      <p class="ds-help">Untick Drill holes for full plates without the hole marks. The side panel adds a cut-off strip with the house number and slum name.</p>
+      <div class="ds-form-actions"><button class="ds-btn ds-btn--primary" type="submit" data-busy="Uploading and checking…">Upload and check</button></div>
+    </form>
+
+    <div>
+      <h2 class="ds-h2" style="margin-bottom:8px">Excel format</h2>
+      <p class="ds-muted" style="margin:0 0 12px">Keep the header row and fill one row per plate. Save as .xlsx; up to 15,000 rows and 10 MB.</p>
+      <table class="ds-table" style="margin-bottom:16px">
+        <thead><tr><th>Column</th><th>Rule</th></tr></thead>
+        <tbody>
+          <tr><td>House No <span class="ds-required">*</span></td><td>Up to 5 characters</td></tr>
+          <tr><td>DIGIPIN or Plus Code <span class="ds-required">*</span></td><td>DIGIPIN: 10 characters. Plus code: full code, e.g. 7J8PMFV5+5RCH</td></tr>
+          <tr><td>Latitude, Longitude <span class="ds-required">*</span></td><td>Decimal degrees inside India</td></tr>
+          <tr><td>Slum Name <span class="ds-required">*</span></td><td>Up to 80 characters</td></tr>
+          <tr><td>Ward, City</td><td>Optional. Extra columns are kept unchanged.</td></tr>
+        </tbody>
+      </table>
+      <div class="ds-actions">
+        <a class="ds-btn" href="{% url 'design_studio:excel_format_download' 'digipin' %}">{% include "design_studio/partials/download_icon.html" %} DIGIPIN Excel format</a>
+        <a class="ds-btn" href="{% url 'design_studio:excel_format_download' 'pluscode' %}">{% include "design_studio/partials/download_icon.html" %} Plus Code Excel format</a>
+      </div>
+    </div>
+  </section>
+</div>
+{% include "design_studio/partials/template_picker.html" %}
+{% endblock %}

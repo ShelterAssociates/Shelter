@@ -1,0 +1,37 @@
+{% if batches %}
+<div class="ds-table-wrap">
+  <table class="ds-table ds-grid" data-grid id="{{ grid_id|default:'batch-grid' }}">
+    <thead><tr>
+      <th aria-sort="none"><button type="button" data-sort="number">Batch</button></th>
+      <th aria-sort="none"><button type="button" data-sort="text">Type</button></th>
+      <th aria-sort="none"><button type="button" data-sort="text">Slum or file</button></th>
+      <th aria-sort="none"><button type="button" data-sort="text">Template</button></th>
+      <th class="ds-num" aria-sort="none"><button type="button" data-sort="number">Rows</button></th>
+      <th class="ds-num" aria-sort="none"><button type="button" data-sort="number">Made</button></th>
+      <th class="ds-num" aria-sort="none"><button type="button" data-sort="number">Skipped</button></th>
+      {% if show_requester %}<th aria-sort="none"><button type="button" data-sort="text">Requested by</button></th>{% endif %}
+      <th aria-sort="descending"><button type="button" data-sort="number">Created</button></th>
+      <th aria-sort="none"><button type="button" data-sort="text">Status</button></th>
+      <th><span class="ds-visually-hidden">Download</span></th>
+    </tr></thead>
+    <tbody>
+    {% for batch in batches %}
+      <tr data-href="{% url 'design_studio:batch_detail' batch.public_id %}" data-status="{{ batch.status }}" tabindex="0" aria-label="Open batch {{ batch.pk }}">
+        <td data-value="{{ batch.pk }}"><a href="{% url 'design_studio:batch_detail' batch.public_id %}" tabindex="-1">#{{ batch.pk }}</a></td>
+        <td>{{ batch.get_plate_type_display }}</td>
+        <td>{{ batch.slum_name|default:batch.original_name|default:"—" }}</td>
+        <td class="ds-muted">{{ batch.template.name }} v{{ batch.template.version }}</td>
+        <td class="ds-num" data-value="{{ batch.row_count }}">{{ batch.row_count }}</td>
+        <td class="ds-num" data-value="{{ batch.made_count }}">{{ batch.made_count }}</td>
+        <td class="ds-num" data-value="{{ batch.skipped_count }}">{{ batch.skipped_count }}</td>
+        {% if show_requester %}<td>{{ batch.requested_by.get_username|default:"—" }}</td>{% endif %}
+        <td class="ds-muted" data-value="{{ batch.created_on|date:'U' }}">{{ batch.created_on|date:"j M Y, H:i" }}</td>
+        <td>{% include "design_studio/partials/status.html" with status=batch.status %}</td>
+        <td>{% if batch.status == "done" %}<a class="ds-btn ds-btn--sm" href="{% url 'design_studio:batch_download' batch.public_id %}">{% include "design_studio/partials/download_icon.html" %} Download</a>{% endif %}</td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</div>
+<p class="ds-empty" data-grid-empty hidden>No batches match. Clear the search or choose another status.</p>
+{% else %}<p class="ds-empty">No batches yet.</p>{% endif %}

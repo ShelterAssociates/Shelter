@@ -1,0 +1,15 @@
+{% extends "admin/base_site.html" %}
+{% block title %}Download{% endblock %}
+{% block bodyclass %}ds-body{% endblock %}
+{% block breadcrumbs %}{% endblock %}
+{% block extrastyle %}{% include "design_studio/partials/styles.html" %}{% endblock %}
+
+{% block content %}
+<div class="ds-page">
+  {% include "design_studio/partials/nav.html" with active="batches" %}
+  {% url 'design_studio:batch_detail' batch.public_id as back_url %}{% include "design_studio/partials/back.html" with back_label="Back to the batch" %}
+  <h1 class="ds-title">Download not available</h1>
+  <p class="ds-lead" style="margin-bottom:20px">{{ message }}</p>
+  <a class="ds-btn ds-btn--primary" href="{% url 'design_studio:batch_detail' batch.public_id %}">Open the batch page</a>
+</div>
+{% endblock %}

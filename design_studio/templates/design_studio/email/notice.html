@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <style>
+      body { margin: 0; padding: 0; background: #eef1f5; font-family: Arial, Helvetica, sans-serif; }
+      .wrapper { padding: 32px 0; }
+      .card { width: 640px; background: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 6px 20px rgba(0, 0, 0, 0.12); }
+      .header { color: #ffffff; padding: 24px 32px; }
+      .header h2 { margin: 0; font-size: 22px; font-weight: 600; }
+      .body-content { padding: 28px 32px; color: #333; font-size: 15px; line-height: 1.7; }
+      .facts { border-collapse: collapse; margin: 14px 0; width: 100%; }
+      .facts td { padding: 6px 8px; border-bottom: 1px solid #eceff3; font-size: 14px; vertical-align: top; }
+      .facts td.key { color: #64748b; width: 170px; }
+      .button { display: inline-block; margin-top: 18px; color: #ffffff !important; padding: 12px 22px; border-radius: 8px; text-decoration: none; font-weight: 600; }
+      .footer { padding: 16px 32px 26px; color: #888; font-size: 12px; }
+    </style>
+  </head>
+  <body>
+    <div class="wrapper">
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr><td align="center">
+        <div class="card">
+          <div class="header" style="background: {{ colour }};"><h2>{{ title }}</h2></div>
+          <div class="body-content">
+            {% for line in lines %}<p>{{ line }}</p>{% endfor %}
+            {% if facts %}
+              <table class="facts">{% for key, value in facts %}<tr><td class="key">{{ key }}</td><td>{{ value }}</td></tr>{% endfor %}</table>
+            {% endif %}
+            {% if rows %}
+              <table class="facts">{% for key, value in rows %}<tr><td class="key">{{ key }}</td><td>{{ value }}</td></tr>{% endfor %}</table>
+            {% endif %}
+            <a class="button" style="background: {{ colour }};" href="{{ link }}">{{ button }}</a>
+            {% if page_link %}<p style="margin-top:16px;font-size:14px">Batch page: <a href="{{ page_link }}">{{ page_link }}</a></p>{% endif %}
+          </div>
+          <div class="footer">Shelter Associates Design Studio. The link opens a page that needs you to log in.</div>
+        </div>
+      </td></tr></table>
+    </div>
+  </body>
+</html>

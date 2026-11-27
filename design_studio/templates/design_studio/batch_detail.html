@@ -1,0 +1,87 @@
+{% extends "admin/base_site.html" %}
+{% block title %}Batch {{ batch.pk }}{% endblock %}
+{% block bodyclass %}ds-body{% endblock %}
+{% block breadcrumbs %}{% endblock %}
+{% block extrastyle %}{% include "design_studio/partials/styles.html" %}{% endblock %}
+
+{% block content %}
+<div class="ds-page">
+  {% include "design_studio/partials/nav.html" with active="batches" %}
+  {% url 'design_studio:batches' as back_url %}{% include "design_studio/partials/back.html" with back_label="Back to batches" %}
+  <div class="ds-header">
+    <div>
+      <h1 class="ds-title">Batch #{{ batch.pk }} &middot; {{ batch.slum_name|default:batch.original_name }}</h1>
+      <p class="ds-lead">{% include "design_studio/partials/status.html" with status=batch.status %} &nbsp; {{ batch.get_plate_type_display }} plates from {{ batch.original_name }}</p>
+    </div>
+    <div class="ds-actions">
+      {% if batch.status == "done" and is_owner or batch.status == "done" and user.is_superuser %}
+        <a class="ds-btn ds-btn--primary" href="{% url 'design_studio:batch_download' batch.public_id %}">{% include "design_studio/partials/download_icon.html" %} Download zip</a>
+      {% endif %}
+      {% if can_generate_again %}
+        <form method="post" action="{% url 'design_studio:batch_regenerate' batch.public_id %}" class="ds-inline">{% csrf_token %}<button class="ds-btn ds-btn--primary" type="submit" data-busy="Preparing…">Generate again</button></form>
+      {% endif %}
+      {% if batch.status == "queued" %}
+        <form method="post" action="{% url 'design_studio:batch_cancel' batch.public_id %}" class="ds-inline">{% csrf_token %}<button class="ds-btn ds-btn--danger" type="submit" data-busy="Cancelling…">Cancel</button></form>
+      {% endif %}
+    </div>
+  </div>
+
+  {% if message %}<div class="ds-note ds-note--warn" style="margin-top:16px">{{ message }}</div>{% endif %}
+
+  <section class="ds-section">
+    {% if batch.status == "queued" %}
+      <p class="ds-task-title">Queued: {{ to_make }} plates.</p>
+      <p class="ds-muted">It usually starts within 2 minutes, longer if another job is running. This page refreshes by itself.</p>
+    {% elif batch.status == "running" %}
+      <p class="ds-task-title">Making plates: {{ batch.made_count }} of {{ to_make }} done.</p>
+      <p class="ds-muted">Progress updates every 100 plates. This page refreshes by itself, and you will get an email.</p>
+    {% elif batch.status == "done" %}
+      <p class="ds-task-title">Ready: {{ batch.made_count }} plates made, {{ batch.skipped_count }} skipped.</p>
+      <p class="ds-muted">Available until <b>{{ available_until }}</b>. After that the zip is deleted by the nightly cleanup; you can generate it again here.</p>
+    {% elif batch.status == "expired" %}
+      <div class="ds-note">{{ expired_message }}</div>
+    {% elif batch.status == "failed" %}
+      <div class="ds-note ds-note--bad">{{ batch.error|default:"The batch stopped." }}</div>
+    {% elif batch.status == "cancelled" %}
+      <p class="ds-task-title">Cancelled{% if batch.cancelled_by %} by {{ batch.cancelled_by.get_username }}{% endif %}{% if batch.cancelled_on %} on {{ batch.cancelled_on|date:"j M Y, H:i" }}{% endif %}.</p>
+    {% endif %}
+  </section>
+
+  <section class="ds-section">
+    <div class="ds-section-head"><h2 class="ds-h2">Details</h2></div>
+    <dl class="ds-facts">
+      <dt>Rows</dt><dd>{{ batch.row_count }} ({{ batch.made_count }} made, {{ batch.skipped_count }} skipped, {{ batch.warning_count }} warnings)</dd>
+      <dt>Template</dt><dd>{{ batch.template.name }} v{{ batch.template.version }}, {{ batch.template.width_mm }} x {{ batch.template.height_mm }} mm, {{ batch.template.dpi }} DPI</dd>
+      <dt>Output</dt><dd>{{ batch.get_output_format_display }}</dd>
+      <dt>Drill holes</dt><dd>{% if batch.holes %}as in the template{% else %}off (full plates){% endif %}</dd>
+      <dt>Side panel</dt><dd>{% if batch.side_panel %}on{% else %}as in the template{% endif %}</dd>
+      <dt>Requested by</dt><dd>{{ batch.requested_by.get_username|default:"—" }} on {{ batch.created_on|date:"j M Y, H:i" }}</dd>
+      <dt>Emails go to</dt><dd>{{ batch.email|default:"—" }}</dd>
+      <dt>Confirmed by</dt><dd>{{ batch.confirmed_by.get_username|default:"—" }}{% if batch.confirmed_on %} on {{ batch.confirmed_on|date:"j M Y, H:i" }}{% endif %}</dd>
+      <dt>Started</dt><dd>{{ batch.started_on|date:"j M Y, H:i"|default:"—" }}</dd>
+      <dt>Finished</dt><dd>{{ batch.finished_on|date:"j M Y, H:i"|default:"—" }}</dd>
+      {% if batch.regenerated_from %}<dt>Made again from</dt><dd><a href="{% url 'design_studio:batch_detail' batch.regenerated_from.public_id %}">batch #{{ batch.regenerated_from.pk }}</a></dd>{% endif %}
+    </dl>
+  </section>
+
+  {% if batch.failures %}
+  <section class="ds-section">
+    <div class="ds-section-head"><h2 class="ds-h2">Skipped rows{% if batch.skipped_count > 200 %} <span class="ds-muted" style="font-weight:400">(first 200; all are in plates.xlsx)</span>{% endif %}</h2></div>
+    <table class="ds-table"><thead><tr><th style="width:80px">Row</th><th>Reason</th></tr></thead><tbody>
+    {% for item in batch.failures %}<tr><td>{{ item.row }}</td><td>{{ item.reason }}</td></tr>{% endfor %}
+    </tbody></table>
+  </section>
+  {% endif %}
+  {% if batch.warnings %}
+  <section class="ds-section">
+    <div class="ds-section-head"><h2 class="ds-h2">Warnings <span class="ds-muted" style="font-weight:400">(plates made)</span></h2></div>
+    <table class="ds-table"><thead><tr><th style="width:80px">Row</th><th>Warning</th></tr></thead><tbody>
+    {% for item in batch.warnings %}<tr><td>{{ item.row }}</td><td>{{ item.reason }}</td></tr>{% endfor %}
+    </tbody></table>
+  </section>
+  {% endif %}
+</div>
+{% if batch.status == "queued" or batch.status == "running" %}
+<script nonce="{{ csp_nonce }}">setTimeout(function () { window.location.reload(); }, 20000);</script>
+{% endif %}
+{% endblock %}

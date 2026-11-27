@@ -1,0 +1,145 @@
+{% extends "admin/base_site.html" %}
+{% load static %}
+{% block title %}Template{% endblock %}
+{% block bodyclass %}ds-body{% endblock %}
+{% block breadcrumbs %}{% endblock %}
+{% block extrastyle %}{% include "design_studio/partials/styles.html" %}{% endblock %}
+
+{% block content %}
+<div class="ds-page">
+  {% include "design_studio/partials/nav.html" with active="templates" %}
+  {% url 'design_studio:templates' as back_url %}{% include "design_studio/partials/back.html" with back_label="Back to templates" %}
+  <div class="ds-header">
+    <div>
+      <h1 class="ds-title">{% if template %}{{ template.name }} v{{ template.version }}{% else %}New template{% endif %}</h1>
+      <p class="ds-lead">Positions and sizes are in millimetres, font sizes in points. After a change, press Reload preview to see it. Saving a changed look makes a new version.</p>
+    </div>
+    {% if template %}
+    <div class="ds-actions">
+      <form method="post" action="{% url 'design_studio:template_copy' template.pk %}" class="ds-inline">{% csrf_token %}<button class="ds-btn" type="submit" data-busy="Copying…">Copy as a new template</button></form>
+      {% if template.is_latest and template.is_active %}
+        <form method="post" action="{% url 'design_studio:template_archive' template.pk %}" class="ds-inline">{% csrf_token %}<button class="ds-btn" type="submit" data-busy="Archiving…">Archive</button></form>
+      {% elif template.is_latest %}
+        <form method="post" action="{% url 'design_studio:template_restore' template.pk %}" class="ds-inline">{% csrf_token %}<button class="ds-btn" type="submit" data-busy="Restoring…">Restore from archive</button></form>
+        <a class="ds-btn ds-btn--danger" href="{% url 'design_studio:template_delete' template.pk %}">Delete permanently</a>
+      {% endif %}
+    </div>
+    {% endif %}
+  </div>
+
+  {% if template and template.is_latest and not template.is_active %}<div class="ds-note" style="margin-top:16px">This template is archived and hidden from every picker. Restore it to use it again.</div>{% endif %}
+  {% if read_only %}<div class="ds-note ds-note--warn" style="margin-top:16px">This is an older version and is read-only. Batches made with it can still be made again exactly. Open the current version from the templates list to change it.</div>{% endif %}
+  {% if form.non_field_errors %}<div class="ds-note ds-note--bad" style="margin-top:16px">{% for error in form.non_field_errors %}{{ error }}<br>{% endfor %}</div>{% endif %}
+
+  <form method="post" id="template-form" novalidate
+        data-preview-url="{% url 'design_studio:template_preview' %}" data-link-url="{% url 'design_studio:link_preview' %}" data-base="{{ template.pk|default:'' }}">
+    {% csrf_token %}
+    <section class="ds-section ds-split" style="grid-template-columns: minmax(0, 1fr) minmax(0, 1fr)">
+      <div>
+        <fieldset class="ds-fieldset">
+          <legend>Plate</legend>
+          {% include "design_studio/partials/field.html" with field=form.name %}
+          <div class="ds-grid-fields">
+            {% include "design_studio/partials/field.html" with field=form.plate_type %}
+            {% include "design_studio/partials/field.html" with field=form.output_kind %}
+            {% include "design_studio/partials/field.html" with field=form.width_mm %}
+            {% include "design_studio/partials/field.html" with field=form.height_mm %}
+            {% include "design_studio/partials/field.html" with field=form.dpi %}
+            {% include "design_studio/partials/field.html" with field=form.mode %}
+            {% include "design_studio/partials/field.html" with field=form.background_image %}
+          </div>
+        </fieldset>
+
+        <fieldset class="ds-fieldset ds-section">
+          <legend>Background</legend>
+          <div class="ds-grid-fields">
+            {% include "design_studio/partials/field.html" with field=form.fill %}
+            {% include "design_studio/partials/field.html" with field=form.colour_1 %}
+            {% include "design_studio/partials/field.html" with field=form.colour_2 %}
+            {% include "design_studio/partials/field.html" with field=form.gradient_angle %}
+            {% include "design_studio/partials/field.html" with field=form.border_colour %}
+            {% include "design_studio/partials/field.html" with field=form.strip_position %}
+          </div>
+          <div class="ds-check-row">
+            {% include "design_studio/partials/check.html" with field=form.grid_on %}
+            {% include "design_studio/partials/check.html" with field=form.border_on %}
+            {% include "design_studio/partials/check.html" with field=form.strip_on %}
+          </div>
+        </fieldset>
+
+        <fieldset class="ds-fieldset ds-section">
+          <legend>Drill holes and side panel</legend>
+          <div class="ds-check-row">
+            {% include "design_studio/partials/check.html" with field=form.holes_on %}
+            {% include "design_studio/partials/check.html" with field=form.panel_on %}
+            {% include "design_studio/partials/check.html" with field=form.panel_cut_line %}
+          </div>
+          <div class="ds-grid-fields" style="margin-top:12px">
+            {% include "design_studio/partials/field.html" with field=form.hole_diameter_mm %}
+            {% include "design_studio/partials/field.html" with field=form.hole_edge_mm %}
+            {% include "design_studio/partials/field.html" with field=form.hole_position %}
+            {% include "design_studio/partials/field.html" with field=form.panel_side %}
+            {% include "design_studio/partials/field.html" with field=form.panel_width_mm %}
+            {% include "design_studio/partials/field.html" with field=form.panel_style %}
+          </div>
+          {% include "design_studio/partials/field.html" with field=form.panel_fields %}
+          <p class="ds-help">A 19.1 mm side panel fits slum names up to about 30 characters at 6 pt; rows with longer names are skipped with "Text too long for side panel slum". Make the panel wider to fit more.</p>
+        </fieldset>
+
+        <fieldset class="ds-fieldset ds-section">
+          <legend>QR link and text</legend>
+          <div class="ds-field">
+            <label class="ds-label" for="pattern-start">Start from</label>
+            <select class="ds-select" id="pattern-start"><option value="">Keep the link below</option>{% for label, pattern in patterns %}<option value="{{ pattern }}">{{ label }}</option>{% endfor %}</select>
+          </div>
+          {% include "design_studio/partials/field.html" with field=form.qr_link_pattern %}
+          <div class="ds-var-buttons">{% for name in variables %}<button class="ds-btn ds-btn--sm" type="button" data-variable="{{ name }}">{{ "{" }}{{ name }}{{ "}" }}</button>{% endfor %}</div>
+          <p class="ds-help">Link for the sample row: <span class="ds-code" id="link-filled">—</span></p>
+          <ul class="ds-errors" id="link-problems"></ul>
+          <img id="link-qr" alt="Test QR" width="120" height="120" hidden>
+          {% include "design_studio/partials/field.html" with field=form.qr_caption %}
+          {% include "design_studio/partials/field.html" with field=form.slum_suffix %}
+        </fieldset>
+
+      </div>
+
+      <div class="ds-sticky">
+        <h2 class="ds-h2" style="margin-bottom:12px">Preview</h2>
+        <label class="ds-check-line"><input type="checkbox" id="preview-worst"> <span>Show the longest values</span></label>
+        <div class="ds-preview-area ds-preview-box" id="preview-area" data-preview-box style="margin-top:12px">
+          <div class="ds-skeleton" data-preview-skeleton></div>
+          <img class="ds-plate" id="preview-image" data-preview alt="Template preview" hidden>
+          <button class="ds-btn ds-btn--primary ds-preview-reload" type="button" data-preview-reload>Reload preview</button>
+          <div class="ds-progress" id="preview-progress" role="progressbar" aria-label="Drawing the preview"></div>
+          <p class="ds-busy-note" id="preview-note">Drawing the preview…</p>
+        </div>
+        <ul class="ds-errors" id="preview-problems" style="margin-top:12px"></ul>
+        <p class="ds-note ds-note--ok" id="preview-ok" style="margin-top:12px" hidden>No layout problems: no overlaps, clear of the holes and edges, and the longest values fit.</p>
+      </div>
+    </section>
+
+    <section class="ds-section">
+      <div class="ds-section-head"><h2 class="ds-h2">Elements</h2></div>
+      <p class="ds-muted" style="margin:-6px 0 14px">Every part of the plate. Left and Top are measured in millimetres from the plate's left and top edges; Width and Height are the box size in millimetres; Largest and Smallest are font sizes in points. To move something left, make Left smaller; to move it down, make Top bigger. Layer decides what is drawn on top.</p>
+      <div class="ds-preview-box" data-preview-box style="max-width:720px;margin-bottom:16px">
+        <div class="ds-skeleton" data-preview-skeleton></div>
+        <img class="ds-plate" data-preview alt="Template preview" hidden>
+        <button class="ds-btn ds-btn--primary ds-preview-reload" type="button" data-preview-reload>Reload preview</button>
+      </div>
+      <div class="ds-table-wrap"><table class="ds-table ds-elements" id="element-table"><thead><tr><th>Id</th><th>Type</th><th>Left (mm)</th><th>Top (mm)</th><th>Width (mm)</th><th>Height (mm)</th><th>Layer</th><th>Font / logo</th><th>Largest (pt)</th><th>Smallest (pt)</th><th>Colour</th><th>Text</th></tr></thead><tbody></tbody></table></div>
+      <details><summary>All element settings (JSON)</summary>{% include "design_studio/partials/field.html" with field=form.elements_json %}</details>
+    </section>
+
+    <section class="ds-section">
+      <div class="ds-check-row">
+        {% include "design_studio/partials/check.html" with field=form.is_default %}
+        {% include "design_studio/partials/check.html" with field=form.is_active %}
+      </div>
+      {% if not read_only %}<div class="ds-form-actions"><button class="ds-btn ds-btn--primary" type="submit" data-busy="Checking and saving…">Save template</button></div>{% endif %}
+    </section>
+  </form>
+</div>
+{{ fonts|json_script:"plate-fonts" }}
+{{ assets|json_script:"plate-assets" }}
+<script src="{% static 'design_studio/template_editor.js' %}"></script>
+{% endblock %}

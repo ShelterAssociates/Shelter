@@ -42,9 +42,9 @@ RETENTION_MINUTES=1440
 # The ONLY directories this script may delete from, relative to MEDIA_DIR.
 #   job_reports/ holds per-run sync detail reports. NotificationJobRun
 #   .detail_file_path is a plain CharField, so reaping these breaks no DB rows.
-#   plate_exports/ holds plate zips; PlateBatch.file_path is a plain CharField and
+#   design_exports/ holds plate zips; DesignBatch.file_path is a plain CharField and
 #   the batch page shows "expired" once its zip is gone.
-EXPORT_DIRS=("photo_exports" "gis_exports" "rim_exports" "job_reports" "plate_exports")
+EXPORT_DIRS=("photo_exports" "gis_exports" "rim_exports" "job_reports" "design_exports")
 
 DRY_RUN=false
 if [ "$1" = "--dry-run" ]; then
@@ -136,12 +136,12 @@ for NAME in "${EXPORT_DIRS[@]}"; do
 	TOTAL_REMOVED=$((TOTAL_REMOVED + COUNT))
 done
 
-# Plates: confirmed uploads after PLATES_UPLOAD_KEEP_DAYS, unconfirmed drafts after
-# PLATES_DRAFT_KEEP_DAYS, and batches whose zip was just removed marked expired.
+# Design Studio: confirmed uploads after DESIGN_STUDIO_UPLOAD_KEEP_DAYS, unconfirmed drafts after
+# DESIGN_STUDIO_DRAFT_KEEP_DAYS, and batches whose zip was just removed marked expired.
 if $DRY_RUN; then
-	"$PROJECT_DIR/ENV3/bin/python" "$PROJECT_DIR/manage.py" cleanup_plate_uploads --dry-run
+	"$PROJECT_DIR/ENV3/bin/python" "$PROJECT_DIR/manage.py" cleanup_design_uploads --dry-run
 else
-	"$PROJECT_DIR/ENV3/bin/python" "$PROJECT_DIR/manage.py" cleanup_plate_uploads
+	"$PROJECT_DIR/ENV3/bin/python" "$PROJECT_DIR/manage.py" cleanup_design_uploads
 fi
 
 AFTER_KB=$(df -Pk "$MEDIA_DIR" | awk 'NR==2 {print $4}')

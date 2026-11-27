@@ -1,9 +1,7 @@
 {% extends 'admin/base.html' %}
-{% load i18n static custom_tags avni_console_tags plates_tags %}
+{% load i18n static custom_tags avni_console_tags design_studio_tags %}
 
-{% block title %}
-  {{ site_title|default:_('Shelter site admin') }}
-{% endblock %}
+{% block title %}{{ site_title|default:'Shelter Associates' }}{% endblock %}
 
 {% block nav %}
   {% if user.is_authenticated %}
@@ -132,9 +130,9 @@
               <li>
                 <a class="drop-item" href="/helpers/digipin_generate/">Generate Digipin</a>
               </li>
-              {% if user|can_use_plates %}
+              {% if user|can_use_design_studio %}
                 <li>
-                  <a class="drop-item" href="{% url 'plates:home' %}">Plates <span class="new-badge">New</span></a>
+                  <a class="drop-item" href="{% url 'design_studio:home' %}">Design Studio <span class="new-badge">New</span></a>
                 </li>
               {% endif %}
               <li>
@@ -225,7 +223,7 @@
         <div class="drop-div"></div>
         <span class="drop-label">Tools</span>
         <a class="drop-item" href="/helpers/digipin_generate/">Generate Digipin</a>
-        {% if user|can_use_plates %}<a class="drop-item" href="{% url 'plates:home' %}">Plates</a>{% endif %}
+        {% if user|can_use_design_studio %}<a class="drop-item" href="{% url 'design_studio:home' %}">Design Studio</a>{% endif %}
         <a class="drop-item" href="/helpers/photo-upload/">Photo upload</a>
         {% if perms.mastersheet.can_view_mastersheet %}
           <a class="drop-item" href="{% url 'photos:photo_index' %}">Household photos</a>

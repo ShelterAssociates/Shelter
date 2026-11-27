@@ -1,0 +1,60 @@
+{% extends "admin/base_site.html" %}
+{% block title %}Design Studio{% endblock %}
+{% block bodyclass %}ds-body{% endblock %}
+{% block breadcrumbs %}{% endblock %}
+{% block extrastyle %}{% include "design_studio/partials/styles.html" %}{% endblock %}
+
+{% block content %}
+<div class="ds-page">
+  {% include "design_studio/partials/nav.html" with active="home" %}
+  <div class="ds-header">
+    <div>
+      <h1 class="ds-title">Design Studio</h1>
+      <p class="ds-lead">Printable DIGIPIN and Plus Code house plates and stickers, one code type per run. A single plate downloads straight away; an Excel upload is checked and shown as demo plates first, and made in the background after you confirm.</p>
+    </div>
+  </div>
+
+  <section class="ds-section">
+    <div class="ds-tasks">
+      <div class="ds-task">
+        <div>
+          <h2 class="ds-task-title">Make one plate</h2>
+          <p>Type one house's code, location, slum and house number; preview it and download the PNG. Nothing is stored.</p>
+        </div>
+        <div class="ds-actions">
+          <a class="ds-btn ds-btn--primary" href="{% url 'design_studio:single' %}?type=digipin">DIGIPIN plate</a>
+          <a class="ds-btn" href="{% url 'design_studio:single' %}?type=pluscode">Plus Code plate</a>
+        </div>
+      </div>
+      <div class="ds-task">
+        <div>
+          <h2 class="ds-task-title">Make many plates from Excel</h2>
+          <p>Fill in the Excel format, upload it, check the rows and the demo plates, then confirm. You get an email when the zip is ready.</p>
+        </div>
+        <div class="ds-actions">
+          <a class="ds-btn ds-btn--primary" href="{% url 'design_studio:bulk_new' %}">Upload Excel</a>
+          <a class="ds-btn" href="{% url 'design_studio:excel_format_download' 'digipin' %}">{% include "design_studio/partials/download_icon.html" %} DIGIPIN Excel format</a>
+          <a class="ds-btn" href="{% url 'design_studio:excel_format_download' 'pluscode' %}">{% include "design_studio/partials/download_icon.html" %} Plus Code Excel format</a>
+        </div>
+      </div>
+      {% if can_edit %}
+      <div class="ds-task">
+        <div>
+          <h2 class="ds-task-title">Templates</h2>
+          <p>Size, DPI, colours, fonts, logos, drill holes, side panel and the QR link of each plate design.</p>
+        </div>
+        <div class="ds-actions"><a class="ds-btn" href="{% url 'design_studio:templates' %}">Open templates</a></div>
+      </div>
+      {% endif %}
+    </div>
+  </section>
+
+  <section class="ds-section">
+    <div class="ds-section-head">
+      <h2 class="ds-h2">Recent batches</h2>
+      {% if recent %}<a href="{% url 'design_studio:batches' %}">All batches</a>{% endif %}
+    </div>
+    {% if recent %}{% include "design_studio/partials/batch_table.html" with batches=recent grid_id="recent-grid" %}{% else %}<p class="ds-empty">No batches yet. Upload an Excel file to make your first batch.</p>{% endif %}
+  </section>
+</div>
+{% endblock %}

@@ -1,0 +1,52 @@
+{% extends "admin/base_site.html" %}
+{% block title %}Archived templates{% endblock %}
+{% block bodyclass %}ds-body{% endblock %}
+{% block breadcrumbs %}{% endblock %}
+{% block extrastyle %}{% include "design_studio/partials/styles.html" %}{% endblock %}
+
+{% block content %}
+<div class="ds-page">
+  {% include "design_studio/partials/nav.html" with active="templates" %}
+  {% url 'design_studio:templates' as back_url %}{% include "design_studio/partials/back.html" with back_label="Back to templates" %}
+  <div class="ds-header">
+    <div>
+      <h1 class="ds-title">Archived templates</h1>
+      <p class="ds-lead">Hidden from every picker. Restore one to use it again, or delete it permanently. A template that was used for a batch cannot be deleted, so that batch can always be made again.</p>
+    </div>
+  </div>
+  {% if message %}<div class="ds-note" style="margin-top:16px">{{ message }}</div>{% endif %}
+
+  <section class="ds-section">
+    {% if archived %}
+    <div class="ds-table-wrap">
+      <table class="ds-table">
+        <thead><tr><th>Preview</th><th>Name</th><th>Type</th><th>Size</th><th>Version</th><th></th></tr></thead>
+        <tbody>
+        {% for template in archived %}
+          <tr>
+            <td><img class="ds-thumb" src="{% url 'design_studio:template_image' template.pk %}?small=1" alt="" loading="lazy"></td>
+            <td><a href="{% url 'design_studio:template_edit' template.pk %}">{{ template.name }}</a></td>
+            <td>{{ template.get_plate_type_display }}</td>
+            <td class="ds-muted">{{ template.width_mm }} x {{ template.height_mm }} mm</td>
+            <td>v{{ template.version }}</td>
+            <td><div class="ds-actions">
+              <form method="post" action="{% url 'design_studio:template_restore' template.pk %}" class="ds-inline">{% csrf_token %}<button class="ds-btn ds-btn--sm" type="submit" data-busy="Restoring…">Restore</button></form>
+              <a class="ds-btn ds-btn--sm ds-btn--danger" href="{% url 'design_studio:template_delete' template.pk %}">Delete permanently</a>
+            </div></td>
+          </tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}<p class="ds-empty">No archived templates.</p>{% endif %}
+  </section>
+
+  {% if older %}
+  <section class="ds-section">
+    <div class="ds-section-head"><h2 class="ds-h2">Older versions</h2></div>
+    <p class="ds-muted" style="margin:-6px 0 12px">Read-only versions kept so earlier batches can be made again exactly.</p>
+    <p>{% for template in older %}<a href="{% url 'design_studio:template_edit' template.pk %}">{{ template.name }} v{{ template.version }}</a>{% if not forloop.last %}, {% endif %}{% endfor %}</p>
+  </section>
+  {% endif %}
+</div>
+{% endblock %}

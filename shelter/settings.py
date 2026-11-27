@@ -172,27 +172,27 @@ AVNI_FORM_CACHE_MAX_AGE_HOURS = 48
 # the background like any other console job.
 AVNI_SUBJECT_PREVIEW_MAX_IDS = 25
 
-# DIGIPIN and Plus Code plates (plates app). Override in local_settings.py.
+# Design Studio (design_studio app): DIGIPIN and Plus Code plates and stickers. Override in local_settings.py.
 # Groups allowed to make plates; superusers always can. Empty = superusers only.
-PLATES_GROUPS = ["sticker_plates_generation"]
+DESIGN_STUDIO_GROUPS = ["design_studio"]
 # Groups allowed to create and edit plate templates. Empty = superusers only.
-PLATES_TEMPLATE_GROUPS = []
-PLATES_MAX_ROWS = 15000
-PLATES_MAX_UPLOAD_MB = 10
-PLATES_MAX_ASSET_MB = 5
+DESIGN_STUDIO_TEMPLATE_GROUPS = []
+DESIGN_STUDIO_MAX_ROWS = 15000
+DESIGN_STUDIO_MAX_UPLOAD_MB = 10
+DESIGN_STUDIO_MAX_ASSET_MB = 5
 # Uploaded Excel of a confirmed batch is kept this long so it can be generated again.
-PLATES_UPLOAD_KEEP_DAYS = 180
+DESIGN_STUDIO_UPLOAD_KEEP_DAYS = 180
 # Drafts never confirmed are deleted (row and file) after this many days.
-PLATES_DRAFT_KEEP_DAYS = 7
-PLATES_MIN_FREE_DISK_GB = 5
+DESIGN_STUDIO_DRAFT_KEEP_DAYS = 7
+DESIGN_STUDIO_MIN_FREE_DISK_GB = 5
 # Folders under MEDIA_ROOT; nginx denies /media/plate_* and the exports name must
 # match EXPORT_DIRS in deploy/CLEANUP_GENERATED_FILES.sh.
-PLATES_EXPORT_DIR_NAME = "plate_exports"
-PLATES_UPLOAD_DIR_NAME = "plate_uploads"
-PLATES_ASSET_DIR_NAME = "plate_assets"
-PLATES_FONT_DIR_NAME = "plate_fonts"
+DESIGN_STUDIO_EXPORT_DIR_NAME = "design_exports"
+DESIGN_STUDIO_UPLOAD_DIR_NAME = "design_uploads"
+DESIGN_STUDIO_ASSET_DIR_NAME = "design_assets"
+DESIGN_STUDIO_FONT_DIR_NAME = "design_fonts"
 # Hosts a template's QR link may point to.
-PLATES_QR_ALLOWED_HOSTS = ["dac.indiapost.gov.in", "www.google.com"]
+DESIGN_STUDIO_QR_ALLOWED_HOSTS = ["dac.indiapost.gov.in", "www.google.com"]
 
 # ---------------------------------------------------------------------------
 # SURVEY DATA CORE
@@ -257,7 +257,7 @@ INSTALLED_APPS = (
     "avni_console.apps.AvniConsoleConfig",
     "survey.apps.SurveyConfig",
     "photos",
-    "plates.apps.PlatesConfig",
+    "design_studio.apps.DesignStudioConfig",
     "reports.apps.ReportsConfig",
     "rest_framework",
     "rest_framework.authtoken",
@@ -332,6 +332,13 @@ CACHES = {
     "auth_throttle": {
         "BACKEND": "django.core.cache.backends.filebased.FileBasedCache",
         "LOCATION": os.path.join(PARENT_DIR, "cache", "auth_throttle"),
+    },
+    # Design Studio template previews (sample-row pictures only), shared by every worker.
+    "design_preview": {
+        "BACKEND": "django.core.cache.backends.filebased.FileBasedCache",
+        "LOCATION": os.path.join(PARENT_DIR, "cache", "design_preview"),
+        "TIMEOUT": 30 * 24 * 3600,
+        "OPTIONS": {"MAX_ENTRIES": 500},
     },
 }
 

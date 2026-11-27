@@ -17,7 +17,7 @@ from django.conf.urls import include, url
 from django.contrib import admin
 from django.contrib.auth import views as auth_views
 from django.conf.urls.static import static
-from django.views.generic import TemplateView
+from django.views.generic import RedirectView, TemplateView
 from django.conf import settings
 from django.http import HttpResponseForbidden
 from shelter.auth_throttle import ThrottledAuthenticationForm
@@ -45,7 +45,7 @@ router.register(r"city", CityViewset)
 # Mirrors the nginx /media deny rules for runserver; in production nginx serves /media.
 PRIVATE_MEDIA = (
     r"^media/(?:(?:FFReport|gis_exports|rim_exports|sponsor_project|photo_exports|shelter/attachments"
-    r"|avni_bulk_updates|job_reports|slum_merges|plate_[^/]*)/.*|[^/]+\.zip)$"
+    r"|avni_bulk_updates|job_reports|slum_merges|plate_[^/]*|design_[^/]*)/.*|[^/]+\.zip)$"
 )
 
 
@@ -122,7 +122,9 @@ urlpatterns = (
         url(r"^photos/", include("photos.urls")),
         # Internal-only AVNI sync console (manual syncs, bulk updates into AVNI)
         url(r"^avni-console/", include("avni_console.urls")),
-        url(r"^plates/", include("plates.urls")),
+        url(r"^design-studio/", include("design_studio.urls")),
+        # Old Plates address (links in emails already sent): same page under /design-studio/.
+        url(r"^plates/(?P<rest>.*)$", RedirectView.as_view(url="/design-studio/%(rest)s", permanent=True, query_string=True)),
         # Internal-only, superusers: slum data versions, AVNI locations, per-slum sync
         url(r"^slum-versions/", include("survey.urls")),
         # Setting URL for QGIS plugin login
@@ -136,3 +138,5 @@ urlpatterns = (
 )
 
 admin.site.site_header = settings.ADMIN_SITE_HEADER
+# Tab titles read "SA | <page> | Shelter Associates" on Django admin pages (templates/admin/base.html adds "SA | ").
+admin.site.site_title = "Shelter Associates"
