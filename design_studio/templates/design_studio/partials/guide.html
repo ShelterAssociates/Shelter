@@ -65,7 +65,7 @@
   <tr><td>Latitude</td><td>Yes</td><td>2.5 to 38.5</td></tr>
   <tr><td>Longitude</td><td>Yes</td><td>63.5 to 99.5</td></tr>
   <tr><td>Slum Name</td><td>Yes</td><td>Up to 80 characters; &lt; and &gt; are not allowed.</td></tr>
-  <tr><td>Ward, City</td><td>No</td><td>Up to 40 characters. City is used in the zip name.</td></tr>
+  <tr><td>Ward, City</td><td>No</td><td>Up to 40 characters.</td></tr>
 </table>
 <ul>
   <li>Header names are matched without caring about capitals or extra spaces. The header row is the first row that is not empty.</li>
@@ -75,7 +75,7 @@
 </ul>
 
 <h3>4.2 Upload</h3>
-<p>Choose the plate type and template, choose the file, and if the workbook has several sheets, give the sheet name (empty means the first sheet). Choose <b>Drill holes</b> and <b>Side panel</b> as for a single plate. Press <b>Upload and check</b>.</p>
+<p>Choose the plate type and template, choose the file, and if the workbook has several sheets, give the sheet name (empty means the first sheet). <b>Send emails to</b> is filled in with your account's email when it is an @shelter-associates.org address; change it if the emails should go to someone else (it must be an @shelter-associates.org address). Choose <b>Drill holes</b> and <b>Side panel</b> as for a single plate. Press <b>Upload and check</b>.</p>
 <p>If a required column is missing, the upload stops straight away and names the missing columns, with the full list of expected headers. Nothing is kept.</p>
 
 <h3>4.3 Check the rows</h3>
@@ -89,7 +89,7 @@
 </ul>
 
 <h3>4.4 Demo plates and confirm</h3>
-<p>Up to three demo plates are drawn exactly as they will print: the first row, the row with the widest code and the row with the longest slum name. Each shows its file name and the QR link. Look at them carefully. Then check <b>Send emails to</b> (filled in with your account's email; change it if needed; it must be an @shelter-associates.org address), tick <b>I have checked the demo plates</b> and press <b>Generate N plates</b>. The button stays off until the box is ticked.</p>
+<p>Up to three demo plates are drawn exactly as they will print: the first row, the row with the widest code and the row with the longest slum name. Each shows its file name and the QR link. Look at them carefully. Then check <b>Send emails to</b> (the address you gave on the upload page; change it if needed; it must be an @shelter-associates.org address), tick <b>I have checked the demo plates</b> and press <b>Generate N plates</b>. The button stays off until the box is ticked.</p>
 <p>After you confirm, the batch is <b>queued</b> and you get an email. The server picks it up within about 2 minutes and makes the plates one by one. The batch page shows progress every 100 plates and refreshes by itself. You can have one queued or running batch at a time.</p>
 
 <h3>4.5 Download</h3>
@@ -138,7 +138,7 @@
 <ul>
   <li><b>New DIGIPIN template</b> / <b>New Plus Code template</b> starts from the current default of that type.</li>
   <li><b>Copy</b> makes an independent copy to try a different size or look; the original stays unchanged.</li>
-  <li>The editor shows a <b>live preview</b> on the right. Tick <b>Show the longest values</b> to see the widest code (MMM MMMM MMM) and a 60-character slum name.</li>
+  <li>The editor shows a <b>preview</b> on the right. After you change something the preview dims and a <b>Reload preview</b> button appears on it; press it to see the change (nothing is redrawn until you do, so editing stays quick). Tick <b>Show the longest values</b> to see the widest code (MMM MMMM MMM) and a 60-character slum name.</li>
 </ul>
 <h3>6.3 The settings</h3>
 <table>
@@ -163,7 +163,7 @@
   <li><b>Colour</b>: #RRGGBB, e.g. #2A2468.</li>
   <li><b>Text</b>: for fixed texts such as the title DIGIPIN.</li>
 </ul>
-<p><b>Example: move the badge circle a little to the left.</b> Its Left is 8.93 mm; change it to 8.75. The preview updates straight away. Every element must stay at least 1.5 mm away from a drill hole, so with drill holes on, 8.72 mm is as far left as the badge can go; the editor tells you if you go further ("badge" is closer than 1.5 mm to a drill hole). To move it more, untick Drill holes or reduce Hole centre from edge, or move the badge right instead.</p>
+<p><b>Example: move the badge circle a little to the left.</b> Its Left is 8.93 mm; change it to 8.75. Press <b>Reload preview</b> to see it. Every element must stay at least 1.5 mm away from a drill hole, so with drill holes on, 8.72 mm is as far left as the badge can go; the editor tells you if you go further ("badge" is closer than 1.5 mm to a drill hole). To move it more, untick Drill holes or reduce Hole centre from edge, or move the badge right instead.</p>
 <p>Behind the scenes the template stores every position as a share of the plate, so when you change the plate size the layout keeps its shape and the millimetre values in the table change with it.</p>
 <p>Advanced settings (alignment, letter spacing, shadows, ring widths, which data a text shows) are in <b>All element settings (JSON)</b>. Text sources are: fixed, qr_caption, digipin, digipin_display, pluscode, slum, house_no, ward, city, lat, long.</p>
 <h3>6.5 QR link helper</h3>
