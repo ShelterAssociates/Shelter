@@ -33,6 +33,15 @@ RHS_KEYS = {
 }
 
 # rhs_data key -> AVNI concept name (family factsheet)
+# Answers that only the household registration carries. For a household in an open same-family /
+# number-again duplicate, an updated registration that leaves one out (cleared in AVNI) clears it here too;
+# elsewhere the merge keeps it (old rows may hold values from earlier surveys that AVNI never had).
+REGISTRATION_ONLY_KEYS = {
+    "group_el9cl08/Enter_the_10_digit_mobile_number": "Enter the 10 digit mobile number",
+    "group_og5bx85/Full_name_of_the_head_of_the_household": "Full name of the head of the household",
+    "Enter_household_number_again": "Househhold number",
+}
+
 FACTSHEET_KEYS = {
     "Note": "Note",
     "group_im2th52/Number_of_Children_under_5_years_of_age": "Number of Children under 5 years of age",
@@ -198,7 +207,7 @@ def merge_rhs_keys(existing, incoming):
     drop = SHOP_ONLY_KEYS if occupancy == "Shop" else UNOCCUPIED_ONLY_KEYS if occupancy == "Unoccupied house" else []
     for key in drop:
         existing.pop(key, None)
-    existing.update(incoming)
+    existing.update(convert_answers(incoming))
     return existing
 
 
@@ -218,22 +227,22 @@ def map_sanitation_keys(observations):
     for key, concept in SANITATION_KEYS.items():
         if concept in mapped:
             mapped[key] = mapped.pop(concept)
-    return mapped
+    return convert_answers(mapped)
 
 
 def rename_keys(data, renames):
     for old, new in renames.items():
         if old in data:
             data[new] = data.pop(old)
-    return data
+    return convert_answers(data)
 
 
 def map_known_questions(observations):
-    return {
+    return convert_answers({
         KNOWN_QUESTION_MAP.get(key, key): value
         for key, value in observations.items()
         if key not in METADATA_KEYS
-    }
+    })
 
 
 def normalize_occupancy(data):
@@ -252,10 +261,55 @@ def apply_household_overrides(data):
     return data
 
 
+# AVNI answer -> the answer the map filters (component Metadata codes) look for, per rhs key.
+# Confirmed 2026-11-28. Answers are compared after trimming spaces.
+ANSWER_CONVERSIONS = {
+    "group_el9cl08/Type_of_water_connection": {
+        "Group connection": "Group connection (paid by all users)",
+        "Borewell/Submersible": "Borewell",
+    },
+    "group_oi8ts04/What_is_the_toilet_connected_to": {"Biogas": "Individual bio-gas"},
+    "group_oi8ts04/OD1": {"only children": "Only children", "only men": "Only men", "only women": "Only women"},
+    "group_oi8ts04/Current_place_of_defecation": {
+        "Toilet by sa": "Toilet by SA",
+        "HHs Use CTB of neighbouring slum": "Use CTB of neighbouring slum",
+        "Toilet by other NGO / Agency": "Toilet by other NGO",
+        "No household toilet": "No Toilet",
+    },
+}
+HOME_WITH_SHOP = "Individual home + shop"
+
+
+def converted(value, table):
+    if isinstance(value, list):
+        return [converted(item, table) for item in value]
+    if not isinstance(value, str):
+        return value
+    whole = value.strip()
+    if whole in table or "," not in whole:
+        return table.get(whole, whole)
+    return ", ".join(table.get(part.strip(), part.strip()) for part in whole.split(","))
+
+
+def copy_home_with_shop(rhs_data):
+    """A home with a shop ("Functioning of the structure") is also its occupancy, as filter #289 reads it."""
+    if rhs_data.get("Functioning of the structure") == HOME_WITH_SHOP:
+        rhs_data["Type_of_structure_occupancy"] = HOME_WITH_SHOP
+    return rhs_data
+
+
+def convert_answers(rhs_data):
+    """AVNI answers -> the filters' answers (ANSWER_CONVERSIONS), on keys already mapped to rhs keys."""
+    for key, table in ANSWER_CONVERSIONS.items():
+        if key in rhs_data:
+            rhs_data[key] = converted(rhs_data[key], table)
+    return rhs_data
+
+
 def apply_structure_overrides(rhs_data):
     """Same rules, expressed on already-mapped Structure / DSES keys."""
     if rhs_data.get("Do you have a toilet at home?") == "Yes":
         rhs_data["group_oi8ts04/Current_place_of_defecation"] = "Own toilet"
     if rhs_data.get("group_el9cl08/Ownership_status_of_the_house") == "Own house/Shop":
         rhs_data["group_el9cl08/Ownership_status_of_the_house"] = "Own house"
-    return rhs_data
+    return copy_home_with_shop(rhs_data)

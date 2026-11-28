@@ -61,7 +61,7 @@ def sync_family_factsheets(from_date=None, api=None):
 
 def save_family_factsheet(record, household):
     """Write ff_data and the factsheet dates on ToiletConstruction."""
-    slum_id, city_id = slum_and_city_ids(household.slum)
+    slum_id, city_id = slum_and_city_ids(household.slum, location_id=(household.record or {}).get("Location ID"))
     rows = HouseholdData.objects.filter(household_number=household.number, city_id=city_id, slum_id=slum_id)
     if not rows.exists():
         households.save_household(household.record)

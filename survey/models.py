@@ -348,3 +348,52 @@ class Answer(models.Model):
         if self.value_date is not None:
             return self.value_date
         return self.value_text
+
+
+class SyncDuplicate(models.Model):
+    """What the provider holds twice: two households with one slum and number, one family registered under two
+    numbers (same mobile and head of household), a household number typed again that is another household's, or one
+    visit entered twice.
+
+    Household duplicates are not merged into each other: the live tables keep what
+    they had until the provider resolves the pair (one voided, renumbered or moved),
+    then both are synced again. Encounter duplicates are only flagged.
+    """
+
+    HOUSEHOLD, ENCOUNTER, FAMILY, NUMBER_AGAIN = "household", "encounter", "family", "number_again"
+    KIND_CHOICES = (
+        (HOUSEHOLD, "Same household number used twice"),
+        (FAMILY, "Same family registered twice"),
+        (NUMBER_AGAIN, "Household number entered again clashes"),
+        (ENCOUNTER, "Visit entered twice"),
+    )
+    OPEN, RESOLVED = "open", "resolved"
+    STATUS_CHOICES = ((OPEN, "Open"), (RESOLVED, "Resolved"))
+
+    provider = models.CharField(max_length=30)
+    kind = models.CharField(max_length=20, choices=KIND_CHOICES)
+    key = models.CharField(max_length=300, help_text="household: slum:number; family: slum:mobile:head; "
+                                                      "number_again: slum:again:number; encounter: subject:type:day")
+    slum = models.ForeignKey("master.Slum", on_delete=models.SET_NULL, null=True, blank=True)
+    city = models.ForeignKey("master.City", on_delete=models.SET_NULL, null=True, blank=True)
+    household_number = models.CharField(max_length=20, blank=True)
+    encounter_type = models.CharField(max_length=300, blank=True)
+    external_ids = JSONField(default=list, help_text="Provider ids of every record in the group")
+    details = JSONField(default=dict, blank=True, help_text="What the team needs to find the records: numbers, head of household, masked mobile")
+    status = models.CharField(max_length=10, choices=STATUS_CHOICES, default=OPEN, db_index=True)
+    first_seen = models.DateTimeField(default=timezone.now)
+    last_seen = models.DateTimeField(default=timezone.now)
+    resolved_on = models.DateTimeField(null=True, blank=True)
+    resolution = models.CharField(max_length=300, blank=True)
+    notified_on = models.DateTimeField(null=True, blank=True)
+    in_mail = models.BooleanField(default=True, help_text="Untick to keep a group (e.g. old data) out of the weekly mail")
+
+    class Meta:
+        db_table = "survey_sync_duplicate"
+        ordering = ("status", "-last_seen")
+        constraints = [
+            models.UniqueConstraint(fields=["provider", "kind", "key"], name="survey_sync_duplicate_key"),
+        ]
+
+    def __str__(self):
+        return "{} {} ({})".format(self.kind, self.key, self.status)

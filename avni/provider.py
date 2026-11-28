@@ -74,6 +74,14 @@ CORE_DATA_TYPES = {
 LEGACY_HOUSEHOLD_TYPES = ("Household", "Structure", "Detailed Socio Economic Survey")
 MOBILIZATION_ENCOUNTER = "Daily Mobilization Activity"
 MEMBER_SUBJECT_TYPE = "Family Member"
+MHM_PROGRAM = "Menstrual hygiene"
+# Household forms whose arrival on a duplicate household is mailed to the city team at once.
+WORK_ENCOUNTERS = {"Sanitation": "Sanitation form", "Sanitation INP": "Sanitation form"}
+
+
+def group_ids(member_raw):
+    """Household ids a member is listed under ("Groups": uuids, or inlined records in some AVNI versions)."""
+    return tuple(entry.get("ID") if isinstance(entry, dict) else entry for entry in member_raw.get("Groups") or () if entry)
 LEGACY_PROGRAM_ENCOUNTER_TYPES = (
     program_encounters.FAMILY_FACTSHEET,
 ) + program_encounters.DAILY_REPORTING_TYPES
@@ -393,6 +401,7 @@ class AvniProvider(contracts.Provider):
             form_name=form.name,
             slum_name=location.get("Slum") or "",
             city_name=location.get("City") or "",
+            location_id=identity_source.get("Location ID") or "",
             household_number=(
                 "" if subject_type == MEMBER_SUBJECT_TYPE
                 else identity.household_number_from(subject_observations.get("First name"))
@@ -436,6 +445,29 @@ class AvniProvider(contracts.Provider):
         household = self.household_of_member(member_raw, context)
         return household.number if household else ""
 
+    def household_ids_for(self, kind, raw, subject_raw):
+        """A member's (and her records') households from "Groups"; a household visit's own subject."""
+        if kind == "subject":
+            return group_ids(raw) if raw.get("Subject type") == MEMBER_SUBJECT_TYPE else ()
+        subject = subject_raw or {}
+        if MEMBER_SUBJECT_TYPE in (raw.get("Subject type"), subject.get("Subject type")):
+            return group_ids(subject)
+        return (raw["Subject ID"],) if raw.get("Subject ID") else ()
+
+    def work_label(self, kind, raw):
+        if kind == "encounter":
+            return WORK_ENCOUNTERS.get(raw.get("Encounter type"), "")
+        if raw.get("Program") == MHM_PROGRAM and kind in ("enrolment", "program_encounter"):
+            return "Menstrual hygiene enrolment" if kind == "enrolment" else "Menstrual hygiene follow-up"
+        return ""
+
+    def fetch(self, kind, external_id):
+        if kind == "subject":
+            return self.get_subject(external_id)
+        if kind == "enrolment":
+            return self.get_enrolment(external_id)
+        return self.read((paths.encounter if kind == "encounter" else paths.program_encounter)(external_id))
+
     def household_number_for(self, normalized, identity_raw, context):
         """A member's records carry her household's number, never her own first name."""
         if normalized.subject_type != MEMBER_SUBJECT_TYPE:
@@ -458,9 +490,14 @@ class AvniProvider(contracts.Provider):
         return (household.record["ID"],)
 
     def legacy_missing(self, kind, raw):
-        """A Family Member record the member tables should hold and do not: the member,
-        her household number when AVNI names a household, her enrolment, or any visit."""
-        if raw.get("Subject type") != MEMBER_SUBJECT_TYPE or raw.get("Voided"):
+        """A record the legacy tables should hold and do not: a household with no row under its
+        slum and number, or a Family Member record - the member, her household number when AVNI
+        names a household, her enrolment, or any visit."""
+        if raw.get("Voided"):
+            return False
+        if kind == "subject" and raw.get("Subject type") in LEGACY_HOUSEHOLD_TYPES:
+            return household_row_missing(raw)
+        if raw.get("Subject type") != MEMBER_SUBJECT_TYPE:
             return False
         if kind == "subject":
             held = list(MemberData.objects.filter(member_uuid=raw.get("ID")).values_list("household_number", flat=True)[:1])
@@ -493,13 +530,19 @@ class AvniProvider(contracts.Provider):
         return False
 
     def legacy_void(self, kind, raw, context):
-        if kind != "subject" or raw.get("Subject type") not in LEGACY_HOUSEHOLD_TYPES:
-            return 0
+        """A record voided in AVNI leaves the legacy tables; a household takes its members along."""
         try:
-            return households.remove_voided_household(raw)
+            if kind == "subject" and raw.get("Subject type") in LEGACY_HOUSEHOLD_TYPES:
+                return households.remove_voided_household(raw)
+            if kind == "subject" and raw.get("Subject type") == MEMBER_SUBJECT_TYPE:
+                return members.remove_voided_member(raw["ID"])
+            if kind == "enrolment":
+                return members.remove_voided_enrolment(raw["ID"])
+            if kind == "program_encounter":
+                return members.remove_voided_encounter(raw["ID"])
         except Exception as exc:
-            logger.error("Voided subject %s not removed: %s", raw.get("ID"), exc)
-            return 0
+            logger.error("Voided %s %s not removed: %s", kind, raw.get("ID"), exc)
+        return 0
 
     def legacy_save(self, kind, raw, context):
         try:
@@ -570,9 +613,18 @@ def legacy_encounter(raw):
     return copy
 
 
+def household_row_missing(raw):
+    """True when no HouseholdData row sits under this household's slum and number (one indexed lookup)."""
+    household = households.household_from_record(raw)
+    slum_id = slum_id_for_name(household.slum, location_id=raw.get("Location ID"))
+    if not slum_id or not household.number:
+        return False
+    return not HouseholdData.objects.filter(slum_id=slum_id, household_number=household.number).exists()
+
+
 def mastersheet_holds(household):
     """True when HouseholdData has this household, or its slum is not one we know."""
-    slum_id = slum_id_for_name(household.slum)
+    slum_id = slum_id_for_name(household.slum, location_id=(household.record or {}).get("Location ID"))
     return slum_id is None or HouseholdData.objects.filter(slum_id=slum_id, household_number=household.number).exists()
 
 

@@ -6,9 +6,10 @@ from collections import namedtuple
 from django.utils import timezone
 
 from avni import mappings, paths
+from avni.sync import household_checks
 from avni.client import AvniError, client
 from avni.locations import slum_and_city_ids
-from graphs.models import HouseholdData
+from graphs.models import FollowupData, HouseholdData
 from notification.services import reporting
 from survey import versioning
 from survey.store import parse_moment
@@ -46,7 +47,7 @@ def save_household(record):
     try:
         if not household.number:
             raise ValueError("subject has no First name (household number)")
-        slum_id, city_id = slum_and_city_ids(household.slum)
+        slum_id, city_id = slum_and_city_ids(household.slum, location_id=record.get("Location ID"))
         if not versioning.allows_write(slum_id, parse_moment(household.submitted_on)):
             logger.info("Household %s in %s belongs to a frozen version; live tables left alone",
                         household.number, household.slum)
@@ -59,6 +60,7 @@ def save_household(record):
             update_household(existing, record, observations)
         else:
             create_household(slum_id, city_id, record, observations)
+        household_checks.flag(existing.first())
         return True
     except Exception as exc:
         logger.error("Household %s in %s not saved: %s", household.number, household.slum, exc)
@@ -66,9 +68,51 @@ def save_household(record):
         return False
 
 
+# {AVNI id: {row ids}} while a bulk load runs (subject_index); None otherwise.
+SUBJECT_ROWS = None
+
+
+def build_subject_index():
+    """Every row's rhs_uuid in one pass (a regular expression in the database, no JSON parsing)."""
+    from collections import defaultdict
+    from django.db import connection
+
+    index = defaultdict(set)
+    with connection.cursor() as cursor:
+        cursor.execute("SELECT id, substring(rhs_data::text from '\"rhs_uuid\":\\s*\"([^\"]+)\"') "
+                       "FROM graphs_householddata WHERE rhs_data::text LIKE '%%rhs_uuid%%'")
+        for row_id, subject_uuid in cursor.fetchall():
+            if subject_uuid:
+                index[subject_uuid].add(row_id)
+    return index
+
+
+class subject_index(object):
+    """For a bulk load: rows_for_subject looks ids up instead of searching the table (about 1 s a search)."""
+
+    def __enter__(self):
+        global SUBJECT_ROWS
+        SUBJECT_ROWS = build_subject_index()
+        return SUBJECT_ROWS
+
+    def __exit__(self, *exc):
+        global SUBJECT_ROWS
+        SUBJECT_ROWS = None
+        return False
+
+
+def note_subject_row(subject_uuid, row_id):
+    """Keep the bulk-load index current when a row gets this AVNI id."""
+    if SUBJECT_ROWS is not None and subject_uuid and row_id:
+        SUBJECT_ROWS[subject_uuid].add(row_id)
+
+
 def rows_for_subject(subject_uuid):
     """Every HouseholdData row carrying this subject's uuid (rhs_data is text, so LIKE then confirm)."""
-    rows = HouseholdData.objects.filter(rhs_data__contains=subject_uuid)
+    if SUBJECT_ROWS is not None:
+        rows = HouseholdData.objects.filter(id__in=SUBJECT_ROWS.get(subject_uuid, ()))
+    else:
+        rows = HouseholdData.objects.filter(rhs_data__contains=subject_uuid)
     return [row for row in rows if (row.rhs_data or {}).get("rhs_uuid") == subject_uuid]
 
 
@@ -101,11 +145,18 @@ def retire_stale_rows(subject_uuid, slum_id, city_id, number):
 
 
 def remove_voided_household(record):
-    """A subject voided in AVNI takes its HouseholdData rows with it (matched by uuid, never by number)."""
+    """A subject voided in AVNI takes its HouseholdData rows with it (matched by uuid, never by number),
+    and with each row its members (with their enrolments, follow-ups and summary rows) and follow-up data."""
+    from avni.sync import members
+
     rows = rows_for_subject(record["ID"])
     for row in rows:
         logger.info("Household %s in slum %s removed: subject %s voided", row.household_number, row.slum_id, record["ID"])
+        linked = members.linked_member_uuids(row.id)
         row.delete()
+        removed = members.remove_household_members(row.slum_id, row.household_number, linked)
+        FollowupData.objects.filter(slum_id=row.slum_id, household_number=row.household_number).delete()
+        logger.info("Household %s in slum %s: %s member(s) removed with it", row.household_number, row.slum_id, removed)
     return len(rows)
 
 
@@ -127,22 +178,29 @@ def create_household(slum_id, city_id, record, observations):
     mappings.apply_household_overrides(rhs_data)
     rhs_data["rhs_uuid"] = record["ID"]
     rhs_data.setdefault("group_og5bx85/Type_of_survey", "RHS")
-    HouseholdData.objects.create(
+    row = HouseholdData.objects.create(
         household_number=mappings.household_number_from(observations.get("First name")),
         slum_id=slum_id,
         city_id=city_id,
         rhs_data=rhs_data,
         **registration_fields(record)
     )
+    note_subject_row(record["ID"], row.id)
 
 
 def update_household(existing, record, observations):
     rhs_data = mappings.normalize_occupancy(existing.values_list("rhs_data", flat=True)[0] or {})
     mappings.apply_household_overrides(observations)
     rhs_data = mappings.merge_rhs_keys(rhs_data, observations)
+    if household_checks.in_open_group(record["ID"]):
+        for key, concept in mappings.REGISTRATION_ONLY_KEYS.items():
+            if concept not in observations:
+                rhs_data.pop(key, None)
     rhs_data["rhs_uuid"] = record["ID"]
     rhs_data["group_og5bx85/Type_of_survey"] = "RHS"
     existing.update(rhs_data=rhs_data, **registration_fields(record))
+    for row_id in existing.values_list("id", flat=True):
+        note_subject_row(record["ID"], row_id)
 
 
 def sync_households(subject_type, from_date=None, api=None, context=None, locations=None):
@@ -186,7 +244,7 @@ def sync_households_by_uuid(subject_uuids, api=None):
 
 def merge_into_rhs_data(household, data):
     """Merge encounter answers into the household's rhs_data, registering it first if unknown."""
-    slum_id, _ = slum_and_city_ids(household.slum)
+    slum_id, _ = slum_and_city_ids(household.slum, location_id=(household.record or {}).get("Location ID"))
     rows = HouseholdData.objects.filter(slum_id=slum_id, household_number=household.number)
     if not rows.exists():
         save_household(household.record)

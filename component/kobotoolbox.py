@@ -48,11 +48,34 @@ def _log_analysis_timing(stage, started_at, started_queries, **details):
 
 
 # @survey_mapping(SURVEYTYPE_CHOICES[1][0])
+
+def answer_parts(data, whole_answers):
+    """The values one stored answer counts under: a list as it is, an answer a filter names whole
+    (e.g. "Partial use- children, women, elderly"), else the comma-separated parts, trimmed."""
+    if isinstance(data, list):
+        return data
+    text = str(data).strip()
+    if text in whole_answers or "," not in text:
+        return [text]
+    return [part.strip() for part in text.split(",") if part.strip()]
+
+
+def filter_whole_answers():
+    """Filter answers that themselves contain a comma, from the component Metadata codes."""
+    from component.models import Metadata
+
+    whole = set()
+    for code in Metadata.objects.filter(type="F", code__contains=",").values_list("code", flat=True):
+        whole.update(option for option in code.partition(":")[2].split("|,|") if "," in option)
+    return whole
+
+
 def get_household_analysis_data(city, slum_code, question_fields, kobo_survey=""):
     """Gets the kobotoolbox RHS data for selected questions"""
     request_started_at = pytime.perf_counter()
     request_started_queries = len(connection.queries)
     output = {}
+    whole_answers = filter_whole_answers()
     slum = get_object_or_404(Slum, id=slum_code)
     hide_houdehold_data = [
         1303807,
@@ -636,7 +659,7 @@ def get_household_analysis_data(city, slum_code, question_fields, kobo_survey=""
                                 output[field][data].append(household_no_key)
                 else:
                     data = record[field]
-                    for val in data if type(data) == list else data.split(","):
+                    for val in answer_parts(data, whole_answers):
                         if field not in output:
                             output[field] = {}
                         if val not in output[field]:

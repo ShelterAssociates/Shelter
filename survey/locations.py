@@ -1,15 +1,28 @@
 """Slum lookups. Generic: no survey tool is involved."""
 
 
-def slum_and_city_ids(slum_name, provider=None):
+def slum_id_for_location(location_id, provider=None):
+    """Slum id of the alias carrying this provider location id (AVNI: the record's "Location ID"), or None."""
+    from survey.models import SlumAlias
+
+    if not location_id:
+        return None
+    aliases = SlumAlias.objects.filter(external_id=location_id)
+    if provider:
+        aliases = aliases.filter(provider=provider)
+    return aliases.values_list("slum_id", flat=True).first()
+
+
+def slum_and_city_ids(slum_name, provider=None, location_id=None):
     """(slum id, city id) for a location title, or LookupError.
 
-    An alias title wins over the Slum name, so a re-surveyed slum's second
-    location feeds the slum its alias points at.
+    The location id's alias wins (a few slum names exist in two cities), then an
+    alias title, then the Slum name, so a re-surveyed slum's second location feeds
+    the slum its alias points at.
     """
     from master.models import Slum
 
-    slum_id = slum_id_for_title(slum_name, provider)
+    slum_id = slum_id_for_location(location_id, provider) or slum_id_for_title(slum_name, provider)
     rows = Slum.objects.filter(id=slum_id) if slum_id else Slum.objects.filter(name=slum_name)
     row = rows.values_list("id", "electoral_ward_id__administrative_ward__city__id").first()
     if row is None:
@@ -29,12 +42,13 @@ def slum_id_for_title(slum_name, provider=None):
     return aliases.values_list("slum_id", flat=True).first()
 
 
-def slum_id_for_name(slum_name, provider=None):
-    """Slum id for a location title, or None. An alias title wins over the Slum name."""
+def slum_id_for_name(slum_name, provider=None, location_id=None):
+    """Slum id for a location title, or None. The location id's alias, then an alias title, win over the Slum name."""
     from master.models import Slum
 
-    if not slum_name:
-        return None
+    by_location = slum_id_for_location(location_id, provider)
+    if by_location or not slum_name:
+        return by_location
     return (
         slum_id_for_title(slum_name, provider)
         or Slum.objects.filter(name=slum_name).values_list("id", flat=True).first()

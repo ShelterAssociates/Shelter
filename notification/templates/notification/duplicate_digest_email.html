@@ -1,0 +1,25 @@
+<!doctype html>
+<html>
+<body style="font-family: Arial, sans-serif; font-size: 14px; color: #222; line-height: 1.45;">
+  {% if test_note %}<p style="background: #e3f2fd; padding: 6px 10px;">{{ test_note }}</p>{% endif %}
+  {% if first %}
+  <p style="background: #fff8e1; padding: 8px 10px;">
+    <strong>First list, please fix urgently.</strong> Start with the rows marked "Working slum this year": slums where we
+    gave toilets or menstrual cups, or held mobilisation activities, in {{ year }}{% if city == "Ichalkaranji" %} (all of Ichalkaranji, as the fresh survey is on){% endif %}.
+    Other slums may also have more duplicates; later mails will add them.<br />
+    <strong>पहिली यादी, कृपया तातडीने दुरुस्त करा.</strong> "Working slum this year" अशी खूण असलेल्या नोंदी आधी दुरुस्त करा:
+    {{ year }} मध्ये शौचालय किंवा मासिक पाळी कप दिलेल्या किंवा जनजागृती उपक्रम झालेल्या वस्त्या{% if city == "Ichalkaranji" %} (नवीन सर्वेक्षण चालू असल्याने इचलकरंजीच्या सर्व वस्त्या){% endif %}.
+    इतर वस्त्यांमध्येही आणखी नोंदी असू शकतात; त्या पुढील मेलमध्ये येतील.
+  </p>
+  {% endif %}
+  <p>AVNI has these duplicate records{% if city %} in {{ city }}{% endif %}{% if new %} ({{ new }} new since the last mail){% endif %}:</p>
+  {% for kind in kinds %}
+  <p style="margin: 6px 0;">
+    <strong>{{ kind.count }} &middot; {{ kind.en }}</strong><br />
+    {{ kind.mr }}
+  </p>
+  {% endfor %}
+  <p>The attached sheet lists each one, one tab per kind. The nightly sync removes an item once it is fixed in AVNI.<br />
+     जोडलेल्या शीटमध्ये प्रत्येक नोंद आहे. AVNI मध्ये दुरुस्त झाल्यावर ती यादीतून आपोआप जाईल.</p>
+</body>
+</html>

@@ -23,6 +23,8 @@ import json
 import logging
 from datetime import datetime
 
+from django.db.models import Q
+
 from avni.locations import slum_id_for_name
 from graphs.models import MemberData, MemberEncounterData, MemberProgramData
 from master.models import Slum
@@ -80,6 +82,33 @@ def write_member_program(member, fields):
 def write_member_encounter(member, program, fields):
     MemberEncounterData.objects.update_or_create(member=member, slum=member.slum, program=program, defaults=fields)
     return True
+
+
+def linked_member_uuids(household_row_id):
+    """Members the survey store links to this HouseholdData row."""
+    from survey.models import Record
+
+    return list(Record.objects.filter(household_id=household_row_id, kind="subject", subject_type="Family Member")
+                .values_list("external_id", flat=True))
+
+
+def remove_household_members(slum_id, household_number, member_uuids=()):
+    """Delete a voided household's members; their enrolments, follow-ups and summary rows cascade."""
+    number = str(household_number or "").strip()
+    by_number = Q(slum_id=slum_id) & (Q(household_number=number) | Q(household_number=number.zfill(4))) if number else Q(pk__in=[])
+    return MemberData.objects.filter(by_number | Q(member_uuid__in=list(member_uuids))).delete()[1].get("graphs.MemberData", 0)
+
+
+def remove_voided_member(member_uuid):
+    return MemberData.objects.filter(member_uuid=member_uuid).delete()[1].get("graphs.MemberData", 0)
+
+
+def remove_voided_enrolment(enrolment_uuid):
+    return MemberProgramData.objects.filter(program_uuid=enrolment_uuid).delete()[0]
+
+
+def remove_voided_encounter(encounter_uuid):
+    return MemberEncounterData.objects.filter(encounter_uuid=encounter_uuid).delete()[0]
 
 
 def member_for(member_uuid):
@@ -176,7 +205,8 @@ def member_household_number(record):
 def save_member_from_record(record, household_number=None):
     """One Family Member subject -> MemberData. `household_number` is that of the household
     AVNI lists the member under, used when her own answers carry none."""
-    slum = Slum.objects.filter(id=slum_id_for_name((record.get("location") or {}).get("Slum"))).first()
+    slum = Slum.objects.filter(id=slum_id_for_name((record.get("location") or {}).get("Slum"),
+                                                   location_id=record.get("Location ID"))).first()
     if slum is None:
         return False
     observations = record.get("observations") or {}

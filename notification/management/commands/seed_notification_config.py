@@ -22,7 +22,18 @@ CONTACTS = [
     ("info", "Shelter Associates"),
     ("dhana", "Dhana"),
     ("gis", "GIS Team"),
+    ("nilima", "Nilima"),
+    ("pmc", "Pune and PCMC team"),
+    ("nmmc", "Navi Mumbai team"),
+    ("arvind", "Arvind (Thane)"),
+    ("imc", "Ichalkaranji team"),
 ]
+
+# One weekly duplicates mail per city (avni.jobs.duplicates.purpose_key): the city team as To, the same CC for all.
+# Cities where work is paused (PCMC, Kolhapur, Panvel) get no mail.
+DUPLICATE_CITIES = ["Pune", "Navi Mumbai", "Thane", "Ichalkaranji"]
+DUPLICATE_TEAMS = {"Pune": ["pmc"], "Navi Mumbai": ["nmmc"], "Thane": ["arvind"], "Ichalkaranji": ["imc"]}
+DUPLICATE_CC = ["dhana", "nilima", "developer", "data"]
 
 PURPOSES = [
     {
@@ -183,7 +194,7 @@ class Command(BaseCommand):
                 "created" if created else "kept", contact.email
             ))
 
-        for spec in PURPOSES:
+        for spec in PURPOSES + duplicate_purposes():
             purpose, created = EmailPurpose.objects.get_or_create(
                 key=spec["key"],
                 defaults={
@@ -223,3 +234,16 @@ class Command(BaseCommand):
                 )
 
         self.stdout.write(self.style.SUCCESS("Seed complete."))
+
+
+def duplicate_purposes():
+    from avni.jobs.duplicates import purpose_key
+
+    return [{
+        "key": purpose_key(city),
+        "display_name": "Duplicate records in AVNI - {}".format(city),
+        "description": "Weekly list of duplicate households and visits in {} for the city team to fix in AVNI; "
+                       "the city team is To, leads and the data team CC.".format(city),
+        "to": DUPLICATE_TEAMS.get(city, []),
+        "cc": DUPLICATE_CC,
+    } for city in DUPLICATE_CITIES]

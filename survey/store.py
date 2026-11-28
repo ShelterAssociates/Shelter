@@ -17,6 +17,7 @@ from django.utils.dateparse import parse_date, parse_datetime
 
 from notification.services import reporting
 from survey import concepts as dictionary
+from survey import duplicates
 from survey import identity, locations, versions
 from survey.models import Answer, Concept, Record
 
@@ -46,6 +47,7 @@ class SyncContext(object):
         self.enrolments = set()
         self.needed = set()
         self.household_rows = {}
+        self.duplicate_households = None
         self.counts = OrderedDict((name, 0) for name in COUNTERS)
 
     def subject(self, subject_external_id):
@@ -113,15 +115,30 @@ def fuzzy_moment(text):
 
 # -- identity -----------------------------------------------------------------
 
-def resolve_slum(slum_name, context):
-    if not slum_name:
+def resolve_slum(slum_name, context, location_id=""):
+    """(slum id, city id): the location id's alias first (shared slum names), then the name."""
+    if not slum_name and not location_id:
         return None, None
-    if slum_name not in context.slum_ids:
+    key = (slum_name, location_id or "")
+    if key not in context.slum_ids:
         try:
-            context.slum_ids[slum_name] = locations.slum_and_city_ids(slum_name)
+            context.slum_ids[key] = locations.slum_and_city_ids(slum_name, location_id=location_id)
         except LookupError:
-            context.slum_ids[slum_name] = (None, None)
-    return context.slum_ids[slum_name]
+            context.slum_ids[key] = (None, None)
+    return context.slum_ids[key]
+
+
+def slum_of(normalized, context):
+    return resolve_slum(normalized.slum_name, context, getattr(normalized, "location_id", ""))
+
+
+def forget_removed_households(context):
+    """Drop memoised household rows a void has just deleted."""
+    from graphs.models import HouseholdData
+
+    ids = {value for value in context.household_rows.values() if value}
+    kept = set(HouseholdData.objects.filter(id__in=ids).values_list("id", flat=True))
+    context.household_rows = {key: value for key, value in context.household_rows.items() if not value or value in kept}
 
 
 def household_id_for(normalized, slum_id, context):
@@ -158,7 +175,7 @@ def household_id_by_number(slum_id, household_number):
 
 def link_household(normalized, context):
     """Re-check the household link after the legacy writer may have created the row."""
-    slum_id, _ = resolve_slum(normalized.slum_name, context)
+    slum_id, _ = slum_of(normalized, context)
     household_id = household_id_by_number(slum_id, normalized.household_number)
     if household_id is None:
         return False
@@ -176,7 +193,7 @@ def link_household(normalized, context):
 # -- writing ------------------------------------------------------------------
 
 def record_fields(normalized, context):
-    slum_id, city_id = resolve_slum(normalized.slum_name, context)
+    slum_id, city_id = slum_of(normalized, context)
     last_modified = parse_moment(normalized.last_modified_at)
     return {
         "version": versions.version_for(slum_id, last_modified or timezone.now(), context.versions),
@@ -258,16 +275,23 @@ def on_integrity_error(normalized, context, exc, quiet):
             return "failed"
         raise
     context.bump("duplicate_household")
-    context.bump("failed")
+    holder = duplicate_holder(normalized, context)
+    slum_id, city_id = slum_of(normalized, context)
+    group = duplicates.remember_household(context.provider.key, slum_id, city_id, normalized.household_number,
+                                          [normalized.external_id] + ([holder] if holder else []))
+    if context.duplicate_households is not None:
+        context.duplicate_households.update({external_id: group.pk for external_id in group.external_ids})
+    message = "household number {} already active in {} (id {}); both kept as a duplicate".format(
+        normalized.household_number, normalized.slum_name or "-", holder or "-")
     if not quiet:
-        reporting.fail(ValueError(duplicate_message(normalized, context)))
-    logger.error("Record %s not stored: %s", normalized.external_id, duplicate_message(normalized, context))
-    return "failed"
+        reporting.skip(slum=normalized.slum_name or None, reason="duplicate household")
+    logger.warning("Record %s not stored: %s", normalized.external_id, message)
+    return "duplicate"
 
 
-def duplicate_message(normalized, context):
-    slum_id, _ = resolve_slum(normalized.slum_name, context)
-    holder = (
+def duplicate_holder(normalized, context):
+    slum_id, _ = slum_of(normalized, context)
+    return (
         Record.objects.filter(
             provider=context.provider.key, kind="subject", is_voided=False,
             slum_id=slum_id, household_number=normalized.household_number,
@@ -275,9 +299,6 @@ def duplicate_message(normalized, context):
         .exclude(external_id=normalized.external_id)
         .values_list("external_id", flat=True)
         .first()
-    )
-    return "household number {} already active in {} (id {})".format(
-        normalized.household_number, normalized.slum_name or "-", holder or "-"
     )
 
 

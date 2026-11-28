@@ -15,7 +15,7 @@ from django.conf import settings
 
 from notification.services import reporting
 from survey import locations as locations_module
-from survey import slum_sync, store, switches, window
+from survey import duplicates, slum_sync, store, switches, window
 from survey.models import Record
 from survey.store import SyncContext  # noqa: F401 (re-exported: callers build one from here)
 
@@ -71,7 +71,7 @@ def context_for(context=None):
 # -- one record ---------------------------------------------------------------
 
 def resolve_slum_id(normalized, context):
-    return store.resolve_slum(normalized.slum_name, context)[0]
+    return store.slum_of(normalized, context)[0]
 
 
 def sync_record(kind, raw, context, only_slums=None):
@@ -90,8 +90,8 @@ def sync_record(kind, raw, context, only_slums=None):
 
     if status == "voided" or source.is_skipped_by_legacy(kind, raw):
         reporting.skip(slum=facts.slum_name or None, reason=skip_reason(kind, status))
-        if status == "voided":
-            source.legacy_void(kind, raw, context)
+        if status == "voided" and source.legacy_void(kind, raw, context) and kind == "subject":
+            store.forget_removed_households(context)
         if not store.unchanged(source.key, facts.external_id, facts.last_modified):
             store_quietly(kind, raw, context)
         return False
@@ -102,6 +102,8 @@ def sync_record(kind, raw, context, only_slums=None):
 
     try:
         subject_raw = subject_for(kind, facts, context)
+        if waits_for_duplicate(kind, raw, facts, subject_raw, context):
+            return False
         sync_needed_first(kind, raw, facts, context)
         normalized = with_household(source.normalize(kind, raw, subject_raw), raw if kind == "subject" else subject_raw, context)
     except Exception as exc:
@@ -128,12 +130,33 @@ def sync_record(kind, raw, context, only_slums=None):
         household=normalized.household_number or None,
         key=facts.external_id,
     ):
-        store.upsert(normalized, context)
+        if store.upsert(normalized, context) == "duplicate":
+            return False
+        if kind in duplicates.ENCOUNTER_KINDS:
+            duplicates.flag_encounter(source.key, facts.external_id)
         saved = bool(source.legacy_save(kind, raw, context))
         if saved:
             context.bump("legacy_saved")
             store.link_household(normalized, context)
         return saved
+
+
+def waits_for_duplicate(kind, raw, facts, subject_raw, context):
+    """A record of a household held twice waits (nothing stored) until the duplicate is resolved."""
+    source = context.provider
+    ids = [external_id for external_id in source.household_ids_for(kind, raw, subject_raw) if external_id]
+    if not ids:
+        return False
+    if context.duplicate_households is None:
+        context.duplicate_households = duplicates.open_household_ids(source.key)
+    group_id = next((context.duplicate_households[i] for i in ids if i in context.duplicate_households), None)
+    if group_id is None:
+        return False
+    day = str(facts.record_datetime or "")[:10]
+    duplicates.hold(group_id, kind, facts.external_id, source.work_label(kind, raw), day)
+    reporting.skip(slum=facts.slum_name or None, reason="waits: duplicate household")
+    context.bump("held_duplicate")
+    return True
 
 
 def skip_reason(kind, status):
@@ -160,7 +183,7 @@ def with_household(normalized, identity_raw, context):
         return normalized
     if normalized.kind != "subject":
         return normalized._replace(household_number=number)
-    slum_id = store.resolve_slum(normalized.slum_name, context)[0]
+    slum_id = store.slum_of(normalized, context)[0]
     context.household_rows[normalized.external_id] = store.household_id_by_number(slum_id, number)
     return normalized
 

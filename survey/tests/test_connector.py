@@ -6,7 +6,7 @@ from graphs.models import HouseholdData
 from notification.models import JobRun, JobStep
 from notification.services import reporting
 from survey import connector, contracts, window
-from survey.models import Record, SyncSwitch
+from survey.models import Record, SyncDuplicate, SyncSwitch
 from survey.store import SyncContext
 from survey.tests.fakes import FakeProvider, raw, tree
 from survey.tests.support import make_city, make_slum, normalized, observation
@@ -136,11 +136,12 @@ class RecordSemanticsTests(ConnectorTestCase):
         self.assertEqual(Record.objects.get().household, HouseholdData.objects.get())
         self.assertEqual(self.context.counts["unlinked"], 0)
 
-    def test_a_duplicate_household_number_fails_but_legacy_still_runs(self):
+    def test_a_duplicate_household_number_is_kept_out_of_the_legacy_tables(self):
         connector.sync_record("subject", raw(normalized(external_id="sub-1")), self.context)
         connector.sync_record("subject", raw(normalized(external_id="sub-2")), self.context)
         self.assertEqual(self.context.counts["duplicate_household"], 1)
-        self.assertEqual(len(self.provider.legacy_calls), 2)
+        self.assertEqual(len(self.provider.legacy_calls), 1)
+        self.assertEqual(SyncDuplicate.objects.get().external_ids, ["sub-1", "sub-2"])
 
 
 class ReportingTests(ConnectorTestCase):

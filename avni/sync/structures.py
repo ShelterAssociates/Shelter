@@ -13,7 +13,7 @@ from django.db import close_old_connections
 from avni import excel, mappings, paths
 from avni.client import AvniError, client
 from avni.locations import slum_and_city_ids
-from avni.sync import households
+from avni.sync import household_checks, households
 from graphs.models import HouseholdData
 
 logger = logging.getLogger(__name__)
@@ -36,7 +36,7 @@ def save_structure_record(record):
     if not slum_name:
         logger.error("Record %s has no slum", rhs_data.get("rhs_uuid"))
         return False
-    slum_id, city_id = slum_and_city_ids(slum_name)
+    slum_id, city_id = slum_and_city_ids(slum_name, location_id=record.get("Location ID"))
     households.retire_stale_rows(rhs_data["rhs_uuid"], slum_id, city_id, number)
     fields = {
         "rhs_data": rhs_data,
@@ -48,6 +48,9 @@ def save_structure_record(record):
         rows.update(**fields)
     else:
         HouseholdData.objects.create(household_number=number, slum_id=slum_id, city_id=city_id, **fields)
+    for row_id in rows.values_list("id", flat=True):
+        households.note_subject_row(rhs_data["rhs_uuid"], row_id)
+    household_checks.flag(rows.first())
     return True
 
 

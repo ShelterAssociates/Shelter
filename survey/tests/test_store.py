@@ -109,19 +109,16 @@ class RecordWriteTests(StoreTestCase):
 
 
 class DuplicateHouseholdTests(StoreTestCase):
-    def test_a_second_active_household_number_fails_and_is_counted(self):
+    def test_a_second_active_household_number_is_a_duplicate_and_is_counted(self):
         store.upsert(normalized(external_id="sub-1"), self.context)
         outcome = store.upsert(normalized(external_id="sub-2"), self.context)
-        self.assertEqual(outcome, "failed")
+        self.assertEqual(outcome, "duplicate")
         self.assertEqual(self.context.counts["duplicate_household"], 1)
         self.assertEqual(Record.objects.count(), 1)
 
-    def test_the_message_names_the_record_holding_the_number(self):
+    def test_the_holder_of_the_number_is_found(self):
         store.upsert(normalized(external_id="sub-1"), self.context)
-        message = store.duplicate_message(normalized(external_id="sub-2"), self.context)
-        self.assertIn("household number 42", message)
-        self.assertIn("Lokmanya Nagar", message)
-        self.assertIn("sub-1", message)
+        self.assertEqual(store.duplicate_holder(normalized(external_id="sub-2"), self.context), "sub-1")
 
     def test_a_voided_duplicate_is_allowed(self):
         store.upsert(normalized(external_id="sub-1"), self.context)
