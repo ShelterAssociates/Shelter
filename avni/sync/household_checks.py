@@ -89,6 +89,14 @@ def flag_number_again(row):
         details={"numbers": [number, other.household_number], "entered_again": other.household_number})
 
 
+def in_open_group(subject_uuid):
+    """True when this household is in an open same-family or number-again group: an answer cleared in AVNI
+    must then clear here too, or the group could never close."""
+    return SyncDuplicate.objects.filter(
+        provider=PROVIDER, status=SyncDuplicate.OPEN, kind__in=(SyncDuplicate.FAMILY, SyncDuplicate.NUMBER_AGAIN),
+        external_ids__contains=subject_uuid).exists()
+
+
 def flag(row):
     """Both checks for one saved household; never breaks the sync."""
     if row is None or not uuid_of(row):

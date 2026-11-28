@@ -33,6 +33,15 @@ RHS_KEYS = {
 }
 
 # rhs_data key -> AVNI concept name (family factsheet)
+# Answers that only the household registration carries. For a household in an open same-family /
+# number-again duplicate, an updated registration that leaves one out (cleared in AVNI) clears it here too;
+# elsewhere the merge keeps it (old rows may hold values from earlier surveys that AVNI never had).
+REGISTRATION_ONLY_KEYS = {
+    "group_el9cl08/Enter_the_10_digit_mobile_number": "Enter the 10 digit mobile number",
+    "group_og5bx85/Full_name_of_the_head_of_the_household": "Full name of the head of the household",
+    "Enter_household_number_again": "Househhold number",
+}
+
 FACTSHEET_KEYS = {
     "Note": "Note",
     "group_im2th52/Number_of_Children_under_5_years_of_age": "Number of Children under 5 years of age",

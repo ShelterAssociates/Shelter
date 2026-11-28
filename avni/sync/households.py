@@ -192,6 +192,10 @@ def update_household(existing, record, observations):
     rhs_data = mappings.normalize_occupancy(existing.values_list("rhs_data", flat=True)[0] or {})
     mappings.apply_household_overrides(observations)
     rhs_data = mappings.merge_rhs_keys(rhs_data, observations)
+    if household_checks.in_open_group(record["ID"]):
+        for key, concept in mappings.REGISTRATION_ONLY_KEYS.items():
+            if concept not in observations:
+                rhs_data.pop(key, None)
     rhs_data["rhs_uuid"] = record["ID"]
     rhs_data["group_og5bx85/Type_of_survey"] = "RHS"
     existing.update(rhs_data=rhs_data, **registration_fields(record))
