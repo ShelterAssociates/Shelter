@@ -46,10 +46,11 @@ class ConvertAnswersTests(SimpleTestCase):
         data = {WATER: "Hand pump", TOILET: "Own toilet", "Other": "Group connection"}
         self.assertEqual(mappings.convert_answers(dict(data)), data)
 
-    def test_home_with_shop_becomes_the_occupancy(self):
+    def test_home_with_shop_keeps_its_occupancy(self):
+        """An occupied home with a shop must stay "Occupied house": ~20 counts (dashboards, exports, QOL,
+        mastersheet) test that value. Filter #289 finds it through "Functioning of the structure" instead."""
         data = mappings.apply_structure_overrides({"Functioning of the structure": "Individual home + shop", OCCUPANCY: "Occupied house"})
-        self.assertEqual(data[OCCUPANCY], "Individual home + shop")
-        self.assertEqual(data["Functioning of the structure"], "Individual home + shop")
+        self.assertEqual(data[OCCUPANCY], "Occupied house")
 
     def test_converting_twice_changes_nothing_more(self):
         once = mappings.convert_answers({TOILET: "Toilet by sa ", WATER: "Group connection"})

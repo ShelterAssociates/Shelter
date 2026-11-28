@@ -246,8 +246,10 @@ def map_known_questions(observations):
 
 
 def normalize_occupancy(data):
-    """'Functioning of the structure' answers Shop / Individual home + shop become the occupancy key."""
-    if data.get("Functioning of the structure") in ("Shop", "Individual home + shop"):
+    """'Functioning of the structure' = Shop becomes the occupancy key. "Individual home + shop" stays in
+    'Functioning of the structure' (an occupied home with a shop keeps its occupancy; map filter #289
+    finds it there)."""
+    if data.get("Functioning of the structure") == "Shop":
         data["Type_of_structure_occupancy"] = data.pop("Functioning of the structure")
     return data
 
@@ -277,7 +279,6 @@ ANSWER_CONVERSIONS = {
         "No household toilet": "No Toilet",
     },
 }
-HOME_WITH_SHOP = "Individual home + shop"
 
 
 def converted(value, table):
@@ -289,13 +290,6 @@ def converted(value, table):
     if whole in table or "," not in whole:
         return table.get(whole, whole)
     return ", ".join(table.get(part.strip(), part.strip()) for part in whole.split(","))
-
-
-def copy_home_with_shop(rhs_data):
-    """A home with a shop ("Functioning of the structure") is also its occupancy, as filter #289 reads it."""
-    if rhs_data.get("Functioning of the structure") == HOME_WITH_SHOP:
-        rhs_data["Type_of_structure_occupancy"] = HOME_WITH_SHOP
-    return rhs_data
 
 
 def convert_answers(rhs_data):
@@ -312,4 +306,4 @@ def apply_structure_overrides(rhs_data):
         rhs_data["group_oi8ts04/Current_place_of_defecation"] = "Own toilet"
     if rhs_data.get("group_el9cl08/Ownership_status_of_the_house") == "Own house/Shop":
         rhs_data["group_el9cl08/Ownership_status_of_the_house"] = "Own house"
-    return copy_home_with_shop(rhs_data)
+    return rhs_data

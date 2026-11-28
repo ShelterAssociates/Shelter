@@ -60,6 +60,19 @@ def answer_parts(data, whole_answers):
     return [part.strip() for part in text.split(",") if part.strip()]
 
 
+OCCUPANCY = "Type_of_structure_occupancy"
+HOME_WITH_SHOP = "Individual home + shop"
+
+
+def occupancy_values(record):
+    """The occupancy values a household counts under: its own, and "Individual home + shop" (filter #289)
+    when "Functioning of the structure" says so - the stored occupancy stays as it is ("Occupied house")."""
+    values = [record[OCCUPANCY]]
+    if record.get("Functioning of the structure") == HOME_WITH_SHOP and HOME_WITH_SHOP not in values:
+        values.append(HOME_WITH_SHOP)
+    return values
+
+
 def filter_whole_answers():
     """Filter answers that themselves contain a comma, from the component Metadata codes."""
     from component.models import Metadata
@@ -630,6 +643,12 @@ def get_household_analysis_data(city, slum_code, question_fields, kobo_survey=""
 
         """question_fields is the different types of parameter of RHS Data."""
         for field in question_fields:
+            if field == OCCUPANCY and field in record and record[field] == record[field]:
+                for val in occupancy_values(record):
+                    houses = output.setdefault(field, {}).setdefault(val, [])
+                    if household_no_key not in houses:
+                        houses.append(household_no_key)
+                continue
 
             """field present in rhs data"""
             if field != "" and field in record and record[field] == record[field]:

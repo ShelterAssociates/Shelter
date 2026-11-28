@@ -110,6 +110,12 @@ class OverrideTests(SimpleTestCase):
         data = mappings.normalize_occupancy({"Functioning of the structure": "Shop"})
         self.assertEqual(data, {"Type_of_structure_occupancy": "Shop"})
 
+    def test_home_with_shop_stays_in_functioning_of_the_structure(self):
+        data = mappings.normalize_occupancy({"Functioning of the structure": "Individual home + shop",
+                                             "Type of structure occupancy_1": "Occupied house"})
+        self.assertEqual(data, {"Functioning of the structure": "Individual home + shop",
+                                "Type of structure occupancy_1": "Occupied house"})
+
 
 class LocationLookupTests(TestCase):
     UUID = "9c393ef0-9c69-400d-b908-86aa1fcb75f2"
