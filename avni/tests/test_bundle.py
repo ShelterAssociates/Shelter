@@ -124,6 +124,22 @@ class LoadTests(BundleCase):
         self.assertEqual(MemberProgramData.objects.get().program_uuid, "enr-new")
         self.assertEqual(counts["older than stored"], 1)
 
+    def test_link_lines_give_old_rows_their_avni_id(self):
+        old = HouseholdData.objects.create(household_number="42", slum=self.slum, city=self.slum.electoral_ward.administrative_ward.city,
+                                           submission_date="2020-01-01T00:00:00Z", rhs_data={"Type_of_survey": "RHS"})
+        held = HouseholdData.objects.create(household_number="43", slum=self.slum, city=old.city,
+                                            submission_date="2020-01-01T00:00:00Z", rhs_data={"rhs_uuid": "kept"})
+        with open(self.path, "w", encoding="utf-8") as handle:
+            for number, uuid in (("42", "hh-42"), ("43", "hh-43")):
+                handle.write(json.dumps({"kind": "link", "slum_id": self.slum.id, "number": number, "uuid": uuid}) + "\n")
+        counts = self.load()
+        old.refresh_from_db()
+        held.refresh_from_db()
+        self.assertEqual(old.rhs_data["rhs_uuid"], "hh-42")
+        self.assertEqual(old.rhs_data["Type_of_survey"], "RHS")
+        self.assertEqual(held.rhs_data["rhs_uuid"], "kept")
+        self.assertEqual(counts["linked"], 1)
+
     def test_report_lists_every_record(self):
         self.write_bundle(("subject", household_record(number="0042")), ("enrolment", enrolment_record(member="ghost")))
         self.load()

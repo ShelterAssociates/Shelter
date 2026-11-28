@@ -18,7 +18,7 @@ from django.db import transaction
 from avni import paths
 from avni.client import AvniError, client, use_client
 from avni.provider import AvniProvider, retrying
-from graphs.models import MemberData, MemberProgramData
+from graphs.models import HouseholdData, MemberProgramData
 from survey import connector, duplicates
 from survey.store import SyncContext, parse_moment
 
@@ -100,10 +100,28 @@ def older_than_stored(record):
     return bool(started and stored and stored > started.date())
 
 
+def link_households(links):
+    """Stamp the AVNI id on rows that have none, matched by slum and number. Returns rows stamped."""
+    from survey.identity import household_number_from
+
+    wanted = {(line["slum_id"], household_number_from(line["number"])): line["uuid"] for line in links}
+    stamped = 0
+    rows = HouseholdData.objects.filter(slum_id__in={slum for slum, number in wanted}).only("id", "slum_id", "household_number", "rhs_data")
+    for row in rows.iterator():
+        uuid = wanted.get((row.slum_id, household_number_from(row.household_number)))
+        data = row.rhs_data or {}
+        if uuid and not data.get("rhs_uuid"):
+            data["rhs_uuid"] = uuid
+            HouseholdData.objects.filter(id=row.id).update(rhs_data=data)
+            stamped += 1
+    return stamped
+
+
 def load(path, apply=False, report="bundle_load_report.csv", out=print):
     """Load a bundle through the normal sync, offline. Dry run unless `apply`. Returns counts."""
     everything = read_bundle(path)
     groups = [line for line in everything if line.get("kind") == "duplicate"]
+    links = [line for line in everything if line.get("kind") == "link"]
     lines = [line for line in everything if "record" in line]
     records = {(line["kind"], line["id"]): line["record"] for line in lines}
     lines.sort(key=lambda line: LOAD_ORDER.index(load_group(line["kind"], line["record"])))
@@ -121,6 +139,7 @@ def load(path, apply=False, report="bundle_load_report.csv", out=print):
                     result = "saved" if connector.sync_record(kind, record, context) else "not saved"
                 counts[result] += 1
                 results.append((kind, line["id"], record.get("Subject type") or "", result))
+            counts["linked"] = link_households(links) if links else 0
             for group in groups:
                 duplicates.remember_household("avni", group["slum_id"], group.get("city_id"), group["number"], group["ids"])
                 counts["duplicate groups"] += 1
