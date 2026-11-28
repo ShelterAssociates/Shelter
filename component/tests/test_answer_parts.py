@@ -19,3 +19,17 @@ class AnswerPartsTests(SimpleTestCase):
 
     def test_single_answer(self):
         self.assertEqual(answer_parts("Own toilet", set()), ["Own toilet"])
+
+
+
+class HomeWithShopTests(SimpleTestCase):
+    def test_home_with_shop_counts_under_the_occupancy_filter(self):
+        from component.kobotoolbox import occupancy_values
+
+        record = {"Type_of_structure_occupancy": "Occupied house", "Functioning of the structure": "Individual home + shop"}
+        self.assertEqual(occupancy_values(record), ["Occupied house", "Individual home + shop"])
+
+    def test_other_households_count_once(self):
+        from component.kobotoolbox import occupancy_values
+
+        self.assertEqual(occupancy_values({"Type_of_structure_occupancy": "Shop"}), ["Shop"])
