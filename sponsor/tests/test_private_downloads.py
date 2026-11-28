@@ -11,7 +11,7 @@ from django.test import TestCase
 from avni.tests.support import make_city, make_slum
 from sponsor.forms import SponsorProjectDetailsSubFieldsForm
 from sponsor.models import Sponsor, SponsorProjectDetails, SponsorProjectDetailsSubFields
-from sponsor.tests import SponsorFixtureMixin
+from sponsor.tests.support import SponsorFixtureMixin
 
 EXPORT_ID = "a" * 32
 

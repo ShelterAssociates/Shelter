@@ -1,20 +1,18 @@
 """Sponsor project uploads must not let HTML/JS run in the application's origin."""
 
 import io
-import shutil
-import tempfile
 import zipfile
 
-from django.contrib.auth.models import Group, User
 from django.core.files.base import ContentFile
 from django.core.files.uploadedfile import SimpleUploadedFile
-from django.test import TestCase, override_settings
+from django.test import TestCase
 from django.urls import reverse
 from PIL import Image
 
 from master.forms import SlumForm
 from sponsor.forms import ProjectDocumentForm, ProjectImageForm, SponsorForm, SponsorProjectDetailsSubFieldsForm
-from sponsor.models import ProjectDocuments, ProjectImages, Sponsor, SponsorProject
+from sponsor.models import ProjectDocuments, ProjectImages, SponsorProject
+from sponsor.tests.support import SponsorFixtureMixin
 
 PDF = b"%PDF-1.4\n1 0 obj<<>>endobj\ntrailer<<>>\n%%EOF"
 HTML = b"<html><script>alert('UPLOAD-TEST')</script></html>"
@@ -95,34 +93,6 @@ class UploadValidationTests(TestCase):
         self.assertIn("factsheet", errors("fs.html", HTML))
         self.assertIn("factsheet", errors("fs.pdf", HTML))
         self.assertNotIn("factsheet", errors("fs.pdf", PDF))
-
-
-class SponsorFixtureMixin:
-    def setUp(self):
-        self.media = tempfile.mkdtemp()
-        self.media_override = override_settings(MEDIA_ROOT=self.media)
-        self.media_override.enable()
-        group, _ = Group.objects.get_or_create(name="sponsor")
-        self.owner = User.objects.create_user("hdfclife", password="x")
-        self.other = User.objects.create_user("othersponsor", password="x")
-        for user in (self.owner, self.other):
-            user.groups.add(group)
-        self.admin = User.objects.create_superuser("shelter", "s@example.org", "x")
-        sponsor = Sponsor.objects.create(organization_name="HDFCLife", address="Pune", user=self.owner)
-        Sponsor.objects.create(organization_name="Other", address="Pune", user=self.other)
-        self.project = SponsorProject.objects.create(
-            name="Toilet facilitation", project_type="1", funds_sponsored=100, status="2",
-            created_by=self.admin, sponsor=sponsor,
-        )
-
-    def tearDown(self):
-        self.media_override.disable()
-        shutil.rmtree(self.media, ignore_errors=True)
-
-    def stored_document(self, name, content):
-        doc = ProjectDocuments(sponsor_project=self.project)
-        doc.document.save(name, ContentFile(content))
-        return doc
 
 
 class AdminUploadTests(SponsorFixtureMixin, TestCase):
