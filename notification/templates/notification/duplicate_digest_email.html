@@ -1,6 +1,10 @@
 <!doctype html>
 <html>
 <body style="font-family: Arial, sans-serif; font-size: 14px; color: #222;">
+  {% if first %}
+  <p>This first list covers only the slums we are working in this financial year ({{ year }}): slums with menstrual hygiene or toilet construction work in {{ year }}, or whose household data was updated in {{ year }}. We have checked these and are notifying you now. Other slums may also have duplicate households; they will be added to later mails as the nightly sync finds them.</p>
+  <p><strong>Please fix these on an urgent basis</strong>: duplicate households hold up a lot of data validation work.</p>
+  {% endif %}
   <p>AVNI holds some records twice{% if city %} in {{ city }}{% endif %}:</p>
   <ul>
     {% if households %}<li><strong>{{ households }}</strong> household number{{ households|pluralize }} used by more than one household</li>{% endif %}

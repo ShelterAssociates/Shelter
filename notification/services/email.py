@@ -86,6 +86,25 @@ def send_digest(runs, missed, since, until):
     )
 
 
+def duplicate_counts(since, until):
+    """Open duplicate households and visits, and groups opened / resolved in the window (not failures)."""
+    from survey.models import SyncDuplicate
+
+    groups = SyncDuplicate.objects.all()
+    open_groups = groups.filter(status=SyncDuplicate.OPEN)
+    return {
+        "households": open_groups.filter(kind=SyncDuplicate.HOUSEHOLD).count(),
+        "visits": open_groups.filter(kind=SyncDuplicate.ENCOUNTER).count(),
+        "new": groups.filter(first_seen__gte=since, first_seen__lt=until).count(),
+        "resolved": groups.filter(resolved_on__gte=since, resolved_on__lt=until).count(),
+    }
+
+
+def duplicate_line(counts):
+    return ("Duplicates: {households} household(s), {visits} visit(s) open in AVNI ({new} new, {resolved} resolved); "
+            "not failures - mailed weekly to each city team").format(**counts)
+
+
 def digest_payload(day, status, runs, missed, stuck, since, until):
     """The nightly digest as structured data, so the email can be laid out."""
     label = status.split(" (")[0]
@@ -101,6 +120,7 @@ def digest_payload(day, status, runs, missed, stuck, since, until):
         "missed": [{"name": item["name"], "expected_at": _when(item["expected_at"])} for item in missed],
         "stuck": ["#{} {}".format(item.pk, item.job_key) for item in stuck],
         "runs": [digest_run(run) for run in runs],
+        "duplicates": duplicate_counts(since, until),
     }
 
 
@@ -145,6 +165,7 @@ def nightly_text(day, status, runs, missed, stuck, since, until):
         "Shelter Nightly Sync — {}".format(day),
         "Status: {}".format(status),
         "Window: {} → {}".format(_when(since), _when(until)),
+        duplicate_line(duplicate_counts(since, until)),
         "",
     ]
     for item in missed:

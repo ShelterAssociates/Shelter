@@ -99,6 +99,11 @@ def workbook(rows, city_name):
             content.getvalue(), XLSX)
 
 
+def financial_year(day):
+    start = day.year if day.month >= 4 else day.year - 1
+    return "FY {}-{:02d}".format(start, (start + 1) % 100)
+
+
 def send_digest(today=None):
     """Mail each city's team its open duplicates, details in an attached sheet; returns {city: groups mailed}."""
     sent = {}
@@ -113,10 +118,13 @@ def send_digest(today=None):
             logger.warning("Duplicates for %s not mailed: no recipients on %s", city_name or "-", purpose_key(city_name))
             continue
         households = [row for row in rows if row.kind == SyncDuplicate.HOUSEHOLD]
+        first = not SyncDuplicate.objects.filter(
+            provider=PROVIDER, city_id=rows[0].city_id, notified_on__isnull=False).exists()
         send_email(to, "Duplicate records in AVNI - {} ({} open)".format(city_name or "no city", len(rows)),
                    template_name="notification/duplicate_digest_email.html",
                    context={"city": city_name, "households": len(households), "visits": len(rows) - len(households),
-                            "new": sum(1 for row in rows if not row.notified_on)},
+                            "new": sum(1 for row in rows if not row.notified_on), "first": first,
+                            "year": financial_year(timezone.localtime(today or timezone.now()).date())},
                    cc=cc, bcc=bcc, attachments=[workbook(rows, city_name)])
         SyncDuplicate.objects.filter(pk__in=[row.pk for row in rows]).update(notified_on=today or timezone.now())
         sent[city_name] = len(rows)

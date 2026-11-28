@@ -175,3 +175,40 @@ class DigestTests(DuplicateCase):
         with mock.patch("helpers.services.send_email.EmailMultiAlternatives") as message:
             job.send_digest(today=timezone.now())
         self.assertTrue(message.called)
+
+
+class FirstMailTests(DuplicateCase):
+    recipients = DigestTests.recipients
+
+    def test_first_mail_explains_the_list_once(self):
+        self.first_and_twin()
+        self.recipients("Pune")
+        with mock.patch("avni.jobs.duplicates.send_email") as send:
+            job.send_digest()
+        self.assertTrue(send.call_args[1]["context"]["first"])
+        duplicates.remember_household("avni", self.slum.id, self.city.id, "43", ["hh-8", "hh-9"])
+        with mock.patch("avni.jobs.duplicates.send_email") as send:
+            job.send_digest()
+        self.assertFalse(send.call_args[1]["context"]["first"])
+
+    def test_first_mail_names_the_financial_year(self):
+        self.first_and_twin()
+        self.recipients("Pune")
+        with mock.patch("helpers.services.send_email.EmailMultiAlternatives") as message:
+            job.send_digest(today=timezone.make_aware(timezone.datetime(2026, 11, 30, 9)))
+        html = message.return_value.attach_alternative.call_args[0][0]
+        self.assertIn("FY 2026-27", html)
+        self.assertIn("Other slums may also have duplicate households", html)
+
+
+class NightlyDigestTests(DuplicateCase):
+    def test_digest_counts_duplicates_apart_from_failures(self):
+        from notification.services import email
+
+        self.first_and_twin()
+        since = timezone.now() - timezone.timedelta(days=1)
+        counts = email.duplicate_counts(since, timezone.now())
+        self.assertEqual(counts, {"households": 1, "visits": 0, "new": 1, "resolved": 0})
+        payload = email.digest_payload("28 Nov 2026", "OK", [], [], [], since, timezone.now())
+        self.assertEqual(payload["duplicates"]["households"], 1)
+        self.assertIn("Duplicates: 1 household", email.nightly_text("28 Nov 2026", "OK", [], [], [], since, timezone.now()))

@@ -24,6 +24,9 @@ CONTACTS = [
     ("gis", "GIS Team"),
 ]
 
+# One weekly duplicates mail per city (avni.jobs.duplicates.purpose_key); recipients are set in admin.
+DUPLICATE_CITIES = ["Pune", "Navi Mumbai", "Thane", "PCMC", "Kolhapur", "Panvel", "Ichalkaranji"]
+
 PURPOSES = [
     {
         "key": "job_digest",
@@ -183,7 +186,7 @@ class Command(BaseCommand):
                 "created" if created else "kept", contact.email
             ))
 
-        for spec in PURPOSES:
+        for spec in PURPOSES + duplicate_purposes():
             purpose, created = EmailPurpose.objects.get_or_create(
                 key=spec["key"],
                 defaults={
@@ -223,3 +226,16 @@ class Command(BaseCommand):
                 )
 
         self.stdout.write(self.style.SUCCESS("Seed complete."))
+
+
+def duplicate_purposes():
+    from avni.jobs.duplicates import purpose_key
+
+    return [{
+        "key": purpose_key(city),
+        "display_name": "Duplicate records in AVNI - {}".format(city),
+        "description": "Weekly list of duplicate households and visits in {} for the city team to fix in AVNI; "
+                       "add the team as To and leads as CC.".format(city),
+        "to": [],
+        "cc": [],
+    } for city in DUPLICATE_CITIES]
