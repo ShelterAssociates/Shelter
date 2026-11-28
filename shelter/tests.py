@@ -77,6 +77,77 @@ class PasswordResetRetiredTests(TestCase):
                 reverse(name)
 
 
+class SignedInLoginPageTests(TestCase):
+    """A signed-in user never gets the login form: dashboard, the requested page, or an access-denied page."""
+
+    def setUp(self):
+        self.user = User.objects.create_user("alice", "alice@example.org", "AlicePass123")
+        self.staff = User.objects.create_user("boss", "boss@example.org", "BossPass123", is_staff=True)
+
+    def test_signed_in_user_is_sent_to_the_dashboard(self):
+        self.client.force_login(self.user)
+        response = self.client.get(reverse("login"))
+        self.assertRedirects(response, reverse("login_success"), fetch_redirect_response=False)
+
+    def test_outside_next_is_ignored(self):
+        self.client.force_login(self.staff)
+        response = self.client.get(reverse("login") + "?next=https://evil.example.com/")
+        self.assertRedirects(response, reverse("login_success"), fetch_redirect_response=False)
+
+    def test_staff_go_on_to_the_requested_page(self):
+        self.client.force_login(self.staff)
+        response = self.client.get(reverse("login") + "?next=/reports/")
+        self.assertRedirects(response, "/reports/", fetch_redirect_response=False)
+
+    def test_non_staff_sent_by_a_staff_page_are_told_they_are_not_allowed(self):
+        self.client.force_login(self.user)
+        response = self.client.get(reverse("login") + "?next=/reports/")
+        self.assertEqual(response.status_code, 403)
+        self.assertContains(response, "alice", status_code=403)
+        self.assertContains(response, "/reports/", status_code=403)
+        self.assertContains(response, reverse("logout"), status_code=403)
+        self.assertNotContains(response, 'id="login-form"', status_code=403)
+
+    def test_staff_only_page_does_not_loop_for_non_staff(self):
+        self.client.force_login(self.user)
+        response = self.client.get("/admin/", follow=True)
+        self.assertEqual(response.status_code, 403)
+        self.assertEqual(len(response.redirect_chain), 1)
+
+    def test_requested_page_is_escaped(self):
+        self.client.force_login(self.user)
+        response = self.client.get(reverse("login") + "?next=/x/%3Cscript%3E")
+        self.assertNotContains(response, "<script>", status_code=403)
+
+    def test_signed_out_user_sees_the_form(self):
+        response = self.client.get(reverse("login"))
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'id="login-form"')
+
+
+class LogoutTests(TestCase):
+    def setUp(self):
+        self.user = User.objects.create_user("alice", "alice@example.org", "AlicePass123")
+
+    def test_logout_lands_on_the_login_page_with_a_thank_you(self):
+        self.client.force_login(self.user)
+        response = self.client.get(reverse("logout"), follow=True)
+        self.assertEqual(response.redirect_chain[-1][0], reverse("login"))
+        self.assertContains(response, 'id="login-form"')
+        self.assertContains(response, "You have been signed out", count=1)
+        self.assertNotContains(response, 'class="messagelist"')
+        self.assertNotIn("_auth_user_id", self.client.session)
+
+    def test_thank_you_is_shown_once(self):
+        self.client.force_login(self.user)
+        self.client.get(reverse("logout"), follow=True)
+        self.assertNotContains(self.client.get(reverse("login")), "You have been signed out")
+
+    def test_signed_out_visitor_gets_no_thank_you(self):
+        response = self.client.get(reverse("logout"), follow=True)
+        self.assertNotContains(response, "You have been signed out")
+
+
 class RestAuthResetRetiredTests(TestCase):
     """django-rest-auth exposed a second, unauthenticated reset surface."""
 

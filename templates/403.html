@@ -1,7 +1,26 @@
 {% extends "admin/base_site.html" %}
-{% block title %}Access Denied{% endblock %}
+{% block title %}Access denied{% endblock %}
 
 {% block content %}
-<h1>Access Denied</h1>
-<span>We're sorry, but you are not authorized to view this page (Error: 403)</span>
+<div class="module access-denied">
+  <h1>Access denied</h1>
+  {% if user.is_authenticated %}
+    <p>
+      You are signed in as <strong>{{ user.get_username }}</strong>, but this account is not allowed to open
+      {% if requested %}<code>{{ requested }}</code>{% else %}this page{% endif %}.
+    </p>
+    <p>If you need access, ask the administrator to grant it to your account.</p>
+    <p>
+      {% if user.is_staff %}
+        <a class="btn btn-primary" href="{% url 'master:index' %}">Go to dashboard</a>
+      {% else %}
+        <a class="btn btn-primary" href="{% url 'slummap' %}">Go to the map</a>
+      {% endif %}
+      <a class="btn btn-default" href="{% url 'logout' %}">Sign out and use another account</a>
+    </p>
+  {% else %}
+    <p>You are not allowed to view this page (Error: 403).</p>
+    <p><a class="btn btn-primary" href="{% url 'login' %}">Log in</a></p>
+  {% endif %}
+</div>
 {% endblock content %}
