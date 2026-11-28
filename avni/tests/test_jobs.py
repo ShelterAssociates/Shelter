@@ -66,7 +66,7 @@ class DailySyncTests(JobTestCase):
         self.assertEqual(NIGHTLY_STEPS, [
             "households:Household", "households:Structure", "households:Detailed Socio Economic Survey",
             "duplicates", "daily_reporting", "family_factsheets", "mobilization", "household_encounters", "members",
-            "member_summary",
+            "duplicate_alerts", "member_summary",
         ])
         self.assertEqual(dict(names)["households:Household"], "failed")
         self.assertEqual(dict(names)["daily_reporting"], "success")

@@ -86,3 +86,27 @@ def flag_stored_encounters(provider):
                 flagged.add(duplicate.pk)
         seen.setdefault(group, external_id)
     return len(flagged)
+
+
+def open_household_ids(provider):
+    """{household id: group id} for every open household duplicate."""
+    held = {}
+    for pk, ids in SyncDuplicate.objects.filter(provider=provider, kind=SyncDuplicate.HOUSEHOLD,
+                                                status=SyncDuplicate.OPEN).values_list("pk", "external_ids"):
+        for external_id in ids or ():
+            held[external_id] = pk
+    return held
+
+
+def hold(group_id, kind, external_id, work="", day=""):
+    """Note a record that waits for the group to resolve; programme work is queued for an alert once."""
+    group = SyncDuplicate.objects.get(pk=group_id)
+    details = dict(group.details or {})
+    held = details.setdefault("held", [])
+    if [kind, external_id] not in held:
+        held.append([kind, external_id])
+    told = {item["id"] for item in details.get("alerts", []) + details.get("alerted", [])}
+    if work and external_id not in told:
+        details.setdefault("alerts", []).append({"kind": kind, "id": external_id, "what": work, "day": day})
+    group.details = details
+    group.save(update_fields=["details"])

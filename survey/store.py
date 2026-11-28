@@ -47,6 +47,7 @@ class SyncContext(object):
         self.enrolments = set()
         self.needed = set()
         self.household_rows = {}
+        self.duplicate_households = None
         self.counts = OrderedDict((name, 0) for name in COUNTERS)
 
     def subject(self, subject_external_id):
@@ -270,8 +271,10 @@ def on_integrity_error(normalized, context, exc, quiet):
     context.bump("duplicate_household")
     holder = duplicate_holder(normalized, context)
     slum_id, city_id = resolve_slum(normalized.slum_name, context)
-    duplicates.remember_household(context.provider.key, slum_id, city_id, normalized.household_number,
-                                  [normalized.external_id] + ([holder] if holder else []))
+    group = duplicates.remember_household(context.provider.key, slum_id, city_id, normalized.household_number,
+                                          [normalized.external_id] + ([holder] if holder else []))
+    if context.duplicate_households is not None:
+        context.duplicate_households.update({external_id: group.pk for external_id in group.external_ids})
     message = "household number {} already active in {} (id {}); both kept as a duplicate".format(
         normalized.household_number, normalized.slum_name or "-", holder or "-")
     if not quiet:

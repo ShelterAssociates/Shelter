@@ -84,6 +84,19 @@ class Provider(object):
         unchanged record is saved again instead of being skipped."""
         return False
 
+    def household_ids_for(self, kind, raw, subject_raw):
+        """Provider ids of the households a record belongs to (a member's household, a visit's subject),
+        so it can wait while one of them is a duplicate."""
+        return ()
+
+    def work_label(self, kind, raw):
+        """A short name for programme work worth an alert when it lands on a duplicate household, or ''."""
+        return ""
+
+    def fetch(self, kind, external_id):
+        """One raw record by kind and id, to sync a record that waited."""
+        raise NotImplementedError
+
     def household_number_for(self, normalized, identity_raw, context):
         """The number of the household a record belongs to. `identity_raw` is the raw
         subject it hangs off; a member's is that of the household she is listed under."""

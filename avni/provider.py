@@ -74,6 +74,14 @@ CORE_DATA_TYPES = {
 LEGACY_HOUSEHOLD_TYPES = ("Household", "Structure", "Detailed Socio Economic Survey")
 MOBILIZATION_ENCOUNTER = "Daily Mobilization Activity"
 MEMBER_SUBJECT_TYPE = "Family Member"
+MHM_PROGRAM = "Menstrual hygiene"
+# Household forms whose arrival on a duplicate household is mailed to the city team at once.
+WORK_ENCOUNTERS = {"Sanitation": "Sanitation form", "Sanitation INP": "Sanitation form"}
+
+
+def group_ids(member_raw):
+    """Household ids a member is listed under ("Groups": uuids, or inlined records in some AVNI versions)."""
+    return tuple(entry.get("ID") if isinstance(entry, dict) else entry for entry in member_raw.get("Groups") or () if entry)
 LEGACY_PROGRAM_ENCOUNTER_TYPES = (
     program_encounters.FAMILY_FACTSHEET,
 ) + program_encounters.DAILY_REPORTING_TYPES
@@ -435,6 +443,29 @@ class AvniProvider(contracts.Provider):
             return number
         household = self.household_of_member(member_raw, context)
         return household.number if household else ""
+
+    def household_ids_for(self, kind, raw, subject_raw):
+        """A member's (and her records') households from "Groups"; a household visit's own subject."""
+        if kind == "subject":
+            return group_ids(raw) if raw.get("Subject type") == MEMBER_SUBJECT_TYPE else ()
+        subject = subject_raw or {}
+        if MEMBER_SUBJECT_TYPE in (raw.get("Subject type"), subject.get("Subject type")):
+            return group_ids(subject)
+        return (raw["Subject ID"],) if raw.get("Subject ID") else ()
+
+    def work_label(self, kind, raw):
+        if kind == "encounter":
+            return WORK_ENCOUNTERS.get(raw.get("Encounter type"), "")
+        if raw.get("Program") == MHM_PROGRAM and kind in ("enrolment", "program_encounter"):
+            return "Menstrual hygiene enrolment" if kind == "enrolment" else "Menstrual hygiene follow-up"
+        return ""
+
+    def fetch(self, kind, external_id):
+        if kind == "subject":
+            return self.get_subject(external_id)
+        if kind == "enrolment":
+            return self.get_enrolment(external_id)
+        return self.read((paths.encounter if kind == "encounter" else paths.program_encounter)(external_id))
 
     def household_number_for(self, normalized, identity_raw, context):
         """A member's records carry her household's number, never her own first name."""

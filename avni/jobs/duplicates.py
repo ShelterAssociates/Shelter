@@ -59,14 +59,69 @@ def recheck(from_date=None, context=None):
         if len(live) > 1 or len(records) < len(group.external_ids):
             counts["open"] += 1
             continue
-        for record in sorted(records, key=lambda item: not item.get("Voided")):
-            connector.sync_record("subject", record, context)
         voided = sum(1 for record in records if record.get("Voided"))
         duplicates.resolve(group, "{} voided, {} renumbered or moved".format(voided, len(records) - voided - len(live)))
+        for external_id in group.external_ids:
+            (context.duplicate_households or {}).pop(external_id, None)
+        for record in sorted(records, key=lambda item: not item.get("Voided")):
+            connector.sync_record("subject", record, context)
+        counts["released"] = counts.get("released", 0) + release_held(group, context)
         counts["resolved"] += 1
     counts["encounters_closed"] = duplicates.recheck_encounters(PROVIDER)
     counts["possible_closed"] = household_checks.recheck()
     return counts
+
+
+def release_held(group, context):
+    """Sync every record that waited for this group, members first. Returns how many were synced."""
+    held = (group.details or {}).get("held") or []
+    order = ("subject", "enrolment", "encounter", "program_encounter")
+    synced = 0
+    for kind, external_id in sorted(held, key=lambda item: order.index(item[0]) if item[0] in order else len(order)):
+        try:
+            synced += int(bool(connector.sync_record(kind, context.provider.fetch(kind, external_id), context)))
+        except Exception as exc:
+            logger.warning("Held %s %s of duplicate %s not synced: %s", kind, external_id, group.key, exc)
+    group.details = dict(group.details or {}, held=[])
+    group.save(update_fields=["details"])
+    return synced
+
+
+def send_alerts(test_to=None):
+    """Mail each city's team the programme work recorded on duplicate households since the last alert.
+    Returns {city: records mailed}."""
+    groups = [group for group in SyncDuplicate.objects.filter(provider=PROVIDER, kind=SyncDuplicate.HOUSEHOLD)
+              .select_related("slum", "city__name") if (group.details or {}).get("alerts")]
+    by_city, sent = {}, {}
+    for group in groups:
+        by_city.setdefault(city_of(group), []).append(group)
+    for city_name, rows in sorted(by_city.items()):
+        to, cc, bcc = contacts.recipients_for(purpose_key(city_name))
+        if test_to:
+            to, cc, bcc = [test_to], [], []
+        if not to:
+            logger.warning("Duplicate alerts for %s not mailed: no recipients on %s", city_name or "-", purpose_key(city_name))
+            continue
+        items = [dict(alert, slum=row.slum.name if row.slum_id else "", number=row.household_number,
+                      ids=", ".join(row.external_ids)) for row in rows for alert in row.details["alerts"]]
+        send_email(to, "{}Work recorded on duplicate households - {} ({})".format(
+                       "[TEST] " if test_to else "", city_name or "no city", len(items)),
+                   template_name="notification/duplicate_alert_email.html",
+                   context={"city": city_name, "items": items}, cc=cc, bcc=bcc)
+        if not test_to:
+            for row in rows:
+                details = dict(row.details)
+                details["alerted"] = details.get("alerted", []) + details["alerts"]
+                details["alerts"] = []
+                row.details = details
+                row.save(update_fields=["details"])
+        sent[city_name] = len(items)
+    return sent
+
+
+def alert_step(from_date=None):
+    """Nightly step: the alerts for work that landed on duplicate households tonight."""
+    return send_alerts()
 
 
 XLSX = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"

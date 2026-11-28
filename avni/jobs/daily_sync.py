@@ -44,6 +44,7 @@ STEPS = (
      (mobilization.SUBJECT_TYPE, "subject", "", "")),
     ("household_encounters", sync_household_encounters, {}, None),
     ("members", sync_members, {}, (MEMBER_SUBJECT_TYPE, "subject", "", "")),
+    ("duplicate_alerts", duplicate_records.alert_step, {}, None),
     ("member_summary", member_summary.refresh, {}, None),
 )
 

@@ -1,0 +1,17 @@
+<!doctype html>
+<html>
+<body style="font-family: Arial, sans-serif; font-size: 14px; color: #222; line-height: 1.45;">
+  <p><strong>Work was recorded on households that AVNI holds twice{% if city %} in {{ city }}{% endif %}.</strong>
+     These records are kept waiting and will not reach the dashboards or reports until the duplicate is fixed in AVNI.
+     Please void, renumber or move the wrong household now.<br />
+     <strong>AVNI मध्ये दोनदा नोंदवलेल्या घरांवर काम नोंदवले गेले आहे.</strong> हे काम डुप्लिकेट दुरुस्त होईपर्यंत डॅशबोर्ड /
+     अहवालात दिसणार नाही. कृपया चुकीचे घर लगेच रद्द (void) करा किंवा त्याचा क्रमांक / वस्ती बदला.</p>
+  <table cellpadding="5" cellspacing="0" border="1" style="border-collapse: collapse; border-color: #ddd;">
+    <tr style="background: #f2f2f2;"><th align="left">Slum</th><th align="left">Household</th><th align="left">Work</th>
+      <th align="left">Date</th><th align="left">Duplicate households (AVNI ids)</th></tr>
+    {% for item in items %}
+    <tr><td>{{ item.slum }}</td><td>{{ item.number }}</td><td>{{ item.what }}</td><td>{{ item.day }}</td><td>{{ item.ids }}</td></tr>
+    {% endfor %}
+  </table>
+</body>
+</html>
