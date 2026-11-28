@@ -44,6 +44,7 @@ class SyncContext(object):
         self.slum_ids = {}
         self.subjects = {}
         self.enrolments = set()
+        self.needed = set()
         self.household_rows = {}
         self.counts = OrderedDict((name, 0) for name in COUNTERS)
 

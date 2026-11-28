@@ -233,6 +233,10 @@ class SubjectTreeTests(TestCase):
                          paths.program_encounters("Daily Reporting", "s"))
         with self.assertRaises(ValueError):
             provider.list_path("enrolment", "Household", "Sanitation program", "", "s")
+        with self.assertRaises(ValueError):
+            provider.list_path("enrolment", "Family Member", "", "", "s")
+        self.assertEqual(provider.list_path("enrolment", "Family Member", "Menstrual hygiene", "", "s"),
+                         paths.enrolments("Menstrual hygiene", "s"))
         self.assertFalse(provider.lists("enrolment"))
         self.assertTrue(provider.lists("program_encounter"))
 
@@ -513,11 +517,15 @@ class MemberAdapterEdgeTests(TestCase):
         self.assertIsNone(members.record_day("yesterday"))
         self.assertIsNone(members.record_day(None))
 
-    def test_household_number_from_groups_or_nothing(self):
+    def test_the_writer_reads_a_household_number_only_from_the_members_own_answers(self):
+        """AVNI gives "Groups" as household-subject uuids; avni.provider resolves those
+        (see test_member_sync). The writer itself never guesses a number out of them."""
         from avni.sync import members
 
-        self.assertEqual(members.member_household_number({"observations": {}, "Groups": [{"Household number": "0042"}]}), "0042")
-        self.assertIsNone(members.member_household_number({"observations": {}, "Groups": ["hh-uuid"]}))
+        self.assertEqual(members.member_household_number({"observations": {"Household number": " 0042 "}}), "0042")
+        self.assertEqual(members.member_household_number({"observations": {"Parent household number": 7}}), "7")
+        self.assertIsNone(members.member_household_number({"observations": {"Household number": ""}, "Groups": ["hh-uuid"]}))
+        self.assertIsNone(members.member_household_number({}))
 
     def test_program_without_audit_uses_the_enrolment_date_and_exit_date(self):
         from avni.sync import members

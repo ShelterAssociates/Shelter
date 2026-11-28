@@ -10,6 +10,11 @@
 # survey tables; a step whose switch is off (Admin -> Survey -> Sync switches)
 # is recorded as disabled. Every step is recorded in Django admin (Job runs)
 # and emailed on failure.
+# The members step lists members, then their enrolments, then their follow-ups.
+# A member's household number is that of the Household subject AVNI lists her
+# under ("Groups"); a record that arrives before what it hangs off (a household
+# for a member, a member for an enrolment or follow-up) syncs that first, and a
+# record the member tables never received is saved again when it is next read.
 # dashboard_update.sh is NO LONGER chained here -- it runs fortnightly on its
 # own cron line (1st and 16th). Chaining it made it run nightly.
 # sync_rhs.sh remains for manual Structure / by-IID runs only.

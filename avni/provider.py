@@ -15,9 +15,11 @@ import requests
 from avni import mappings, metadata, paths
 from avni.client import AvniError, client, page_path
 from avni.models import AvniForm, AvniFormMapping
+from avni.locations import slum_id_for_name
 from avni.sync import encounters, households, members, mobilization, program_encounters, structures
+from graphs.models import HouseholdData, MemberData, MemberEncounterData, MemberProgramData
 from notification.services import reporting
-from survey import contracts, identity
+from survey import contracts, identity, switches
 
 logger = logging.getLogger(__name__)
 
@@ -235,9 +237,15 @@ class AvniProvider(contracts.Provider):
     # -- listing and fetching -------------------------------------------------
 
     def lists(self, kind):
-        """api/programEnrolments needs subject AND program, so enrolments cannot be
-        listed by type; the connector fetches them on demand (get_enrolment)."""
+        """Enrolments are fetched on demand with their first program encounter
+        (get_enrolment), except those `lists_enrolments` names."""
         return kind != "enrolment"
+
+    def lists_enrolments(self, subject_type, program):
+        """api/programEnrolments lists one program's enrolments by date. Family Member
+        enrolments are listed that way, so one is saved the night it is made and not
+        only when its first follow-up arrives."""
+        return subject_type == MEMBER_SUBJECT_TYPE and bool(program)
 
     def list_path(self, kind, subject_type, program, encounter_type, since, location_uuid=None):
         if kind == "subject":
@@ -246,6 +254,8 @@ class AvniProvider(contracts.Provider):
             return paths.encounters(encounter_type, since)
         if kind == "program_encounter":
             return paths.program_encounters(encounter_type, since)
+        if kind == "enrolment" and self.lists_enrolments(subject_type, program):
+            return paths.enrolments(program, since)
         raise ValueError("AVNI cannot list {} records by type".format(kind))
 
     def iter_records(self, kind, subject_type, program="", encounter_type="", since=None, locations=()):
@@ -337,7 +347,10 @@ class AvniProvider(contracts.Provider):
             record_datetime=first_of(raw, DATE_KEYS.get(kind, ())),
             last_modified=(raw.get("audit") or {}).get("Last modified at"),
             slum_name=(location.get("Slum") or "") if is_subject else "",
-            household_number=identity.household_number_from(observations.get("First name")) if is_subject else "",
+            household_number=(
+                identity.household_number_from(observations.get("First name"))
+                if is_subject and subject_type != MEMBER_SUBJECT_TYPE else ""
+            ),
             enrolment_external_id=raw.get("Enrolment ID") or "",
         )
 
@@ -380,7 +393,10 @@ class AvniProvider(contracts.Provider):
             form_name=form.name,
             slum_name=location.get("Slum") or "",
             city_name=location.get("City") or "",
-            household_number=identity.household_number_from(subject_observations.get("First name")),
+            household_number=(
+                "" if subject_type == MEMBER_SUBJECT_TYPE
+                else identity.household_number_from(subject_observations.get("First name"))
+            ),
             record_datetime=first_of(raw, DATE_KEYS.get(kind, ())),
             earliest_scheduled=raw.get("Earliest scheduled date"),
             max_scheduled=raw.get("Max scheduled date"),
@@ -391,6 +407,69 @@ class AvniProvider(contracts.Provider):
             last_modified_at=(raw.get("audit") or {}).get("Last modified at"),
             observations=walk_observations(raw.get("observations"), form),
         )
+
+    # -- family members -------------------------------------------------------
+
+    def household_of_member(self, member_raw, context):
+        """The household a Family Member belongs to, or None. AVNI lists the household
+        subjects' uuids under "Groups"; the first live one of a household type counts,
+        read through the run's subject memo."""
+        for subject_id in member_raw.get("Groups") or ():
+            if not isinstance(subject_id, str):
+                continue
+            try:
+                group = context.subject(subject_id)
+            except Exception as exc:
+                logger.warning("Household %s of member %s not read: %s", subject_id, member_raw.get("ID"), exc)
+                continue
+            if group.get("Voided") or group.get("Subject type") not in LEGACY_HOUSEHOLD_TYPES:
+                continue
+            household = households.household_from_record(group)
+            if household.number:
+                return household
+        return None
+
+    def member_household_number(self, member_raw, context):
+        number = members.member_household_number(member_raw)
+        if number:
+            return number
+        household = self.household_of_member(member_raw, context)
+        return household.number if household else ""
+
+    def household_number_for(self, normalized, identity_raw, context):
+        """A member's records carry her household's number, never her own first name."""
+        if normalized.subject_type != MEMBER_SUBJECT_TYPE:
+            return normalized.household_number
+        return self.member_household_number(identity_raw, context) if identity_raw else ""
+
+    def subjects_needed_first(self, kind, raw, context):
+        """A Family Member's enrolment or visit needs her in the member tables; she needs
+        her household in the mastersheet, when that household type is synced at all."""
+        if raw.get("Subject type") != MEMBER_SUBJECT_TYPE:
+            return ()
+        if kind != "subject":
+            member_id = raw.get("Subject ID")
+            return (member_id,) if member_id and not MemberData.objects.filter(member_uuid=member_id).exists() else ()
+        household = self.household_of_member(raw, context)
+        if household is None or mastersheet_holds(household):
+            return ()
+        if not switches.is_enabled(household.record.get("Subject type"), "subject", provider=self.key):
+            return ()
+        return (household.record["ID"],)
+
+    def legacy_missing(self, kind, raw):
+        """A Family Member record the member tables should hold and do not: the member,
+        her household number when AVNI names a household, her enrolment, or any visit."""
+        if raw.get("Subject type") != MEMBER_SUBJECT_TYPE or raw.get("Voided"):
+            return False
+        if kind == "subject":
+            held = list(MemberData.objects.filter(member_uuid=raw.get("ID")).values_list("household_number", flat=True)[:1])
+            return not held or (held[0] is None and bool(raw.get("Groups")))
+        if kind == "enrolment":
+            return not MemberProgramData.objects.filter(program_uuid=raw.get("ID")).exists()
+        if kind == "program_encounter":
+            return not MemberEncounterData.objects.filter(member__member_uuid=raw.get("Subject ID")).exists()
+        return False
 
     # -- legacy writers -------------------------------------------------------
 
@@ -440,6 +519,8 @@ class AvniProvider(contracts.Provider):
         subject_type = self.subject_type_of(kind, raw, subject_raw)
 
         if kind == "subject":
+            if subject_type == MEMBER_SUBJECT_TYPE:
+                return members.save_member_from_record(raw, self.member_household_number(raw, context) or None)
             writer = LEGACY_SUBJECT_WRITERS.get(subject_type)
             return writer(raw) if writer else False
         if subject_type == MEMBER_SUBJECT_TYPE:
@@ -487,6 +568,12 @@ def legacy_encounter(raw):
     copy = dict(raw)
     copy["Encounter type"] = twin
     return copy
+
+
+def mastersheet_holds(household):
+    """True when HouseholdData has this household, or its slum is not one we know."""
+    slum_id = slum_id_for_name(household.slum)
+    return slum_id is None or HouseholdData.objects.filter(slum_id=slum_id, household_number=household.number).exists()
 
 
 LEGACY_SUBJECT_WRITERS = {

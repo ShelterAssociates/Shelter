@@ -69,6 +69,26 @@ class Provider(object):
         """False when the provider cannot list this kind by type (AVNI: enrolments)."""
         return True
 
+    def lists_enrolments(self, subject_type, program):
+        """True when the enrolments of this subject type and program can be listed by date,
+        even though `lists("enrolment")` is False in general."""
+        return False
+
+    def subjects_needed_first(self, kind, raw, context):
+        """Ids of the subjects the legacy tables must hold before this record can be saved
+        (an enrolment's member, a member's household) and do not hold yet."""
+        return ()
+
+    def legacy_missing(self, kind, raw):
+        """True when the legacy tables should hold this record and do not, so an
+        unchanged record is saved again instead of being skipped."""
+        return False
+
+    def household_number_for(self, normalized, identity_raw, context):
+        """The number of the household a record belongs to. `identity_raw` is the raw
+        subject it hangs off; a member's is that of the household she is listed under."""
+        return normalized.household_number
+
     def iter_records(self, kind, subject_type, program="", encounter_type="", since=None, locations=()):
         """Yield raw records of one kind modified since `since`, page by page.
 

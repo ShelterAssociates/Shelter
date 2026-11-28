@@ -96,13 +96,14 @@ def sync_record(kind, raw, context, only_slums=None):
             store_quietly(kind, raw, context)
         return False
 
-    if store.unchanged(source.key, facts.external_id, facts.last_modified):
+    if store.unchanged(source.key, facts.external_id, facts.last_modified) and not source.legacy_missing(kind, raw):
         context.bump("unchanged")
         return False
 
     try:
         subject_raw = subject_for(kind, facts, context)
-        normalized = source.normalize(kind, raw, subject_raw)
+        sync_needed_first(kind, raw, facts, context)
+        normalized = with_household(source.normalize(kind, raw, subject_raw), raw if kind == "subject" else subject_raw, context)
     except Exception as exc:
         logger.error("Record %s not read: %s", facts.external_id, exc)
         with reporting.record(key=facts.external_id):
@@ -147,6 +148,37 @@ def subject_for(kind, facts, context):
     if kind == "subject" or not facts.subject_external_id:
         return None
     return context.subject(facts.subject_external_id)
+
+
+def with_household(normalized, identity_raw, context):
+    """Give a record the household its provider resolves for it. A visit or enrolment takes
+    that household's number. A subject that only belongs to a household (a member) is
+    linked to the household's row and keeps its own number blank, because a slum holds
+    one active subject per household number."""
+    number = context.provider.household_number_for(normalized, identity_raw, context)
+    if number == normalized.household_number:
+        return normalized
+    if normalized.kind != "subject":
+        return normalized._replace(household_number=number)
+    slum_id = store.resolve_slum(normalized.slum_name, context)[0]
+    context.household_rows[normalized.external_id] = store.household_id_by_number(slum_id, number)
+    return normalized
+
+
+def sync_needed_first(kind, raw, facts, context):
+    """Sync the subjects this record cannot be saved without (an enrolment's member, a
+    member's household) before it. Each is tried once per run; one that cannot be read
+    or saved is logged and the record goes on without it."""
+    if kind == "subject":
+        context.needed.add(facts.external_id)
+    for subject_id in context.provider.subjects_needed_first(kind, raw, context):
+        if subject_id in context.needed:
+            continue
+        context.needed.add(subject_id)
+        try:
+            sync_record("subject", context.subject(subject_id), context)
+        except Exception as exc:
+            logger.warning("Subject %s needed by %s not synced: %s", subject_id, facts.external_id, exc)
 
 
 def ensure_enrolment(facts, subject_raw, context):
@@ -237,14 +269,17 @@ def step_name(row):
 
 
 def enabled_rows(subject_types, kinds=DOWN_KINDS, exclude=NIGHTLY_EXCLUDED):
-    """Enabled switch rows the provider can list, minus the excluded encounter types."""
+    """Enabled switch rows the provider can list, minus the excluded encounter types;
+    each subject type's registrations first, then its enrolments, then its visits."""
     source = provider()
     rows = []
     for subject_type in subject_types:
         for row in switches.enabled_kinds(subject_type, kinds):
             if exclude and row.encounter_type in exclude:
                 continue
-            if not source.lists(row.kind):
+            if not source.lists(row.kind) and not (
+                row.kind == "enrolment" and source.lists_enrolments(row.subject_type, row.program)
+            ):
                 continue
             rows.append(row)
     return rows

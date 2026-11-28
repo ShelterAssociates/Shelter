@@ -7,6 +7,7 @@ catalog refresh, anything else waits for its switch.
 
 import logging
 
+from survey import contracts
 from survey.models import SyncSwitch
 
 logger = logging.getLogger(__name__)
@@ -71,6 +72,11 @@ def is_enabled(subject_type, kind, program="", encounter_type="", provider=None)
     return subject_type in DEFAULT_ON_SUBJECT_TYPES
 
 
+def kind_rank(row):
+    """Registrations, then enrolments, then visits: a record is synced after what it hangs off."""
+    return contracts.KINDS.index(row.kind) if row.kind in contracts.KINDS else len(contracts.KINDS)
+
+
 def enabled_kinds(subject_type, kinds=None, provider=None):
     """Every enabled switch row of a subject type, optionally limited to some kinds."""
     rows = rows_for(subject_type, provider).filter(is_available=True)
@@ -79,7 +85,8 @@ def enabled_kinds(subject_type, kinds=None, provider=None):
     parent = SyncSwitch.objects.filter(
         provider=provider_key(provider), subject_type=subject_type, kind="subject"
     ).first()
-    return [row for row in rows.order_by("kind", "program", "encounter_type") if effective_enabled(row, parent)]
+    enabled = [row for row in rows.order_by("program", "encounter_type") if effective_enabled(row, parent)]
+    return sorted(enabled, key=kind_rank)
 
 
 def enabled_encounter_types(subject_type, provider=None):

@@ -404,6 +404,160 @@ class ProviderLoadingTests(TestCase):
             contracts.Provider().catalog()
 
 
+class ParentsFirstTests(ConnectorTestCase):
+    """A record is saved after what it hangs off: the provider names the subjects it still needs."""
+
+    def member(self, external_id="mem-1", **overrides):
+        overrides.setdefault("subject_type", "Family Member")
+        overrides.setdefault("household_number", "")
+        return normalized(external_id=external_id, **overrides)
+
+    def test_a_subject_needed_first_is_synced_before_the_record(self):
+        self.provider.subjects["hh-1"] = raw(normalized(external_id="hh-1"))
+        self.provider.needs_first["mem-1"] = ["hh-1"]
+        connector.sync_record("subject", raw(self.member()), self.context)
+        self.assertEqual(self.provider.legacy_calls, [("subject", "hh-1"), ("subject", "mem-1")])
+        self.assertEqual(sorted(Record.objects.values_list("external_id", flat=True)), ["hh-1", "mem-1"])
+
+    def test_a_child_record_brings_its_subject_and_that_subject_its_own(self):
+        self.provider.subjects["hh-1"] = raw(normalized(external_id="hh-1"))
+        self.provider.subjects["mem-1"] = raw(self.member())
+        self.provider.needs_first["mem-1"] = ["hh-1"]
+        self.provider.needs_first["enr-1"] = ["mem-1"]
+        enrolment = normalized(kind="enrolment", external_id="enr-1", subject_external_id="mem-1",
+                               subject_type="Family Member", program="MHM", household_number="")
+        connector.sync_record("enrolment", raw(enrolment), self.context)
+        self.assertEqual(self.provider.legacy_calls,
+                         [("subject", "hh-1"), ("subject", "mem-1"), ("enrolment", "enr-1")])
+
+    def test_a_needed_subject_is_synced_once_per_run(self):
+        self.provider.subjects["hh-1"] = raw(normalized(external_id="hh-1"))
+        for uuid in ("mem-1", "mem-2"):
+            self.provider.needs_first[uuid] = ["hh-1"]
+            connector.sync_record("subject", raw(self.member(uuid)), self.context)
+        self.assertEqual(self.provider.legacy_calls.count(("subject", "hh-1")), 1)
+        self.assertEqual(self.provider.subject_calls, ["hh-1"])
+
+    def test_a_needed_subject_that_cannot_be_read_does_not_stop_the_record(self):
+        self.provider.needs_first["mem-1"] = ["ghost"]
+        saved = connector.sync_record("subject", raw(self.member()), self.context)
+        self.assertTrue(saved)
+        self.assertEqual(self.provider.legacy_calls, [("subject", "mem-1")])
+
+    def test_a_needed_subject_that_fails_to_save_does_not_stop_the_record(self):
+        self.provider.subjects["hh-1"] = {"ID": "hh-1"}    # unreadable by the provider
+        self.provider.needs_first["mem-1"] = ["hh-1"]
+        self.assertTrue(connector.sync_record("subject", raw(self.member()), self.context))
+
+    def test_two_subjects_needing_each_other_do_not_loop(self):
+        self.provider.subjects["a"] = raw(self.member("a"))
+        self.provider.subjects["b"] = raw(self.member("b"))
+        self.provider.needs_first["a"] = ["b"]
+        self.provider.needs_first["b"] = ["a"]
+        connector.sync_record("subject", raw(self.member("a")), self.context)
+        self.assertEqual(self.provider.legacy_calls, [("subject", "b"), ("subject", "a")])
+
+    def test_nothing_is_fetched_for_a_record_that_needs_nothing(self):
+        connector.sync_record("subject", raw(self.member()), self.context)
+        self.assertEqual(self.provider.subject_calls, [])
+
+    def test_an_unchanged_record_asks_for_no_parents(self):
+        connector.sync_record("subject", raw(self.member()), self.context)
+        self.provider.needs_first["mem-1"] = ["hh-1"]
+        connector.sync_record("subject", raw(self.member()), SyncContext(self.provider))
+        self.assertEqual(self.provider.subject_calls, [])
+
+    def test_a_subject_that_belongs_to_a_household_is_linked_to_it_and_keeps_its_own_number_blank(self):
+        household = self.household("42")
+        self.provider.household_numbers["mem-1"] = "42"
+        connector.sync_record("subject", raw(self.member()), self.context)
+        row = Record.objects.get(external_id="mem-1")
+        self.assertEqual((row.household_number, row.household), ("", household))
+
+    def test_two_subjects_of_one_household_are_both_stored(self):
+        household = self.household("42")
+        for uuid in ("mem-1", "mem-2"):
+            self.provider.household_numbers[uuid] = "42"
+            connector.sync_record("subject", raw(self.member(uuid)), self.context)
+        self.assertEqual(Record.objects.filter(household=household).count(), 2)
+        self.assertEqual(self.context.counts["failed"], 0)
+
+    def test_a_child_record_carries_the_number_of_the_household_its_subject_belongs_to(self):
+        household = self.household("42")
+        self.provider.subjects["mem-1"] = {"ID": "mem-1"}
+        self.provider.household_numbers["enr-1"] = "42"
+        enrolment = normalized(kind="enrolment", external_id="enr-1", subject_external_id="mem-1",
+                               subject_type="Family Member", program="MHM", household_number="")
+        connector.sync_record("enrolment", raw(enrolment), self.context)
+        row = Record.objects.get(external_id="enr-1")
+        self.assertEqual((row.household_number, row.household), ("42", household))
+
+    def test_a_subjects_own_household_number_is_stored_as_before(self):
+        household = self.household("42")
+        connector.sync_record("subject", raw(normalized()), self.context)
+        row = Record.objects.get(external_id="sub-1")
+        self.assertEqual((row.household_number, row.household), ("42", household))
+
+
+class LegacyGapTests(ConnectorTestCase):
+    """A record the store has seen but the legacy tables never received is saved again."""
+
+    def test_an_unchanged_record_missing_from_the_legacy_tables_is_saved_again(self):
+        connector.sync_record("subject", raw(normalized()), self.context)
+        self.provider.legacy_gaps.add("sub-1")
+        saved = connector.sync_record("subject", raw(normalized()), SyncContext(self.provider))
+        self.assertTrue(saved)
+        self.assertEqual(self.provider.legacy_calls, [("subject", "sub-1"), ("subject", "sub-1")])
+        self.assertEqual(Record.objects.count(), 1)
+
+    def test_an_unchanged_record_the_legacy_tables_hold_is_left_alone(self):
+        connector.sync_record("subject", raw(normalized()), self.context)
+        again = SyncContext(self.provider)
+        self.assertFalse(connector.sync_record("subject", raw(normalized()), again))
+        self.assertEqual(again.counts["unchanged"], 1)
+        self.assertEqual(len(self.provider.legacy_calls), 1)
+
+    def test_a_voided_record_is_never_saved_again_for_a_legacy_gap(self):
+        voided = raw(normalized(is_voided=True), status="voided")
+        connector.sync_record("subject", voided, self.context)
+        self.provider.legacy_gaps.add("sub-1")
+        connector.sync_record("subject", voided, SyncContext(self.provider))
+        self.assertEqual(self.provider.legacy_calls, [])
+
+
+class ListingOrderTests(ConnectorTestCase):
+    def test_registrations_come_before_enrolments_and_enrolments_before_visits(self):
+        self.provider.enrolment_listings.add(("Family Member", "MHM"))
+        self.provider.unlistable.add("enrolment")
+        self.switch("Family Member", kind="program_encounter", program="MHM", encounter_type="Follow-up")
+        self.switch("Family Member", kind="encounter", encounter_type="Workshop")
+        self.switch("Family Member", kind="enrolment", program="MHM", encounter_type="")
+        self.switch("Family Member", kind="subject", encounter_type="")
+        rows = connector.enabled_rows(["Family Member"], kinds=contracts.KINDS, exclude=())
+        self.assertEqual([row.kind for row in rows], ["subject", "enrolment", "encounter", "program_encounter"])
+
+    def test_enrolments_are_listed_only_where_the_provider_can_list_them(self):
+        self.provider.unlistable.add("enrolment")
+        self.provider.enrolment_listings.add(("Family Member", "MHM"))
+        self.switch("Family Member", kind="enrolment", program="MHM", encounter_type="")
+        self.switch("Family Member", kind="enrolment", program="Other", encounter_type="")
+        self.switch("Household", kind="enrolment", program="MHM", encounter_type="")
+        rows = connector.enabled_rows(["Family Member", "Household"], kinds=("enrolment",))
+        self.assertEqual([(row.subject_type, row.program) for row in rows], [("Family Member", "MHM")])
+
+    def test_a_listed_enrolment_is_stored_and_handed_to_legacy(self):
+        self.provider.unlistable.add("enrolment")
+        self.provider.enrolment_listings.add(("Family Member", "MHM"))
+        self.switch("Family Member", kind="enrolment", program="MHM", encounter_type="")
+        self.provider.subjects["mem-1"] = {"ID": "mem-1"}
+        enrolment = normalized(kind="enrolment", external_id="enr-1", subject_external_id="mem-1",
+                               subject_type="Family Member", program="MHM", household_number="")
+        self.provider.listings[("enrolment", "Family Member", "MHM", "")] = [raw(enrolment)]
+        results = connector.sync_kinds(["Family Member"], kinds=("enrolment",))
+        self.assertEqual(results, {"enrolments:MHM": 1})
+        self.assertEqual(self.provider.legacy_calls, [("enrolment", "enr-1")])
+
+
 class EnrolmentOnDemandTests(ConnectorTestCase):
     def program_encounter(self, external_id="penc-1", enrolment="enr-1"):
         record = normalized(kind="program_encounter", external_id=external_id, subject_external_id="sub-1",
