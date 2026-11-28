@@ -493,13 +493,19 @@ class AvniProvider(contracts.Provider):
         return False
 
     def legacy_void(self, kind, raw, context):
-        if kind != "subject" or raw.get("Subject type") not in LEGACY_HOUSEHOLD_TYPES:
-            return 0
+        """A record voided in AVNI leaves the legacy tables; a household takes its members along."""
         try:
-            return households.remove_voided_household(raw)
+            if kind == "subject" and raw.get("Subject type") in LEGACY_HOUSEHOLD_TYPES:
+                return households.remove_voided_household(raw)
+            if kind == "subject" and raw.get("Subject type") == MEMBER_SUBJECT_TYPE:
+                return members.remove_voided_member(raw["ID"])
+            if kind == "enrolment":
+                return members.remove_voided_enrolment(raw["ID"])
+            if kind == "program_encounter":
+                return members.remove_voided_encounter(raw["ID"])
         except Exception as exc:
-            logger.error("Voided subject %s not removed: %s", raw.get("ID"), exc)
-            return 0
+            logger.error("Voided %s %s not removed: %s", kind, raw.get("ID"), exc)
+        return 0
 
     def legacy_save(self, kind, raw, context):
         try:

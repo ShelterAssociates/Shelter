@@ -1,0 +1,135 @@
+"""AVNI records in a JSON-lines file, so a repair can run where AVNI must not be called.
+
+`export` (run where AVNI is reachable) fetches records one by one, at the shared
+client's pace, and appends one line per record: {"kind", "id", "record"} or
+{"kind", "id", "missing": status}. It resumes from the lines already written.
+`load` (run anywhere, production included) feeds the bundle through the normal
+sync (survey.connector.sync_record) with FileApi as the only AVNI there is, so
+every write goes through the same writers as the nightly sync.
+"""
+
+import csv
+import json
+import os
+from collections import Counter
+
+from django.db import transaction
+
+from avni import paths
+from avni.client import AvniError, client, use_client
+from avni.provider import AvniProvider, retrying
+from graphs.models import MemberData, MemberProgramData
+from survey import connector
+from survey.store import SyncContext, parse_moment
+
+PATHS = {"subject": paths.subject, "enrolment": paths.program_enrolment, "program_encounter": paths.program_encounter}
+HOUSEHOLD_TYPES = ("Household", "Structure", "Detailed Socio Economic Survey")
+LOAD_ORDER = ("household", "member", "enrolment", "program_encounter")
+
+
+class DryRun(Exception):
+    pass
+
+
+def read_ids(path):
+    with open(path, newline="", encoding="utf-8") as handle:
+        return [(row["kind"], row["uuid"]) for row in csv.DictReader(handle) if row.get("uuid")]
+
+
+def read_bundle(path):
+    if not os.path.exists(path):
+        return []
+    with open(path, encoding="utf-8") as handle:
+        return [json.loads(line) for line in handle if line.strip()]
+
+
+def export(ids_path, out_path, api=None, out=print):
+    """Fetch every (kind, uuid) not yet in the bundle and append it. Returns counts."""
+    api = api or client()
+    done = {(line["kind"], line["id"]) for line in read_bundle(out_path)}
+    wanted = [item for item in read_ids(ids_path) if item not in done]
+    counts = Counter()
+    with open(out_path, "a", encoding="utf-8") as handle:
+        for number, (kind, uuid) in enumerate(wanted, 1):
+            path = PATHS[kind](uuid)
+            try:
+                line = {"kind": kind, "id": uuid, "record": retrying(lambda: api.get_json(path), label=path)}
+                counts["fetched"] += 1
+            except AvniError as exc:
+                line = {"kind": kind, "id": uuid, "missing": exc.status_code}
+                counts["missing"] += 1
+            handle.write(json.dumps(line) + "\n")
+            if number % 500 == 0:
+                handle.flush()
+                out("{} of {} fetched".format(number, len(wanted)))
+    out("Fetched {}, missing in AVNI {}, already in the bundle {}.".format(
+        counts["fetched"], counts["missing"], len(done)))
+    return counts
+
+
+class FileApi(object):
+    """The bundle as a read-only AVNI: records by id, empty lists, 404 for anything else."""
+
+    def __init__(self, records):
+        self.records = records
+        self.calls = []
+
+    def get_json(self, path, timeout=None):
+        self.calls.append(path)
+        for kind, build in PATHS.items():
+            prefix = build("")
+            if path.startswith(prefix) and (kind, path[len(prefix):]) in self.records:
+                return json.loads(json.dumps(self.records[(kind, path[len(prefix):])]))
+        raise AvniError(404, path, "not in the bundle")
+
+    def iter_pages(self, path, timeout=None):
+        yield []
+
+
+def load_group(kind, record):
+    if kind != "subject":
+        return kind
+    return "household" if record.get("Subject type") in HOUSEHOLD_TYPES else "member"
+
+
+def older_than_stored(record):
+    """An enrolment older than the one already stored for its member (one row per member)."""
+    started = parse_moment(record.get("Enrolment datetime"))
+    stored = (MemberProgramData.objects.filter(member__member_uuid=record.get("Subject ID"))
+              .exclude(program_uuid=record.get("ID")).values_list("created_date", flat=True).first())
+    return bool(started and stored and stored > started.date())
+
+
+def load(path, apply=False, report="bundle_load_report.csv", out=print):
+    """Load a bundle through the normal sync, offline. Dry run unless `apply`. Returns counts."""
+    lines = [line for line in read_bundle(path) if "record" in line]
+    records = {(line["kind"], line["id"]): line["record"] for line in lines}
+    lines.sort(key=lambda line: LOAD_ORDER.index(load_group(line["kind"], line["record"])))
+    api = FileApi(records)
+    counts, results = Counter(), []
+    use_client(api)
+    try:
+        with transaction.atomic():
+            context = SyncContext(AvniProvider(api=api))
+            for line in lines:
+                kind, record = line["kind"], line["record"]
+                if kind == "enrolment" and older_than_stored(record):
+                    result = "older than stored"
+                else:
+                    result = "saved" if connector.sync_record(kind, record, context) else "not saved"
+                counts[result] += 1
+                results.append((kind, line["id"], record.get("Subject type") or "", result))
+            if not apply:
+                raise DryRun()
+    except DryRun:
+        pass
+    finally:
+        use_client(None)
+    with open(report, "w", newline="", encoding="utf-8") as handle:
+        writer = csv.writer(handle)
+        writer.writerow(["kind", "id", "subject_type", "result"])
+        writer.writerows(results)
+    out("{} records: {}.".format(len(lines), ", ".join("{} {}".format(n, r) for r, n in sorted(counts.items()))))
+    out("Report: {}".format(report))
+    out("Written." if apply else "Dry run: nothing written. Run again with --apply to write.")
+    return counts

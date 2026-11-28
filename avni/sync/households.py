@@ -8,7 +8,7 @@ from django.utils import timezone
 from avni import mappings, paths
 from avni.client import AvniError, client
 from avni.locations import slum_and_city_ids
-from graphs.models import HouseholdData
+from graphs.models import FollowupData, HouseholdData
 from notification.services import reporting
 from survey import versioning
 from survey.store import parse_moment
@@ -101,11 +101,18 @@ def retire_stale_rows(subject_uuid, slum_id, city_id, number):
 
 
 def remove_voided_household(record):
-    """A subject voided in AVNI takes its HouseholdData rows with it (matched by uuid, never by number)."""
+    """A subject voided in AVNI takes its HouseholdData rows with it (matched by uuid, never by number),
+    and with each row its members (with their enrolments, follow-ups and summary rows) and follow-up data."""
+    from avni.sync import members
+
     rows = rows_for_subject(record["ID"])
     for row in rows:
         logger.info("Household %s in slum %s removed: subject %s voided", row.household_number, row.slum_id, record["ID"])
+        linked = members.linked_member_uuids(row.id)
         row.delete()
+        removed = members.remove_household_members(row.slum_id, row.household_number, linked)
+        FollowupData.objects.filter(slum_id=row.slum_id, household_number=row.household_number).delete()
+        logger.info("Household %s in slum %s: %s member(s) removed with it", row.household_number, row.slum_id, removed)
     return len(rows)
 
 
