@@ -56,7 +56,7 @@ class ForgedRequestTests(TestCase):
         return self.browser.post(path, "[]", content_type="application/json", **headers, **extra)
 
     def token(self):
-        response = self.browser.get("/accounts/login/")
+        response = self.browser.get("/accounts/auth/user/add/")
         return str(response.context["csrf_token"]) if response.context else get_token(response.wsgi_request)
 
     def test_forged_delete_is_refused(self):
