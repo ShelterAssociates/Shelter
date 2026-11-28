@@ -134,7 +134,6 @@ def create_household(slum_id, city_id, record, observations):
     mappings.apply_household_overrides(rhs_data)
     rhs_data["rhs_uuid"] = record["ID"]
     rhs_data.setdefault("group_og5bx85/Type_of_survey", "RHS")
-    mappings.convert_answers(rhs_data)
     HouseholdData.objects.create(
         household_number=mappings.household_number_from(observations.get("First name")),
         slum_id=slum_id,
@@ -150,7 +149,6 @@ def update_household(existing, record, observations):
     rhs_data = mappings.merge_rhs_keys(rhs_data, observations)
     rhs_data["rhs_uuid"] = record["ID"]
     rhs_data["group_og5bx85/Type_of_survey"] = "RHS"
-    mappings.convert_answers(rhs_data)
     existing.update(rhs_data=rhs_data, **registration_fields(record))
 
 
@@ -202,4 +200,4 @@ def merge_into_rhs_data(household, data):
         rows = HouseholdData.objects.filter(slum_id=slum_id, household_number=household.number)
     rhs_data = rows.values_list("rhs_data", flat=True)[0] or {}
     rhs_data.update(data)
-    rows.update(rhs_data=mappings.convert_answers(rhs_data))
+    rows.update(rhs_data=rhs_data)

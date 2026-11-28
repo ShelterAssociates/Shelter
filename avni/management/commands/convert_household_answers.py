@@ -9,7 +9,7 @@ from graphs.models import HouseholdData
 
 
 class Command(BaseCommand):
-    help = "Apply avni.mappings.convert_answers to every stored household; dry run unless --apply."
+    help = "Apply the answer conversions (avni.mappings) to every stored household; dry run unless --apply."
 
     def add_arguments(self, parser):
         parser.add_argument("--apply", action="store_true", help="Write the changes (default is a dry run).")
@@ -18,7 +18,7 @@ class Command(BaseCommand):
         changed, keys = 0, Counter()
         for row in HouseholdData.objects.exclude(rhs_data__isnull=True).only("id", "rhs_data").iterator():
             before = row.rhs_data or {}
-            after = mappings.convert_answers(dict(before))
+            after = mappings.copy_home_with_shop(mappings.convert_answers(dict(before)))
             moved = [key for key in after if after.get(key) != before.get(key)]
             if not moved:
                 continue

@@ -47,13 +47,33 @@ class ConvertAnswersTests(SimpleTestCase):
         self.assertEqual(mappings.convert_answers(dict(data)), data)
 
     def test_home_with_shop_becomes_the_occupancy(self):
-        data = mappings.convert_answers({"Functioning of the structure": "Individual home + shop", OCCUPANCY: "Occupied house"})
+        data = mappings.apply_structure_overrides({"Functioning of the structure": "Individual home + shop", OCCUPANCY: "Occupied house"})
         self.assertEqual(data[OCCUPANCY], "Individual home + shop")
         self.assertEqual(data["Functioning of the structure"], "Individual home + shop")
 
     def test_converting_twice_changes_nothing_more(self):
         once = mappings.convert_answers({TOILET: "Toilet by sa ", WATER: "Group connection"})
         self.assertEqual(mappings.convert_answers(dict(once)), once)
+
+
+class MappingFunctionsConvertTests(SimpleTestCase):
+    """Answers are converted where their keys are mapped, as the earlier mappings are."""
+
+    def test_household_keys(self):
+        self.assertEqual(mappings.merge_rhs_keys({}, {"Water Sub Category": "Group connection"})[WATER],
+                         "Group connection (paid by all users)")
+
+    def test_structure_keys(self):
+        self.assertEqual(mappings.map_known_questions({"Final current place of defecation": "Toilet by sa "})[TOILET],
+                         "Toilet by SA")
+
+    def test_sanitation_form_keys(self):
+        self.assertEqual(mappings.map_sanitation_keys(
+            {"Does any member of the household go for open defecation ?": "only men"})[OD], "Only men")
+
+    def test_water_form_keys(self):
+        self.assertEqual(mappings.rename_keys({"Type of water connection ?": "Borewell/Submersible"},
+                                              mappings.ENCOUNTER_RENAMES["Water"])[WATER], "Borewell")
 
 
 class WritersConvertTests(TestCase):
@@ -80,9 +100,12 @@ class WritersConvertTests(TestCase):
         structures.save_structure_record(record)
         self.assertEqual(self.row()[TOILET], "No Toilet")
 
-    def test_form_answers_merged_into_a_household_are_converted(self):
+    def test_sanitation_form_answers_are_converted(self):
         households.save_household(subject_record())
-        households.merge_into_rhs_data(households.household_from_record(subject_record()), {OD: "only women"})
+        form = {"ID": "enc-1", "Encounter type": "Sanitation",
+                "observations": {"Does any member of the household go for open defecation ?": "only women"},
+                "audit": {"Created at": "2026-10-01T00:00:00.000Z", "Last modified at": "2026-10-01T00:00:00.000Z"}}
+        encounters.save_encounter_for(households.household_from_record(subject_record()), form)
         self.assertEqual(self.row()[OD], "Only women")
 
 
