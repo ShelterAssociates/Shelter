@@ -93,10 +93,20 @@ class EncounterDuplicateTests(DuplicateCase):
                        "Encounter date time": day})
         return record
 
-    def store(self, record):
-        Record.objects.create(provider="avni", kind="program_encounter", external_id=record["ID"],
-                              subject_external_id="mem-1", encounter_type="Menstrual hygiene Follow-up",
-                              record_datetime=record["Encounter date time"], slum=self.slum, city=self.city)
+    def store(self, record, answer="2026-08-20"):
+        from survey.models import Answer, Concept
+
+        stored = Record.objects.create(provider="avni", kind="program_encounter", external_id=record["ID"],
+                                       subject_external_id="mem-1", encounter_type="Menstrual hygiene Follow-up",
+                                       record_datetime=record["Encounter date time"], slum=self.slum, city=self.city)
+        question, _ = Concept.objects.get_or_create(key="last-period-date", defaults={"name": "Last period date", "data_type": "date"})
+        Answer.objects.create(record=stored, question=question, value_text=answer)
+        return stored
+
+    def test_same_day_with_other_answers_is_not_a_duplicate(self):
+        self.store(self.visit("v-1"), answer="2026-07-20")
+        self.store(self.visit("v-2"), answer="2026-08-20")
+        self.assertIsNone(duplicates.flag_encounter("avni", "v-2"))
 
     def test_same_subject_type_and_day_is_flagged(self):
         self.store(self.visit("v-1"))

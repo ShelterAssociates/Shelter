@@ -46,12 +46,28 @@ def flag_encounter(provider, external_id):
                     household_number=record.household_number, encounter_type=record.encounter_type)
 
 
+def answers_of(record_ids):
+    """{record id: frozenset of its answers} - visits entered twice carry the same answers."""
+    from survey.models import Answer
+
+    answers = {}
+    for record_id, question, answer, text, number, moment in Answer.objects.filter(record_id__in=record_ids).values_list(
+            "record_id", "question_id", "answer_id", "value_text", "value_number", "value_date"):
+        answers.setdefault(record_id, set()).add((question, answer, text, number, moment))
+    return {record_id: frozenset(answers.get(record_id, ())) for record_id in record_ids}
+
+
 def twin_ids(record, day):
-    same = Record.objects.filter(
+    """Live visits of this subject, type and day whose answers are the same as this one's."""
+    same = list(Record.objects.filter(
         provider=record.provider, kind=record.kind, subject_external_id=record.subject_external_id,
         encounter_type=record.encounter_type, is_voided=False, record_datetime__date=day,
-    )
-    return set(same.values_list("external_id", flat=True))
+    ).values_list("id", "external_id"))
+    if len(same) < 2:
+        return {external_id for _, external_id in same}
+    answers = answers_of([pk for pk, _ in same])
+    mine = answers.get(record.pk, frozenset())
+    return {external_id for pk, external_id in same if answers[pk] == mine}
 
 
 def resolve(duplicate, resolution):
