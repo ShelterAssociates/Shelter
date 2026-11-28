@@ -8,6 +8,7 @@ like a step disabled in the job's admin.
 import time
 
 from avni import window
+from avni.jobs import duplicates as duplicate_records
 from avni.jobs import resume as resuming
 from avni.jobs.steps import run_step
 from avni.sync import households, mobilization, program_encounters, structures
@@ -34,6 +35,7 @@ STEPS = (
      (structures.STRUCTURE, "subject", "", "")),
     ("households:Detailed Socio Economic Survey", households.sync_households, {"subject_type": structures.DSES},
      (structures.DSES, "subject", "", "")),
+    ("duplicates", duplicate_records.recheck, {}, None),
     ("daily_reporting", program_encounters.sync_daily_reporting, {},
      ("Household", "program_encounter", "", program_encounters.DAILY_REPORTING)),
     ("family_factsheets", program_encounters.sync_family_factsheets, {},

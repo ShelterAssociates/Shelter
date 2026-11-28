@@ -19,7 +19,7 @@ from avni import paths
 from avni.client import AvniError, client, use_client
 from avni.provider import AvniProvider, retrying
 from graphs.models import MemberData, MemberProgramData
-from survey import connector
+from survey import connector, duplicates
 from survey.store import SyncContext, parse_moment
 
 PATHS = {"subject": paths.subject, "enrolment": paths.program_enrolment, "program_encounter": paths.program_encounter}
@@ -102,7 +102,9 @@ def older_than_stored(record):
 
 def load(path, apply=False, report="bundle_load_report.csv", out=print):
     """Load a bundle through the normal sync, offline. Dry run unless `apply`. Returns counts."""
-    lines = [line for line in read_bundle(path) if "record" in line]
+    everything = read_bundle(path)
+    groups = [line for line in everything if line.get("kind") == "duplicate"]
+    lines = [line for line in everything if "record" in line]
     records = {(line["kind"], line["id"]): line["record"] for line in lines}
     lines.sort(key=lambda line: LOAD_ORDER.index(load_group(line["kind"], line["record"])))
     api = FileApi(records)
@@ -119,6 +121,9 @@ def load(path, apply=False, report="bundle_load_report.csv", out=print):
                     result = "saved" if connector.sync_record(kind, record, context) else "not saved"
                 counts[result] += 1
                 results.append((kind, line["id"], record.get("Subject type") or "", result))
+            for group in groups:
+                duplicates.remember_household("avni", group["slum_id"], group.get("city_id"), group["number"], group["ids"])
+                counts["duplicate groups"] += 1
             if not apply:
                 raise DryRun()
     except DryRun:

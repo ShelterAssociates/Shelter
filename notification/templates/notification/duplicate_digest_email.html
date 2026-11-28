@@ -1,0 +1,12 @@
+<!doctype html>
+<html>
+<body style="font-family: Arial, sans-serif; font-size: 14px; color: #222;">
+  <p>AVNI holds some records twice{% if city %} in {{ city }}{% endif %}:</p>
+  <ul>
+    {% if households %}<li><strong>{{ households }}</strong> household number{{ households|pluralize }} used by more than one household</li>{% endif %}
+    {% if visits %}<li><strong>{{ visits }}</strong> visit{{ visits|pluralize }} entered more than once on the same day</li>{% endif %}
+  </ul>
+  {% if new %}<p>{{ new }} of these {{ new|pluralize:"is,are" }} new since the last mail.</p>{% endif %}
+  <p>The attached sheet lists each one and what to change in AVNI. Once the wrong record is voided, renumbered or moved in AVNI, the nightly sync picks it up and removes it from this list.</p>
+</body>
+</html>

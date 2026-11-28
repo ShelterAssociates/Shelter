@@ -17,6 +17,7 @@ from django.utils.dateparse import parse_date, parse_datetime
 
 from notification.services import reporting
 from survey import concepts as dictionary
+from survey import duplicates
 from survey import identity, locations, versions
 from survey.models import Answer, Concept, Record
 
@@ -122,6 +123,15 @@ def resolve_slum(slum_name, context):
         except LookupError:
             context.slum_ids[slum_name] = (None, None)
     return context.slum_ids[slum_name]
+
+
+def forget_removed_households(context):
+    """Drop memoised household rows a void has just deleted."""
+    from graphs.models import HouseholdData
+
+    ids = {value for value in context.household_rows.values() if value}
+    kept = set(HouseholdData.objects.filter(id__in=ids).values_list("id", flat=True))
+    context.household_rows = {key: value for key, value in context.household_rows.items() if not value or value in kept}
 
 
 def household_id_for(normalized, slum_id, context):
@@ -258,16 +268,21 @@ def on_integrity_error(normalized, context, exc, quiet):
             return "failed"
         raise
     context.bump("duplicate_household")
-    context.bump("failed")
+    holder = duplicate_holder(normalized, context)
+    slum_id, city_id = resolve_slum(normalized.slum_name, context)
+    duplicates.remember_household(context.provider.key, slum_id, city_id, normalized.household_number,
+                                  [normalized.external_id] + ([holder] if holder else []))
+    message = "household number {} already active in {} (id {}); both kept as a duplicate".format(
+        normalized.household_number, normalized.slum_name or "-", holder or "-")
     if not quiet:
-        reporting.fail(ValueError(duplicate_message(normalized, context)))
-    logger.error("Record %s not stored: %s", normalized.external_id, duplicate_message(normalized, context))
-    return "failed"
+        reporting.skip(slum=normalized.slum_name or None, reason="duplicate household")
+    logger.warning("Record %s not stored: %s", normalized.external_id, message)
+    return "duplicate"
 
 
-def duplicate_message(normalized, context):
+def duplicate_holder(normalized, context):
     slum_id, _ = resolve_slum(normalized.slum_name, context)
-    holder = (
+    return (
         Record.objects.filter(
             provider=context.provider.key, kind="subject", is_voided=False,
             slum_id=slum_id, household_number=normalized.household_number,
@@ -275,9 +290,6 @@ def duplicate_message(normalized, context):
         .exclude(external_id=normalized.external_id)
         .values_list("external_id", flat=True)
         .first()
-    )
-    return "household number {} already active in {} (id {})".format(
-        normalized.household_number, normalized.slum_name or "-", holder or "-"
     )
 
 

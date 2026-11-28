@@ -15,7 +15,7 @@ from django.conf import settings
 
 from notification.services import reporting
 from survey import locations as locations_module
-from survey import slum_sync, store, switches, window
+from survey import duplicates, slum_sync, store, switches, window
 from survey.models import Record
 from survey.store import SyncContext  # noqa: F401 (re-exported: callers build one from here)
 
@@ -90,8 +90,8 @@ def sync_record(kind, raw, context, only_slums=None):
 
     if status == "voided" or source.is_skipped_by_legacy(kind, raw):
         reporting.skip(slum=facts.slum_name or None, reason=skip_reason(kind, status))
-        if status == "voided":
-            source.legacy_void(kind, raw, context)
+        if status == "voided" and source.legacy_void(kind, raw, context) and kind == "subject":
+            store.forget_removed_households(context)
         if not store.unchanged(source.key, facts.external_id, facts.last_modified):
             store_quietly(kind, raw, context)
         return False
@@ -128,7 +128,10 @@ def sync_record(kind, raw, context, only_slums=None):
         household=normalized.household_number or None,
         key=facts.external_id,
     ):
-        store.upsert(normalized, context)
+        if store.upsert(normalized, context) == "duplicate":
+            return False
+        if kind in duplicates.ENCOUNTER_KINDS:
+            duplicates.flag_encounter(source.key, facts.external_id)
         saved = bool(source.legacy_save(kind, raw, context))
         if saved:
             context.bump("legacy_saved")

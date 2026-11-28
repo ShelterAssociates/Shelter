@@ -348,3 +348,42 @@ class Answer(models.Model):
         if self.value_date is not None:
             return self.value_date
         return self.value_text
+
+
+class SyncDuplicate(models.Model):
+    """What the provider holds twice: two households with one slum and number, or one visit entered twice.
+
+    Household duplicates are not merged into each other: the live tables keep what
+    they had until the provider resolves the pair (one voided, renumbered or moved),
+    then both are synced again. Encounter duplicates are only flagged.
+    """
+
+    HOUSEHOLD, ENCOUNTER = "household", "encounter"
+    KIND_CHOICES = ((HOUSEHOLD, "Household"), (ENCOUNTER, "Encounter"))
+    OPEN, RESOLVED = "open", "resolved"
+    STATUS_CHOICES = ((OPEN, "Open"), (RESOLVED, "Resolved"))
+
+    provider = models.CharField(max_length=30)
+    kind = models.CharField(max_length=20, choices=KIND_CHOICES)
+    key = models.CharField(max_length=300, help_text="household: slum id:number; encounter: subject id:type:day")
+    slum = models.ForeignKey("master.Slum", on_delete=models.SET_NULL, null=True, blank=True)
+    city = models.ForeignKey("master.City", on_delete=models.SET_NULL, null=True, blank=True)
+    household_number = models.CharField(max_length=20, blank=True)
+    encounter_type = models.CharField(max_length=300, blank=True)
+    external_ids = JSONField(default=list, help_text="Provider ids of every record in the group")
+    status = models.CharField(max_length=10, choices=STATUS_CHOICES, default=OPEN, db_index=True)
+    first_seen = models.DateTimeField(default=timezone.now)
+    last_seen = models.DateTimeField(default=timezone.now)
+    resolved_on = models.DateTimeField(null=True, blank=True)
+    resolution = models.CharField(max_length=300, blank=True)
+    notified_on = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        db_table = "survey_sync_duplicate"
+        ordering = ("status", "-last_seen")
+        constraints = [
+            models.UniqueConstraint(fields=["provider", "kind", "key"], name="survey_sync_duplicate_key"),
+        ]
+
+    def __str__(self):
+        return "{} {} ({})".format(self.kind, self.key, self.status)

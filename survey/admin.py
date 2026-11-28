@@ -15,6 +15,7 @@ from survey.models import (
     SlumDataVersion,
     SlumSyncSetting,
     SlumVersionBackup,
+    SyncDuplicate,
     SyncSwitch,
 )
 
@@ -196,3 +197,11 @@ class SyncSwitchAdmin(admin.ModelAdmin):
         count = queryset.update(is_enabled=False)
         self.message_user(request, "{} switch(es) disabled.".format(count), messages.SUCCESS)
     disable_selected.short_description = "Disable selected switches"
+
+
+@admin.register(SyncDuplicate)
+class SyncDuplicateAdmin(admin.ModelAdmin):
+    list_display = ("kind", "city", "slum", "household_number", "encounter_type", "status", "first_seen", "last_seen", "notified_on")
+    list_filter = ("kind", "status", "city")
+    search_fields = ("household_number", "key", "external_ids")
+    readonly_fields = ("first_seen", "last_seen", "resolved_on", "notified_on")

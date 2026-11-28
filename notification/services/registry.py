@@ -22,6 +22,7 @@ JOBS = {
     "avni_bulk_update": "avni_console.services.bulk_update:run",
     "dashboard_update": "graphs.jobs.dashboard_update:run",
     "member_summary": "graphs.jobs.member_summary:run",
+    "duplicate_digest": "avni.jobs.duplicates:run",
     "selftest": "notification.services.selftest:run",
     "design_batch": "design_studio.services.batch:run",
 }
