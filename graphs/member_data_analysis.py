@@ -1,11 +1,15 @@
+import logging
+
 from graphs.models import *
 import pandas as pd
 from django.db.models.functions import Cast
 from django.db.models import CharField
 from django.db.models import Max
 from django.db.models import Count
+from django.db.models import Q
 from django.db import transaction
 
+logger = logging.getLogger(__name__)
 
 class MemberDataProcess:
     updated_count = 0
@@ -14,7 +18,7 @@ class MemberDataProcess:
     error_logs = {}
 
     def __init__(self, slum):
-
+        self.slum_id = slum
         self.data = MemberData.objects.filter(slum_id=slum)
         self.program_data = MemberProgramData.objects.filter(slum_id=slum)
         self.encounter_data = MemberEncounterData.objects.filter(slum_id=slum)
@@ -38,11 +42,8 @@ class MemberDataProcess:
         }
 
     def convert_data_to_dict(self, data):
-        return (
-            data.groupby("id")
-            .apply(lambda x: x.drop("id", axis=1).to_dict("records")[0])
-            .to_dict()
-        )
+        """{member id: {column: value}}; ids are unique."""
+        return data.set_index("id").to_dict("index")
 
     def create_member_metrics(self):
         # Extract member data and convert into dataframe for processing
@@ -86,7 +87,7 @@ class MemberDataProcess:
         )
         # convert dataframe into list of dict
         member_data = member_df.to_dict(orient="records")
-        member_data = [{**dct, **dct.pop("member_data")} for dct in member_data]
+        member_data = [{**dct, **(dct.pop("member_data") or {})} for dct in member_data]
         member_df = pd.DataFrame(
             member_data,
             columns=[
@@ -135,7 +136,7 @@ class MemberDataProcess:
         # Utility function...
         def get_cup_use_status(id_):
             if id_ in qualified_members_dict:
-                return qualified_members_dict[id_].cup_use_status
+                return qualified_members_dict[id_].cup_use_status or ""
             return "No Record Available"
 
         member_data["cup_used_in_last_followup"] = member_data["id"].apply(
@@ -170,71 +171,32 @@ class MemberDataProcess:
         member_data = self.get_last_encounters(member_data, member_ids)
         return member_data
 
-    def chunked_queryset(self, queryset, size=100):
-        for i in range(0, len(queryset), size):
-            yield queryset[i : i + size]
-
     def save_member_data_metrics(self):
-        """ETL function to process, insert, and update records while logging activity."""
-        updated_count = 0
-        inserted_count = 0
+        """Replace this slum's summary rows in one transaction (bulk_update took ~30 ms a member)."""
         failed_count = 0
         error_logs = {}
 
-        # create member data matrices
         member_data_df = self.create_member_metrics()
-        # create member program metrics
         self.create_member_program_metrics(member_data_df)
-        # Convert dataframe into dict of rows
         final_data_for_update = self.convert_data_to_dict(member_data_df)
-        # Create record_ids to fetch the model instences from the table.
         record_ids = list(final_data_for_update.keys())
-        # Fetch the model instences using the above record_ids
-        existing_records = {
-            record.member_id: record
-            for record in MemberDataETL.objects.filter(member_id__in=record_ids)
-        }
-        """ Now Here we are have to handle two cases.
-            1. Records that are available in our table. We have to update these records.
-            2. Records that are not available in our table. We have to create new entries for these records
-        """
-        # Separate records into updates and inserts
-        records_to_update = []
-        records_to_create = []
-        # Loop to iterate on the final data
+
+        records = []
         for record_id, data in final_data_for_update.items():
             try:
-                if record_id in existing_records:
-                    # Update existing record
-                    record = existing_records[record_id]
-                    for field, value in data.items():
-                        setattr(record, field, value)
-                    records_to_update.append(record)
-                    updated_count += 1
-                else:
-                    record = MemberDataETL(member_id=record_id, **data)
-                    records_to_create.append(record)
-                    inserted_count += 1
+                records.append(MemberDataETL(member_id=record_id, **data))
             except Exception as e:
                 failed_count += 1
                 error_logs[record_id] = str(e)
 
-        # Perform bulk updates
-        if records_to_update:
-            fields_to_update = list(final_data_for_update[record_ids[0]].keys())
-            for batch in self.chunked_queryset(
-                records_to_update
-            ):  # Adjust size as needed
-                with transaction.atomic():  # Optional: ensure atomic batch updates
-                    MemberDataETL.objects.bulk_update(batch, fields=fields_to_update)
-
-        # Perform bulk inserts
-        if records_to_create:
-            MemberDataETL.objects.bulk_create(records_to_create)
-        # Store ETL log
+        with transaction.atomic():
+            previous = MemberDataETL.objects.filter(Q(slum_id=self.slum_id) | Q(member_id__in=record_ids))
+            updated_count = previous.filter(member_id__in=record_ids).count()
+            previous.delete()
+            MemberDataETL.objects.bulk_create(records, batch_size=1000)
         return {
             "updated_records": updated_count,
-            "inserted_records": inserted_count,
+            "inserted_records": len(records) - updated_count,
             "failed_records": failed_count,
             "error_details": error_logs,
         }
@@ -244,18 +206,25 @@ class MemberDataProcess:
 
 
 def main():
+    """Rebuild MemberDataETL slum by slum; a slum that fails is logged and the rest carry on. Returns totals."""
     list_of_slums = (
         MemberData.objects.all().values_list("slum_id", flat=True).distinct()
-    )  # [1362, 1091, 1253] #
+    )
     error_logs_dict = {
         "updated_records": 0,
         "inserted_records": 0,
         "failed_records": 0,
         "error_details": {},
     }
+    failed_slums = 0
     for slum_id in list_of_slums:
-        mem_obj = MemberDataProcess(slum_id)
-        etl_logs = mem_obj.save_member_data_metrics()
+        try:
+            etl_logs = MemberDataProcess(slum_id).save_member_data_metrics()
+        except Exception as exc:
+            logger.exception("Member summary for slum %s failed", slum_id)
+            failed_slums += 1
+            error_logs_dict["error_details"]["slum {}".format(slum_id)] = "{}: {}".format(type(exc).__name__, exc)
+            continue
         error_logs_dict = {
             k: (
                 v + error_logs_dict.get(k)
@@ -264,7 +233,6 @@ def main():
             )
             for k, v in etl_logs.items()
         }
-    # Store ETL log
     ETLLog.objects.create(
         task_name="Member ETL Task",
         updated_records=error_logs_dict["updated_records"],
@@ -272,3 +240,9 @@ def main():
         failed_records=error_logs_dict["failed_records"],
         error_details=error_logs_dict["error_details"],
     )
+    return {
+        "updated_records": error_logs_dict["updated_records"],
+        "inserted_records": error_logs_dict["inserted_records"],
+        "failed_records": error_logs_dict["failed_records"],
+        "failed_slums": failed_slums,
+    }

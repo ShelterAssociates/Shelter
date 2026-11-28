@@ -15,6 +15,8 @@
 # under ("Groups"); a record that arrives before what it hangs off (a household
 # for a member, a member for an enrolment or follow-up) syncs that first, and a
 # record the member tables never received is saved again when it is next read.
+# Last step: member_summary rebuilds the member summary (MemberDataETL) the
+# staff dashboard reads; it can be switched off in the job's admin like any step.
 # dashboard_update.sh is NO LONGER chained here -- it runs fortnightly on its
 # own cron line (1st and 16th). Chaining it made it run nightly.
 # sync_rhs.sh remains for manual Structure / by-IID runs only.

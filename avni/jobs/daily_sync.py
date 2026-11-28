@@ -11,6 +11,7 @@ from avni import window
 from avni.jobs import resume as resuming
 from avni.jobs.steps import run_step
 from avni.sync import households, mobilization, program_encounters, structures
+from graphs.jobs import member_summary
 from survey import connector, switches
 
 MEMBER_SUBJECT_TYPE = "Family Member"
@@ -41,6 +42,7 @@ STEPS = (
      (mobilization.SUBJECT_TYPE, "subject", "", "")),
     ("household_encounters", sync_household_encounters, {}, None),
     ("members", sync_members, {}, (MEMBER_SUBJECT_TYPE, "subject", "", "")),
+    ("member_summary", member_summary.refresh, {}, None),
 )
 
 

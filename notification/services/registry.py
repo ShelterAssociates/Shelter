@@ -21,6 +21,7 @@ JOBS = {
     "avni_form_cache_refresh": "avni.jobs.form_cache_refresh:run",
     "avni_bulk_update": "avni_console.services.bulk_update:run",
     "dashboard_update": "graphs.jobs.dashboard_update:run",
+    "member_summary": "graphs.jobs.member_summary:run",
     "selftest": "notification.services.selftest:run",
     "design_batch": "design_studio.services.batch:run",
 }
