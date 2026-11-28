@@ -1,16 +1,24 @@
 <!doctype html>
 <html>
-<body style="font-family: Arial, sans-serif; font-size: 14px; color: #222;">
+<body style="font-family: Arial, sans-serif; font-size: 14px; color: #222; line-height: 1.45;">
   {% if first %}
-  <p>This first list covers only the slums we are working in this financial year ({{ year }}): slums with menstrual hygiene or toilet construction work in {{ year }}, or whose household data was updated in {{ year }}. We have checked these and are notifying you now. Other slums may also have duplicate households; they will be added to later mails as the nightly sync finds them.</p>
-  <p><strong>Please fix these on an urgent basis</strong>: duplicate households hold up a lot of data validation work.</p>
+  <p style="background: #fff8e1; padding: 8px 10px;">
+    <strong>First list, please fix urgently.</strong> It covers the slums where we gave toilets or menstrual cups, or held
+    mobilisation activities, in {{ year }}{% if city == "Ichalkaranji" %} (all of Ichalkaranji, as the fresh survey is on){% endif %}.
+    Other slums may also have duplicates; later mails will add them.<br />
+    <strong>पहिली यादी, कृपया तातडीने दुरुस्त करा.</strong> यात {{ year }} मध्ये शौचालय किंवा मासिक पाळी कप दिलेल्या किंवा
+    जनजागृती उपक्रम झालेल्या वस्त्या आहेत{% if city == "Ichalkaranji" %} (नवीन सर्वेक्षण चालू असल्याने इचलकरंजीच्या सर्व वस्त्या){% endif %}.
+    इतर वस्त्यांमध्येही अशा नोंदी असू शकतात; त्या पुढील मेलमध्ये येतील.
+  </p>
   {% endif %}
-  <p>AVNI holds some records twice{% if city %} in {{ city }}{% endif %}:</p>
-  <ul>
-    {% if households %}<li><strong>{{ households }}</strong> household number{{ households|pluralize }} used by more than one household</li>{% endif %}
-    {% if visits %}<li><strong>{{ visits }}</strong> visit{{ visits|pluralize }} entered more than once on the same day</li>{% endif %}
-  </ul>
-  {% if new %}<p>{{ new }} of these {{ new|pluralize:"is,are" }} new since the last mail.</p>{% endif %}
-  <p>The attached sheet lists each one and what to change in AVNI. Once the wrong record is voided, renumbered or moved in AVNI, the nightly sync picks it up and removes it from this list.</p>
+  <p>AVNI has these duplicate records{% if city %} in {{ city }}{% endif %}{% if new %} ({{ new }} new since the last mail){% endif %}:</p>
+  {% for kind in kinds %}
+  <p style="margin: 6px 0;">
+    <strong>{{ kind.count }} &middot; {{ kind.en }}</strong><br />
+    {{ kind.mr }}
+  </p>
+  {% endfor %}
+  <p>The attached sheet lists each one, one tab per kind. The nightly sync removes an item once it is fixed in AVNI.<br />
+     जोडलेल्या शीटमध्ये प्रत्येक नोंद आहे. AVNI मध्ये दुरुस्त झाल्यावर ती यादीतून आपोआप जाईल.</p>
 </body>
 </html>

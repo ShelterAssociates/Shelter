@@ -147,3 +147,17 @@ class LoadTests(BundleCase):
             rows = list(csv.DictReader(handle))
         self.assertEqual([(row["kind"], row["id"], row["result"]) for row in rows],
                          [("subject", "hh-1", "saved"), ("enrolment", "enr-1", "not saved")])
+
+
+class DuplicateLineTests(BundleCase):
+    def test_family_and_number_again_lines_are_recorded(self):
+        from survey.models import SyncDuplicate
+
+        with open(self.path, "w", encoding="utf-8") as handle:
+            handle.write(json.dumps({"kind": "duplicate", "dup_kind": "family", "key": "1:9876543210:ashapatil",
+                                     "slum_id": self.slum.id, "ids": ["a", "b"],
+                                     "details": {"numbers": ["42", "77"], "head": "Asha Patil", "mobile": "XXXXXX3210"}}) + "\n")
+            handle.write(json.dumps({"kind": "duplicate", "slum_id": self.slum.id, "number": "42", "ids": ["c", "d"]}) + "\n")
+        self.load()
+        self.assertEqual(sorted(SyncDuplicate.objects.values_list("kind", flat=True)), ["family", "household"])
+        self.assertEqual(SyncDuplicate.objects.get(kind="family").details["head"], "Asha Patil")

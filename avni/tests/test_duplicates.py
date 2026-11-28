@@ -140,7 +140,7 @@ class DigestTests(DuplicateCase):
         args, kwargs = send.call_args
         self.assertEqual(args[0], ["team@example.org"])
         self.assertEqual(kwargs["cc"], ["lead@example.org"])
-        self.assertEqual(kwargs["context"]["households"], 1)
+        self.assertEqual([kind["count"] for kind in kwargs["context"]["kinds"]], [1])
         name, content, mimetype = kwargs["attachments"][0]
         self.assertTrue(name.startswith("duplicates_pune_") and name.endswith(".xlsx"))
         self.assertIsNotNone(SyncDuplicate.objects.get().notified_on)
@@ -151,10 +151,13 @@ class DigestTests(DuplicateCase):
 
         self.first_and_twin()
         name, content, mimetype = job.workbook(list(SyncDuplicate.objects.all()), "Pune")
-        rows = list(load_workbook(io.BytesIO(content)).active.iter_rows(values_only=True))
-        self.assertEqual(rows[0][0], "Kind")
-        self.assertEqual(rows[1][3], "42")
-        self.assertIn("void the wrong one", rows[1][9])
+        book = load_workbook(io.BytesIO(content))
+        self.assertEqual(book.sheetnames, ["Read me", "Same number"])
+        readme = list(book["Read me"].iter_rows(values_only=True))
+        self.assertIn("एकच घर क्रमांक", readme[1][2])
+        rows = list(book["Same number"].iter_rows(values_only=True))
+        self.assertEqual((rows[1][0], rows[1][2]), ("Pune", "42"))
+        self.assertIn("Void the wrong household", rows[1][10])
 
     def test_city_without_recipients_is_not_mailed(self):
         self.first_and_twin()
@@ -198,7 +201,8 @@ class FirstMailTests(DuplicateCase):
             job.send_digest(today=timezone.make_aware(timezone.datetime(2026, 11, 30, 9)))
         html = message.return_value.attach_alternative.call_args[0][0]
         self.assertIn("FY 2026-27", html)
-        self.assertIn("Other slums may also have duplicate households", html)
+        self.assertIn("Other slums may also have duplicates", html)
+        self.assertIn("पहिली यादी", html)
 
 
 class NightlyDigestTests(DuplicateCase):

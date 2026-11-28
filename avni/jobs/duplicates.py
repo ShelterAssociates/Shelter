@@ -14,7 +14,7 @@ from django.template.defaultfilters import slugify
 from django.utils import timezone
 
 from avni.client import AvniError
-from avni.sync import households
+from avni.sync import household_checks, households
 from helpers.services.send_email import send_email
 from notification.services import contacts
 from survey import connector, duplicates
@@ -65,34 +65,82 @@ def recheck(from_date=None, context=None):
         duplicates.resolve(group, "{} voided, {} renumbered or moved".format(voided, len(records) - voided - len(live)))
         counts["resolved"] += 1
     counts["encounters_closed"] = duplicates.recheck_encounters(PROVIDER)
+    counts["possible_closed"] = household_checks.recheck()
     return counts
 
 
-SHEET_COLUMNS = ("Kind", "City", "Slum", "Household number", "Visit type", "AVNI ids", "First seen", "Last seen",
-                 "New since last mail", "What to do in AVNI")
 XLSX = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
 
+# What each kind means and what to do, in English and Marathi (mail, sheet "Read me", sheet names).
+EXPLAIN = {
+    SyncDuplicate.HOUSEHOLD: {
+        "sheet": "Same number",
+        "en": "Same household number used twice: two different households have the same number in one slum. "
+              "Keep the right one; void the other, or give it its correct number or slum.",
+        "mr": "एकच घर क्रमांक दोनदा: एका वस्तीत दोन वेगवेगळ्या घरांना एकच क्रमांक दिला आहे. योग्य घर ठेवा; "
+              "दुसरे रद्द (void) करा किंवा त्याचा योग्य क्रमांक / वस्ती द्या.",
+        "todo": "Void the wrong household, or renumber / move it",
+    },
+    SyncDuplicate.FAMILY: {
+        "sheet": "Same family twice",
+        "en": "Same family registered twice: the same head of household and mobile number appear under two household "
+              "numbers. Check on the ground and void the extra registration.",
+        "mr": "एकच कुटुंब दोनदा नोंदवले: एकाच कुटुंबप्रमुखाचे नाव व मोबाईल क्रमांक दोन घर क्रमांकांवर आहे. "
+              "प्रत्यक्ष तपासा आणि जास्तीची नोंद रद्द (void) करा.",
+        "todo": "Check which registration is right; void the extra one",
+    },
+    SyncDuplicate.NUMBER_AGAIN: {
+        "sheet": "Number entered again",
+        "en": "Household number entered again does not match: the number typed a second time is another household's "
+              "number. Correct the household number.",
+        "mr": "पुन्हा टाकलेला घर क्रमांक जुळत नाही: दुसऱ्यांदा टाकलेला क्रमांक दुसऱ्या घराचा आहे. घर क्रमांक दुरुस्त करा.",
+        "todo": "Correct the household number (or the number entered again)",
+    },
+    SyncDuplicate.ENCOUNTER: {
+        "sheet": "Visit twice",
+        "en": "Visit entered twice: the same form for the same person or household on the same day. Void the extra one.",
+        "mr": "एकच भेट दोनदा: एकाच दिवशी एकाच व्यक्ती / घरासाठी एकच फॉर्म दोनदा भरला आहे. जास्तीचा रद्द (void) करा.",
+        "todo": "Void the extra visit",
+    },
+}
+KIND_ORDER = (SyncDuplicate.HOUSEHOLD, SyncDuplicate.FAMILY, SyncDuplicate.NUMBER_AGAIN, SyncDuplicate.ENCOUNTER)
+COLUMNS = ("City", "Slum", "Household number(s)", "Head of household", "Mobile", "Number entered again", "Visit type",
+           "AVNI ids", "First seen", "New since last mail", "What to do in AVNI")
 
-def todo(group):
-    if group.kind == SyncDuplicate.HOUSEHOLD:
-        return "{} households share number {}: void the wrong one, or renumber / move it".format(
-            len(group.external_ids), group.household_number)
-    return "{} {} visits on one day: void the extra one".format(len(group.external_ids), group.encounter_type)
+
+def city_of(row):
+    return row.city.name.city_name if row.city_id else ""
+
+
+def numbers_of(row):
+    return ", ".join((row.details or {}).get("numbers") or ([row.household_number] if row.household_number else []))
 
 
 def workbook(rows, city_name):
-    """The open groups as an .xlsx attachment (filename, bytes, mimetype)."""
+    """The groups as an .xlsx (filename, bytes, mimetype): a Read me sheet, then one sheet per kind."""
     import io
     from openpyxl import Workbook
 
     book = Workbook()
-    sheet = book.active
-    sheet.title = "Duplicates"
-    sheet.append(SHEET_COLUMNS)
-    for row in rows:
-        sheet.append([row.get_kind_display(), city_name, row.slum.name if row.slum_id else "", row.household_number,
-                      row.encounter_type, ", ".join(row.external_ids), row.first_seen.date(), row.last_seen.date(),
-                      "" if row.notified_on else "New", todo(row)])
+    readme = book.active
+    readme.title = "Read me"
+    readme.append(["Kind", "English", "मराठी", "Records"])
+    for kind in KIND_ORDER:
+        count = sum(1 for row in rows if row.kind == kind)
+        if count:
+            readme.append([EXPLAIN[kind]["sheet"], EXPLAIN[kind]["en"], EXPLAIN[kind]["mr"], count])
+    for kind in KIND_ORDER:
+        kind_rows = [row for row in rows if row.kind == kind]
+        if not kind_rows:
+            continue
+        sheet = book.create_sheet(EXPLAIN[kind]["sheet"])
+        sheet.append(COLUMNS)
+        for row in kind_rows:
+            details = row.details or {}
+            sheet.append([city_of(row), row.slum.name if row.slum_id else "", numbers_of(row), details.get("head", ""),
+                          details.get("mobile", ""), details.get("entered_again", ""), row.encounter_type,
+                          ", ".join(row.external_ids), row.first_seen.date(), "" if row.notified_on else "New",
+                          EXPLAIN[kind]["todo"]])
     content = io.BytesIO()
     book.save(content)
     return ("duplicates_{}_{}.xlsx".format(slugify(city_name or "no-city"), timezone.localdate().isoformat()),
@@ -117,12 +165,12 @@ def send_digest(today=None):
         if not to:
             logger.warning("Duplicates for %s not mailed: no recipients on %s", city_name or "-", purpose_key(city_name))
             continue
-        households = [row for row in rows if row.kind == SyncDuplicate.HOUSEHOLD]
         first = not SyncDuplicate.objects.filter(
             provider=PROVIDER, city_id=rows[0].city_id, notified_on__isnull=False).exists()
         send_email(to, "Duplicate records in AVNI - {} ({} open)".format(city_name or "no city", len(rows)),
                    template_name="notification/duplicate_digest_email.html",
-                   context={"city": city_name, "households": len(households), "visits": len(rows) - len(households),
+                   context={"city": city_name, "kinds": [dict(EXPLAIN[kind], count=sum(1 for row in rows if row.kind == kind))
+                                                          for kind in KIND_ORDER if any(row.kind == kind for row in rows)],
                             "new": sum(1 for row in rows if not row.notified_on), "first": first,
                             "year": financial_year(timezone.localtime(today or timezone.now()).date())},
                    cc=cc, bcc=bcc, attachments=[workbook(rows, city_name)])

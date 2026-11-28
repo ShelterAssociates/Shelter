@@ -6,6 +6,7 @@ from collections import namedtuple
 from django.utils import timezone
 
 from avni import mappings, paths
+from avni.sync import household_checks
 from avni.client import AvniError, client
 from avni.locations import slum_and_city_ids
 from graphs.models import FollowupData, HouseholdData
@@ -59,6 +60,7 @@ def save_household(record):
             update_household(existing, record, observations)
         else:
             create_household(slum_id, city_id, record, observations)
+        household_checks.flag(existing.first())
         return True
     except Exception as exc:
         logger.error("Household %s in %s not saved: %s", household.number, household.slum, exc)
