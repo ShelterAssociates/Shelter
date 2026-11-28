@@ -104,8 +104,8 @@ EXPLAIN = {
     },
 }
 KIND_ORDER = (SyncDuplicate.HOUSEHOLD, SyncDuplicate.FAMILY, SyncDuplicate.NUMBER_AGAIN, SyncDuplicate.ENCOUNTER)
-COLUMNS = ("City", "Slum", "Household number(s)", "Head of household", "Mobile", "Number entered again", "Visit type",
-           "AVNI ids", "First seen", "New since last mail", "What to do in AVNI")
+COLUMNS = ("City", "Slum", "Working slum this year", "Household number(s)", "Head of household", "Mobile",
+           "Number entered again", "Visit type", "AVNI ids", "First seen", "New since last mail", "What to do in AVNI")
 
 
 def city_of(row):
@@ -130,14 +130,16 @@ def workbook(rows, city_name):
         if count:
             readme.append([EXPLAIN[kind]["sheet"], EXPLAIN[kind]["en"], EXPLAIN[kind]["mr"], count])
     for kind in KIND_ORDER:
-        kind_rows = [row for row in rows if row.kind == kind]
+        kind_rows = sorted((row for row in rows if row.kind == kind),
+                           key=lambda row: (not (row.details or {}).get("working_slum"), row.slum.name if row.slum_id else ""))
         if not kind_rows:
             continue
         sheet = book.create_sheet(EXPLAIN[kind]["sheet"])
         sheet.append(COLUMNS)
         for row in kind_rows:
             details = row.details or {}
-            sheet.append([city_of(row), row.slum.name if row.slum_id else "", numbers_of(row), details.get("head", ""),
+            sheet.append([city_of(row), row.slum.name if row.slum_id else "", "Yes" if details.get("working_slum") else "",
+                          numbers_of(row), details.get("head", ""),
                           details.get("mobile", ""), details.get("entered_again", ""), row.encounter_type,
                           ", ".join(row.external_ids), row.first_seen.date(), "" if row.notified_on else "New",
                           EXPLAIN[kind]["todo"]])

@@ -26,12 +26,13 @@ CONTACTS = [
     ("pmc", "Pune and PCMC team"),
     ("nmmc", "Navi Mumbai team"),
     ("arvind", "Arvind (Thane)"),
+    ("imc", "Ichalkaranji team"),
 ]
 
 # One weekly duplicates mail per city (avni.jobs.duplicates.purpose_key): the city team as To, the same CC for all.
-# A city with no team here gets no mail until a To is added in admin.
-DUPLICATE_CITIES = ["Pune", "Navi Mumbai", "Thane", "PCMC", "Kolhapur", "Panvel", "Ichalkaranji"]
-DUPLICATE_TEAMS = {"Pune": ["pmc"], "PCMC": ["pmc"], "Navi Mumbai": ["nmmc"], "Thane": ["arvind"]}
+# Cities where work is paused (Kolhapur, Panvel) get no mail.
+DUPLICATE_CITIES = ["Pune", "PCMC", "Navi Mumbai", "Thane", "Ichalkaranji"]
+DUPLICATE_TEAMS = {"Pune": ["pmc"], "PCMC": ["pmc"], "Navi Mumbai": ["nmmc"], "Thane": ["arvind"], "Ichalkaranji": ["imc"]}
 DUPLICATE_CC = ["dhana", "nilima", "developer", "data"]
 
 PURPOSES = [

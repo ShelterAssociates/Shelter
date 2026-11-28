@@ -156,8 +156,8 @@ class DigestTests(DuplicateCase):
         readme = list(book["Read me"].iter_rows(values_only=True))
         self.assertIn("एकच घर क्रमांक", readme[1][2])
         rows = list(book["Same number"].iter_rows(values_only=True))
-        self.assertEqual((rows[1][0], rows[1][2]), ("Pune", "42"))
-        self.assertIn("Void the wrong household", rows[1][10])
+        self.assertEqual((rows[1][0], rows[1][3]), ("Pune", "42"))
+        self.assertIn("Void the wrong household", rows[1][11])
 
     def test_city_without_recipients_is_not_mailed(self):
         self.first_and_twin()
@@ -201,7 +201,7 @@ class FirstMailTests(DuplicateCase):
             job.send_digest(today=timezone.make_aware(timezone.datetime(2026, 11, 30, 9)))
         html = message.return_value.attach_alternative.call_args[0][0]
         self.assertIn("FY 2026-27", html)
-        self.assertIn("Other slums may also have duplicates", html)
+        self.assertIn("Working slum this year", html)
         self.assertIn("पहिली यादी", html)
 
 
