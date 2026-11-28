@@ -176,6 +176,17 @@ class FileTests(BackfillCase):
         self.assertEqual(self.number("m1"), "42")
         self.assertEqual(self.number("m2"), "70")
 
+    def test_detailed_survey_export_columns_are_read(self):
+        self.member("m1")
+        path = os.path.join(self.folder, "ichalkaranji.csv")
+        with open(path, "w", newline="", encoding="utf-8") as handle:
+            writer = csv.writer(handle)
+            writer.writerow(["detailed_survey_registration_uuid", "detailet_survey_House_Number", "address__City",
+                             "address__Slum", "family_member_uuid", "family_member_first_name"])
+            writer.writerow(["hh-1", "0042", "Ichalkaranji", "Antule Nagar, Pisoli", "m1", "Asha"])
+        self.run_backfill(path, apply=True)
+        self.assertEqual(self.number("m1"), "42")
+
     def test_missing_column_is_refused(self):
         path = os.path.join(self.folder, "bad.csv")
         with open(path, "w", encoding="utf-8") as handle:

@@ -20,8 +20,12 @@ from master.models import Slum
 from survey.identity import household_number_from
 from survey.locations import slum_id_for_name
 
-COLUMNS = {"city": "City", "slum": "Slum", "number": "household__first_name",
-           "member": "family_member - member_subject_id__uuid"}
+COLUMNS = {
+    "city": ("City", "address__City"),
+    "slum": ("Slum", "address__Slum"),
+    "number": ("household__first_name", "detailet_survey_House_Number"),
+    "member": ("family_member - member_subject_id__uuid", "family_member_uuid"),
+}
 SKIP_CITIES = ("Test_city",)
 BLANK = {"", "nan", "none", "null"}
 FLOAT_SPELLING = re.compile(r"^(\d+)\.0+$")
@@ -80,10 +84,11 @@ def read_rows(path):
 
 def sheet_rows(lines):
     header = [text(cell) for cell in next(lines)]
-    missing = [name for name in COLUMNS.values() if name not in header]
+    found = {key: next((name for name in names if name in header), None) for key, names in COLUMNS.items()}
+    missing = [" or ".join(COLUMNS[key]) for key, name in found.items() if name is None]
     if missing:
         raise ValueError("Missing column(s): {}".format(", ".join(missing)))
-    index = {key: header.index(name) for key, name in COLUMNS.items()}
+    index = {key: header.index(name) for key, name in found.items()}
     for line in lines:
         if not any(line):
             continue
