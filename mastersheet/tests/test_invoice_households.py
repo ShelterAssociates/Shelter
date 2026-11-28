@@ -6,7 +6,7 @@ from django.contrib.auth.models import Group
 from django.core.exceptions import ValidationError
 
 from mastersheet.models import InvoiceItems, household_list
-from mastersheet.test_financial_values import FinanceCase
+from mastersheet.tests.test_financial_values import FinanceCase
 
 
 class TamperedHouseholdsTests(FinanceCase):

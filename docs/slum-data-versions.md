@@ -391,7 +391,7 @@ restore command.
 ## 8. Tests
 
 **802 tests, 800 pass.** The 2 failures are
-`master.tests.RimDisplayFilterTests`, which **fail on a clean tree too** —
+`master.tests.test_views.RimDisplayFilterTests`, which **fail on a clean tree too** —
 pre-existing and unrelated.
 
 | File | Covers |

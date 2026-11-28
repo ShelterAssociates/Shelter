@@ -28,8 +28,8 @@ def failing_job(recorder, params=None):
 class QueueTestCase(TestCase):
     def setUp(self):
         self.user = User.objects.create(username="data-team")
-        self.patch = mock.patch.dict(registry.JOBS, {"fake": "notification.tests_queue:fake_job",
-                                                     "failing": "notification.tests_queue:failing_job"})
+        self.patch = mock.patch.dict(registry.JOBS, {"fake": "notification.tests.test_queue:fake_job",
+                                                     "failing": "notification.tests.test_queue:failing_job"})
         self.patch.start()
         self.email = mock.patch("notification.services.queue.job_email.send_activity_report")
         self.send = self.email.start()
