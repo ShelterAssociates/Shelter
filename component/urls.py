@@ -26,6 +26,7 @@ urlpatterns = [
     # Avni mobile app map picker (component/avni_map.py)
     url(r"^get_structures_for_avni/$", avni_map.get_structures_for_avni, name="get_structures_for_avni"),
     url(r"^map_subject_to_structure/$", avni_map.map_subject_to_structure, name="map_subject_to_structure"),
+    url(r"^avni_app_status/$", avni_map.avni_app_status, name="avni_app_status"),
     url(
         r"^set_component_metric/$",
         views.set_component_metric,

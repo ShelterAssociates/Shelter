@@ -1,6 +1,7 @@
 """Cached AVNI form definitions: which forms exist, what they are for, what they ask."""
 
 from colorfield.fields import ColorField
+from django.core.validators import RegexValidator
 from django.db import models
 from django.utils import timezone
 from jsonfield import JSONField
@@ -246,3 +247,33 @@ def city_id_of(slum):
     if ward is None or ward.administrative_ward is None:
         return None
     return ward.administrative_ward.city_id
+
+
+VERSION_FORMAT = RegexValidator(r"^\d+(\.\d+){0,3}$", "Use numbers and dots only, e.g. 1.3.0")
+DEFAULT_UPDATE_MESSAGE = (
+    "This version of the app is no longer supported. "
+    "Please install the latest version shared by the developer, then open the app again."
+)
+
+
+class AvniAppRelease(models.Model):
+    """The oldest Avni app build field workers may still use; older phones are told to update and the app closes."""
+
+    min_version = models.CharField(
+        max_length=20, validators=[VERSION_FORMAT], verbose_name="minimum version",
+        help_text="Phones below this version are blocked after their next sync, e.g. 1.3.0",
+    )
+    latest_version = models.CharField(
+        max_length=20, blank=True, validators=[VERSION_FORMAT],
+        help_text="Optional. Phones below this (but not below the minimum) see a dismissible reminder.",
+    )
+    message = models.TextField(default=DEFAULT_UPDATE_MESSAGE, help_text="Shown on the phone as plain text.")
+    is_active = models.BooleanField(default=True)
+    created_on = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ("-created_on", "-id")
+        verbose_name = "Avni app release"
+
+    def __str__(self):
+        return "min {}{}".format(self.min_version, "" if self.is_active else " (off)")
