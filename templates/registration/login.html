@@ -48,6 +48,20 @@
       text-align: center;
       margin-bottom: 18px;
     }
+
+    body.login .page-head {
+      display: none;
+    }
+
+    .login-note {
+      margin: 0 0 16px;
+      padding: 10px 12px;
+      border: 1px solid #2e7d32;
+      border-radius: 6px;
+      background: #e8f5e9;
+      color: #1b5e20;
+      text-align: center;
+    }
     
     .login-brand img {
       width: min(220px, 70%);
@@ -223,6 +237,8 @@
 
 {% endblock %}
 
+{% block messages %}{% endblock %}
+
 {% block branding %}
 
 {% endblock %}
@@ -243,6 +259,9 @@
       <div class="login-brand">
         <img src="/static/images/shelter.png" alt="Shelter Associates" />
       </div>
+      {% for message in messages %}
+        <p class="login-note" role="status">{{ message }}</p>
+      {% endfor %}
       {% if form.errors and not form.non_field_errors %}
         <p class="errornote">
           {% if form.errors.items|length == 1 %}
@@ -262,7 +281,7 @@
       <div id="content-main">
         {% if user.is_authenticated %}
           <p class="errornote">
-            {% blocktrans trimmed %}You are authenticated as {{ username }}, but are not authorized to access this page. Would you like to login to a different account?{% endblocktrans %}
+            {% blocktrans trimmed with username=user.get_username %}You are authenticated as {{ username }}, but are not authorized to access this page. Would you like to login to a different account?{% endblocktrans %}
           </p>
         {% endif %}
 
