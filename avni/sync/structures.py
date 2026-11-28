@@ -26,7 +26,7 @@ def save_structure_record(record):
     observations = record.get("observations") or {}
     if not observations:
         return False
-    rhs_data = mappings.apply_structure_overrides(mappings.map_known_questions(observations))
+    rhs_data = mappings.convert_answers(mappings.apply_structure_overrides(mappings.map_known_questions(observations)))
     rhs_data.setdefault("group_og5bx85/Type_of_survey", "RHS")
     rhs_data.setdefault("rhs_uuid", record.get("ID") or record.get("uuid"))
     number = mappings.household_number_from(observations.get("First name"))

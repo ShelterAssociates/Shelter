@@ -252,6 +252,46 @@ def apply_household_overrides(data):
     return data
 
 
+# AVNI answer -> the answer the map filters (component Metadata codes) look for, per rhs key.
+# Confirmed 2026-11-28. Answers are compared after trimming spaces.
+ANSWER_CONVERSIONS = {
+    "group_el9cl08/Type_of_water_connection": {
+        "Group connection": "Group connection (paid by all users)",
+        "Borewell/Submersible": "Borewell",
+    },
+    "group_oi8ts04/What_is_the_toilet_connected_to": {"Biogas": "Individual bio-gas"},
+    "group_oi8ts04/OD1": {"only children": "Only children", "only men": "Only men", "only women": "Only women"},
+    "group_oi8ts04/Current_place_of_defecation": {
+        "Toilet by sa": "Toilet by SA",
+        "HHs Use CTB of neighbouring slum": "Use CTB of neighbouring slum",
+        "Toilet by other NGO / Agency": "Toilet by other NGO",
+        "No household toilet": "No Toilet",
+    },
+}
+HOME_WITH_SHOP = "Individual home + shop"
+
+
+def converted(value, table):
+    if isinstance(value, list):
+        return [converted(item, table) for item in value]
+    if not isinstance(value, str):
+        return value
+    whole = value.strip()
+    if whole in table or "," not in whole:
+        return table.get(whole, whole)
+    return ", ".join(table.get(part.strip(), part.strip()) for part in whole.split(","))
+
+
+def convert_answers(rhs_data):
+    """Convert AVNI answers to the filters' answers; a home with a shop is also its occupancy."""
+    for key, table in ANSWER_CONVERSIONS.items():
+        if key in rhs_data:
+            rhs_data[key] = converted(rhs_data[key], table)
+    if rhs_data.get("Functioning of the structure") == HOME_WITH_SHOP:
+        rhs_data["Type_of_structure_occupancy"] = HOME_WITH_SHOP
+    return rhs_data
+
+
 def apply_structure_overrides(rhs_data):
     """Same rules, expressed on already-mapped Structure / DSES keys."""
     if rhs_data.get("Do you have a toilet at home?") == "Yes":
