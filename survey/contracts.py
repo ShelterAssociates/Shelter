@@ -27,10 +27,10 @@ NormalizedRecord = namedtuple(
     "kind external_id subject_external_id subject_type program encounter_type "
     "form_external_id form_name slum_name city_name household_number record_datetime "
     "earliest_scheduled max_scheduled cancel_datetime exit_datetime is_voided "
-    "created_at last_modified_at observations",
+    "created_at last_modified_at observations location_id",
 )
 NormalizedRecord.__new__.__defaults__ = (
-    "", "", "", "", "", "", "", "", "", None, None, None, None, None, False, None, None, (),
+    "", "", "", "", "", "", "", "", "", None, None, None, None, None, False, None, None, (), "",
 )
 
 # One form in the provider's catalog. `concepts` is [(ConceptRef, [answer ConceptRef, ...]), ...]

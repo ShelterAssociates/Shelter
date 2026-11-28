@@ -71,7 +71,7 @@ def context_for(context=None):
 # -- one record ---------------------------------------------------------------
 
 def resolve_slum_id(normalized, context):
-    return store.resolve_slum(normalized.slum_name, context)[0]
+    return store.slum_of(normalized, context)[0]
 
 
 def sync_record(kind, raw, context, only_slums=None):
@@ -183,7 +183,7 @@ def with_household(normalized, identity_raw, context):
         return normalized
     if normalized.kind != "subject":
         return normalized._replace(household_number=number)
-    slum_id = store.resolve_slum(normalized.slum_name, context)[0]
+    slum_id = store.slum_of(normalized, context)[0]
     context.household_rows[normalized.external_id] = store.household_id_by_number(slum_id, number)
     return normalized
 

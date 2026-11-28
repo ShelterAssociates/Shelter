@@ -205,7 +205,8 @@ def member_household_number(record):
 def save_member_from_record(record, household_number=None):
     """One Family Member subject -> MemberData. `household_number` is that of the household
     AVNI lists the member under, used when her own answers carry none."""
-    slum = Slum.objects.filter(id=slum_id_for_name((record.get("location") or {}).get("Slum"))).first()
+    slum = Slum.objects.filter(id=slum_id_for_name((record.get("location") or {}).get("Slum"),
+                                                   location_id=record.get("Location ID"))).first()
     if slum is None:
         return False
     observations = record.get("observations") or {}

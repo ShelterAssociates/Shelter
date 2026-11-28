@@ -115,15 +115,21 @@ def fuzzy_moment(text):
 
 # -- identity -----------------------------------------------------------------
 
-def resolve_slum(slum_name, context):
-    if not slum_name:
+def resolve_slum(slum_name, context, location_id=""):
+    """(slum id, city id): the location id's alias first (shared slum names), then the name."""
+    if not slum_name and not location_id:
         return None, None
-    if slum_name not in context.slum_ids:
+    key = (slum_name, location_id or "")
+    if key not in context.slum_ids:
         try:
-            context.slum_ids[slum_name] = locations.slum_and_city_ids(slum_name)
+            context.slum_ids[key] = locations.slum_and_city_ids(slum_name, location_id=location_id)
         except LookupError:
-            context.slum_ids[slum_name] = (None, None)
-    return context.slum_ids[slum_name]
+            context.slum_ids[key] = (None, None)
+    return context.slum_ids[key]
+
+
+def slum_of(normalized, context):
+    return resolve_slum(normalized.slum_name, context, getattr(normalized, "location_id", ""))
 
 
 def forget_removed_households(context):
@@ -169,7 +175,7 @@ def household_id_by_number(slum_id, household_number):
 
 def link_household(normalized, context):
     """Re-check the household link after the legacy writer may have created the row."""
-    slum_id, _ = resolve_slum(normalized.slum_name, context)
+    slum_id, _ = slum_of(normalized, context)
     household_id = household_id_by_number(slum_id, normalized.household_number)
     if household_id is None:
         return False
@@ -187,7 +193,7 @@ def link_household(normalized, context):
 # -- writing ------------------------------------------------------------------
 
 def record_fields(normalized, context):
-    slum_id, city_id = resolve_slum(normalized.slum_name, context)
+    slum_id, city_id = slum_of(normalized, context)
     last_modified = parse_moment(normalized.last_modified_at)
     return {
         "version": versions.version_for(slum_id, last_modified or timezone.now(), context.versions),
@@ -270,7 +276,7 @@ def on_integrity_error(normalized, context, exc, quiet):
         raise
     context.bump("duplicate_household")
     holder = duplicate_holder(normalized, context)
-    slum_id, city_id = resolve_slum(normalized.slum_name, context)
+    slum_id, city_id = slum_of(normalized, context)
     group = duplicates.remember_household(context.provider.key, slum_id, city_id, normalized.household_number,
                                           [normalized.external_id] + ([holder] if holder else []))
     if context.duplicate_households is not None:
@@ -284,7 +290,7 @@ def on_integrity_error(normalized, context, exc, quiet):
 
 
 def duplicate_holder(normalized, context):
-    slum_id, _ = resolve_slum(normalized.slum_name, context)
+    slum_id, _ = slum_of(normalized, context)
     return (
         Record.objects.filter(
             provider=context.provider.key, kind="subject", is_voided=False,

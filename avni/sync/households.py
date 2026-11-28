@@ -47,7 +47,7 @@ def save_household(record):
     try:
         if not household.number:
             raise ValueError("subject has no First name (household number)")
-        slum_id, city_id = slum_and_city_ids(household.slum)
+        slum_id, city_id = slum_and_city_ids(household.slum, location_id=record.get("Location ID"))
         if not versioning.allows_write(slum_id, parse_moment(household.submitted_on)):
             logger.info("Household %s in %s belongs to a frozen version; live tables left alone",
                         household.number, household.slum)
@@ -240,7 +240,7 @@ def sync_households_by_uuid(subject_uuids, api=None):
 
 def merge_into_rhs_data(household, data):
     """Merge encounter answers into the household's rhs_data, registering it first if unknown."""
-    slum_id, _ = slum_and_city_ids(household.slum)
+    slum_id, _ = slum_and_city_ids(household.slum, location_id=(household.record or {}).get("Location ID"))
     rows = HouseholdData.objects.filter(slum_id=slum_id, household_number=household.number)
     if not rows.exists():
         save_household(household.record)

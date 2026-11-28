@@ -401,6 +401,7 @@ class AvniProvider(contracts.Provider):
             form_name=form.name,
             slum_name=location.get("Slum") or "",
             city_name=location.get("City") or "",
+            location_id=identity_source.get("Location ID") or "",
             household_number=(
                 "" if subject_type == MEMBER_SUBJECT_TYPE
                 else identity.household_number_from(subject_observations.get("First name"))
@@ -489,9 +490,14 @@ class AvniProvider(contracts.Provider):
         return (household.record["ID"],)
 
     def legacy_missing(self, kind, raw):
-        """A Family Member record the member tables should hold and do not: the member,
-        her household number when AVNI names a household, her enrolment, or any visit."""
-        if raw.get("Subject type") != MEMBER_SUBJECT_TYPE or raw.get("Voided"):
+        """A record the legacy tables should hold and do not: a household with no row under its
+        slum and number, or a Family Member record - the member, her household number when AVNI
+        names a household, her enrolment, or any visit."""
+        if raw.get("Voided"):
+            return False
+        if kind == "subject" and raw.get("Subject type") in LEGACY_HOUSEHOLD_TYPES:
+            return household_row_missing(raw)
+        if raw.get("Subject type") != MEMBER_SUBJECT_TYPE:
             return False
         if kind == "subject":
             held = list(MemberData.objects.filter(member_uuid=raw.get("ID")).values_list("household_number", flat=True)[:1])
@@ -607,9 +613,18 @@ def legacy_encounter(raw):
     return copy
 
 
+def household_row_missing(raw):
+    """True when no HouseholdData row sits under this household's slum and number (one indexed lookup)."""
+    household = households.household_from_record(raw)
+    slum_id = slum_id_for_name(household.slum, location_id=raw.get("Location ID"))
+    if not slum_id or not household.number:
+        return False
+    return not HouseholdData.objects.filter(slum_id=slum_id, household_number=household.number).exists()
+
+
 def mastersheet_holds(household):
     """True when HouseholdData has this household, or its slum is not one we know."""
-    slum_id = slum_id_for_name(household.slum)
+    slum_id = slum_id_for_name(household.slum, location_id=(household.record or {}).get("Location ID"))
     return slum_id is None or HouseholdData.objects.filter(slum_id=slum_id, household_number=household.number).exists()
 
 

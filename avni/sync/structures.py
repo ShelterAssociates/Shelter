@@ -36,7 +36,7 @@ def save_structure_record(record):
     if not slum_name:
         logger.error("Record %s has no slum", rhs_data.get("rhs_uuid"))
         return False
-    slum_id, city_id = slum_and_city_ids(slum_name)
+    slum_id, city_id = slum_and_city_ids(slum_name, location_id=record.get("Location ID"))
     households.retire_stale_rows(rhs_data["rhs_uuid"], slum_id, city_id, number)
     fields = {
         "rhs_data": rhs_data,

@@ -51,9 +51,11 @@ def save_encounter_for(household, record):
 
 
 def save_sanitation_followup(household, data):
-    rows = FollowupData.objects.filter(household_number=household.number, slum_id=slum_id_for_name(household.slum))
+    location_id = (household.record or {}).get("Location ID")
+    rows = FollowupData.objects.filter(household_number=household.number,
+                                       slum_id=slum_id_for_name(household.slum, location_id=location_id))
     if not rows.exists():
-        slum_id, city_id = slum_and_city_ids(household.slum)
+        slum_id, city_id = slum_and_city_ids(household.slum, location_id=location_id)
         FollowupData.objects.create(
             household_number=household.number,
             slum_id=slum_id,
