@@ -18,6 +18,7 @@ from django.db import transaction
 from avni import paths
 from avni.client import AvniError, client, use_client
 from avni.provider import AvniProvider, retrying
+from avni.sync import households
 from graphs.models import HouseholdData, MemberProgramData
 from survey import connector, duplicates
 from survey.store import SyncContext, parse_moment
@@ -113,6 +114,7 @@ def link_households(links):
         if uuid and not data.get("rhs_uuid"):
             data["rhs_uuid"] = uuid
             HouseholdData.objects.filter(id=row.id).update(rhs_data=data)
+            households.note_subject_row(uuid, row.id)
             stamped += 1
     return stamped
 
@@ -129,7 +131,7 @@ def load(path, apply=False, report="bundle_load_report.csv", out=print):
     counts, results = Counter(), []
     use_client(api)
     try:
-        with transaction.atomic():
+        with transaction.atomic(), households.subject_index():
             context = SyncContext(AvniProvider(api=api))
             for line in lines:
                 kind, record = line["kind"], line["record"]

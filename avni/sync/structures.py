@@ -48,6 +48,8 @@ def save_structure_record(record):
         rows.update(**fields)
     else:
         HouseholdData.objects.create(household_number=number, slum_id=slum_id, city_id=city_id, **fields)
+    for row_id in rows.values_list("id", flat=True):
+        households.note_subject_row(rhs_data["rhs_uuid"], row_id)
     household_checks.flag(rows.first())
     return True
 

@@ -68,9 +68,51 @@ def save_household(record):
         return False
 
 
+# {AVNI id: {row ids}} while a bulk load runs (subject_index); None otherwise.
+SUBJECT_ROWS = None
+
+
+def build_subject_index():
+    """Every row's rhs_uuid in one pass (a regular expression in the database, no JSON parsing)."""
+    from collections import defaultdict
+    from django.db import connection
+
+    index = defaultdict(set)
+    with connection.cursor() as cursor:
+        cursor.execute("SELECT id, substring(rhs_data::text from '\"rhs_uuid\":\\s*\"([^\"]+)\"') "
+                       "FROM graphs_householddata WHERE rhs_data::text LIKE '%%rhs_uuid%%'")
+        for row_id, subject_uuid in cursor.fetchall():
+            if subject_uuid:
+                index[subject_uuid].add(row_id)
+    return index
+
+
+class subject_index(object):
+    """For a bulk load: rows_for_subject looks ids up instead of searching the table (about 1 s a search)."""
+
+    def __enter__(self):
+        global SUBJECT_ROWS
+        SUBJECT_ROWS = build_subject_index()
+        return SUBJECT_ROWS
+
+    def __exit__(self, *exc):
+        global SUBJECT_ROWS
+        SUBJECT_ROWS = None
+        return False
+
+
+def note_subject_row(subject_uuid, row_id):
+    """Keep the bulk-load index current when a row gets this AVNI id."""
+    if SUBJECT_ROWS is not None and subject_uuid and row_id:
+        SUBJECT_ROWS[subject_uuid].add(row_id)
+
+
 def rows_for_subject(subject_uuid):
     """Every HouseholdData row carrying this subject's uuid (rhs_data is text, so LIKE then confirm)."""
-    rows = HouseholdData.objects.filter(rhs_data__contains=subject_uuid)
+    if SUBJECT_ROWS is not None:
+        rows = HouseholdData.objects.filter(id__in=SUBJECT_ROWS.get(subject_uuid, ()))
+    else:
+        rows = HouseholdData.objects.filter(rhs_data__contains=subject_uuid)
     return [row for row in rows if (row.rhs_data or {}).get("rhs_uuid") == subject_uuid]
 
 
@@ -136,13 +178,14 @@ def create_household(slum_id, city_id, record, observations):
     mappings.apply_household_overrides(rhs_data)
     rhs_data["rhs_uuid"] = record["ID"]
     rhs_data.setdefault("group_og5bx85/Type_of_survey", "RHS")
-    HouseholdData.objects.create(
+    row = HouseholdData.objects.create(
         household_number=mappings.household_number_from(observations.get("First name")),
         slum_id=slum_id,
         city_id=city_id,
         rhs_data=rhs_data,
         **registration_fields(record)
     )
+    note_subject_row(record["ID"], row.id)
 
 
 def update_household(existing, record, observations):
@@ -152,6 +195,8 @@ def update_household(existing, record, observations):
     rhs_data["rhs_uuid"] = record["ID"]
     rhs_data["group_og5bx85/Type_of_survey"] = "RHS"
     existing.update(rhs_data=rhs_data, **registration_fields(record))
+    for row_id in existing.values_list("id", flat=True):
+        note_subject_row(record["ID"], row_id)
 
 
 def sync_households(subject_type, from_date=None, api=None, context=None, locations=None):

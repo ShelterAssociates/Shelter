@@ -161,3 +161,37 @@ class DuplicateLineTests(BundleCase):
         self.load()
         self.assertEqual(sorted(SyncDuplicate.objects.values_list("kind", flat=True)), ["family", "household"])
         self.assertEqual(SyncDuplicate.objects.get(kind="family").details["head"], "Asha Patil")
+
+
+class SubjectIndexTests(BundleCase):
+    """A bulk load reads every household's AVNI id once instead of searching the table per household."""
+
+    def test_index_finds_the_same_rows_as_the_table_search(self):
+        from avni.sync import households
+
+        self.write_bundle(("subject", household_record(uuid="hh-1", number="0042")))
+        self.load()
+        with households.subject_index():
+            self.assertEqual([row.household_number for row in households.rows_for_subject("hh-1")], ["42"])
+            self.assertEqual(households.rows_for_subject("nobody"), [])
+
+    def test_rows_created_or_removed_during_the_load_are_followed(self):
+        from avni.sync import households
+
+        with households.subject_index():
+            households.save_household(household_record(uuid="hh-7", number="0007"))
+            self.assertEqual(len(households.rows_for_subject("hh-7")), 1)
+            households.save_household(household_record(uuid="hh-7", number="0008", modified="2026-10-01T00:00:00.000Z"))
+            self.assertEqual([row.household_number for row in households.rows_for_subject("hh-7")], ["8"])
+            households.remove_voided_household({"ID": "hh-7"})
+            self.assertEqual(households.rows_for_subject("hh-7"), [])
+
+    def test_load_uses_the_index(self):
+        from avni.sync import households
+
+        self.write_bundle(("subject", household_record(uuid="hh-1", number="0042")),
+                          ("subject", household_record(uuid="hh-2", number="0043")))
+        with mock.patch.object(households, "build_subject_index", wraps=households.build_subject_index) as build:
+            self.load()
+        build.assert_called_once()
+        self.assertIsNone(households.SUBJECT_ROWS)
