@@ -1,6 +1,7 @@
 from django.contrib import admin
 
 from .models import (
+    AvniAppRelease,
     AvniFilterPreset,
     AvniFilterPresetItem,
     AvniFilterPresetScope,
@@ -179,3 +180,10 @@ class AvniFilterPresetItemAdmin(admin.ModelAdmin):
 
     def encounter_type(self, item):
         return item.mapping.encounter_type
+
+
+@admin.register(AvniAppRelease)
+class AvniAppReleaseAdmin(admin.ModelAdmin):
+    list_display = ("min_version", "latest_version", "is_active", "created_on")
+    list_filter = ("is_active",)
+    fields = ("min_version", "latest_version", "message", "is_active")

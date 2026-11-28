@@ -8,7 +8,7 @@ from django.contrib.contenttypes.models import ContentType
 from django.contrib.gis.geos import Polygon
 from django.test import SimpleTestCase, TestCase, override_settings
 
-from avni.models import AvniForm, AvniFormQuestion, AvniMapFilter
+from avni.models import AvniAppRelease, AvniForm, AvniFormQuestion, AvniMapFilter
 from avni.tests.support import make_city, make_slum
 from component.kmlparser import (
     HOUSE_BASE_LAYER_CODE,
@@ -604,3 +604,42 @@ class KMLEntityTests(TestCase):
         response = self.upload(b"<kml><Document><unclosed></kml>")
         self.assertEqual(response.status_code, 400)
         self.assertNotIn("line", response.json()["message"].lower())
+
+
+STATUS_URL = "/component/avni_app_status/"
+
+
+@override_settings(AVNI_GIS_API_KEY=KEY)
+class AvniAppStatusTests(TestCase):
+    def get(self, key=KEY):
+        return self.client.get(STATUS_URL, HTTP_X_AVNI_GIS_KEY=key)
+
+    def test_says_nothing_when_no_release_is_set(self):
+        self.assertEqual(self.get().json(), {"min_version": None, "latest_version": None, "message": None})
+
+    def test_sends_the_newest_active_release(self):
+        AvniAppRelease.objects.create(min_version="1.2.0", message="old")
+        AvniAppRelease.objects.create(min_version="1.3.0", latest_version="1.4.0", message="Install 1.3")
+        AvniAppRelease.objects.create(min_version="9.0.0", is_active=False)
+        self.assertEqual(self.get().json(), {"min_version": "1.3.0", "latest_version": "1.4.0", "message": "Install 1.3"})
+
+    def test_sends_no_latest_version_when_left_blank(self):
+        AvniAppRelease.objects.create(min_version="1.3.0")
+        body = self.get().json()
+        self.assertIsNone(body["latest_version"])
+        self.assertIn("latest version shared by the developer", body["message"])
+
+    def test_requires_the_key(self):
+        self.assertEqual(self.get(key="wrong").status_code, 401)
+
+    def test_only_answers_get(self):
+        self.assertEqual(self.client.post(STATUS_URL, HTTP_X_AVNI_GIS_KEY=KEY).status_code, 405)
+
+
+class AvniAppReleaseValidationTests(SimpleTestCase):
+    def test_accepts_dotted_numbers_only(self):
+        from django.core.exceptions import ValidationError
+        AvniAppRelease(min_version="1.3.0").clean_fields()
+        for bad in ("1.3.0-beta", "v1.3", "", "1..3"):
+            with self.assertRaises(ValidationError, msg=bad):
+                AvniAppRelease(min_version=bad).clean_fields()

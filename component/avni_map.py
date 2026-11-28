@@ -40,7 +40,7 @@ from django.views.decorators.http import require_GET, require_POST
 from avni import map_filters as filter_presets
 from avni import mappings
 from avni.locations import slum_id_for_location_uuid
-from avni.models import AvniFormMapping, AvniMapFilter
+from avni.models import AvniAppRelease, AvniFormMapping, AvniMapFilter
 from component.models import Component, Metadata, SubjectStructureMapping
 from master.models import Slum
 from survey.identity import household_number_from
@@ -177,6 +177,18 @@ def get_structures_for_avni(request):
     # Compact separators: "s" instead of "housenumber" and no whitespace save
     # a few hundred KB before gzip on a large slum.
     return HttpResponse(json.dumps(collection, separators=(",", ":")), content_type="application/json")
+
+
+@require_GET
+@requires_api_key
+def avni_app_status(request):
+    """The oldest app version still allowed; the app checks it after every sync and closes when it is older."""
+    release = AvniAppRelease.objects.filter(is_active=True).first()
+    return JsonResponse({
+        "min_version": release.min_version if release else None,
+        "latest_version": (release.latest_version or None) if release else None,
+        "message": release.message if release else None,
+    })
 
 
 def find_structure(slum, structure_id):
