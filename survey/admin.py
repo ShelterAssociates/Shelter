@@ -201,7 +201,20 @@ class SyncSwitchAdmin(admin.ModelAdmin):
 
 @admin.register(SyncDuplicate)
 class SyncDuplicateAdmin(admin.ModelAdmin):
-    list_display = ("kind", "city", "slum", "household_number", "encounter_type", "status", "first_seen", "last_seen", "notified_on")
-    list_filter = ("kind", "status", "city")
+    list_display = ("kind", "city", "slum", "household_number", "encounter_type", "status", "in_mail", "first_seen",
+                    "last_seen", "notified_on")
+    list_filter = ("kind", "status", "in_mail", "city")
+    list_editable = ("in_mail",)
     search_fields = ("household_number", "key", "external_ids")
     readonly_fields = ("first_seen", "last_seen", "resolved_on", "notified_on")
+    actions = ["keep_out_of_mail", "put_back_in_mail"]
+
+    def keep_out_of_mail(self, request, queryset):
+        self.message_user(request, "{} kept out of the weekly mail.".format(queryset.update(in_mail=False)))
+
+    keep_out_of_mail.short_description = "Keep out of the weekly mail (e.g. old data)"
+
+    def put_back_in_mail(self, request, queryset):
+        self.message_user(request, "{} put back in the weekly mail.".format(queryset.update(in_mail=True)))
+
+    put_back_in_mail.short_description = "Put back in the weekly mail"

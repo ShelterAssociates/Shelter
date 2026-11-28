@@ -22,10 +22,17 @@ CONTACTS = [
     ("info", "Shelter Associates"),
     ("dhana", "Dhana"),
     ("gis", "GIS Team"),
+    ("nilima", "Nilima"),
+    ("pmc", "Pune and PCMC team"),
+    ("nmmc", "Navi Mumbai team"),
+    ("arvind", "Arvind (Thane)"),
 ]
 
-# One weekly duplicates mail per city (avni.jobs.duplicates.purpose_key); recipients are set in admin.
+# One weekly duplicates mail per city (avni.jobs.duplicates.purpose_key): the city team as To, the same CC for all.
+# A city with no team here gets no mail until a To is added in admin.
 DUPLICATE_CITIES = ["Pune", "Navi Mumbai", "Thane", "PCMC", "Kolhapur", "Panvel", "Ichalkaranji"]
+DUPLICATE_TEAMS = {"Pune": ["pmc"], "PCMC": ["pmc"], "Navi Mumbai": ["nmmc"], "Thane": ["arvind"]}
+DUPLICATE_CC = ["dhana", "nilima", "developer", "data"]
 
 PURPOSES = [
     {
@@ -235,7 +242,7 @@ def duplicate_purposes():
         "key": purpose_key(city),
         "display_name": "Duplicate records in AVNI - {}".format(city),
         "description": "Weekly list of duplicate households and visits in {} for the city team to fix in AVNI; "
-                       "add the team as To and leads as CC.".format(city),
-        "to": [],
-        "cc": [],
+                       "the city team is To, leads and the data team CC.".format(city),
+        "to": DUPLICATE_TEAMS.get(city, []),
+        "cc": DUPLICATE_CC,
     } for city in DUPLICATE_CITIES]

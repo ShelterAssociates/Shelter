@@ -142,11 +142,14 @@ def load(path, apply=False, report="bundle_load_report.csv", out=print):
             counts["linked"] = link_households(links) if links else 0
             for group in groups:
                 if group.get("dup_kind", "household") == "household":
-                    duplicates.remember_household("avni", group["slum_id"], group.get("city_id"), group["number"], group["ids"])
+                    saved = duplicates.remember_household("avni", group["slum_id"], group.get("city_id"), group["number"], group["ids"])
                 else:
-                    duplicates.remember("avni", group["dup_kind"], group["key"], group["ids"], slum_id=group["slum_id"],
-                                        city_id=group.get("city_id"), household_number=group.get("number", ""),
-                                        details=group.get("details") or {})
+                    saved = duplicates.remember("avni", group["dup_kind"], group["key"], group["ids"], slum_id=group["slum_id"],
+                                                city_id=group.get("city_id"), household_number=group.get("number", ""),
+                                                details=group.get("details") or {})
+                if group.get("in_mail") is False and saved.in_mail:
+                    saved.in_mail = False
+                    saved.save(update_fields=["in_mail"])
                 counts["duplicate groups"] += 1
             if not apply:
                 raise DryRun()

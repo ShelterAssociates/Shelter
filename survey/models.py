@@ -386,6 +386,7 @@ class SyncDuplicate(models.Model):
     resolved_on = models.DateTimeField(null=True, blank=True)
     resolution = models.CharField(max_length=300, blank=True)
     notified_on = models.DateTimeField(null=True, blank=True)
+    in_mail = models.BooleanField(default=True, help_text="Untick to keep a group (e.g. old data) out of the weekly mail")
 
     class Meta:
         db_table = "survey_sync_duplicate"

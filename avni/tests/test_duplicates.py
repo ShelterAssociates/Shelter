@@ -216,3 +216,39 @@ class NightlyDigestTests(DuplicateCase):
         payload = email.digest_payload("28 Nov 2026", "OK", [], [], [], since, timezone.now())
         self.assertEqual(payload["duplicates"]["households"], 1)
         self.assertIn("Duplicates: 1 household", email.nightly_text("28 Nov 2026", "OK", [], [], [], since, timezone.now()))
+
+
+class TestMailTests(DuplicateCase):
+    def test_test_mail_goes_only_to_the_test_address_and_marks_nothing(self):
+        self.first_and_twin()
+        DigestTests.recipients(self, "Pune")
+        with mock.patch("avni.jobs.duplicates.send_email") as send:
+            sent = job.send_digest(test_to="dev@example.org")
+        args, kwargs = send.call_args
+        self.assertEqual((args[0], kwargs["cc"], kwargs["bcc"]), (["dev@example.org"], [], []))
+        self.assertTrue(args[1].startswith("[TEST] "))
+        self.assertEqual(sent, {"Pune": 1})
+        self.assertIsNone(SyncDuplicate.objects.get().notified_on)
+        self.assertTrue(kwargs["context"]["first"])
+
+    def test_test_mail_covers_cities_without_recipients(self):
+        self.first_and_twin()
+        with mock.patch("avni.jobs.duplicates.send_email") as send:
+            self.assertEqual(job.send_digest(test_to="dev@example.org"), {"Pune": 1})
+        self.assertIn("would go to: nobody yet", send.call_args[1]["context"]["test_note"])
+
+
+class InMailTests(DuplicateCase):
+    def test_groups_kept_out_of_the_mail_are_not_mailed(self):
+        self.first_and_twin()
+        SyncDuplicate.objects.update(in_mail=False)
+        DigestTests.recipients(self, "Pune")
+        with mock.patch("avni.jobs.duplicates.send_email") as send:
+            self.assertEqual(job.send_digest(), {})
+        send.assert_not_called()
+
+    def test_seen_again_keeps_the_choice(self):
+        self.first_and_twin()
+        SyncDuplicate.objects.update(in_mail=False)
+        duplicates.remember_household("avni", self.slum.id, self.city.id, "42", ["hh-1", "hh-2"])
+        self.assertFalse(SyncDuplicate.objects.get().in_mail)

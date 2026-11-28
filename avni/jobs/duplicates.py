@@ -152,29 +152,36 @@ def financial_year(day):
     return "FY {}-{:02d}".format(start, (start + 1) % 100)
 
 
-def send_digest(today=None):
-    """Mail each city's team its open duplicates, details in an attached sheet; returns {city: groups mailed}."""
+def send_digest(today=None, test_to=None):
+    """Mail each city's team its open duplicates, details in an attached sheet; returns {city: groups mailed}.
+
+    With `test_to`, every city's mail goes to that address only, marked [TEST], and nothing is marked notified."""
     sent = {}
-    groups = SyncDuplicate.objects.filter(provider=PROVIDER, status=SyncDuplicate.OPEN).select_related(
+    groups = SyncDuplicate.objects.filter(provider=PROVIDER, status=SyncDuplicate.OPEN, in_mail=True).select_related(
         "slum", "city__name").order_by("city_id", "kind", "slum__name", "household_number")
     by_city = {}
     for group in groups:
         by_city.setdefault(group.city.name.city_name if group.city_id else "", []).append(group)
     for city_name, rows in sorted(by_city.items()):
         to, cc, bcc = contacts.recipients_for(purpose_key(city_name))
+        test_note = ""
+        if test_to:
+            test_note = "TEST - would go to: {}{}".format(", ".join(to) or "nobody yet", "; cc: " + ", ".join(cc) if cc else "")
+            to, cc, bcc = [test_to], [], []
         if not to:
             logger.warning("Duplicates for %s not mailed: no recipients on %s", city_name or "-", purpose_key(city_name))
             continue
         first = not SyncDuplicate.objects.filter(
             provider=PROVIDER, city_id=rows[0].city_id, notified_on__isnull=False).exists()
-        send_email(to, "Duplicate records in AVNI - {} ({} open)".format(city_name or "no city", len(rows)),
+        send_email(to, "{}Duplicate records in AVNI - {} ({} open)".format("[TEST] " if test_to else "", city_name or "no city", len(rows)),
                    template_name="notification/duplicate_digest_email.html",
                    context={"city": city_name, "kinds": [dict(EXPLAIN[kind], count=sum(1 for row in rows if row.kind == kind))
                                                           for kind in KIND_ORDER if any(row.kind == kind for row in rows)],
-                            "new": sum(1 for row in rows if not row.notified_on), "first": first,
+                            "new": sum(1 for row in rows if not row.notified_on), "first": first, "test_note": test_note,
                             "year": financial_year(timezone.localtime(today or timezone.now()).date())},
                    cc=cc, bcc=bcc, attachments=[workbook(rows, city_name)])
-        SyncDuplicate.objects.filter(pk__in=[row.pk for row in rows]).update(notified_on=today or timezone.now())
+        if not test_to:
+            SyncDuplicate.objects.filter(pk__in=[row.pk for row in rows]).update(notified_on=today or timezone.now())
         sent[city_name] = len(rows)
     return sent
 
@@ -184,4 +191,4 @@ def run(recorder, params=None):
     with recorder.step("duplicate_digest", loggers=LOGGERS) as step:
         if step.disabled:
             return
-        send_digest()
+        send_digest(test_to=(params or {}).get("test_to"))
